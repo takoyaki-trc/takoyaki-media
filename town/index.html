@@ -2,14 +2,16 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
   <title>たこ焼きトレカ｜町マップ</title>
 
-  <!-- あなたの“町”専用CSS（BASEと切り離す） -->
+  <!-- ✅ 町専用CSS（これが“統一の心臓”） -->
   <link rel="stylesheet" href="./town.css?v=1">
 
-  <!-- 外部CSS（あなたの既存資産） -->
+  <!-- ✅ あなたの外部CSS（既存資産） -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/boss.css?v=777">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takofish.css?v=1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/tawa.css?v=2">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc.css?v=111">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/hotspot.css?v=777">
@@ -19,159 +21,710 @@
 
 <body>
 
-  <!-- ▼ タイトル画像 -->
-  <img class="title-gif"
-       src="https://ul.h3z.jp/h12u4pD5.gif"
-       alt="たこ焼きトレカ タイトル">
+<!-- =========================
+  ✅ 昼夜（最初に付与）
+========================= -->
+<script>
+(() => {
+  // 夜は 20:00〜4:59（端末時間）
+  const h = new Date().getHours();
+  const night = (h >= 20 || h < 5);
+  const html = document.documentElement;
+  html.classList.toggle("is-night", night);
+  html.classList.toggle("day", !night);
+})();
+</script>
 
-  <!-- ▼ タイトル文字画像（任意） -->
-  <img class="title-sub"
-       src="https://basefile.akamaized.net/takoyakitrc-base-shop/69613a78bcb90/mojiji.png"
-       alt="タイトル文字">
+<!-- ▼ タイトル画像 -->
+<img class="title-gif"
+  src="https://ul.h3z.jp/h12u4pD5.gif"
+  alt="TAKOYAKI TRADING CARD">
 
-  <!-- ▼ タイトル下・タコ民表示（アクセスごとにランダム） -->
-  <div id="takominArea" class="takomin-area">
-    <div class="takomin-wrap">
-      <a id="takominLink" class="takomin-avatar" href="#" target="_blank" rel="noopener">
-        <img id="takominImg" src="" alt="タコ民">
-      </a>
-      <div class="takomin-text">
-        <span id="takominLine">……</span>
-      </div>
-    </div>
-  </div>
+<!-- ▼ タイトル文字（任意） -->
+<img class="title-sub"
+  src="https://basefile.akamaized.net/takoyakitrc-base-shop/69613a78bcb90/mojiji.png"
+  alt="焼かれた伝説を、君の手に。">
 
-  <!-- ▼ 町マップ本体 -->
-  <div class="map-wrap">
+<!-- ==========================================
+  タイトル下・タコ民表示（アクセスごとにランダム）
+========================================== -->
+<div id="takominArea" class="takomin-area">
+  <div class="takomin-wrap">
 
-    <!-- ✅ 見た目（祭壇） -->
-    <button class="spot spot--gate" type="button" aria-label="たこ焼きゲート（見た目）">
-      <img class="spot__base"
-           src="https://ul.h3z.jp/DOpnGGIS.png"
-           data-day="https://ul.h3z.jp/DOpnGGIS.png"
-           data-night="https://ul.h3z.jp/RrfereXw.png"
-           alt="たこ焼きの祭壇">
-      <img class="spot__icon" src="https://ul.h3z.jp/G9HOojAP.png" alt="行き先アイコン">
-    </button>
-
-    <!-- ✅ タップ判定専用 -->
-    <button class="gate-hit" type="button" aria-label="たこ焼きゲート（タップ判定）"></button>
-
-    <!-- ✅ ゲートモーダル -->
-    <div id="gateModal" class="gate-modal" aria-hidden="true">
-      <div class="gate-modal__panel" role="dialog" aria-modal="true" aria-labelledby="gateModalTitle">
-        <img id="gateModalPhoto" class="gate-modal__photo" src="" alt="">
-        <div class="gate-modal__body">
-          <div id="gateModalTitle" class="gate-modal__title">たこ焼きゲート</div>
-          <div id="gateModalDesc" class="gate-modal__desc"></div>
-
-          <div class="gate-modal__btns">
-            <button id="gateModalCancel" type="button" class="gate-modal__btn">やめる</button>
-            <a id="gateModalGo" class="gate-modal__btn gate-modal__btn--go" href="#" target="_blank" rel="noopener">行く</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ✅ たこ焼きタワー：ゲーム用モーダル -->
-    <div id="tawaModal" class="tawa-modal" aria-hidden="true">
-      <div class="tawa-panel" role="dialog" aria-modal="true" aria-label="たこ焼きタワーゲーム">
-        <div class="tawa-head">
-          <div class="tawa-title">たこ焼きバランスタワー</div>
-          <div class="tawa-score">Score: <span id="tawaScore">0</span></div>
-        </div>
-
-        <canvas id="tawaCanvas" width="360" height="520"></canvas>
-
-        <div class="tawa-help">
-          左右に揺れるたこ焼きを <b>タップ / クリック</b>で落として積むたこ！
-        </div>
-
-        <div class="tawa-btns">
-          <button id="tawaRestart" type="button">リスタート</button>
-          <button id="tawaClose" type="button">閉じる</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 背景マップ（昼夕夜差し替え） -->
-    <img class="map-img"
-         src="https://ul.h3z.jp/0yeAj4R7.png"
-         alt="背景"
-         data-morning="https://ul.h3z.jp/0yeAj4R7.png"
-         data-day="https://ul.h3z.jp/D2RCeIwt.png"
-         data-night="https://ul.h3z.jp/5N83cTj6.png">
-
-    <!-- ✅ ボスゲート（夜だけ） -->
-    <a class="boss-gate night-only" href="#" aria-label="鉄板魔グマに挑む">
-      <img src="https://ul.h3z.jp/CsjyEnG3.png" alt="ボスゲート">
+    <!-- タコ民 -->
+    <a id="takominLink" class="takomin-avatar" href="#" target="_blank" rel="noopener">
+      <img id="takominImg" src="" alt="タコ民">
     </a>
 
-    <!-- ▼ タコ民：ここはあなたの既存をそのまま移植OK（省略せずに増やしてOK） -->
-    <!-- 例：GHOST -->
-    <button class="takomin takomin--ghost takomin--glow is-float" data-id="ghost" type="button" aria-label="GHOSTのタコ民">
-      <img src="https://ul.h3z.jp/yfWcFrT4.png"
-        data-day="https://ul.h3z.jp/yfWcFrT4.png"
-        data-night="https://ul.h3z.jp/93R4C9fH.png"
-        alt="GHOST">
-      <div class="takomin-balloon"></div>
-    </button>
-
-    <!-- ▼ ホットスポット（あなたの既存） -->
-    <a class="hotspot hs-osirase" href="https://takoyaki-trc.github.io/takoyaki-media/notice/" aria-label="最新のお知らせ"></a>
-    <a class="hotspot hs-situmon" href="https://takoyaki-trc.github.io/takoyaki-media/faq/" aria-label="よくある質問"></a>
+    <!-- 横テキスト -->
+    <div class="takomin-text">
+      <span id="takominLine">……</span>
+    </div>
 
   </div>
+</div>
 
-  <!-- Matter.js -->
-  <script defer src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/tawa.js?v=1"></script>
+<!-- =========================
+  ✅ 町マップ本体
+========================= -->
+<div class="map-wrap">
 
-  <!-- 既存JS（あなたの資産） -->
-  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc2.js?v=111"></script>
-  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/boss.js?v=777"></script>
-  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/gate4.js?v=5"></script>
-  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-murabito5.js?v=5"></script>
-  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takofish11.js?v=2"></script>
+  <!-- ここからたこ焼きの祭壇（収益用） -->
 
-  <!-- ✅ 昼夜・空・マップ切替：BASE版の二重スクリプトを“1本化” -->
-  <script>
-  (() => {
-    function nowTokyo(){
-      return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+  <!-- ✅ 見た目（祭壇） -->
+  <button class="spot spot--gate" type="button" aria-label="たこ焼きゲート（見た目）">
+    <!-- 土台（通常配置：高さを作る） -->
+    <img class="spot__base"
+         src="https://ul.h3z.jp/DOpnGGIS.png"
+         data-day="https://ul.h3z.jp/DOpnGGIS.png"
+         data-night="https://ul.h3z.jp/RrfereXw.png"
+         alt="たこ焼きの祭壇">
+
+    <!-- 上に重ねる（アイコン） -->
+    <img class="spot__icon" src="https://ul.h3z.jp/G9HOojAP.png" alt="行き先アイコン">
+  </button>
+
+  <!-- ✅ タップ判定専用（透明ボタン：これが“反応の本体”） -->
+  <button class="gate-hit" type="button" aria-label="たこ焼きゲート（タップ判定）"></button>
+
+  <!-- ✅ ワンクッション（モーダル） -->
+  <div id="gateModal" class="gate-modal" aria-hidden="true">
+    <div class="gate-modal__panel" role="dialog" aria-modal="true" aria-labelledby="gateModalTitle">
+      <img id="gateModalPhoto" class="gate-modal__photo" src="" alt="">
+      <div class="gate-modal__body">
+        <div id="gateModalTitle" class="gate-modal__title">たこ焼きゲート</div>
+        <div id="gateModalDesc" class="gate-modal__desc"></div>
+
+        <div class="gate-modal__btns">
+          <button id="gateModalCancel" type="button" class="gate-modal__btn">やめる</button>
+          <a id="gateModalGo" class="gate-modal__btn gate-modal__btn--go" href="#" target="_blank" rel="noopener">行く</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================
+    たこ焼きタワー：ゲーム用モーダル
+  ========================= -->
+  <div id="tawaModal" class="tawa-modal" aria-hidden="true">
+    <div class="tawa-panel" role="dialog" aria-modal="true" aria-label="たこ焼きタワーゲーム">
+      <div class="tawa-head">
+        <div class="tawa-title">たこ焼きバランスタワー</div>
+        <div class="tawa-score">Score: <span id="tawaScore">0</span></div>
+      </div>
+
+      <canvas id="tawaCanvas" width="360" height="520"></canvas>
+
+      <div class="tawa-help">
+        左右に揺れるたこ焼きを <b>タップ / クリック</b>で落として積むたこ！
+      </div>
+
+      <div class="tawa-btns">
+        <button id="tawaRestart" type="button">リスタート</button>
+        <button id="tawaClose" type="button">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 背景（昼夕夜） -->
+  <img
+    class="map-img"
+    src="https://ul.h3z.jp/0yeAj4R7.png"
+    alt="背景"
+    data-morning="https://ul.h3z.jp/0yeAj4R7.png"
+    data-day="https://ul.h3z.jp/D2RCeIwt.png"
+    data-night="https://ul.h3z.jp/5N83cTj6.png"/>
+
+  <!-- ✅ ボスゲート（夜だけ表示＆タップでボス会話→バトル） -->
+  <a class="boss-gate night-only" href="#" aria-label="鉄板魔グマに挑む">
+    <img src="https://ul.h3z.jp/CsjyEnG3.png" alt="ボスゲート">
+  </a>
+
+  <!-- ✅ GHOST -->
+  <button class="takomin takomin--ghost takomin--glow is-float" data-id="ghost" type="button" aria-label="GHOSTのタコ民">
+    <img src="https://ul.h3z.jp/yfWcFrT4.png"
+      data-day="https://ul.h3z.jp/yfWcFrT4.png"
+      data-night="https://ul.h3z.jp/93R4C9fH.png"
+      alt="GHOST">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ YOUSHA -->
+  <button class="takomin takomin--yousha takomin--glow" data-id="yousha" type="button" aria-label="YOUSHA">
+    <img
+      src="https://ul.h3z.jp/XNnElwbh.png"
+      data-day="https://ul.h3z.jp/XNnElwbh.png"
+      data-night="https://ul.h3z.jp/2LR6QUQf.png"
+      alt="YOUSHA">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ 追加：もとの湯（たこ焼き菜々） -->
+  <button class="takomin takomin--motoyu is-step takomin--glow" data-id="motoyu" type="button" aria-label="たこ焼き菜々（もとの湯）のタコ民">
+    <img
+      src="https://ul.h3z.jp/vsy0pctI.png"
+      data-day="https://ul.h3z.jp/vsy0pctI.png"
+      data-night="https://ul.h3z.jp/PpSfLird.png"
+      alt="もとの湯">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ kbc -->
+  <button class="takomin takomin--kbc takomin--glow" data-id="kbc" type="button" aria-label="久留米ＫＢＣ">
+    <img
+      src="https://ul.h3z.jp/fy5i61XI.png"
+      data-day="https://ul.h3z.jp/fy5i61XI.png"
+      data-night="https://ul.h3z.jp/mGbOq0Q5.png"
+      alt="久留米ＫＢＣ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ katana -->
+  <button class="takomin takomin--katana takomin--glow" data-id="katana" type="button" aria-label="刀鍛冶">
+    <img
+      src="https://ul.h3z.jp/OnsDTpd8.png"
+      data-day="https://ul.h3z.jp/OnsDTpd8.png"
+      data-night="https://ul.h3z.jp/KgDhxsxP.png"
+      alt="刀鍛冶">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ hotel -->
+  <button class="takomin takomin--hotel takomin--glow" data-id="hotel" type="button" aria-label="旅路の塔">
+    <img
+      src="https://ul.h3z.jp/hx0gOm4a.png"
+      data-day="https://ul.h3z.jp/hx0gOm4a.png"
+      data-night="https://ul.h3z.jp/hx0gOm4a.png"
+      alt="旅路の塔">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅bigmans -->
+  <button class="takomin takomin--bigmans takomin--glow" data-id="bigmans" type="button" aria-label="BIGMANS">
+    <img
+      src="https://ul.h3z.jp/sticAk2s.png"
+      data-day="https://ul.h3z.jp/sticAk2s.png"
+      data-night="https://ul.h3z.jp/q8H3THcE.png"
+      alt="BIGMANS">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ 2bit -->
+  <button class="takomin takomin--twobit takomin--glow" data-id="twobit" type="button" aria-label="twobit">
+    <img
+      src="https://basefile.akamaized.net/takoyakitrc-base-shop/696a673f108bf/2bit1.png"
+      data-day="https://basefile.akamaized.net/takoyakitrc-base-shop/696a673f108bf/2bit1.png"
+      data-night="https://basefile.akamaized.net/takoyakitrc-base-shop/696a6755c2e31/2bit2.png"
+      alt="twobit">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ hanaya -->
+  <button class="takomin takomin--hanaya takomin--glow" data-id="hanaya" type="button" aria-label="華矢式">
+    <img
+      src="https://ul.h3z.jp/JPKQZ6sP.png"
+      data-day="https://ul.h3z.jp/JPKQZ6sP.png"
+      data-night="https://ul.h3z.jp/yF9zSCHU.png"
+      alt="華矢式">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ mars -->
+  <button class="takomin takomin--mars takomin--glow" data-id="mars" type="button" aria-label="mars">
+    <img
+      src="https://ul.h3z.jp/n6sTv8Xr.png"
+      data-day="https://ul.h3z.jp/n6sTv8Xr.png"
+      data-night="https://ul.h3z.jp/tHlNh1NI.png"
+      alt="mars">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ dollis -->
+  <button class="takomin takomin--dollis takomin--glow" data-id="dollis" type="button" aria-label="ドリズ">
+    <img
+      src="https://ul.h3z.jp/yi2Zbd3I.png"
+      data-day="https://ul.h3z.jp/yi2Zbd3I.png"
+      data-night="https://ul.h3z.jp/FmYMG8fu.png"
+      alt="ドリズ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- トップメニュー（me1〜） -->
+  <button class="takomin takomin--me1 takomin--glow topmenu" data-id="me1" type="button" aria-label="最新のお知らせ">
+    <img src="https://ul.h3z.jp/2z5fOkRX.png"
+      data-day="https://ul.h3z.jp/2z5fOkRX.png"
+      data-night="https://ul.h3z.jp/dUhJu7ky.png"
+      alt="最新のお知らせ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me2 takomin--glow topmenu" data-id="me2" type="button" aria-label="たこ焼きトレカの世界">
+    <img src="https://ul.h3z.jp/CJ443Pa2.png"
+      data-day="https://ul.h3z.jp/CJ443Pa2.png"
+      data-night="https://ul.h3z.jp/QAszf1eo.png"
+      alt="たこ焼きトレカの世界">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me3 takomin--glow topmenu" data-id="me3" type="button" aria-label="よくある質問">
+    <img src="https://ul.h3z.jp/I3PLFgos.png"
+      data-day="https://ul.h3z.jp/I3PLFgos.png"
+      data-night="https://ul.h3z.jp/Qvk5pot0.png"
+      alt="よくある質問">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me4 takomin--glow topmenu" data-id="me4" type="button" aria-label="今遊べるイベント">
+    <img src="https://ul.h3z.jp/y7MHJcs1.png"
+      data-day="https://ul.h3z.jp/y7MHJcs1.png"
+      data-night="https://ul.h3z.jp/HX7qBOFD.png"
+      alt="今遊べるイベント">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me5 takomin--glow topmenu" data-id="me5" type="button" aria-label="ビンゴの泉">
+    <img src="https://ul.h3z.jp/JQGm41Td.png"
+      data-day="https://ul.h3z.jp/JQGm41Td.png"
+      data-night="https://ul.h3z.jp/OrmSjUlC.png"
+      alt="ビンゴの泉">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me6 takomin--glow topmenu" data-id="me6" type="button" aria-label="カードを買う">
+    <img src="https://ul.h3z.jp/Db26pagb.png"
+      data-day="https://ul.h3z.jp/Db26pagb.png"
+      data-night="https://ul.h3z.jp/ko0Xgd8p.png"
+      alt="カードを買う">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me7 takomin--glow topmenu" data-id="me7" type="button" aria-label="たこぴのSNS">
+    <img src="https://ul.h3z.jp/D2KbpmcN.png"
+      data-day="https://ul.h3z.jp/D2KbpmcN.png"
+      data-night="https://ul.h3z.jp/g5bLMwI0.png"
+      alt="たこぴのSNS">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me8 takomin--glow topmenu" data-id="me8" type="button" aria-label="アイテムショップ">
+    <img src="https://ul.h3z.jp/OREcMs5u.png"
+      data-day="https://ul.h3z.jp/OREcMs5u.png"
+      data-night="https://ul.h3z.jp/2gFRuuSs.png"
+      alt="アイテムショップ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me9 takomin--glow topmenu" data-id="me9" type="button" aria-label="達成の記録">
+    <img src="https://ul.h3z.jp/nvhUJBFe.png"
+      data-day="https://ul.h3z.jp/nvhUJBFe.png"
+      data-night="https://ul.h3z.jp/gXNVqtcD.png"
+      alt="達成の記録">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me10 takomin--glow topmenu" data-id="me10" type="button" aria-label="メディア掲載">
+    <img src="https://ul.h3z.jp/s4CIKhrn.png"
+      data-day="https://ul.h3z.jp/s4CIKhrn.png"
+      data-night="https://ul.h3z.jp/5fFm3Fpr.png"
+      alt="メディア掲載">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me12 takomin--glow topmenu" data-id="me12" type="button" aria-label="カード図鑑">
+    <img src="https://ul.h3z.jp/Wvnf4dc7.png"
+      data-day="https://ul.h3z.jp/Wvnf4dc7.png"
+      data-night="https://ul.h3z.jp/3aj5G2CO.png"
+      alt="カード図鑑">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me13 is-step" data-id="me13" type="button" aria-label="推し活">
+    <img src="https://ul.h3z.jp/mC7LPEzu.png"
+      data-day="https://ul.h3z.jp/mC7LPEzu.png"
+      data-night="https://ul.h3z.jp/icyNwiaA.png"
+      alt="推し活">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ 釣りタコ民 -->
+  <a class="takomin takomin--fish is-bob" href="#"
+     onclick="window.openTakofishGame && window.openTakofishGame(); return false;">
+    <img
+      src="https://ul.h3z.jp/8taiJLpS.png"
+      data-day="https://ul.h3z.jp/8taiJLpS.png"
+      data-night="https://ul.h3z.jp/QP3AevlY.png"
+      alt="釣りタコ民">
+  </a>
+
+  <!-- ✅ たこ焼きタワー（起動アイコン） -->
+  <button class="takomin takomin--tawa" data-id="tawa" type="button" aria-label="たこ焼きタワー">
+    <img src="https://ul.h3z.jp/QJX6Wqrs.png"
+      data-day="https://ul.h3z.jp/QJX6Wqrs.png"
+      data-night="https://ul.h3z.jp/Rbm88XCj.png"
+      alt="たこ焼きタワー">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ダーツ佐俣とニキティGIF -->
+  <img src="https://ul.h3z.jp/l2zcjFAE.gif" class="map-gif" alt="コラボカード一覧">
+
+  <!-- 北海道焼きもとの湯GIF -->
+  <img src="https://ul.h3z.jp/OdXwiBmZ.gif" class="map2-gif" alt="たこ焼き菜々">
+
+  <!-- ホットスポット -->
+  <a class="hotspot hs-osirase" href="https://takoyaki-trc.github.io/takoyaki-media/notice/" aria-label="最新のお知らせ"></a>
+  <a class="hotspot hs-story" href="https://ul.h3z.jp/TeAcRjKS.jpg" aria-label="たこ焼きトレカの世界"></a>
+  <a class="hotspot hs-situmon" href="https://takoyaki-trc.github.io/takoyaki-media/faq/" aria-label="よくある質問"></a>
+  <a class="hotspot hs-bingo" href="ここにURL" aria-label="ビンゴの泉"></a>
+  <a class="hotspot hs-ivent" href="ここにURL" aria-label="いま遊べるイベント"></a>
+  <a class="hotspot hs-kau" href="https://takoyaki-toreka.booth.pm/" aria-label="カードを買う"></a>
+  <a class="hotspot hs-sns" href="https://x.com/takopi_trc" aria-label="たこぴのSNS"></a>
+  <a class="hotspot hs-item" href="ここにURL" aria-label="アイテムショップ"></a>
+  <a class="hotspot hs-kiroku" href="ここにURL" aria-label="達成の記録"></a>
+  <a class="hotspot hs-medhia" href="https://takoyaki-trc.github.io/takoyaki-media/" aria-label="メディア掲載"></a>
+  <a class="hotspot hs-korabo" href="ここにURL" aria-label="コラボカードを見る"></a>
+  <a class="hotspot hs-zukan1" href="https://ul.h3z.jp/QSIXpYKH.jpg" aria-label="カード図鑑"></a>
+  <a class="hotspot hs-tou" href="ここにURL" aria-label="旅路の塔"></a>
+
+  <!-- ホットスポット協力店の街 -->
+  <a class="hotspot hs-ghost" href="https://share.google/zXplullkNy8XP35bj" aria-label="GHOST"></a>
+  <a class="hotspot hs-yousha" href="https://share.google/QAtxaPWvWBI4ks2Ug" aria-label="sports and darts cafe YOUSHA"></a>
+  <a class="hotspot hs-bigmans" href="https://share.google/K5HRyuWsdxhkIrH7o" aria-label="Darts&Shop BIGMANS"></a>
+  <a class="hotspot hs-hanayashiki" href="https://share.google/AOSjhW79YMq0hJUuh" aria-label="華矢式"></a>
+  <a class="hotspot hs-2bit" href="https://share.google/N2MqjpCLRYiKU6S8T" aria-label="Darts room 2 bit"></a>
+  <a class="hotspot hs-kbc" href="https://share.google/6szp6CoWi6H6kL3Ss" aria-label="ビリヤード＆ダーツＫＢＣ"></a>
+  <a class="hotspot hs-mars" href="https://share.google/Nu2j99ORbplos40Zh" aria-label="Mars. Kamata"></a>
+  <a class="hotspot hs-dollis" href="https://share.google/gb0NBa7q35HzEfqq9" aria-label="ダーツカフェ ドリズ DOLLiS"></a>
+  <a class="hotspot hs-katanakazi" href="https://share.google/ulEVNRsi6wreMqV8p" aria-label="たこ焼き 刀鍛冶"></a>
+  <a class="hotspot hs-nana" href="https://share.google/MDaHozOZI1bmLxUwL" aria-label="たこ焼き菜々"></a>
+
+</div>
+
+<!-- =========================
+  ✅ JS（必要なものだけ）
+========================= -->
+
+<!-- Matter.js（物理エンジン） -->
+<script defer src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+
+<!-- タワー本体 -->
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/tawa.js?v=1"></script>
+
+<!-- タイトル下のタコ民（ランダム） -->
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc2.js?v=111"></script>
+
+<!-- ボス -->
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/boss.js?v=777"></script>
+
+<!-- タコ民セリフ -->
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-murabito5.js?v=5"></script>
+
+<!-- 釣り -->
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takofish11.js?v=2"></script>
+
+<!-- ✅ ゲートJS：あなたが貼った完全版を“そのまま”内蔵 -->
+<script>
+(() => {
+  /* =========================
+    gate.js（完全版）
+    - 通常：12種類を1時間ごと（24hで2周）
+    - 追加：1日のどこかに「5分枠×5回」ランダム表示（その日は固定）
+    - 優先：イベント中はイベントを上書き
+  ========================= */
+
+  const isNight = () => document.documentElement.classList.contains("is-night");
+
+  const gate = document.querySelector(".spot--gate");
+  const gateHit = document.querySelector(".gate-hit");
+  if(!gate || !gateHit) return;
+
+  const baseImg = gate.querySelector(".spot__base");
+  const iconImg = gate.querySelector(".spot__icon");
+
+  // ✅ モーダル要素
+  const modal  = document.getElementById("gateModal");
+  const mPhoto = document.getElementById("gateModalPhoto");
+  const mTitle = document.getElementById("gateModalTitle");
+  const mDesc  = document.getElementById("gateModalDesc");
+  const btnGo  = document.getElementById("gateModalGo");
+  const btnCancel = document.getElementById("gateModalCancel");
+
+  /* =========================
+    ① 通常：12種類（1時間ごと、24hで2周）
+  ========================= */
+  const DEST = [
+    { name:"ソース", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/nqINjjMK.png",  photo:"https://ul.h3z.jp/w9q1XjEw.JPG" },
+    { name:"辛口ソース", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/YLRvkVGN.png",  photo:"https://ul.h3z.jp/9hMHvKKj.JPG" },
+    { name:"牡蠣だし醤油", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/MVSCZ25p.png",  photo:"https://ul.h3z.jp/T0CxTKSx.jpg" },
+    { name:"塩こしょう", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/SQV2q3jp.png",  photo:"https://ul.h3z.jp/NBucOtLN.jpg" },
+    { name:"すっぴん", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/YMqM1RHO.png", photo:"https://ul.h3z.jp/dS7jTJHG.jpg" },
+    { name:"塩マヨペッパー", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/zQQykyJj.png", photo:"https://ul.h3z.jp/1cp7o9Wj.JPG" },
+    { name:"ぶっかけ揚げ玉からしマヨ", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/IPCsqito.png", photo:"https://ul.h3z.jp/bGPE3EF0.JPG" },
+    { name:"チーズソースマヨ", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/90Ev9Ne1.png", photo:"https://ul.h3z.jp/KV88ErO9.JPG" },
+    { name:"めんたいマヨ", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/67VI4JDC.png", photo:"https://ul.h3z.jp/KmKaonqx.JPG" },
+    { name:"ねぎ味噌", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/s8niXw6T.png", photo:"https://ul.h3z.jp/hZFTeh2G.JPG" },
+    { name:"てりたま", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/2R5Y1u17.png", photo:"https://ul.h3z.jp/mUdLeIXQ.jpg" },
+    { name:"イカさま焼き", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/u3nsTFYy.png", photo:"https://ul.h3z.jp/XhgVmXyG.JPG" }
+  ];
+
+  /* =========================
+    ② 5分イベント：候補プール
+  ========================= */
+  const EVENT_POOL = [
+    { name:"5分限定①", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/zqoEDppD.jpg" },
+    { name:"5分限定②", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/8ipISSBp.png", photo:"https://ul.h3z.jp/NpBmmHXa.jpg" },
+    { name:"5分限定③", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/IShYv1or.png", photo:"https://ul.h3z.jp/zF3JHtL2.png" },
+    { name:"5分限定④", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/UHcLPRSi.png", photo:"https://ul.h3z.jp/oHafyMzg.png" },
+    { name:"5分限定⑤", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/lLEWj0Pu.png", photo:"https://ul.h3z.jp/qKBz4tee.jpg" }
+  ];
+
+  function todayKey(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function mulberry32(seed){
+    return function(){
+      let t = seed += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function hashStringToSeed(str){
+    let h = 2166136261;
+    for (let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
     }
-    function slotByHour(h){
-      if(h >= 5 && h < 11) return "morning";
-      if(h >= 11 && h < 20) return "day";
-      return "night";
+    return h >>> 0;
+  }
+  function pickUnique(arr, n, rnd){
+    const copy = arr.slice();
+    for (let i=copy.length-1;i>0;i--){
+      const j = Math.floor(rnd() * (i+1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
     }
-    function applyMapByHour(h){
-      const img = document.querySelector('.map-img');
-      if(!img) return;
-      const slot = slotByHour(h);
-      const url = slot === "morning" ? img.dataset.morning
-               : slot === "day"     ? img.dataset.day
-               :                      img.dataset.night;
-      if(url && img.src !== url) img.src = url;
+    return copy.slice(0, Math.min(n, copy.length));
+  }
+
+  function generateEventWindows(rnd, count=5){
+    const windows = [];
+    const used = new Set();
+    while (windows.length < count){
+      const slot = Math.floor(rnd() * 288); // 0..287
+      if (used.has(slot) || used.has(slot-1) || used.has(slot+1)) continue;
+      used.add(slot);
+      windows.push(slot);
     }
-    function applyNightClass(h){
-      const night = (h >= 20 || h < 5);
-      document.documentElement.classList.toggle("is-night", night);
-      document.documentElement.classList.toggle("day", !night);
+    windows.sort((a,b)=>a-b);
+    return windows.map(slot => ({ startMin: slot*5, endMin: slot*5 + 5 }));
+  }
+
+  function getTodayEventPlan(){
+    const key = `gateEventPlan_${todayKey()}`;
+    const saved = localStorage.getItem(key);
+    if(saved){
+      try { return JSON.parse(saved); } catch(e){}
     }
-    function applyAll(){
-      const now = nowTokyo();
-      const h = now.getHours();
-      applyNightClass(h);
-      applyMapByHour(h);
+
+    const seed = hashStringToSeed("takoyaki-gate-" + todayKey());
+    const rnd = mulberry32(seed);
+
+    const picks = pickUnique(EVENT_POOL, 5, rnd);
+    const windows = generateEventWindows(rnd, 5);
+
+    const plan = windows.map((w,i)=>({
+      startMin: w.startMin,
+      endMin: w.endMin,
+      item: picks[i] || picks[0]
+    }));
+
+    localStorage.setItem(key, JSON.stringify(plan));
+    return plan;
+  }
+
+  function getActiveEventItem(){
+    const now = new Date();
+    const nowMin = now.getHours()*60 + now.getMinutes();
+    const plan = getTodayEventPlan();
+    for(const p of plan){
+      if(nowMin >= p.startMin && nowMin < p.endMin) return p.item;
     }
-    document.addEventListener("DOMContentLoaded", () => {
-      applyAll();
-      setInterval(applyAll, 20 * 1000);
+    return null;
+  }
+
+  function getHourlyDest(){
+    const hour = new Date().getHours(); // 0..23
+    const idx = hour % DEST.length;
+    return DEST[idx] || DEST[0];
+  }
+
+  function getCurrentDest(){
+    const e = getActiveEventItem();
+    if(e) return { ...e, isEvent:true };
+    return { ...getHourlyDest(), isEvent:false };
+  }
+
+  function applyBase(){
+    if(!baseImg) return;
+    const url = isNight() ? baseImg.dataset.night : baseImg.dataset.day;
+    if(url) baseImg.src = url;
+  }
+
+  function applyIconAndDest(){
+    const dest = getCurrentDest();
+    if(iconImg && dest.icon) iconImg.src = dest.icon;
+    gate._dest = dest;
+  }
+
+  function openModal(dest){
+    if(!modal) return;
+    const d = dest || gate._dest || getCurrentDest();
+
+    if(mPhoto){
+      mPhoto.classList.remove("is-ready");
+
+      const fallback = "https://ul.h3z.jp/zqoEDppD.jpg";
+      const nextUrl = d.photo || fallback;
+
+      mPhoto.onload = () => mPhoto.classList.add("is-ready");
+      mPhoto.onerror = () => {
+        if(mPhoto.src !== fallback) mPhoto.src = fallback;
+        mPhoto.classList.add("is-ready");
+      };
+
+      mPhoto.src = nextUrl;
+      mPhoto.alt = d.name ? `たこ焼き写真：${d.name}` : "たこ焼き写真";
+    }
+
+    if(mTitle) mTitle.textContent = "たこ焼きゲート";
+    if(mDesc){
+      const label = d.isEvent ? "【5分イベント発生中】" : "この時間の行き先";
+      mDesc.textContent = `${label}：${d.name}\n行きますか？`;
+    }
+    if(btnGo) btnGo.href = d.url || "#";
+
+    modal.classList.add("is-open");
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeModal(){
+    if(!modal) return;
+    modal.classList.remove("is-open");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  if(btnCancel) btnCancel.addEventListener("click", closeModal);
+  if(modal) modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
+  document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeModal(); });
+
+  applyBase();
+  applyIconAndDest();
+
+  new MutationObserver(muts => {
+    for(const m of muts){
+      if(m.attributeName === "class"){
+        applyBase();
+        break;
+      }
+    }
+  }).observe(document.documentElement, { attributes: true });
+
+  gateHit.addEventListener("click", (e) => {
+    e.preventDefault();
+    openModal(gate._dest || getCurrentDest());
+  });
+
+  setInterval(applyIconAndDest, 30 * 1000);
+})();
+</script>
+
+<!-- ✅ 昼夜で画像を切り替える（tawa/fish） -->
+<script>
+(() => {
+  const isNight = () =>
+    document.documentElement.classList.contains("is-night") ||
+    document.body.classList.contains("is-night");
+
+  const targets = [
+    ".takomin--tawa img",
+    ".takomin--fish img"
+  ];
+
+  function apply(){
+    targets.forEach(sel => {
+      const img = document.querySelector(sel);
+      if (!img) return;
+
+      const day   = img.dataset.day;
+      const night = img.dataset.night;
+      const url   = isNight() ? night : day;
+
+      if (url) img.src = url;
     });
-    window.addEventListener("pageshow", applyAll);
-  })();
-  </script>
+  }
+
+  apply();
+
+  const mo = new MutationObserver(apply);
+  mo.observe(document.documentElement, { attributes:true, attributeFilter:["class"] });
+
+  setInterval(apply, 1000);
+})();
+</script>
+
+<!-- ✅ マップの昼夕夜切替（Tokyo時間） -->
+<script>
+(() => {
+  function nowTokyo(){
+    return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+  }
+
+  function slotByHour(h){
+    if(h >= 5 && h < 11) return "morning";
+    if(h >= 11 && h < 20) return "day";
+    return "night";
+  }
+
+  function applyMapByHour(h){
+    const img = document.querySelector('.map-img');
+    if(!img) return;
+
+    const slot = slotByHour(h);
+    const url =
+      slot === 'morning' ? img.dataset.morning :
+      slot === 'day'     ? img.dataset.day :
+                           img.dataset.night;
+
+    if(url && img.src !== url) img.src = url;
+  }
+
+  function applyNightClass(h){
+    const night = (h >= 20 || h < 5);
+    const html = document.documentElement;
+    html.classList.toggle("is-night", night);
+    html.classList.toggle("day", !night);
+  }
+
+  function applyAll(){
+    const now = nowTokyo();
+    const h = now.getHours();
+    applyNightClass(h);
+    applyMapByHour(h);
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=> {
+    applyAll();
+    setInterval(applyAll, 20*1000);
+  });
+  window.addEventListener("pageshow", applyAll);
+})();
+</script>
 
 </body>
 </html>
+
