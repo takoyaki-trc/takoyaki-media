@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0">
+  <title>たこ焼きトレカ｜町マップ</title>
+
+  <!-- あなたの“町”専用CSS（BASEと切り離す） -->
+  <link rel="stylesheet" href="./town.css?v=1">
+
+  <!-- 外部CSS（あなたの既存資産） -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/boss.css?v=777">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/tawa.css?v=2">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc.css?v=111">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/hotspot.css?v=777">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/gate5.css?v=777">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-murabito.css?v=777">
+</head>
+
+<body>
+
+  <!-- ▼ タイトル画像 -->
+  <img class="title-gif"
+       src="https://ul.h3z.jp/h12u4pD5.gif"
+       alt="たこ焼きトレカ タイトル">
+
+  <!-- ▼ タイトル文字画像（任意） -->
+  <img class="title-sub"
+       src="https://basefile.akamaized.net/takoyakitrc-base-shop/69613a78bcb90/mojiji.png"
+       alt="タイトル文字">
+
+  <!-- ▼ タイトル下・タコ民表示（アクセスごとにランダム） -->
+  <div id="takominArea" class="takomin-area">
+    <div class="takomin-wrap">
+      <a id="takominLink" class="takomin-avatar" href="#" target="_blank" rel="noopener">
+        <img id="takominImg" src="" alt="タコ民">
+      </a>
+      <div class="takomin-text">
+        <span id="takominLine">……</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ▼ 町マップ本体 -->
+  <div class="map-wrap">
+
+    <!-- ✅ 見た目（祭壇） -->
+    <button class="spot spot--gate" type="button" aria-label="たこ焼きゲート（見た目）">
+      <img class="spot__base"
+           src="https://ul.h3z.jp/DOpnGGIS.png"
+           data-day="https://ul.h3z.jp/DOpnGGIS.png"
+           data-night="https://ul.h3z.jp/RrfereXw.png"
+           alt="たこ焼きの祭壇">
+      <img class="spot__icon" src="https://ul.h3z.jp/G9HOojAP.png" alt="行き先アイコン">
+    </button>
+
+    <!-- ✅ タップ判定専用 -->
+    <button class="gate-hit" type="button" aria-label="たこ焼きゲート（タップ判定）"></button>
+
+    <!-- ✅ ゲートモーダル -->
+    <div id="gateModal" class="gate-modal" aria-hidden="true">
+      <div class="gate-modal__panel" role="dialog" aria-modal="true" aria-labelledby="gateModalTitle">
+        <img id="gateModalPhoto" class="gate-modal__photo" src="" alt="">
+        <div class="gate-modal__body">
+          <div id="gateModalTitle" class="gate-modal__title">たこ焼きゲート</div>
+          <div id="gateModalDesc" class="gate-modal__desc"></div>
+
+          <div class="gate-modal__btns">
+            <button id="gateModalCancel" type="button" class="gate-modal__btn">やめる</button>
+            <a id="gateModalGo" class="gate-modal__btn gate-modal__btn--go" href="#" target="_blank" rel="noopener">行く</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ たこ焼きタワー：ゲーム用モーダル -->
+    <div id="tawaModal" class="tawa-modal" aria-hidden="true">
+      <div class="tawa-panel" role="dialog" aria-modal="true" aria-label="たこ焼きタワーゲーム">
+        <div class="tawa-head">
+          <div class="tawa-title">たこ焼きバランスタワー</div>
+          <div class="tawa-score">Score: <span id="tawaScore">0</span></div>
+        </div>
+
+        <canvas id="tawaCanvas" width="360" height="520"></canvas>
+
+        <div class="tawa-help">
+          左右に揺れるたこ焼きを <b>タップ / クリック</b>で落として積むたこ！
+        </div>
+
+        <div class="tawa-btns">
+          <button id="tawaRestart" type="button">リスタート</button>
+          <button id="tawaClose" type="button">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 背景マップ（昼夕夜差し替え） -->
+    <img class="map-img"
+         src="https://ul.h3z.jp/0yeAj4R7.png"
+         alt="背景"
+         data-morning="https://ul.h3z.jp/0yeAj4R7.png"
+         data-day="https://ul.h3z.jp/D2RCeIwt.png"
+         data-night="https://ul.h3z.jp/5N83cTj6.png">
+
+    <!-- ✅ ボスゲート（夜だけ） -->
+    <a class="boss-gate night-only" href="#" aria-label="鉄板魔グマに挑む">
+      <img src="https://ul.h3z.jp/CsjyEnG3.png" alt="ボスゲート">
+    </a>
+
+    <!-- ▼ タコ民：ここはあなたの既存をそのまま移植OK（省略せずに増やしてOK） -->
+    <!-- 例：GHOST -->
+    <button class="takomin takomin--ghost takomin--glow is-float" data-id="ghost" type="button" aria-label="GHOSTのタコ民">
+      <img src="https://ul.h3z.jp/yfWcFrT4.png"
+        data-day="https://ul.h3z.jp/yfWcFrT4.png"
+        data-night="https://ul.h3z.jp/93R4C9fH.png"
+        alt="GHOST">
+      <div class="takomin-balloon"></div>
+    </button>
+
+    <!-- ▼ ホットスポット（あなたの既存） -->
+    <a class="hotspot hs-osirase" href="https://takoyaki-trc.github.io/takoyaki-media/notice/" aria-label="最新のお知らせ"></a>
+    <a class="hotspot hs-situmon" href="https://takoyaki-trc.github.io/takoyaki-media/faq/" aria-label="よくある質問"></a>
+
+  </div>
+
+  <!-- Matter.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/tawa.js?v=1"></script>
+
+  <!-- 既存JS（あなたの資産） -->
+  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc2.js?v=111"></script>
+  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/boss.js?v=777"></script>
+  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/gate4.js?v=5"></script>
+  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-murabito5.js?v=5"></script>
+  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takofish11.js?v=2"></script>
+
+  <!-- ✅ 昼夜・空・マップ切替：BASE版の二重スクリプトを“1本化” -->
+  <script>
+  (() => {
+    function nowTokyo(){
+      return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+    }
+    function slotByHour(h){
+      if(h >= 5 && h < 11) return "morning";
+      if(h >= 11 && h < 20) return "day";
+      return "night";
+    }
+    function applyMapByHour(h){
+      const img = document.querySelector('.map-img');
+      if(!img) return;
+      const slot = slotByHour(h);
+      const url = slot === "morning" ? img.dataset.morning
+               : slot === "day"     ? img.dataset.day
+               :                      img.dataset.night;
+      if(url && img.src !== url) img.src = url;
+    }
+    function applyNightClass(h){
+      const night = (h >= 20 || h < 5);
+      document.documentElement.classList.toggle("is-night", night);
+      document.documentElement.classList.toggle("day", !night);
+    }
+    function applyAll(){
+      const now = nowTokyo();
+      const h = now.getHours();
+      applyNightClass(h);
+      applyMapByHour(h);
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+      applyAll();
+      setInterval(applyAll, 20 * 1000);
+    });
+    window.addEventListener("pageshow", applyAll);
+  })();
+  </script>
+
+</body>
+</html>
