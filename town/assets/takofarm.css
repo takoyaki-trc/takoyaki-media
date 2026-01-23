@@ -1,1 +1,539 @@
+/* =========================================================
+   takofarm.css  (GitHub用 / たこ焼き畑 + 宝箱 + 露店 共通)
+   - 街マップ上に「建物ボタン」→ モーダルで開く想定
+   - 画像サイズ前提：
+     farm:128x128 / fx:128x128 / chest:64x64
+     shelf:160x96 / villager:96x96
+   - クラスは tf- で名前衝突を避ける
+========================================================= */
+
+/* ---------- 基本変数 ---------- */
+:root{
+  --tf-bg: rgba(0,0,0,.78);
+  --tf-panel: #0c121b;
+  --tf-panel2:#0f1621;
+  --tf-line: #263246;
+  --tf-text: #e8eef7;
+  --tf-muted:#a8b3c7;
+  --tf-good:#7cffb2;
+  --tf-bad:#ff7c7c;
+  --tf-warn:#ffd27c;
+
+  --tf-radius: 14px;
+  --tf-shadow: 0 14px 40px rgba(0,0,0,.45);
+
+  /* モーダル内の基準幅 */
+  --tf-maxw: 980px;
+
+  /* ファーム1マス表示サイズ（CSS側で拡大縮小） */
+  --tf-cell: clamp(96px, 20vw, 128px);
+}
+
+/* ---------- 共通：ボタン/テキスト ---------- */
+.tf-btn{
+  appearance:none;
+  border:1px solid var(--tf-line);
+  background:#0b1018;
+  color:var(--tf-text);
+  border-radius:12px;
+  padding:10px 12px;
+  font-weight:800;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.tf-btn:active{ transform: translateY(1px); }
+.tf-btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+
+.tf-btn--primary{ background:#142336; }
+.tf-btn--good{ border-color:#2c6a45; background:#0f2a1d; }
+.tf-btn--danger{ border-color:#6a2c2c; background:#2a0f0f; }
+.tf-btn--ghost{ background:transparent; }
+
+.tf-pill{
+  border:1px solid var(--tf-line);
+  background:#0b1018;
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:12px;
+  color:var(--tf-muted);
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+}
+.tf-pill b{ color:var(--tf-text); }
+
+.tf-muted{ color:var(--tf-muted); }
+.tf-mini{ font-size:12px; color:var(--tf-muted); }
+.tf-title{ font-size:14px; color:var(--tf-muted); margin:0 0 8px; }
+
+/* ---------- 街マップ上：建物ボタン（任意） ---------- */
+/* 既存の .spot に寄せる場合は、ここは不要。名前衝突を避けて tf- にしてる */
+.tf-building{
+  position:absolute;
+  display:block;
+  transform: translate(-50%, -100%);
+  background:transparent;
+  border:0;
+  padding:0;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.tf-building img{ display:block; width: clamp(92px, 14vw, 220px); height:auto; }
+
+/* 宝箱（街のランダム出現） */
+.tf-chest-spot{
+  position:absolute;
+  width:64px;
+  height:64px;
+  transform: translate(-50%, -100%);
+  border:0;
+  background:transparent;
+  padding:0;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tf-chest-spot img{
+  width:100%;
+  height:100%;
+  image-rendering: pixelated;
+}
+/* “見つけやすい”軽い演出（その日固定の宝箱にだけ） */
+.tf-chest-spot.tf-is-active img{
+  animation: tfChestGlow 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 10px 12px rgba(0,0,0,.55));
+}
+@keyframes tfChestGlow{
+  0%,100%{ transform: translateY(0); filter: drop-shadow(0 8px 10px rgba(0,0,0,.45)); }
+  50%{ transform: translateY(-2px); filter: drop-shadow(0 12px 14px rgba(124,255,178,.22)); }
+}
+
+/* ---------- 共通：モーダル ---------- */
+.tf-modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 99990;
+  background: var(--tf-bg);
+}
+.tf-modal.tf-open{ display:block; }
+
+.tf-modal__panel{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform: translate(-50%, -50%);
+  width: min(var(--tf-maxw), 94vw);
+  max-height: 88vh;
+  overflow: hidden;
+  border-radius: var(--tf-radius);
+  border:1px solid var(--tf-line);
+  background: linear-gradient(180deg, var(--tf-panel), var(--tf-panel2));
+  box-shadow: var(--tf-shadow);
+}
+
+.tf-modal__head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 12px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.tf-modal__head h2{
+  margin:0;
+  font-size:14px;
+  color:var(--tf-text);
+}
+.tf-modal__close{
+  appearance:none;
+  border:1px solid var(--tf-line);
+  background:#0b1018;
+  color:var(--tf-text);
+  border-radius:10px;
+  padding:8px 10px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.tf-modal__body{
+  padding:12px;
+  overflow:auto;
+  max-height: calc(88vh - 54px);
+}
+
+/* ---------- 共通：HUD（オクト表示＋ショップ導線） ---------- */
+.tf-hud{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.tf-hud .tf-hud__right{ margin-left:auto; display:flex; gap:8px; }
+
+/* ---------- ファーム：レイアウト ---------- */
+.tf-farm{
+  display:grid;
+  gap:10px;
+}
+@media (min-width:860px){
+  .tf-farm{
+    grid-template-columns: 1fr 360px;
+    align-items:start;
+  }
+}
+.tf-farm__left,
+.tf-farm__right{
+  display:grid;
+  gap:10px;
+}
+
+.tf-card{
+  border:1px solid var(--tf-line);
+  border-radius: var(--tf-radius);
+  background:#0b1018;
+  padding:12px;
+}
+
+/* ---------- 3x3 盤面 ---------- */
+.tf-plate{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:10px;
+  justify-items:center;
+}
+.tf-cell{
+  width: var(--tf-cell);
+  height: var(--tf-cell);
+  border-radius: 16px;
+  border:1px solid var(--tf-line);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.06), transparent 45%),
+    radial-gradient(circle at 70% 70%, rgba(255,255,255,.04), transparent 55%),
+    linear-gradient(180deg,#0f1621,#0b1018);
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.tf-cell.tf-selected{
+  outline:2px solid rgba(124,255,178,.55);
+}
+.tf-cell__img,
+.tf-cell__fx{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  image-rendering: pixelated;
+}
+.tf-cell__img{ z-index: 1; }
+.tf-cell__fx{ z-index: 2; pointer-events:none; display:none; }
+
+/* ここで “匂わせエフェクト” を表示（JSでクラス付与） */
+.tf-cell.tf-fx-on .tf-cell__fx{ display:block; }
+
+/* ラベル */
+.tf-cell__tag{
+  position:absolute;
+  left:8px; top:8px;
+  z-index: 3;
+  font-size:11px;
+  color:var(--tf-muted);
+  background:rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.08);
+  padding:3px 8px;
+  border-radius:999px;
+}
+.tf-cell__sub{
+  position:absolute;
+  left:50%; bottom:8px;
+  transform: translateX(-50%);
+  z-index: 3;
+  font-size:11px;
+  color:var(--tf-muted);
+  background:rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.08);
+  padding:3px 8px;
+  border-radius:999px;
+  max-width: 90%;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* 状態ごとの軽い差（見た目のヒント） */
+.tf-cell[data-state="EMPTY"]{ }
+.tf-cell[data-state="SEED"]{ }
+.tf-cell[data-state="WATER"]{ }
+.tf-cell[data-state="GROWING"]{ }
+.tf-cell[data-state="READY"]{
+  border-color: rgba(124,255,178,.35);
+}
+.tf-cell[data-state="BURNED"]{
+  border-color: rgba(255,124,124,.35);
+}
+
+/* ---------- ファーム：操作パネル ---------- */
+.tf-actions{
+  display:grid;
+  gap:8px;
+}
+.tf-actions__row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.tf-actions__msg{
+  font-size:12px;
+  color:var(--tf-muted);
+  line-height:1.5;
+}
+
+/* セレクト（店の選択 UI 用） */
+.tf-select{
+  width:100%;
+  border:1px solid var(--tf-line);
+  background:#0b1018;
+  color:var(--tf-text);
+  border-radius:12px;
+  padding:10px 12px;
+  font-weight:800;
+}
+
+/* ---------- 図鑑（50枠） ---------- */
+.tf-dex{
+  display:grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap:8px;
+}
+@media (min-width:540px){
+  .tf-dex{ grid-template-columns: repeat(6, 1fr); }
+}
+@media (min-width:860px){
+  .tf-dex{ grid-template-columns: repeat(8, 1fr); }
+}
+.tf-dex__card{
+  border:1px solid var(--tf-line);
+  border-radius:12px;
+  background:#0b1018;
+  padding:8px;
+  display:grid;
+  gap:6px;
+  cursor:pointer;
+  user-select:none;
+}
+.tf-dex__thumb{
+  width:100%;
+  aspect-ratio: 3 / 4;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.08);
+  overflow:hidden;
+  background: linear-gradient(180deg,#111,#070b10);
+  position:relative;
+}
+.tf-dex__thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  image-rendering: pixelated;
+  display:block;
+}
+.tf-dex__thumb.tf-locked{
+  filter: grayscale(1) brightness(.6);
+}
+.tf-dex__meta{
+  font-size:11px;
+  color:var(--tf-muted);
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+}
+.tf-dex__meta b{ color:var(--tf-text); }
+
+/* ---------- 露店（市場） ---------- */
+.tf-market{
+  display:grid;
+  gap:10px;
+}
+@media (min-width:860px){
+  .tf-market{ grid-template-columns: 1fr 340px; }
+}
+.tf-shelves{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:10px;
+}
+@media (min-width:560px){
+  .tf-shelves{ grid-template-columns: repeat(3, 1fr); }
+}
+.tf-shelf{
+  border:1px solid var(--tf-line);
+  border-radius:14px;
+  background:#0b1018;
+  padding:10px;
+  display:grid;
+  gap:8px;
+}
+.tf-shelf__img{
+  width:100%;
+  aspect-ratio: 5 / 3; /* 160x96比率 */
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.08);
+  overflow:hidden;
+  background:#070b10;
+  position:relative;
+}
+.tf-shelf__img img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  image-rendering: pixelated;
+  display:block;
+}
+.tf-shelf__price{
+  position:absolute;
+  right:6px; top:6px;
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--tf-text);
+  font-size:11px;
+  font-weight:900;
+  padding:4px 7px;
+  border-radius:999px;
+}
+.tf-shelf__name{
+  font-size:12px;
+  font-weight:900;
+  color:var(--tf-text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.tf-shelf__sub{
+  font-size:11px;
+  color:var(--tf-muted);
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+}
+
+/* 村人演出エリア */
+.tf-villagers{
+  position:relative;
+  min-height: 120px;
+  border:1px solid var(--tf-line);
+  border-radius:14px;
+  background: linear-gradient(180deg,#0f1621,#0b1018);
+  overflow:hidden;
+}
+.tf-villager{
+  position:absolute;
+  bottom:8px;
+  width:96px;
+  height:96px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 10px 12px rgba(0,0,0,.55));
+}
+.tf-villager--left{ left:10px; }
+.tf-villager--right{ right:10px; transform: scaleX(-1); }
+
+.tf-bubble{
+  position:absolute;
+  left:50%;
+  top:10px;
+  transform: translateX(-50%);
+  max-width: 90%;
+  font-size:12px;
+  color:var(--tf-text);
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  padding:8px 10px;
+  line-height:1.4;
+}
+
+/* 富豪イベントの軽い演出用（JSで付与） */
+.tf-market.tf-richman .tf-villagers{
+  animation: tfFlash 220ms ease-in-out 1;
+}
+@keyframes tfFlash{
+  0%{ filter: brightness(1); }
+  50%{ filter: brightness(1.35); }
+  100%{ filter: brightness(1); }
+}
+
+/* ---------- 即納品（確定換金）UI  ---------- */
+.tf-deliver-list{
+  border:1px solid var(--tf-line);
+  border-radius:14px;
+  overflow:hidden;
+  background:#0b1018;
+}
+.tf-deliver-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.tf-deliver-row:last-child{ border-bottom:0; }
+.tf-deliver-row .tf-left{
+  display:flex; gap:10px; align-items:center;
+  min-width: 0;
+}
+.tf-badge{
+  font-size:11px;
+  padding:3px 8px;
+  border-radius:999px;
+  border:1px solid var(--tf-line);
+  color:var(--tf-muted);
+  background:#0f1621;
+}
+.tf-badge.N{ background:#0e141d; }
+.tf-badge.R{ background:#101b2a; }
+.tf-badge.SR{ background:#1a1530; }
+.tf-badge.UR{ background:#24152a; }
+.tf-badge.LR{ background:#2a2211; }
+.tf-name{
+  font-weight:900;
+  font-size:12px;
+  color:var(--tf-text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width: 48vw;
+}
+.tf-count{ font-size:12px; color:var(--tf-muted); }
+
+/* ---------- 小さなトースト ---------- */
+.tf-toast{
+  position:fixed;
+  left:50%;
+  bottom:16px;
+  transform: translateX(-50%);
+  z-index: 99999;
+  background: rgba(0,0,0,.72);
+  border:1px solid rgba(255,255,255,.12);
+  color: var(--tf-text);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 12px;
+  max-width: min(520px, 92vw);
+  display:none;
+}
+.tf-toast.tf-show{ display:block; }
+
+/* ---------- アクセシビリティ：reduce motion ---------- */
+@media (prefers-reduced-motion: reduce){
+  .tf-chest-spot.tf-is-active img{ animation:none; }
+  .tf-market.tf-richman .tf-villagers{ animation:none; }
+  .tf-btn:active{ transform:none; }
+}
 
