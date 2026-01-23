@@ -870,6 +870,24 @@
     }
   }
 
+
+
+
+
+
+function chestSpotIndexForToday(){
+  const h = hashStrToInt("CHEST|" + todayKey());
+  return h % CHEST_SPOTS.length;
+}
+
+
+
+
+
+
+
+
+   
   /* =========================
      6) 初期化 & 初回起動
   ========================= */
