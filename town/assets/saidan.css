@@ -1,1 +1,239 @@
 
+
+/* =========================
+   ✅ 祭壇：見た目とタップ判定を分離（ズレない版）
+   - 見た目：.spot--gate（画像）
+   - 判定：.gate-hit（透明ボタン）
+   - タコ民を見た目で上にしても、タップは祭壇が勝つ
+========================= */
+
+/* 建物スポット共通（見た目側） */
+.map-wrap .spot{
+  position:absolute;
+  display:block;
+
+  /* 足元基準（重要：以前 -50% になっててズレの原因になってた） */
+  transform: translate(-50%, -100%);
+
+  width: clamp(124px, 12vw, 250px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+/* ✅ 見た目：祭壇の位置 */
+.map-wrap .spot--gate{
+  top: 67%;
+  left: 52%;
+
+  /* 見た目はタコ民より後ろでもOK */
+  z-index: 10 !important;
+}
+
+/* 土台：通常配置（高さを作る） */
+.map-wrap .spot--gate .spot__base{
+  display:block;
+  width:100%;
+  height:auto;
+  image-rendering: pixelated;
+  pointer-events: none; /* 見た目だけ */
+}
+
+/* アイコン：上に重ねる（見た目だけ） */
+.map-wrap .spot--gate .spot__icon{
+  position:absolute;
+  left:50%;
+  top:42%;
+  transform: translate(-50%, 10%);
+  width:30%;
+  height:auto;
+  image-rendering: pixelated;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.6));
+}
+
+/* =========================
+   ✅ タップ判定：透明ボタン（これが“反応の本体”）
+   祭壇と完全に同じ座標にする
+========================= */
+.map-wrap .gate-hit{
+  position:absolute;
+
+  /* ✅ 祭壇と同じ（ここをズラすと“判定だけ”動く） */
+  top: 65%;
+  left: 52%;
+  transform: translate(-50%, -50%);
+
+
+  
+
+  /* ✅ 判定サイズ（必要なら拡げる） */
+  width: clamp(124px, 12vw, 250px);
+  height: clamp(124px, 12vw, 250px);
+
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+
+  /* タップ最強 */
+  z-index: 9999 !important;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* ✅ 判定をもう少し広げたい場合（見た目は変えない）
+   - 触りやすくしたいなら、下のscaleを1.1〜1.4に
+*/
+/*
+.map-wrap .gate-hit{
+  transform: translate(-50%, -100%) scale(1.15);
+  transform-origin: 50% 50%;
+}
+*/
+/* ✅ 見た目側（赤枠の本体）はタップを取らない */
+.map-wrap .spot--gate{
+  pointer-events: none !important;
+}
+
+/* ✅ 念のため：中の画像もタップを取らない */
+.map-wrap .spot--gate .spot__base,
+.map-wrap .spot--gate .spot__icon{
+  pointer-events: none !important;
+}
+
+/* =========================
+   ✅ モーダル
+========================= */
+.gate-modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(0,0,0,.65);
+  z-index: 9999;
+  padding: 16px;
+}
+.gate-modal.is-open{ display: grid; }
+
+.gate-modal__panel{
+  width: min(520px, 92vw);
+  background: #111;
+  color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
+}
+.gate-modal__photo{
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.gate-modal__photo.is-ready{
+  opacity: 1;
+  transform: translateY(0);
+}
+.gate-modal__body{ padding: 12px 14px 14px; }
+.gate-modal__title{ font-weight: 700; margin-bottom: 6px; }
+.gate-modal__desc{ white-space: pre-line; line-height: 1.45; opacity: .95; }
+.gate-modal__btns{ display:flex; gap:10px; margin-top:12px; }
+.gate-modal__btn{
+  flex:1;
+  text-align:center;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.2);
+  background: transparent;
+  color:#fff;
+  text-decoration:none;
+  cursor:pointer;
+}
+.gate-modal__btn--go{
+  background:#fff;
+  color:#000;
+  border-color: transparent;
+}
+/* gate.css：位置ズレ防止（必ずこれが勝つ） */
+.map-wrap .spot.spot--gate{
+  top: 67% !important;
+  left: 52% !important;
+  transform: translate(-50%, -100%) !important;
+}
+
+.map-wrap .gate-hit{
+  top: 67% !important;
+  left: 52% !important;
+  transform: translate(-50%, -100%) !important;
+}
+
+
+
+
+/* =========================
+  ✅ ゲート：アイコンを常に同サイズ・同位置に固定
+  （イベント時だけ小さく見える問題対策）
+========================= */
+
+/* 祭壇スポットは子要素absoluteの基準にする */
+.map-wrap .spot--gate{
+  position: absolute;     /* 既にabsoluteならOK */
+  overflow: visible;
+}
+
+/* 土台（祭壇ベース）は通常通り */
+.map-wrap .spot--gate .spot__base{
+  display:block;
+  width: 100%;
+  height: auto;
+}
+
+/* ✅ 上に重ねるアイコンを「固定サイズ＆中央固定」 */
+.map-wrap .spot--gate .spot__icon{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+
+  /* ここがキモ：画像の実サイズに依存させない */
+  width: 92%;        /* ←大きくしたいなら 100% まで上げてOK */
+  height: 92%;
+  max-width: none;
+  max-height: none;
+
+  display: block;
+  object-fit: contain;   /* 画像が潰れない */
+  pointer-events: none;  /* タップ判定は gate-hit に任せる */
+}
+
+/* ✅ gate-hit（透明ボタン）も祭壇と同じ範囲に固定したい場合 */
+.map-wrap .gate-hit{
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translate(-50%, -100%);
+
+  width: clamp(124px, 12vw, 250px); /* spotと合わせる */
+  height: clamp(124px, 12vw, 250px);
+
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.map-wrap .spot--gate .spot__icon{
+  width: 110%;
+  height: 110%;
+}
+/* =========================
+  ✅ 5分イベント用アイコンだけ微調整（+1.3% 上）
+========================= */
+.map-wrap .spot--gate .spot__icon[src*="Quyt1TAt"],
+.map-wrap .spot--gate .spot__icon[src*="8ipISSBp"],
+.map-wrap .spot--gate .spot__icon[src*="IShYv1or"],
+.map-wrap .spot--gate .spot__icon[src*="UHcLPRSi"],
+.map-wrap .spot--gate .spot__icon[src*="lLEWj0Pu"]{
+  transform: translate(-50%, -50%) translateY(-1.3%) !important;
+}
