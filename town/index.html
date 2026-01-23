@@ -319,6 +319,223 @@ body.shop #mainFooter.wrapper + #base_url{
 <div class="map-wrap">
 
 
+
+
+
+
+
+
+
+
+
+
+
+<!-- =========================
+  ✅ たこ焼きトレカ街トップ（追記パーツ）
+  - GitHubのCSS/JSを読み込む
+  - 街に「ファーム建物」「露店建物」を置く
+  - 宝箱はJSが .map-wrap に自動でランダム配置（20座標・日替わり固定）
+  - ファームはモーダルで開く（必要ID全部入り）
+========================= -->
+
+<!-- ▼ GitHub（jsDelivr）からCSS読み込み -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/takofarm.css?v=1">
+
+
+<!-- ▼ GitHub（jsDelivr）からJS読み込み（defer推奨） -->
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/takofarm1.js"></script>
+
+<!-- ▼（任意）街マップのラッパー：宝箱はこの中に出現する -->
+<!-- 既に .map-wrap があるなら、そのまま使ってOK -->
+<div class="map-wrap" style="position:relative;">
+  <!-- ここにあなたの街背景画像や既存の建物ボタンが入っている想定 -->
+
+  <!-- =========================
+    ✅ 建物：ファーム（たこ焼き畑）
+    - 画像はあなたの建物アイコンに差し替え
+    - 位置は top/left を調整
+  ========================= -->
+  <button id="openFarm" class="tf-building" type="button" aria-label="たこ焼き畑">
+    <img src="https://ul.h3z.jp/QXv49CJQ.png" alt="たこ焼き畑（建物）">
+  </button>
+
+  <!-- =========================
+    ✅ 建物：露店（市場）
+  ========================= -->
+  <button id="openMarket" class="tf-building" type="button" aria-label="露店">
+    <img src="https://ul.h3z.jp/yDO66TXg.png" alt="露店（建物）">
+  </button>
+</div>
+
+<!-- ▼ 建物の位置（サンプル） -->
+<style>
+  .map-wrap{ position:relative; }
+  /* 建物の見た目サイズは takofarm.css 側（tf-building img）で調整される */
+  #openFarm{ top: 64%; left: 32%; }
+  #openMarket{ top: 62%; left: 68%; }
+</style>
+
+<!-- =========================
+  ✅ トースト（JSがここに表示）
+========================= -->
+<div class="tf-toast" aria-live="polite"></div>
+
+<!-- =========================
+  ✅ ファームモーダル（必須IDを揃えた完全版）
+========================= -->
+<div id="tfFarmModal" class="tf-modal" aria-hidden="true">
+  <div class="tf-modal__panel" role="dialog" aria-modal="true" aria-label="たこ焼き畑">
+    <div class="tf-modal__head">
+      <h2>たこ焼き畑（3×3）</h2>
+      <button class="tf-modal__close" type="button" data-close="tfFarmModal" aria-label="閉じる">×</button>
+    </div>
+
+    <div class="tf-modal__body">
+      <!-- HUD：オクト・種・化石 -->
+      <div class="tf-hud" style="margin-bottom:10px;">
+        <span class="tf-pill">🪙 OCTO：<b id="tfOcto">0</b></span>
+        <span class="tf-pill">🌱 種：<b id="tfSeedCount">0</b></span>
+        <span class="tf-pill">🪨 黒い化石：<b id="tfFossilCount">0</b></span>
+
+        <div class="tf-hud__right">
+          <button id="tfHarvestStartBtn" class="tf-btn tf-btn--good" type="button">今日の収穫タイム開始（24h）</button>
+          <button id="tfOpenShopWater" class="tf-btn" type="button">水を買う</button>
+          <button id="tfOpenShopTaco" class="tf-btn" type="button">タコを買う</button>
+          <button id="tfResetBtn" class="tf-btn tf-btn--danger" type="button">初期化</button>
+        </div>
+      </div>
+
+      <div class="tf-farm">
+        <!-- 左：盤面 -->
+        <div class="tf-farm__left">
+          <div class="tf-card">
+            <div class="tf-title">鉄板（3×3）</div>
+            <div id="tfPlate" class="tf-plate"></div>
+            <div class="tf-mini" style="margin-top:8px;">
+              成長：24h → 収穫可能（24h） → 放置で焦げ消失（3%で黒い化石）
+            </div>
+          </div>
+        </div>
+
+        <!-- 右：操作 -->
+        <div class="tf-farm__right">
+          <div class="tf-card">
+            <div class="tf-title">選択マス</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+              <span class="tf-pill">マス：<b id="tfSelIndex">-</b></span>
+              <span class="tf-pill">状態：<b id="tfSelState">-</b></span>
+            </div>
+
+            <div class="tf-actions">
+              <div class="tf-actions__row">
+                <button id="tfPlantBtn" class="tf-btn tf-btn--primary" type="button">種を植える</button>
+                <button id="tfCancelBtn" class="tf-btn tf-btn--ghost" type="button">キャンセル（種戻る）</button>
+              </div>
+
+              <div class="tf-actions__row">
+                <select id="tfPickWater" class="tf-select" aria-label="水を選ぶ"></select>
+              </div>
+
+              <div class="tf-actions__row">
+                <select id="tfPickTaco" class="tf-select" aria-label="タコを選ぶ"></select>
+              </div>
+
+              <div class="tf-actions__row">
+                <button id="tfHarvestBtn" class="tf-btn tf-btn--good" type="button">このマスを収穫する</button>
+              </div>
+
+              <div id="tfActionMsg" class="tf-actions__msg">マスをタップして選んでください。</div>
+            </div>
+          </div>
+
+          <!-- ※ 図鑑/即納品/露店への導線は次の段階でここに追加してOK -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================
+  ✅ 露店モーダル（まずは枠だけ）
+  - 棚、村人、富豪イベントは次で中身を埋める
+========================= -->
+<div id="tfMarketModal" class="tf-modal" aria-hidden="true">
+  <div class="tf-modal__panel" role="dialog" aria-modal="true" aria-label="露店">
+    <div class="tf-modal__head">
+      <h2>露店（市場）</h2>
+      <button class="tf-modal__close" type="button" data-close="tfMarketModal" aria-label="閉じる">×</button>
+    </div>
+    <div class="tf-modal__body">
+      <div class="tf-mini">ここに棚・価格設定・村人演出・富豪イベントを実装します。</div>
+      <!-- 後でIDを追加していく -->
+    </div>
+  </div>
+</div>
+
+<!-- =========================
+  ✅ モーダル開閉（トップページ用の最小JS）
+  - takofarm.js とは干渉しない
+========================= -->
+<script>
+(() => {
+  const open = (id) => {
+    const m = document.getElementById(id);
+    if(!m) return;
+    m.classList.add("tf-open");
+    m.setAttribute("aria-hidden","false");
+  };
+  const close = (id) => {
+    const m = document.getElementById(id);
+    if(!m) return;
+    m.classList.remove("tf-open");
+    m.setAttribute("aria-hidden","true");
+  };
+
+  // 建物クリック
+  const farmBtn = document.getElementById("openFarm");
+  const marketBtn = document.getElementById("openMarket");
+  if(farmBtn) farmBtn.addEventListener("click", () => open("tfFarmModal"));
+  if(marketBtn) marketBtn.addEventListener("click", () => open("tfMarketModal"));
+
+  // ×ボタン
+  document.querySelectorAll("[data-close]").forEach(btn => {
+    btn.addEventListener("click", () => close(btn.getAttribute("data-close")));
+  });
+
+  // 背景クリックで閉じる（任意）
+  document.getElementById("tfFarmModal")?.addEventListener("click", (e) => {
+    if(e.target.id === "tfFarmModal") close("tfFarmModal");
+  });
+  document.getElementById("tfMarketModal")?.addEventListener("click", (e) => {
+    if(e.target.id === "tfMarketModal") close("tfMarketModal");
+  });
+
+  // ESCで閉じる
+  document.addEventListener("keydown", (e) => {
+    if(e.key !== "Escape") return;
+    close("tfFarmModal");
+    close("tfMarketModal");
+  });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
 <!-- ここからたこ焼きの祭壇（収益用） -->
 
 <!-- ✅ 見た目（祭壇） -->
@@ -1126,203 +1343,6 @@ html.is-night .boss-gate{
 
 
 
-
-
-
-
-
-
-
-
-
-<!-- =========================
-  ✅ たこ焼きトレカ街トップ（追記パーツ）
-  - GitHubのCSS/JSを読み込む
-  - 街に「ファーム建物」「露店建物」を置く
-  - 宝箱はJSが .map-wrap に自動でランダム配置（20座標・日替わり固定）
-  - ファームはモーダルで開く（必要ID全部入り）
-========================= -->
-
-<!-- ▼ GitHub（jsDelivr）からCSS読み込み -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/takofarm.css?v=1">
-
-
-<!-- ▼ GitHub（jsDelivr）からJS読み込み（defer推奨） -->
-<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/takofarm1.js"></script>
-
-<!-- ▼（任意）街マップのラッパー：宝箱はこの中に出現する -->
-<!-- 既に .map-wrap があるなら、そのまま使ってOK -->
-<div class="map-wrap" style="position:relative;">
-  <!-- ここにあなたの街背景画像や既存の建物ボタンが入っている想定 -->
-
-  <!-- =========================
-    ✅ 建物：ファーム（たこ焼き畑）
-    - 画像はあなたの建物アイコンに差し替え
-    - 位置は top/left を調整
-  ========================= -->
-  <button id="openFarm" class="tf-building" type="button" aria-label="たこ焼き畑">
-    <img src="https://ul.h3z.jp/QXv49CJQ.png" alt="たこ焼き畑（建物）">
-  </button>
-
-  <!-- =========================
-    ✅ 建物：露店（市場）
-  ========================= -->
-  <button id="openMarket" class="tf-building" type="button" aria-label="露店">
-    <img src="https://ul.h3z.jp/yDO66TXg.png" alt="露店（建物）">
-  </button>
-</div>
-
-<!-- ▼ 建物の位置（サンプル） -->
-<style>
-  .map-wrap{ position:relative; }
-  /* 建物の見た目サイズは takofarm.css 側（tf-building img）で調整される */
-  #openFarm{ top: 64%; left: 32%; }
-  #openMarket{ top: 62%; left: 68%; }
-</style>
-
-<!-- =========================
-  ✅ トースト（JSがここに表示）
-========================= -->
-<div class="tf-toast" aria-live="polite"></div>
-
-<!-- =========================
-  ✅ ファームモーダル（必須IDを揃えた完全版）
-========================= -->
-<div id="tfFarmModal" class="tf-modal" aria-hidden="true">
-  <div class="tf-modal__panel" role="dialog" aria-modal="true" aria-label="たこ焼き畑">
-    <div class="tf-modal__head">
-      <h2>たこ焼き畑（3×3）</h2>
-      <button class="tf-modal__close" type="button" data-close="tfFarmModal" aria-label="閉じる">×</button>
-    </div>
-
-    <div class="tf-modal__body">
-      <!-- HUD：オクト・種・化石 -->
-      <div class="tf-hud" style="margin-bottom:10px;">
-        <span class="tf-pill">🪙 OCTO：<b id="tfOcto">0</b></span>
-        <span class="tf-pill">🌱 種：<b id="tfSeedCount">0</b></span>
-        <span class="tf-pill">🪨 黒い化石：<b id="tfFossilCount">0</b></span>
-
-        <div class="tf-hud__right">
-          <button id="tfHarvestStartBtn" class="tf-btn tf-btn--good" type="button">今日の収穫タイム開始（24h）</button>
-          <button id="tfOpenShopWater" class="tf-btn" type="button">水を買う</button>
-          <button id="tfOpenShopTaco" class="tf-btn" type="button">タコを買う</button>
-          <button id="tfResetBtn" class="tf-btn tf-btn--danger" type="button">初期化</button>
-        </div>
-      </div>
-
-      <div class="tf-farm">
-        <!-- 左：盤面 -->
-        <div class="tf-farm__left">
-          <div class="tf-card">
-            <div class="tf-title">鉄板（3×3）</div>
-            <div id="tfPlate" class="tf-plate"></div>
-            <div class="tf-mini" style="margin-top:8px;">
-              成長：24h → 収穫可能（24h） → 放置で焦げ消失（3%で黒い化石）
-            </div>
-          </div>
-        </div>
-
-        <!-- 右：操作 -->
-        <div class="tf-farm__right">
-          <div class="tf-card">
-            <div class="tf-title">選択マス</div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-              <span class="tf-pill">マス：<b id="tfSelIndex">-</b></span>
-              <span class="tf-pill">状態：<b id="tfSelState">-</b></span>
-            </div>
-
-            <div class="tf-actions">
-              <div class="tf-actions__row">
-                <button id="tfPlantBtn" class="tf-btn tf-btn--primary" type="button">種を植える</button>
-                <button id="tfCancelBtn" class="tf-btn tf-btn--ghost" type="button">キャンセル（種戻る）</button>
-              </div>
-
-              <div class="tf-actions__row">
-                <select id="tfPickWater" class="tf-select" aria-label="水を選ぶ"></select>
-              </div>
-
-              <div class="tf-actions__row">
-                <select id="tfPickTaco" class="tf-select" aria-label="タコを選ぶ"></select>
-              </div>
-
-              <div class="tf-actions__row">
-                <button id="tfHarvestBtn" class="tf-btn tf-btn--good" type="button">このマスを収穫する</button>
-              </div>
-
-              <div id="tfActionMsg" class="tf-actions__msg">マスをタップして選んでください。</div>
-            </div>
-          </div>
-
-          <!-- ※ 図鑑/即納品/露店への導線は次の段階でここに追加してOK -->
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- =========================
-  ✅ 露店モーダル（まずは枠だけ）
-  - 棚、村人、富豪イベントは次で中身を埋める
-========================= -->
-<div id="tfMarketModal" class="tf-modal" aria-hidden="true">
-  <div class="tf-modal__panel" role="dialog" aria-modal="true" aria-label="露店">
-    <div class="tf-modal__head">
-      <h2>露店（市場）</h2>
-      <button class="tf-modal__close" type="button" data-close="tfMarketModal" aria-label="閉じる">×</button>
-    </div>
-    <div class="tf-modal__body">
-      <div class="tf-mini">ここに棚・価格設定・村人演出・富豪イベントを実装します。</div>
-      <!-- 後でIDを追加していく -->
-    </div>
-  </div>
-</div>
-
-<!-- =========================
-  ✅ モーダル開閉（トップページ用の最小JS）
-  - takofarm.js とは干渉しない
-========================= -->
-<script>
-(() => {
-  const open = (id) => {
-    const m = document.getElementById(id);
-    if(!m) return;
-    m.classList.add("tf-open");
-    m.setAttribute("aria-hidden","false");
-  };
-  const close = (id) => {
-    const m = document.getElementById(id);
-    if(!m) return;
-    m.classList.remove("tf-open");
-    m.setAttribute("aria-hidden","true");
-  };
-
-  // 建物クリック
-  const farmBtn = document.getElementById("openFarm");
-  const marketBtn = document.getElementById("openMarket");
-  if(farmBtn) farmBtn.addEventListener("click", () => open("tfFarmModal"));
-  if(marketBtn) marketBtn.addEventListener("click", () => open("tfMarketModal"));
-
-  // ×ボタン
-  document.querySelectorAll("[data-close]").forEach(btn => {
-    btn.addEventListener("click", () => close(btn.getAttribute("data-close")));
-  });
-
-  // 背景クリックで閉じる（任意）
-  document.getElementById("tfFarmModal")?.addEventListener("click", (e) => {
-    if(e.target.id === "tfFarmModal") close("tfFarmModal");
-  });
-  document.getElementById("tfMarketModal")?.addEventListener("click", (e) => {
-    if(e.target.id === "tfMarketModal") close("tfMarketModal");
-  });
-
-  // ESCで閉じる
-  document.addEventListener("keydown", (e) => {
-    if(e.key !== "Escape") return;
-    close("tfFarmModal");
-    close("tfMarketModal");
-  });
-})();
-</script>
 
 
 
