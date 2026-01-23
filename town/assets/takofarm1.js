@@ -881,6 +881,10 @@ function chestSpotIndexForToday(){
 }
 
 
+const CHEST_SPOTS = [
+  { x:"10%", y:"90%" },  // ← 左下あたりに出る（見つけやすい）
+  ...
+];
 
 
 
