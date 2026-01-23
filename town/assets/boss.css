@@ -1,1 +1,85 @@
 
+(() => {
+  // ===== boss.js が動いてるか確認ボタン（※本番では無効） =====
+  const addTestBtn = () => {
+    if (document.getElementById("bossTestBtn")) return;
+    const btn = document.createElement("button");
+    btn.id = "bossTestBtn";
+    btn.textContent = "BOSS TEST";
+    btn.style.position = "fixed";
+    btn.style.left = "10px";
+    btn.style.bottom = "10px";
+    btn.style.zIndex = "999999";
+    btn.style.padding = "8px 10px";
+    btn.style.border = "2px solid #fff";
+    btn.style.background = "#000";
+    btn.style.color = "#fff";
+    btn.style.cursor = "pointer";
+    document.body.appendChild(btn);
+    btn.addEventListener("click", () => openTalk());
+  };
+
+  // ===== 会話UIを作る（無ければ生成） =====
+  let talk = document.querySelector(".boss-talk");
+  if (!talk) {
+    talk = document.createElement("div");
+    talk.className = "boss-talk";
+    talk.innerHTML = `
+      <div class="boss-talk-panel" role="dialog" aria-modal="true">
+        <div class="boss-talk-title" id="bossTalkTitle">BOSS</div>
+        <div class="boss-talk-text" id="bossTalkText">出るかテスト中…</div>
+        <div class="boss-talk-buttons">
+          <button type="button" id="bossBack">閉じる</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(talk);
+  }
+
+  // ===== 最前面固定 =====
+  const forceFront = () => {
+    document.body.appendChild(talk);
+    talk.style.position = "fixed";
+    talk.style.inset = "0";
+    talk.style.zIndex = "30000";
+    talk.style.background = "rgba(0,0,0,0.85)";
+  };
+
+  const closeTalk = () => {
+    talk.style.display = "none";
+    talk.classList.remove("is-open");
+  };
+
+  const openTalk = () => {
+    const gm = document.getElementById("gateModal");
+    if (gm) gm.classList.remove("is-open");
+
+    forceFront();
+    talk.style.display = "block";
+    talk.classList.add("is-open");
+
+    const t = talk.querySelector("#bossTalkText");
+    if (t) t.textContent = "ボスが現れた…！";
+
+    const back = talk.querySelector("#bossBack");
+    if (back) back.onclick = closeTalk;
+  };
+
+  // ===== boss-gate を押したら開く =====
+  const bindBossGate = () => {
+    const gate = document.querySelector(".boss-gate");
+    if (gate && !gate.dataset.bound) {
+      gate.dataset.bound = "1";
+      gate.addEventListener("click", (e) => {
+        e.preventDefault();
+        openTalk();
+      });
+    }
+  };
+// ===== 実行 =====
+// addTestBtn();  ← ★完全に削除 or コメントアウト
+bindBossGate();
+setTimeout(bindBossGate, 500);
+setTimeout(bindBossGate, 1500);
+
+})();
