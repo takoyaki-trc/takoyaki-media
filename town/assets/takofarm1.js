@@ -920,6 +920,258 @@ const CHEST_SPOTS = [
     }, 15 * 1000);
   }
 
+   /* =========================
+   露店（市場）ロジック：C + A
+   - 30分ごとに来店1回分が貯まる
+   - 露店を開いた時にまとめて判定
+   - 呼び込みで+1（30秒クール）
+   - 王様は棚全買い
+========================= */
+
+const MARKET_BASE = { N:2, R:5, SR:12, UR:35, LR:90 }; // 内部相場（非表示）
+
+// 来店タイプ（倍率レンジ）＋出現率（例）
+// ※合計100%に近ければOK。微調整は後でOK。
+const VISITORS = [
+  { id:"look",  name:"覗き見",    min:Infinity, max:-Infinity, p:30 }, // 買わない
+  { id:"c1",    name:"庶民",      min:1.0, max:1.2, p:28 },
+  { id:"c2",    name:"旅人",      min:1.3, max:1.6, p:18 },
+  { id:"c3",    name:"見習い",    min:1.5, max:2.0, p:10 },
+  { id:"c4",    name:"コレクター",min:1.8, max:3.0, p:7  },
+  { id:"c5",    name:"上客",      min:2.8, max:5.0, p:4  },
+  { id:"c6",    name:"富豪",      min:4.5, max:10,  p:2  },
+  { id:"c7",    name:"狂コレ",    min:8.0, max:50,  p:0.8},
+  { id:"king",  name:"王様",      min:0,   max:0,   p:0.2 }, // 棚全買い
+];
+
+const MARKET_TICK_MS = 30 * 60 * 1000;     // 30分
+const MARKET_MAX_PENDING = 48;             // 最大24時間ぶん
+const CALL_COOLDOWN_MS = 30 * 1000;        // 呼び込み30秒
+
+function ensureMarketState(){
+  state.market ||= { shelfSize:3, shelves:Array.from({length:6},()=>null) };
+  state.market.lastCheckAt ||= Date.now();
+  state.market.callCooldownUntil ||= 0;
+  state.market.log ||= [];
+}
+
+function pickVisitor(){
+  const sum = VISITORS.reduce((a,v)=>a+v.p,0);
+  let r = Math.random()*sum;
+  for(const v of VISITORS){ r -= v.p; if(r<=0) return v; }
+  return VISITORS[0];
+}
+
+function getPendingVisits(){
+  ensureMarketState();
+  const now = Date.now();
+  const last = state.market.lastCheckAt || now;
+  const diff = Math.max(0, now - last);
+  let n = Math.floor(diff / MARKET_TICK_MS);
+  if(n > MARKET_MAX_PENDING) n = MARKET_MAX_PENDING;
+  return n;
+}
+
+function consumePendingVisits(){
+  ensureMarketState();
+  const now = Date.now();
+  const last = state.market.lastCheckAt || now;
+  const diff = Math.max(0, now - last);
+  let n = Math.floor(diff / MARKET_TICK_MS);
+  if(n <= 0) return 0;
+  if(n > MARKET_MAX_PENDING) n = MARKET_MAX_PENDING;
+
+  // lastCheckAt を進める（貯まった分だけ消費）
+  state.market.lastCheckAt = last + n * MARKET_TICK_MS;
+  return n;
+}
+
+function shelfItems(){
+  ensureMarketState();
+  const size = state.market.shelfSize || 3;
+  return state.market.shelves.slice(0, size);
+}
+
+function basePriceFor(item){
+  return MARKET_BASE[item.rarity] || 1;
+}
+
+function priceRatio(item){
+  const base = basePriceFor(item);
+  return item.price / base;
+}
+
+function sellOne(visitor){
+  ensureMarketState();
+
+  // 王様：棚全買い
+  if(visitor.id === "king"){
+    let total = 0;
+    let sold = 0;
+    const size = state.market.shelfSize || 3;
+
+    for(let i=0;i<size;i++){
+      const it = state.market.shelves[i];
+      if(!it) continue;
+      total += it.price;
+      sold++;
+      state.market.shelves[i] = null;
+    }
+    if(sold>0){
+      state.octo += total;
+      marketLog(`👑 王様が現れた… 棚を全買い！ +${total} OCTO`);
+      renderMarket();
+      return { sold:true, msg:`👑 王様「全部いく」 +${total}` };
+    }else{
+      return { sold:false, msg:"👑 王様（棚が空だった）" };
+    }
+  }
+
+  // 覗き見：買わない
+  if(visitor.id === "look"){
+    return { sold:false, msg:`👀 ${visitor.name}「ふーん」` };
+  }
+
+  // 買える倍率の範囲に入る棚商品を探す（先に“高い順”に試すとドラマが出る）
+  const candidates = shelfItems()
+    .map((it, idx)=>({it, idx}))
+    .filter(x=>x.it)
+    .sort((a,b)=>b.it.price - a.it.price);
+
+  for(const c of candidates){
+    const ratio = priceRatio(c.it);
+    if(ratio >= visitor.min && ratio <= visitor.max){
+      // 買う！
+      state.octo += c.it.price;
+      state.market.shelves[c.idx] = null;
+      marketLog(`🧍 ${visitor.name}が購入：${c.it.no}（${c.it.rarity}） ${c.it.price} OCTO`);
+      renderMarket();
+      return { sold:true, msg:`✅ ${visitor.name}が買った（×${ratio.toFixed(1)}） +${c.it.price}` };
+    }
+  }
+
+  return { sold:false, msg:`🧍 ${visitor.name}「高い…」` };
+}
+
+function marketLog(line){
+  ensureMarketState();
+  const t = new Date().toLocaleString();
+  state.market.log.unshift(`[${t}] ${line}`);
+  state.market.log = state.market.log.slice(0, 40);
+  saveState();
+}
+
+function runVisits(count){
+  ensureMarketState();
+  let lastMsg = "";
+  for(let i=0;i<count;i++){
+    const v = pickVisitor();
+    const r = sellOne(v);
+    lastMsg = r.msg;
+  }
+  if(lastMsg) setMarketBubble(lastMsg);
+  saveState();
+}
+
+function setMarketBubble(text){
+  const b = document.getElementById("mkBubble");
+  if(b) b.textContent = text;
+}
+
+function renderMarket(){
+  ensureMarketState();
+
+  // HUD
+  const mkOcto = document.getElementById("mkOcto");
+  const mkShelfSize = document.getElementById("mkShelfSize");
+  const mkPending = document.getElementById("mkPending");
+  if(mkOcto) mkOcto.textContent = String(state.octo);
+  if(mkShelfSize) mkShelfSize.textContent = String(state.market.shelfSize || 3);
+
+  // pending（見える化）
+  if(mkPending) mkPending.textContent = String(getPendingVisits());
+
+  // 呼び込みCD表示
+  const cd = document.getElementById("mkCallCd");
+  const btn = document.getElementById("mkCallBtn");
+  const now = Date.now();
+  const until = state.market.callCooldownUntil || 0;
+  const left = Math.max(0, until - now);
+  if(btn){
+    btn.disabled = left > 0;
+  }
+  if(cd){
+    cd.textContent = left>0 ? `あと ${Math.ceil(left/1000)} 秒` : "（呼び込みOK）";
+  }
+
+  // 棚描画（いまは“空/あり”だけ。カード画像は後で）
+  const wrap = document.getElementById("mkShelves");
+  if(wrap){
+    wrap.innerHTML = "";
+    const size = state.market.shelfSize || 3;
+    for(let i=0;i<size;i++){
+      const it = state.market.shelves[i];
+      const d = document.createElement("div");
+      d.className = "tf-shelf";
+      d.innerHTML = `
+        <div class="tf-shelf__img">
+          <div class="tf-shelf__price">${it ? it.price + " OCTO" : "空"}</div>
+        </div>
+        <div class="tf-shelf__name">${it ? `${it.no} ${it.name}` : "（空き棚）"}</div>
+        <div class="tf-shelf__sub">
+          <span>${it ? it.rarity : ""}</span>
+          <span>${it ? "陳列中" : ""}</span>
+        </div>
+      `;
+      wrap.appendChild(d);
+    }
+  }
+
+  // ログ
+  const log = document.getElementById("mkLog");
+  if(log){
+    log.innerHTML = (state.market.log || []).slice(0, 15).map(x=>`<div>${escapeHtml(x)}</div>`).join("")
+      || "ログはまだありません。";
+  }
+
+  saveState();
+}
+
+// 露店モーダルを開いた時に「貯まった来店」を消化
+function onMarketOpen(){
+  ensureMarketState();
+  const n = consumePendingVisits();
+  if(n > 0){
+    runVisits(n);
+    marketLog(`🛎 露店オープン：来店 ${n} 回分をまとめて処理`);
+  }else{
+    renderMarket();
+  }
+}
+
+// 呼び込み
+function onMarketCall(){
+  ensureMarketState();
+  const now = Date.now();
+  if(now < (state.market.callCooldownUntil || 0)){
+    renderMarket();
+    return;
+  }
+  state.market.callCooldownUntil = now + CALL_COOLDOWN_MS;
+  runVisits(1);
+  marketLog("📣 呼び込み！");
+  renderMarket();
+}
+
+// HTMLの呼び込みボタンに紐付け
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("mkCallBtn")?.addEventListener("click", onMarketCall);
+
+  // あなたのモーダル開閉スクリプト側で open("tfMarketModal") するので、
+  // そのタイミングで onMarketOpen() を呼べるようにしておく
+  window.TakoMarket = { onOpen: onMarketOpen, render: renderMarket };
+});
+
   // グローバルに少しだけ公開（建物タップで呼べる）
   window.TakoFarm = {
     init,
