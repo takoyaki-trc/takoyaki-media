@@ -54,68 +54,68 @@
   // 形式：{ no:"TN-001", name:"カード名", img:"https://..." }（imgは任意、図鑑で使う）
  const CARD_POOLS = {
   N: [
-    { no:"TN-005", name:"たこ焼きタワー112", img:"" },
-    { no:"TN-006", name:"塩顔パレード焼き", img:"" },
-    { no:"TN-009", name:"塩マヨ露天焼き", img:"" },
-    { no:"TN-011", name:"チーズ火山焼き", img:"" },
-    { no:"TN-012", name:"揚げ玉会議焼き", img:"" },
-    { no:"TN-013", name:"くたびれ塩こしょう焼き", img:"" },
-    { no:"TN-016", name:"たこ焼き、発射オーライ", img:"" },
-    { no:"TN-018", name:"ゆのかわの主", img:"" },
-    { no:"TN-019", name:"誤入店トラップ", img:"" },
-    { no:"TN-021", name:"たこ焼き、流れて候", img:"" },
-    { no:"TN-023", name:"芝生かたこ焼きか大会", img:"" },
-    { no:"TN-024", name:"温泉女神のありがた迷惑", img:"" },
-    { no:"TN-026", name:"たこ焼き48回リボ払い", img:"" },
-    { no:"TN-027", name:"全身たこ焼きダイエット", img:"" },
-    { no:"TN-028", name:"自己啓発たこ塾《井上諒プロ🎯》", img:"" },
-    { no:"TN-029", name:"カロリーゼロ理論《仁木治プロ🎯》", img:"" },
-    { no:"TN-031", name:"行列の最後尾が別県", img:"" },
-    { no:"TN-034", name:"エシカル過剰焼き", img:"" },
-    { no:"TN-036", name:"マヨネーズ詐欺", img:"" },
-    { no:"TN-037", name:"勘違いデート", img:"" },
-    { no:"TN-041", name:"玉の上にも三年", img:"" },
-    { no:"TN-043", name:"転生したら即売れたこ焼き", img:"" },
-    { no:"TN-046", name:"ごますりたこ焼き", img:"" },
-    { no:"TN-048", name:"店主反撃レビュー《佐俣雄一郎🎯》", img:"" },
+    { no:"TN-005", name:"たこ焼きタワー112", img:"https://ul.h3z.jp/xjoqO9HK.png" },
+    { no:"TN-006", name:"塩顔パレード焼き", img:"https://ul.h3z.jp/SvLLVa7m.png" },
+    { no:"TN-009", name:"塩マヨ露天焼き", img:"https://ul.h3z.jp/sh2p18pj.png" },
+    { no:"TN-011", name:"チーズ火山焼き", img:"https://ul.h3z.jp/u12Q1rQ9.png" },
+    { no:"TN-012", name:"揚げ玉会議焼き", img:"https://ul.h3z.jp/wvL9uwpZ.png" },
+    { no:"TN-013", name:"くたびれ塩こしょう焼き", img:"https://ul.h3z.jp/KW4kM6OW.png" },
+    { no:"TN-016", name:"たこ焼き、発射オーライ", img:"https://ul.h3z.jp/Dk6Hj5gd.png" },
+    { no:"TN-018", name:"ゆのかわの主", img:"https://ul.h3z.jp/mPE2nzcz.png" },
+    { no:"TN-019", name:"誤入店トラップ", img:"https://ul.h3z.jp/xE6OcrTz.png" },
+    { no:"TN-021", name:"たこ焼き、流れて候", img:"https://ul.h3z.jp/XFCtYUZu.png" },
+    { no:"TN-023", name:"芝生かたこ焼きか大会", img:"https://ul.h3z.jp/H4HOwhKK.png" },
+    { no:"TN-024", name:"温泉女神のありがた迷惑", img:"https://ul.h3z.jp/Q8392V7N.png" },
+    { no:"TN-026", name:"たこ焼き48回リボ払い", img:"https://ul.h3z.jp/Ih4UgGuG.png" },
+    { no:"TN-027", name:"全身たこ焼きダイエット", img:"https://ul.h3z.jp/JQcHg0cM.png" },
+    { no:"TN-028", name:"自己啓発たこ塾《井上諒プロ🎯》", img:"https://ul.h3z.jp/x2giE7yR.png" },
+    { no:"TN-029", name:"カロリーゼロ理論《仁木治プロ🎯》", img:"https://ul.h3z.jp/G9TjNqsR.png" },
+    { no:"TN-031", name:"行列の最後尾が別県", img:"https://ul.h3z.jp/do0u2b0m.png" },
+    { no:"TN-034", name:"エシカル過剰焼き", img:"https://ul.h3z.jp/grlvMXBT.png" },
+    { no:"TN-036", name:"マヨネーズ詐欺", img:"https://ul.h3z.jp/Veh6cTQo.png" },
+    { no:"TN-037", name:"勘違いデート", img:"https://ul.h3z.jp/Zj9jqeFm.png" },
+    { no:"TN-041", name:"玉の上にも三年", img:"https://ul.h3z.jp/FHIVjxEc.png" },
+    { no:"TN-043", name:"転生したら即売れたこ焼き", img:"https://ul.h3z.jp/n6un0ECF.png" },
+    { no:"TN-046", name:"ごますりたこ焼き", img:"https://ul.h3z.jp/6hrmumFg.png" },
+    { no:"TN-048", name:"店主反撃レビュー《佐俣雄一郎🎯》", img:"https://ul.h3z.jp/bGZmixM4.png" },
   ],
 
   R: [
-    { no:"TN-002", name:"熱々地獄の給たこ所", img:"" },
-    { no:"TN-003", name:"爆走！たこ焼きライダー菜々", img:"" },
-    { no:"TN-008", name:"明太ギャラクシー焼き", img:"" },
-    { no:"TN-014", name:"世界たこ焼き釣り選手権大会", img:"" },
-    { no:"TN-017", name:"たこ焼きマニフェスト", img:"" },
-    { no:"TN-022", name:"たこ焼きダーツ･インフェルノ《對馬裕佳子プロ🎯》", img:"" },
-    { no:"TN-032", name:"国境超えた恋", img:"" },
-    { no:"TN-035", name:"デリバリー長距離便", img:"" },
-    { no:"TN-038", name:"恋落ちマッチング", img:"" },
-    { no:"TN-042", name:"たこ焼きループザループ", img:"" },
-    { no:"TN-044", name:"白い契約(稲石裕プロ🎯)", img:"" },
-    { no:"TN-047", name:"ボスゲート", img:"" },
+    { no:"TN-002", name:"熱々地獄の給たこ所", img:"https://ul.h3z.jp/tnPHMqxN.png" },
+    { no:"TN-003", name:"爆走！たこ焼きライダー菜々", img:"https://ul.h3z.jp/KB3Z4nk0.png" },
+    { no:"TN-008", name:"明太ギャラクシー焼き", img:"https://ul.h3z.jp/ElEUWV02.png" },
+    { no:"TN-014", name:"世界たこ焼き釣り選手権大会", img:"https://ul.h3z.jp/QBf0mhfP.png" },
+    { no:"TN-017", name:"たこ焼きマニフェスト", img:"https://ul.h3z.jp/B5z1zmki.png" },
+    { no:"TN-022", name:"たこ焼きダーツ･インフェルノ《對馬裕佳子プロ🎯》", img:"https://ul.h3z.jp/5SAL3R2J.png" },
+    { no:"TN-032", name:"国境超えた恋", img:"https://ul.h3z.jp/Yhty1eVw.png" },
+    { no:"TN-035", name:"デリバリー長距離便", img:"https://ul.h3z.jp/uISdf4dn.png" },
+    { no:"TN-038", name:"恋落ちマッチング", img:"https://ul.h3z.jp/VaeuN4fe.png" },
+    { no:"TN-042", name:"たこ焼きループザループ", img:"https://ul.h3z.jp/uKy4GPOX.png" },
+    { no:"TN-044", name:"白い契約(稲石裕プロ🎯)", img:"https://ul.h3z.jp/g2banLA9.png" },
+    { no:"TN-047", name:"ボスゲート", img:"https://ul.h3z.jp/1Q26RpZH.png" },
   ],
 
   SR: [
-    { no:"TN-004", name:"見えるフリ焼き", img:"" },
-    { no:"TN-010", name:"焼ク者ノ証", img:"" },
-    { no:"TN-015", name:"顔コイン", img:"" },
-    { no:"TN-020", name:"ピック不要の真実", img:"" },
-    { no:"TN-030", name:"ガチャたこ焼き", img:"" },
-    { no:"TN-039", name:"ドローン誤配達", img:"" },
-    { no:"TN-040", name:"推し活たこ団扇", img:"" },
-    { no:"TN-049", name:"たこ焼きの御神体", img:"" },
+    { no:"TN-004", name:"見えるフリ焼き", img:"https://ul.h3z.jp/NSUjkwRE.png" },
+    { no:"TN-010", name:"焼ク者ノ証", img:"https://ul.h3z.jp/BCXLFeGI.png" },
+    { no:"TN-015", name:"顔コイン", img:"https://ul.h3z.jp/CIA9LV8T.png" },
+    { no:"TN-020", name:"ピック不要の真実", img:"https://ul.h3z.jp/Xave4XVq.png" },
+    { no:"TN-030", name:"ガチャたこ焼き", img:"https://ul.h3z.jp/XDrYkA9R.png" },
+    { no:"TN-039", name:"ドローン誤配達", img:"https://ul.h3z.jp/6VGy1YM2.png" },
+    { no:"TN-040", name:"推し活たこ団扇", img:"https://ul.h3z.jp/7mFuyxeG.png" },
+    { no:"TN-049", name:"たこ焼きの御神体", img:"https://ul.h3z.jp/sv5Y8d9u.png" },
   ],
 
   UR: [
-    { no:"TN-001", name:"黒き真珠イカさま焼き", img:"" },
-    { no:"TN-007", name:"ローソク出せ！", img:"" },
-    { no:"BN-033", name:"鉄板のビーナス", img:"" },
-    { no:"BN-045", name:"ドリームファイト", img:"" },
+    { no:"TN-001", name:"黒き真珠イカさま焼き", img:"https://ul.h3z.jp/wMBupVzu.png" },
+    { no:"TN-007", name:"ローソク出せ！", img:"https://ul.h3z.jp/naBoXNrd.png" },
+    { no:"BN-033", name:"鉄板のビーナス", img:"https://ul.h3z.jp/xI1NUxhq.png" },
+    { no:"BN-045", name:"ドリームファイト", img:"https://ul.h3z.jp/YNtkOAIi.png" },
   ],
 
   LR: [
-    { no:"TN-025", name:"たこ焼き化石in函館山", img:"" },
-    { no:"BN-050", name:"焼かれし記憶、ソースに還る", img:"" },
+    { no:"TN-025", name:"たこ焼き化石in函館山", img:"https://ul.h3z.jp/e2B7lU9p.png" },
+    { no:"BN-050", name:"焼かれし記憶、ソースに還る", img:"https://ul.h3z.jp/l47TH2Ml.png" },
   ],
 };
 
@@ -123,7 +123,7 @@
   // 水（生地）選択肢（価格はオクト）
   // ※確率はUIに出さないが、ここに書くのはOK（内部用）
   const WATER_OPTIONS = [
-    { id:"water_normal",  label:"普通の水（無料）", price:0,    base:{ N:100, R:0,  SR:0,  UR:0,  LR:0 } },
+    { id:"water_normal",  label:"普通の水（無料）", price:0,    base:{ N:30, R:30,  SR:20,  UR:10,  LR:10 } },
     { id:"water_sea",     label:"海水",             price:1,    base:{ N:85,  R:13, SR:2,  UR:0,  LR:0 } },
     { id:"water_yunokawa",label:"ゆのかわの天然水", price:10,   base:{ N:70,  R:23, SR:5,  UR:2,  LR:0 } },
     { id:"water_gold",    label:"黄金の水",         price:50,   base:{ N:60,  R:28, SR:7,  UR:4,  LR:1 } },
@@ -161,7 +161,7 @@
     if(r < 0.2) return 77;
     if(r < 1.2) return 30;
     if(r < 6.2) return 10;
-    return 1 + Math.floor(Math.random() * 5);
+    return 1 + Math.floor(Math.random() * 9);
   }
 
   /* =========================
