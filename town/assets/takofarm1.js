@@ -30,13 +30,13 @@
 
   // 画像URL（あなたの用意した画像に差し替え）
   const IMG = {
-    farmEmpty:   "https://ul.h3z.jp/QXv49CJQ.png",
-    farmBatter:  "https://ul.h3z.jp/kNUcqhfc.png",
-    farmCooking: "https://ul.h3z.jp/qIC3xste.png",
+    farmEmpty:   "https://ul.h3z.jp/YeMGDwHX.png",
+    farmBatter:  "https://ul.h3z.jp/9NMqEYog.png",
+    farmCooking: "https://ul.h3z.jp/Uyd2OaGN.png",
     farmReady:   "https://ul.h3z.jp/fWfm0A1l.png",
     farmBurned:  "https://ul.h3z.jp/3lRjj9Xt.png",        // 任意（無ければreadyを流用）
-    fxSmall:     "https://ul.h3z.jp/MjdxLjRZ.png",
-    fxStrong:    "https://ul.h3z.jp/El4ikwBP.png",
+    fxSmall:     "https://ul.h3z.jp/rnShJZdK.png",
+    fxStrong:    "https://ul.h3z.jp/UtT08LXX.png",
     chestClosed: "https://ul.h3z.jp/7R07SCTz.png",
   };
 
