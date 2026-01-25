@@ -1,5 +1,5 @@
 /* =========================
-  ✅ 町ページ：完全固定ベース
+  ✅ 町ページ：完全固定ベース（統一完全版）
 ========================= */
 html, body { margin:0; padding:0; width:100%; }
 body{
@@ -7,7 +7,9 @@ body{
   font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
 }
 
-/* タイトル */
+/* =========================
+  ✅ タイトル
+========================= */
 .title-gif{
   width:min(720px, 90%);
   margin: 14px auto 10px;
@@ -20,7 +22,10 @@ body{
   display:block;
   image-rendering: pixelated;
 }
-/* タイトル下タコ民エリア（固定幅＋タコ民40px固定＋黒バー幅固定） */
+
+/* =========================
+  ✅ タイトル下タコ民（★ここを1本化：黒バー幅固定 + タコ民40px固定）
+========================= */
 .takomin-area{
   width: min(800px, 92%);
   margin: 0 auto 10px;
@@ -28,7 +33,7 @@ body{
   box-sizing: border-box;
 }
 
-/* ✅ 黒バーの幅を固定したいので、行全体の幅を固定 */
+/* ✅ 行全体の幅を固定 → 黒バー幅も常に一定 */
 .takomin-wrap{
   display:flex;
   flex-direction: row;
@@ -40,14 +45,16 @@ body{
   margin: 0 auto;
   box-sizing: border-box;
 
-  --npc-size: 40px;          /* ←タコ民は常に40px */
+  --npc-size: 40px;          /* ←タコ民は常に40px固定 */
 }
 
-/* ✅ タコ民を40px固定（縮まない） */
+/* ✅ タコ民を40px固定（縮まない・伸びない） */
 .takomin-avatar{
   flex: 0 0 var(--npc-size);
   width: var(--npc-size);
   height: var(--npc-size);
+  display:block;
+  -webkit-tap-highlight-color: transparent;
 }
 .takomin-avatar img{
   width: 100%;
@@ -57,7 +64,7 @@ body{
   display:block;
 }
 
-/* ✅ 黒バー：常に同じ幅（中身で伸縮しない） */
+/* ✅ 黒バー：常に同じ幅（内容で伸縮しない） */
 .takomin-text{
   flex: 1 1 auto;
   min-width: 0;
@@ -71,23 +78,43 @@ body{
   line-height: 1.2;
   box-sizing: border-box;
 
-  /* 1行の高さを安定 */
+  /* ✅ 高さを1行で安定（チラつき/揺れ止め） */
   min-height: calc(1.2em + 4px);
 
-  /* 長文でも黒バー幅を変えない */
+  /* ✅ 長文でも枠は固定 */
   overflow: hidden;
+
+  /* 描画安定（環境によって効く） */
+  contain: paint;
+  transform: translateZ(0);
 }
 
-/* 文字が長い時は…で省略（黒バー固定のまま） */
+/* ✅ 文字だけ省略（黒バー固定のまま） */
 #takominLine{
   display:block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  opacity:1;
+  transition:opacity .2s ease;
+
+  will-change: opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+#takominLine.fade-out{ opacity:0; }
+#takominLine.fade-in { opacity:1; }
+
+/* スマホ微調整 */
+@media (max-width:480px){
+  .takomin-wrap{ width: min(460px, 100%); gap:8px; }
+  .takomin-text{ font-size:13px; padding:2px 9px; }
 }
 
-
-/* マップ枠 */
+/* =========================
+  ✅ マップ枠
+========================= */
 .map-wrap{
   position: relative;
   width: min(800px, 100%);
@@ -399,101 +426,4 @@ html.is-night #moon{ opacity: 1; }
 /* スマホ微調整 */
 @media (max-width: 480px){
   #sun, #moon{ width: 60px; height: 60px; top: 8%; left: 6%; }
-}
-
-
-/* takomin-npc.css */
-
-/* ===== 全体配置 ===== */
-.takomin-area{
-  margin:12px auto 24px;
-  display:flex;
-  justify-content:center;
-  padding:0 10px;
-  box-sizing:border-box;
-}
-
-/* ===== 横並びの基準（ここでサイズも決める） ===== */
-.takomin-wrap{
-  display:flex !important;
-  flex-direction:row !important;
-  flex-wrap:nowrap !important;         /* ←スマホでも折り返し禁止 */
-  align-items:flex-start !important;   /* ←上揃え */
-  gap:8px;
-  width:min(520px, 100%);
-  box-sizing:border-box;
-
-  --npc-size: 40px;                    /* ★タコ民は全て40px */
-}
-
-/* ===== タコ民画像（縮まない・固定） ===== */
-.takomin-avatar{
-  flex:0 0 var(--npc-size) !important; /* ←絶対縮まない */
-  width:var(--npc-size);
-  height:var(--npc-size);
-  display:block;
-  text-decoration:none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.takomin-avatar img{
-  width:var(--npc-size) !important;
-  height:var(--npc-size) !important;
-  object-fit:contain;
-  display:block;
-  image-rendering:pixelated;
-}
-
-/* ===== 横テキスト（黒バー本体：常に表示してチラつかない） ===== */
-.takomin-text{
-  flex:1 1 auto !important;
-  min-width:0 !important;
-  max-width:100%;
-  padding:3px 12px;
-  background:#000;
-  color:#fff;
-  font-size:15px;
-  line-height:0.8;
-  font-family:"DotGothic16","PixelMplus10",monospace;
-  box-sizing:border-box;
-  word-break:break-word;
-
-  /* ▼ 黒バーは消さない（フェード対象にしない） */
-  opacity:1 !important;
-}
-
-/* ===== 文字だけフェード（JSは #takominLine に fade-in/out を付ける） ===== */
-#takominLine{
-  display:block;
-  opacity:1;
-  transition:opacity .2s ease;
-}
-
-/* ▼ fadeクラスは #takominLine にだけ効かせる（黒バーがチラつかない） */
-#takominLine.fade-out{ opacity:0; }
-#takominLine.fade-in { opacity:1; }
-
-/* ===== スマホ微調整（横並びは維持） ===== */
-@media (max-width:480px){
-  .takomin-text{ font-size:12px; }
-}
-
-
-/* =========================
-   ✅ チラつき対策（追記）
-   ========================= */
-
-
-
-/* 文字だけフェードを“合成レイヤー化”してチラつき減らす */
-#takominLine{
-  will-change: opacity;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-/* 黒バー自体も描画を安定させる（環境によって効く） */
-.takomin-text{
-  contain: paint;
-  transform: translateZ(0);
 }
