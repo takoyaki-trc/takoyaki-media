@@ -487,10 +487,10 @@
       ctx.translate(b.position.x, b.position.y);
       ctx.rotate(b.angle);
 
-      const w = b._drawW ?? (b.bounds.max.x - b.bounds.min.x);
-      const h = b._drawH ?? (b.bounds.max.y - b.bounds.min.y);
+// ✅ 画像は常に正方形で描く（四角引き伸ばし事故を防ぐ）
+const size = b._spriteSize ?? 64;  // ←好きな基準値にできる
+ctx.drawImage(img, -size/2, -size/2, size, size);
 
-      ctx.drawImage(img, -w/2, -h/2, w, h);
       ctx.restore();
     }
   });
