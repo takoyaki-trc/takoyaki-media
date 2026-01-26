@@ -58,6 +58,13 @@
   const elHeight = document.getElementById('ttHeight');
   const elScore  = document.getElementById('ttScore');
   const elBest   = document.getElementById('ttBest');
+  
+  const elMeterFill   = document.getElementById('ttMeterFill');
+const elMeterKnob   = document.getElementById('ttMeterKnob');
+const elMeterLv     = document.getElementById('ttMeterLv');
+const elMeterFloors = document.getElementById('ttMeterFloors');
+const elMeterName   = document.getElementById('ttMeterName');
+
 
   // 昼夜判定（town側のis-nightがあればそれ優先でもOK）
   function isNightNow(){
@@ -179,6 +186,60 @@
     return results;
   }
 
+
+
+
+
+
+const LEVEL_NAMES = [
+  // 1-10
+  "タコ民の皿の上","たこ焼き1舟分","タコ民のひざ下","タコ民の腰あたり","タコ民の背丈",
+  "屋台の鉄板くらい","のれんの高さ","提灯の下","看板の端っこ","たこ焼きビル 1階分",
+  // 11-20
+  "たこ焼きビル 2階分","たこ焼きビル 3階分","商店街の屋根","電柱の途中","バス停の屋根",
+  "小さな時計塔くらい","タコ民の見上げる高さ","街灯のてっぺん","焼き台タワー級","焼き塔（やきとう）レベル",
+  // 21-30
+  "校舎の2階あたり","校舎の屋上","体育館の天井","倉庫の屋根越え","タコ民展望所",
+  "焼き塔・中層","見張り台レベル","古い水塔くらい","粉袋積みすぎゾーン","伝説の粉城（こじろ）入口",
+  // 31-40
+  "粉城 1層","粉城 2層","粉城 3層","タコ民が迷う高さ","焼き塔・上層",
+  "星見の丘","空に近い鉄板","雲に焦げ目がつく高さ","伝説の湯気帯","星見の塔・下層",
+  // 41-50
+  "湯の川の湯気圏","湯の川噴火口級","湯の川・源泉上空","温泉煙突レベル","夜景がきれいな高さ",
+  "タコ民夜景ポイント","港を見下ろす高さ","波止場見晴らし台","星見の塔・中層","星見の塔（※あの塔ではない）",
+  // 51-60
+  "タコ民が無言になる高さ","湯気が雲になる地点","空気がソース味","鉄板の重力限界","粉が舞う成層圏",
+  "焼き塔・危険域","たこ焼き圏外","星が近い","月に焦げ目が見える","伝説領域・入口",
+  // 61-70
+  "タコ民神話層","粉の神が見てる","焼かれし者の道","ソースが逆流する高さ","マヨが空を飛ぶ",
+  "星見の塔・上層","伝説の粉城・最上段","世界の裏鉄板","夜空に屋台が浮かぶ","焼き神の視界",
+  // 71-80
+  "タコ民王の玉座下","粉王国・空中回廊","焼き塔・神域","伝説の夜景ライン","星と同じ高さ",
+  "月に近づきすぎ","たこ焼き重力崩壊","世界が丸く見える","鉄板の向こう側","焼かれし王の領域",
+  // 81-90
+  "粉の時間停止層","タコ民が数えられない","焼きすぎ注意領域","現実とソースの境界","星が焦げる",
+  "マヨネーズ星雲","タコ民伝承圏外","記録不能高さ","誰も戻らない場所","神話の外側",
+  // 91-100
+  "伝説そのもの","焼かれし存在","タコ民が祈る高さ","粉と一体化","星見の塔・最果て",
+  "焼き神と目が合う","世界の天板","たこ焼き宇宙","記録に残らない領域","焼かれた伝説"
+];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
   // =========================================================
   // World setup
   // =========================================================
@@ -520,7 +581,7 @@ ctx.drawImage(img, -size/2, -size/2, size, size);
     const targetTop = Math.min(topY - CFG.CAM_PAD_TOP, bottom - viewH);
 
     const currentMinY = render.bounds.min.y;
-    const lerpY = currentMinY + (targetTop - currentMinY) * 0.12;
+    const lerpY = currentMinY + (targetTop - currentMinY) * 0.18;
 
     Render.lookAt(render, {
       min: { x: 0, y: lerpY },
@@ -554,6 +615,24 @@ ctx.drawImage(img, -size/2, -size/2, size, size);
     }
   }
 
+
+// =========================
+// 高さメーター（1個=1階 / Lv1-100）
+// =========================
+const floors = Math.max(1, (S.locked?.length || 0));        // 1階から
+const lv = Math.min(100, floors);                            // Lvは100で上限
+
+if (elMeterFloors) elMeterFloors.textContent = String(floors);
+if (elMeterLv)     elMeterLv.textContent     = `Lv ${lv}`;
+if (elMeterName)   elMeterName.textContent   = LEVEL_NAMES[lv - 1] || "焼かれた伝説";
+
+const pct = (lv / 100) * 100; // 0-100%
+if (elMeterFill) elMeterFill.style.height = `${pct}%`;
+if (elMeterKnob) elMeterKnob.style.bottom = `${pct}%`;
+
+
+
+  
   // =========================================================
   // Start / Input
   // =========================================================
