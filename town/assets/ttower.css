@@ -1,269 +1,190 @@
 :root{
-  --bg:#FFF0F5;
-  --panel:rgba(255,255,255,0.88);
-  --text:#5D4037;
-  --muted:#9FA8DA;
-  --accent:#FF69B4;
-  --accent2:#4ECDC4;
-  --shadow:rgba(147,112,219,0.30);
-  --font:'M PLUS Rounded 1c', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  --bg: #0b0f14;
+  --ink: #e9eef5;
+  --muted: rgba(233,238,245,.7);
+  --panel: rgba(0,0,0,.55);
+  --panel2: rgba(255,255,255,.08);
+  --meterW: 18px;
+  --safeTop: env(safe-area-inset-top);
+  --safeBottom: env(safe-area-inset-bottom);
 }
 
+*{ box-sizing:border-box; }
 html,body{
-  height:100%;
   margin:0;
-  background:var(--bg);
-  font-family:var(--font);
-  overflow:hidden;
-  touch-action:manipulation;
-  user-select:none;
-  -webkit-user-select:none;
-}
-
-.ttWrap{
-  position:fixed;
-  inset:0;
-  overflow:hidden;
-}
-
-canvas{
-  display:block;
+  padding:0;
   width:100%;
   height:100%;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+  background:var(--bg);
+  color:var(--ink);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  overflow:hidden;
+  touch-action: manipulation;
+  user-select:none;
 }
 
-/* 背景のゆめかわ泡 */
-.ttBg{
+.game-wrap{
   position:fixed;
   inset:0;
-  z-index:-1;
-  pointer-events:none;
-  background-image:
-    radial-gradient(circle at 12% 22%, rgba(255,255,255,0.45) 10%, transparent 10.5%),
-    radial-gradient(circle at 88% 78%, rgba(255,255,255,0.45) 10%, transparent 10.5%),
-    radial-gradient(circle at 30% 85%, rgba(255,255,255,0.35) 8%, transparent 8.5%);
 }
 
-/* HUD */
-.ttHud{
+canvas#world{
+  width:100%;
+  height:100%;
+  display:block;
+}
+
+/* ===== HUD ===== */
+.hud{
   position:fixed;
-  left:16px;
-  top:16px;
+  top:calc(10px + var(--safeTop));
+  left:10px;
+  right:10px;
   z-index:20;
-  display:flex;
-  gap:10px;
   pointer-events:none;
-}
-
-.ttHudBox{
-  min-width:64px;
-  padding:8px 14px;
-  border-radius:18px;
-  background:var(--panel);
-  border:3px solid #fff;
-  box-shadow:0 6px 0 var(--shadow);
   display:flex;
-  flex-direction:column;
-  align-items:center;
+  justify-content:space-between;
+  gap:12px;
 }
 
-.ttHudLabel{
-  font-size:11px;
-  font-weight:800;
-  color:var(--accent2);
-  margin-bottom:2px;
+.hud-left{
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  padding:10px 12px;
+  min-width: 210px;
+  backdrop-filter: blur(6px);
 }
 
-.ttHudBox b{
-  font-size:18px;
-  font-weight:900;
-  color:var(--accent);
+.hud-floor, .hud-lv{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
   line-height:1;
 }
 
-/* Toast */
-.ttToast{
-  position:fixed;
-  left:50%;
-  top:18%;
-  transform:translateX(-50%) scale(0.85);
-  z-index:90;
-  padding:12px 22px;
-  border-radius:999px;
-  background:var(--accent);
-  color:#fff;
-  font-weight:900;
-  opacity:0;
-  pointer-events:none;
-  box-shadow:0 10px 24px rgba(255,105,180,0.35);
-  transition: all .28s cubic-bezier(0.175,0.885,0.32,1.275);
+.label{
+  font-size:12px;
+  color:var(--muted);
+  letter-spacing:.08em;
 }
-.ttToast.show{
-  opacity:1;
-  transform:translateX(-50%) scale(1);
+.value{
+  font-size:22px;
+  font-weight:800;
+}
+.unit{
+  font-size:12px;
+  color:var(--muted);
+}
+.hud-name{
+  margin-top:8px;
+  font-size:12px;
+  color:rgba(233,238,245,.92);
+  line-height:1.25;
+  max-width: 260px;
 }
 
-/* Overlay */
-.ttOverlay{
+/* ===== Height Meter ===== */
+.meter{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+}
+
+.meter-track{
+  width:var(--meterW);
+  height: 170px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.14);
+  overflow:hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+.meter-fill{
+  width:100%;
+  height:0%;
+  background:rgba(233,238,245,.85);
+  border-radius:999px;
+  transform-origin: bottom;
+  transition: height .18s linear;
+}
+
+.meter-mark{
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:12px;
+  color:rgba(233,238,245,.9);
+}
+
+/* ===== Overlay Screens ===== */
+.overlay{
   position:fixed;
   inset:0;
   z-index:50;
-  display:flex;
+  background: radial-gradient(1200px 900px at 50% 30%, rgba(255,255,255,.10), rgba(0,0,0,.88));
+  display:none;
   align-items:center;
   justify-content:center;
-  background:rgba(255,240,245,0.86);
-  backdrop-filter: blur(4px);
-  pointer-events:auto;
+  padding: 24px 18px calc(24px + var(--safeBottom));
 }
 
-.ttCard{
-  width:min(360px, 90vw);
-  background:#fff;
-  border:4px solid var(--accent);
-  border-radius:30px;
-  padding:20px 18px 18px;
-  box-shadow:0 12px 0 var(--shadow);
+.overlay.is-visible{
+  display:flex;
+}
+
+.start-inner, .go-inner{
+  width:min(420px, 92vw);
   text-align:center;
-  animation: ttFloat 3s ease-in-out infinite;
 }
 
-@keyframes ttFloat{
-  0%,100%{ transform:translateY(0); }
-  50%{ transform:translateY(-10px); }
-}
-
-.ttTitle{
-  margin:0 0 8px;
-  font-size:28px;
-  font-weight:900;
-  color:var(--accent);
-  text-shadow:2px 2px 0 #fff, 4px 4px 0 var(--shadow);
-}
-
-.ttSub{
-  margin:0 0 12px;
-  color:var(--muted);
-  font-size:14px;
-  font-weight:800;
-}
-
-.ttStartBtn{
-  appearance:none;
-  border:none;
-  background:transparent;
-  padding:0;
-  margin:10px auto 10px;
-  cursor:pointer;
-  touch-action:manipulation;
-  position:relative;
-  border-radius:22px;
-}
-.ttStartBtn:active{
-  transform:translateY(3px);
-}
-
-.ttStartImg{
-  display:block;
-  width:min(280px, 76vw);
+.start-img{
+  width:min(320px, 78vw);
   height:auto;
-  border-radius:22px;
-  border:4px solid var(--accent2);
-  box-shadow:0 10px 0 var(--shadow);
+  image-rendering: pixelated;
+  filter: drop-shadow(0 16px 30px rgba(0,0,0,.45));
 }
 
-.ttTapBadge{
-  position:absolute;
-  left:50%;
-  bottom:10px;
-  transform:translateX(-50%);
-  padding:6px 12px;
-  border-radius:999px;
-  background:rgba(255,105,180,0.92);
-  color:#fff;
+.start-hint{
+  margin-top:14px;
+  font-weight:800;
+  letter-spacing:.14em;
+  color:rgba(233,238,245,.9);
+  font-size:14px;
+}
+
+.go-title{
+  font-size:34px;
   font-weight:900;
-  font-size:13px;
-  letter-spacing:1px;
-  box-shadow:0 6px 0 rgba(216,27,96,0.55);
+  letter-spacing:.06em;
 }
-
-.ttTiny{
+.go-sub{
+  margin-top:8px;
+  color:rgba(233,238,245,.85);
+  font-weight:800;
+  letter-spacing:.12em;
+  font-size:12px;
+}
+.go-score{
+  margin-top:14px;
+  font-size:22px;
+  font-weight:900;
+}
+.go-reason{
   margin-top:10px;
-  color:var(--muted);
-  font-size:11px;
-  line-height:1.45;
+  font-size:12px;
+  color:rgba(233,238,245,.8);
+  line-height:1.35;
+  padding:10px 12px;
+  border-radius:14px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
 }
 
-
-/* =========================
-   高さメーター（右側）
-========================= */
-.ttMeter{
-  position: fixed;
-  right: 14px;
-  top: 86px;
-  z-index: 25;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  pointer-events: none;
+@media (max-height: 700px){
+  .meter-track{ height:140px; }
+  .hud-left{ min-width: 190px; }
 }
-
-.ttMeterTrack{
-  position: relative;
-  width: 14px;
-  height: min(62vh, 520px);
-  border-radius: 999px;
-  background: rgba(255,255,255,0.75);
-  border: 3px solid #fff;
-  box-shadow: 0 6px 0 var(--shadow);
-  overflow: hidden;
-}
-
-.ttMeterFill{
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 0%;
-  background: linear-gradient(180deg, var(--accent2), var(--accent));
-}
-
-.ttMeterKnob{
-  position: absolute;
-  left: 50%;
-  bottom: 0%;
-  transform: translate(-50%, 50%);
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  border: 3px solid var(--accent);
-  box-shadow: 0 6px 0 rgba(216,27,96,0.35);
-}
-
-.ttMeterText{
-  width: 160px;
-  background: rgba(255,255,255,0.85);
-  border: 3px solid #fff;
-  border-radius: 16px;
-  padding: 10px 10px;
-  box-shadow: 0 6px 0 var(--shadow);
-}
-
-.ttMeterLv{
-  font-weight: 900;
-  color: var(--accent);
-  font-size: 13px;
-  line-height: 1.2;
-  margin-bottom: 6px;
-}
-
-.ttMeterName{
-  font-weight: 800;
-  color: var(--text);
-  font-size: 12px;
-  line-height: 1.35;
-}
-
