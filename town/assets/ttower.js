@@ -1,21 +1,18 @@
 (() => {
   'use strict';
 
-  // =========================
-  // CONFIG（必要ならここだけ変更）
-  // =========================
-  const CFG = {
-    // スタート画像（たこ焼きタワー画像）
-    START_IMG: './assets/ttower_start.png',
+const CFG = {
+  START_IMG_DAY:  'https://ul.h3z.jp/QJX6Wqrs.png',
+  START_IMG_NIGHT:'https://ul.h3z.jp/Rbm88XCj.png',
 
     // 10種たこ焼き画像（定番：常に出る）
     TAKO_IMGS: [
-      './assets/tako_01_sauce.png',
-      './assets/tako_02_spicy.png',
-      './assets/tako_03_plain.png',
-      './assets/tako_04_mentai.png',
-      './assets/tako_05_agedama_karashi.png',
-      './assets/tako_06_negi_miso.png',
+      'https://ul.h3z.jp/gDi9QPz6.png',
+      'https://ul.h3z.jp/j17HHdHp.png',
+      'https://ul.h3z.jp/2aMjMOS1.png',
+      'https://ul.h3z.jp/rZUWtrIU.png',
+      'https://ul.h3z.jp/0MMuzDin.png',
+      'https://ul.h3z.jp/XBqIjQot.png',
       './assets/tako_07_cheese_mayo.png',
       './assets/tako_08_salt_mayo_pepper.png',
       './assets/tako_09_pizza.png',
@@ -49,9 +46,20 @@
   const elScore  = document.getElementById('ttScore');
   const elBest   = document.getElementById('ttBest');
 
-  // Start画像の差し替え（念のため）
-  if (startImg) startImg.src = CFG.START_IMG;
+function isNightNow(){
+  const h = new Date().getHours();
+  return (h >= 18 || h < 6);
+}
 
+if (startImg){
+  startImg.src = isNightNow() ? CFG.START_IMG_NIGHT : CFG.START_IMG_DAY;
+}
+
+
+
+
+
+  
   // =========================
   // State
   // =========================
