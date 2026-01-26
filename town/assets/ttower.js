@@ -13,10 +13,10 @@ const CFG = {
       'https://ul.h3z.jp/rZUWtrIU.png',
       'https://ul.h3z.jp/0MMuzDin.png',
       'https://ul.h3z.jp/XBqIjQot.png',
-      './assets/tako_07_cheese_mayo.png',
-      './assets/tako_08_salt_mayo_pepper.png',
-      './assets/tako_09_pizza.png',
-      './assets/tako_10_donut.png',
+      'https://ul.h3z.jp/kbWxJSyI.png',
+      'https://ul.h3z.jp/G7hIQKGj.png',
+      'https://ul.h3z.jp/v4tCnB7g.png',
+      'https://ul.h3z.jp/he8DdILQ.png',
     ],
 
     // 物理・テンポ
