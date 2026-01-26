@@ -5,68 +5,67 @@
   // CONFIG
   // =========================================================
   const CFG = {
-    // スタート画像（townのタワー）
     START_IMG_DAY:  'https://ul.h3z.jp/QJX6Wqrs.png',
     START_IMG_NIGHT:'https://ul.h3z.jp/Rbm88XCj.png',
 
-    // 定番10種（ここはあなたのURL/ローカル混在でOK）
     TAKO_IMGS: [
-      'https://ul.h3z.jp/gDi9QPz6.png', // ソース
-      'https://ul.h3z.jp/j17HHdHp.png', // 辛口（夜画像を流用してもOK）
-      'https://ul.h3z.jp/2aMjMOS1.png', // 素焼き
-      'https://ul.h3z.jp/rZUWtrIU.png', // 明太マヨ
-      'https://ul.h3z.jp/0MMuzDin.png', // ぶっかけ揚げ玉からしマヨ
-      'https://ul.h3z.jp/XBqIjQot.png', // ネギ味噌
-      './assets/tako_07_cheese_mayo.png',         // チーズソースマヨ
-      './assets/tako_08_salt_mayo_pepper.png',    // 塩マヨ黒胡椒
-      './assets/tako_09_pizza.png',               // ピザ風
-      './assets/tako_10_donut.png',               // ドーナツ風
+      'https://ul.h3z.jp/gDi9QPz6.png',
+      'https://ul.h3z.jp/j17HHdHp.png',
+      'https://ul.h3z.jp/2aMjMOS1.png',
+      'https://ul.h3z.jp/rZUWtrIU.png',
+      'https://ul.h3z.jp/0MMuzDin.png',
+      'https://ul.h3z.jp/XBqIjQot.png',
+      './assets/tako_07_cheese_mayo.png',
+      './assets/tako_08_salt_mayo_pepper.png',
+      './assets/tako_09_pizza.png',
+      './assets/tako_10_donut.png',
     ],
 
-    // 物理
-    GRAVITY: 1.15,
+    // physics
+    GRAVITY: 1.1,
 
-    // 落下テンポ
+    // pacing
     DROP_COOLDOWN_MS: 220,
-    NEXT_SPAWN_DELAY_MS: 380,
+    NEXT_SPAWN_DELAY_MS: 420,
 
-    // 上で左右に動く（ここが今回の肝）
-    MOVE_AMPLITUDE: 140, // 左右の振れ幅(px)
-    MOVE_SPEED: 2.2,     // 左右移動の速さ（大きいほど速い）
+    // moving (pre-drop)
+    MOVE_AMPLITUDE: 150,
+    MOVE_SPEED: 2.0,
 
-    // カメラ
-    CAM_PAD_TOP: 150,
-    CAM_PAD_BOTTOM: 260,
+    // camera
+    CAM_PAD_TOP: 180,
+    CAM_PAD_BOTTOM: 240,
+    CAMERA_LERP: 0.22, // 追随速度（大きいほど追う）
 
-    // ゲームオーバー（落下判定）
-    FALL_LINE: 260,
-    FALLEN_COUNT_GAMEOVER: 2,
+    // gameover
+    FALL_LINE: 200,            // 床よりこれだけ下に落ちたらアウト判定
+    FALLEN_COUNT_GAMEOVER: 1,  // 1個落ちたら終了（緊張感）
 
-    // 横転がり禁止の強さ（強いほど「絶対動かない」）
-    LOCK_X_STRENGTH: 1.0, // 1.0=完全固定（推奨）
+    // anti-rolling (NOT zero) ：横滑りだけ少し抑える
+    X_DAMP: 0.86,              // 0.0に近いほど横止まり。0.86くらいが自然
+    ANGULAR_DAMP: 0.98         // 回転は止めすぎない（1.0で減衰なし）
   };
 
   // =========================================================
   // DOM
   // =========================================================
-  const wrap = document.getElementById('ttWrap');
+  const wrap    = document.getElementById('ttWrap');
   const overlay = document.getElementById('ttOverlay');
-  const startBtn = document.getElementById('ttStartImageBtn');
-  const startImg = document.getElementById('ttStartImage');
-  const toast = document.getElementById('ttToast');
+  const startBtn= document.getElementById('ttStartImageBtn');
+  const startImg= document.getElementById('ttStartImage');
+  const toast   = document.getElementById('ttToast');
 
-  const elHeight = document.getElementById('ttHeight');
-  const elScore  = document.getElementById('ttScore');
-  const elBest   = document.getElementById('ttBest');
-  
+  const elHeight= document.getElementById('ttHeight');
+  const elScore = document.getElementById('ttScore');
+  const elBest  = document.getElementById('ttBest');
+
+  // （メーターを付けるならHTMLにこれらのIDが必要）
   const elMeterFill   = document.getElementById('ttMeterFill');
-const elMeterKnob   = document.getElementById('ttMeterKnob');
-const elMeterLv     = document.getElementById('ttMeterLv');
-const elMeterFloors = document.getElementById('ttMeterFloors');
-const elMeterName   = document.getElementById('ttMeterName');
+  const elMeterKnob   = document.getElementById('ttMeterKnob');
+  const elMeterLv     = document.getElementById('ttMeterLv');
+  const elMeterFloors = document.getElementById('ttMeterFloors');
+  const elMeterName   = document.getElementById('ttMeterName');
 
-
-  // 昼夜判定（town側のis-nightがあればそれ優先でもOK）
   function isNightNow(){
     const h = new Date().getHours();
     return (h >= 18 || h < 6);
@@ -76,34 +75,38 @@ const elMeterName   = document.getElementById('ttMeterName');
   }
 
   // =========================================================
+  // Level names (1-100) ※短縮版：未定義なら表示だけスキップ
+  // =========================================================
+  const LEVEL_NAMES = (typeof window.LEVEL_NAMES_OVERRIDE !== 'undefined')
+    ? window.LEVEL_NAMES_OVERRIDE
+    : null;
+
+  // =========================================================
   // State
   // =========================================================
   const S = {
     playing: false,
     gameOver: false,
 
-    // 現在の「動いている1個」
     current: null,
     canDrop: false,
     lastDropAt: 0,
 
-    // 落としたもの（X固定の対象）
-    locked: [],
+    // placed count (1個=1階)
+    floors: 0,
 
-    // world
     floorY: 0,
     worldWidth: 0,
     worldHeight: 0,
     spawnX: 0,
     spawnY: 0,
 
-    // score
     height: 0,
     score: 0,
     best: Number(localStorage.getItem('takoyakiTowerBest') || 0),
 
-    // images
     images: [],
+    cameraY: null, // smoothing
   };
   if (elBest) elBest.textContent = String(S.best);
 
@@ -127,7 +130,6 @@ const elMeterName   = document.getElementById('ttMeterName');
     }
   });
 
-  // ドットをくっきり
   render.canvas.style.imageRendering = 'pixelated';
   render.canvas.style.imageRendering = 'crisp-edges';
   render.canvas.style.touchAction = 'manipulation';
@@ -137,7 +139,7 @@ const elMeterName   = document.getElementById('ttMeterName');
   // =========================================================
   // Utils
   // =========================================================
-  const rand = (min, max) => Math.random() * (max - min) + min;
+  const rand  = (min, max) => Math.random() * (max - min) + min;
   const randi = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
   function showToast(msg){
@@ -148,7 +150,6 @@ const elMeterName   = document.getElementById('ttMeterName');
   }
 
   function makeFallbackImage(){
-    // 読めない画像があってもゲームが止まらないようにするダミー
     const c = document.createElement('canvas');
     c.width = 64; c.height = 64;
     const ctx = c.getContext('2d');
@@ -156,9 +157,7 @@ const elMeterName   = document.getElementById('ttMeterName');
     ctx.fillStyle = '#FF69B4';
     ctx.fillRect(0, 0, 64, 64);
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(8, 8, 48, 48);
-    ctx.fillStyle = '#4ECDC4';
-    ctx.fillRect(16, 16, 32, 32);
+    ctx.fillRect(10, 10, 44, 44);
     const img = new Image();
     img.src = c.toDataURL();
     return img;
@@ -166,80 +165,21 @@ const elMeterName   = document.getElementById('ttMeterName');
 
   async function loadImagesSafe(srcList){
     const fallback = makeFallbackImage();
-    const results = [];
+    const out = [];
     for (const src of srcList){
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = src;
-
       try{
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-        results.push(img);
+        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+        out.push(img);
       }catch{
-        // 失敗しても止めない
-        results.push(fallback);
+        out.push(fallback);
       }
     }
-    return results;
+    return out;
   }
 
-
-
-
-
-
-const LEVEL_NAMES = [
-  // 1-10
-  "タコ民の皿の上","たこ焼き1舟分","タコ民のひざ下","タコ民の腰あたり","タコ民の背丈",
-  "屋台の鉄板くらい","のれんの高さ","提灯の下","看板の端っこ","たこ焼きビル 1階分",
-  // 11-20
-  "たこ焼きビル 2階分","たこ焼きビル 3階分","商店街の屋根","電柱の途中","バス停の屋根",
-  "小さな時計塔くらい","タコ民の見上げる高さ","街灯のてっぺん","焼き台タワー級","焼き塔（やきとう）レベル",
-  // 21-30
-  "校舎の2階あたり","校舎の屋上","体育館の天井","倉庫の屋根越え","タコ民展望所",
-  "焼き塔・中層","見張り台レベル","古い水塔くらい","粉袋積みすぎゾーン","伝説の粉城（こじろ）入口",
-  // 31-40
-  "粉城 1層","粉城 2層","粉城 3層","タコ民が迷う高さ","焼き塔・上層",
-  "星見の丘","空に近い鉄板","雲に焦げ目がつく高さ","伝説の湯気帯","星見の塔・下層",
-  // 41-50
-  "湯の川の湯気圏","湯の川噴火口級","湯の川・源泉上空","温泉煙突レベル","夜景がきれいな高さ",
-  "タコ民夜景ポイント","港を見下ろす高さ","波止場見晴らし台","星見の塔・中層","星見の塔（※あの塔ではない）",
-  // 51-60
-  "タコ民が無言になる高さ","湯気が雲になる地点","空気がソース味","鉄板の重力限界","粉が舞う成層圏",
-  "焼き塔・危険域","たこ焼き圏外","星が近い","月に焦げ目が見える","伝説領域・入口",
-  // 61-70
-  "タコ民神話層","粉の神が見てる","焼かれし者の道","ソースが逆流する高さ","マヨが空を飛ぶ",
-  "星見の塔・上層","伝説の粉城・最上段","世界の裏鉄板","夜空に屋台が浮かぶ","焼き神の視界",
-  // 71-80
-  "タコ民王の玉座下","粉王国・空中回廊","焼き塔・神域","伝説の夜景ライン","星と同じ高さ",
-  "月に近づきすぎ","たこ焼き重力崩壊","世界が丸く見える","鉄板の向こう側","焼かれし王の領域",
-  // 81-90
-  "粉の時間停止層","タコ民が数えられない","焼きすぎ注意領域","現実とソースの境界","星が焦げる",
-  "マヨネーズ星雲","タコ民伝承圏外","記録不能高さ","誰も戻らない場所","神話の外側",
-  // 91-100
-  "伝説そのもの","焼かれし存在","タコ民が祈る高さ","粉と一体化","星見の塔・最果て",
-  "焼き神と目が合う","世界の天板","たこ焼き宇宙","記録に残らない領域","焼かれた伝説"
-];
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
   // =========================================================
   // World setup
   // =========================================================
@@ -254,19 +194,13 @@ const LEVEL_NAMES = [
     S.floorY = S.worldHeight - 110;
 
     const floor = Bodies.rectangle(
-      S.worldWidth / 2,
-      S.floorY + 45,
-      S.worldWidth + 600,
-      90,
-      { isStatic: true, label: 'floor', render:{ visible:false } }
+      S.worldWidth/2, S.floorY + 45,
+      S.worldWidth + 600, 90,
+      { isStatic:true, label:'floor', render:{visible:false} }
     );
 
-    const wallL = Bodies.rectangle(-140, S.floorY - 9000, 300, 18000, {
-      isStatic: true, render:{ visible:false }
-    });
-    const wallR = Bodies.rectangle(S.worldWidth + 140, S.floorY - 9000, 300, 18000, {
-      isStatic: true, render:{ visible:false }
-    });
+    const wallL = Bodies.rectangle(-140, S.floorY - 9000, 300, 18000, { isStatic:true, render:{visible:false} });
+    const wallR = Bodies.rectangle(S.worldWidth + 140, S.floorY - 9000, 300, 18000, { isStatic:true, render:{visible:false} });
 
     Composite.add(engine.world, [floor, wallL, wallR]);
 
@@ -275,14 +209,16 @@ const LEVEL_NAMES = [
 
     S.height = 0;
     S.score = 0;
+    S.floors = 0;
 
     S.current = null;
     S.canDrop = false;
-    S.locked = [];
     S.gameOver = false;
 
+    S.cameraY = null;
+
     if (elHeight) elHeight.textContent = '0';
-    if (elScore)  elScore.textContent = '0';
+    if (elScore)  elScore.textContent  = '0';
 
     Render.lookAt(render, {
       min: { x: 0, y: S.floorY - S.worldHeight },
@@ -291,26 +227,19 @@ const LEVEL_NAMES = [
   }
 
   // =========================================================
-  // Bodies (当たり判定の形だけ変える)
-  // 見た目は画像。転がりを止めるために回転を抑える設定を入れる。
+  // Bodies (balance-friendly)
+  // 重要：回転OK（倒れる） / 横だけ少し抑える
   // =========================================================
   function baseProps(){
     return {
       restitution: 0.0,
-      friction: 1.0,
-      frictionStatic: 1.0,
+      friction: 0.9,
+      frictionStatic: 0.95,
       density: 0.0022,
-      frictionAir: 0.03,
-      render: { visible: false },
+      frictionAir: 0.012,
+      render: { visible:false },
       label: 'takoyaki'
     };
-  }
-
-  function lockNoRoll(body){
-    // 回転しない（転がりの根本を消す）
-    Body.setInertia(body, Infinity);
-    Body.setAngularVelocity(body, 0);
-    Body.setAngle(body, 0);
   }
 
   function makeBodyByIndex(idx, x, y){
@@ -318,90 +247,39 @@ const LEVEL_NAMES = [
     const s = rand(0.92, 1.08);
     let body;
 
-    // 10種：当たり判定の形を適当に散らす（バランスゲーム用）
     switch(idx){
-      case 0: { // ソース：丸
-        const r = 30*s;
-        body = Bodies.circle(x, y, r, p);
-        body._drawW = r*2; body._drawH = r*2;
-        break;
-      }
-      case 1: { // 辛口：縦長（難しめ）
-        const w = 42*s, h = 78*s;
-        body = Bodies.rectangle(x, y, w, h, { ...p, chamfer:{ radius: 16*s } });
-        body._drawW = w; body._drawH = h;
-        break;
-      }
-      case 2: { // 素焼き：小さめ丸（安定）
-        const r = 28*s;
-        body = Bodies.circle(x, y, r, p);
-        body._drawW = r*2; body._drawH = r*2;
-        break;
-      }
-      case 3: { // 明太：横長
-        const w = 74*s, h = 40*s;
-        body = Bodies.rectangle(x, y, w, h, { ...p, chamfer:{ radius: 16*s } });
-        body._drawW = w; body._drawH = h;
-        break;
-      }
-      case 4: { // 揚げ玉：多角形
-        const sides = 7, r = 32*s;
-        body = Bodies.polygon(x, y, sides, r, p);
-        body._drawW = r*2; body._drawH = r*2;
-        break;
-      }
-      case 5: { // ネギ味噌：複合（片寄り）
-        const a = Bodies.circle(x, y, 26*s, p);
-        const b = Bodies.circle(x + 12*s, y - 10*s, 18*s, p);
+      case 0: { const r = 30*s; body = Bodies.circle(x,y,r,p); body._spriteSize = 64; break; }
+      case 1: { const w=40*s,h=78*s; body = Bodies.rectangle(x,y,w,h,{...p,chamfer:{radius:14*s}}); body._spriteSize = 66; break; }
+      case 2: { const r = 28*s; body = Bodies.circle(x,y,r,p); body._spriteSize = 60; break; }
+      case 3: { const w=74*s,h=40*s; body = Bodies.rectangle(x,y,w,h,{...p,chamfer:{radius:14*s}}); body._spriteSize = 66; break; }
+      case 4: { const sides=7,r=32*s; body = Bodies.polygon(x,y,sides,r,p); Body.rotate(body, rand(-0.6,0.6)); body._spriteSize=66; break; }
+      case 5: { // ネギ味噌：偏り複合（倒れやすい）
+        const a = Bodies.circle(x,y,26*s,p);
+        const b = Bodies.circle(x+12*s,y-10*s,18*s,p);
         body = Body.create({ parts:[a,b] });
-        body.label = 'takoyaki';
-        body.render.visible = false;
-        body.frictionAir = 0.03;
-        body._drawW = 76*s; body._drawH = 66*s;
+        body.label='takoyaki'; body.render.visible=false;
+        body.frictionAir = 0.012;
+        body._spriteSize = 70;
         break;
       }
-      case 6: { // チーズ：大きめ丸
-        const r = 34*s;
-        body = Bodies.circle(x, y, r, { ...p, density: 0.0026 });
-        body._drawW = r*2; body._drawH = r*2;
-        break;
-      }
-      case 7: { // 塩マヨ胡椒：5角
-        const sides = 5, r = 32*s;
-        body = Bodies.polygon(x, y, sides, r, p);
-        body._drawW = r*2; body._drawH = r*2;
-        break;
-      }
-      case 8: { // ピザ：台形っぽい複合
-        const a = Bodies.rectangle(x, y, 62*s, 40*s, { ...p, chamfer:{ radius: 14*s } });
-        const b = Bodies.rectangle(x, y - 18*s, 44*s, 24*s, { ...p, chamfer:{ radius: 10*s }, density: 0.0025 });
+      case 6: { const r=34*s; body = Bodies.circle(x,y,r,{...p,density:0.0026}); body._spriteSize=72; break; }
+      case 7: { const sides=5,r=32*s; body = Bodies.polygon(x,y,sides,r,p); Body.rotate(body, rand(-0.6,0.6)); body._spriteSize=66; break; }
+      case 8: { // ピザ：上重心複合（難しい）
+        const a = Bodies.rectangle(x,y,62*s,40*s,{...p,chamfer:{radius:12*s}});
+        const b = Bodies.rectangle(x,y-18*s,44*s,24*s,{...p,chamfer:{radius:10*s},density:0.0025});
         body = Body.create({ parts:[a,b] });
-        body.label = 'takoyaki';
-        body.render.visible = false;
-        body.frictionAir = 0.03;
-        body._drawW = 82*s; body._drawH = 78*s;
+        body.label='takoyaki'; body.render.visible=false;
+        body.frictionAir = 0.012;
+        body._spriteSize = 74;
         break;
       }
-      case 9: { // ドーナツ：丸（見た目は穴だが当たり判定は丸でOK）
-        const r = 30*s;
-        body = Bodies.circle(x, y, r, p);
-        body._drawW = r*2; body._drawH = r*2;
-        break;
-      }
-      default: {
-        const r = 30*s;
-        body = Bodies.circle(x, y, r, p);
-        body._drawW = r*2; body._drawH = r*2;
-      }
+      case 9: { const r=30*s; body = Bodies.circle(x,y,r,p); body._spriteSize=66; break; }
+      default:{ const r=30*s; body = Bodies.circle(x,y,r,p); body._spriteSize=64; }
     }
 
-    // 見た目
     body.spriteIndex = idx;
 
-    // 転がり防止（回転しない）
-    lockNoRoll(body);
-
-    // 落下前の左右移動フラグ
+    // 落下前移動
     body._moving = true;
     body._spawnTime = performance.now();
 
@@ -412,19 +290,13 @@ const LEVEL_NAMES = [
     const idx = randi(0, 9);
     const body = makeBodyByIndex(idx, S.spawnX, S.spawnY);
 
-    // 最初は「空中待機」なので速度ゼロ
     Body.setVelocity(body, { x: 0, y: 0 });
-    Body.setAngularVelocity(body, 0);
-
     Composite.add(engine.world, body);
 
     S.current = body;
     S.canDrop = true;
   }
 
-  // =========================================================
-  // 左右移動（落下前の1個だけ）
-  // =========================================================
   function updateMovingCurrent(){
     if (!S.playing || S.gameOver) return;
     const b = S.current;
@@ -434,15 +306,11 @@ const LEVEL_NAMES = [
     const x = S.spawnX + Math.sin(t * CFG.MOVE_SPEED) * CFG.MOVE_AMPLITUDE;
     const y = S.spawnY;
 
+    // 落下前は「位置を強制」して左右移動
     Body.setPosition(b, { x, y });
     Body.setVelocity(b, { x: 0, y: 0 });
-    Body.setAngularVelocity(b, 0);
-    Body.setAngle(b, 0);
   }
 
-  // =========================================================
-  // 落下（タップ）
-  // =========================================================
   function dropCurrent(){
     if (!S.playing || S.gameOver) return;
     if (!S.current || !S.canDrop) return;
@@ -452,78 +320,49 @@ const LEVEL_NAMES = [
     S.lastDropAt = now;
 
     const b = S.current;
-
-    // 左右移動停止
     b._moving = false;
 
-    // 「落とした場所から動かない」ためのロック（X固定）
-    b._lockX = b.position.x; // 落とした瞬間のXを固定
-    b._locked = true;
+    // 落下開始（真下）
+    Body.setVelocity(b, { x: 0, y: 0.8 });
 
-    // 落下開始
-    Body.setVelocity(b, { x: 0, y: 0.6 });
+    // 階数（1個=1階）
+    S.floors += 1;
 
-    // 次の準備
     S.canDrop = false;
     S.current = null;
-
-    // ロック対象に追加
-    S.locked.push(b);
 
     setTimeout(() => {
       if (!S.playing || S.gameOver) return;
       spawnTakoyaki();
-      // canDrop は spawnTakoyaki 内で true
     }, CFG.NEXT_SPAWN_DELAY_MS);
   }
 
-  // =========================================================
-  // 落下後の「横移動禁止」最終ガード
-  //  - 横速度0
-  //  - X位置を固定（強制）
-  //  - 回転ゼロ
-  // =========================================================
-  function enforceLocks(){
-    if (!S.locked.length) return;
+  // 横転がりを少し抑える（完全停止しない＝ゲーム性残す）
+  function dampAllTakoyaki(){
+    const bodies = Composite.allBodies(engine.world).filter(b => !b.isStatic && b.label === 'takoyaki');
+    for (const b of bodies){
+      // 落下前の移動中は触らない
+      if (b._moving) continue;
 
-    // 軽量化：下に落ちすぎたやつは外す
-    S.locked = S.locked.filter(b => b && b.position && b.position.y < S.floorY + 1800);
-
-    for (const b of S.locked){
-      if (!b._locked) continue;
-
-      // 横速度ゼロ
+      // 横だけ減衰
       if (Math.abs(b.velocity.x) > 0.0001){
-        Body.setVelocity(b, { x: 0, y: b.velocity.y });
+        Body.setVelocity(b, { x: b.velocity.x * CFG.X_DAMP, y: b.velocity.y });
       }
-
-      // X固定（完全固定）
-      if (CFG.LOCK_X_STRENGTH >= 1.0){
-        if (b.position.x !== b._lockX){
-          Body.setPosition(b, { x: b._lockX, y: b.position.y });
-        }
-      } else {
-        // 少しだけ許す場合（今回は使わない）
-        const dx = b._lockX - b.position.x;
-        Body.setPosition(b, { x: b.position.x + dx * CFG.LOCK_X_STRENGTH, y: b.position.y });
-      }
-
-      // 回転ゼロ
+      // 回転も少しだけ減衰（止めない）
       if (Math.abs(b.angularVelocity) > 0.0001){
-        Body.setAngularVelocity(b, 0);
-        Body.setAngle(b, 0);
+        Body.setAngularVelocity(b, b.angularVelocity * CFG.ANGULAR_DAMP);
       }
     }
   }
 
   // =========================================================
-  // Draw（画像）
+  // Draw (images)
   // =========================================================
   Events.on(render, 'afterRender', () => {
     const ctx = render.context;
     ctx.imageSmoothingEnabled = false;
 
-    // floor（見た目）
+    // floor
     ctx.save();
     ctx.translate(0, S.floorY);
     ctx.fillStyle = '#9370DB';
@@ -548,16 +387,16 @@ const LEVEL_NAMES = [
       ctx.translate(b.position.x, b.position.y);
       ctx.rotate(b.angle);
 
-// ✅ 画像は常に正方形で描く（四角引き伸ばし事故を防ぐ）
-const size = b._spriteSize ?? 64;  // ←好きな基準値にできる
-ctx.drawImage(img, -size/2, -size/2, size, size);
+      // ★見た目は常に正方形（四角伸び事故を防ぐ）
+      const size = b._spriteSize ?? 64;
+      ctx.drawImage(img, -size/2, -size/2, size, size);
 
       ctx.restore();
     }
   });
 
   // =========================================================
-  // HUD / Camera / GameOver
+  // HUD / Camera / GameOver + Meter
   // =========================================================
   function updateHUDAndCamera(){
     if (!S.playing) return;
@@ -570,23 +409,39 @@ ctx.drawImage(img, -size/2, -size/2, size, size);
       if (y < topY) topY = y;
     }
 
+    // score
     S.height = Math.max(0, Math.floor((S.floorY - topY) / 10));
     S.score  = S.height + (bodies.length * 10);
 
     if (elHeight) elHeight.textContent = String(S.height);
     if (elScore)  elScore.textContent  = String(S.score);
 
+    // camera follow
     const viewH = render.options.height;
     const bottom = S.floorY + CFG.CAM_PAD_BOTTOM;
     const targetTop = Math.min(topY - CFG.CAM_PAD_TOP, bottom - viewH);
 
-    const currentMinY = render.bounds.min.y;
-    const lerpY = currentMinY + (targetTop - currentMinY) * 0.18;
+    if (S.cameraY === null) S.cameraY = render.bounds.min.y;
+    S.cameraY = S.cameraY + (targetTop - S.cameraY) * CFG.CAMERA_LERP;
 
     Render.lookAt(render, {
-      min: { x: 0, y: lerpY },
-      max: { x: S.worldWidth, y: lerpY + viewH }
+      min: { x: 0, y: S.cameraY },
+      max: { x: S.worldWidth, y: S.cameraY + viewH }
     });
+
+    // meter (optional)
+    const floors = Math.max(1, S.floors);
+    const lv = Math.min(100, floors);
+
+    if (elMeterFloors) elMeterFloors.textContent = String(floors);
+    if (elMeterLv) elMeterLv.textContent = `Lv ${lv}`;
+    if (elMeterName){
+      if (LEVEL_NAMES && LEVEL_NAMES[lv - 1]) elMeterName.textContent = LEVEL_NAMES[lv - 1];
+      else elMeterName.textContent = '高さメーター（Lv）';
+    }
+    const pct = (lv / 100) * 100;
+    if (elMeterFill) elMeterFill.style.height = `${pct}%`;
+    if (elMeterKnob) elMeterKnob.style.bottom = `${pct}%`;
   }
 
   function endGame(msg){
@@ -615,24 +470,6 @@ ctx.drawImage(img, -size/2, -size/2, size, size);
     }
   }
 
-
-// =========================
-// 高さメーター（1個=1階 / Lv1-100）
-// =========================
-const floors = Math.max(1, (S.locked?.length || 0));        // 1階から
-const lv = Math.min(100, floors);                            // Lvは100で上限
-
-if (elMeterFloors) elMeterFloors.textContent = String(floors);
-if (elMeterLv)     elMeterLv.textContent     = `Lv ${lv}`;
-if (elMeterName)   elMeterName.textContent   = LEVEL_NAMES[lv - 1] || "焼かれた伝説";
-
-const pct = (lv / 100) * 100; // 0-100%
-if (elMeterFill) elMeterFill.style.height = `${pct}%`;
-if (elMeterKnob) elMeterKnob.style.bottom = `${pct}%`;
-
-
-
-  
   // =========================================================
   // Start / Input
   // =========================================================
@@ -655,43 +492,33 @@ if (elMeterKnob) elMeterKnob.style.bottom = `${pct}%`;
   }
 
   function bindInputs(){
-    // スタート（画像タップ）
     startBtn.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault(); e.stopPropagation();
       startGame();
     }, { passive:false });
 
     startBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault(); e.stopPropagation();
       startGame();
     }, { passive:false });
 
-    // プレイ中：どこタップでも落下（1回で1個）
     document.addEventListener('pointerdown', (e) => {
       if (!S.playing || S.gameOver) return;
-      // スタート画像押しは無視（誤爆防止）
       if (e.target.closest('#ttStartImageBtn')) return;
       dropCurrent();
     }, { passive:true });
   }
 
   // =========================================================
-  // Main Loop
+  // Main loop
   // =========================================================
   Events.on(engine, 'afterUpdate', () => {
     if (!S.playing) return;
 
-    // ① 上の1個を左右移動
-    updateMovingCurrent();
-
-    // ② 落とした後の横移動禁止
-    enforceLocks();
-
-    // ③ HUD/Camera/判定
-    updateHUDAndCamera();
-    checkGameOver();
+    updateMovingCurrent();   // 上で左右移動
+    dampAllTakoyaki();       // 横転がり抑制（止めすぎない）
+    updateHUDAndCamera();    // 追随＆メーター
+    checkGameOver();         // 崩れたら終了
   });
 
   // =========================================================
@@ -701,7 +528,6 @@ if (elMeterKnob) elMeterKnob.style.bottom = `${pct}%`;
     setupWorld();
     bindInputs();
 
-    // 画像先読み（失敗しても止まらない）
     S.images = await loadImagesSafe(CFG.TAKO_IMGS);
 
     Render.run(render);
@@ -735,3 +561,4 @@ if (elMeterKnob) elMeterKnob.style.bottom = `${pct}%`;
   });
 
 })();
+
