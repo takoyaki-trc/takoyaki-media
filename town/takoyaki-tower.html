@@ -1,83 +1,70 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<meta name="screen-orientation" content="portrait">
-<title>たこ焼きタワー</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;800;900&display=swap" rel="stylesheet">
-
-<!-- ✅ town/assets に置く（あなたの指定どおり） -->
-<link rel="stylesheet" href="./assets/ttower.css?v=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="viewport-fit=cover,width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Takoyaki Tower</title>
+  <link rel="stylesheet" href="./ttower.css" />
 </head>
-
 <body>
-<!-- ✅ JSがこのIDを探すので名前は固定 -->
-<div id="ttWrap" class="ttWrap">
-  <div class="ttBg" aria-hidden="true"></div>
 
-  <!-- HUD -->
-  <div class="ttHud" aria-hidden="true">
-    <div class="ttHudBox">
-      <span class="ttHudLabel">高さ</span>
-      <b id="ttHeight">0</b>
-    </div>
-    <div class="ttHudBox">
-      <span class="ttHudLabel">スコア</span>
-      <b id="ttScore">0</b>
-    </div>
-    <div class="ttHudBox">
-      <span class="ttHudLabel">ベスト</span>
-      <b id="ttBest">0</b>
+  <!-- ===== Start Screen (tap the image) ===== -->
+  <div id="startScreen" class="overlay is-visible" aria-hidden="false">
+    <div class="start-inner">
+      <img
+        id="startBtnImg"
+        class="start-img"
+        src=""
+        data-day=""
+        data-night=""
+        alt="Takoyaki Tower"
+      />
+      <div class="start-hint">TAP TO START</div>
     </div>
   </div>
-<!-- ✅ 高さメーター（Lv1〜100） -->
-<div class="ttMeter" aria-hidden="true">
-  <div class="ttMeterTrack">
-    <div class="ttMeterFill" id="ttMeterFill"></div>
-    <div class="ttMeterKnob" id="ttMeterKnob"></div>
+
+  <!-- ===== Game Over Screen (tap anywhere) ===== -->
+  <div id="gameOverScreen" class="overlay" aria-hidden="true">
+    <div class="go-inner">
+      <div class="go-title">GAME OVER</div>
+      <div class="go-sub">TAP TO RESTART</div>
+      <div class="go-score" id="goScore">0F</div>
+      <div class="go-reason" id="goReason">—</div>
+    </div>
   </div>
 
-  <div class="ttMeterText">
-    <div class="ttMeterLv"><span id="ttMeterLv">Lv 1</span>（<span id="ttMeterFloors">1</span>階）</div>
-    <div class="ttMeterName" id="ttMeterName">タコ民の皿の上</div>
-  </div>
-</div>
+  <!-- ===== HUD ===== -->
+  <div id="hud" class="hud" aria-hidden="false">
+    <div class="hud-left">
+      <div class="hud-floor">
+        <span class="label">FLOOR</span>
+        <span id="floorNum" class="value">1</span>
+        <span class="unit">F</span>
+      </div>
+      <div class="hud-lv">
+        <span class="label">LV</span>
+        <span id="lvNum" class="value">1</span>
+      </div>
+      <div class="hud-name" id="lvName">たこ焼き台 1階分</div>
+    </div>
 
-
-
-  
-  <!-- Toast -->
-  <div class="ttToast" id="ttToast" aria-hidden="true">スタート！</div>
-
-  <!-- ✅ スタート画面（タワー画像をタップで開始） -->
-  <div class="ttOverlay" id="ttOverlay" aria-hidden="false">
-    <div class="ttCard" role="dialog" aria-modal="true">
-      <h1 class="ttTitle">たこ焼きタワー</h1>
-      <p class="ttSub">タワー画像をタップして開始！<br>プレイ中は画面タップで落下</p>
-
-      <!-- ★この画像ボタンをタップで開始 -->
-      <button id="ttStartImageBtn" class="ttStartBtn" type="button" aria-label="たこ焼きタワー画像をタップしてスタート">
-        <img id="ttStartImage" class="ttStartImg" src="https://ul.h3z.jp/QJX6Wqrs.png" alt="たこ焼きタワー（タップで開始）">
-        <span class="ttTapBadge">TAP!</span>
-      </button>
-
-      <div class="ttTiny">
-        ルール：落ちてくるたこ焼きをタイミングよく落として積み上げよう。<br>
-        崩れたらゲームオーバー。ベスト更新を目指してね。
+    <div class="meter">
+      <div class="meter-track">
+        <div id="meterFill" class="meter-fill"></div>
+      </div>
+      <div class="meter-mark">
+        <span id="meterText">1 / 100</span>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ✅ Matter.js（CDN） -->
-<script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
+  <!-- ===== Matter Canvas Mount ===== -->
+  <div id="gameWrap" class="game-wrap">
+    <canvas id="world"></canvas>
+  </div>
 
-<!-- ✅ town/assets に置くJS -->
-<script src="./assets/ttower.js?v=1"></script>
+  <!-- Matter.js CDN (no other frameworks) -->
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+  <script src="./ttower.js"></script>
 </body>
 </html>
