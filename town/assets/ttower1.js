@@ -476,90 +476,85 @@
   }
 
   // ---------- Matter setup ----------
-  function destroyWorld(){
-    if (render){
-      Render.stop(render);
-      if (render.canvas && render.canvas.parentNode){
-        render.canvas.parentNode.removeChild(render.canvas);
-      }
+function initWorld(){
+  destroyWorld();
+
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+
+  engine = Engine.create();
+  engine.gravity.y = 1;
+  engine.gravity.scale = 0.0011;
+
+  render = Render.create({
+    element: gameWrap,
+    engine: engine,
+    options: {
+      width: W,
+      height: H,
+      hasBounds: true,
+      wireframes: false,
+      background: "#0b0f14",
+      pixelRatio: window.devicePixelRatio || 1
     }
-    if (runner) Runner.stop(runner);
-    engine = render = runner = null;
-  }
+  });
 
-  function initWorld(){
-    destroyWorld();
+  runner = Runner.create();
 
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+  baseX = W / 2;
+  groundY = H - 60;
 
-    engine = Engine.create();
-    engine.gravity.y = 1;
-    engine.gravity.scale = 0.0011;
+  // ground + walls
+  const ground = Bodies.rectangle(W/2, groundY + 50, W + 1200, 140, {
+    isStatic: true,
+    label: "ground",
+    friction: 1.0,
+    render: { fillStyle: "rgba(255,255,255,.14)" } // ←見えるように
+  });
+  const leftWall  = Bodies.rectangle(-320, H/2, 640, H + 4000, { isStatic:true, label:"wall", render:{ visible:false }});
+  const rightWall = Bodies.rectangle(W+320, H/2, 640, H + 4000, { isStatic:true, label:"wall", render:{ visible:false }});
+  World.add(engine.world, [ground, leftWall, rightWall]);
 
-    render = Render.create({
-      element: gameWrap,
-      engine,
-      options: {
-        width: W,
-        height: H,
-        wireframes: false,
-        background: "#0b0f14",
-        pixelRatio: window.devicePixelRatio || 1
-      }
-    });
+  // base (static)
+  const baseCfg = TAKO_TYPES.find(t => t.key === "SAUCE");
+  baseBody = createTakoyakiBody(baseX, groundY - 10, baseCfg, 1.18);
+  Body.setStatic(baseBody, true);
+  baseBody.label = "base";
+  baseBody.plugin.counted = true;
+  World.add(engine.world, baseBody);
 
-    runner = Runner.create();
+  baseWidth = (baseBody.bounds.max.x - baseBody.bounds.min.x) * 0.92;
 
-    baseX = W/2;
-    groundY = H - 60;
+  // camera
+  bestTopY = baseBody.bounds.min.y;
+  cameraY = baseBody.position.y; // ←最初は土台中心を見る（重要）
 
-    // ground + walls (walls invisible; allow sideways wobble but keep in world)
-    const ground = Bodies.rectangle(W/2, groundY + 50, W + 1200, 140, {
-      isStatic: true,
-      label: "ground",
-      friction: 1.0,
-      render: { fillStyle: "rgba(255,255,255,.04)" }
-    });
+  // counters
+  floorCount = 1;
+  isGameOver = false;
+  gameRunning = true;
+  currentPreview = null;
+  currentDropped = null;
+  lastDroppedId = 0;
+  lastSpawnId = 0;
 
-    const leftWall  = Bodies.rectangle(-320, H/2, 640, H + 4000, { isStatic:true, label:"wall", render:{ visible:false }});
-    const rightWall = Bodies.rectangle(W+320, H/2, 640, H + 4000, { isStatic:true, label:"wall", render:{ visible:false }});
+  updateHUD();
 
-    World.add(engine.world, [ground, leftWall, rightWall]);
+  Render.run(render);
+  Runner.run(runner, engine);
 
-    // base (static, never moves)
-    const baseCfg = TAKO_TYPES.find(t=>t.key==="SAUCE");
-    baseBody = createTakoyakiBody(baseX, groundY - 10, baseCfg, 1.18);
-    Body.setStatic(baseBody, true);
-    baseBody.label = "base";
-    baseBody.plugin.counted = true; // treat as already counted
-    World.add(engine.world, baseBody);
+  // ✅ 初期表示を必ず「画面そのまま」に固定
+  render.bounds.min.x = 0;
+  render.bounds.min.y = 0;
+  render.bounds.max.x = W;
+  render.bounds.max.y = H;
 
-    baseWidth = (baseBody.bounds.max.x - baseBody.bounds.min.x) * 0.92;
+  Events.on(engine, "beforeUpdate", onBeforeUpdate);
+  Events.on(engine, "afterUpdate", onAfterUpdate);
 
-    // camera
-    bestTopY = baseBody.bounds.min.y;
-    cameraY = baseBody.position.y - 260;
+  spawnNextPreview();
+}
 
-    // counters
-    floorCount = 1;
-    isGameOver = false;
-    gameRunning = true;
-    currentPreview = null;
-    currentDropped = null;
-    lastDroppedId = 0;
-    lastSpawnId = 0; // reset ids (ok; plugin uses ++)
-
-    updateHUD();
-
-    Render.run(render);
-    Runner.run(runner, engine);
-
-    Events.on(engine, "beforeUpdate", onBeforeUpdate);
-    Events.on(engine, "afterUpdate", onAfterUpdate);
-
-    spawnNextPreview();
-  }
 
   // ---------- Spawn / Drop ----------
   function spawnNextPreview(){
