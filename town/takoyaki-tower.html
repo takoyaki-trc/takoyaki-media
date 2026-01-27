@@ -127,14 +127,15 @@
 </div>
 
 
+
 <script>
 (() => {
   /* =========================================================
-     ✅ タイミングタワー：敗因表示 + 結果コピー + 称号（たこ焼きトレカ風）
+     ✅ タイミングタワー：敗因表示 + 称号 + ミニタワー再現（縮小）
+     - 結果コピーは削除
+     - GAME OVER時：オーバーレイ上部に「作ったタワーの縮小再現」を表示
      - 高さバラバラでも上に進む（毎フレームカメラ追随）
      - レア効果：金焼き(甘判定) / 虹伝説(1回保険) / 激辛(高速)
-     - 進捗：FLOOR / METER
-     - GAME OVER時：敗因/称号/結果コピー（オーバーレイでバンッ）
      ========================================================= */
 
   // =========================
@@ -183,22 +184,18 @@
 
     grid: true,
 
-    // ✅ 進捗単位
+    // 進捗単位
     PROGRESS_MODE: "FLOOR", // "FLOOR" or "METER"
     METER_PER_STANDARD_BLOCK: 0.7,
     METER_DECIMALS: 1,
 
-    // ✅ カメラ
+    // カメラ
     CAMERA_ANCHOR_Y: 0.25,
     CAMERA_SMOOTH: 0.18,
     CAMERA_MIN: 0,
 
-    // ✅ 無限でも軽く
-    KEEP_BLOCKS: 90, // 0で無効
-
-    // ✅ 結果コピーのテンプレ（必要なら店名/URLを差し替え）
-    SHARE_HASHTAGS: "#たこ焼きトレカ #TakoyakiTower",
-    SHARE_URL: "", // 例: "https://takoyaki-trc.github.io/..."（空なら出さない）
+    // 無限でも軽く（描画用ブロックを間引く）
+    KEEP_BLOCKS: 120, // 0で無効（ただし無限で重くなる）
   };
 
   // =========================
@@ -295,8 +292,10 @@
     lastFailDetail: "",
     lastTitle: "",
     lastSubtitle: "",
-    lastLastBlockLabel: "", // 最後に置けたブロックの種類
-    lastUsedSpecials: [],   // 金/虹/激辛が出た記録（表示用）
+    lastLastBlockLabel: "",
+    lastUsedSpecials: [],
+    // ✅ タワー再現用スナップショット
+    towerSnapshot: null,
   };
 
   // =========================
@@ -324,40 +323,36 @@
   // 称号（たこ焼きトレカ風）
   // =========================
   function getTakoyakiTitle(progress){
-    // 進捗の“段階”を作る（FLOOR優先で刻みやすい）
     const p = (CONF.PROGRESS_MODE === "FLOOR") ? Math.floor(progress) : progress;
 
-    // たこ焼きトレカっぽい「称号」＋サブコピー
-    // ※好きに増やしてOK
     const table = (CONF.PROGRESS_MODE === "FLOOR")
       ? [
-          { min: 0,   title:"〘未投入〙",           sub:"鉄板に、置かれていない。" },
-          { min: 1,   title:"〘初焼き見習い〙",     sub:"丸くする前に、心が揺れる。" },
-          { min: 5,   title:"〘返しの小手先〙",     sub:"角度だけ上手い。まだ浅い。" },
-          { min: 10,  title:"〘湯気の観測者〙",     sub:"熱は見える。だが耐性はない。" },
-          { min: 15,  title:"〘焼き縮みの達人〙",   sub:"小さくなっても、諦めない。" },
-          { min: 20,  title:"〘鉄板の中級者〙",     sub:"焦げと会話できるようになった。" },
-          { min: 30,  title:"〘タコ民の評議員〙",   sub:"積むことは、街を守ること。" },
-          { min: 40,  title:"〘職人祭壇の候補者〙", sub:"祭壇が、君の手元を見ている。" },
-          { min: 50,  title:"〘金枠の焼き手〙",     sub:"PERFECTの匂いがする。" },
-          { min: 70,  title:"〘伝説の返し〙",       sub:"落ちないのではない。落とさない。" },
-          { min: 100, title:"〘焼かれた伝説〙",     sub:"君の塔が、カードになる。" },
-          { min: 130, title:"〘禁断の多段返し〙",   sub:"誰も真似できない速度域。" },
-          { min: 160, title:"〘鉄板の向こう側〙",   sub:"上限は、君が決める。" },
-          { min: 200, title:"〘神話級・丸の支配者〙",sub:"ここまで来ると、怖い。" },
+          { min: 0,   title:"〘未投入〙",             sub:"鉄板に、置かれていない。" },
+          { min: 1,   title:"〘初焼き見習い〙",       sub:"丸くする前に、心が揺れる。" },
+          { min: 5,   title:"〘返しの小手先〙",       sub:"角度だけ上手い。まだ浅い。" },
+          { min: 10,  title:"〘湯気の観測者〙",       sub:"熱は見える。だが耐性はない。" },
+          { min: 15,  title:"〘焼き縮みの達人〙",     sub:"小さくなっても、諦めない。" },
+          { min: 20,  title:"〘鉄板の中級者〙",       sub:"焦げと会話できるようになった。" },
+          { min: 30,  title:"〘タコ民の評議員〙",     sub:"積むことは、街を守ること。" },
+          { min: 40,  title:"〘職人祭壇の候補者〙",   sub:"祭壇が、君の手元を見ている。" },
+          { min: 50,  title:"〘金枠の焼き手〙",       sub:"PERFECTの匂いがする。" },
+          { min: 70,  title:"〘伝説の返し〙",         sub:"落ちないのではない。落とさない。" },
+          { min: 100, title:"〘焼かれた伝説〙",       sub:"君の塔が、カードになる。" },
+          { min: 130, title:"〘禁断の多段返し〙",     sub:"誰も真似できない速度域。" },
+          { min: 160, title:"〘鉄板の向こう側〙",     sub:"上限は、君が決める。" },
+          { min: 200, title:"〘神話級・丸の支配者〙", sub:"ここまで来ると、怖い。" },
         ]
       : [
-          { min: 0,    title:"〘未投入〙",           sub:"鉄板に、置かれていない。" },
-          { min: 1.0,  title:"〘初焼き見習い〙",     sub:"高さより、手が震える。" },
-          { min: 5.0,  title:"〘湯気の観測者〙",     sub:"熱は見える。だが耐性はない。" },
-          { min: 10.0, title:"〘鉄板の中級者〙",     sub:"焦げと会話できるようになった。" },
-          { min: 15.0, title:"〘職人祭壇の候補者〙", sub:"祭壇が、君の手元を見ている。" },
-          { min: 25.0, title:"〘焼かれた伝説〙",     sub:"君の塔が、カードになる。" },
-          { min: 35.0, title:"〘禁断の多段返し〙",   sub:"誰も真似できない速度域。" },
-          { min: 50.0, title:"〘神話級・丸の支配者〙",sub:"ここまで来ると、怖い。" },
+          { min: 0,    title:"〘未投入〙",             sub:"鉄板に、置かれていない。" },
+          { min: 1.0,  title:"〘初焼き見習い〙",       sub:"高さより、手が震える。" },
+          { min: 5.0,  title:"〘湯気の観測者〙",       sub:"熱は見える。だが耐性はない。" },
+          { min: 10.0, title:"〘鉄板の中級者〙",       sub:"焦げと会話できるようになった。" },
+          { min: 15.0, title:"〘職人祭壇の候補者〙",   sub:"祭壇が、君の手元を見ている。" },
+          { min: 25.0, title:"〘焼かれた伝説〙",       sub:"君の塔が、カードになる。" },
+          { min: 35.0, title:"〘禁断の多段返し〙",     sub:"誰も真似できない速度域。" },
+          { min: 50.0, title:"〘神話級・丸の支配者〙", sub:"ここまで来ると、怖い。" },
         ];
 
-    // 最大minを満たすものを選ぶ
     let pick = table[0];
     for (const row of table){
       if (p >= row.min) pick = row;
@@ -366,59 +361,7 @@
   }
 
   // =========================
-  // 結果コピー用（テキスト生成）
-  // =========================
-  function buildShareText(){
-    const title = S.lastTitle || "〘焼き結果〙";
-    const reached = formatProgress(S.lastRunProgress);
-    const best = formatProgress(S.best);
-    const reason = S.lastFailReason ? `敗因：${S.lastFailReason}` : "";
-    const detail = S.lastFailDetail ? `（${S.lastFailDetail}）` : "";
-    const lastBlock = S.lastLastBlockLabel ? `最後の焼き：${S.lastLastBlockLabel}` : "";
-
-    const specials = S.lastUsedSpecials.length ? `出現：${S.lastUsedSpecials.join(" / ")}` : "";
-    const url = CONF.SHARE_URL ? `\n${CONF.SHARE_URL}` : "";
-
-    const lines = [
-      "【たこ焼きタワー】",
-      `${title}`,
-      `到達：${reached} / BEST：${best}`,
-      (reason + detail).trim(),
-      lastBlock,
-      specials,
-      CONF.SHARE_HASHTAGS
-    ].filter(Boolean);
-
-    return lines.join("\n") + url;
-  }
-
-  async function copyToClipboard(text){
-    try{
-      if (navigator.clipboard && window.isSecureContext){
-        await navigator.clipboard.writeText(text);
-        return true;
-      }
-    }catch(e){}
-    // フォールバック
-    try{
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      ta.style.top = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      ta.setSelectionRange(0, ta.value.length);
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-      return ok;
-    }catch(e){}
-    return false;
-  }
-
-  // =========================
-  // オーバーレイ（ゲームオーバーの“バンっ”）
+  // オーバーレイ（結果表示：ミニタワー付き）
   // =========================
   let resultOverlay = null;
 
@@ -452,17 +395,45 @@
     // カード風パネル
     const card = document.createElement("div");
     card.style.position = "relative";
-    card.style.width = "min(92%, 420px)";
+    card.style.width = "min(92%, 440px)";
     card.style.borderRadius = "18px";
     card.style.border = "1px solid rgba(255,255,255,.18)";
     card.style.background = "linear-gradient(180deg, rgba(24,28,40,.95), rgba(12,14,20,.95))";
     card.style.boxShadow = "0 20px 60px rgba(0,0,0,.55)";
-    card.style.padding = "16px 14px";
+    card.style.padding = "14px 14px 16px";
     card.style.boxSizing = "border-box";
     card.style.transform = "translateY(6px) scale(.98)";
     card.style.opacity = "0";
     card.style.transition = "transform .18s ease, opacity .18s ease";
     box.appendChild(card);
+
+    // ✅ ミニタワー用キャンバス枠（最上部に配置）
+    const miniWrap = document.createElement("div");
+    miniWrap.style.borderRadius = "16px";
+    miniWrap.style.border = "1px solid rgba(255,255,255,.14)";
+    miniWrap.style.background = "rgba(255,255,255,.05)";
+    miniWrap.style.padding = "10px";
+    miniWrap.style.marginBottom = "12px";
+    card.appendChild(miniWrap);
+
+    const miniTitle = document.createElement("div");
+    miniTitle.style.fontWeight = "900";
+    miniTitle.style.fontSize = "12px";
+    miniTitle.style.opacity = ".8";
+    miniTitle.style.marginBottom = "6px";
+    miniTitle.textContent = "あなたのタワー（縮小再現）";
+    miniWrap.appendChild(miniTitle);
+
+    const miniCanvas = document.createElement("canvas");
+    miniCanvas.id = "resMiniCanvas";
+    miniCanvas.width = 360;
+    miniCanvas.height = 180;
+    miniCanvas.style.width = "100%";
+    miniCanvas.style.height = "auto";
+    miniCanvas.style.display = "block";
+    miniCanvas.style.imageRendering = "pixelated";
+    miniCanvas.style.borderRadius = "12px";
+    miniWrap.appendChild(miniCanvas);
 
     // タイトル
     const h1 = document.createElement("div");
@@ -484,7 +455,6 @@
 
     // 到達＆ベスト
     const stats = document.createElement("div");
-    stats.id = "resStats";
     stats.style.display = "grid";
     stats.style.gridTemplateColumns = "1fr 1fr";
     stats.style.gap = "10px";
@@ -528,25 +498,11 @@
     extra.style.marginBottom = "12px";
     card.appendChild(extra);
 
-    // ボタン列
+    // ボタン列（もう一回だけ）
     const row = document.createElement("div");
     row.style.display = "flex";
     row.style.gap = "10px";
     card.appendChild(row);
-
-    const copyBtn = document.createElement("button");
-    copyBtn.id = "resCopyBtn";
-    copyBtn.type = "button";
-    copyBtn.textContent = "結果をコピー";
-    copyBtn.style.flex = "1";
-    copyBtn.style.border = "0";
-    copyBtn.style.borderRadius = "14px";
-    copyBtn.style.padding = "14px 12px";
-    copyBtn.style.fontWeight = "900";
-    copyBtn.style.background = "#ffd34d";
-    copyBtn.style.color = "#111";
-    copyBtn.style.cursor = "pointer";
-    row.appendChild(copyBtn);
 
     const againBtn = document.createElement("button");
     againBtn.type = "button";
@@ -555,58 +511,38 @@
     againBtn.style.border = "0";
     againBtn.style.borderRadius = "14px";
     againBtn.style.padding = "14px 12px";
-    againBtn.style.fontWeight = "800";
-    againBtn.style.background = "#2a3147";
-    againBtn.style.color = "#fff";
+    againBtn.style.fontWeight = "900";
+    againBtn.style.background = "#ffd34d";
+    againBtn.style.color = "#111";
     againBtn.style.cursor = "pointer";
     row.appendChild(againBtn);
 
     // イベント
-    copyBtn.addEventListener("click", async () => {
-      const text = buildShareText();
-      const ok = await copyToClipboard(text);
-      showToast(ok ? "コピーした！" : "コピー失敗（手動で選択してね）");
-      // 失敗時のために、テキストも一瞬出す
-      if (!ok){
-        alert(text);
-      }
-    });
-
     againBtn.addEventListener("click", () => {
       hideResultOverlay();
       reset();
       start();
     });
 
-    // 背景クリックで閉じる（任意：消したければここを外す）
     bg.addEventListener("click", () => {
       hideResultOverlay();
     });
 
-    // panelがposition:relative前提だけど、無ければ足す
     const st = getComputedStyle(wrap);
     if (st.position === "static") wrap.style.position = "relative";
     wrap.appendChild(box);
 
-    resultOverlay = { box, card };
+    resultOverlay = { box, card, miniCanvas };
     return resultOverlay;
   }
 
   function showResultOverlay(){
     const o = ensureOverlay();
-    // 内容反映
-    const title = S.lastTitle || "〘焼き結果〙";
-    const sub = S.lastSubtitle || "";
-    const reached = formatProgress(S.lastRunProgress);
-    const best = formatProgress(S.best);
 
-    const specials = S.lastUsedSpecials.length ? `出現：${S.lastUsedSpecials.join(" / ")}` : "出現：なし";
-    const lastBlock = S.lastLastBlockLabel ? `最後の焼き：${S.lastLastBlockLabel}` : "最後の焼き：—";
-
-    document.getElementById("resTitle").textContent = title;
-    document.getElementById("resSub").textContent = sub;
-    document.getElementById("resReach").textContent = reached;
-    document.getElementById("resBest").textContent = best;
+    document.getElementById("resTitle").textContent = S.lastTitle || "〘焼き結果〙";
+    document.getElementById("resSub").textContent = S.lastSubtitle || "";
+    document.getElementById("resReach").textContent = formatProgress(S.lastRunProgress);
+    document.getElementById("resBest").textContent = formatProgress(S.best);
 
     const reason = S.lastFailReason || "不明";
     const detail = S.lastFailDetail ? `（${S.lastFailDetail}）` : "";
@@ -614,9 +550,13 @@
       `<div style="opacity:.75;font-size:12px;margin-bottom:4px;">敗因</div>` +
       `<div style="font-weight:900;">${escapeHtml(reason)} ${escapeHtml(detail)}</div>`;
 
+    const specials = S.lastUsedSpecials.length ? `出現：${S.lastUsedSpecials.join(" / ")}` : "出現：なし";
+    const lastBlock = S.lastLastBlockLabel ? `最後の焼き：${S.lastLastBlockLabel}` : "最後の焼き：—";
     document.getElementById("resExtra").textContent = `${lastBlock} / ${specials}`;
 
-    // 表示
+    // ✅ ミニタワー描画
+    renderTowerMini(o.miniCanvas, S.towerSnapshot || []);
+
     o.box.style.display = "flex";
     requestAnimationFrame(() => {
       o.card.style.opacity = "1";
@@ -629,15 +569,136 @@
     const { box, card } = resultOverlay;
     card.style.opacity = "0";
     card.style.transform = "translateY(6px) scale(.98)";
-    setTimeout(() => {
-      box.style.display = "none";
-    }, 180);
+    setTimeout(() => { box.style.display = "none"; }, 180);
   }
 
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, (c) => ({
       "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
     }[c]));
+  }
+
+  // =========================
+  // ミニタワー再現（縮小描画）
+  // =========================
+  function renderTowerMini(canvas, blocks){
+    const mctx = canvas.getContext("2d");
+    const W = canvas.width;
+    const H = canvas.height;
+
+    mctx.clearRect(0,0,W,H);
+    mctx.imageSmoothingEnabled = false;
+
+    // 背景（薄いグラデ）
+    mctx.fillStyle = "rgba(0,0,0,.0)";
+    mctx.fillRect(0,0,W,H);
+
+    if (!blocks || blocks.length === 0){
+      mctx.save();
+      mctx.globalAlpha = 0.7;
+      mctx.fillStyle = "#fff";
+      mctx.font = "700 12px system-ui, sans-serif";
+      mctx.textAlign = "center";
+      mctx.fillText("（タワーデータなし）", W/2, H/2);
+      mctx.restore();
+      return;
+    }
+
+    // bounds計算（世界座標のまま）
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+    for (const b of blocks){
+      minX = Math.min(minX, b.x);
+      maxX = Math.max(maxX, b.x + b.width);
+      minY = Math.min(minY, b.y);
+      maxY = Math.max(maxY, b.y + b.h);
+    }
+
+    // 余白
+    const pad = 10;
+    const bw = Math.max(1, maxX - minX);
+    const bh = Math.max(1, maxY - minY);
+
+    // スケール：枠に収める
+    const sx = (W - pad*2) / bw;
+    const sy = (H - pad*2) / bh;
+    const s = Math.min(sx, sy);
+
+    // 左下寄せ（タワーっぽく）
+    const offX = pad + (W - pad*2 - bw*s)/2 - minX*s;
+    const offY = pad + (H - pad*2 - bh*s) - minY*s; // 下揃え
+
+    // うっすらガイド線
+    mctx.save();
+    mctx.globalAlpha = 0.10;
+    mctx.strokeStyle = "#fff";
+    mctx.lineWidth = 1;
+    for (let y=H-1; y>0; y-=24){
+      mctx.beginPath();
+      mctx.moveTo(0,y);
+      mctx.lineTo(W,y);
+      mctx.stroke();
+    }
+    mctx.restore();
+
+    // 下から上に描く（yが大きいほど下）
+    const sorted = [...blocks].sort((a,b) => (a.y - b.y));
+    for (const b of sorted){
+      drawTileRect(mctx,
+        Math.round(offX + b.x*s),
+        Math.round(offY - (b.y*s)), // yは上が小さいので反転
+        Math.max(1, Math.round(b.width*s)),
+        Math.max(1, Math.round(b.h*s)),
+        b.tileKey
+      );
+    }
+  }
+
+  function drawTileRect(g, x, yTop, w, h, tileKey){
+    // yTopは「上端」座標として受け取る（renderTowerMini側で調整済）
+    // ここではそのまま描画
+    const r = Math.max(3, Math.round(h * 0.18));
+    const tile = tileKey ? IMG[tileKey] : null;
+
+    // 角丸パス
+    g.save();
+    g.beginPath();
+    roundedPathOn(g, x, yTop, w, h, r);
+    g.clip();
+
+    if (!tile || !tile.naturalWidth){
+      // fallback
+      g.fillStyle = "rgba(255,210,80,.9)";
+      g.fillRect(x, yTop, w, h);
+    } else {
+      // タイルを高さに合わせて敷き詰め
+      const scale = h / tile.naturalHeight;
+      const tileW = Math.max(1, Math.round(tile.naturalWidth * scale));
+      for (let xx = x; xx < x + w; xx += tileW){
+        g.drawImage(tile, xx, yTop, tileW, h);
+      }
+    }
+
+    g.restore();
+
+    // 枠線
+    g.save();
+    g.strokeStyle = "rgba(0,0,0,.45)";
+    g.lineWidth = Math.max(1, Math.round(2));
+    g.beginPath();
+    roundedPathOn(g, x, yTop, w, h, r);
+    g.stroke();
+    g.restore();
+  }
+
+  function roundedPathOn(g, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    g.moveTo(x+rr, y);
+    g.arcTo(x+w, y, x+w, y+h, rr);
+    g.arcTo(x+w, y+h, x, y+h, rr);
+    g.arcTo(x, y+h, x, y, rr);
+    g.arcTo(x, y, x+w, y, rr);
+    g.closePath();
   }
 
   // =========================
@@ -752,6 +813,7 @@
     S.lastSubtitle = "";
     S.lastLastBlockLabel = "";
     S.lastUsedSpecials = [];
+    S.towerSnapshot = null;
 
     S.cameraY = 0;
     S.dir = 1;
@@ -784,7 +846,7 @@
     S.lastTitle = t.title;
     S.lastSubtitle = t.sub;
 
-    // ベスト更新は既に途中でやるが、保険として
+    // ベスト更新（保険）
     if (S.progress > S.best){
       S.best = S.progress;
       saveBest(S.best);
@@ -794,6 +856,14 @@
     showResultOverlay();
   }
 
+  function snapshotTower(){
+    // ✅ 結果表示用に「確定ブロックだけ」コピー
+    // blocks は keepで切られてる可能性があるけど、直近の塔再現としては十分
+    S.towerSnapshot = S.blocks.map(b => ({
+      x: b.x, y: b.y, width: b.width, h: b.h, tileKey: b.tileKey
+    }));
+  }
+
   function gameOver(reason, detail){
     S.over = true;
     S.playing = false;
@@ -801,6 +871,7 @@
     S.lastFailReason = reason || "焼き失敗";
     S.lastFailDetail = detail || "";
 
+    snapshotTower();
     showToast("焼き失敗… GAME OVER");
     endRun();
   }
@@ -815,7 +886,7 @@
     const overlapRight = Math.min(prev.x + prev.width, curr.x + curr.width);
     const overlapW = overlapRight - overlapLeft;
 
-    // ① 外れた（重なり0）
+    // ① 外れた
     if (overlapW <= 0){
       S.progress = computeProgress();
       gameOver("外れた（重なりゼロ）", "たこ焼きが鉄板から逃げた");
@@ -844,16 +915,15 @@
 
     // 確定
     S.blocks.push(curr);
-    S.lastLastBlockLabel = curr.label || ""; // 最後に置けたブロック
-
+    S.lastLastBlockLabel = curr.label || "";
     S.curr = null;
 
-    // 無限軽量化
+    // 無限軽量化（ただし結果の再現は切られた範囲になる）
     if (CONF.KEEP_BLOCKS > 0 && S.blocks.length > CONF.KEEP_BLOCKS){
       S.blocks = S.blocks.slice(S.blocks.length - CONF.KEEP_BLOCKS);
     }
 
-    // 次の段へ
+    // 次へ
     S.level++;
 
     // 進捗更新
@@ -865,7 +935,7 @@
       saveBest(S.best);
     }
 
-    // ② 焼き縮み（幅が限界以下）→置けたけど次が無理
+    // ② 焼き縮み
     if (curr.width < CONF.minWidth){
       gameOver("焼き縮み（幅が限界）", `残り幅 ${Math.floor(curr.width)}px / 限界 ${CONF.minWidth}px`);
       return;
@@ -896,7 +966,7 @@
   }
 
   // =========================
-  // 描画
+  // 描画（メイン）
   // =========================
   function drawBG(){
     if (!CONF.grid) return;
@@ -991,7 +1061,7 @@
     for (const b of S.blocks) drawBlock(b);
     if (S.curr) drawBlock(S.curr);
 
-    // HUDっぽい情報（左上）
+    // 左上
     ctx.save();
     ctx.globalAlpha = 0.35;
     ctx.fillStyle = "#fff";
@@ -1018,7 +1088,6 @@
   });
 })();
 </script>
-
 
 
 
