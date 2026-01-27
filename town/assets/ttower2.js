@@ -192,114 +192,210 @@
     Body.setPosition(previewBody, { x: previewX, y: previewBody.position.y });
   }
 
-  function dropPreview(){
-    if (!previewBody || gameOver) return;
 
-    Body.setStatic(previewBody, false);
-    Body.applyForce(previewBody, previewBody.position, { x: 0, y: 0.0008 });
 
-    score += 10;
-    best = Math.max(best, score);
-    setBest(best);
-    updateHUD();
 
-    previewBody = null;
-    spawnPreview();
+
+
+
+
+
+
+
+/* =========================
+   落下処理（確実に落ちる版）
+   - static → dynamic 切替の不具合回避
+   - 必ず新しいBodyを生成
+========================= */
+function dropPreview(){
+  if (!previewBody || gameOver) return;
+
+  const old = previewBody;
+  previewBody = null;
+
+  // 🔥 新しい dynamic たこ焼きを生成
+  const body = Bodies.circle(
+    old.position.x,
+    old.position.y,
+    old.circleRadius,
+    {
+      friction: CONF.friction,
+      frictionStatic: CONF.frictionStatic,
+      restitution: CONF.restitution,
+      frictionAir: CONF.air,
+      density: 0.0045,
+      render: old.render
+    }
+  );
+
+  // 回転完全ロック（ぷよぷよ）
+  Body.setInertia(body, Infinity);
+  body.label = "TAKO";
+
+  // 古い static preview を削除
+  World.remove(engine.world, old);
+
+  // 新しい dynamic を追加
+  World.add(engine.world, body);
+
+  // ↓ 強制的に落とす（重力に確実に乗せる）
+  Body.applyForce(body, body.position, { x: 0, y: 0.002 });
+
+  // スコア
+  score += 10;
+  best = Math.max(best, score);
+  setBest(best);
+  updateHUD();
+
+  // 次の preview
+  spawnPreview();
+}
+
+
+/* =========================
+   横揺れ（左右ズレ蓄積用）
+========================= */
+function computeWind(){
+  const base = CONF.windBase + score * CONF.windPerScore;
+  const t = engine.timing.timestamp || 0;
+  const s = Math.sin(t * CONF.windSinSpeed);
+  const n = (Math.random() * 2 - 1) * CONF.windNoise;
+  windValue = (s + n * 0.25) * base;
+}
+
+function applyWind(){
+  computeWind();
+
+  const bodies = Composite.allBodies(engine.world);
+  for (const b of bodies){
+    if (b.label !== "TAKO") continue;
+
+    // 上にあるほど影響が強い
+    const height = Math.max(0, groundY - b.position.y);
+    const fx = windValue * (1 + height * CONF.windHeightFactor);
+
+    Body.applyForce(b, b.position, { x: fx, y: 0 });
   }
+}
 
-  function computeWind(){
-    const base = CONF.windBase + score * CONF.windPerScore;
-    const t = engine.timing.timestamp || 0;
-    const s = Math.sin(t * CONF.windSinSpeed);
-    const n = (Math.random() * 2 - 1) * CONF.windNoise;
-    windValue = (s + n * 0.25) * base;
+
+/* =========================
+   タワー最高点計測
+========================= */
+function updateHighest(){
+  highestY = groundY;
+
+  const bodies = Composite.allBodies(engine.world);
+  for (const b of bodies){
+    if (b.label !== "TAKO") continue;
+    const top = b.position.y - b.circleRadius;
+    if (top < highestY) highestY = top;
   }
+}
 
-  function applyWind(){
-    computeWind();
-    const bodies = Composite.allBodies(engine.world);
-    for (const b of bodies){
-      if (b.isStatic) continue;
-      if (b.label !== "TAKO") continue;
 
-      const heightFromGround = (groundY - b.position.y);
-      const hFactor = Math.max(0, heightFromGround) * CONF.windHeightFactor;
-      const fx = windValue * (1 + hFactor);
-      Body.applyForce(b, b.position, { x: fx, y: 0 });
+/* =========================
+   カメラ追従（上方向）
+========================= */
+function updateCamera(){
+  const target = Math.min(0, highestY - CONF.camTopMargin);
+  camY += (target - camY) * CONF.camLerp;
+
+  render.bounds.min.y = camY;
+  render.bounds.max.y = camY + H;
+  render.bounds.min.x = 0;
+  render.bounds.max.x = W;
+}
+
+
+/* =========================
+   下に落ちすぎたBody掃除
+========================= */
+function cleanupBodies(){
+  const bodies = Composite.allBodies(engine.world);
+  const yBottom = render.bounds.max.y;
+
+  let count = 0;
+  for (const b of bodies) if (b.label === "TAKO") count++;
+  if (count <= CONF.maxBodies) return;
+
+  for (const b of bodies){
+    if (b.label !== "TAKO") continue;
+    if (b.position.y > yBottom + CONF.cleanBelowPad){
+      World.remove(engine.world, b);
     }
   }
+}
 
-  function updateHighest(){
-    highestY = groundY;
-    const bodies = Composite.allBodies(engine.world);
-    for (const b of bodies){
-      if (b.label !== "TAKO") continue;
-      const topY = b.position.y - (b.circleRadius || 0);
-      if (topY < highestY) highestY = topY;
+
+/* =========================
+   ゲームオーバー判定
+========================= */
+function checkGameOver(){
+  if (gameOver) return;
+
+  const deadY = render.bounds.max.y + CONF.deadLinePad;
+  const bodies = Composite.allBodies(engine.world);
+
+  for (const b of bodies){
+    if (b.label !== "TAKO") continue;
+    if (b.position.y > deadY){
+      endGame();
+      return;
     }
   }
+}
 
-  function updateCamera(){
-    const targetCamY = Math.min(0, highestY - CONF.camTopMargin);
-    camY = camY + (targetCamY - camY) * CONF.camLerp;
 
-    render.bounds.min.y = camY;
-    render.bounds.max.y = camY + H;
-    render.bounds.min.x = 0;
-    render.bounds.max.x = W;
+/* =========================
+   ゲームオーバー処理
+========================= */
+function endGame(){
+  gameOver = true;
+  setHint("ゲームオーバー！");
+  updateHUD();
+  shakeScreen();
+  openGameOver();
+}
+
+
+/* =========================
+   毎フレーム処理
+========================= */
+function onBeforeUpdate(){
+  if (gameOver) return;
+
+  applyWind();
+
+  // preview を常に画面上に固定
+  if (previewBody){
+    const y = render.bounds.min.y + CONF.spawnYPad;
+    Body.setPosition(previewBody, { x: previewBody.position.x, y });
+    Body.setInertia(previewBody, Infinity);
   }
 
-  function cleanupBodies(){
-    const bodies = Composite.allBodies(engine.world);
-    const yBottom = render.bounds.max.y;
-
-    let takos = 0;
-    for (const b of bodies) if (b.label === "TAKO") takos++;
-    if (takos <= CONF.maxBodies) return;
-
-    for (const b of bodies){
-      if (b.label !== "TAKO") continue;
-      if (b.position.y > yBottom + CONF.cleanBelowPad){
-        World.remove(engine.world, b);
+  // 回転完全禁止（保険）
+  const bodies = Composite.allBodies(engine.world);
+  for (const b of bodies){
+    if (b.label === "TAKO" || b.label === "TAKO_PREVIEW"){
+      Body.setInertia(b, Infinity);
+      if (Math.abs(b.angularVelocity) > 0.0001){
+        Body.setAngularVelocity(b, 0);
       }
     }
   }
+}
 
-  function checkGameOver(){
-    if (gameOver) return;
 
-    const yBottom = render.bounds.max.y;
-    const deadY = yBottom + CONF.deadLinePad;
 
-    const bodies = Composite.allBodies(engine.world);
-    for (const b of bodies){
-      if (b.label !== "TAKO") continue;
-      if (b.position.y > deadY){
-        endGame();
-        return;
-      }
-    }
-  }
 
-  function endGame(){
-    gameOver = true;
-    setHint("ゲームオーバー！");
-    updateHUD();
-    shakeScreen();
-    openGameOver();
-  }
 
-  function onBeforeUpdate(){
-    if (gameOver) return;
 
-    applyWind();
 
-    if (previewBody){
-      const y = render.bounds.min.y + CONF.spawnYPad;
-      Body.setPosition(previewBody, { x: previewBody.position.x, y });
-      Body.setInertia(previewBody, Infinity);
-    }
 
+
+
+  
     // ✅ 回転完全禁止（保険）
     const bodies = Composite.allBodies(engine.world);
     for (const b of bodies){
