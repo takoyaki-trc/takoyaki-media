@@ -126,28 +126,27 @@
   </div>
 </div>
 
-
 <script>
 (() => {
   /* =========================================================
      ✅ タイミングタワー：称号 + 敗因 + 日時 + ミニタワー縮小再現（完全版）
-     - 「結果コピー」は無し
-     - 結果画面の上部に「あなたのタワー（縮小再現）」を表示
-     - 結果画面に「日時」を表示
-     - 丸い画像でも遊べる：
-       CONF.BLOCK_DRAW_MODE = "TILE"（横に並ぶ）/ "STRETCH"（1枚で引き伸ばし）
+     ✅ ブロック描画：歪ませない「トリミング表示」
+        - 縦（高さ）に合わせて等倍スケール → 横ははみ出した分をクリップで切る
+        - 幅が縮んでも顔が潰れない
      ========================================================= */
 
   // =========================
   // 画像URL（ここだけ差し替え）
   // =========================
   const SPR = {
-    takoA: "https://ul.h3z.jp/V45yu5y6.png",
-    takoB: "https://ul.h3z.jp/WA38dRcJ.png",
-    takoC: "https://ul.h3z.jp/D11B4brG.png",
-    takoG: "https://ul.h3z.jp/1bHikf24.png", // 金焼き
-    takoR: "https://ul.h3z.jp/rSYEnY7C.png", // 激辛
-    takoX: "https://ul.h3z.jp/8HQXzbSh.png", // 虹伝説
+    takoA: "https://YOUR-IMAGE-URL/takoA.png",
+    takoB: "https://YOUR-IMAGE-URL/takoB.png",
+    takoC: "https://YOUR-IMAGE-URL/takoC.png",
+    takoG: "https://YOUR-IMAGE-URL/takoG.png", // 金焼き
+    takoR: "https://YOUR-IMAGE-URL/takoR.png", // 激辛
+    takoX: "https://YOUR-IMAGE-URL/takoX.png", // 虹伝説
+    // 追加例：キャラ入り縦長ブロック
+    // takoP: "https://YOUR-IMAGE-URL/takoPeople.png",
   };
 
   const IMG = {};
@@ -158,7 +157,7 @@
       if (!entries.length){ resolve(); return; }
       for (const [key, src] of entries){
         const im = new Image();
-       
+        im.crossOrigin = "anonymous";
         im.onload = () => { IMG[key] = im; loaded++; if (loaded === entries.length) resolve(); };
         im.onerror = () => { console.warn("Image load failed:", key, src); loaded++; if (loaded === entries.length) resolve(); };
         im.src = src;
@@ -189,33 +188,30 @@
     METER_PER_STANDARD_BLOCK: 0.7,
     METER_DECIMALS: 1,
 
-    // カメラ（上に進まない問題を潰す：毎フレーム追随）
+    // カメラ（毎フレーム追随）
     CAMERA_ANCHOR_Y: 0.25,
     CAMERA_SMOOTH: 0.18,
     CAMERA_MIN: 0,
 
-    // 軽量化：描画用は最後だけ残す（結果用は別に全保存するのでOK）
-    KEEP_BLOCKS_DRAW: 120,
-
-    // ✅ ブロック描画モード
-    // "TILE"    = 横に並べる（プレートっぽい）
-    // "STRETCH" = 1枚で引き伸ばす（丸い画像でも自然）
-    BLOCK_DRAW_MODE: "TILE",
+    // 軽量化：描画用は最後だけ残す（結果用allBlocksは全保存）
+    KEEP_BLOCKS_DRAW: 140,
   };
 
   // =========================
   // 種類テーブル（高さ差激しめ + 特殊効果）
   // =========================
   const BLOCK_TABLE = [
-  { key:"takoA", w:45, h:18, label:"極薄", speedMul: 1.05 },
-  { key:"takoB", w:40, h:34, label:"標準", speedMul: 1.30 },
-  { key:"takoC", w:28, h:58, label:"山盛り", speedMul: 0.72 },
+    { key:"takoA", w:45, h:18, label:"極薄" },
+    { key:"takoB", w:40, h:34, label:"標準" },
+    { key:"takoC", w:28, h:58, label:"山盛り" },
 
-  { key:"takoG", w:8,  h:26, label:"金焼き", perfectPlus: 3, speedMul: 1.52 },
-  { key:"takoR", w:6,  h:70, label:"激辛", speedMul: 1.75 },
-  { key:"takoX", w:2,  h:92, label:"虹伝説", insurance: true, speedMul: 0.90 },
-];
+    { key:"takoG", w:8,  h:26, label:"金焼き", perfectPlus: 3 },    // PERFECT甘く
+    { key:"takoR", w:6,  h:70, label:"激辛",   speedMul: 1.25 },    // 高速
+    { key:"takoX", w:2,  h:92, label:"虹伝説", insurance: true },   // 1回保険
 
+    // 例：キャラ入り縦長ブロックを混ぜたいなら（PNG用意したら有効化）
+    // { key:"takoP", w:3, h:88, label:"のぞき窓", speedMul: 1.05 },
+  ];
 
   let lastKey = null;
   function pickBlockDef(){
@@ -293,7 +289,7 @@
     blocks: [],
     curr: null,
 
-    // ✅ 結果用：全ブロック保存（ここがミニ再現の元）
+    // ✅ 結果用：全ブロック保存（ミニ再現はこれ）
     allBlocks: [],
 
     // 結果表示用
@@ -392,7 +388,7 @@
   }
 
   // =========================
-  // 初期ブロック生成
+  // 初期生成
   // =========================
   function spawnBase(){
     const def = pickBlockDef();
@@ -438,7 +434,7 @@
       insurance: !!def.insurance
     });
 
-    // 特殊出現ログ（結果用）
+    // 特殊出現ログ
     if (S.curr.insurance) S.lastUsedSpecials.push("虹伝説");
     else if ((S.curr.perfectPlus||0) > 0) S.lastUsedSpecials.push("金焼き");
     else if ((S.curr.speedMul||1) > 1) S.lastUsedSpecials.push("激辛");
@@ -452,7 +448,7 @@
   // 進捗（階 / メートル）
   // =========================
   function computeProgress(){
-    const floors = Math.max(0, S.allBlocks.length - 1); // allBlocks基準
+    const floors = Math.max(0, S.allBlocks.length - 1);
     if (CONF.PROGRESS_MODE === "FLOOR") return floors;
 
     let sum = 0;
@@ -682,7 +678,7 @@
     const lastBlock = S.lastLastBlockLabel ? `最後の焼き：${S.lastLastBlockLabel}` : "最後の焼き：—";
     document.getElementById("resExtra").textContent = `${lastBlock} / ${specials}`;
 
-    // ✅ ミニタワー描画（allBlocks全体で再現）
+    // ミニタワー描画（allBlocks全体）
     renderTowerMini(o.miniCanvas, S.allBlocks);
 
     o.box.style.display = "flex";
@@ -707,7 +703,7 @@
   }
 
   // =========================
-  // ミニタワー再現（縮小描画）※ズレない版
+  // ミニタワー再現（縮小描画）
   // =========================
   function renderTowerMini(canvas, blocks){
     const mctx = canvas.getContext("2d");
@@ -793,7 +789,7 @@
       g.fillStyle = "rgba(255,210,80,.9)";
       g.fillRect(x, y, w, h);
     } else {
-      // ミニは「引き伸ばし」表示の方が見やすい
+      // ミニは見やすさ優先で引き伸ばし
       g.drawImage(tile, x, y, w, h);
     }
     g.restore();
@@ -815,6 +811,26 @@
     g.arcTo(x, y+h, x, y, rr);
     g.arcTo(x, y, x+w, y, rr);
     g.closePath();
+  }
+
+  // =========================
+  // 速度
+  // =========================
+  function levelSpeed(){
+    const base = CONF.speedBase + S.level * CONF.speedPerLevel;
+    const mul = (S.curr && S.curr.speedMul) ? S.curr.speedMul : 1;
+    return base * mul;
+  }
+
+  // =========================
+  // 日時
+  // =========================
+  function setResultDatetime(){
+    S.lastRunAt = new Date().toLocaleString("ja-JP", {
+      timeZone: "Asia/Tokyo",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit"
+    });
   }
 
   // =========================
@@ -852,20 +868,6 @@
     if (S.over) reset();
     S.playing = true;
     setHUD();
-  }
-
-  function levelSpeed(){
-    const base = CONF.speedBase + S.level * CONF.speedPerLevel;
-    const mul = (S.curr && S.curr.speedMul) ? S.curr.speedMul : 1;
-    return base * mul;
-  }
-
-  function setResultDatetime(){
-    S.lastRunAt = new Date().toLocaleString("ja-JP", {
-      timeZone: "Asia/Tokyo",
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit"
-    });
   }
 
   function endRun(){
@@ -933,13 +935,12 @@
       curr.width = overlapW;
     }
 
-    // 確定（pushConfirmedBlockで allBlocksにも入る）
+    // 確定
     pushConfirmedBlock(curr);
     S.lastLastBlockLabel = curr.label || "";
-
     S.curr = null;
 
-    // 次の段へ
+    // 次へ
     S.level++;
 
     // 進捗更新
@@ -982,7 +983,7 @@
   }
 
   // =========================
-  // 描画（メイン）
+  // 描画（背景）
   // =========================
   function drawBG(){
     if (!CONF.grid) return;
@@ -1000,6 +1001,9 @@
     ctx.restore();
   }
 
+  // =========================
+  // 角丸パス（メイン）
+  // =========================
   function roundedPath(x, y, w, h, r){
     const rr = Math.min(r, w/2, h/2);
     ctx.moveTo(x+rr, y);
@@ -1010,18 +1014,14 @@
     ctx.closePath();
   }
 
-  function roundRect(x, y, w, h, r, fillStyle){
-    ctx.save();
-    ctx.fillStyle = fillStyle;
-    ctx.beginPath();
-    roundedPath(x, y, w, h, r);
-    ctx.fill();
-    ctx.restore();
-  }
-
+  // =========================
+  // ✅ ブロック描画（歪ませないトリミング表示）
+  // - 高さ(h)に合わせて等倍スケール
+  // - 横は中央配置 → はみ出しはクリップで切る
+  // =========================
   function drawBlock(b){
     const y = b.y + S.cameraY;
-    if (y > CONF.canvasH + 120 || y < -240) return;
+    if (y > CONF.canvasH + 140 || y < -300) return;
 
     const x = Math.round(b.x);
     const w = Math.round(b.width);
@@ -1030,29 +1030,30 @@
 
     const tile = b.tileKey ? IMG[b.tileKey] : null;
 
-    // 角丸クリップ
     ctx.save();
     ctx.beginPath();
     roundedPath(x, y, w, h, r);
     ctx.clip();
 
-    if (!tile || !tile.naturalWidth){
+    if (tile && tile.naturalWidth){
+      // ✅ 縦をブロック高さに合わせて等倍スケール
+      const scale = h / tile.naturalHeight;
+      const drawW = Math.round(tile.naturalWidth * scale);
+      const drawH = h;
+
+      // ✅ 中央にドーン（幅が小さければ左右が切れる）
+      const cx = x + Math.floor((w - drawW) / 2);
+
+      // drawW > w の場合：左右がはみ出す → クリップで自然に切れる
+      // drawW < w の場合：左右に余白 → 中央にドーンでOK
+      ctx.drawImage(tile, cx, y, drawW, drawH);
+    } else {
       // fallback
       const grad = ctx.createLinearGradient(x, y, x, y+h);
       grad.addColorStop(0, "#ffd34d");
       grad.addColorStop(1, "#f08b2f");
       ctx.fillStyle = grad;
       ctx.fillRect(x, y, w, h);
-    } else if (CONF.BLOCK_DRAW_MODE === "STRETCH"){
-      // ✅ 丸い画像でも自然（1枚でブロック化）
-      ctx.drawImage(tile, x, y, w, h);
-    } else {
-      // ✅ TILE：横に並べる（プレート感）
-      const scale = h / tile.naturalHeight;
-      const tileW = Math.max(1, Math.round(tile.naturalWidth * scale));
-      for (let xx = x; xx < x + w; xx += tileW){
-        ctx.drawImage(tile, xx, y, tileW, h);
-      }
     }
 
     ctx.restore();
@@ -1103,6 +1104,7 @@
   });
 })();
 </script>
+
 
   
 
