@@ -436,6 +436,26 @@
   }
 
   bindInputs();
-  initWorld();
-})();
+   bindInputs();
 
+  try {
+    initWorld();
+    const h = document.getElementById("ttHint");
+    if (h) h.textContent = "準備完了。左右に動かして落とせます";
+  } catch (e) {
+    const err = document.createElement("div");
+    err.style.position = "fixed";
+    err.style.left = "10px";
+    err.style.top = "120px";
+    err.style.zIndex = "999999";
+    err.style.background = "#300";
+    err.style.color = "#fff";
+    err.style.padding = "10px";
+    err.style.fontSize = "12px";
+    err.style.maxWidth = "90vw";
+    err.style.whiteSpace = "pre-wrap";
+    err.textContent = "INIT ERROR:\n" + (e && e.message ? e.message : String(e));
+    document.body.appendChild(err);
+    console.error(e);
+  }
+})();
