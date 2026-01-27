@@ -1,228 +1,218 @@
+/* =========================================================
+  たこ焼きタワー UI
+  - スマホ縦長最優先
+  - Canvasの上にHUD/ボタンを重ねる
+========================================================= */
+
 :root{
-  --bg:#0b0f14;
-  --ink: rgba(255,255,255,.92);
-  --muted: rgba(255,255,255,.65);
-  --panel: rgba(0,0,0,.45);
-  --stroke: rgba(255,255,255,.10);
-  --meterFrame: rgba(255,255,255,.12);
-  --meterFill: rgba(255,255,255,.72);
+  --bg: #0b0f14;
+  --fg: #eaf2ff;
+  --muted: rgba(234,242,255,.75);
+  --line: rgba(234,242,255,.18);
+  --card: rgba(0,0,0,.55);
+  --shadow: 0 12px 40px rgba(0,0,0,.45);
+
+  --btn: rgba(255,255,255,.08);
+  --btn2: rgba(255,255,255,.14);
+
+  --radius: 14px;
+  --tap: 52px;
 }
 
-*{ box-sizing:border-box; }
-html,body{ height:100%; }
-body{
+*{ box-sizing: border-box; }
+html,body{
+  height:100%;
   margin:0;
-  background:var(--bg);
-  color:var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-  overflow:hidden;
-  touch-action: manipulation;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
 }
 
-#app{
-  height:100%;
-  width:100%;
-  position:relative;
+.tt-wrap{
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
 }
 
-#gameWrap{
-  position:relative;
-  height:100%;
-  width:100%;
-  overflow:hidden;
-}
-
-/* Render canvas (Matter Render creates canvas under #gameWrap) */
-canvas{
-  display:block;
-  width:100% !important;
-  height:100% !important;
+.tt-game{
+  position: absolute;
+  inset: 0;
 }
 
 /* HUD */
-#hud{
-  position:absolute;
-  top:12px;
-  left:12px;
-  right:12px;
+.tt-hud{
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: 10px 10px 6px;
+  pointer-events: none;
+}
+
+.tt-hud__row{
   display:flex;
-  justify-content:space-between;
-  gap:12px;
-  pointer-events:none;
-  z-index:20;
+  gap:8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  pointer-events: none;
 }
 
-.hud__box{
-  background:var(--panel);
-  border:1px solid var(--stroke);
-  border-radius:14px;
-  padding:10px 12px;
-  min-width: 210px;
-  max-width: 64vw;
-  backdrop-filter: blur(6px);
+.tt-hud__row--small{
+  margin-top: 6px;
 }
 
-.hud__row{
+.tt-pill{
   display:flex;
-  justify-content:space-between;
-  gap:12px;
-  font-weight:800;
-  letter-spacing:.2px;
-}
-.hud__label{
-  color:var(--muted);
-  font-size:12px;
-}
-.hud__value{
-  font-size:14px;
-}
-.hud__name{
-  margin-top:6px;
-  font-weight:900;
-  font-size:13px;
-  line-height:1.25;
-  color:rgba(255,255,255,.9);
+  align-items: baseline;
+  gap:8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
 }
 
-/* Meter */
-.meter{
-  width:78px;
+.tt-pill__label{
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--muted);
+}
+
+.tt-pill__value{
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.tt-hint{
+  font-size: 12px;
+  color: var(--muted);
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  background: rgba(0,0,0,.35);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+
+/* Controls */
+.tt-controls{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: env(safe-area-inset-bottom, 0px);
+  z-index: 60;
   display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
+  gap:10px;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 10px 12px;
+  pointer-events: auto;
 }
 
-.meter__frame{
-  height: 150px;
-  width: 18px;
-  border-radius: 12px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid var(--meterFrame);
-  overflow:hidden;
-  position:relative;
+.tt-btn{
+  height: var(--tap);
+  min-width: var(--tap);
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--btn);
+  color: var(--fg);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
-.meter__fill{
-  position:absolute;
-  bottom:0;
-  left:0;
-  width:100%;
-  height:1%;
-  background: var(--meterFill);
+.tt-btn:active{
+  transform: translateY(1px);
+  background: var(--btn2);
 }
 
-.meter__text{
-  font-size:12px;
-  font-weight:900;
-  color:rgba(255,255,255,.85);
+.tt-btn--primary{
+  background: rgba(255,255,255,.16);
+  border-color: rgba(255,255,255,.26);
 }
 
-/* Overlay */
-.overlay{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: rgba(0,0,0,.55);
-  z-index:30;
+.tt-btn--ghost{
+  background: rgba(0,0,0,.15);
 }
 
-.overlay__panel{
-  width: min(420px, 88vw);
-  background: rgba(0,0,0,.42);
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: 18px;
-  padding: 16px 14px 14px;
-  text-align:center;
-  backdrop-filter: blur(8px);
-}
-
-.overlay__caption{
-  margin-top:10px;
-  font-weight:900;
-  font-size:14px;
-  color: rgba(255,255,255,.92);
-}
-
-.overlay__sub{
-  margin-top:6px;
-  font-weight:700;
-  font-size:12px;
-  color: rgba(255,255,255,.70);
-}
-
-.startImg{
-  width: min(360px, 76vw);
-  height: auto;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.16);
-  box-shadow: 0 14px 36px rgba(0,0,0,.35);
-  image-rendering: pixelated;
-}
-
-.go__title{
-  font-weight:1000;
-  letter-spacing:2px;
-  font-size:20px;
-}
-
-.go__score{
-  margin-top:8px;
-  font-weight:1000;
-  font-size:26px;
-}
-
-.go__reason{
-  margin-top:8px;
-  font-weight:800;
-  font-size:13px;
-  color: rgba(255,255,255,.80);
-  line-height:1.4;
-}
-
-/* Portrait only hint */
-#rotateHint{
-  position:absolute;
-  inset:0;
+/* Game Over */
+.tt-over{
+  position: fixed;
+  inset: 0;
+  z-index: 120;
   display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:40;
-  background: rgba(0,0,0,.78);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(2px);
 }
-.rotateHint__panel{
-  width:min(360px, 86vw);
-  border:1px solid rgba(255,255,255,.16);
-  border-radius:18px;
-  padding:14px 14px 12px;
+
+.tt-over.is-open{
+  display:flex;
+}
+
+.tt-over__card{
+  width: min(420px, 100%);
+  border: 1px solid var(--line);
+  background: rgba(0,0,0,.68);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 14px;
+}
+
+.tt-over__title{
+  font-weight: 900;
+  letter-spacing: .18em;
+  text-align: center;
+  padding: 6px 0 10px;
+}
+
+.tt-over__score{
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 4px;
+  margin: 6px 0 10px;
   text-align:center;
-  background: rgba(0,0,0,.45);
-}
-.rotateHint__title{
-  font-weight:1000;
-  font-size:18px;
-  letter-spacing:1px;
-}
-.rotateHint__text{
-  margin-top:8px;
-  color: rgba(255,255,255,.75);
-  font-weight:800;
-  font-size:13px;
+  font-size: 16px;
 }
 
-/* Landscape -> show hint, hide HUD/overlays via z-index naturally */
-@media (orientation: landscape){
-  #rotateHint{ display:flex; }
+.tt-over__line{
+  margin: 6px 0;
+  font-weight: 800;
 }
 
-html, body { height:100%; margin:0; overflow:hidden; }
-#gameWrap { position:fixed; inset:0; overflow:hidden; }
-#world, #gameWrap canvas{
-  position:fixed;
-  inset:0;
-  width:100vw !important;
-  height:100vh !important;
-  display:block !important;
+.tt-over__btns{
+  display:flex;
+  gap:10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+
+.tt-over__note{
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Shake effect (GAME OVER) */
+.tt-shake{
+  animation: ttShake .35s linear 1;
+}
+@keyframes ttShake{
+  0%{ transform: translate(0,0); }
+  20%{ transform: translate(-6px,2px); }
+  40%{ transform: translate(6px,-2px); }
+  60%{ transform: translate(-5px,-1px); }
+  80%{ transform: translate(5px,1px); }
+  100%{ transform: translate(0,0); }
 }
