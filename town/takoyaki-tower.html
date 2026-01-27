@@ -129,6 +129,41 @@
 <script>
 (() => {
   // =========================
+  // 画像（ドット絵）読み込み
+  // =========================
+  const SPR = {
+    // ★ここをあなたの「たこ焼きブロック用ドット絵PNG」に差し替え
+    // 例：1個のたこ焼き（丸）でも、横長プレートでもOK（透過PNG推奨）
+    takoTile: "https://YOUR-IMAGE-URL/tako_tile.png",
+  };
+
+  const IMG = {};
+  function loadImages(){
+    const entries = Object.entries(SPR);
+    let loaded = 0;
+
+    return new Promise((resolve) => {
+      if (!entries.length){ resolve(); return; }
+
+      for (const [key, src] of entries){
+        const im = new Image();
+        im.crossOrigin = "anonymous"; // GitHub等から読む場合に必要なことがある
+        im.onload = () => {
+          IMG[key] = im;
+          loaded++;
+          if (loaded === entries.length) resolve();
+        };
+        im.onerror = () => {
+          console.warn("Image load failed:", key, src);
+          loaded++;
+          if (loaded === entries.length) resolve(); // 失敗してもゲームは動かす（fallback）
+        };
+        im.src = src;
+      }
+    });
+  }
+
+  // =========================
   // 設定
   // =========================
   const CONF = {
@@ -136,8 +171,8 @@
     canvasH: 720,
 
     baseWidth: 220,      // 最初の土台幅
-    blockH: 34,          // ブロック高さ
-    minWidth: 26,        // これ未満でゲームオーバー（見た目で限界）
+    blockH: 34,          // ブロック高さ（画像の高さの基準になる）
+    minWidth: 26,        // これ未満でゲームオーバー
     marginX: 16,         // 左右余白
     speedBase: 2.6,      // 横移動速度
     speedPerLevel: 0.10, // 段数ごとに速度UP
@@ -205,8 +240,6 @@
   // =========================
   // ユーティリティ
   // =========================
-  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-
   function showToast(text){
     toastEl.textContent = text;
     toastEl.classList.add("show");
@@ -343,7 +376,6 @@
 
     // カメラ追随（ある程度積んだら上へスクロール）
     if (S.blocks.length > CONF.camFollowFrom){
-      // ブロックが画面上に近づいたらカメラを上げる
       const top = S.blocks[S.blocks.length - 1];
       const targetY = (CONF.canvasH * 0.35) - top.y; // 画面35%あたりに置く
       S.cameraY = Math.max(S.cameraY, targetY);
@@ -375,10 +407,9 @@
   }
 
   // =========================
-  // 描画
+  // 描画（ドット絵タイル）
   // =========================
   function drawBG(){
-    // 薄いグリッド（目安）
     if (!CONF.grid) return;
     ctx.save();
     ctx.globalAlpha = 0.12;
@@ -400,28 +431,49 @@
     // 画面外は描かない（軽量化）
     if (y > CONF.canvasH + 80 || y < -120) return;
 
+    const x = Math.round(b.x);
+    const w = Math.round(b.width);
+    const h = Math.round(b.h);
     const r = 10;
-    const x = b.x;
-    const w = b.width;
-    const h = b.h;
 
-    // たこ焼きっぽいグラデ風（※CanvasなのでOK。ドット風にしたければ画像に差し替え）
-    const grad = ctx.createLinearGradient(x, y, x, y+h);
-    grad.addColorStop(0, b.colorA);
-    grad.addColorStop(1, b.colorB);
+    const tile = IMG.takoTile;
 
-    // 本体
-    roundRect(x, y, w, h, r, grad);
+    // ✅ 画像がない/読めてない時のfallback（今まで通りの簡易ブロック）
+    if (!tile || !tile.naturalWidth){
+      const grad = ctx.createLinearGradient(x, y, x, y+h);
+      grad.addColorStop(0, b.colorA);
+      grad.addColorStop(1, b.colorB);
+      roundRect(x, y, w, h, r, grad);
+      ctx.save();
+      ctx.strokeStyle = "rgba(0,0,0,.35)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      roundedPath(x, y, w, h, r);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
 
-    // ハイライト（焼き目）
+    // ✅ タイルを高さに合わせてスケール → 横に敷き詰め
+    const scale = h / tile.naturalHeight;
+    const tileW = Math.max(1, Math.round(tile.naturalWidth * scale));
+
+    // 角丸クリップ
     ctx.save();
-    ctx.globalAlpha = 0.22;
-    roundRect(x+6, y+6, w-12, h-14, r-3, "#fff");
+    ctx.beginPath();
+    roundedPath(x, y, w, h, r);
+    ctx.clip();
+
+    // 横タイル敷き詰め
+    for (let xx = x; xx < x + w; xx += tileW){
+      ctx.drawImage(tile, xx, y, tileW, h);
+    }
+
     ctx.restore();
 
-    // 枠線
+    // 枠線（締まる）
     ctx.save();
-    ctx.strokeStyle = "rgba(0,0,0,.35)";
+    ctx.strokeStyle = "rgba(0,0,0,.45)";
     ctx.lineWidth = 2;
     ctx.beginPath();
     roundedPath(x, y, w, h, r);
@@ -450,6 +502,10 @@
 
   function draw(){
     ctx.clearRect(0,0,CONF.canvasW, CONF.canvasH);
+
+    // ✅ ドット絵がぼやけない
+    ctx.imageSmoothingEnabled = false;
+
     drawBG();
 
     // 確定ブロック
@@ -495,11 +551,16 @@
     requestAnimationFrame(loop);
   }
 
-  // 初期化
-  reset();
-  loop();
+  // =========================
+  // 初期化（画像ロード→開始）
+  // =========================
+  loadImages().then(() => {
+    reset();
+    loop();
+  });
 })();
 </script>
+
 </body>
 </html>
 
