@@ -126,24 +126,20 @@
   </div>
 </div>
 
+
+
 <script>
 (() => {
   /* =========================================================
-     ✅ タイミングタワー（画像タイル対応 + レア効果 + 進捗を階/メートル）
-     - 物理なし / 座標計算のみ
-     - ブロック種類ランダム（画像タイル複数）
-     - レア効果：
-       金焼き：PERFECT判定 +2px（甘く）
-       虹伝説：1回だけ削れない保険（消費）
-       激辛：移動速度UP（ハイリスク）
-     - 進捗（Score）を点数ではなく「FLOOR / METER」に変更
+     ✅ タイミングタワー（高さバラバラでも上に進む修正版）
+     - カメラ追随：最高到達のブロック位置を毎フレーム追う（止まらない）
+     - 終了画面：到達（階/m）＋ベスト表示
+     - レア効果：金焼き(甘判定) / 虹伝説(1回保険) / 激辛(高速)
      ========================================================= */
 
   // =========================
-  // 1) 画像（ドット絵）読み込み
+  // 画像（ドット絵）読み込み
   // =========================
-  // ★ここをあなたの画像URLに差し替え
-  // 透過PNG推奨 / 横に敷き詰め可能なタイル画像だと最高
   const SPR = {
     takoA: "https://YOUR-IMAGE-URL/takoA.png",
     takoB: "https://YOUR-IMAGE-URL/takoB.png",
@@ -154,86 +150,75 @@
   };
 
   const IMG = {};
-
   function loadImages(){
     const entries = Object.entries(SPR);
     let loaded = 0;
-
     return new Promise((resolve) => {
       if (!entries.length){ resolve(); return; }
       for (const [key, src] of entries){
         const im = new Image();
-        im.crossOrigin = "anonymous"; // GitHub等で必要なことがある
-        im.onload = () => {
-          IMG[key] = im;
-          loaded++;
-          if (loaded === entries.length) resolve();
-        };
-        im.onerror = () => {
-          console.warn("Image load failed:", key, src);
-          loaded++;
-          if (loaded === entries.length) resolve(); // 失敗してもfallbackで動く
-        };
+        im.crossOrigin = "anonymous";
+        im.onload = () => { IMG[key] = im; loaded++; if (loaded === entries.length) resolve(); };
+        im.onerror = () => { console.warn("Image load failed:", key, src); loaded++; if (loaded === entries.length) resolve(); };
         im.src = src;
       }
     });
   }
 
   // =========================
-  // 2) 設定
+  // 設定
   // =========================
   const CONF = {
     canvasW: 420,
     canvasH: 720,
 
     baseWidth: 220,
-    blockHDefault: 34,    // fallback時の標準高さ
+    blockHDefault: 34,
     minWidth: 26,
     marginX: 16,
 
     speedBase: 2.6,
     speedPerLevel: 0.10,
 
-    perfectPx: 3,         // 基本PERFECT幅
-    camFollowFrom: 10,
+    perfectPx: 3,
+
     grid: true,
 
-    // ✅ 進捗表示の単位（ここで切替）
-    // "FLOOR" = 何階（積んだ段数）
-    // "METER" = 何m（積んだ高さの合計）
+    // ✅ 進捗単位
+    // "FLOOR" or "METER"
     PROGRESS_MODE: "FLOOR",
-
-    // "METER" の換算：1ブロック（標準高さ34px）を何mにするか
     METER_PER_STANDARD_BLOCK: 0.7,
-
-    // 表示小数（METER時）
     METER_DECIMALS: 1,
+
+    // ✅ カメラ（ここが「上に進まない」修正の核）
+    // 画面のどの位置に「一番上のブロック」を置きたいか（0.20=上の方）
+    CAMERA_ANCHOR_Y: 0.25,
+    CAMERA_SMOOTH: 0.18,     // 0〜1（大きいほど追随が速い）
+    CAMERA_MIN: 0,
+
+    // ✅ 無限でも軽くする（描画用に古いブロックを間引く）
+    KEEP_BLOCKS: 90,         // 0で無効
   };
 
- const BLOCK_TABLE = [
-  // ===== Common（よく出る）=====
-  { key:"takoA", w:45, h:40, label:"極薄" },      // かなり薄い
-  { key:"takoB", w:40, h:75, label:"標準" },      // 基準
-  { key:"takoC", w:28, h:100, label:"山盛り" },    // かなり厚い
+  // =========================
+  // 種類テーブル（高さ差を激しくしてOK）
+  // =========================
+  const BLOCK_TABLE = [
+    { key:"takoA", w:45, h:18, label:"極薄" },
+    { key:"takoB", w:40, h:34, label:"標準" },
+    { key:"takoC", w:28, h:58, label:"山盛り" },
 
-  // ===== Rare =====
-  { key:"takoG", w:8,  h:150, label:"金焼き", perfectPlus: 3 },    // 甘判定さらに強め
-  { key:"takoR", w:6,  h:190, label:"激辛",   speedMul: 1.25 },    // 厚い + 速い
+    { key:"takoG", w:8,  h:26, label:"金焼き", perfectPlus: 3 },
+    { key:"takoR", w:6,  h:70, label:"激辛",   speedMul: 1.25 },
+    { key:"takoX", w:2,  h:92, label:"虹伝説", insurance: true },
+  ];
 
-  // ===== Ultra Rare =====
-  { key:"takoX", w:2,  h:292, label:"虹伝説", insurance: true }    // ほぼ“壁”
-];
-
-  // 同じの連続回避
   let lastKey = null;
-
   function pickBlockDef(){
     if (BLOCK_TABLE.length <= 1) return BLOCK_TABLE[0];
+    let total = 0; for (const d of BLOCK_TABLE) total += d.w;
 
-    let total = 0;
-    for (const d of BLOCK_TABLE) total += d.w;
-
-    for (let tries = 0; tries < 6; tries++){
+    for (let tries=0; tries<6; tries++){
       let r = Math.random() * total;
       for (const d of BLOCK_TABLE){
         r -= d.w;
@@ -244,13 +229,13 @@
         }
       }
     }
-    const fb = BLOCK_TABLE[Math.floor(Math.random() * BLOCK_TABLE.length)];
+    const fb = BLOCK_TABLE[Math.floor(Math.random()*BLOCK_TABLE.length)];
     lastKey = fb.key;
     return fb;
   }
 
   // =========================
-  // 4) DOM
+  // DOM
   // =========================
   const cv = document.getElementById("cv");
   const ctx = cv.getContext("2d");
@@ -261,7 +246,6 @@
   const stopBtn = document.getElementById("stopBtn");
   const restartBtn = document.getElementById("restartBtn");
 
-  // 画面タップでもSTOP
   cv.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     if (!S.playing) start();
@@ -276,10 +260,9 @@
   restartBtn.addEventListener("click", reset);
 
   // =========================
-  // 5) 保存（ベスト）
+  // 保存（ベスト）
   // =========================
   const BEST_KEY = `takoyakiTimingTower_best_${CONF.PROGRESS_MODE}`;
-
   function loadBest(){
     const v = Number(localStorage.getItem(BEST_KEY) || 0);
     return Number.isFinite(v) ? v : 0;
@@ -289,13 +272,12 @@
   }
 
   // =========================
-  // 6) 状態
+  // 状態
   // =========================
   const S = {
     playing: false,
     over: false,
 
-    // ✅ 進捗（点数ではなく階/メートル）
     progress: 0,
     best: loadBest(),
 
@@ -304,11 +286,14 @@
     dir: 1,
 
     blocks: [],
-    curr: null
+    curr: null,
+
+    // 終了画面表示用に保持
+    lastRunProgress: 0
   };
 
   // =========================
-  // 7) UI
+  // UI
   // =========================
   function showToast(text){
     toastEl.textContent = text;
@@ -318,9 +303,7 @@
   }
 
   function formatProgress(v){
-    if (CONF.PROGRESS_MODE === "METER"){
-      return `${v.toFixed(CONF.METER_DECIMALS)}m`;
-    }
+    if (CONF.PROGRESS_MODE === "METER") return `${v.toFixed(CONF.METER_DECIMALS)}m`;
     return `${Math.floor(v)}F`;
   }
 
@@ -331,33 +314,23 @@
   }
 
   // =========================
-  // 8) ブロック生成
+  // ブロック
   // =========================
-  function makeBlock({
-    x, width, y,
-    h = CONF.blockHDefault,
-    tileKey = null,
-    label = "",
-    bonus = 0,
-    perfectPlus = 0,
-    speedMul = 1,
-    insurance = false
-  }){
-    return { x, width, y, h, tileKey, label, bonus, perfectPlus, speedMul, insurance };
+  function makeBlock({ x, width, y, h, tileKey, label="", perfectPlus=0, speedMul=1, insurance=false }){
+    return { x, width, y, h, tileKey, label, perfectPlus, speedMul, insurance };
   }
 
   function spawnBase(){
+    const def = pickBlockDef();
     const w = CONF.baseWidth;
     const x = (CONF.canvasW - w) / 2;
-    const def = pickBlockDef();
     const y = CONF.canvasH - 90;
 
     const base = makeBlock({
       x, width: w, y,
-      h: def.h,
+      h: def.h ?? CONF.blockHDefault,
       tileKey: def.key,
       label: def.label || "",
-      bonus: def.bonus || 0,
       perfectPlus: def.perfectPlus || 0,
       speedMul: def.speedMul || 1,
       insurance: !!def.insurance
@@ -372,7 +345,7 @@
     const def = pickBlockDef();
 
     const w = prev.width;
-    const h = def.h;
+    const h = def.h ?? CONF.blockHDefault;
     const y = prev.y - h;
 
     const startLeft = (S.level % 2 === 0);
@@ -384,33 +357,25 @@
       h,
       tileKey: def.key,
       label: def.label || "",
-      bonus: def.bonus || 0,
       perfectPlus: def.perfectPlus || 0,
       speedMul: def.speedMul || 1,
       insurance: !!def.insurance
     });
 
-    // 出現演出（軽く）
     if (S.curr.insurance) showToast("🌈 虹伝説：保険付き！");
-    else if ((S.curr.perfectPlus || 0) > 0) showToast("🥇 金焼き：甘判定！");
-    else if ((S.curr.speedMul || 1) > 1) showToast("🌶 激辛：高速！");
+    else if ((S.curr.perfectPlus||0) > 0) showToast("🥇 金焼き：甘判定！");
+    else if ((S.curr.speedMul||1) > 1) showToast("🌶 激辛：高速！");
   }
 
   // =========================
-  // 9) 進捗（階 / メートル）
+  // 進捗（階 / メートル）
   // =========================
-  function computeProgressFromBlocks(){
-    // blocks[0] は土台。積んだ段数 = blocks.length - 1
+  function computeProgress(){
     const floors = Math.max(0, S.blocks.length - 1);
+    if (CONF.PROGRESS_MODE === "FLOOR") return floors;
 
-    if (CONF.PROGRESS_MODE === "FLOOR"){
-      return floors;
-    }
-
-    // METER：積んだ高さ合計を換算
-    // 「標準34px = 0.7m」換算（ブロック高さが違うほど伸びが変わる）
     let sum = 0;
-    for (let i = 1; i < S.blocks.length; i++){
+    for (let i=1; i<S.blocks.length; i++){
       const b = S.blocks[i];
       sum += (b.h / 34) * CONF.METER_PER_STANDARD_BLOCK;
     }
@@ -418,13 +383,41 @@
   }
 
   // =========================
-  // 10) ゲーム進行
+  // カメラ追随（★ここが修正ポイント）
+  // =========================
+  function getTopMostY(){
+    // “一番上”＝yが最小（上に行くほど小さい）
+    let topY = Infinity;
+
+    for (const b of S.blocks){
+      if (Number.isFinite(b.y)) topY = Math.min(topY, b.y);
+    }
+    if (S.curr && Number.isFinite(S.curr.y)) topY = Math.min(topY, S.curr.y);
+
+    if (!Number.isFinite(topY)) topY = 0;
+    return topY;
+  }
+
+  function updateCamera(){
+    // 画面の上の方(CAMERA_ANCHOR_Y)に最高到達を置く
+    const topY = getTopMostY();
+    const anchorY = CONF.canvasH * CONF.CAMERA_ANCHOR_Y;
+
+    // topY（世界座標）を anchorY（画面座標）に合わせるためのカメラ値
+    const target = Math.max(CONF.CAMERA_MIN, anchorY - topY);
+
+    // スムーズ追随
+    S.cameraY += (target - S.cameraY) * CONF.CAMERA_SMOOTH;
+  }
+
+  // =========================
+  // ゲーム
   // =========================
   function reset(){
     S.playing = false;
     S.over = false;
-
     S.progress = 0;
+    S.lastRunProgress = 0;
 
     S.cameraY = 0;
     S.dir = 1;
@@ -432,7 +425,7 @@
     spawnBase();
     spawnCurrent();
 
-    S.progress = computeProgressFromBlocks();
+    S.progress = computeProgress();
     setHUD();
     draw();
   }
@@ -446,6 +439,9 @@
   function gameOver(){
     S.over = true;
     S.playing = false;
+
+    S.lastRunProgress = S.progress;
+
     setHUD();
     showToast("焼き失敗… GAME OVER");
   }
@@ -456,7 +452,6 @@
     return base * mul;
   }
 
-  // STOPで確定（重なり計算）
   function drop(){
     if (!S.curr || S.over) return;
 
@@ -467,32 +462,28 @@
     const overlapRight = Math.min(prev.x + prev.width, curr.x + curr.width);
     const overlapW = overlapRight - overlapLeft;
 
-    // 完全に外れた
     if (overlapW <= 0){
       gameOver();
       return;
     }
 
-    // ✅ PERFECT判定（金焼きは+2pxなど）
     const diff = Math.abs(curr.x - prev.x);
     const perfectRange = CONF.perfectPx + (curr.perfectPlus || 0);
     const isPerfect = diff <= perfectRange;
 
-    // ✅ 虹伝説：1回だけ削れない保険（消費）
-    // 「重なりはあるが削れる」場面で、1回だけ width を維持
     const willShrink = overlapW < curr.width;
+
+    // 虹伝説：1回だけ削れない
     if (curr.insurance && willShrink){
-      curr.x = overlapLeft;       // 位置だけ合わせる
-      // curr.widthは維持（削れない）
-      curr.insurance = false;     // 消費
+      curr.x = overlapLeft;
+      // width維持
+      curr.insurance = false;
       showToast("🌈 虹伝説発動：セーフ！");
     } else if (isPerfect){
-      // PERFECTなら下とピッタリに補正＆幅維持
       curr.x = prev.x;
       curr.width = prev.width;
       showToast("PERFECT!!");
     } else {
-      // 通常：重なり分だけ残す
       curr.x = overlapLeft;
       curr.width = overlapW;
     }
@@ -501,24 +492,24 @@
     S.blocks.push(curr);
     S.curr = null;
 
-    // 最小幅チェック
+    // 幅が小さすぎたら終了
     if (curr.width < CONF.minWidth){
+      S.progress = computeProgress();
+      if (S.progress > S.best){ S.best = S.progress; saveBest(S.best); }
       gameOver();
       return;
     }
 
-    // 次の段へ
-    S.level++;
-
-    // カメラ追随
-    if (S.blocks.length > CONF.camFollowFrom){
-      const top = S.blocks[S.blocks.length - 1];
-      const targetY = (CONF.canvasH * 0.35) - top.y;
-      S.cameraY = Math.max(S.cameraY, targetY);
+    // 無限でも軽く：古い描画用ブロックを間引く
+    if (CONF.KEEP_BLOCKS > 0 && S.blocks.length > CONF.KEEP_BLOCKS){
+      S.blocks = S.blocks.slice(S.blocks.length - CONF.KEEP_BLOCKS);
     }
 
-    // ✅ 進捗更新（階 / メートル）
-    S.progress = computeProgressFromBlocks();
+    // 次へ
+    S.level++;
+
+    // 進捗更新
+    S.progress = computeProgress();
 
     // ベスト更新
     if (S.progress > S.best){
@@ -530,9 +521,6 @@
     setHUD();
   }
 
-  // =========================
-  // 11) 更新ループ
-  // =========================
   function update(){
     if (S.playing && !S.over && S.curr){
       const sp = levelSpeed();
@@ -549,10 +537,13 @@
         S.dir = -1;
       }
     }
+
+    // ★毎フレーム追随するから「上に進まない」現象が消える
+    if (!S.over) updateCamera();
   }
 
   // =========================
-  // 12) 描画（ドット絵タイル）
+  // 描画
   // =========================
   function drawBG(){
     if (!CONF.grid) return;
@@ -591,16 +582,17 @@
 
   function drawBlock(b){
     const y = b.y + S.cameraY;
-    if (y > CONF.canvasH + 80 || y < -140) return;
+    if (y > CONF.canvasH + 120 || y < -200) return;
 
     const x = Math.round(b.x);
     const w = Math.round(b.width);
     const h = Math.round(b.h);
-    const r = 10;
+
+    // ✅ 高さが激しい時は角丸も連動させると見栄えが崩れない
+    const r = Math.max(6, Math.round(h * 0.22));
 
     const tile = b.tileKey ? IMG[b.tileKey] : null;
 
-    // 画像がない場合はfallback
     if (!tile || !tile.naturalWidth){
       const grad = ctx.createLinearGradient(x, y, x, y+h);
       grad.addColorStop(0, "#ffd34d");
@@ -620,7 +612,6 @@
     const scale = h / tile.naturalHeight;
     const tileW = Math.max(1, Math.round(tile.naturalWidth * scale));
 
-    // 角丸クリップ
     ctx.save();
     ctx.beginPath();
     roundedPath(x, y, w, h, r);
@@ -629,10 +620,8 @@
     for (let xx = x; xx < x + w; xx += tileW){
       ctx.drawImage(tile, xx, y, tileW, h);
     }
-
     ctx.restore();
 
-    // 枠線
     ctx.save();
     ctx.strokeStyle = "rgba(0,0,0,.45)";
     ctx.lineWidth = 2;
@@ -645,7 +634,7 @@
   function draw(){
     ctx.clearRect(0,0,CONF.canvasW, CONF.canvasH);
 
-    // ✅ ドット絵ぼやけ防止
+    // ドット絵ぼやけ防止
     ctx.imageSmoothingEnabled = false;
 
     drawBG();
@@ -653,33 +642,40 @@
     for (const b of S.blocks) drawBlock(b);
     if (S.curr) drawBlock(S.curr);
 
-    // 左上表示（単位込み）
+    // 左上ガイド
     ctx.save();
     ctx.globalAlpha = 0.35;
     ctx.fillStyle = "#fff";
     ctx.font = "700 12px system-ui, sans-serif";
-    const unit = (CONF.PROGRESS_MODE === "METER") ? "m" : "F";
-    ctx.fillText(`TOP: ${formatProgress(S.progress)}  (${unit})`, 14, 24);
+    ctx.fillText(`現在: ${formatProgress(S.progress)} / BEST: ${formatProgress(S.best)}`, 14, 24);
     ctx.restore();
 
+    // 終了画面（到達表示）
     if (S.over){
       ctx.save();
       ctx.globalAlpha = 0.85;
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, CONF.canvasW, CONF.canvasH);
+
       ctx.globalAlpha = 1;
       ctx.fillStyle = "#fff";
-      ctx.font = "900 34px system-ui, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("GAME OVER", CONF.canvasW/2, CONF.canvasH*0.44);
-      ctx.font = "700 16px system-ui, sans-serif";
-      ctx.fillText("RESTART で再挑戦", CONF.canvasW/2, CONF.canvasH*0.50);
+
+      ctx.font = "900 34px system-ui, sans-serif";
+      ctx.fillText("GAME OVER", CONF.canvasW/2, CONF.canvasH*0.40);
+
+      ctx.font = "800 18px system-ui, sans-serif";
+      ctx.fillText(`到達: ${formatProgress(S.lastRunProgress)}`, CONF.canvasW/2, CONF.canvasH*0.48);
+      ctx.fillText(`BEST: ${formatProgress(S.best)}`, CONF.canvasW/2, CONF.canvasH*0.53);
+
+      ctx.font = "700 14px system-ui, sans-serif";
+      ctx.fillText("RESTART で再挑戦 / 画面タップでもOK", CONF.canvasW/2, CONF.canvasH*0.61);
       ctx.restore();
     }
   }
 
   // =========================
-  // 13) ループ
+  // ループ
   // =========================
   function loop(){
     update();
@@ -687,17 +683,16 @@
     requestAnimationFrame(loop);
   }
 
-  // =========================
-  // 14) 初期化（画像ロード→開始）
-  // =========================
+  // 初期化
   loadImages().then(() => {
-    setHUD();
     reset();
     loop();
   });
 })();
 </script>
 
+
+  
 
 </body>
 </html>
