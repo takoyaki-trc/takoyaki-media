@@ -1,68 +1,505 @@
+
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>たこ焼きタワー（タイミング）</title>
-  <link rel="stylesheet" href="./assets/ttower.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no" />
+<title>たこ焼きタイミングタワー</title>
+<style>
+  :root{
+    --w: 420px;
+    --h: 720px;
+  }
+  body{
+    margin:0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background:#0f1115;
+    color:#fff;
+    display:flex;
+    min-height:100svh;
+    align-items:center;
+    justify-content:center;
+  }
+  .wrap{
+    width:min(var(--w), 100vw);
+    padding:10px 10px 14px;
+    box-sizing:border-box;
+  }
+  .hud{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin:6px 2px 10px;
+    font-size:14px;
+    opacity:.95;
+  }
+  .hud b{ font-size:16px; }
+  .panel{
+    background:#141824;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  canvas{
+    width:100%;
+    height:auto;
+    display:block;
+    background: radial-gradient(120% 80% at 50% 15%, rgba(255,255,255,.06), rgba(0,0,0,0) 50%),
+                linear-gradient(#0f1320, #0b0d13);
+    touch-action:manipulation;
+  }
+  .controls{
+    display:flex;
+    gap:10px;
+    padding:10px;
+    background: rgba(0,0,0,.18);
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+  button{
+    flex:1;
+    appearance:none;
+    border:0;
+    border-radius:12px;
+    padding:14px 12px;
+    font-weight:700;
+    font-size:16px;
+    color:#111;
+    background:#ffd34d;
+    cursor:pointer;
+  }
+  button.secondary{
+    background:#2a3147;
+    color:#fff;
+    font-weight:600;
+  }
+  .toast{
+    position:absolute;
+    left:50%;
+    top:18%;
+    transform:translateX(-50%);
+    background: rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.18);
+    padding:10px 14px;
+    border-radius:999px;
+    font-weight:800;
+    letter-spacing:.02em;
+    opacity:0;
+    transition: opacity .15s ease, transform .15s ease;
+    pointer-events:none;
+    white-space:nowrap;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(-2px);
+  }
+  .hint{
+    font-size:12px;
+    opacity:.75;
+    margin-top:10px;
+    line-height:1.5;
+  }
+</style>
 </head>
-
 <body>
-  <div class="tt-wrap" id="ttWrap">
-    <!-- HUD -->
-    <header class="tt-hud" aria-label="HUD">
-      <div class="tt-hud__row">
-        <div class="tt-pill">
-          <span class="tt-pill__label">FLOOR</span>
-          <span id="ttFloor" class="tt-pill__value">0</span>
-        </div>
-        <div class="tt-pill">
-          <span class="tt-pill__label">BEST</span>
-          <span id="ttBest" class="tt-pill__value">0</span>
-        </div>
-        <div class="tt-pill">
-          <span class="tt-pill__label">COMBO</span>
-          <span id="ttCombo" class="tt-pill__value">0</span>
-        </div>
-      </div>
-      <div class="tt-hud__row tt-hud__row--small">
-        <div id="ttHint" class="tt-hint">タップ/スペースで落とす</div>
-      </div>
-    </header>
-
-    <!-- Canvas -->
-    <div class="tt-game" id="ttGame">
-      <canvas id="ttCanvas"></canvas>
-    </div>
-
-    <!-- Controls -->
-    <footer class="tt-controls" aria-label="Controls">
-      <button id="ttDrop" class="tt-btn tt-btn--primary" type="button" aria-label="落とす">落とす</button>
-      <button id="ttRestart" class="tt-btn tt-btn--ghost" type="button" aria-label="リスタート">↻</button>
-    </footer>
-
-    <!-- Game Over -->
-    <div id="ttOver" class="tt-over" aria-hidden="true">
-      <div class="tt-over__card" role="dialog" aria-modal="true" aria-label="ゲームオーバー">
-        <div class="tt-over__title">GAME OVER</div>
-        <div class="tt-over__score">
-          <div class="tt-over__line">FLOOR: <span id="ttOverFloor">0</span></div>
-          <div class="tt-over__line">BEST: <span id="ttOverBest">0</span></div>
-        </div>
-        <div class="tt-over__btns">
-          <button id="ttAgain" class="tt-btn tt-btn--primary" type="button">もう一回</button>
-          <a class="tt-btn tt-btn--ghost" href="./index.html">戻る</a>
-        </div>
-        <div class="tt-over__note">※ 端末にベストを保存します</div>
-      </div>
-    </div>
-
-    <!-- Perfect popup -->
-    <div id="ttPop" class="tt-pop" aria-hidden="true"></div>
+<div class="wrap">
+  <div class="hud">
+    <div>Score: <b id="score">0</b></div>
+    <div>Best: <b id="best">0</b></div>
+    <div id="state">READY</div>
   </div>
 
-  <script src="./assets/ttower2.js"></script>
+  <div class="panel" style="position:relative;">
+    <div id="toast" class="toast">PERFECT!!</div>
+    <canvas id="cv" width="420" height="720" aria-label="たこ焼きタイミングタワー"></canvas>
+    <div class="controls">
+      <button id="stopBtn">STOP（タップ）</button>
+      <button id="restartBtn" class="secondary">RESTART</button>
+    </div>
+  </div>
+
+  <div class="hint">
+    ・操作は「STOP」だけ。<br/>
+    ・下のブロックと重なった分だけ残ります。<br/>
+    ・PERFECT（ほぼ同じ位置）だと削れません。<br/>
+  </div>
+</div>
+
+<script>
+(() => {
+  // =========================
+  // 設定
+  // =========================
+  const CONF = {
+    canvasW: 420,
+    canvasH: 720,
+
+    baseWidth: 220,      // 最初の土台幅
+    blockH: 34,          // ブロック高さ
+    minWidth: 26,        // これ未満でゲームオーバー（見た目で限界）
+    marginX: 16,         // 左右余白
+    speedBase: 2.6,      // 横移動速度
+    speedPerLevel: 0.10, // 段数ごとに速度UP
+    perfectPx: 3,        // PERFECT判定（px）
+    camFollowFrom: 10,   // 何段目からカメラ追随開始
+    grid: true           // 背景の薄いガイド
+  };
+
+  // =========================
+  // DOM
+  // =========================
+  const cv = document.getElementById("cv");
+  const ctx = cv.getContext("2d");
+  const scoreEl = document.getElementById("score");
+  const bestEl  = document.getElementById("best");
+  const stateEl = document.getElementById("state");
+  const toastEl = document.getElementById("toast");
+  const stopBtn = document.getElementById("stopBtn");
+  const restartBtn = document.getElementById("restartBtn");
+
+  // スマホのタップも全部 STOP にする
+  cv.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    if (!S.playing) start();
+    else drop();
+  }, { passive:false });
+
+  stopBtn.addEventListener("click", () => {
+    if (!S.playing) start();
+    else drop();
+  });
+
+  restartBtn.addEventListener("click", reset);
+
+  // =========================
+  // 保存
+  // =========================
+  const BEST_KEY = "takoyakiTimingTower_best";
+  function loadBest(){
+    const v = Number(localStorage.getItem(BEST_KEY) || 0);
+    return Number.isFinite(v) ? v : 0;
+  }
+  function saveBest(v){
+    localStorage.setItem(BEST_KEY, String(v));
+  }
+
+  // =========================
+  // 状態
+  // =========================
+  const S = {
+    playing: false,
+    over: false,
+    score: 0,
+    best: loadBest(),
+    level: 0,          // 積み段数（0-based）
+    cameraY: 0,        // 画面スクロール（上に積むほど増える）
+    dir: 1,            // 横移動方向
+    t: 0,
+    blocks: [],        // 確定済みブロック
+    curr: null         // 移動中ブロック
+  };
+
+  bestEl.textContent = S.best;
+
+  // =========================
+  // ユーティリティ
+  // =========================
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+  function showToast(text){
+    toastEl.textContent = text;
+    toastEl.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toastEl.classList.remove("show"), 420);
+  }
+
+  function setHUD(){
+    scoreEl.textContent = S.score;
+    bestEl.textContent  = S.best;
+    stateEl.textContent = S.over ? "GAME OVER" : (S.playing ? "PLAYING" : "READY");
+  }
+
+  function levelSpeed(){
+    return CONF.speedBase + S.level * CONF.speedPerLevel;
+  }
+
+  // =========================
+  // ブロック生成
+  // =========================
+  function makeBlock({ x, width, y, colorA, colorB }){
+    return { x, width, y, h: CONF.blockH, colorA, colorB };
+  }
+
+  function spawnBase(){
+    // 土台は中央固定
+    const w = CONF.baseWidth;
+    const x = (CONF.canvasW - w) / 2;
+    const y = CONF.canvasH - 90; // 底から少し上
+    const base = makeBlock({
+      x, width: w, y,
+      colorA: "#ffcc55",
+      colorB: "#f08b2f"
+    });
+    S.blocks = [base];
+    S.level = 1; // 次は1段目を積む
+  }
+
+  function spawnCurrent(){
+    const prev = S.blocks[S.blocks.length - 1];
+    const w = prev.width;
+    const y = prev.y - CONF.blockH;
+
+    // 左からスタート・右へ移動（たまに右からでもOK）
+    const startLeft = (S.level % 2 === 0);
+    const x = startLeft ? CONF.marginX : (CONF.canvasW - CONF.marginX - w);
+    S.dir = startLeft ? 1 : -1;
+
+    S.curr = makeBlock({
+      x, width: w, y,
+      colorA: "#ffd34d",
+      colorB: "#f0a12f"
+    });
+  }
+
+  // =========================
+  // ゲーム進行
+  // =========================
+  function reset(){
+    S.playing = false;
+    S.over = false;
+    S.score = 0;
+    S.cameraY = 0;
+    S.t = 0;
+    spawnBase();
+    spawnCurrent();
+    setHUD();
+    draw();
+  }
+
+  function start(){
+    if (S.over) reset();
+    S.playing = true;
+    setHUD();
+  }
+
+  function gameOver(){
+    S.over = true;
+    S.playing = false;
+    setHUD();
+    showToast("焼き失敗… GAME OVER");
+  }
+
+  // STOPで確定（重なり計算）
+  function drop(){
+    if (!S.curr || S.over) return;
+
+    const prev = S.blocks[S.blocks.length - 1];
+    const curr = S.curr;
+
+    const overlapLeft  = Math.max(prev.x, curr.x);
+    const overlapRight = Math.min(prev.x + prev.width, curr.x + curr.width);
+    const overlapW = overlapRight - overlapLeft;
+
+    // 0以下なら外れた
+    if (overlapW <= 0){
+      gameOver();
+      return;
+    }
+
+    // PERFECT判定：左端差がごく小さいなら補正＋幅維持
+    const diff = Math.abs(curr.x - prev.x);
+    const isPerfect = diff <= CONF.perfectPx;
+
+    if (isPerfect){
+      curr.x = prev.x;
+      curr.width = prev.width;
+      showToast("PERFECT!!");
+      S.score += 25;
+    } else {
+      curr.x = overlapLeft;
+      curr.width = overlapW;
+      S.score += 10;
+    }
+
+    // 確定
+    S.blocks.push(curr);
+    S.curr = null;
+
+    // ベスト更新
+    if (S.score > S.best){
+      S.best = S.score;
+      saveBest(S.best);
+    }
+
+    // 最小幅チェック
+    if (curr.width < CONF.minWidth){
+      gameOver();
+      return;
+    }
+
+    // 次の段へ
+    S.level++;
+
+    // カメラ追随（ある程度積んだら上へスクロール）
+    if (S.blocks.length > CONF.camFollowFrom){
+      // ブロックが画面上に近づいたらカメラを上げる
+      const top = S.blocks[S.blocks.length - 1];
+      const targetY = (CONF.canvasH * 0.35) - top.y; // 画面35%あたりに置く
+      S.cameraY = Math.max(S.cameraY, targetY);
+    }
+
+    spawnCurrent();
+    setHUD();
+  }
+
+  // =========================
+  // 更新ループ
+  // =========================
+  function update(){
+    if (S.playing && !S.over && S.curr){
+      const sp = levelSpeed();
+      S.curr.x += sp * S.dir;
+
+      const minX = CONF.marginX;
+      const maxX = CONF.canvasW - CONF.marginX - S.curr.width;
+
+      if (S.curr.x <= minX){
+        S.curr.x = minX;
+        S.dir = 1;
+      } else if (S.curr.x >= maxX){
+        S.curr.x = maxX;
+        S.dir = -1;
+      }
+    }
+  }
+
+  // =========================
+  // 描画
+  // =========================
+  function drawBG(){
+    // 薄いグリッド（目安）
+    if (!CONF.grid) return;
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    const step = 30;
+    for (let y=0; y<CONF.canvasH; y+=step){
+      ctx.beginPath();
+      ctx.moveTo(0,y);
+      ctx.lineTo(CONF.canvasW,y);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawBlock(b){
+    const y = b.y + S.cameraY;
+
+    // 画面外は描かない（軽量化）
+    if (y > CONF.canvasH + 80 || y < -120) return;
+
+    const r = 10;
+    const x = b.x;
+    const w = b.width;
+    const h = b.h;
+
+    // たこ焼きっぽいグラデ風（※CanvasなのでOK。ドット風にしたければ画像に差し替え）
+    const grad = ctx.createLinearGradient(x, y, x, y+h);
+    grad.addColorStop(0, b.colorA);
+    grad.addColorStop(1, b.colorB);
+
+    // 本体
+    roundRect(x, y, w, h, r, grad);
+
+    // ハイライト（焼き目）
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    roundRect(x+6, y+6, w-12, h-14, r-3, "#fff");
+    ctx.restore();
+
+    // 枠線
+    ctx.save();
+    ctx.strokeStyle = "rgba(0,0,0,.35)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    roundedPath(x, y, w, h, r);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function roundRect(x, y, w, h, r, fillStyle){
+    ctx.save();
+    ctx.fillStyle = fillStyle;
+    ctx.beginPath();
+    roundedPath(x, y, w, h, r);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function roundedPath(x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,CONF.canvasW, CONF.canvasH);
+    drawBG();
+
+    // 確定ブロック
+    for (const b of S.blocks) drawBlock(b);
+
+    // 現在ブロック
+    if (S.curr) drawBlock(S.curr);
+
+    // 最上段のガイド
+    const top = S.blocks[S.blocks.length - 1];
+    if (top){
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = "#fff";
+      ctx.font = "700 12px system-ui, sans-serif";
+      ctx.fillText(`LEVEL ${S.blocks.length - 1}`, 14, 24);
+      ctx.restore();
+    }
+
+    // ゲームオーバー表示
+    if (S.over){
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, CONF.canvasW, CONF.canvasH);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#fff";
+      ctx.font = "900 34px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("GAME OVER", CONF.canvasW/2, CONF.canvasH*0.44);
+      ctx.font = "700 16px system-ui, sans-serif";
+      ctx.fillText("RESTART で再挑戦", CONF.canvasW/2, CONF.canvasH*0.50);
+      ctx.restore();
+    }
+  }
+
+  // =========================
+  // ループ
+  // =========================
+  function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // 初期化
+  reset();
+  loop();
+})();
+</script>
 </body>
 </html>
-
 
