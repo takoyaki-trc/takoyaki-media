@@ -127,14 +127,14 @@
 </div>
 
 
-
 <script>
 (() => {
   /* =========================================================
-     ✅ タイミングタワー（高さバラバラでも上に進む修正版）
-     - カメラ追随：最高到達のブロック位置を毎フレーム追う（止まらない）
-     - 終了画面：到達（階/m）＋ベスト表示
+     ✅ タイミングタワー：敗因表示 + 結果コピー + 称号（たこ焼きトレカ風）
+     - 高さバラバラでも上に進む（毎フレームカメラ追随）
      - レア効果：金焼き(甘判定) / 虹伝説(1回保険) / 激辛(高速)
+     - 進捗：FLOOR / METER
+     - GAME OVER時：敗因/称号/結果コピー（オーバーレイでバンッ）
      ========================================================= */
 
   // =========================
@@ -179,29 +179,30 @@
 
     speedBase: 2.6,
     speedPerLevel: 0.10,
-
     perfectPx: 3,
 
     grid: true,
 
     // ✅ 進捗単位
-    // "FLOOR" or "METER"
-    PROGRESS_MODE: "FLOOR",
+    PROGRESS_MODE: "FLOOR", // "FLOOR" or "METER"
     METER_PER_STANDARD_BLOCK: 0.7,
     METER_DECIMALS: 1,
 
-    // ✅ カメラ（ここが「上に進まない」修正の核）
-    // 画面のどの位置に「一番上のブロック」を置きたいか（0.20=上の方）
+    // ✅ カメラ
     CAMERA_ANCHOR_Y: 0.25,
-    CAMERA_SMOOTH: 0.18,     // 0〜1（大きいほど追随が速い）
+    CAMERA_SMOOTH: 0.18,
     CAMERA_MIN: 0,
 
-    // ✅ 無限でも軽くする（描画用に古いブロックを間引く）
-    KEEP_BLOCKS: 90,         // 0で無効
+    // ✅ 無限でも軽く
+    KEEP_BLOCKS: 90, // 0で無効
+
+    // ✅ 結果コピーのテンプレ（必要なら店名/URLを差し替え）
+    SHARE_HASHTAGS: "#たこ焼きトレカ #TakoyakiTower",
+    SHARE_URL: "", // 例: "https://takoyaki-trc.github.io/..."（空なら出さない）
   };
 
   // =========================
-  // 種類テーブル（高さ差を激しくしてOK）
+  // 種類テーブル（高さ差激しめ）
   // =========================
   const BLOCK_TABLE = [
     { key:"takoA", w:45, h:18, label:"極薄" },
@@ -288,12 +289,18 @@
     blocks: [],
     curr: null,
 
-    // 終了画面表示用に保持
-    lastRunProgress: 0
+    // 結果用
+    lastRunProgress: 0,
+    lastFailReason: "",
+    lastFailDetail: "",
+    lastTitle: "",
+    lastSubtitle: "",
+    lastLastBlockLabel: "", // 最後に置けたブロックの種類
+    lastUsedSpecials: [],   // 金/虹/激辛が出た記録（表示用）
   };
 
   // =========================
-  // UI
+  // UI（トースト）
   // =========================
   function showToast(text){
     toastEl.textContent = text;
@@ -311,6 +318,326 @@
     scoreEl.textContent = formatProgress(S.progress);
     bestEl.textContent  = formatProgress(S.best);
     stateEl.textContent = S.over ? "GAME OVER" : (S.playing ? "PLAYING" : "READY");
+  }
+
+  // =========================
+  // 称号（たこ焼きトレカ風）
+  // =========================
+  function getTakoyakiTitle(progress){
+    // 進捗の“段階”を作る（FLOOR優先で刻みやすい）
+    const p = (CONF.PROGRESS_MODE === "FLOOR") ? Math.floor(progress) : progress;
+
+    // たこ焼きトレカっぽい「称号」＋サブコピー
+    // ※好きに増やしてOK
+    const table = (CONF.PROGRESS_MODE === "FLOOR")
+      ? [
+          { min: 0,   title:"〘未投入〙",           sub:"鉄板に、置かれていない。" },
+          { min: 1,   title:"〘初焼き見習い〙",     sub:"丸くする前に、心が揺れる。" },
+          { min: 5,   title:"〘返しの小手先〙",     sub:"角度だけ上手い。まだ浅い。" },
+          { min: 10,  title:"〘湯気の観測者〙",     sub:"熱は見える。だが耐性はない。" },
+          { min: 15,  title:"〘焼き縮みの達人〙",   sub:"小さくなっても、諦めない。" },
+          { min: 20,  title:"〘鉄板の中級者〙",     sub:"焦げと会話できるようになった。" },
+          { min: 30,  title:"〘タコ民の評議員〙",   sub:"積むことは、街を守ること。" },
+          { min: 40,  title:"〘職人祭壇の候補者〙", sub:"祭壇が、君の手元を見ている。" },
+          { min: 50,  title:"〘金枠の焼き手〙",     sub:"PERFECTの匂いがする。" },
+          { min: 70,  title:"〘伝説の返し〙",       sub:"落ちないのではない。落とさない。" },
+          { min: 100, title:"〘焼かれた伝説〙",     sub:"君の塔が、カードになる。" },
+          { min: 130, title:"〘禁断の多段返し〙",   sub:"誰も真似できない速度域。" },
+          { min: 160, title:"〘鉄板の向こう側〙",   sub:"上限は、君が決める。" },
+          { min: 200, title:"〘神話級・丸の支配者〙",sub:"ここまで来ると、怖い。" },
+        ]
+      : [
+          { min: 0,    title:"〘未投入〙",           sub:"鉄板に、置かれていない。" },
+          { min: 1.0,  title:"〘初焼き見習い〙",     sub:"高さより、手が震える。" },
+          { min: 5.0,  title:"〘湯気の観測者〙",     sub:"熱は見える。だが耐性はない。" },
+          { min: 10.0, title:"〘鉄板の中級者〙",     sub:"焦げと会話できるようになった。" },
+          { min: 15.0, title:"〘職人祭壇の候補者〙", sub:"祭壇が、君の手元を見ている。" },
+          { min: 25.0, title:"〘焼かれた伝説〙",     sub:"君の塔が、カードになる。" },
+          { min: 35.0, title:"〘禁断の多段返し〙",   sub:"誰も真似できない速度域。" },
+          { min: 50.0, title:"〘神話級・丸の支配者〙",sub:"ここまで来ると、怖い。" },
+        ];
+
+    // 最大minを満たすものを選ぶ
+    let pick = table[0];
+    for (const row of table){
+      if (p >= row.min) pick = row;
+    }
+    return pick;
+  }
+
+  // =========================
+  // 結果コピー用（テキスト生成）
+  // =========================
+  function buildShareText(){
+    const title = S.lastTitle || "〘焼き結果〙";
+    const reached = formatProgress(S.lastRunProgress);
+    const best = formatProgress(S.best);
+    const reason = S.lastFailReason ? `敗因：${S.lastFailReason}` : "";
+    const detail = S.lastFailDetail ? `（${S.lastFailDetail}）` : "";
+    const lastBlock = S.lastLastBlockLabel ? `最後の焼き：${S.lastLastBlockLabel}` : "";
+
+    const specials = S.lastUsedSpecials.length ? `出現：${S.lastUsedSpecials.join(" / ")}` : "";
+    const url = CONF.SHARE_URL ? `\n${CONF.SHARE_URL}` : "";
+
+    const lines = [
+      "【たこ焼きタワー】",
+      `${title}`,
+      `到達：${reached} / BEST：${best}`,
+      (reason + detail).trim(),
+      lastBlock,
+      specials,
+      CONF.SHARE_HASHTAGS
+    ].filter(Boolean);
+
+    return lines.join("\n") + url;
+  }
+
+  async function copyToClipboard(text){
+    try{
+      if (navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    }catch(e){}
+    // フォールバック
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      ta.style.top = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }catch(e){}
+    return false;
+  }
+
+  // =========================
+  // オーバーレイ（ゲームオーバーの“バンっ”）
+  // =========================
+  let resultOverlay = null;
+
+  function ensureOverlay(){
+    if (resultOverlay) return resultOverlay;
+
+    const wrap = cv.closest(".panel") || document.body;
+
+    const box = document.createElement("div");
+    box.id = "takoyakiResultOverlay";
+    box.style.position = "absolute";
+    box.style.left = "0";
+    box.style.top = "0";
+    box.style.width = "100%";
+    box.style.height = "100%";
+    box.style.display = "none";
+    box.style.alignItems = "center";
+    box.style.justifyContent = "center";
+    box.style.zIndex = "9999";
+    box.style.pointerEvents = "auto";
+
+    // 背景
+    const bg = document.createElement("div");
+    bg.style.position = "absolute";
+    bg.style.inset = "0";
+    bg.style.background = "rgba(0,0,0,.72)";
+    bg.style.backdropFilter = "blur(2px)";
+    bg.style.webkitBackdropFilter = "blur(2px)";
+    box.appendChild(bg);
+
+    // カード風パネル
+    const card = document.createElement("div");
+    card.style.position = "relative";
+    card.style.width = "min(92%, 420px)";
+    card.style.borderRadius = "18px";
+    card.style.border = "1px solid rgba(255,255,255,.18)";
+    card.style.background = "linear-gradient(180deg, rgba(24,28,40,.95), rgba(12,14,20,.95))";
+    card.style.boxShadow = "0 20px 60px rgba(0,0,0,.55)";
+    card.style.padding = "16px 14px";
+    card.style.boxSizing = "border-box";
+    card.style.transform = "translateY(6px) scale(.98)";
+    card.style.opacity = "0";
+    card.style.transition = "transform .18s ease, opacity .18s ease";
+    box.appendChild(card);
+
+    // タイトル
+    const h1 = document.createElement("div");
+    h1.id = "resTitle";
+    h1.style.fontWeight = "900";
+    h1.style.fontSize = "18px";
+    h1.style.letterSpacing = ".02em";
+    h1.style.marginBottom = "6px";
+    card.appendChild(h1);
+
+    // サブ
+    const sub = document.createElement("div");
+    sub.id = "resSub";
+    sub.style.opacity = ".85";
+    sub.style.fontSize = "13px";
+    sub.style.lineHeight = "1.35";
+    sub.style.marginBottom = "10px";
+    card.appendChild(sub);
+
+    // 到達＆ベスト
+    const stats = document.createElement("div");
+    stats.id = "resStats";
+    stats.style.display = "grid";
+    stats.style.gridTemplateColumns = "1fr 1fr";
+    stats.style.gap = "10px";
+    stats.style.marginBottom = "10px";
+    card.appendChild(stats);
+
+    const statA = document.createElement("div");
+    statA.style.padding = "10px";
+    statA.style.borderRadius = "14px";
+    statA.style.border = "1px solid rgba(255,255,255,.12)";
+    statA.style.background = "rgba(255,255,255,.06)";
+    statA.innerHTML = `<div style="opacity:.75;font-size:12px;">到達</div><div id="resReach" style="font-weight:900;font-size:20px;margin-top:2px;"></div>`;
+    stats.appendChild(statA);
+
+    const statB = document.createElement("div");
+    statB.style.padding = "10px";
+    statB.style.borderRadius = "14px";
+    statB.style.border = "1px solid rgba(255,255,255,.12)";
+    statB.style.background = "rgba(255,255,255,.06)";
+    statB.innerHTML = `<div style="opacity:.75;font-size:12px;">BEST</div><div id="resBest" style="font-weight:900;font-size:20px;margin-top:2px;"></div>`;
+    stats.appendChild(statB);
+
+    // 敗因
+    const fail = document.createElement("div");
+    fail.id = "resFail";
+    fail.style.padding = "10px";
+    fail.style.borderRadius = "14px";
+    fail.style.border = "1px solid rgba(255,255,255,.12)";
+    fail.style.background = "rgba(255,255,255,.04)";
+    fail.style.marginBottom = "10px";
+    fail.style.fontSize = "13px";
+    fail.style.lineHeight = "1.4";
+    card.appendChild(fail);
+
+    // 特記事項
+    const extra = document.createElement("div");
+    extra.id = "resExtra";
+    extra.style.opacity = ".85";
+    extra.style.fontSize = "12px";
+    extra.style.lineHeight = "1.35";
+    extra.style.marginBottom = "12px";
+    card.appendChild(extra);
+
+    // ボタン列
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.gap = "10px";
+    card.appendChild(row);
+
+    const copyBtn = document.createElement("button");
+    copyBtn.id = "resCopyBtn";
+    copyBtn.type = "button";
+    copyBtn.textContent = "結果をコピー";
+    copyBtn.style.flex = "1";
+    copyBtn.style.border = "0";
+    copyBtn.style.borderRadius = "14px";
+    copyBtn.style.padding = "14px 12px";
+    copyBtn.style.fontWeight = "900";
+    copyBtn.style.background = "#ffd34d";
+    copyBtn.style.color = "#111";
+    copyBtn.style.cursor = "pointer";
+    row.appendChild(copyBtn);
+
+    const againBtn = document.createElement("button");
+    againBtn.type = "button";
+    againBtn.textContent = "もう一回";
+    againBtn.style.flex = "1";
+    againBtn.style.border = "0";
+    againBtn.style.borderRadius = "14px";
+    againBtn.style.padding = "14px 12px";
+    againBtn.style.fontWeight = "800";
+    againBtn.style.background = "#2a3147";
+    againBtn.style.color = "#fff";
+    againBtn.style.cursor = "pointer";
+    row.appendChild(againBtn);
+
+    // イベント
+    copyBtn.addEventListener("click", async () => {
+      const text = buildShareText();
+      const ok = await copyToClipboard(text);
+      showToast(ok ? "コピーした！" : "コピー失敗（手動で選択してね）");
+      // 失敗時のために、テキストも一瞬出す
+      if (!ok){
+        alert(text);
+      }
+    });
+
+    againBtn.addEventListener("click", () => {
+      hideResultOverlay();
+      reset();
+      start();
+    });
+
+    // 背景クリックで閉じる（任意：消したければここを外す）
+    bg.addEventListener("click", () => {
+      hideResultOverlay();
+    });
+
+    // panelがposition:relative前提だけど、無ければ足す
+    const st = getComputedStyle(wrap);
+    if (st.position === "static") wrap.style.position = "relative";
+    wrap.appendChild(box);
+
+    resultOverlay = { box, card };
+    return resultOverlay;
+  }
+
+  function showResultOverlay(){
+    const o = ensureOverlay();
+    // 内容反映
+    const title = S.lastTitle || "〘焼き結果〙";
+    const sub = S.lastSubtitle || "";
+    const reached = formatProgress(S.lastRunProgress);
+    const best = formatProgress(S.best);
+
+    const specials = S.lastUsedSpecials.length ? `出現：${S.lastUsedSpecials.join(" / ")}` : "出現：なし";
+    const lastBlock = S.lastLastBlockLabel ? `最後の焼き：${S.lastLastBlockLabel}` : "最後の焼き：—";
+
+    document.getElementById("resTitle").textContent = title;
+    document.getElementById("resSub").textContent = sub;
+    document.getElementById("resReach").textContent = reached;
+    document.getElementById("resBest").textContent = best;
+
+    const reason = S.lastFailReason || "不明";
+    const detail = S.lastFailDetail ? `（${S.lastFailDetail}）` : "";
+    document.getElementById("resFail").innerHTML =
+      `<div style="opacity:.75;font-size:12px;margin-bottom:4px;">敗因</div>` +
+      `<div style="font-weight:900;">${escapeHtml(reason)} ${escapeHtml(detail)}</div>`;
+
+    document.getElementById("resExtra").textContent = `${lastBlock} / ${specials}`;
+
+    // 表示
+    o.box.style.display = "flex";
+    requestAnimationFrame(() => {
+      o.card.style.opacity = "1";
+      o.card.style.transform = "translateY(0) scale(1)";
+    });
+  }
+
+  function hideResultOverlay(){
+    if (!resultOverlay) return;
+    const { box, card } = resultOverlay;
+    card.style.opacity = "0";
+    card.style.transform = "translateY(6px) scale(.98)";
+    setTimeout(() => {
+      box.style.display = "none";
+    }, 180);
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+    }[c]));
   }
 
   // =========================
@@ -362,6 +689,12 @@
       insurance: !!def.insurance
     });
 
+    // 特殊出現ログ（結果用）
+    if (S.curr.insurance) S.lastUsedSpecials.push("虹伝説");
+    else if ((S.curr.perfectPlus||0) > 0) S.lastUsedSpecials.push("金焼き");
+    else if ((S.curr.speedMul||1) > 1) S.lastUsedSpecials.push("激辛");
+
+    // トースト
     if (S.curr.insurance) showToast("🌈 虹伝説：保険付き！");
     else if ((S.curr.perfectPlus||0) > 0) showToast("🥇 金焼き：甘判定！");
     else if ((S.curr.speedMul||1) > 1) showToast("🌶 激辛：高速！");
@@ -383,30 +716,22 @@
   }
 
   // =========================
-  // カメラ追随（★ここが修正ポイント）
+  // カメラ追随（止まらない）
   // =========================
   function getTopMostY(){
-    // “一番上”＝yが最小（上に行くほど小さい）
     let topY = Infinity;
-
     for (const b of S.blocks){
       if (Number.isFinite(b.y)) topY = Math.min(topY, b.y);
     }
     if (S.curr && Number.isFinite(S.curr.y)) topY = Math.min(topY, S.curr.y);
-
     if (!Number.isFinite(topY)) topY = 0;
     return topY;
   }
 
   function updateCamera(){
-    // 画面の上の方(CAMERA_ANCHOR_Y)に最高到達を置く
     const topY = getTopMostY();
     const anchorY = CONF.canvasH * CONF.CAMERA_ANCHOR_Y;
-
-    // topY（世界座標）を anchorY（画面座標）に合わせるためのカメラ値
     const target = Math.max(CONF.CAMERA_MIN, anchorY - topY);
-
-    // スムーズ追随
     S.cameraY += (target - S.cameraY) * CONF.CAMERA_SMOOTH;
   }
 
@@ -414,10 +739,19 @@
   // ゲーム
   // =========================
   function reset(){
+    hideResultOverlay();
+
     S.playing = false;
     S.over = false;
+
     S.progress = 0;
     S.lastRunProgress = 0;
+    S.lastFailReason = "";
+    S.lastFailDetail = "";
+    S.lastTitle = "";
+    S.lastSubtitle = "";
+    S.lastLastBlockLabel = "";
+    S.lastUsedSpecials = [];
 
     S.cameraY = 0;
     S.dir = 1;
@@ -436,20 +770,39 @@
     setHUD();
   }
 
-  function gameOver(){
-    S.over = true;
-    S.playing = false;
-
-    S.lastRunProgress = S.progress;
-
-    setHUD();
-    showToast("焼き失敗… GAME OVER");
-  }
-
   function levelSpeed(){
     const base = CONF.speedBase + S.level * CONF.speedPerLevel;
     const mul = (S.curr && S.curr.speedMul) ? S.curr.speedMul : 1;
     return base * mul;
+  }
+
+  function endRun(){
+    S.lastRunProgress = S.progress;
+
+    // 称号決定
+    const t = getTakoyakiTitle(S.lastRunProgress);
+    S.lastTitle = t.title;
+    S.lastSubtitle = t.sub;
+
+    // ベスト更新は既に途中でやるが、保険として
+    if (S.progress > S.best){
+      S.best = S.progress;
+      saveBest(S.best);
+    }
+
+    setHUD();
+    showResultOverlay();
+  }
+
+  function gameOver(reason, detail){
+    S.over = true;
+    S.playing = false;
+
+    S.lastFailReason = reason || "焼き失敗";
+    S.lastFailDetail = detail || "";
+
+    showToast("焼き失敗… GAME OVER");
+    endRun();
   }
 
   function drop(){
@@ -462,15 +815,16 @@
     const overlapRight = Math.min(prev.x + prev.width, curr.x + curr.width);
     const overlapW = overlapRight - overlapLeft;
 
+    // ① 外れた（重なり0）
     if (overlapW <= 0){
-      gameOver();
+      S.progress = computeProgress();
+      gameOver("外れた（重なりゼロ）", "たこ焼きが鉄板から逃げた");
       return;
     }
 
     const diff = Math.abs(curr.x - prev.x);
     const perfectRange = CONF.perfectPx + (curr.perfectPlus || 0);
     const isPerfect = diff <= perfectRange;
-
     const willShrink = overlapW < curr.width;
 
     // 虹伝説：1回だけ削れない
@@ -490,22 +844,16 @@
 
     // 確定
     S.blocks.push(curr);
+    S.lastLastBlockLabel = curr.label || ""; // 最後に置けたブロック
+
     S.curr = null;
 
-    // 幅が小さすぎたら終了
-    if (curr.width < CONF.minWidth){
-      S.progress = computeProgress();
-      if (S.progress > S.best){ S.best = S.progress; saveBest(S.best); }
-      gameOver();
-      return;
-    }
-
-    // 無限でも軽く：古い描画用ブロックを間引く
+    // 無限軽量化
     if (CONF.KEEP_BLOCKS > 0 && S.blocks.length > CONF.KEEP_BLOCKS){
       S.blocks = S.blocks.slice(S.blocks.length - CONF.KEEP_BLOCKS);
     }
 
-    // 次へ
+    // 次の段へ
     S.level++;
 
     // 進捗更新
@@ -515,6 +863,12 @@
     if (S.progress > S.best){
       S.best = S.progress;
       saveBest(S.best);
+    }
+
+    // ② 焼き縮み（幅が限界以下）→置けたけど次が無理
+    if (curr.width < CONF.minWidth){
+      gameOver("焼き縮み（幅が限界）", `残り幅 ${Math.floor(curr.width)}px / 限界 ${CONF.minWidth}px`);
+      return;
     }
 
     spawnCurrent();
@@ -538,7 +892,6 @@
       }
     }
 
-    // ★毎フレーム追随するから「上に進まない」現象が消える
     if (!S.over) updateCamera();
   }
 
@@ -582,13 +935,11 @@
 
   function drawBlock(b){
     const y = b.y + S.cameraY;
-    if (y > CONF.canvasH + 120 || y < -200) return;
+    if (y > CONF.canvasH + 120 || y < -240) return;
 
     const x = Math.round(b.x);
     const w = Math.round(b.width);
     const h = Math.round(b.h);
-
-    // ✅ 高さが激しい時は角丸も連動させると見栄えが崩れない
     const r = Math.max(6, Math.round(h * 0.22));
 
     const tile = b.tileKey ? IMG[b.tileKey] : null;
@@ -608,7 +959,6 @@
       return;
     }
 
-    // タイル敷き詰め（高さに合わせてスケール）
     const scale = h / tile.naturalHeight;
     const tileW = Math.max(1, Math.round(tile.naturalWidth * scale));
 
@@ -620,6 +970,7 @@
     for (let xx = x; xx < x + w; xx += tileW){
       ctx.drawImage(tile, xx, y, tileW, h);
     }
+
     ctx.restore();
 
     ctx.save();
@@ -633,8 +984,6 @@
 
   function draw(){
     ctx.clearRect(0,0,CONF.canvasW, CONF.canvasH);
-
-    // ドット絵ぼやけ防止
     ctx.imageSmoothingEnabled = false;
 
     drawBG();
@@ -642,36 +991,13 @@
     for (const b of S.blocks) drawBlock(b);
     if (S.curr) drawBlock(S.curr);
 
-    // 左上ガイド
+    // HUDっぽい情報（左上）
     ctx.save();
     ctx.globalAlpha = 0.35;
     ctx.fillStyle = "#fff";
     ctx.font = "700 12px system-ui, sans-serif";
     ctx.fillText(`現在: ${formatProgress(S.progress)} / BEST: ${formatProgress(S.best)}`, 14, 24);
     ctx.restore();
-
-    // 終了画面（到達表示）
-    if (S.over){
-      ctx.save();
-      ctx.globalAlpha = 0.85;
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, CONF.canvasW, CONF.canvasH);
-
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = "#fff";
-      ctx.textAlign = "center";
-
-      ctx.font = "900 34px system-ui, sans-serif";
-      ctx.fillText("GAME OVER", CONF.canvasW/2, CONF.canvasH*0.40);
-
-      ctx.font = "800 18px system-ui, sans-serif";
-      ctx.fillText(`到達: ${formatProgress(S.lastRunProgress)}`, CONF.canvasW/2, CONF.canvasH*0.48);
-      ctx.fillText(`BEST: ${formatProgress(S.best)}`, CONF.canvasW/2, CONF.canvasH*0.53);
-
-      ctx.font = "700 14px system-ui, sans-serif";
-      ctx.fillText("RESTART で再挑戦 / 画面タップでもOK", CONF.canvasW/2, CONF.canvasH*0.61);
-      ctx.restore();
-    }
   }
 
   // =========================
@@ -683,13 +1009,18 @@
     requestAnimationFrame(loop);
   }
 
+  // =========================
   // 初期化
+  // =========================
   loadImages().then(() => {
     reset();
     loop();
   });
 })();
 </script>
+
+
+
 
 
   
