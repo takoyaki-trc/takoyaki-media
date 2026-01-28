@@ -1,1 +1,390 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>カード図鑑</title>
+  <style>
+    :root{
+      --bg:#0f1220;
+      --panel:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.14);
+      --text:#fff;
+      --muted:rgba(255,255,255,.72);
+      --btn:rgba(255,255,255,.10);
+      --btn2:rgba(255,255,255,.14);
+    }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:520px;margin:0 auto;padding:14px 14px 22px}
+
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .topbar a{
+      color:var(--text);text-decoration:none;
+      border:1px solid var(--line);padding:8px 10px;border-radius:12px;
+      background:var(--panel);font-weight:900
+    }
+
+    h1{font-size:18px;margin:12px 0 6px}
+    .hint{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:12px}
+
+    /* Controls */
+    .controls{
+      display:flex;gap:10px;flex-wrap:wrap;
+      border:1px solid var(--line);
+      background:var(--panel);
+      border-radius:16px;
+      padding:10px;
+      margin-bottom:12px;
+    }
+    .controls input[type="search"]{
+      flex:1;
+      min-width:180px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      outline:none;
+      font-weight:700;
+    }
+    .controls select{
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      padding:10px 10px;
+      border-radius:14px;
+      font-weight:800;
+      outline:none;
+    }
+    .pill{
+      margin-left:auto;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    /* Grid */
+    .grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:10px}
+    .card{
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      background:rgba(255,255,255,.05);
+      cursor:pointer;
+      user-select:none;
+      transition:transform .06s ease;
+    }
+    .card:active{transform:scale(.99)}
+    .card img{
+      width:100%;
+      display:block;
+      aspect-ratio:3/4;
+      object-fit:cover;
+      background:rgba(255,255,255,.03);
+    }
+    .meta{padding:10px 10px 12px}
+    .name{font-weight:1000}
+    .id{font-size:12px;color:var(--muted);margin-top:3px}
+
+    .empty{
+      border:1px dashed rgba(255,255,255,.22);
+      background:rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:16px;
+      line-height:1.7;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    /* Footer actions */
+    .actions{
+      margin-top:14px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      border-radius:16px;
+      padding:10px;
+      display:flex;gap:10px;
+    }
+    .actions button{
+      flex:1;
+      border:1px solid var(--line);
+      background:var(--btn);
+      color:var(--text);
+      padding:12px 10px;
+      border-radius:14px;
+      font-weight:900;
+    }
+    .actions button.danger{
+      border:1px solid rgba(255,154,165,.45);
+      background:rgba(255,154,165,.14);
+    }
+
+    /* Modal */
+    .modal{
+      position:fixed;inset:0;display:none;
+      background:rgba(0,0,0,.55);
+      align-items:flex-end;justify-content:center;
+      padding:14px;
+      z-index:9999;
+    }
+    .modal[aria-hidden="false"]{display:flex}
+    .sheet{
+      width:min(520px, 100%);
+      border:1px solid var(--line);
+      background:rgba(15,18,32,.94);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .sheetHead{
+      padding:12px 14px;
+      display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+    }
+    .sheetHead .ttl{font-weight:1000}
+    .sheetHead button{
+      border:1px solid var(--line);
+      background:var(--btn);
+      color:var(--text);
+      padding:8px 10px;border-radius:12px;
+      font-weight:1000;
+    }
+    .sheetBody{padding:12px 14px 14px}
+    .bigImg{
+      width:100%;
+      border-radius:16px;
+      border:1px solid var(--line);
+      aspect-ratio:3/4;
+      object-fit:cover;
+      background:rgba(255,255,255,.03);
+      display:block;
+    }
+    .info{
+      margin-top:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      border-radius:16px;
+      padding:10px 12px;
+      line-height:1.6;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .info b{color:var(--text)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a href="./index.html">← 戻る</a>
+      <a href="./farm.html">畑へ</a>
+    </div>
+
+    <h1>カード図鑑</h1>
+    <div class="hint">畑で収穫 → 「確認して図鑑へ」を押したカードがここに登録される。</div>
+
+    <div class="controls">
+      <input id="q" type="search" placeholder="検索：名前 / 番号（例 TN-003）" autocomplete="off" />
+      <select id="sort">
+        <option value="new">新しい順</option>
+        <option value="old">古い順</option>
+        <option value="id">番号順</option>
+        <option value="name">名前順</option>
+      </select>
+      <div class="pill">登録：<span id="count">0</span>枚</div>
+    </div>
+
+    <div id="root"></div>
+
+    <div class="actions">
+      <button id="btnTop" type="button">トップへ戻る</button>
+      <button id="btnClear" class="danger" type="button">図鑑をリセット</button>
+    </div>
+  </div>
+
+  <!-- 詳細モーダル -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-label="カード詳細">
+      <div class="sheetHead">
+        <div class="ttl" id="mTitle">詳細</div>
+        <button id="mClose" type="button">閉じる</button>
+      </div>
+      <div class="sheetBody" id="mBody"></div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const LS_BOOK = "tf_v1_book";
+
+  function loadBook(){
+    try{
+      const raw = localStorage.getItem(LS_BOOK);
+      if(!raw) return { ver:1, got:{} };
+      const obj = JSON.parse(raw);
+      if(!obj || typeof obj.got !== "object") return { ver:1, got:{} };
+      return obj;
+    }catch(e){
+      return { ver:1, got:{} };
+    }
+  }
+  function saveBook(b){
+    localStorage.setItem(LS_BOOK, JSON.stringify(b));
+  }
+  function fmtDate(t){
+    if(!t) return "-";
+    const d = new Date(t);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const da= String(d.getDate()).padStart(2,"0");
+    const hh= String(d.getHours()).padStart(2,"0");
+    const mm= String(d.getMinutes()).padStart(2,"0");
+    return `${y}/${m}/${da} ${hh}:${mm}`;
+  }
+  function normalizeId(id){
+    // "TN-003" のような形式ならそのまま、数字だけでも並べられるように
+    const m = String(id||"").match(/(\d+)/);
+    return m ? parseInt(m[1],10) : 999999;
+  }
+
+  const root  = document.getElementById("root");
+  const qEl   = document.getElementById("q");
+  const sortEl= document.getElementById("sort");
+  const countEl = document.getElementById("count");
+
+  const modal = document.getElementById("modal");
+  const mTitle= document.getElementById("mTitle");
+  const mBody = document.getElementById("mBody");
+  const mClose= document.getElementById("mClose");
+
+  let book = loadBook();
+
+  function getItems(){
+    const items = Object.values(book.got || {});
+    const q = (qEl.value || "").trim().toLowerCase();
+
+    let filtered = items;
+    if(q){
+      filtered = items.filter(x => {
+        const name = String(x.name||"").toLowerCase();
+        const id   = String(x.id||"").toLowerCase();
+        return name.includes(q) || id.includes(q);
+      });
+    }
+
+    const s = sortEl.value;
+    filtered.sort((a,b) => {
+      if(s === "new") return (b.at||0) - (a.at||0);
+      if(s === "old") return (a.at||0) - (b.at||0);
+      if(s === "id")  return normalizeId(a.id) - normalizeId(b.id);
+      if(s === "name")return String(a.name||"").localeCompare(String(b.name||""), "ja");
+      return 0;
+    });
+
+    return filtered;
+  }
+
+  function render(){
+    const allCount = Object.keys(book.got || {}).length;
+    countEl.textContent = String(allCount);
+
+    const items = getItems();
+    if(allCount === 0){
+      root.innerHTML = `
+        <div class="empty">
+          まだ図鑑に登録がない。<br>
+          <b>畑で収穫 → 確認</b>を押すとここに追加される。
+        </div>`;
+      return;
+    }
+
+    if(items.length === 0){
+      root.innerHTML = `
+        <div class="empty">
+          検索条件に一致するカードがない。<br>
+          別のキーワードで試してね。
+        </div>`;
+      return;
+    }
+
+    root.innerHTML = `
+      <div class="grid">
+        ${items.map(x => `
+          <div class="card" data-id="${escapeHtml(String(x.id||""))}">
+            <img src="${escapeAttr(String(x.img||""))}" alt="${escapeAttr(String(x.name||""))}">
+            <div class="meta">
+              <div class="name">${escapeHtml(String(x.name||""))}</div>
+              <div class="id">${escapeHtml(String(x.id||""))}</div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+
+    root.querySelectorAll(".card").forEach(el => {
+      el.addEventListener("click", () => {
+        const id = el.getAttribute("data-id");
+        const data = (book.got || {})[id];
+        if(data) openDetail(data);
+      });
+    });
+  }
+
+  function openDetail(x){
+    mTitle.textContent = `${x.name || "カード"}（${x.id || ""}）`;
+    mBody.innerHTML = `
+      <img class="bigImg" src="${escapeAttr(String(x.img||""))}" alt="${escapeAttr(String(x.name||""))}">
+      <div class="info">
+        <div>番号：<b>${escapeHtml(String(x.id||""))}</b></div>
+        <div>名前：<b>${escapeHtml(String(x.name||""))}</b></div>
+        <div>登録日時：<b>${escapeHtml(fmtDate(x.at))}</b></div>
+      </div>
+    `;
+    modal.setAttribute("aria-hidden","false");
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onEsc);
+  }
+  function closeModal(){
+    modal.setAttribute("aria-hidden","true");
+    modal.removeEventListener("click", onBackdrop);
+    document.removeEventListener("keydown", onEsc);
+    mBody.innerHTML = "";
+  }
+  function onBackdrop(e){
+    if(e.target === modal) closeModal();
+  }
+  function onEsc(e){
+    if(e.key === "Escape") closeModal();
+  }
+  mClose.addEventListener("click", closeModal);
+
+  // actions
+  document.getElementById("btnTop").addEventListener("click", () => location.href = "./index.html");
+  document.getElementById("btnClear").addEventListener("click", () => {
+    if(!confirm("図鑑データを消します。OK？")) return;
+    book = { ver:1, got:{} };
+    saveBook(book);
+    render();
+  });
+
+  qEl.addEventListener("input", render);
+  sortEl.addEventListener("change", render);
+
+  // mini util: safe render
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+  function escapeAttr(s){
+    return escapeHtml(s);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
 
