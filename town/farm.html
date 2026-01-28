@@ -882,31 +882,58 @@ d.appendChild(fx);
       </div>
     `);
 
+
     document.getElementById("btnRe").addEventListener("click", showSeedStep);
+
     document.getElementById("btnPlant").addEventListener("click", () => {
       const p = {
-  state: "GROW",
-  seedId: draft.seedId,
-  waterId: draft.waterId,
-  fertId: draft.fertId,
-  startAt: now,
-  readyAt: now + growMs,
+        state: "GROW",
+        seedId: draft.seedId,
+        waterId: draft.waterId,
+        fertId: draft.fertId,
+        startAt: now,
+        readyAt: now + growMs,
 
-  // ★第2段階の予兆フラグ（保存されるので再読み込みしてもブレない）
-  // "NONE" | "SR65" | "SR100"
-  srHint:
-    (draft.waterId === "water_mid" && draft.fertId === "fert_str") ? "SR100" :
-    (draft.waterId === "water_mid") ? "SR65" :
-    "NONE"
-};
+        // ★第2段階の予兆フラグ（保存されるので再読み込みしてもブレない）
+        // "NONE" | "SR65" | "SR100"
+        srHint:
+          (draft.waterId === "water_mid" && draft.fertId === "fert_str") ? "SR100" :
+          (draft.waterId === "water_mid") ? "SR65" :
+          "NONE"
+      };
 
-state.plots[activeIndex] = p;
-saveState(state);
-closeModal();
-render();
-
+      state.plots[activeIndex] = p;
+      saveState(state);
+      closeModal();
+      render();
+    });
+  } // ← confirmPlant() の終わり
 
   function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+
+  // ====== 状態更新（時間経過） ======
+  function tick(){
+    const now = Date.now();
+    let changed = false;
+
+    for(const p of state.plots){
+      if(p.state === "GROW" && typeof p.readyAt === "number"){
+        if(now >= p.readyAt){
+          p.state = "READY";
+          p.burnAt = p.readyAt + READY_TO_BURN_MS;
+          changed = true;
+        }
+      } else if(p.state === "READY" && typeof p.burnAt === "number"){
+        if(now >= p.burnAt){
+          p.state = "BURN";
+          changed = true;
+        }
+      }
+    }
+
+    if(changed) saveState(state);
+    render();
+  }
 
   // ====== リセット ======
   document.getElementById("btnReset").addEventListener("click", () => {
@@ -922,6 +949,9 @@ render();
   render();
   setInterval(tick, TICK_MS);
 })();
+
+    
+ 
 </script>
 
 
