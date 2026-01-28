@@ -124,22 +124,25 @@
     ・PERFECT（ほぼ同じ位置）だと削れません。<br/>
   </div>
 </div>
-
 <script>
 (() => {
   /* =========================================================
-     ✅ タイミングタワー：称号 + 敗因 + 日時 + ミニタワー縮小再現（完全版）
-     ✅ 変更点：ブロック表示を「1枚ドーン」＋縦横同倍率（歪み少）に対応
-       - CONF.BLOCK_DRAW_MODE = "COVER" で等倍スケール＆中央トリミング
-     ========================================================= */
+     ✅ たこ焼きタイミングタワー（完全版：スコア実装）
+     - 基準点：階数に応じて増える
+     - 早押しボーナス：出現して早く落とすほど加点
+     - PERFECT：倍率＆コンボ加算（×1.2→×1.3→…）
+     - 結果画面：敗因/最後の焼き/履歴は表示しない
+     - 背景：昼→夕→夜（0-20-60）
+     - 角：四隅角丸（下も丸い）
+  ========================================================= */
 
   // =========================
   // 画像URL（ここだけ差し替え）
   // =========================
   const SPR = {
-    takoA: "https://ul.h3z.jp/OPpiBayk.png",// 素焼き
-    takoB: "https://ul.h3z.jp/8lVPkSPJ.png",// イカさま焼き
-    takoC: "https://ul.h3z.jp/rbG1ovxG.png",// 生焼け
+    takoA: "https://ul.h3z.jp/OPpiBayk.png", // 素焼き
+    takoB: "https://ul.h3z.jp/8lVPkSPJ.png", // イカさま焼き
+    takoC: "https://ul.h3z.jp/rbG1ovxG.png", // 生焼け
     takoG: "https://ul.h3z.jp/XPTM8m5U.png", // 金焼き
     takoR: "https://ul.h3z.jp/dXRcAx01.png", // 激辛
     takoX: "https://ul.h3z.jp/Uia1oOpk.png", // 虹伝説
@@ -159,118 +162,107 @@
       }
     });
   }
-// =========================
-// 設定
-// =========================
-const CONF = {
-  canvasW: 420,
-  canvasH: 720,
-
-  baseWidth: 230,      // 土台ちょい太めで見栄え安定
-  blockHDefault: 34,   // ← 元コードで参照してるので残す（保険）
-  minWidth: 34,        // 26だと永遠に続きやすいので少し上げる
-  marginX: 16,
-
-  speedBase: 2.25,     // ちょい落として序盤の理不尽感を減らす
-  speedPerLevel: 0.085,// 上に行くほどちゃんと難しく
-  perfectPx: 4,        // 64px画像基準で少し甘め（気持ち良さ優先）
-
-  grid: true,
-
-  PROGRESS_MODE: "FLOOR",
-  METER_PER_STANDARD_BLOCK: 0.7,
-  METER_DECIMALS: 1,
-
-  CAMERA_ANCHOR_Y: 0.28,
-  CAMERA_SMOOTH: 0.16,
-  CAMERA_MIN: 0,
-
-  KEEP_BLOCKS_DRAW: 140,
-
-  // ✅ ブロック描画モード
-  // "TILE" / "STRETCH" / "COVER"
-  BLOCK_DRAW_MODE: "COVER",
-};
 
   // =========================
-  // 種類テーブル（高さ差激しめ + 特殊効果）
+  // 設定（バランス調整込み）
   // =========================
- const BLOCK_TABLE = [
-  // --- 通常3種（よく出る） ---
-  // 薄すぎると輪切りに見えるので「極薄」でも 26px は確保
-  { key:"takoA", p: 44, h: 48, label:"素焼き（薄）", speedMul: 1.05 }, // 素焼き＝軽い
-  { key:"takoB", p: 40, h: 58, label:"イカさま（標準）", speedMul: 1.3 },
-  { key:"takoC", p: 30, h: 64, label:"生焼け（厚）", speedMul: 1.60 }, // 厚い＝遅めで助かるが視界は詰まる
+  const CONF = {
+    canvasW: 420,
+    canvasH: 720,
 
-  // --- レア枠（出たら嬉しい） ---
-  { key:"takoG", p: 10, h: 64, label:"金焼き", perfectPlus: 3, speedMul: 1.20 }, // 判定甘く
-  { key:"takoR", p:  7, h: 64, label:"激辛",  speedMul: 2.45 },                   // 速い＝スリル
-  { key:"takoX", p:  4, h: 64, label:"虹伝説", insurance: true, speedMul: 1.10 }, // 保険付き
-];
+    baseWidth: 230,
+    blockHDefault: 34,
+    minWidth: 34,
+    marginX: 16,
 
+    speedBase: 2.25,
+    speedPerLevel: 0.085,
+    perfectPx: 4,
+
+    grid: true,
+
+    PROGRESS_MODE: "FLOOR",
+    CAMERA_ANCHOR_Y: 0.28,
+    CAMERA_SMOOTH: 0.16,
+    CAMERA_MIN: 0,
+
+    KEEP_BLOCKS_DRAW: 140,
+
+    BLOCK_DRAW_MODE: "COVER",
+
+    // ✅ 下5段だけ見た目高さブースト（輪切り対策）
+    BASE_BOOST: [1.65, 1.55, 1.45, 1.35, 1.25],
+
+    // ✅ スコア設計
+    SCORE_BASE0: 60,        // 1段目の基準点の土台
+    SCORE_PER_FLOOR: 10,    // 階数ごとの基準点増分
+    SPEED_BONUS_FAST_MS: 450,
+    SPEED_BONUS_MID_MS: 850,
+    SPEED_BONUS_FAST: 40,
+    SPEED_BONUS_MID: 20,
+
+    PERFECT_MUL: 1.30,      // PERFECTの基本倍率
+    NEAR_MUL: 1.12,         // ほぼ成功（近い）の倍率
+    COMBO_MUL_ADD: 0.05,    // PERFECT連続で倍率が育つ
+    MUL_CAP: 2.00,          // 倍率上限（暴走防止）
+  };
+
+  // =========================
+  // 種類テーブル（出現率p / 高さh）
+  // =========================
+  const BLOCK_TABLE = [
+    { key:"takoA", p: 44, h: 26, label:"素焼き（薄）", speedMul: 1.05 },
+    { key:"takoB", p: 40, h: 34, label:"イカさま（標準）", speedMul: 1.12 },
+    { key:"takoC", p: 30, h: 46, label:"生焼け（厚）", speedMul: 0.90 },
+
+    { key:"takoG", p: 10, h: 30, label:"金焼き", perfectPlus: 3, speedMul: 1.20 },
+    { key:"takoR", p:  7, h: 38, label:"激辛",  speedMul: 1.45 },
+    { key:"takoX", p:  4, h: 42, label:"虹伝説", insurance: true, speedMul: 1.10 },
+  ];
 
   let lastKey = null;
+  function pickBlockDef(){
+    let total = 0;
+    for (const d of BLOCK_TABLE) total += (d.p ?? 1);
 
-function pickBlockDef(){
-  if (BLOCK_TABLE.length <= 1) return BLOCK_TABLE[0];
-
-  let total = 0;
-  for (const d of BLOCK_TABLE) total += (d.p ?? 1);
-
-  // 同じ絵が連発しないように軽く回避
-  for (let tries=0; tries<8; tries++){
-    let r = Math.random() * total;
-    for (const d of BLOCK_TABLE){
-      r -= (d.p ?? 1);
-      if (r <= 0){
-        if (d.key === lastKey) break;
-        lastKey = d.key;
-        return d;
+    for (let tries=0; tries<8; tries++){
+      let r = Math.random() * total;
+      for (const d of BLOCK_TABLE){
+        r -= (d.p ?? 1);
+        if (r <= 0){
+          if (d.key === lastKey) break;
+          lastKey = d.key;
+          return d;
+        }
       }
     }
+    const fb = BLOCK_TABLE[Math.floor(Math.random() * BLOCK_TABLE.length)];
+    lastKey = fb.key;
+    return fb;
   }
-
-  const fb = BLOCK_TABLE[Math.floor(Math.random() * BLOCK_TABLE.length)];
-  lastKey = fb.key;
-  return fb;
-}
-
 
   // =========================
   // DOM
   // =========================
   const cv = document.getElementById("cv");
   const ctx = cv.getContext("2d");
-  const scoreEl = document.getElementById("score");
-  const bestEl  = document.getElementById("best");
+  const scoreEl = document.getElementById("score"); // ← ここは「点数」を表示
+  const bestEl  = document.getElementById("best");  // ← BEST点数
   const stateEl = document.getElementById("state");
   const toastEl = document.getElementById("toast");
   const stopBtn = document.getElementById("stopBtn");
   const restartBtn = document.getElementById("restartBtn");
 
-  cv.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    if (!S.playing) start();
-    else drop();
-  }, { passive:false });
-
-  stopBtn.addEventListener("click", () => {
-    if (!S.playing) start();
-    else drop();
-  });
-
-  restartBtn.addEventListener("click", reset);
-
   // =========================
-  // 保存（ベスト）
+  // 保存
   // =========================
-  const BEST_KEY = `takoyakiTimingTower_best_${CONF.PROGRESS_MODE}`;
-  function loadBest(){
-    const v = Number(localStorage.getItem(BEST_KEY) || 0);
+  const BEST_POINT_KEY = "takoyakiTimingTower_best_points";
+  function loadBestPoints(){
+    const v = Number(localStorage.getItem(BEST_POINT_KEY) || 0);
     return Number.isFinite(v) ? v : 0;
   }
-  function saveBest(v){
-    localStorage.setItem(BEST_KEY, String(v));
+  function saveBestPoints(v){
+    localStorage.setItem(BEST_POINT_KEY, String(v));
   }
 
   // =========================
@@ -280,33 +272,35 @@ function pickBlockDef(){
     playing: false,
     over: false,
 
-    progress: 0,
-    best: loadBest(),
+    // 進行（段数）
+    floors: 0,
+
+    // 点数
+    points: 0,
+    bestPoints: loadBestPoints(),
+
+    // 倍率関連
+    mul: 1.0,
+    comboPerfect: 0,
 
     level: 0,
     cameraY: 0,
     dir: 1,
 
-    // 描画用（軽量化で切る）
     blocks: [],
     curr: null,
-
-    // ✅ 結果用：全ブロック保存（ここがミニ再現の元）
     allBlocks: [],
 
-    // 結果表示用
-    lastRunProgress: 0,
-    lastFailReason: "",
-    lastFailDetail: "",
+    // 結果
     lastTitle: "",
     lastSubtitle: "",
-    lastLastBlockLabel: "",
-    lastUsedSpecials: [],
     lastRunAt: "",
+    lastRunFloors: 0,
+    lastRunPoints: 0,
   };
 
   // =========================
-  // UI（トースト）
+  // トースト
   // =========================
   function showToast(text){
     toastEl.textContent = text;
@@ -315,25 +309,35 @@ function pickBlockDef(){
     showToast._t = setTimeout(() => toastEl.classList.remove("show"), 520);
   }
 
-  function formatProgress(v){
-    if (CONF.PROGRESS_MODE === "METER") return `${v.toFixed(CONF.METER_DECIMALS)}m`;
-    return `${Math.floor(v)}F`;
+  // =========================
+  // 背景：昼→夕→夜
+  // =========================
+  const SKY_COLORS = {
+    day:    { top:"#a9cfe6", bottom:"#eaf5fb" },
+    sunset: { top:"#f0b38c", bottom:"#6b4e71" },
+    night:  { top:"#0b132b", bottom:"#1c2541" },
+  };
+  function getTimePhase(floors){
+    if (floors < 20) return "day";
+    if (floors < 60) return "sunset";
+    return "night";
   }
 
+  // =========================
+  // UI
+  // =========================
   function setHUD(){
-    scoreEl.textContent = formatProgress(S.progress);
-    bestEl.textContent  = formatProgress(S.best);
-    stateEl.textContent = S.over ? "GAME OVER" : (S.playing ? "PLAYING" : "READY");
+    scoreEl.textContent = String(S.points);
+    bestEl.textContent  = String(S.bestPoints);
+    stateEl.textContent = S.over ? `GAME OVER / ${S.floors}F` : (S.playing ? `${S.floors}F ×${S.mul.toFixed(2)}` : "READY");
   }
 
   // =========================
-  // 称号（たこ焼きトレカ風）
+  // 称号（たこぴ口調・ギャグ版）
   // =========================
-  function getTakoyakiTitle(progress){
-    const p = (CONF.PROGRESS_MODE === "FLOOR") ? Math.floor(progress) : progress;
-
-const table = (CONF.PROGRESS_MODE === "FLOOR")
-  ? [
+  function getTakoyakiTitle(floors){
+    const p = Math.floor(floors);
+    const table = [
       { min: 0,   title:"〘未投入〙",                 sub:"まだ鉄板に、こんにちはしてないたこ。" },
       { min: 1,   title:"〘はじめて置いたたこ〙",   sub:"今の音、ちょっと良かったたこ。" },
       { min: 5,   title:"〘返せた気がするたこ〙",   sub:"たぶん合ってた。たぶんたこ。" },
@@ -348,19 +352,7 @@ const table = (CONF.PROGRESS_MODE === "FLOOR")
       { min: 130, title:"〘返しすぎたたこ〙",         sub:"手が先に動いてたこ。" },
       { min: 160, title:"〘鉄板の向こう見えたたこ〙", sub:"戻り方、忘れたたこ。" },
       { min: 200, title:"〘神話級・丸を管理するたこ〙", sub:"丸が、許可を取りに来たたこ。" },
-    ]
-  : [
-      { min: 0,    title:"〘未投入〙",                 sub:"高さゼロ。気持ちは満タンたこ。" },
-      { min: 1.0,  title:"〘低めが好きなたこ〙",     sub:"高ければいいって訳じゃないたこ。" },
-      { min: 5.0,  title:"〘湯気を信じたたこ〙",     sub:"そこに段があった気がするたこ。" },
-      { min: 10.0, title:"〘鉄板なれてきたたこ〙",   sub:"音で分かるようになったたこ。" },
-      { min: 15.0, title:"〘祭壇が気になるたこ〙",   sub:"呼ばれてる？たこ。" },
-      { min: 25.0, title:"〘焼かれた伝説〙",           sub:"高さが物語をこえたたこ。" },
-      { min: 35.0, title:"〘止まれないたこ〙",       sub:"もう一段だけ…たこ。" },
-      { min: 50.0, title:"〘神話級・丸の支配者たこ〙", sub:"数えるの、やめたたこ。" },
     ];
-
-
     let pick = table[0];
     for (const row of table){
       if (p >= row.min) pick = row;
@@ -371,27 +363,21 @@ const table = (CONF.PROGRESS_MODE === "FLOOR")
   // =========================
   // ブロック構造
   // =========================
-  function makeBlock({ x, width, y, h, tileKey, label="", perfectPlus=0, speedMul=1, insurance=false }){
-    return { x, width, y, h, tileKey, label, perfectPlus, speedMul, insurance };
+  function makeBlock({ x, width, y, h, tileKey, label="", perfectPlus=0, speedMul=1, insurance=false, spawnedAt=0 }){
+    return { x, width, y, h, tileKey, label, perfectPlus, speedMul, insurance, spawnedAt };
   }
 
   function pushConfirmedBlock(b){
-    // 描画用
     S.blocks.push(b);
+    S.allBlocks.push({ x: b.x, y: b.y, width: b.width, h: b.h, tileKey: b.tileKey });
 
-    // 結果用：全保存
-    S.allBlocks.push({
-      x: b.x, y: b.y, width: b.width, h: b.h, tileKey: b.tileKey
-    });
-
-    // 描画用を軽量化
     if (CONF.KEEP_BLOCKS_DRAW > 0 && S.blocks.length > CONF.KEEP_BLOCKS_DRAW){
       S.blocks = S.blocks.slice(S.blocks.length - CONF.KEEP_BLOCKS_DRAW);
     }
   }
 
   // =========================
-  // 初期ブロック生成
+  // 初期ブロック
   // =========================
   function spawnBase(){
     const def = pickBlockDef();
@@ -428,42 +414,23 @@ const table = (CONF.PROGRESS_MODE === "FLOOR")
     S.dir = startLeft ? 1 : -1;
 
     S.curr = makeBlock({
-      x, width: w, y,
-      h,
+      x, width: w, y, h,
       tileKey: def.key,
       label: def.label || "",
       perfectPlus: def.perfectPlus || 0,
       speedMul: def.speedMul || 1,
-      insurance: !!def.insurance
+      insurance: !!def.insurance,
+      spawnedAt: performance.now(), // ✅ 早押し計測
     });
 
-    // 特殊出現ログ（結果用）
-    if (S.curr.insurance) S.lastUsedSpecials.push("虹伝説");
-    else if ((S.curr.perfectPlus||0) > 0) S.lastUsedSpecials.push("金焼き");
-    else if ((S.curr.speedMul||1) > 1) S.lastUsedSpecials.push("激辛");
-
-    if (S.curr.insurance) showToast("🌈 虹伝説：保険付き！");
-    else if ((S.curr.perfectPlus||0) > 0) showToast("🥇 金焼き：甘判定！");
-    else if ((S.curr.speedMul||1) > 1) showToast("🌶 激辛：高速！");
+    // 一言演出（任意）
+    if (S.curr.insurance) showToast("🌈 虹伝説（1回セーフ）");
+    else if ((S.curr.perfectPlus||0) > 0) showToast("🥇 金焼き（甘判定）");
+    else if ((S.curr.speedMul||1) > 1.3) showToast("🌶 激辛（高速）");
   }
 
   // =========================
-  // 進捗（階 / メートル）
-  // =========================
-  function computeProgress(){
-    const floors = Math.max(0, S.allBlocks.length - 1); // allBlocks基準
-    if (CONF.PROGRESS_MODE === "FLOOR") return floors;
-
-    let sum = 0;
-    for (let i=1; i<S.allBlocks.length; i++){
-      const b = S.allBlocks[i];
-      sum += (b.h / 34) * CONF.METER_PER_STANDARD_BLOCK;
-    }
-    return sum;
-  }
-
-  // =========================
-  // カメラ追随（毎フレーム）
+  // カメラ追随
   // =========================
   function getTopMostY(){
     let topY = Infinity;
@@ -483,7 +450,24 @@ const table = (CONF.PROGRESS_MODE === "FLOOR")
   }
 
   // =========================
-  // 結果オーバーレイ（ミニタワー + 日時）
+  // スコア計算
+  // =========================
+  function getBaseScore(floor){
+    return CONF.SCORE_BASE0 + floor * CONF.SCORE_PER_FLOOR;
+  }
+
+  function getSpeedBonus(ms){
+    if (ms <= CONF.SPEED_BONUS_FAST_MS) return CONF.SPEED_BONUS_FAST;
+    if (ms <= CONF.SPEED_BONUS_MID_MS)  return CONF.SPEED_BONUS_MID;
+    return 0;
+  }
+
+  function clampMul(m){
+    return Math.min(CONF.MUL_CAP, Math.max(1.0, m));
+  }
+
+  // =========================
+  // 結果オーバーレイ（敗因/履歴なし）
   // =========================
   let resultOverlay = null;
 
@@ -564,7 +548,6 @@ const table = (CONF.PROGRESS_MODE === "FLOOR")
     h1.style.marginBottom = "6px";
     card.appendChild(h1);
 
-    // サブ
     const sub = document.createElement("div");
     sub.id = "resSub";
     sub.style.opacity = ".85";
@@ -573,7 +556,6 @@ const table = (CONF.PROGRESS_MODE === "FLOOR")
     sub.style.marginBottom = "8px";
     card.appendChild(sub);
 
-    // 日時
     const dt = document.createElement("div");
     dt.id = "resDate";
     dt.style.opacity = ".75";
@@ -581,12 +563,12 @@ const table = (CONF.PROGRESS_MODE === "FLOOR")
     dt.style.margin = "0 0 10px";
     card.appendChild(dt);
 
-    // 到達＆BEST
+    // 到達＆BEST（段数＆点数）
     const stats = document.createElement("div");
     stats.style.display = "grid";
     stats.style.gridTemplateColumns = "1fr 1fr";
     stats.style.gap = "10px";
-    stats.style.marginBottom = "10px";
+    stats.style.marginBottom = "12px";
     card.appendChild(stats);
 
     const statA = document.createElement("div");
@@ -594,7 +576,7 @@ const table = (CONF.PROGRESS_MODE === "FLOOR")
     statA.style.borderRadius = "14px";
     statA.style.border = "1px solid rgba(255,255,255,.12)";
     statA.style.background = "rgba(255,255,255,.06)";
-    statA.innerHTML = `<div style="opacity:.75;font-size:12px;">到達</div><div id="resReach" style="font-weight:900;font-size:20px;margin-top:2px;"></div>`;
+    statA.innerHTML = `<div style="opacity:.75;font-size:12px;">到達</div><div id="resReach" style="font-weight:900;font-size:20px;margin-top:2px;"></div><div id="resPts" style="opacity:.85;font-size:12px;margin-top:4px;"></div>`;
     stats.appendChild(statA);
 
     const statB = document.createElement("div");
@@ -602,29 +584,8 @@ const table = (CONF.PROGRESS_MODE === "FLOOR")
     statB.style.borderRadius = "14px";
     statB.style.border = "1px solid rgba(255,255,255,.12)";
     statB.style.background = "rgba(255,255,255,.06)";
-    statB.innerHTML = `<div style="opacity:.75;font-size:12px;">BEST</div><div id="resBest" style="font-weight:900;font-size:20px;margin-top:2px;"></div>`;
+    statB.innerHTML = `<div style="opacity:.75;font-size:12px;">BEST</div><div id="resBestPts" style="font-weight:900;font-size:20px;margin-top:2px;"></div>`;
     stats.appendChild(statB);
-
-    // 敗因
-    const fail = document.createElement("div");
-    fail.id = "resFail";
-    fail.style.padding = "10px";
-    fail.style.borderRadius = "14px";
-    fail.style.border = "1px solid rgba(255,255,255,.12)";
-    fail.style.background = "rgba(255,255,255,.04)";
-    fail.style.marginBottom = "10px";
-    fail.style.fontSize = "13px";
-    fail.style.lineHeight = "1.4";
-    card.appendChild(fail);
-
-    // 特記事項
-    const extra = document.createElement("div");
-    extra.id = "resExtra";
-    extra.style.opacity = ".85";
-    extra.style.fontSize = "12px";
-    extra.style.lineHeight = "1.35";
-    extra.style.marginBottom = "12px";
-    card.appendChild(extra);
 
     // ボタン
     const row = document.createElement("div");
@@ -645,18 +606,16 @@ const table = (CONF.PROGRESS_MODE === "FLOOR")
     againBtn.style.cursor = "pointer";
     row.appendChild(againBtn);
 
-    againBtn.addEventListener("click", () => {
+    againBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
       hideResultOverlay();
       reset();
       start();
     });
 
-    // ❌ 背景クリックでは何もしない（＝どこ押しても再スタートを防ぐ）
-bg.addEventListener("click", (e) => {
-  e.stopPropagation(); // 伝播を止めるだけ
-  // 何もしない
-});
-
+    // 背景/カードは反応させない（ボタンだけ）
+    bg.addEventListener("click", (e) => e.stopPropagation());
+    card.addEventListener("click", (e) => e.stopPropagation());
 
     const st = getComputedStyle(wrap);
     if (st.position === "static") wrap.style.position = "relative";
@@ -670,23 +629,13 @@ bg.addEventListener("click", (e) => {
     const o = ensureOverlay();
 
     document.getElementById("resTitle").textContent = S.lastTitle || "〘焼き結果〙";
-    document.getElementById("resSub").textContent = S.lastSubtitle || "";
-    document.getElementById("resDate").textContent = S.lastRunAt ? `記録：${S.lastRunAt}` : "";
+    document.getElementById("resSub").textContent   = S.lastSubtitle || "";
+    document.getElementById("resDate").textContent  = S.lastRunAt ? `記録：${S.lastRunAt}` : "";
 
-    document.getElementById("resReach").textContent = formatProgress(S.lastRunProgress);
-    document.getElementById("resBest").textContent  = formatProgress(S.best);
+    document.getElementById("resReach").textContent = `${S.lastRunFloors}F`;
+    document.getElementById("resPts").textContent   = `点数：${S.lastRunPoints}`;
+    document.getElementById("resBestPts").textContent = String(S.bestPoints);
 
-    const reason = S.lastFailReason || "不明";
-    const detail = S.lastFailDetail ? `（${S.lastFailDetail}）` : "";
-    document.getElementById("resFail").innerHTML =
-      `<div style="opacity:.75;font-size:12px;margin-bottom:4px;">敗因</div>` +
-      `<div style="font-weight:900;">${escapeHtml(reason)} ${escapeHtml(detail)}</div>`;
-
-    const specials = S.lastUsedSpecials.length ? `出現：${S.lastUsedSpecials.join(" / ")}` : "出現：なし";
-    const lastBlock = S.lastLastBlockLabel ? `最後の焼き：${S.lastLastBlockLabel}` : "最後の焼き：—";
-    document.getElementById("resExtra").textContent = `${lastBlock} / ${specials}`;
-
-    // ✅ ミニタワー描画（allBlocks全体で再現）
     renderTowerMini(o.miniCanvas, S.allBlocks);
 
     o.box.style.display = "flex";
@@ -704,154 +653,86 @@ bg.addEventListener("click", (e) => {
     setTimeout(() => { box.style.display = "none"; }, 180);
   }
 
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, (c) => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
-    }[c]));
+  function setResultDatetime(){
+    S.lastRunAt = new Date().toLocaleString("ja-JP", {
+      timeZone: "Asia/Tokyo",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit"
+    });
   }
 
   // =========================
-  // ✅ 画像を「等倍スケール（歪みなし）で埋める」描画（cover）
+  // ミニタワー（縮小再現）
   // =========================
   function drawImageCover(g, img, x, y, w, h){
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
     if (!iw || !ih){ g.drawImage(img, x, y, w, h); return; }
-
-    // cover：枠を埋めるための同倍率スケール
     const s = Math.max(w / iw, h / ih);
     const dw = iw * s;
     const dh = ih * s;
-
-    // 中央配置（はみ出し＝トリミング）
     const dx = x + (w - dw) / 2;
     const dy = y + (h - dh) / 2;
-
     g.drawImage(img, dx, dy, dw, dh);
   }
 
-// =========================
-// ✅ ミニタワー再現（縮小描画）※ズレない＆上角丸版
-// - 画像は cover（縦横同倍率で埋める）
-// - ブロックは「上2角だけ」強めに丸く
-// =========================
-function renderTowerMini(canvas, blocks){
-  const mctx = canvas.getContext("2d");
-  const W = canvas.width;
-  const H = canvas.height;
+  function renderTowerMini(canvas, blocks){
+    const mctx = canvas.getContext("2d");
+    const W = canvas.width;
+    const H = canvas.height;
 
-  mctx.clearRect(0,0,W,H);
-  mctx.imageSmoothingEnabled = false;
+    mctx.clearRect(0,0,W,H);
+    mctx.imageSmoothingEnabled = false;
 
-  // 背景
-  mctx.save();
-  mctx.globalAlpha = 0.20;
-  mctx.fillStyle = "#000";
-  mctx.fillRect(0,0,W,H);
-  mctx.restore();
-
-  if (!blocks || blocks.length === 0){
+    // 背景（暗く）
     mctx.save();
-    mctx.globalAlpha = 0.7;
-    mctx.fillStyle = "#fff";
-    mctx.font = "700 12px system-ui, sans-serif";
-    mctx.textAlign = "center";
-    mctx.fillText("（タワーデータなし）", W/2, H/2);
+    mctx.globalAlpha = 0.20;
+    mctx.fillStyle = "#000";
+    mctx.fillRect(0,0,W,H);
     mctx.restore();
-    return;
+
+    if (!blocks || blocks.length === 0) return;
+
+    // bounds（世界座標）
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const b of blocks){
+      minX = Math.min(minX, b.x);
+      maxX = Math.max(maxX, b.x + b.width);
+      minY = Math.min(minY, b.y);
+      maxY = Math.max(maxY, b.y + b.h);
+    }
+
+    const pad = 10;
+    const bw = Math.max(1, maxX - minX);
+    const bh = Math.max(1, maxY - minY);
+    const s = Math.min((W - pad*2) / bw, (H - pad*2) / bh);
+
+    // 左右中央 / 下揃え
+    const ox = pad + (W - pad*2 - bw*s)/2 - minX*s;
+    const oy = pad + (H - pad*2 - bh*s) - minY*s;
+
+    const sorted = [...blocks].sort((a,b) => (a.y - b.y));
+    for (const b of sorted){
+      const x = Math.round(ox + b.x*s);
+      const y = Math.round(oy + b.y*s);
+      const w = Math.max(1, Math.round(b.width*s));
+      const h = Math.max(1, Math.round(b.h*s));
+
+      const tile = b.tileKey ? IMG[b.tileKey] : null;
+      const r = Math.max(3, Math.round(Math.min(w, h) * 0.22));
+
+      mctx.save();
+      mctx.beginPath();
+      roundedPathOn(mctx, x, y, w, h, r);
+      mctx.clip();
+      if (tile && tile.naturalWidth) drawImageCover(mctx, tile, x, y, w, h);
+      else {
+        mctx.fillStyle = "rgba(255,210,80,.9)";
+        mctx.fillRect(x, y, w, h);
+      }
+      mctx.restore();
+    }
   }
-
-  // bounds（世界座標）
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const b of blocks){
-    minX = Math.min(minX, b.x);
-    maxX = Math.max(maxX, b.x + b.width);
-    minY = Math.min(minY, b.y);
-    maxY = Math.max(maxY, b.y + b.h);
-  }
-
-  const pad = 10;
-  const bw = Math.max(1, maxX - minX);
-  const bh = Math.max(1, maxY - minY);
-
-  const sx = (W - pad*2) / bw;
-  const sy = (H - pad*2) / bh;
-  const s  = Math.min(sx, sy);
-
-  // 左右中央 / 下揃え
-  const ox = pad + (W - pad*2 - bw*s)/2 - minX*s;
-  const oy = pad + (H - pad*2 - bh*s) - minY*s;
-
- 
-  // 下から上へ（yが小さいほど上）
-  const sorted = [...blocks].sort((a,b) => (a.y - b.y));
-  for (const b of sorted){
-    const x = Math.round(ox + b.x*s);
-    const y = Math.round(oy + b.y*s);
-    const w = Math.max(1, Math.round(b.width*s));
-    const h = Math.max(1, Math.round(b.h*s));
-    drawMiniBlock(mctx, x, y, w, h, b.tileKey);
-  }
-}
-
-// ✅ 上だけ角丸（ミニ用）
-function roundedTopPathOn(g, x, y, w, h, rt){
-  const r = Math.min(rt, w/2, h);
-  g.moveTo(x, y + h);                 // 左下
-  g.lineTo(x, y + r);                 // 左側上へ
-  g.arcTo(x, y, x + r, y, r);         // 左上
-  g.lineTo(x + w - r, y);             // 上辺
-  g.arcTo(x + w, y, x + w, y + r, r); // 右上
-  g.lineTo(x + w, y + h);             // 右側下へ
-  g.closePath();
-}
-
-function drawMiniBlock(g, x, y, w, h, tileKey){
-  // ✅ 上角を強めに（薄いほど効く）
-  const rTop = Math.max(5, Math.round(h * 0.55));
-  const tile = tileKey ? IMG[tileKey] : null;
-
-  g.save();
-  g.beginPath();
-  roundedTopPathOn(g, x, y, w, h, rTop);
-  g.clip();
-
-  if (!tile || !tile.naturalWidth){
-    g.fillStyle = "rgba(255,210,80,.9)";
-    g.fillRect(x, y, w, h);
-  } else {
-    // ✅ ミニも cover（歪みなし）
-    drawImageCover(g, tile, x, y, w, h);
-  }
-
-  g.restore();
-
-  // 枠線（上角丸に合わせる）
-  g.save();
-  g.strokeStyle = "rgba(0,0,0,.45)";
-  g.lineWidth = 1;
-  g.beginPath();
-  roundedTopPathOn(g, x, y, w, h, rTop);
-  g.stroke();
-  g.restore();
-}
-
-/* もし drawImageCover がまだ無いなら、これも入れてOK
-function drawImageCover(g, img, x, y, w, h){
-  const iw = img.naturalWidth || img.width;
-  const ih = img.naturalHeight || img.height;
-  if (!iw || !ih){ g.drawImage(img, x, y, w, h); return; }
-
-  const s = Math.max(w / iw, h / ih);
-  const dw = iw * s;
-  const dh = ih * s;
-  const dx = x + (w - dw) / 2;
-  const dy = y + (h - dh) / 2;
-
-  g.drawImage(img, dx, dy, dw, dh);
-}
-*/
-
 
   function roundedPathOn(g, x, y, w, h, r){
     const rr = Math.min(r, w/2, h/2);
@@ -864,6 +745,103 @@ function drawImageCover(g, img, x, y, w, h){
   }
 
   // =========================
+  // 描画（メイン）
+  // =========================
+  function drawBG(){
+    const phase = getTimePhase(S.floors);
+    const sky = SKY_COLORS[phase];
+
+    const grad = ctx.createLinearGradient(0,0,0,CONF.canvasH);
+    grad.addColorStop(0, sky.top);
+    grad.addColorStop(1, sky.bottom);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
+
+    if (!CONF.grid) return;
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    const step = 30;
+    for (let y=0; y<CONF.canvasH; y+=step){
+      ctx.beginPath();
+      ctx.moveTo(0,y);
+      ctx.lineTo(CONF.canvasW,y);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function roundedPath(x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  function drawBlock(b, index){
+    const y = b.y + S.cameraY;
+    if (y > CONF.canvasH + 120 || y < -240) return;
+
+    const x = Math.round(b.x);
+    const w = Math.round(b.width);
+
+    const boost = CONF.BASE_BOOST[index] ?? 1.0;
+    const h = Math.round(b.h * boost);
+
+    const tile = b.tileKey ? IMG[b.tileKey] : null;
+    const rAll = Math.round(Math.min(w, h) * 0.40); // ← もっと丸い
+
+    ctx.save();
+    ctx.beginPath();
+    roundedPath(x, y, w, h, rAll);
+    ctx.clip();
+
+    if (!tile || !tile.naturalWidth){
+      const grad = ctx.createLinearGradient(x, y, x, y+h);
+      grad.addColorStop(0, "#ffd34d");
+      grad.addColorStop(1, "#f08b2f");
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, y, w, h);
+    } else if (CONF.BLOCK_DRAW_MODE === "COVER"){
+      drawImageCover(ctx, tile, x, y, w, h);
+    } else if (CONF.BLOCK_DRAW_MODE === "STRETCH"){
+      ctx.drawImage(tile, x, y, w, h);
+    } else {
+      const scale = h / tile.naturalHeight;
+      const tileW = Math.max(1, Math.round(tile.naturalWidth * scale));
+      for (let xx = x; xx < x + w; xx += tileW){
+        ctx.drawImage(tile, xx, y, tileW, h);
+      }
+    }
+
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,CONF.canvasW, CONF.canvasH);
+    ctx.imageSmoothingEnabled = false;
+
+    drawBG();
+
+    for (let i=0; i<S.blocks.length; i++){
+      drawBlock(S.blocks[i], i);
+    }
+    if (S.curr) drawBlock(S.curr, S.blocks.length);
+
+    // 左上（点数/倍率）
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = "#fff";
+    ctx.font = "700 12px system-ui, sans-serif";
+    ctx.fillText(`点数: ${S.points} / ${S.floors}F / ×${S.mul.toFixed(2)}`, 14, 24);
+    ctx.restore();
+  }
+
+  // =========================
   // ゲーム進行
   // =========================
   function reset(){
@@ -872,16 +850,16 @@ function drawImageCover(g, img, x, y, w, h){
     S.playing = false;
     S.over = false;
 
-    S.progress = 0;
+    S.floors = 0;
+    S.points = 0;
+    S.mul = 1.0;
+    S.comboPerfect = 0;
 
-    S.lastRunProgress = 0;
-    S.lastFailReason = "";
-    S.lastFailDetail = "";
     S.lastTitle = "";
     S.lastSubtitle = "";
-    S.lastLastBlockLabel = "";
-    S.lastUsedSpecials = [];
     S.lastRunAt = "";
+    S.lastRunFloors = 0;
+    S.lastRunPoints = 0;
 
     S.cameraY = 0;
     S.dir = 1;
@@ -889,7 +867,6 @@ function drawImageCover(g, img, x, y, w, h){
     spawnBase();
     spawnCurrent();
 
-    S.progress = computeProgress();
     setHUD();
     draw();
   }
@@ -906,39 +883,27 @@ function drawImageCover(g, img, x, y, w, h){
     return base * mul;
   }
 
-  function setResultDatetime(){
-    S.lastRunAt = new Date().toLocaleString("ja-JP", {
-      timeZone: "Asia/Tokyo",
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit"
-    });
-  }
-
   function endRun(){
-    S.lastRunProgress = S.progress;
+    S.lastRunFloors = S.floors;
+    S.lastRunPoints = S.points;
 
-    const t = getTakoyakiTitle(S.lastRunProgress);
+    const t = getTakoyakiTitle(S.floors);
     S.lastTitle = t.title;
     S.lastSubtitle = t.sub;
 
-    if (S.progress > S.best){
-      S.best = S.progress;
-      saveBest(S.best);
+    if (S.points > S.bestPoints){
+      S.bestPoints = S.points;
+      saveBestPoints(S.bestPoints);
     }
 
     setResultDatetime();
     setHUD();
-    showToast("焼き失敗… GAME OVER");
     showResultOverlay();
   }
 
-  function gameOver(reason, detail){
+  function gameOver(){
     S.over = true;
     S.playing = false;
-
-    S.lastFailReason = reason || "焼き失敗";
-    S.lastFailDetail = detail || "";
-
     endRun();
   }
 
@@ -952,54 +917,76 @@ function drawImageCover(g, img, x, y, w, h){
     const overlapRight = Math.min(prev.x + prev.width, curr.x + curr.width);
     const overlapW = overlapRight - overlapLeft;
 
-    // 外れた
     if (overlapW <= 0){
-      S.progress = computeProgress();
-      gameOver("外れた（重なりゼロ）", "たこ焼きが鉄板から逃げた");
+      gameOver();
       return;
     }
 
     const diff = Math.abs(curr.x - prev.x);
     const perfectRange = CONF.perfectPx + (curr.perfectPlus || 0);
     const isPerfect = diff <= perfectRange;
+
+    // 「近い」判定（PERFECTではないが上手い）
+    const nearPerfect = (!isPerfect && diff <= perfectRange * 2);
+
     const willShrink = overlapW < curr.width;
 
     // 虹伝説：1回だけ削れない保険
     if (curr.insurance && willShrink){
       curr.x = overlapLeft;
-      // width維持
       curr.insurance = false;
-      showToast("🌈 虹伝説発動：セーフ！");
+      showToast("🌈 セーフ！");
     } else if (isPerfect){
       curr.x = prev.x;
       curr.width = prev.width;
-      showToast("PERFECT!!");
+      showToast(`PERFECT! ×${(S.comboPerfect+1)}`);
     } else {
       curr.x = overlapLeft;
       curr.width = overlapW;
     }
 
-    // 確定（pushConfirmedBlockで allBlocksにも入る）
+    // 確定
     pushConfirmedBlock(curr);
-    S.lastLastBlockLabel = curr.label || "";
-
     S.curr = null;
 
-    // 次の段へ
+    // ✅ 段数更新
     S.level++;
+    S.floors = Math.max(0, S.allBlocks.length - 1);
 
-    // 進捗更新
-    S.progress = computeProgress();
+    // ✅ スコア加算（ここが本題）
+    const base = getBaseScore(S.floors);
+    const elapsed = performance.now() - (curr.spawnedAt || performance.now());
+    const speedBonus = getSpeedBonus(elapsed);
 
-    // ベスト更新
-    if (S.progress > S.best){
-      S.best = S.progress;
-      saveBest(S.best);
+    if (isPerfect){
+      S.comboPerfect++;
+      // PERFECTで倍率が育つ（×1.30 → +0.05ずつ上昇）
+      S.mul = clampMul(CONF.PERFECT_MUL + S.comboPerfect * CONF.COMBO_MUL_ADD);
+    } else if (nearPerfect){
+      S.comboPerfect = 0;
+      S.mul = clampMul(CONF.NEAR_MUL);
+    } else {
+      S.comboPerfect = 0;
+      S.mul = 1.0;
     }
 
-    // 焼き縮み
+    const gained = Math.floor(base * S.mul) + speedBonus;
+    S.points += gained;
+
+    // 点の内訳を軽く見せる（うざくならない範囲）
+    if (speedBonus > 0 && isPerfect) showToast(`+${gained}（早×PERFECT）`);
+    else if (isPerfect) showToast(`+${gained}（×${S.mul.toFixed(2)}）`);
+    else if (speedBonus > 0) showToast(`+${gained}（早押し）`);
+
+    // ベスト更新（点数）
+    if (S.points > S.bestPoints){
+      S.bestPoints = S.points;
+      saveBestPoints(S.bestPoints);
+    }
+
+    // ゲームオーバー判定（幅が限界）
     if (curr.width < CONF.minWidth){
-      gameOver("焼き縮み（幅が限界）", `残り幅 ${Math.floor(curr.width)}px / 限界 ${CONF.minWidth}px`);
+      gameOver();
       return;
     }
 
@@ -1027,166 +1014,39 @@ function drawImageCover(g, img, x, y, w, h){
     if (!S.over) updateCamera();
   }
 
-  
-const SKY_COLORS = {
-  day:    { top:"#a9cfe6", bottom:"#eaf5fb" },
-  sunset: { top:"#f0b38c", bottom:"#6b4e71" },
-  night:  { top:"#0b132b", bottom:"#1c2541" },
-};
-
-function getTimePhase(score){
-  if (score < 20) return "day";
-  if (score < 60) return "sunset";
-  return "night";
-}
-// =========================
-// 描画（メイン）
-// =========================
-function drawBG(){
-  const phase = getTimePhase(Math.floor(S.progress)); // 0-20-60で切替
-  const sky = SKY_COLORS[phase];
-
-  // 空グラデーション
-  const grad = ctx.createLinearGradient(0, 0, 0, CONF.canvasH);
-  grad.addColorStop(0, sky.top);
-  grad.addColorStop(1, sky.bottom);
-
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, CONF.canvasW, CONF.canvasH);
-
-  // うっすらグリッド
-  if (!CONF.grid) return;
-  ctx.save();
-  ctx.globalAlpha = 0.08;
-  const step = 30;
-  for (let y=0; y<CONF.canvasH; y+=step){
-    ctx.beginPath();
-    ctx.moveTo(0,y);
-    ctx.lineTo(CONF.canvasW,y);
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-// ✅ 四隅角丸パス（上下とも丸くなる）
-function roundedPath(x, y, w, h, r){
-  const rr = Math.min(r, w/2, h/2);
-  ctx.moveTo(x + rr, y);
-  ctx.arcTo(x + w, y,     x + w, y + h, rr);
-  ctx.arcTo(x + w, y + h, x,     y + h, rr);
-  ctx.arcTo(x,     y + h, x,     y,     rr);
-  ctx.arcTo(x,     y,     x + w, y,     rr);
-  ctx.closePath();
-}
-
-// ✅ メインブロック描画（index = 下から何段目）
-function drawBlock(b, index){
-  const y = b.y + S.cameraY;
-  if (y > CONF.canvasH + 120 || y < -240) return;
-
-  const x = Math.round(b.x);
-  const w = Math.round(b.width);
-
-  // 下5段だけ高さブースト（見た目だけ）
-  const baseBoost = [1.65, 1.55, 1.45, 1.35, 1.25];
-  const boost = baseBoost[index] ?? 1.0;
-  const h = Math.round(b.h * boost);
-
-  const tile = b.tileKey ? IMG[b.tileKey] : null;
-
-  // 四隅角丸（たこ焼き感）
-const rAll = Math.min(
-  Math.floor(Math.min(w, h) / 2),
-  Math.round(Math.min(w, h) * 0.4)
-);
-
-
-
-
-
-  // ===== 本体描画（クリップ内）=====
-  ctx.save();
-  ctx.beginPath();
-  roundedPath(x, y, w, h, rAll);
-  ctx.clip();
-
-  if (!tile || !tile.naturalWidth){
-    const grad = ctx.createLinearGradient(x, y, x, y+h);
-    grad.addColorStop(0, "#ffd34d");
-    grad.addColorStop(1, "#f08b2f");
-    ctx.fillStyle = grad;
-    ctx.fillRect(x, y, w, h);
-  } else if (CONF.BLOCK_DRAW_MODE === "COVER"){
-    drawImageCover(ctx, tile, x, y, w, h);
-  } else if (CONF.BLOCK_DRAW_MODE === "STRETCH"){
-    ctx.drawImage(tile, x, y, w, h);
-  } else {
-    const scale = h / tile.naturalHeight;
-    const tileW = Math.max(1, Math.round(tile.naturalWidth * scale));
-    for (let xx = x; xx < x + w; xx += tileW){
-      ctx.drawImage(tile, xx, y, tileW, h);
-    }
+  function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
   }
 
-  ctx.restore();
+  // =========================
+  // 入力
+  // =========================
+  cv.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    if (!S.playing) start();
+    else drop();
+  }, { passive:false });
 
-  // 枠線（不要ならこのブロックごと削除OK）
-  ctx.save();
-  ctx.strokeStyle = "rgba(0,0,0,.20)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  roundedPath(x, y, w, h, rAll);
-  ctx.stroke();
-  ctx.restore();
-}
+  stopBtn.addEventListener("click", () => {
+    if (!S.playing) start();
+    else drop();
+  });
 
-function draw(){
-  ctx.clearRect(0,0,CONF.canvasW, CONF.canvasH);
-  ctx.imageSmoothingEnabled = false;
+  restartBtn.addEventListener("click", reset);
 
-  drawBG();
+  // =========================
+  // 初期化
+  // =========================
+  loadImages().then(() => {
+    reset();
+    loop();
+  });
 
-  // 下から順に描画（indexが効く）
-  for (let i=0; i<S.blocks.length; i++){
-    drawBlock(S.blocks[i], i);
-  }
-
-  // 現在のブロック
-  if (S.curr) drawBlock(S.curr, S.blocks.length);
-
-  // 左上表示
-  ctx.save();
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#fff";
-  ctx.font = "700 12px system-ui, sans-serif";
-  ctx.fillText(
-    `現在: ${formatProgress(S.progress)} / BEST: ${formatProgress(S.best)}`,
-    14, 24
-  );
-  ctx.restore();
-}
-
-
-// =========================
-// ループ
-// =========================
-function loop(){
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-
-// =========================
-// 初期化
-// =========================
-loadImages().then(() => {
-  reset();
-  loop();
-});
 })();
 </script>
+
 
 </body>
 </html>
