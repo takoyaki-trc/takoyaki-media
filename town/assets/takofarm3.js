@@ -386,7 +386,7 @@
   }
 
   function getMapRoot(){
-    return $(".map-wrap") || $("#townMap") || $("#map") || null;
+    return $("#townMap") || $(".map-wrap") || $("#map") || null;
   }
 
   function ensureChestOnMap(){
