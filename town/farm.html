@@ -219,102 +219,119 @@
       <div class="sheetBody" id="mBody"></div>
     </div>
   </div>
-
 <script>
 (() => {
   /* ==========================
-     たこ焼きファーム v1
+     たこ焼きファーム v1（あなたのやりたい形に寄せた暫定版）
      - localStorage保存
-     - 種→水→肥料
-     - 5時間育成（効果で短縮）
-     - 収穫→確認→図鑑追加
+     - 種→水→肥料（今は「植える時に選ぶ」方式のまま）
+     - 水で「出るレアリティ確率」が変わる（ここが今回の変更点）
+     - 肥料は「時間短縮」だけ（レア率には影響させない）
+     - 収穫→確認→図鑑追加（図鑑にrarityも保存）
   ========================== */
 
   const LS_STATE = "tf_v1_state";
   const LS_BOOK  = "tf_v1_book";
 
-  // ====== バランス（あとで調整OK） ======
-  const BASE_GROW_MS = 5 * 60 * 60 * 1000; // 5時間
+  // ====== バランス ======
+  // ※将来「基本6時間」にしたいなら、ここを6にするだけでOK
+  const BASE_GROW_MS = 5 * 60 * 60 * 1000; // 5時間（今は現状維持）
   const READY_TO_BURN_MS = 2 * 60 * 60 * 1000; // 収穫可能になってから2時間で焼け
   const TICK_MS = 1000;
 
-  // ====== カードプール（収穫で出るカード）=====
-  // ※今はレア抽選なし：全部まとめてランダムで1枚出る
-  const HARVEST_POOL = [
-    // --- N ---
-    { id:"TN-005", name:"たこ焼きタワー112", img:"https://ul.h3z.jp/xjoqO9HK.png" },
-    { id:"TN-006", name:"塩顔パレード焼き", img:"https://ul.h3z.jp/SvLLVa7m.png" },
-    { id:"TN-009", name:"塩マヨ露天焼き", img:"https://ul.h3z.jp/sh2p18pj.png" },
-    { id:"TN-011", name:"チーズ火山焼き", img:"https://ul.h3z.jp/u12Q1rQ9.png" },
-    { id:"TN-012", name:"揚げ玉会議焼き", img:"https://ul.h3z.jp/wvL9uwpZ.png" },
-    { id:"TN-013", name:"くたびれ塩こしょう焼き", img:"https://ul.h3z.jp/KW4kM6OW.png" },
-    { id:"TN-016", name:"たこ焼き、発射オーライ", img:"https://ul.h3z.jp/Dk6Hj5gd.png" },
-    { id:"TN-018", name:"ゆのかわの主", img:"https://ul.h3z.jp/mPE2nzcz.png" },
-    { id:"TN-019", name:"誤入店トラップ", img:"https://ul.h3z.jp/xE6OcrTz.png" },
-    { id:"TN-021", name:"たこ焼き、流れて候", img:"https://ul.h3z.jp/XFCtYUZu.png" },
-    { id:"TN-023", name:"芝生かたこ焼きか大会", img:"https://ul.h3z.jp/H4HOwhKK.png" },
-    { id:"TN-024", name:"温泉女神のありがた迷惑", img:"https://ul.h3z.jp/Q8392V7N.png" },
-    { id:"TN-026", name:"たこ焼き48回リボ払い", img:"https://ul.h3z.jp/Ih4UgGuG.png" },
-    { id:"TN-027", name:"全身たこ焼きダイエット", img:"https://ul.h3z.jp/JQcHg0cM.png" },
-    { id:"TN-028", name:"自己啓発たこ塾《井上諒プロ🎯》", img:"https://ul.h3z.jp/x2giE7yR.png" },
-    { id:"TN-029", name:"カロリーゼロ理論《仁木治プロ🎯》", img:"https://ul.h3z.jp/G9TjNqsR.png" },
-    { id:"TN-031", name:"行列の最後尾が別県", img:"https://ul.h3z.jp/do0u2b0m.png" },
-    { id:"TN-034", name:"エシカル過剰焼き", img:"https://ul.h3z.jp/grlvMXBT.png" },
-    { id:"TN-036", name:"マヨネーズ詐欺", img:"https://ul.h3z.jp/Veh6cTQo.png" },
-    { id:"TN-037", name:"勘違いデート", img:"https://ul.h3z.jp/Zj9jqeFm.png" },
-    { id:"TN-041", name:"玉の上にも三年", img:"https://ul.h3z.jp/FHIVjxEc.png" },
-    { id:"TN-043", name:"転生したら即売れたこ焼き", img:"https://ul.h3z.jp/n6un0ECF.png" },
-    { id:"TN-046", name:"ごますりたこ焼き", img:"https://ul.h3z.jp/6hrmumFg.png" },
-    { id:"TN-048", name:"店主反撃レビュー《佐俣雄一郎🎯》", img:"https://ul.h3z.jp/bGZmixM4.png" },
+  // ====== レア率（ベース）=====
+  // ※ここをいじると全体のレア出現率が変わる
+  const BASE_RARITY_RATE = { N:70, R:20, SR:8, UR:1.8, LR:0.2 };
 
-    // --- R ---
-    { id:"TN-002", name:"熱々地獄の給たこ所", img:"https://ul.h3z.jp/tnPHMqxN.png" },
-    { id:"TN-003", name:"爆走！たこ焼きライダー菜々", img:"https://ul.h3z.jp/KB3Z4nk0.png" },
-    { id:"TN-008", name:"明太ギャラクシー焼き", img:"https://ul.h3z.jp/ElEUWV02.png" },
-    { id:"TN-014", name:"世界たこ焼き釣り選手権大会", img:"https://ul.h3z.jp/QBf0mhfP.png" },
-    { id:"TN-017", name:"たこ焼きマニフェスト", img:"https://ul.h3z.jp/B5z1zmki.png" },
-    { id:"TN-022", name:"たこ焼きダーツ･インフェルノ《對馬裕佳子プロ🎯》", img:"https://ul.h3z.jp/5SAL3R2J.png" },
-    { id:"TN-032", name:"国境超えた恋", img:"https://ul.h3z.jp/Yhty1eVw.png" },
-    { id:"TN-035", name:"デリバリー長距離便", img:"https://ul.h3z.jp/uISdf4dn.png" },
-    { id:"TN-038", name:"恋落ちマッチング", img:"https://ul.h3z.jp/VaeuN4fe.png" },
-    { id:"TN-042", name:"たこ焼きループザループ", img:"https://ul.h3z.jp/uKy4GPOX.png" },
-    { id:"TN-044", name:"白い契約(稲石裕プロ🎯)", img:"https://ul.h3z.jp/g2banLA9.png" },
-    { id:"TN-047", name:"ボスゲート", img:"https://ul.h3z.jp/1Q26RpZH.png" },
+  // ====== 実在カードプール（レアリティごと）=====
+  // 形式：{ no:"TN-001", name:"カード名", img:"https://..." }
+  const CARD_POOLS = {
+    N: [
+      { no:"TN-005", name:"たこ焼きタワー112", img:"https://ul.h3z.jp/xjoqO9HK.png" },
+      { no:"TN-006", name:"塩顔パレード焼き", img:"https://ul.h3z.jp/SvLLVa7m.png" },
+      { no:"TN-009", name:"塩マヨ露天焼き", img:"https://ul.h3z.jp/sh2p18pj.png" },
+      { no:"TN-011", name:"チーズ火山焼き", img:"https://ul.h3z.jp/u12Q1rQ9.png" },
+      { no:"TN-012", name:"揚げ玉会議焼き", img:"https://ul.h3z.jp/wvL9uwpZ.png" },
+      { no:"TN-013", name:"くたびれ塩こしょう焼き", img:"https://ul.h3z.jp/KW4kM6OW.png" },
+      { no:"TN-016", name:"たこ焼き、発射オーライ", img:"https://ul.h3z.jp/Dk6Hj5gd.png" },
+      { no:"TN-018", name:"ゆのかわの主", img:"https://ul.h3z.jp/mPE2nzcz.png" },
+      { no:"TN-019", name:"誤入店トラップ", img:"https://ul.h3z.jp/xE6OcrTz.png" },
+      { no:"TN-021", name:"たこ焼き、流れて候", img:"https://ul.h3z.jp/XFCtYUZu.png" },
+      { no:"TN-023", name:"芝生かたこ焼きか大会", img:"https://ul.h3z.jp/H4HOwhKK.png" },
+      { no:"TN-024", name:"温泉女神のありがた迷惑", img:"https://ul.h3z.jp/Q8392V7N.png" },
+      { no:"TN-026", name:"たこ焼き48回リボ払い", img:"https://ul.h3z.jp/Ih4UgGuG.png" },
+      { no:"TN-027", name:"全身たこ焼きダイエット", img:"https://ul.h3z.jp/JQcHg0cM.png" },
+      { no:"TN-028", name:"自己啓発たこ塾《井上諒プロ🎯》", img:"https://ul.h3z.jp/x2giE7yR.png" },
+      { no:"TN-029", name:"カロリーゼロ理論《仁木治プロ🎯》", img:"https://ul.h3z.jp/G9TjNqsR.png" },
+      { no:"TN-031", name:"行列の最後尾が別県", img:"https://ul.h3z.jp/do0u2b0m.png" },
+      { no:"TN-034", name:"エシカル過剰焼き", img:"https://ul.h3z.jp/grlvMXBT.png" },
+      { no:"TN-036", name:"マヨネーズ詐欺", img:"https://ul.h3z.jp/Veh6cTQo.png" },
+      { no:"TN-037", name:"勘違いデート", img:"https://ul.h3z.jp/Zj9jqeFm.png" },
+      { no:"TN-041", name:"玉の上にも三年", img:"https://ul.h3z.jp/FHIVjxEc.png" },
+      { no:"TN-043", name:"転生したら即売れたこ焼き", img:"https://ul.h3z.jp/n6un0ECF.png" },
+      { no:"TN-046", name:"ごますりたこ焼き", img:"https://ul.h3z.jp/6hrmumFg.png" },
+      { no:"TN-048", name:"店主反撃レビュー《佐俣雄一郎🎯》", img:"https://ul.h3z.jp/bGZmixM4.png" },
+    ],
+    R: [
+      { no:"TN-002", name:"熱々地獄の給たこ所", img:"https://ul.h3z.jp/tnPHMqxN.png" },
+      { no:"TN-003", name:"爆走！たこ焼きライダー菜々", img:"https://ul.h3z.jp/KB3Z4nk0.png" },
+      { no:"TN-008", name:"明太ギャラクシー焼き", img:"https://ul.h3z.jp/ElEUWV02.png" },
+      { no:"TN-014", name:"世界たこ焼き釣り選手権大会", img:"https://ul.h3z.jp/QBf0mhfP.png" },
+      { no:"TN-017", name:"たこ焼きマニフェスト", img:"https://ul.h3z.jp/B5z1zmki.png" },
+      { no:"TN-022", name:"たこ焼きダーツ･インフェルノ《對馬裕佳子プロ🎯》", img:"https://ul.h3z.jp/5SAL3R2J.png" },
+      { no:"TN-032", name:"国境超えた恋", img:"https://ul.h3z.jp/Yhty1eVw.png" },
+      { no:"TN-035", name:"デリバリー長距離便", img:"https://ul.h3z.jp/uISdf4dn.png" },
+      { no:"TN-038", name:"恋落ちマッチング", img:"https://ul.h3z.jp/VaeuN4fe.png" },
+      { no:"TN-042", name:"たこ焼きループザループ", img:"https://ul.h3z.jp/uKy4GPOX.png" },
+      { no:"TN-044", name:"白い契約(稲石裕プロ🎯)", img:"https://ul.h3z.jp/g2banLA9.png" },
+      { no:"TN-047", name:"ボスゲート", img:"https://ul.h3z.jp/1Q26RpZH.png" },
+    ],
+    SR: [
+      { no:"TN-004", name:"見えるフリ焼き", img:"https://ul.h3z.jp/NSUjkwRE.png" },
+      { no:"TN-010", name:"焼ク者ノ証", img:"https://ul.h3z.jp/BCXLFeGI.png" },
+      { no:"TN-015", name:"顔コイン", img:"https://ul.h3z.jp/CIA9LV8T.png" },
+      { no:"TN-020", name:"ピック不要の真実", img:"https://ul.h3z.jp/Xave4XVq.png" },
+      { no:"TN-030", name:"ガチャたこ焼き", img:"https://ul.h3z.jp/XDrYkA9R.png" },
+      { no:"TN-039", name:"ドローン誤配達", img:"https://ul.h3z.jp/6VGy1YM2.png" },
+      { no:"TN-040", name:"推し活たこ団扇", img:"https://ul.h3z.jp/7mFuyxeG.png" },
+      { no:"TN-049", name:"たこ焼きの御神体", img:"https://ul.h3z.jp/sv5Y8d9u.png" },
+    ],
+    UR: [
+      { no:"TN-001", name:"黒き真珠イカさま焼き", img:"https://ul.h3z.jp/wMBupVzu.png" },
+      { no:"TN-007", name:"ローソク出せ！", img:"https://ul.h3z.jp/naBoXNrd.png" },
+      { no:"BN-033", name:"鉄板のビーナス", img:"https://ul.h3z.jp/xI1NUxhq.png" },
+      { no:"BN-045", name:"ドリームファイト", img:"https://ul.h3z.jp/YNtkOAIi.png" },
+    ],
+    LR: [
+      { no:"TN-025", name:"たこ焼き化石in函館山", img:"https://ul.h3z.jp/e2B7lU9p.png" },
+      { no:"BN-050", name:"焼かれし記憶、ソースに還る", img:"https://ul.h3z.jp/l47TH2Ml.png" },
+    ],
+  };
 
-    // --- SR ---
-    { id:"TN-004", name:"見えるフリ焼き", img:"https://ul.h3z.jp/NSUjkwRE.png" },
-    { id:"TN-010", name:"焼ク者ノ証", img:"https://ul.h3z.jp/BCXLFeGI.png" },
-    { id:"TN-015", name:"顔コイン", img:"https://ul.h3z.jp/CIA9LV8T.png" },
-    { id:"TN-020", name:"ピック不要の真実", img:"https://ul.h3z.jp/Xave4XVq.png" },
-    { id:"TN-030", name:"ガチャたこ焼き", img:"https://ul.h3z.jp/XDrYkA9R.png" },
-    { id:"TN-039", name:"ドローン誤配達", img:"https://ul.h3z.jp/6VGy1YM2.png" },
-    { id:"TN-040", name:"推し活たこ団扇", img:"https://ul.h3z.jp/7mFuyxeG.png" },
-    { id:"TN-049", name:"たこ焼きの御神体", img:"https://ul.h3z.jp/sv5Y8d9u.png" },
-
-    // --- UR ---
-    { id:"TN-001", name:"黒き真珠イカさま焼き", img:"https://ul.h3z.jp/wMBupVzu.png" },
-    { id:"TN-007", name:"ローソク出せ！", img:"https://ul.h3z.jp/naBoXNrd.png" },
-    { id:"BN-033", name:"鉄板のビーナス", img:"https://ul.h3z.jp/xI1NUxhq.png" },
-    { id:"BN-045", name:"ドリームファイト", img:"https://ul.h3z.jp/YNtkOAIi.png" },
-
-    // --- LR ---
-    { id:"TN-025", name:"たこ焼き化石in函館山", img:"https://ul.h3z.jp/e2B7lU9p.png" },
-    { id:"BN-050", name:"焼かれし記憶、ソースに還る", img:"https://ul.h3z.jp/l47TH2Ml.png" },
-  ];
-
-  
   // ====== 種 / 水 / 肥料（カードUI）=====
-  // factor: 収穫時間に掛ける係数（小さいほど早い）
   const SEEDS = [
     { id:"seed_basic", name:"生地のタネ", desc:"基本のたこ焼き。まずはここから。", factor:1.00 },
     { id:"seed_soft",  name:"ふわとろタネ", desc:"ふわっと仕上がる。焼けにくい…気がする。", factor:1.00 },
     { id:"seed_rare",  name:"レアタネ", desc:"当たりやすい気配。時間はそのまま。", factor:1.00 },
   ];
+
+  // ★水：レア率補正（rarityMul）を追加
   const WATERS = [
-    { id:"water_small", name:"水：小", desc:"少しだけ時短。", factor:0.90, fx:"収穫時間 -10%" },
-    { id:"water_mid",   name:"水：中", desc:"ほどよく時短。", factor:0.80, fx:"収穫時間 -20%" },
-    { id:"water_str",   name:"水：強", desc:"一気に時短。", factor:0.70, fx:"収穫時間 -30%" },
+    {
+      id:"water_small", name:"普通の水", desc:"クセのない水。", factor:0.90, fx:"収穫時間 -10%",
+      rarityMul:{ N:1.00, R:1.00, SR:1.00, UR:1.00, LR:1.00 }
+    },
+    {
+      id:"water_mid", name:"黄金の水", desc:"レアが上がりやすい。", factor:0.80, fx:"収穫時間 -20%",
+      rarityMul:{ N:0.95, R:1.10, SR:1.25, UR:1.45, LR:1.20 }
+    },
+    {
+      id:"water_str", name:"怪しい水", desc:"博打の香り。", factor:0.70, fx:"収穫時間 -30%",
+      rarityMul:{ N:0.90, R:1.00, SR:1.15, UR:1.65, LR:1.45 }
+    },
   ];
+
+  // 肥料：時間短縮だけ（レア率は触らない）
   const FERTS = [
     { id:"fert_small", name:"肥料：小", desc:"少しだけ時短。", factor:0.90, fx:"収穫時間 -10%" },
     { id:"fert_mid",   name:"肥料：中", desc:"ほどよく時短。", factor:0.80, fx:"収穫時間 -20%" },
@@ -361,6 +378,45 @@
     const mm = Math.floor((s%3600)/60);
     const ss = s%60;
     return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+  }
+
+  // ====== レア抽選（今回は水だけ影響）=====
+  function pickRarityWithWater(waterId){
+    const water = WATERS.find(x=>x.id===waterId);
+    const wm = (water && water.rarityMul) ? water.rarityMul : {};
+
+    const weights = {};
+    let total = 0;
+
+    for(const k of Object.keys(BASE_RARITY_RATE)){
+      const w = BASE_RARITY_RATE[k] * (wm[k] ?? 1);
+      weights[k] = Math.max(0, w);
+      total += weights[k];
+    }
+    if(total <= 0) return "N";
+
+    let r = Math.random() * total;
+    for(const k of Object.keys(weights)){
+      r -= weights[k];
+      if(r <= 0) return k;
+    }
+    return "N";
+  }
+
+  function drawReward(waterId){
+    const rarity = pickRarityWithWater(waterId);
+    const pool = CARD_POOLS[rarity] || CARD_POOLS.N || [];
+    const c = pick(pool);
+    return {
+      id: c.no,
+      name: c.name,
+      img: c.img,
+      rarity
+    };
+  }
+
+  function rarityLabel(r){
+    return r || "";
   }
 
   const farmEl = document.getElementById("farm");
@@ -465,7 +521,6 @@
       if(p.state === "GROW" && typeof p.readyAt === "number"){
         if(now >= p.readyAt){
           p.state = "READY";
-          // 収穫可能→焼けまでの期限
           p.burnAt = p.readyAt + READY_TO_BURN_MS;
           changed = true;
         }
@@ -516,8 +571,9 @@
     }
 
     if(p.state === "READY"){
-      // 収穫→カード表示→確認で図鑑追加
-      const reward = pick(HARVEST_POOL);
+      // 収穫：水によってレア率が変わる
+      const reward = drawReward(p.waterId);
+
       p.reward = reward;
       saveState(state);
 
@@ -525,7 +581,7 @@
         <div class="step">収穫したカードを確認してから図鑑に登録する。</div>
         <div class="reward">
           <div class="big">${reward.name}（${reward.id}）</div>
-          <div class="mini">確認ボタンを押すと図鑑に追加され、このマスは空になる。</div>
+          <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>確認ボタンを押すと図鑑に追加され、このマスは空になる。</div>
           <img class="img" src="${reward.img}" alt="${reward.name}">
         </div>
         <div class="row">
@@ -535,7 +591,6 @@
       `);
 
       document.getElementById("btnCancel").addEventListener("click", () => {
-        // 取り消し：reward保持してREADYのままでも良いが、混乱を避けて消す
         delete p.reward;
         saveState(state);
         closeModal();
@@ -543,11 +598,9 @@
 
       document.getElementById("btnConfirm").addEventListener("click", () => {
         addToBook(reward);
-        // マスを空に戻す
         state.plots[i] = defaultPlot();
         saveState(state);
         closeModal();
-        // 図鑑へ移動（好みでコメントアウトOK）
         location.href = "./zukan.html";
       });
       return;
@@ -575,7 +628,13 @@
   function addToBook(card){
     const b = loadBook();
     if(!b.got) b.got = {};
-    b.got[card.id] = { id:card.id, name:card.name, img:card.img, at:Date.now() };
+    b.got[card.id] = {
+      id: card.id,
+      name: card.name,
+      img: card.img,
+      rarity: card.rarity || "",
+      at: Date.now()
+    };
     book = b;
     saveBook(book);
   }
@@ -617,7 +676,7 @@
       showWaterStep();
     });
     ui.setTitle("種を選ぶ");
-    ui.onBack(() => closeModal()); // seedの戻る＝閉じる
+    ui.onBack(() => closeModal());
     ui.onClose();
   }
 
@@ -650,6 +709,7 @@
       (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
       0.35, 1.0
     );
+
     const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000); // 最短1時間
     const now = Date.now();
 
@@ -661,7 +721,8 @@
           種：${seed?.name || "-"}<br>
           水：${water?.name || "-"}<br>
           肥料：${fert?.name || "-"}<br><br>
-          時短係数：<b>${factor.toFixed(2)}</b>
+          時短係数：<b>${factor.toFixed(2)}</b><br>
+          レア補正：<b>${water?.name || "-"}</b>（水の効果）
         </div>
       </div>
       <div class="row">
@@ -704,5 +765,7 @@
   setInterval(tick, TICK_MS);
 })();
 </script>
+
+
 </body>
 </html>
