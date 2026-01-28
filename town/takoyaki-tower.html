@@ -1100,16 +1100,18 @@ function drawBlock(b, index){
   const boost = baseBoost[index] ?? 1.0;
   const h = Math.round(b.h * boost);
 
-  // ✅ 上角丸：薄いほど効く
-  const rTop = Math.max(12, Math.round(h * 0.60));
+ // 角丸（四隅）
+const rAll = Math.max(10, Math.round(Math.min(w, h) * 0.22));
 
-  const tile = b.tileKey ? IMG[b.tileKey] : null;
+// 角丸クリップ（四隅）
+ctx.save();
+ctx.beginPath();
+roundedPath(x, y, w, h, rAll);
+ctx.clip();
 
-  // 角丸クリップ（上だけ）
-  ctx.save();
-  ctx.beginPath();
-  roundedTopPath(x, y, w, h, rTop);
-  ctx.clip();
+// ...（中の画像描画はそのまま）...
+
+ctx.restore();
 
   if (!tile || !tile.naturalWidth){
     const grad = ctx.createLinearGradient(x, y, x, y+h);
