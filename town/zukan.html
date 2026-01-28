@@ -3,388 +3,679 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>カード図鑑</title>
+  <title>たこ焼き図鑑</title>
   <style>
     :root{
-      --bg:#0f1220;
-      --panel:rgba(255,255,255,.06);
-      --line:rgba(255,255,255,.14);
-      --text:#fff;
-      --muted:rgba(255,255,255,.72);
-      --btn:rgba(255,255,255,.10);
-      --btn2:rgba(255,255,255,.14);
+      --bg:#0b0f18;
+      --panel:#11192a;
+      --panel2:#0f1626;
+      --text:#e9f1ff;
+      --muted:#9fb0c9;
+      --border:rgba(255,255,255,.10);
+      --shadow:0 12px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --gap:10px;
+      --tile:96px; /* 画像タイルの基準 */
     }
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
-    .wrap{max-width:520px;margin:0 auto;padding:14px 14px 22px}
-
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .topbar a{
-      color:var(--text);text-decoration:none;
-      border:1px solid var(--line);padding:8px 10px;border-radius:12px;
-      background:var(--panel);font-weight:900
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:radial-gradient(1200px 600px at 40% -10%, rgba(106,160,255,.18), transparent 60%),
+                 radial-gradient(900px 500px at 90% 10%, rgba(255,180,80,.10), transparent 65%),
+                 var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", sans-serif;
+    }
+    a{color:inherit}
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 14px 36px;
+    }
+    header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:.02em;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:12px;
     }
 
-    h1{font-size:18px;margin:12px 0 6px}
-    .hint{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:12px}
-
-    /* Controls */
+    /* ===== Controls ===== */
     .controls{
-      display:flex;gap:10px;flex-wrap:wrap;
-      border:1px solid var(--line);
-      background:var(--panel);
-      border-radius:16px;
-      padding:10px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:12px;
+      box-shadow:var(--shadow);
       margin-bottom:12px;
     }
-    .controls input[type="search"]{
-      flex:1;
-      min-width:180px;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.18);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:14px;
-      outline:none;
-      font-weight:700;
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:170px;
+      flex:1 1 220px;
     }
-    .controls select{
-      border:1px solid var(--line);
+    .label{
+      font-size:11px;
+      color:var(--muted);
+      letter-spacing:.03em;
+    }
+    input[type="search"], select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
       background:rgba(0,0,0,.18);
       color:var(--text);
-      padding:10px 10px;
-      border-radius:14px;
-      font-weight:800;
       outline:none;
+      font-size:14px;
+    }
+    input[type="search"]::placeholder{color:rgba(255,255,255,.35)}
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex:1 1 220px;
     }
     .pill{
-      margin-left:auto;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.18);
-      padding:10px 12px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
       border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--muted);
       font-size:12px;
-      font-weight:900;
       white-space:nowrap;
     }
-
-    /* Grid */
-    .grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:10px}
-    .card{
-      border:1px solid var(--line);
-      border-radius:16px;
-      overflow:hidden;
-      background:rgba(255,255,255,.05);
-      cursor:pointer;
-      user-select:none;
-      transition:transform .06s ease;
-    }
-    .card:active{transform:scale(.99)}
-    .card img{
-      width:100%;
-      display:block;
-      aspect-ratio:3/4;
-      object-fit:cover;
-      background:rgba(255,255,255,.03);
-    }
-    .meta{padding:10px 10px 12px}
-    .name{font-weight:1000}
-    .id{font-size:12px;color:var(--muted);margin-top:3px}
-
-    .empty{
-      border:1px dashed rgba(255,255,255,.22);
-      background:rgba(255,255,255,.03);
-      border-radius:16px;
-      padding:16px;
-      line-height:1.7;
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    /* Footer actions */
-    .actions{
-      margin-top:14px;
-      border:1px solid var(--line);
-      background:var(--panel);
-      border-radius:16px;
-      padding:10px;
-      display:flex;gap:10px;
-    }
-    .actions button{
-      flex:1;
-      border:1px solid var(--line);
-      background:var(--btn);
+    .btn{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
       color:var(--text);
-      padding:12px 10px;
-      border-radius:14px;
-      font-weight:900;
+      font-size:13px;
+      cursor:pointer;
     }
-    .actions button.danger{
-      border:1px solid rgba(255,154,165,.45);
-      background:rgba(255,154,165,.14);
+    .btn:active{transform:translateY(1px)}
+    .btn.small{padding:8px 10px;font-size:12px}
+    .btn.danger{border-color:rgba(255,80,80,.35); color:#ffd3d3}
+    .btn:hover{filter:brightness(1.05)}
+
+    /* ===== Grid ===== */
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(var(--tile), 1fr));
+      gap:var(--gap);
+      align-items:stretch;
     }
 
-    /* Modal */
+    .card{
+      position:relative;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.12));
+      overflow:hidden;
+      box-shadow:0 10px 18px rgba(0,0,0,.22);
+      cursor:pointer;
+      min-height:calc(var(--tile) + 36px);
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .card:active{transform:scale(.985)}
+    .thumb{
+      width:100%;
+      height:var(--tile);
+      display:block;
+      object-fit:cover;
+      background:rgba(255,255,255,.05);
+    }
+    .meta{
+      padding:8px 8px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .name{
+      font-size:12px;
+      line-height:1.2;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .mini{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:6px;
+      color:var(--muted);
+      font-size:11px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--muted);
+      max-width:100%;
+    }
+    .tag b{color:var(--text); font-weight:600}
+    .id{opacity:.95}
+
+    /* ===== SR+ glow ===== */
+    .card.is-glow{
+      border-color:rgba(255,230,120,.35);
+      box-shadow:
+        0 0 0 1px rgba(255,230,120,.10) inset,
+        0 10px 18px rgba(0,0,0,.22),
+        0 0 20px rgba(255,210,90,.10);
+    }
+    .card.is-glow::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:conic-gradient(from 180deg,
+        rgba(255,215,90,.0),
+        rgba(255,215,90,.35),
+        rgba(160,220,255,.22),
+        rgba(255,215,90,.0));
+      filter:blur(10px);
+      opacity:.45;
+      pointer-events:none;
+      animation:spin 4.2s linear infinite;
+    }
+    .card.is-glow::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,.10), transparent 55%);
+      pointer-events:none;
+      opacity:.55;
+    }
+    @keyframes spin{
+      from{transform:rotate(0deg)}
+      to{transform:rotate(360deg)}
+    }
+
+    /* ===== Empty / Error ===== */
+    .empty{
+      margin-top:14px;
+      padding:16px;
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:var(--radius);
+      color:var(--muted);
+      background:rgba(0,0,0,.18);
+    }
+    .empty code{
+      color:var(--text);
+      background:rgba(255,255,255,.06);
+      padding:2px 6px;
+      border-radius:8px;
+    }
+
+    /* ===== Modal ===== */
     .modal{
-      position:fixed;inset:0;display:none;
-      background:rgba(0,0,0,.55);
-      align-items:flex-end;justify-content:center;
-      padding:14px;
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      background:rgba(0,0,0,.68);
       z-index:9999;
     }
     .modal[aria-hidden="false"]{display:flex}
-    .sheet{
-      width:min(520px, 100%);
-      border:1px solid var(--line);
-      background:rgba(15,18,32,.94);
+    .modal__panel{
+      width:min(92vw, 520px);
       border-radius:18px;
+      border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.18));
+      box-shadow:0 24px 60px rgba(0,0,0,.5);
       overflow:hidden;
-      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      position:relative;
     }
-    .sheetHead{
-      padding:12px 14px;
-      display:flex;align-items:center;justify-content:space-between;
-      border-bottom:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-    }
-    .sheetHead .ttl{font-weight:1000}
-    .sheetHead button{
-      border:1px solid var(--line);
-      background:var(--btn);
-      color:var(--text);
-      padding:8px 10px;border-radius:12px;
-      font-weight:1000;
-    }
-    .sheetBody{padding:12px 14px 14px}
-    .bigImg{
+    .modal__img{
       width:100%;
-      border-radius:16px;
-      border:1px solid var(--line);
-      aspect-ratio:3/4;
-      object-fit:cover;
-      background:rgba(255,255,255,.03);
+      height:auto;
       display:block;
-    }
-    .info{
-      margin-top:10px;
-      border:1px solid var(--line);
       background:rgba(255,255,255,.05);
-      border-radius:16px;
-      padding:10px 12px;
-      line-height:1.6;
-      color:var(--muted);
-      font-size:12px;
     }
-    .info b{color:var(--text)}
+    .modal__body{
+      padding:12px 12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .modal__title{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .modal__title h2{
+      margin:0;
+      font-size:15px;
+      line-height:1.25;
+    }
+    .close{
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-size:13px;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns:110px 1fr;
+      gap:8px 10px;
+      font-size:12px;
+      color:var(--muted);
+      border-top:1px solid var(--border);
+      padding-top:10px;
+    }
+    .kv b{color:var(--text); font-weight:600}
+    .srGlow{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,220,120,.35);
+      color:#ffe9b8;
+      background:rgba(255,220,120,.08);
+    }
+
+    /* スマホ：カードを少し大きめに */
+    @media (max-width: 520px){
+      :root{ --tile:110px; --gap:10px; }
+      .field{min-width:140px}
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="topbar">
-      <a href="./index.html">← 戻る</a>
-      <a href="./farm.html">畑へ</a>
-    </div>
-
-    <h1>カード図鑑</h1>
-    <div class="hint">畑で収穫 → 「確認して図鑑へ」を押したカードがここに登録される。</div>
-
-    <div class="controls">
-      <input id="q" type="search" placeholder="検索：名前 / 番号（例 TN-003）" autocomplete="off" />
-      <select id="sort">
-        <option value="new">新しい順</option>
-        <option value="old">古い順</option>
-        <option value="id">番号順</option>
-        <option value="name">名前順</option>
-      </select>
-      <div class="pill">登録：<span id="count">0</span>枚</div>
-    </div>
-
-    <div id="root"></div>
-
-    <div class="actions">
-      <button id="btnTop" type="button">トップへ戻る</button>
-      <button id="btnClear" class="danger" type="button">図鑑をリセット</button>
-    </div>
-  </div>
-
-  <!-- 詳細モーダル -->
-  <div id="modal" class="modal" aria-hidden="true">
-    <div class="sheet" role="dialog" aria-label="カード詳細">
-      <div class="sheetHead">
-        <div class="ttl" id="mTitle">詳細</div>
-        <button id="mClose" type="button">閉じる</button>
+    <header>
+      <div class="title">
+        <h1>図鑑（tf_v1_book）</h1>
+        <div class="sub">localStorage の <b>tf_v1_book</b> → got[] を表示します</div>
       </div>
-      <div class="sheetBody" id="mBody"></div>
-    </div>
+      <div class="pill" id="statPill">読み込み中…</div>
+    </header>
+
+    <section class="controls" aria-label="検索と並び替え">
+      <div class="field" style="flex:2 1 360px">
+        <div class="label">検索（ID / 名前 / レアリティ）</div>
+        <input id="q" type="search" placeholder="例：TN-012 / ソース / SR" autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <div class="label">並び替え</div>
+        <select id="sort">
+          <option value="new">新しい順（at 降順）</option>
+          <option value="num">番号順（id の数値）</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <button class="btn small" id="btnReload" type="button">再読込</button>
+        <button class="btn small danger" id="btnClear" type="button" title="図鑑データを消します">図鑑を消去</button>
+      </div>
+    </section>
+
+    <main>
+      <div id="grid" class="grid" aria-label="図鑑グリッド"></div>
+      <div id="empty" class="empty" style="display:none"></div>
+    </main>
   </div>
 
-<script>
-(() => {
-  const LS_BOOK = "tf_v1_book";
-
-  function loadBook(){
-    try{
-      const raw = localStorage.getItem(LS_BOOK);
-      if(!raw) return { ver:1, got:{} };
-      const obj = JSON.parse(raw);
-      if(!obj || typeof obj.got !== "object") return { ver:1, got:{} };
-      return obj;
-    }catch(e){
-      return { ver:1, got:{} };
-    }
-  }
-  function saveBook(b){
-    localStorage.setItem(LS_BOOK, JSON.stringify(b));
-  }
-  function fmtDate(t){
-    if(!t) return "-";
-    const d = new Date(t);
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const da= String(d.getDate()).padStart(2,"0");
-    const hh= String(d.getHours()).padStart(2,"0");
-    const mm= String(d.getMinutes()).padStart(2,"0");
-    return `${y}/${m}/${da} ${hh}:${mm}`;
-  }
-  function normalizeId(id){
-    // "TN-003" のような形式ならそのまま、数字だけでも並べられるように
-    const m = String(id||"").match(/(\d+)/);
-    return m ? parseInt(m[1],10) : 999999;
-  }
-
-  const root  = document.getElementById("root");
-  const qEl   = document.getElementById("q");
-  const sortEl= document.getElementById("sort");
-  const countEl = document.getElementById("count");
-
-  const modal = document.getElementById("modal");
-  const mTitle= document.getElementById("mTitle");
-  const mBody = document.getElementById("mBody");
-  const mClose= document.getElementById("mClose");
-
-  let book = loadBook();
-
-  function getItems(){
-    const items = Object.values(book.got || {});
-    const q = (qEl.value || "").trim().toLowerCase();
-
-    let filtered = items;
-    if(q){
-      filtered = items.filter(x => {
-        const name = String(x.name||"").toLowerCase();
-        const id   = String(x.id||"").toLowerCase();
-        return name.includes(q) || id.includes(q);
-      });
-    }
-
-    const s = sortEl.value;
-    filtered.sort((a,b) => {
-      if(s === "new") return (b.at||0) - (a.at||0);
-      if(s === "old") return (a.at||0) - (b.at||0);
-      if(s === "id")  return normalizeId(a.id) - normalizeId(b.id);
-      if(s === "name")return String(a.name||"").localeCompare(String(b.name||""), "ja");
-      return 0;
-    });
-
-    return filtered;
-  }
-
-  function render(){
-    const allCount = Object.keys(book.got || {}).length;
-    countEl.textContent = String(allCount);
-
-    const items = getItems();
-    if(allCount === 0){
-      root.innerHTML = `
-        <div class="empty">
-          まだ図鑑に登録がない。<br>
-          <b>畑で収穫 → 確認</b>を押すとここに追加される。
-        </div>`;
-      return;
-    }
-
-    if(items.length === 0){
-      root.innerHTML = `
-        <div class="empty">
-          検索条件に一致するカードがない。<br>
-          別のキーワードで試してね。
-        </div>`;
-      return;
-    }
-
-    root.innerHTML = `
-      <div class="grid">
-        ${items.map(x => `
-          <div class="card" data-id="${escapeHtml(String(x.id||""))}">
-            <img src="${escapeAttr(String(x.img||""))}" alt="${escapeAttr(String(x.name||""))}">
-            <div class="meta">
-              <div class="name">${escapeHtml(String(x.name||""))}</div>
-              <div class="id">${escapeHtml(String(x.id||""))}</div>
-            </div>
+  <!-- Modal -->
+  <div class="modal" id="modal" aria-hidden="true" role="dialog" aria-label="カード拡大表示">
+    <div class="modal__panel" role="document">
+      <img id="mImg" class="modal__img" alt="">
+      <div class="modal__body">
+        <div class="modal__title">
+          <div>
+            <h2 id="mTitle">-</h2>
+            <div id="mGlow" style="margin-top:6px; display:none" class="srGlow">✨ SR以上</div>
           </div>
-        `).join("")}
-      </div>
-    `;
+          <button class="close" id="mClose" type="button" aria-label="閉じる">閉じる</button>
+        </div>
 
-    root.querySelectorAll(".card").forEach(el => {
-      el.addEventListener("click", () => {
-        const id = el.getAttribute("data-id");
-        const data = (book.got || {})[id];
-        if(data) openDetail(data);
+        <div class="kv" aria-label="カード情報">
+          <div>ID</div><div><b id="mId">-</b></div>
+          <div>レア</div><div><b id="mRarity">-</b></div>
+          <div>取得</div><div><b id="mAt">-</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================
+    // zukan.html (tf_v1_book)
+    // 期待データ: localStorage["tf_v1_book"] = JSON string
+    // 例: { got: [{ id, name, img, rarity, at }], ... }
+    // =========================================================
+
+    const LS_KEY = "tf_v1_book";
+
+    const elGrid = document.getElementById("grid");
+    const elEmpty = document.getElementById("empty");
+    const elPill = document.getElementById("statPill");
+    const elQ = document.getElementById("q");
+    const elSort = document.getElementById("sort");
+    const btnReload = document.getElementById("btnReload");
+    const btnClear = document.getElementById("btnClear");
+
+    // modal
+    const modal = document.getElementById("modal");
+    const mImg = document.getElementById("mImg");
+    const mTitle = document.getElementById("mTitle");
+    const mId = document.getElementById("mId");
+    const mRarity = document.getElementById("mRarity");
+    const mAt = document.getElementById("mAt");
+    const mGlow = document.getElementById("mGlow");
+    const mClose = document.getElementById("mClose");
+
+    let all = [];   // raw got
+    let view = [];  // filtered+sorted
+
+    function safeJSONParse(str){
+      try { return JSON.parse(str); } catch(e){ return null; }
+    }
+
+    function normalizeText(s){
+      return (s ?? "").toString().trim().toLowerCase();
+    }
+
+    // id から数値を抜く（TN-012 → 12 / 012 → 12 / No.TN-048 → 48 なども吸う）
+    function idToNumber(id){
+      const s = (id ?? "").toString();
+      const m = s.match(/(\d+)/g);
+      if(!m) return Number.POSITIVE_INFINITY;
+      // 最後の数値が一番それっぽい
+      const last = m[m.length - 1];
+      const n = parseInt(last, 10);
+      return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+    }
+
+    function isSRPlus(rarity){
+      const r = normalizeText(rarity);
+      // SR / SSR / UR / LR / HR / XR / etc... など「SR以上」を雑に拾う
+      // SR を含む or UR/LR/SSR/XR/HR 等
+      if(!r) return false;
+      if(r.includes("sr")) return true;
+      if(r.includes("ur")) return true;
+      if(r.includes("lr")) return true;
+      if(r.includes("hr")) return true;
+      if(r.includes("xr")) return true;
+      return false;
+    }
+
+    function formatAt(at){
+      if(!at) return "-";
+      // at が数値(ミリ秒/秒) or ISO文字列でもだいたい表示できるように
+      let d = null;
+
+      if(typeof at === "number"){
+        // 秒っぽいなら ms に寄せる
+        d = (at < 2e12) ? new Date(at * 1000) : new Date(at);
+      } else {
+        const n = Number(at);
+        if(Number.isFinite(n)){
+          d = (n < 2e12) ? new Date(n * 1000) : new Date(n);
+        } else {
+          d = new Date(at);
+        }
+      }
+      if(!d || isNaN(d.getTime())) return String(at);
+
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mi = String(d.getMinutes()).padStart(2,"0");
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+    }
+
+    function load(){
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw){
+        all = [];
+        render();
+        showEmpty(
+          `図鑑データが見つからないよ。<br>
+           localStorage の <code>${LS_KEY}</code> を畑側で保存してから開いてね。`
+        );
+        elPill.textContent = "0 / 0";
+        return;
+      }
+      const obj = safeJSONParse(raw);
+      const got = obj && Array.isArray(obj.got) ? obj.got : [];
+      // 念のため変形
+      all = got.map(x => ({
+        id: x?.id ?? "",
+        name: x?.name ?? "",
+        img: x?.img ?? "",
+        rarity: x?.rarity ?? "",
+        at: x?.at ?? ""
+      }));
+
+      render();
+    }
+
+    function applyFilterSort(){
+      const q = normalizeText(elQ.value);
+      const sort = elSort.value;
+
+      // filter
+      view = all.filter(item => {
+        if(!q) return true;
+        const hay = [
+          item.id, item.name, item.rarity
+        ].map(normalizeText).join(" ");
+        return hay.includes(q);
       });
+
+      // sort
+      if(sort === "new"){
+        view.sort((a,b) => {
+          // at を Date化して比較。失敗したら 0 扱い
+          const ta = toTime(a.at);
+          const tb = toTime(b.at);
+          return tb - ta;
+        });
+      } else if(sort === "num"){
+        view.sort((a,b) => {
+          const na = idToNumber(a.id);
+          const nb = idToNumber(b.id);
+          if(na !== nb) return na - nb;
+          // 同番号の時は新しい順
+          return toTime(b.at) - toTime(a.at);
+        });
+      }
+
+      elPill.textContent = `${view.length} / ${all.length}`;
+    }
+
+    function toTime(at){
+      if(!at) return 0;
+      if(typeof at === "number"){
+        return (at < 2e12) ? at * 1000 : at;
+      }
+      const n = Number(at);
+      if(Number.isFinite(n)){
+        return (n < 2e12) ? n * 1000 : n;
+      }
+      const d = new Date(at);
+      const t = d.getTime();
+      return Number.isFinite(t) ? t : 0;
+    }
+
+    function render(){
+      hideEmpty();
+      applyFilterSort();
+
+      elGrid.innerHTML = "";
+      if(view.length === 0){
+        showEmpty("該当カードがないよ（検索条件を変えてみてね）。");
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+      for(const item of view){
+        const card = document.createElement("div");
+        card.className = "card" + (isSRPlus(item.rarity) ? " is-glow" : "");
+        card.setAttribute("role","button");
+        card.setAttribute("tabindex","0");
+        card.dataset.id = item.id || "";
+        card.dataset.name = item.name || "";
+        card.dataset.img = item.img || "";
+        card.dataset.rarity = item.rarity || "";
+        card.dataset.at = item.at || "";
+
+        const img = document.createElement("img");
+        img.className = "thumb";
+        img.alt = item.name || item.id || "card";
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.src = item.img || "";
+        img.onerror = () => {
+          img.removeAttribute("src");
+          img.alt = "画像なし";
+          img.style.display = "block";
+          img.style.objectFit = "contain";
+        };
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = item.name || "(no name)";
+
+        const mini = document.createElement("div");
+        mini.className = "mini";
+
+        const tag = document.createElement("div");
+        tag.className = "tag";
+        tag.innerHTML = `<span class="id">#${escapeHTML(item.id || "-")}</span>`;
+
+        const rar = document.createElement("div");
+        rar.className = "tag";
+        rar.innerHTML = `<b>${escapeHTML(item.rarity || "-")}</b>`;
+
+        mini.appendChild(tag);
+        mini.appendChild(rar);
+
+        meta.appendChild(name);
+        meta.appendChild(mini);
+
+        card.appendChild(img);
+        card.appendChild(meta);
+
+        card.addEventListener("click", () => openModal(item));
+        card.addEventListener("keydown", (e) => {
+          if(e.key === "Enter" || e.key === " "){
+            e.preventDefault();
+            openModal(item);
+          }
+        });
+
+        frag.appendChild(card);
+      }
+      elGrid.appendChild(frag);
+    }
+
+    function escapeHTML(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function showEmpty(html){
+      elEmpty.style.display = "block";
+      elEmpty.innerHTML = html;
+    }
+    function hideEmpty(){
+      elEmpty.style.display = "none";
+      elEmpty.innerHTML = "";
+    }
+
+    function openModal(item){
+      mImg.src = item.img || "";
+      mImg.alt = item.name || item.id || "card";
+      mTitle.textContent = item.name || "(no name)";
+      mId.textContent = item.id || "-";
+      mRarity.textContent = item.rarity || "-";
+      mAt.textContent = formatAt(item.at);
+      mGlow.style.display = isSRPlus(item.rarity) ? "inline-flex" : "none";
+
+      modal.setAttribute("aria-hidden","false");
+      // ESCで閉じる
+      document.addEventListener("keydown", onEscClose, { once:false });
+    }
+
+    function closeModal(){
+      modal.setAttribute("aria-hidden","true");
+      mImg.removeAttribute("src");
+      document.removeEventListener("keydown", onEscClose);
+    }
+    function onEscClose(e){
+      if(e.key === "Escape") closeModal();
+    }
+
+    // 背景クリックで閉じる
+    modal.addEventListener("click", (e) => {
+      if(e.target === modal) closeModal();
     });
-  }
+    mClose.addEventListener("click", closeModal);
 
-  function openDetail(x){
-    mTitle.textContent = `${x.name || "カード"}（${x.id || ""}）`;
-    mBody.innerHTML = `
-      <img class="bigImg" src="${escapeAttr(String(x.img||""))}" alt="${escapeAttr(String(x.name||""))}">
-      <div class="info">
-        <div>番号：<b>${escapeHtml(String(x.id||""))}</b></div>
-        <div>名前：<b>${escapeHtml(String(x.name||""))}</b></div>
-        <div>登録日時：<b>${escapeHtml(fmtDate(x.at))}</b></div>
-      </div>
-    `;
-    modal.setAttribute("aria-hidden","false");
-    modal.addEventListener("click", onBackdrop);
-    document.addEventListener("keydown", onEsc);
-  }
-  function closeModal(){
-    modal.setAttribute("aria-hidden","true");
-    modal.removeEventListener("click", onBackdrop);
-    document.removeEventListener("keydown", onEsc);
-    mBody.innerHTML = "";
-  }
-  function onBackdrop(e){
-    if(e.target === modal) closeModal();
-  }
-  function onEsc(e){
-    if(e.key === "Escape") closeModal();
-  }
-  mClose.addEventListener("click", closeModal);
+    // controls
+    elQ.addEventListener("input", () => render());
+    elSort.addEventListener("change", () => render());
+    btnReload.addEventListener("click", () => load());
 
-  // actions
-  document.getElementById("btnTop").addEventListener("click", () => location.href = "./index.html");
-  document.getElementById("btnClear").addEventListener("click", () => {
-    if(!confirm("図鑑データを消します。OK？")) return;
-    book = { ver:1, got:{} };
-    saveBook(book);
-    render();
-  });
+    btnClear.addEventListener("click", () => {
+      const ok = confirm("図鑑（tf_v1_book）を消去する？\n※畑側の図鑑も消えます");
+      if(!ok) return;
+      localStorage.removeItem(LS_KEY);
+      load();
+    });
 
-  qEl.addEventListener("input", render);
-  sortEl.addEventListener("change", render);
-
-  // mini util: safe render
-  function escapeHtml(s){
-    return s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-  }
-  function escapeAttr(s){
-    return escapeHtml(s);
-  }
-
-  render();
-})();
-</script>
+    // init
+    load();
+  </script>
 </body>
 </html>
 
