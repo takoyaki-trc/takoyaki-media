@@ -334,188 +334,50 @@ body.shop #mainFooter.wrapper + #base_url{
 
 <div class="map-wrap" id="townMap" style="position:relative;">
 
-  <!-- 街背景画像（例） -->
-  <img class="map-img" src="YOUR_MAP_IMAGE.png" alt="" />
-
-  <!-- ファーム建物 -->
-  <button id="openFarm" class="tf-building" type="button" aria-label="たこ焼き畑"
-    style="left:18%; top:99%;">
-    <img src="https://ul.h3z.jp/TmbW4Zix.png" alt="たこ焼き畑">
-  </button>
-
-  <!-- 露店建物 -->
-  <button id="openMarket" class="tf-building" type="button" aria-label="露店"
-    style="left:18%; top:93%;">
-    <img src="https://ul.h3z.jp/yDO66TXg.png" alt="露店">
-  </button>
-
-</div>
-
-<!-- トースト（JSの toast() がここに出す） -->
+  
+<!-- トースト -->
 <div class="tf-toast" aria-live="polite"></div>
 
+<div class="map-wrap" id="townMap">
+  <!-- 畑：別ページへ -->
+  <a class="tf-building" href="farm.html" style="left:18%; top:99%;">
+    <img src="https://ul.h3z.jp/TmbW4Zix.png" alt="たこ焼き畑">
+  </a>
 
-<!-- ▼ 建物の位置 -->
-<style>
-  /* 念のため */
-  .map-wrap{ position:relative; }
+  <!-- 露店：別ページへ -->
+  <a class="tf-building" href="market.html" style="left:18%; top:93%;">
+    <img src="https://ul.h3z.jp/yDO66TXg.png" alt="露店">
+  </a>
 
-  /* 宝箱が埋もれないように最前面へ */
-  .tf-chest-spot{ z-index: 9999; }
+  <!-- 宝箱はここに出没 -->
+</div>
 
-  #openFarm{ top: 99%; left: 18%; }
-  #openMarket{ top: 93%; left: 18%; }
+
+
+</div>
+
+<style>.map-wrap{ position:relative; }
+
+.tf-building{
+  position:absolute;
+  border:0;
+  background:transparent;
+  padding:0;
+  display:block;
+  transform: translate(-50%, -100%); /* 足元基準 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tf-building img{
+  display:block;
+  width: clamp(92px, 14vw, 220px); /* 既存に合わせて調整OK */
+  height:auto;
+  image-rendering: pixelated;
+}
+.tf-chest-spot{ z-index:9999; }
+
+  
 </style>
-
-<div id="tfFarmModal" class="tf-modal" aria-hidden="true">
-  <div class="tf-modal__panel" role="dialog" aria-modal="true" aria-label="たこ焼き畑">
-    <div class="tf-modal__head">
-      <h2>たこ焼き畑（3×3）</h2>
-      <button class="tf-modal__close" type="button" data-close="tfFarmModal" aria-label="閉じる">×</button>
-    </div>
-
-    <div class="tf-modal__body">
-      <!-- HUD -->
-      <div class="tf-hud" style="margin-bottom:10px;">
-        <span class="tf-pill">🪙 OCTO：<b id="tfOcto">0</b></span>
-        <span class="tf-pill">🌱 種：<b id="tfSeedCount">0</b></span>
-        <span class="tf-pill">🪨 黒い化石：<b id="tfFossilCount">0</b></span>
-
-        <div class="tf-hud__right">
-          <button id="tfHarvestStartBtn" class="tf-btn tf-btn--good" type="button">
-            今日の収穫タイム開始（24h）
-          </button>
-          <button id="tfOpenShopWater" class="tf-btn" type="button">水を買う</button>
-          <button id="tfOpenShopTaco" class="tf-btn" type="button">タコを買う</button>
-          <button id="tfResetBtn" class="tf-btn tf-btn--danger" type="button">初期化</button>
-        </div>
-      </div>
-
-      <div class="tf-farm">
-        <!-- 左：盤面 -->
-        <div class="tf-farm__left">
-          <div class="tf-card">
-            <div class="tf-title">鉄板（3×3）</div>
-            <div id="tfPlate" class="tf-plate"></div>
-            <div class="tf-mini" style="margin-top:8px;">
-              成長：24h → 収穫可能（24h） → 放置で焦げ消失（3%で黒い化石）
-            </div>
-          </div>
-        </div>
-
-        <!-- 右：操作 -->
-        <div class="tf-farm__right">
-          <div class="tf-card">
-            <div class="tf-title">選択マス</div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-              <span class="tf-pill">マス：<b id="tfSelIndex">-</b></span>
-              <span class="tf-pill">状態：<b id="tfSelState">-</b></span>
-            </div>
-
-            <div class="tf-actions">
-              <div class="tf-actions__row">
-                <button id="tfPlantBtn" class="tf-btn tf-btn--primary" type="button">種を植える</button>
-                <button id="tfCancelBtn" class="tf-btn tf-btn--ghost" type="button">キャンセル（種戻る）</button>
-              </div>
-
-              <div class="tf-actions__row">
-                <select id="tfPickWater" class="tf-select" aria-label="水を選ぶ"></select>
-              </div>
-
-              <div class="tf-actions__row">
-                <select id="tfPickTaco" class="tf-select" aria-label="タコを選ぶ"></select>
-              </div>
-
-              <div class="tf-actions__row">
-                <button id="tfHarvestBtn" class="tf-btn tf-btn--good" type="button">このマスを収穫する</button>
-              </div>
-
-              <div id="tfActionMsg" class="tf-actions__msg">マスをタップして選んでください。</div>
-            </div>
-          </div>
-
-          <!-- ✅ 図鑑導線（任意：図鑑モーダルを開くボタン） -->
-          <div class="tf-card">
-            <div class="tf-title">図鑑</div>
-            <button id="openDex" class="tf-btn" type="button">図鑑を開く</button>
-            <div class="tf-mini" style="margin-top:6px;">収穫したカードがここに溜まる。</div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<div id="tfDexModal" class="tf-modal" aria-hidden="true">
-  <div class="tf-modal__panel" role="dialog" aria-modal="true" aria-label="図鑑">
-    <div class="tf-modal__head">
-      <h2>図鑑（所持カード）</h2>
-      <button class="tf-modal__close" type="button" data-close="tfDexModal" aria-label="閉じる">×</button>
-    </div>
-
-    <div class="tf-modal__body">
-      <div class="tf-hud" style="margin-bottom:10px;">
-        <span class="tf-pill">🪙 OCTO：<b id="dexOcto">0</b></span>
-        <span class="tf-pill">登録：<b id="dexCount">0</b></span>
-      </div>
-
-      <!-- ✅ ここに50枠のカード一覧を描画する -->
-      <div id="tfDexGrid" class="tf-dex"></div>
-
-      <div class="tf-mini" style="margin-top:10px;">
-        ※ここは次に renderDex() を追加して完成させる。
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-<script>
-(() => {
-  const open = (id) => {
-    const m = document.getElementById(id);
-    if(!m) return;
-    m.classList.add("tf-open");
-    m.setAttribute("aria-hidden","false");
-  };
-  const close = (id) => {
-    const m = document.getElementById(id);
-    if(!m) return;
-    m.classList.remove("tf-open");
-    m.setAttribute("aria-hidden","true");
-  };
-
-  document.getElementById("openFarm")?.addEventListener("click", () => open("tfFarmModal"));
-  document.getElementById("openMarket")?.addEventListener("click", () => {
-    open("tfMarketModal");
-    window.TakoMarket?.onOpen?.();
-  });
-
-  // ✅ 図鑑
-  document.getElementById("openDex")?.addEventListener("click", () => open("tfDexModal"));
-
-  document.querySelectorAll("[data-close]").forEach(btn => {
-    btn.addEventListener("click", () => close(btn.getAttribute("data-close")));
-  });
-
-  ["tfFarmModal","tfMarketModal","tfDexModal"].forEach(id=>{
-    document.getElementById(id)?.addEventListener("click",(e)=>{
-      if(e.target.id === id) close(id);
-    });
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if(e.key !== "Escape") return;
-    close("tfFarmModal");
-    close("tfMarketModal");
-    close("tfDexModal");
-  });
-})();
-</script>
-
 
 
 
