@@ -451,84 +451,117 @@ const PLOT_IMG = {
     return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
   }
 
-  // ====== レア抽選（今回は水だけ影響）=====
-  function pickRarityWithWater(waterId){
-    const water = WATERS.find(x=>x.id===waterId);
-    const wm = (water && water.rarityMul) ? water.rarityMul : {};
+ // ====== レア抽選（今回は水だけ影響）=====
+function pickRarityWithWater(waterId){
+  const water = WATERS.find(x => x.id === waterId);
+  const wm = (water && water.rarityMul) ? water.rarityMul : {};
 
-    const weights = {};
-    let total = 0;
+  const weights = {};
+  let total = 0;
 
-    for(const k of Object.keys(BASE_RARITY_RATE)){
-      const w = BASE_RARITY_RATE[k] * (wm[k] ?? 1);
-      weights[k] = Math.max(0, w);
-      total += weights[k];
-    }
-    if(total <= 0) return "N";
-
-    let r = Math.random() * total;
-    for(const k of Object.keys(weights)){
-      r -= weights[k];
-      if(r <= 0) return k;
-    }
-    return "N";
+  for (const k of Object.keys(BASE_RARITY_RATE)){
+    const w = BASE_RARITY_RATE[k] * (wm[k] ?? 1);
+    weights[k] = Math.max(0, w);
+    total += weights[k];
   }
 
-  function drawReward(waterId){
-    const rarity = pickRarityWithWater(waterId);
-    const pool = CARD_POOLS[rarity] || CARD_POOLS.N || [];
-    const c = pick(pool);
-    return {
-      id: c.no,
-      name: c.name,
-      img: c.img,
-      rarity
-    };
+  if (total <= 0) return "N";
+
+  let r = Math.random() * total;
+  for (const k of Object.keys(weights)){
+    r -= weights[k];
+    if (r <= 0) return k;
+  }
+  return "N";
+}
+
+// ★SR予兆（srHint）込みの収穫抽選
+// - p.srHint === "SR100" → SR/UR/LR 100%
+// - p.srHint === "SR65"  → SR/UR/LR 65%（外れたら通常）
+// - それ以外             → 通常（水抽選）
+function drawRewardForPlot(p){
+  // SR以上の候補（空プール対策付き）
+  const highList = ["SR", "UR", "LR"];
+
+  const pickHigh = () => {
+    const r = highList[Math.floor(Math.random() * highList.length)];
+    const pool = CARD_POOLS[r] || [];
+    const fallback = CARD_POOLS.SR || [];
+    const base = pool.length ? pool : fallback;
+    const c = pick(base);
+    return { id:c.no, name:c.name, img:c.img, rarity:r };
+  };
+
+  // 100%確定
+  if (p && p.srHint === "SR100") {
+    return pickHigh();
   }
 
-  function rarityLabel(r){
-    return r || "";
+  // 65%予兆
+  if (p && p.srHint === "SR65") {
+    const hit = Math.random() < 0.65;
+    if (hit) return pickHigh();
+    // 外れたら通常へ落とす
   }
 
-  const farmEl = document.getElementById("farm");
-  const stBook = document.getElementById("stBook");
-  const stGrow = document.getElementById("stGrow");
-  const stReady = document.getElementById("stReady");
-  const stBurn = document.getElementById("stBurn");
+  // 通常（水抽選）
+  const rarity = pickRarityWithWater(p ? p.waterId : null);
+  const pool = CARD_POOLS[rarity] || CARD_POOLS.N || [];
+  const c = pick(pool);
+  return { id:c.no, name:c.name, img:c.img, rarity };
+}
 
-  const modal = document.getElementById("modal");
-  const mTitle = document.getElementById("mTitle");
-  const mBody  = document.getElementById("mBody");
-  const mClose = document.getElementById("mClose");
+function rarityLabel(r){
+  return r || "";
+}
 
-  let state = loadState();
-  let book  = loadBook();
+// ====== DOM参照 ======
+const farmEl = document.getElementById("farm");
+const stBook = document.getElementById("stBook");
+const stGrow = document.getElementById("stGrow");
+const stReady = document.getElementById("stReady");
+const stBurn = document.getElementById("stBurn");
 
-  let activeIndex = -1;          // 今操作してるマス
-  let draft = null;              // 選択中（種/水/肥料）
+const modal  = document.getElementById("modal");
+const mTitle = document.getElementById("mTitle");
+const mBody  = document.getElementById("mBody");
+const mClose = document.getElementById("mClose");
 
-  function openModal(title, html){
-    mTitle.textContent = title;
-    mBody.innerHTML = html;
-    modal.setAttribute("aria-hidden","false");
-    modal.addEventListener("click", onBackdrop);
-    document.addEventListener("keydown", onEsc);
-  }
-  function closeModal(){
-    modal.setAttribute("aria-hidden","true");
-    modal.removeEventListener("click", onBackdrop);
-    document.removeEventListener("keydown", onEsc);
-    mBody.innerHTML = "";
-    activeIndex = -1;
-    draft = null;
-  }
-  function onBackdrop(e){
-    if(e.target === modal) closeModal();
-  }
-  function onEsc(e){
-    if(e.key === "Escape") closeModal();
-  }
-  mClose.addEventListener("click", closeModal);
+// ====== 状態 ======
+let state = loadState();
+let book  = loadBook();
+
+let activeIndex = -1; // 今操作してるマス
+let draft = null;     // 選択中（種/水/肥料）
+
+// ====== モーダル ======
+function openModal(title, html){
+  mTitle.textContent = title;
+  mBody.innerHTML = html;
+  modal.setAttribute("aria-hidden","false");
+  modal.addEventListener("click", onBackdrop);
+  document.addEventListener("keydown", onEsc);
+}
+
+function closeModal(){
+  modal.setAttribute("aria-hidden","true");
+  modal.removeEventListener("click", onBackdrop);
+  document.removeEventListener("keydown", onEsc);
+  mBody.innerHTML = "";
+  activeIndex = -1;
+  draft = null;
+}
+
+function onBackdrop(e){
+  if(e.target === modal) closeModal();
+}
+
+function onEsc(e){
+  if(e.key === "Escape") closeModal();
+}
+
+mClose.addEventListener("click", closeModal);
+
 // ====== UI描画 ======
 function render(){
   farmEl.innerHTML = "";
@@ -559,8 +592,23 @@ function render(){
       const denom = Math.max(1, end - start);
       const progress = (Date.now() - start) / denom;
 
-      img = (progress < 0.5) ? PLOT_IMG.GROW1 : PLOT_IMG.GROW2;
-      label = `育成中 ${fmtRemain(remain)}`;
+      // ====== 成長段階ごとの画像切り替え ======
+if (progress < 0.5) {
+  // 第1段階（前半）
+  img = PLOT_IMG.GROW1;
+} else {
+  // 第2段階（後半）：レア予兆で分岐
+  if (p.srHint === "SR100") {
+    img = PLOT_IMG.GROW2_SR100;   // ★SR以上100%確定
+  } else if (p.srHint === "SR65") {
+    img = PLOT_IMG.GROW2_SR65;    // ★SR以上65%予兆
+  } else {
+    img = PLOT_IMG.GROW2;         // 通常
+  }
+}
+
+label = `育成中 ${fmtRemain(remain)}`;
+
 
       const b = document.createElement("div");
       b.className = "badge warn";
@@ -675,7 +723,7 @@ d.appendChild(fx);
 
     if(p.state === "READY"){
       // 収穫：水によってレア率が変わる
-      const reward = drawReward(p.waterId);
+      const reward = drawRewardForPlot(p);
 
       p.reward = reward;
       saveState(state);
@@ -837,19 +885,26 @@ d.appendChild(fx);
     document.getElementById("btnRe").addEventListener("click", showSeedStep);
     document.getElementById("btnPlant").addEventListener("click", () => {
       const p = {
-        state:"GROW",
-        seedId: draft.seedId,
-        waterId: draft.waterId,
-        fertId: draft.fertId,
-        startAt: now,
-        readyAt: now + growMs
-      };
-      state.plots[activeIndex] = p;
-      saveState(state);
-      closeModal();
-      render();
-    });
-  }
+  state: "GROW",
+  seedId: draft.seedId,
+  waterId: draft.waterId,
+  fertId: draft.fertId,
+  startAt: now,
+  readyAt: now + growMs,
+
+  // ★第2段階の予兆フラグ（保存されるので再読み込みしてもブレない）
+  // "NONE" | "SR65" | "SR100"
+  srHint:
+    (draft.waterId === "water_mid" && draft.fertId === "fert_str") ? "SR100" :
+    (draft.waterId === "water_mid") ? "SR65" :
+    "NONE"
+};
+
+state.plots[activeIndex] = p;
+saveState(state);
+closeModal();
+render();
+
 
   function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
 
