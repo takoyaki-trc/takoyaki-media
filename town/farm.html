@@ -229,6 +229,14 @@
      - 肥料は「時間短縮」だけ（レア率には影響させない）
      - 収穫→確認→図鑑追加（図鑑にrarityも保存）
   ========================== */
+// マス画像（状態ごと）
+const PLOT_IMG = {
+  EMPTY: "https://ul.h3z.jp/muPEAkao.png",
+  GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
+  GROW2: "https://ul.h3z.jp/qsYG2s7X.png",
+  READY: "https://ul.h3z.jp/AmlnQA1b.png",
+  BURN:  "https://ul.h3z.jp/q9hxngx6.png"
+};
 
   const LS_STATE = "tf_v1_state";
   const LS_BOOK  = "tf_v1_book";
@@ -458,83 +466,108 @@
     if(e.key === "Escape") closeModal();
   }
   mClose.addEventListener("click", closeModal);
+// ====== UI描画 ======
+function render(){
+  farmEl.innerHTML = "";
+  let grow = 0, ready = 0, burn = 0;
 
-  // ====== UI描画 ======
-  function render(){
-    farmEl.innerHTML = "";
-    let grow=0, ready=0, burn=0;
+  state.plots.forEach((p, i) => {
+    const d = document.createElement("div");
+    d.className = "plot";
+    d.dataset.state = p.state || "EMPTY";
 
-    state.plots.forEach((p, i) => {
-      const d = document.createElement("div");
-      d.className = "plot";
-      d.dataset.state = p.state || "EMPTY";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.dataset.i = String(i);
 
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.dataset.i = String(i);
+    // ====== マス表示（画像版） ======
+    let img = PLOT_IMG.EMPTY;
+    let label = "植える";
 
-      if(p.state === "EMPTY"){
-        btn.innerHTML = `<div>＋</div><div class="tag">植える</div>`;
-      } else if(p.state === "GROW"){
-        grow++;
-        const remain = (p.readyAt||0) - Date.now();
-        btn.innerHTML = `<div>…</div><div class="tag">育成中</div><div class="time">${fmtRemain(remain)}</div>`;
-        const b = document.createElement("div");
-        b.className = "badge warn";
-        b.textContent = "GROW";
-        d.appendChild(b);
-      } else if(p.state === "READY"){
-        ready++;
-        btn.innerHTML = `<div>✓</div><div class="tag">収穫</div><div class="time">今だ</div>`;
-        const b = document.createElement("div");
-        b.className = "badge good";
-        b.textContent = "READY";
-        d.appendChild(b);
-      } else if(p.state === "BURN"){
-        burn++;
-        btn.innerHTML = `<div>×</div><div class="tag">焼け</div><div class="time">回収</div>`;
-        const b = document.createElement("div");
-        b.className = "badge bad";
-        b.textContent = "BURN";
-        d.appendChild(b);
-      } else {
-        btn.innerHTML = `<div>?</div><div class="tag">不明</div>`;
-      }
+    if (p.state === "GROW") {
+      grow++;
 
-      btn.addEventListener("click", () => onPlotTap(i));
-      d.appendChild(btn);
-      farmEl.appendChild(d);
-    });
+      // 残り時間
+      const remain = (p.readyAt || 0) - Date.now();
 
-    stGrow.textContent = String(grow);
-    stReady.textContent = String(ready);
-    stBurn.textContent = String(burn);
-    stBook.textContent = String(Object.keys(book.got || {}).length);
-  }
+      // 成長段階（前半 / 後半）
+      const start = (typeof p.startAt === "number") ? p.startAt : Date.now();
+      const end   = (typeof p.readyAt === "number") ? p.readyAt : (start + 1);
+      const denom = Math.max(1, end - start);
+      const progress = (Date.now() - start) / denom;
 
-  // ====== 状態更新（時間経過） ======
-  function tick(){
-    const now = Date.now();
-    let changed = false;
+      img = (progress < 0.5) ? PLOT_IMG.GROW1 : PLOT_IMG.GROW2;
+      label = `育成中 ${fmtRemain(remain)}`;
 
-    for(const p of state.plots){
-      if(p.state === "GROW" && typeof p.readyAt === "number"){
-        if(now >= p.readyAt){
-          p.state = "READY";
-          p.burnAt = p.readyAt + READY_TO_BURN_MS;
-          changed = true;
-        }
-      } else if(p.state === "READY" && typeof p.burnAt === "number"){
-        if(now >= p.burnAt){
-          p.state = "BURN";
-          changed = true;
-        }
-      }
+      const b = document.createElement("div");
+      b.className = "badge warn";
+      b.textContent = "GROW";
+      d.appendChild(b);
+
+    } else if (p.state === "READY") {
+      ready++;
+      img = PLOT_IMG.READY;
+      label = "収穫";
+
+      const b = document.createElement("div");
+      b.className = "badge good";
+      b.textContent = "READY";
+      d.appendChild(b);
+
+    } else if (p.state === "BURN") {
+      burn++;
+      img = PLOT_IMG.BURN;
+      label = "焦げ";
+
+      const b = document.createElement("div");
+      b.className = "badge bad";
+      b.textContent = "BURN";
+      d.appendChild(b);
+
+    } else if (p.state === "EMPTY") {
+      img = PLOT_IMG.EMPTY;
+      label = "植える";
+    } else {
+      img = PLOT_IMG.EMPTY;
+      label = "不明";
     }
 
-    if(changed) saveState(state);
-    render();
-  }
+    // 画像＋ラベル（クリックはボタン全体）
+    btn.innerHTML = `
+      <img src="${img}" alt="" style="
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        border-radius:14px;
+        display:block;
+      ">
+      <div class="tag" style="
+        position:absolute;
+        bottom:6px;
+        left:0;
+        right:0;
+        text-align:center;
+        font-size:11px;
+        font-weight:900;
+        color:#fff;
+        text-shadow:0 1px 3px rgba(0,0,0,.6);
+        pointer-events:none;
+      ">
+        ${label}
+      </div>
+    `;
+
+    btn.addEventListener("click", () => onPlotTap(i));
+    d.appendChild(btn);
+    farmEl.appendChild(d);
+  });
+
+  stGrow.textContent = String(grow);
+  stReady.textContent = String(ready);
+  stBurn.textContent = String(burn);
+  stBook.textContent = String(Object.keys(book.got || {}).length);
+}
+
 
   // ====== マスをタップ ======
   function onPlotTap(i){
