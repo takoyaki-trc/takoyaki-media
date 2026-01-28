@@ -938,6 +938,43 @@
     }
   } // ← renderFarmSide() ここまで
 
+// ===== 起動印（読み込み確認）=====
+window.TakoFarm = window.TakoFarm || {};
+window.TakoFarm.version = "takofarm.js";
+console.log("[TakoFarm] loaded");
+
+// ===== 初期化（街ページでも farm.html でも動く）=====
+function init(){
+  // 宝箱（街にいるページなら出す）
+  ensureChestOnMap();
+  // ファームUI（あるページだけ描画）
+  renderHud();
+  renderPlate();
+  renderFarmSide();
+
+  // 戻る/キャッシュ対策（iPhone/Chrome対策）
+  window.addEventListener("pageshow", ensureChestOnMap);
+
+  // ラベル更新（盤面があるときだけ）
+  setInterval(() => {
+    if(document.getElementById("tfPlate")){
+      renderPlate();
+      renderFarmSide();
+    }
+  }, 15000);
+}
+
+document.addEventListener("DOMContentLoaded", init);
+
+
+
+
+
+
+
+
+
+   
 window.TakoFarm = window.TakoFarm || {};
 console.log("[TakoFarm] loaded takofarm2.js");
 
