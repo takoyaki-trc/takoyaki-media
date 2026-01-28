@@ -1,228 +1,653 @@
-<!-- =========================================================
-     farm.html（たこ焼き畑：ページ版）
-     - index(街)から farm.html に遷移して遊ぶ想定
-     - CSS: takofarm.css（あなたのやつ）を読み込む
-     - JS : takofarm.js（あなたのやつ）を読み込む
-     - ✅ 重要：JSが参照するIDをこのHTMLで全部用意している
-     - 図鑑は「モーダル」で開く（軽い/分離しやすい）
-========================================================= -->
 <!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>たこ焼き畑 | たこ焼きトレカ</title>
-
-  <!-- ✅ 共有CSS（あなたのtakofarm.css） -->
-  <link rel="stylesheet" href="./takofarm.css">
+  <title>たこ焼きファーム</title>
   <style>
-    /* ページ版の最低限レイアウト（重くしない） */
-    body{
-      margin:0;
-      background:#070b10;
-      color:#e8eef7;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+    :root{
+      --bg:#0f1220;
+      --panel:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.14);
+      --text:#fff;
+      --muted:rgba(255,255,255,.72);
+      --good:#9fffa8;
+      --warn:#ffd38a;
+      --bad:#ff9aa5;
+      --btn:rgba(255,255,255,.10);
+      --btn2:rgba(255,255,255,.14);
     }
-    .tf-page{
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 14px 12px 90px;
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:520px;margin:0 auto;padding:14px 14px 20px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .topbar a{color:var(--text);text-decoration:none;border:1px solid var(--line);padding:8px 10px;border-radius:12px;background:var(--panel);font-weight:700}
+    h1{font-size:18px;margin:10px 0 8px}
+    .hint{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:10px}
+    .stats{display:flex;gap:10px;flex-wrap:wrap}
+    .pill{border:1px solid var(--line);background:var(--panel);padding:8px 10px;border-radius:999px;font-size:12px}
+    .pill b{font-weight:800}
+
+    /* ====== Farm Grid ====== */
+    .farm{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns:repeat(5, 1fr);
+      gap:8px;
+      user-select:none;
     }
-    .tf-topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .tf-topbar__left{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width:0;
-    }
-    .tf-titlepage{
-      font-weight:900;
-      font-size:14px;
-      margin:0;
-      white-space:nowrap;
+    .plot{
+      aspect-ratio:1/1;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      display:flex;align-items:center;justify-content:center;
+      position:relative;
       overflow:hidden;
-      text-overflow:ellipsis;
     }
-    .tf-back{
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:8px 10px;
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:12px;
-      color:#e8eef7;
+    .plot button{
+      width:100%;height:100%;
+      background:transparent;border:0;color:var(--text);
+      font-weight:800;
+      padding:0;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:4px;
+    }
+    .plot .tag{font-size:10px;opacity:.8}
+    .plot .time{font-size:11px;opacity:.9}
+    .plot[data-state="EMPTY"] .tag{opacity:.6}
+    .plot[data-state="GROW"]{outline:2px solid rgba(255,211,138,.25)}
+    .plot[data-state="READY"]{outline:2px solid rgba(159,255,168,.35)}
+    .plot[data-state="BURN"]{outline:2px solid rgba(255,154,165,.35)}
+    .badge{
+      position:absolute;top:8px;left:8px;
+      font-size:10px;font-weight:900;
+      padding:4px 8px;border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+    }
+    .badge.good{color:var(--good)}
+    .badge.warn{color:var(--warn)}
+    .badge.bad{color:var(--bad)}
+
+    /* ====== Modal ====== */
+    .modal{
+      position:fixed;inset:0;display:none;
+      background:rgba(0,0,0,.55);
+      align-items:flex-end;justify-content:center;
+      padding:14px;
+      z-index:9999;
+    }
+    .modal[aria-hidden="false"]{display:flex}
+    .sheet{
+      width:min(520px, 100%);
+      border:1px solid var(--line);
+      background:rgba(15,18,32,.92);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .sheetHead{
+      padding:12px 14px;
+      display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid var(--line);
       background:rgba(255,255,255,.04);
     }
-    .tf-back:active{ transform: translateY(1px); }
+    .sheetHead .ttl{font-weight:900}
+    .sheetHead button{
+      border:1px solid var(--line);
+      background:var(--btn);
+      color:var(--text);
+      padding:8px 10px;border-radius:12px;
+      font-weight:900;
+    }
+    .sheetBody{padding:12px 14px 14px}
+    .step{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5}
 
-    /* 図鑑モーダル：ページ版でも使う */
-    .tf-modal{ z-index: 99990; }
+    /* ====== Card slider ====== */
+    .cards{
+      display:flex;gap:10px;overflow:auto;padding-bottom:8px;
+      -webkit-overflow-scrolling:touch;
+      scroll-snap-type:x mandatory;
+    }
+    .c{
+      min-width:150px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      border-radius:16px;
+      padding:12px;
+      scroll-snap-align:start;
+      flex:0 0 auto;
+      position:relative;
+    }
+    .c .name{font-weight:900;margin-bottom:6px}
+    .c .desc{font-size:12px;color:var(--muted);line-height:1.45;min-height:36px}
+    .c .fx{font-size:12px;margin-top:8px}
+    .c button{
+      width:100%;
+      margin-top:10px;
+      border:1px solid var(--line);
+      background:var(--btn2);
+      color:var(--text);
+      padding:10px 10px;border-radius:14px;
+      font-weight:900;
+    }
+    .row{display:flex;gap:10px;margin-top:12px}
+    .row button{
+      flex:1;border:1px solid var(--line);
+      background:var(--btn);
+      color:var(--text);
+      padding:12px;border-radius:14px;
+      font-weight:900;
+    }
+    .row button.primary{background:rgba(159,255,168,.14);}
+
+    /* ====== Harvest card ====== */
+    .reward{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      border-radius:16px;
+      padding:12px;
+    }
+    .reward .big{font-weight:1000;font-size:16px;margin-bottom:6px}
+    .reward .mini{font-size:12px;color:var(--muted);line-height:1.5}
+    .reward .img{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      margin-top:10px;
+      aspect-ratio:3/4;
+      object-fit:cover;
+      background:rgba(255,255,255,.03);
+      display:block;
+    }
+
+    .dangerZone{
+      margin-top:12px;
+      border:1px dashed rgba(255,154,165,.45);
+      background:rgba(255,154,165,.10);
+      padding:10px 12px;
+      border-radius:16px;
+    }
+    .dangerZone .dzttl{font-weight:900}
+    .dangerZone .dzsub{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px}
+    .dangerZone button{
+      margin-top:10px;width:100%;
+      border:1px solid rgba(255,154,165,.45);
+      background:rgba(255,154,165,.14);
+      color:var(--text);
+      padding:12px;border-radius:14px;
+      font-weight:900;
+    }
   </style>
 </head>
-
 <body>
-  <div class="tf-page">
-
-    <!-- 上部：戻る＋タイトル -->
-    <div class="tf-topbar">
-      <div class="tf-topbar__left">
-        <a class="tf-back" href="./index.html" aria-label="街に戻る">← 街に戻る</a>
-        <h1 class="tf-titlepage">たこ焼き畑（3×3）</h1>
-      </div>
-
-      <!-- 右上：図鑑ボタン（モーダル） -->
-      <button id="openDex" class="tf-btn" type="button">図鑑</button>
+  <div class="wrap">
+    <div class="topbar">
+      <a href="./index.html">← 戻る</a>
+      <a href="./zukan.html">図鑑</a>
     </div>
 
-    <!-- HUD -->
-    <div class="tf-hud" style="margin-bottom:10px;">
-      <span class="tf-pill">🪙 OCTO：<b id="tfOcto">0</b></span>
-      <span class="tf-pill">🌱 種：<b id="tfSeedCount">0</b></span>
-      <span class="tf-pill">🪨 黒い化石：<b id="tfFossilCount">0</b></span>
-
-      <div class="tf-hud__right">
-        <button id="tfHarvestStartBtn" class="tf-btn tf-btn--good" type="button">
-          今日の収穫タイム開始（24h）
-        </button>
-        <button id="tfOpenShopWater" class="tf-btn" type="button">水を買う</button>
-        <button id="tfOpenShopTaco" class="tf-btn" type="button">タコを買う</button>
-        <button id="tfResetBtn" class="tf-btn tf-btn--danger" type="button">初期化</button>
-      </div>
+    <h1>たこ焼きファーム</h1>
+    <div class="hint">
+      マスをタップ → 種 → 水 → 肥料。<br>
+      基本の収穫時間は <b>5時間</b>。収穫可能になってから放置すると<b>焼ける</b>ので注意。
     </div>
 
-    <div class="tf-farm">
-      <!-- 左：盤面 -->
-      <div class="tf-farm__left">
-        <div class="tf-card">
-          <div class="tf-title">鉄板（3×3）</div>
-          <div id="tfPlate" class="tf-plate"></div>
-          <div class="tf-mini" style="margin-top:8px;">
-            成長：24h → 収穫可能（24h） → 放置で焦げ消失（3%で黒い化石）
-          </div>
-        </div>
-      </div>
+    <div class="stats">
+      <div class="pill">獲得種類：<b id="stBook">0</b></div>
+      <div class="pill">育成中：<b id="stGrow">0</b></div>
+      <div class="pill">収穫可：<b id="stReady">0</b></div>
+      <div class="pill">焼け：<b id="stBurn">0</b></div>
+    </div>
 
-      <!-- 右：操作 -->
-      <div class="tf-farm__right">
-        <div class="tf-card">
-          <div class="tf-title">選択マス</div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-            <span class="tf-pill">マス：<b id="tfSelIndex">-</b></span>
-            <span class="tf-pill">状態：<b id="tfSelState">-</b></span>
-          </div>
+    <div id="farm" class="farm" aria-label="畑"></div>
 
-          <div class="tf-actions">
-            <div class="tf-actions__row">
-              <button id="tfPlantBtn" class="tf-btn tf-btn--primary" type="button">種を植える</button>
-              <button id="tfCancelBtn" class="tf-btn tf-btn--ghost" type="button">キャンセル（種戻る）</button>
-            </div>
-
-            <div class="tf-actions__row">
-              <select id="tfPickWater" class="tf-select" aria-label="水を選ぶ"></select>
-            </div>
-
-            <div class="tf-actions__row">
-              <select id="tfPickTaco" class="tf-select" aria-label="タコを選ぶ"></select>
-            </div>
-
-            <div class="tf-actions__row">
-              <button id="tfHarvestBtn" class="tf-btn tf-btn--good" type="button">このマスを収穫する</button>
-            </div>
-
-            <div id="tfActionMsg" class="tf-actions__msg">マスをタップして選んでください。</div>
-          </div>
-        </div>
-
-        <!-- 右下：ちょい説明 -->
-        <div class="tf-card">
-          <div class="tf-title">ヒント</div>
-          <div class="tf-mini" style="line-height:1.6;">
-            ・種は街の宝箱で手に入る。<br>
-            ・水→タコで確定して焼き始める。<br>
-            ・収穫するには「今日の収穫タイム開始」が必要。<br>
-            ・放置すると焦げて消える（3%で黒い化石）。<br>
-          </div>
-        </div>
-
-      </div>
+    <div class="dangerZone">
+      <div class="dzttl">デバッグ/リセット</div>
+      <div class="dzsub">テスト中だけ使ってね。畑と図鑑のデータを消す。</div>
+      <button id="btnReset" type="button">全データをリセット</button>
     </div>
   </div>
 
-  <!-- ✅ トースト（takofarm.js の toast() がここに出す） -->
-  <div class="tf-toast" aria-live="polite"></div>
-
-  <!-- =========================
-       図鑑モーダル（箱だけ）
-       ※ renderDex() は次に追加でOK
-  ========================= -->
-  <div id="tfDexModal" class="tf-modal" aria-hidden="true">
-    <div class="tf-modal__panel" role="dialog" aria-modal="true" aria-label="図鑑">
-      <div class="tf-modal__head">
-        <h2>図鑑（所持カード）</h2>
-        <button class="tf-modal__close" type="button" data-close="tfDexModal" aria-label="閉じる">×</button>
+  <!-- ====== Modal ====== -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-label="畑操作">
+      <div class="sheetHead">
+        <div class="ttl" id="mTitle">操作</div>
+        <button id="mClose" type="button">閉じる</button>
       </div>
-
-      <div class="tf-modal__body">
-        <div class="tf-hud" style="margin-bottom:10px;">
-          <span class="tf-pill">🪙 OCTO：<b id="dexOcto">0</b></span>
-          <span class="tf-pill">登録：<b id="dexCount">0</b></span>
-        </div>
-
-        <div id="tfDexGrid" class="tf-dex"></div>
-
-        <div class="tf-mini" style="margin-top:10px;">
-          ※図鑑描画（renderDex）は次に追加できます。
-        </div>
-      </div>
+      <div class="sheetBody" id="mBody"></div>
     </div>
   </div>
 
-  <!-- ✅ 共有JS（あなたのtakofarm.js） -->
-  <script src="./takofarm.js"></script>
+<script>
+(() => {
+  /* ==========================
+     たこ焼きファーム v1
+     - localStorage保存
+     - 種→水→肥料
+     - 5時間育成（効果で短縮）
+     - 収穫→確認→図鑑追加
+  ========================== */
 
-  <!-- ✅ 図鑑モーダル開閉（軽い） -->
-  <script>
-  (() => {
-    const open = (id) => {
-      const m = document.getElementById(id);
-      if(!m) return;
-      m.classList.add("tf-open");
-      m.setAttribute("aria-hidden","false");
+  const LS_STATE = "tf_v1_state";
+  const LS_BOOK  = "tf_v1_book";
+
+  // ====== バランス（あとで調整OK） ======
+  const BASE_GROW_MS = 5 * 60 * 60 * 1000; // 5時間
+  const READY_TO_BURN_MS = 2 * 60 * 60 * 1000; // 収穫可能になってから2時間で焼け
+  const TICK_MS = 1000;
+
+  // ====== カードプール（収穫で出るカード）=====
+  // ※あとであなたの実カードの画像URL/名前に差し替えでOK
+  const HARVEST_POOL = [
+    { id:"TN-001", name:"定番ソース", img:"https://placehold.co/768x1024/png?text=TN-001" },
+    { id:"TN-002", name:"ねぎ塩",   img:"https://placehold.co/768x1024/png?text=TN-002" },
+    { id:"TN-003", name:"チーズ",   img:"https://placehold.co/768x1024/png?text=TN-003" },
+    { id:"TN-004", name:"明太マヨ", img:"https://placehold.co/768x1024/png?text=TN-004" },
+    { id:"TN-005", name:"激辛",     img:"https://placehold.co/768x1024/png?text=TN-005" },
+  ];
+
+  // ====== 種 / 水 / 肥料（カードUI）=====
+  // factor: 収穫時間に掛ける係数（小さいほど早い）
+  const SEEDS = [
+    { id:"seed_basic", name:"生地のタネ", desc:"基本のたこ焼き。まずはここから。", factor:1.00 },
+    { id:"seed_soft",  name:"ふわとろタネ", desc:"ふわっと仕上がる。焼けにくい…気がする。", factor:1.00 },
+    { id:"seed_rare",  name:"レアタネ", desc:"当たりやすい気配。時間はそのまま。", factor:1.00 },
+  ];
+  const WATERS = [
+    { id:"water_small", name:"水：小", desc:"少しだけ時短。", factor:0.90, fx:"収穫時間 -10%" },
+    { id:"water_mid",   name:"水：中", desc:"ほどよく時短。", factor:0.80, fx:"収穫時間 -20%" },
+    { id:"water_str",   name:"水：強", desc:"一気に時短。", factor:0.70, fx:"収穫時間 -30%" },
+  ];
+  const FERTS = [
+    { id:"fert_small", name:"肥料：小", desc:"少しだけ時短。", factor:0.90, fx:"収穫時間 -10%" },
+    { id:"fert_mid",   name:"肥料：中", desc:"ほどよく時短。", factor:0.80, fx:"収穫時間 -20%" },
+    { id:"fert_str",   name:"肥料：強", desc:"一気に時短。", factor:0.70, fx:"収穫時間 -30%" },
+  ];
+
+  // ====== 状態 ======
+  // plot: { state:"EMPTY|GROW|READY|BURN", seedId, waterId, fertId, startAt, readyAt, burnAt, reward? }
+  const defaultPlot = () => ({ state:"EMPTY" });
+  const defaultState = () => ({ ver:1, plots: Array.from({length:25}, defaultPlot) });
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(LS_STATE);
+      if(!raw) return defaultState();
+      const obj = JSON.parse(raw);
+      if(!obj || !Array.isArray(obj.plots) || obj.plots.length !== 25) return defaultState();
+      return obj;
+    }catch(e){
+      return defaultState();
+    }
+  }
+  function saveState(s){ localStorage.setItem(LS_STATE, JSON.stringify(s)); }
+
+  function loadBook(){
+    try{
+      const raw = localStorage.getItem(LS_BOOK);
+      if(!raw) return { ver:1, got:{} };
+      const obj = JSON.parse(raw);
+      if(!obj || typeof obj.got !== "object") return { ver:1, got:{} };
+      return obj;
+    }catch(e){
+      return { ver:1, got:{} };
+    }
+  }
+  function saveBook(b){ localStorage.setItem(LS_BOOK, JSON.stringify(b)); }
+
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function fmtRemain(ms){
+    if(ms <= 0) return "00:00:00";
+    const s = Math.floor(ms/1000);
+    const hh = Math.floor(s/3600);
+    const mm = Math.floor((s%3600)/60);
+    const ss = s%60;
+    return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+  }
+
+  const farmEl = document.getElementById("farm");
+  const stBook = document.getElementById("stBook");
+  const stGrow = document.getElementById("stGrow");
+  const stReady = document.getElementById("stReady");
+  const stBurn = document.getElementById("stBurn");
+
+  const modal = document.getElementById("modal");
+  const mTitle = document.getElementById("mTitle");
+  const mBody  = document.getElementById("mBody");
+  const mClose = document.getElementById("mClose");
+
+  let state = loadState();
+  let book  = loadBook();
+
+  let activeIndex = -1;          // 今操作してるマス
+  let draft = null;              // 選択中（種/水/肥料）
+
+  function openModal(title, html){
+    mTitle.textContent = title;
+    mBody.innerHTML = html;
+    modal.setAttribute("aria-hidden","false");
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onEsc);
+  }
+  function closeModal(){
+    modal.setAttribute("aria-hidden","true");
+    modal.removeEventListener("click", onBackdrop);
+    document.removeEventListener("keydown", onEsc);
+    mBody.innerHTML = "";
+    activeIndex = -1;
+    draft = null;
+  }
+  function onBackdrop(e){
+    if(e.target === modal) closeModal();
+  }
+  function onEsc(e){
+    if(e.key === "Escape") closeModal();
+  }
+  mClose.addEventListener("click", closeModal);
+
+  // ====== UI描画 ======
+  function render(){
+    farmEl.innerHTML = "";
+    let grow=0, ready=0, burn=0;
+
+    state.plots.forEach((p, i) => {
+      const d = document.createElement("div");
+      d.className = "plot";
+      d.dataset.state = p.state || "EMPTY";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.i = String(i);
+
+      if(p.state === "EMPTY"){
+        btn.innerHTML = `<div>＋</div><div class="tag">植える</div>`;
+      } else if(p.state === "GROW"){
+        grow++;
+        const remain = (p.readyAt||0) - Date.now();
+        btn.innerHTML = `<div>…</div><div class="tag">育成中</div><div class="time">${fmtRemain(remain)}</div>`;
+        const b = document.createElement("div");
+        b.className = "badge warn";
+        b.textContent = "GROW";
+        d.appendChild(b);
+      } else if(p.state === "READY"){
+        ready++;
+        btn.innerHTML = `<div>✓</div><div class="tag">収穫</div><div class="time">今だ</div>`;
+        const b = document.createElement("div");
+        b.className = "badge good";
+        b.textContent = "READY";
+        d.appendChild(b);
+      } else if(p.state === "BURN"){
+        burn++;
+        btn.innerHTML = `<div>×</div><div class="tag">焼け</div><div class="time">回収</div>`;
+        const b = document.createElement("div");
+        b.className = "badge bad";
+        b.textContent = "BURN";
+        d.appendChild(b);
+      } else {
+        btn.innerHTML = `<div>?</div><div class="tag">不明</div>`;
+      }
+
+      btn.addEventListener("click", () => onPlotTap(i));
+      d.appendChild(btn);
+      farmEl.appendChild(d);
+    });
+
+    stGrow.textContent = String(grow);
+    stReady.textContent = String(ready);
+    stBurn.textContent = String(burn);
+    stBook.textContent = String(Object.keys(book.got || {}).length);
+  }
+
+  // ====== 状態更新（時間経過） ======
+  function tick(){
+    const now = Date.now();
+    let changed = false;
+
+    for(const p of state.plots){
+      if(p.state === "GROW" && typeof p.readyAt === "number"){
+        if(now >= p.readyAt){
+          p.state = "READY";
+          // 収穫可能→焼けまでの期限
+          p.burnAt = p.readyAt + READY_TO_BURN_MS;
+          changed = true;
+        }
+      } else if(p.state === "READY" && typeof p.burnAt === "number"){
+        if(now >= p.burnAt){
+          p.state = "BURN";
+          changed = true;
+        }
+      }
+    }
+
+    if(changed) saveState(state);
+    render();
+  }
+
+  // ====== マスをタップ ======
+  function onPlotTap(i){
+    activeIndex = i;
+    const p = state.plots[i];
+
+    if(p.state === "EMPTY"){
+      draft = { seedId:null, waterId:null, fertId:null };
+      showSeedStep();
+      return;
+    }
+
+    if(p.state === "GROW"){
+      const seed = SEEDS.find(x=>x.id===p.seedId);
+      const water = WATERS.find(x=>x.id===p.waterId);
+      const fert = FERTS.find(x=>x.id===p.fertId);
+      const remain = (p.readyAt||0) - Date.now();
+      openModal("育成中", `
+        <div class="step">このマスは育成中。収穫まであと <b>${fmtRemain(remain)}</b></div>
+        <div class="reward">
+          <div class="big">設定</div>
+          <div class="mini">
+            種：${seed?seed.name:"-"}<br>
+            水：${water?water.name:"-"}<br>
+            肥料：${fert?fert.name:"-"}
+          </div>
+        </div>
+        <div class="row">
+          <button type="button" id="btnOk">OK</button>
+        </div>
+      `);
+      document.getElementById("btnOk").addEventListener("click", closeModal);
+      return;
+    }
+
+    if(p.state === "READY"){
+      // 収穫→カード表示→確認で図鑑追加
+      const reward = pick(HARVEST_POOL);
+      p.reward = reward;
+      saveState(state);
+
+      openModal("収穫！", `
+        <div class="step">収穫したカードを確認してから図鑑に登録する。</div>
+        <div class="reward">
+          <div class="big">${reward.name}（${reward.id}）</div>
+          <div class="mini">確認ボタンを押すと図鑑に追加され、このマスは空になる。</div>
+          <img class="img" src="${reward.img}" alt="${reward.name}">
+        </div>
+        <div class="row">
+          <button type="button" id="btnCancel">やめる</button>
+          <button type="button" class="primary" id="btnConfirm">確認して図鑑へ</button>
+        </div>
+      `);
+
+      document.getElementById("btnCancel").addEventListener("click", () => {
+        // 取り消し：reward保持してREADYのままでも良いが、混乱を避けて消す
+        delete p.reward;
+        saveState(state);
+        closeModal();
+      });
+
+      document.getElementById("btnConfirm").addEventListener("click", () => {
+        addToBook(reward);
+        // マスを空に戻す
+        state.plots[i] = defaultPlot();
+        saveState(state);
+        closeModal();
+        // 図鑑へ移動（好みでコメントアウトOK）
+        location.href = "./zukan.html";
+      });
+      return;
+    }
+
+    if(p.state === "BURN"){
+      openModal("焼けた…", `
+        <div class="step">放置しすぎて焼けた。回収するとマスが空になる。</div>
+        <div class="row">
+          <button type="button" id="btnBack">戻る</button>
+          <button type="button" class="primary" id="btnClear">回収して空にする</button>
+        </div>
+      `);
+      document.getElementById("btnBack").addEventListener("click", closeModal);
+      document.getElementById("btnClear").addEventListener("click", () => {
+        state.plots[i] = defaultPlot();
+        saveState(state);
+        closeModal();
+        render();
+      });
+      return;
+    }
+  }
+
+  function addToBook(card){
+    const b = loadBook();
+    if(!b.got) b.got = {};
+    b.got[card.id] = { id:card.id, name:card.name, img:card.img, at:Date.now() };
+    book = b;
+    saveBook(book);
+  }
+
+  // ====== ステップUI（種→水→肥料）=====
+  function cardSlider(items, onSelectId){
+    const list = items.map(x => `
+      <div class="c">
+        <div class="name">${x.name}</div>
+        <div class="desc">${x.desc || ""}</div>
+        <div class="fx">${x.fx ? "効果：<b>"+x.fx+"</b>" : ""}</div>
+        <button type="button" data-pick="${x.id}">これにする</button>
+      </div>
+    `).join("");
+
+    openModal("選択", `
+      <div class="step">カードを横にスライドして選べる。</div>
+      <div class="cards">${list}</div>
+      <div class="row">
+        <button type="button" id="btnBackStep">戻る</button>
+        <button type="button" id="btnCloseStep">閉じる</button>
+      </div>
+    `);
+
+    mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
+      btn.addEventListener("click", () => onSelectId(btn.getAttribute("data-pick")));
+    });
+
+    return {
+      setTitle(t){ mTitle.textContent = t; },
+      onBack(fn){ document.getElementById("btnBackStep").addEventListener("click", fn); },
+      onClose(){ document.getElementById("btnCloseStep").addEventListener("click", closeModal); },
     };
-    const close = (id) => {
-      const m = document.getElementById(id);
-      if(!m) return;
-      m.classList.remove("tf-open");
-      m.setAttribute("aria-hidden","true");
-    };
+  }
 
-    document.getElementById("openDex")?.addEventListener("click", () => {
-      // 図鑑表示（実装済みなら）
-      // window.TakoFarm?.renderDex?.();
-      open("tfDexModal");
+  function showSeedStep(){
+    const ui = cardSlider(SEEDS, (id) => {
+      draft.seedId = id;
+      showWaterStep();
     });
+    ui.setTitle("種を選ぶ");
+    ui.onBack(() => closeModal()); // seedの戻る＝閉じる
+    ui.onClose();
+  }
 
-    document.querySelectorAll("[data-close]").forEach(btn => {
-      btn.addEventListener("click", () => close(btn.getAttribute("data-close")));
+  function showWaterStep(){
+    const ui = cardSlider(WATERS, (id) => {
+      draft.waterId = id;
+      showFertStep();
     });
+    ui.setTitle("水を選ぶ");
+    ui.onBack(() => showSeedStep());
+    ui.onClose();
+  }
 
-    document.getElementById("tfDexModal")?.addEventListener("click",(e)=>{
-      if(e.target.id === "tfDexModal") close("tfDexModal");
+  function showFertStep(){
+    const ui = cardSlider(FERTS, (id) => {
+      draft.fertId = id;
+      confirmPlant();
     });
+    ui.setTitle("肥料を選ぶ");
+    ui.onBack(() => showWaterStep());
+    ui.onClose();
+  }
 
-    document.addEventListener("keydown", (e) => {
-      if(e.key !== "Escape") return;
-      close("tfDexModal");
+  function confirmPlant(){
+    const seed  = SEEDS.find(x=>x.id===draft.seedId);
+    const water = WATERS.find(x=>x.id===draft.waterId);
+    const fert  = FERTS.find(x=>x.id===draft.fertId);
+
+    const factor = clamp(
+      (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
+      0.35, 1.0
+    );
+    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000); // 最短1時間
+    const now = Date.now();
+
+    openModal("植える確認", `
+      <div class="step">この内容で植える？（収穫まで約 <b>${fmtRemain(growMs)}</b>）</div>
+      <div class="reward">
+        <div class="big">選択</div>
+        <div class="mini">
+          種：${seed?.name || "-"}<br>
+          水：${water?.name || "-"}<br>
+          肥料：${fert?.name || "-"}<br><br>
+          時短係数：<b>${factor.toFixed(2)}</b>
+        </div>
+      </div>
+      <div class="row">
+        <button type="button" id="btnRe">選び直す</button>
+        <button type="button" class="primary" id="btnPlant">植える</button>
+      </div>
+    `);
+
+    document.getElementById("btnRe").addEventListener("click", showSeedStep);
+    document.getElementById("btnPlant").addEventListener("click", () => {
+      const p = {
+        state:"GROW",
+        seedId: draft.seedId,
+        waterId: draft.waterId,
+        fertId: draft.fertId,
+        startAt: now,
+        readyAt: now + growMs
+      };
+      state.plots[activeIndex] = p;
+      saveState(state);
+      closeModal();
+      render();
     });
-  })();
-  </script>
+  }
+
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+
+  // ====== リセット ======
+  document.getElementById("btnReset").addEventListener("click", () => {
+    if(!confirm("畑と図鑑のデータを全消去します。OK？")) return;
+    localStorage.removeItem(LS_STATE);
+    localStorage.removeItem(LS_BOOK);
+    state = loadState();
+    book  = loadBook();
+    render();
+  });
+
+  // 初期描画＆ループ
+  render();
+  setInterval(tick, TICK_MS);
+})();
+</script>
 </body>
 </html>
-
