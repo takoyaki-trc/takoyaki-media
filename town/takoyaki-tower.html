@@ -1029,7 +1029,7 @@ function drawImageCover(g, img, x, y, w, h){
     if (!S.over) updateCamera();
   }
 
- // =========================
+// =========================
 // 描画（メイン）
 // =========================
 function drawBG(){
@@ -1048,18 +1048,7 @@ function drawBG(){
   ctx.restore();
 }
 
-// ✅ 旧：四隅角丸（残しておいてOK）
-function roundedPath(x, y, w, h, r){
-  const rr = Math.min(r, w/2, h/2);
-  ctx.moveTo(x+rr, y);
-  ctx.arcTo(x+w, y, x+w, y+h, rr);
-  ctx.arcTo(x+w, y+h, x, y+h, rr);
-  ctx.arcTo(x, y+h, x, y, rr);
-  ctx.arcTo(x, y, x+w, y, rr);
-  ctx.closePath();
-}
-
-// ✅ NEW：上だけ角丸（上2角だけ）
+// ✅ 上だけ角丸（上2角だけ）
 function roundedTopPath(x, y, w, h, rt){
   const r = Math.min(rt, w/2, h);
   ctx.moveTo(x, y + h);                 // 左下
@@ -1071,16 +1060,22 @@ function roundedTopPath(x, y, w, h, rt){
   ctx.closePath();
 }
 
-function drawBlock(b){
+// ✅ メインブロック描画（indexを受け取る版）
+// index = 下から何段目か（0が一番下）
+// ここで「最初の数段だけ高さを増やす」見た目補正を入れる
+function drawBlock(b, index){
   const y = b.y + S.cameraY;
   if (y > CONF.canvasH + 120 || y < -240) return;
 
   const x = Math.round(b.x);
   const w = Math.round(b.width);
-  const h = Math.round(b.h);
 
-  // ✅ 上角を強めに丸く（薄いほど効く）
-  // もっと丸くしたい → 0.75 / 控えめ → 0.45
+  // ✅ 下3段だけ高さブースト（見た目だけ）
+  const baseBoost = [1.4, 1.25, 1.12];
+  const boost = baseBoost[index] ?? 1.0;
+  const h = Math.round(b.h * boost);
+
+  // ✅ 上角丸：薄いほど効く
   const rTop = Math.max(12, Math.round(h * 0.60));
 
   const tile = b.tileKey ? IMG[b.tileKey] : null;
@@ -1092,7 +1087,6 @@ function drawBlock(b){
   ctx.clip();
 
   if (!tile || !tile.naturalWidth){
-    // fallback
     const grad = ctx.createLinearGradient(x, y, x, y+h);
     grad.addColorStop(0, "#ffd34d");
     grad.addColorStop(1, "#f08b2f");
@@ -1100,11 +1094,9 @@ function drawBlock(b){
     ctx.fillRect(x, y, w, h);
 
   } else if (CONF.BLOCK_DRAW_MODE === "COVER"){
-    // ✅ 1枚ドーン：縦横同倍率で拡大 → 中央トリミング（歪みなし）
     drawImageCover(ctx, tile, x, y, w, h);
 
   } else if (CONF.BLOCK_DRAW_MODE === "STRETCH"){
-    // 旧：縦横別倍率で引き伸ばし
     ctx.drawImage(tile, x, y, w, h);
 
   } else {
@@ -1118,7 +1110,7 @@ function drawBlock(b){
 
   ctx.restore();
 
-  // 枠線（上だけ角丸に合わせる）
+  // 枠線（上だけ）
   ctx.save();
   ctx.strokeStyle = "rgba(0,0,0,.45)";
   ctx.lineWidth = 2;
@@ -1134,10 +1126,15 @@ function draw(){
 
   drawBG();
 
-  for (const b of S.blocks) drawBlock(b);
-  if (S.curr) drawBlock(S.curr);
+  // ✅ index を渡して描画（これで高さブーストが確実に効く）
+  for (let i=0; i<S.blocks.length; i++){
+    drawBlock(S.blocks[i], i);
+  }
 
-  // 左上
+  // ✅ いま動いてるブロック（最上段扱い）
+  if (S.curr) drawBlock(S.curr, S.blocks.length);
+
+  // 左上表示
   ctx.save();
   ctx.globalAlpha = 0.35;
   ctx.fillStyle = "#fff";
