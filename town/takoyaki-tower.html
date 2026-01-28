@@ -1035,13 +1035,38 @@ function drawImageCover(g, img, x, y, w, h){
     if (!S.over) updateCamera();
   }
 
+  
+const SKY_COLORS = {
+  day:    { top:"#a9cfe6", bottom:"#eaf5fb" },
+  sunset: { top:"#f0b38c", bottom:"#6b4e71" },
+  night:  { top:"#0b132b", bottom:"#1c2541" },
+};
+
+function getTimePhase(score){
+  if (score < 20) return "day";
+  if (score < 60) return "sunset";
+  return "night";
+}
+
 // =========================
 // 描画（メイン）
 // =========================
 function drawBG(){
+  const phase = getTimePhase(Math.floor(S.progress)); // 0-20-60で切替
+  const sky = SKY_COLORS[phase];
+
+  // 空グラデーション
+  const grad = ctx.createLinearGradient(0, 0, 0, CONF.canvasH);
+  grad.addColorStop(0, sky.top);
+  grad.addColorStop(1, sky.bottom);
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CONF.canvasW, CONF.canvasH);
+
+  // うっすらグリッド（元の演出は残す）
   if (!CONF.grid) return;
   ctx.save();
-  ctx.globalAlpha = 0.12;
+  ctx.globalAlpha = 0.08;
   const step = 30;
   for (let y=0; y<CONF.canvasH; y+=step){
     ctx.beginPath();
@@ -1053,6 +1078,7 @@ function drawBG(){
   }
   ctx.restore();
 }
+
 
 // ✅ 上だけ角丸（上2角だけ）
 function roundedTopPath(x, y, w, h, rt){
