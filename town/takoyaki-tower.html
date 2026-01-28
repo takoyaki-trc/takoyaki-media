@@ -1039,7 +1039,6 @@ function getTimePhase(score){
   if (score < 60) return "sunset";
   return "night";
 }
-
 // =========================
 // 描画（メイン）
 // =========================
@@ -1055,7 +1054,7 @@ function drawBG(){
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, CONF.canvasW, CONF.canvasH);
 
-  // うっすらグリッド（元の演出は残す）
+  // うっすらグリッド
   if (!CONF.grid) return;
   ctx.save();
   ctx.globalAlpha = 0.08;
@@ -1071,22 +1070,18 @@ function drawBG(){
   ctx.restore();
 }
 
-
-// ✅ 上だけ角丸（上2角だけ）
-function roundedTopPath(x, y, w, h, rt){
-  const r = Math.min(rt, w/2, h);
-  ctx.moveTo(x, y + h);                 // 左下
-  ctx.lineTo(x, y + r);                 // 左側上へ
-  ctx.arcTo(x, y, x + r, y, r);         // 左上
-  ctx.lineTo(x + w - r, y);             // 上辺
-  ctx.arcTo(x + w, y, x + w, y + r, r); // 右上
-  ctx.lineTo(x + w, y + h);             // 右側下へ
+// ✅ 四隅角丸パス（上下とも丸くなる）
+function roundedPath(x, y, w, h, r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x,     y + h, rr);
+  ctx.arcTo(x,     y + h, x,     y,     rr);
+  ctx.arcTo(x,     y,     x + w, y,     rr);
   ctx.closePath();
 }
 
-// ✅ メインブロック描画（indexを受け取る版）
-// index = 下から何段目か（0が一番下）
-// ここで「最初の数段だけ高さを増やす」見た目補正を入れる
+// ✅ メインブロック描画（index = 下から何段目）
 function drawBlock(b, index){
   const y = b.y + S.cameraY;
   if (y > CONF.canvasH + 120 || y < -240) return;
@@ -1094,21 +1089,20 @@ function drawBlock(b, index){
   const x = Math.round(b.x);
   const w = Math.round(b.width);
 
-  // ✅ 下5段だけ高さブースト（見た目だけ）
-  const baseBoost = [1.65, 1.55, 1.45, 1.35, 1.25, 1.15, 1.05]; // 下5段
-
+  // 下5段だけ高さブースト（見た目だけ）
+  const baseBoost = [1.65, 1.55, 1.45, 1.35, 1.25];
   const boost = baseBoost[index] ?? 1.0;
   const h = Math.round(b.h * boost);
 
-  // ✅ 上角丸：薄いほど効く
-  const rTop = Math.max(12, Math.round(h * 0.60));
-
   const tile = b.tileKey ? IMG[b.tileKey] : null;
 
-  // 角丸クリップ（上だけ）
+  // 四隅角丸（たこ焼き感）
+  const rAll = Math.max(10, Math.round(Math.min(w, h) * 0.22));
+
+  // ===== 本体描画（クリップ内）=====
   ctx.save();
   ctx.beginPath();
-  roundedTopPath(x, y, w, h, rTop);
+  roundedPath(x, y, w, h, rAll);
   ctx.clip();
 
   if (!tile || !tile.naturalWidth){
@@ -1117,15 +1111,11 @@ function drawBlock(b, index){
     grad.addColorStop(1, "#f08b2f");
     ctx.fillStyle = grad;
     ctx.fillRect(x, y, w, h);
-
   } else if (CONF.BLOCK_DRAW_MODE === "COVER"){
     drawImageCover(ctx, tile, x, y, w, h);
-
   } else if (CONF.BLOCK_DRAW_MODE === "STRETCH"){
     ctx.drawImage(tile, x, y, w, h);
-
   } else {
-    // TILE
     const scale = h / tile.naturalHeight;
     const tileW = Math.max(1, Math.round(tile.naturalWidth * scale));
     for (let xx = x; xx < x + w; xx += tileW){
@@ -1135,12 +1125,12 @@ function drawBlock(b, index){
 
   ctx.restore();
 
-  // 枠線（上だけ）
+  // 枠線（不要ならこのブロックごと削除OK）
   ctx.save();
-  ctx.strokeStyle = "rgba(0,0,0,.45)";
+  ctx.strokeStyle = "rgba(0,0,0,.20)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  roundedTopPath(x, y, w, h, rTop);
+  roundedPath(x, y, w, h, rAll);
   ctx.stroke();
   ctx.restore();
 }
@@ -1151,12 +1141,12 @@ function draw(){
 
   drawBG();
 
-  // ✅ index を渡して描画（これで高さブーストが確実に効く）
+  // 下から順に描画（indexが効く）
   for (let i=0; i<S.blocks.length; i++){
     drawBlock(S.blocks[i], i);
   }
 
-  // ✅ いま動いてるブロック（最上段扱い）
+  // 現在のブロック
   if (S.curr) drawBlock(S.curr, S.blocks.length);
 
   // 左上表示
@@ -1164,9 +1154,13 @@ function draw(){
   ctx.globalAlpha = 0.35;
   ctx.fillStyle = "#fff";
   ctx.font = "700 12px system-ui, sans-serif";
-  ctx.fillText(`現在: ${formatProgress(S.progress)} / BEST: ${formatProgress(S.best)}`, 14, 24);
+  ctx.fillText(
+    `現在: ${formatProgress(S.progress)} / BEST: ${formatProgress(S.best)}`,
+    14, 24
+  );
   ctx.restore();
 }
+
 
 // =========================
 // ループ
