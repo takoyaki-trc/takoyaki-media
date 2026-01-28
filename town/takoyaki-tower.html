@@ -137,12 +137,12 @@
   // 画像URL（ここだけ差し替え）
   // =========================
   const SPR = {
-    takoA: "https://ul.h3z.jp/3FGlR8nh.png",
-    takoB: "https://ul.h3z.jp/2Wq0BKcg.png",
-    takoC: "https://ul.h3z.jp/bzBZayin.png",
-    takoG: "https://ul.h3z.jp/g5TO7TR3.png", // 金焼き
-    takoR: "https://ul.h3z.jp/kvnuSQlG.png", // 激辛
-    takoX: "https://ul.h3z.jp/HmmlmOhu.png", // 虹伝説
+    takoA: "https://ul.h3z.jp/OPpiBayk.png",// 素焼き
+    takoB: "https://ul.h3z.jp/8lVPkSPJ.png",// イカさま焼き
+    takoC: "https://ul.h3z.jp/rbG1ovxG.png",// 生焼け
+    takoG: "https://ul.h3z.jp/XPTM8m5U.png", // 金焼き
+    takoR: "https://ul.h3z.jp/dXRcAx01.png", // 激辛
+    takoX: "https://ul.h3z.jp/Uia1oOpk.png", // 虹伝説
   };
 
   const IMG = {};
@@ -163,33 +163,34 @@
   // =========================
   // 設定
   // =========================
-  const CONF = {
-    canvasW: 420,
-    canvasH: 720,
+const CONF = {
+  canvasW: 420,
+  canvasH: 720,
 
-    baseWidth: 220,
-    blockHDefault: 34,
-    minWidth: 26,
-    marginX: 16,
+  baseWidth: 230,      // 土台ちょい太めで見栄え安定
+  minWidth: 34,        // 26だと永遠に続きやすいので少し上げる
+  marginX: 16,
 
-    speedBase: 2.6,
-    speedPerLevel: 0.10,
-    perfectPx: 3,
+  speedBase: 2.25,     // ちょい落として序盤の理不尽感を減らす
+  speedPerLevel: 0.085,// 上に行くほどちゃんと難しく
+  perfectPx: 4,        // 64px画像基準で少し甘め（気持ち良さ優先）
 
-    grid: true,
+  grid: true,
 
-    // 進捗単位
-    PROGRESS_MODE: "FLOOR", // "FLOOR" or "METER"
-    METER_PER_STANDARD_BLOCK: 0.7,
-    METER_DECIMALS: 1,
+  PROGRESS_MODE: "FLOOR",
+  METER_PER_STANDARD_BLOCK: 0.7,
+  METER_DECIMALS: 1,
 
-    // カメラ（上に進まない問題を潰す：毎フレーム追随）
-    CAMERA_ANCHOR_Y: 0.25,
-    CAMERA_SMOOTH: 0.18,
-    CAMERA_MIN: 0,
+  CAMERA_ANCHOR_Y: 0.28,
+  CAMERA_SMOOTH: 0.16,
+  CAMERA_MIN: 0,
 
-    // 軽量化：描画用は最後だけ残す（結果用は別に全保存するのでOK）
-    KEEP_BLOCKS_DRAW: 120,
+  KEEP_BLOCKS_DRAW: 140,
+
+  // ✅ 画像は1枚ドーン（歪み少）
+  BLOCK_DRAW_MODE: "COVER",
+};
+
 
     // ✅ ブロック描画モード
     // "TILE"    = 横に並べる（プレートっぽい）
@@ -201,36 +202,46 @@
   // =========================
   // 種類テーブル（高さ差激しめ + 特殊効果）
   // =========================
-  const BLOCK_TABLE = [
-    { key:"takoA", w:64, h:64, label:"極薄", speedMul: 1.05 },
-    { key:"takoB", w:64, h:64, label:"標準", speedMul: 1.40 },
-    { key:"takoC", w:64, h:64, label:"山盛り", speedMul: 1.3 },
+ const BLOCK_TABLE = [
+  // --- 通常3種（よく出る） ---
+  // 薄すぎると輪切りに見えるので「極薄」でも 26px は確保
+  { key:"takoA", p: 44, h: 26, label:"素焼き（薄）", speedMul: 1.05 }, // 素焼き＝軽い
+  { key:"takoB", p: 40, h: 34, label:"イカさま（標準）", speedMul: 1.12 },
+  { key:"takoC", p: 30, h: 46, label:"生焼け（厚）", speedMul: 0.90 }, // 厚い＝遅めで助かるが視界は詰まる
 
-    { key:"takoG", w:64,  h:64, label:"金焼き", perfectPlus: 3, speedMul: 1.52 },
-    { key:"takoR", w:64,  h:64, label:"激辛", speedMul: 1.75 },
-    { key:"takoX", w:64,  h:64, label:"虹伝説", insurance: true, speedMul: 1.90 },
-  ];
+  // --- レア枠（出たら嬉しい） ---
+  { key:"takoG", p: 10, h: 30, label:"金焼き", perfectPlus: 3, speedMul: 1.20 }, // 判定甘く
+  { key:"takoR", p:  7, h: 38, label:"激辛",  speedMul: 1.45 },                   // 速い＝スリル
+  { key:"takoX", p:  4, h: 42, label:"虹伝説", insurance: true, speedMul: 1.10 }, // 保険付き
+];
+
 
   let lastKey = null;
-  function pickBlockDef(){
-    if (BLOCK_TABLE.length <= 1) return BLOCK_TABLE[0];
-    let total = 0; for (const d of BLOCK_TABLE) total += d.w;
 
-    for (let tries=0; tries<6; tries++){
-      let r = Math.random() * total;
-      for (const d of BLOCK_TABLE){
-        r -= d.w;
-        if (r <= 0){
-          if (d.key === lastKey) break;
-          lastKey = d.key;
-          return d;
-        }
+function pickBlockDef(){
+  if (BLOCK_TABLE.length <= 1) return BLOCK_TABLE[0];
+
+  let total = 0;
+  for (const d of BLOCK_TABLE) total += (d.p ?? 1);
+
+  // 同じ絵が連発しないように軽く回避
+  for (let tries=0; tries<8; tries++){
+    let r = Math.random() * total;
+    for (const d of BLOCK_TABLE){
+      r -= (d.p ?? 1);
+      if (r <= 0){
+        if (d.key === lastKey) break;
+        lastKey = d.key;
+        return d;
       }
     }
-    const fb = BLOCK_TABLE[Math.floor(Math.random()*BLOCK_TABLE.length)];
-    lastKey = fb.key;
-    return fb;
   }
+
+  const fb = BLOCK_TABLE[Math.floor(Math.random() * BLOCK_TABLE.length)];
+  lastKey = fb.key;
+  return fb;
+}
+
 
   // =========================
   // DOM
