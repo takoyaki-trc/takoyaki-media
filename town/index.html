@@ -1348,8 +1348,63 @@ if (night) {
 <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/takofarm2.js?v=2"></script>
 
 <script>
-console.log("takofarm2 loaded?", !!window.TakoFarm);
+(() => {
+  // 画面右上に診断バッジを出す（Console見れなくてもOK）
+  const badge = document.createElement("div");
+  badge.style.cssText = `
+    position:fixed; right:10px; top:10px; z-index:999999;
+    background:rgba(0,0,0,.72); color:#fff; border:1px solid rgba(255,255,255,.2);
+    padding:8px 10px; border-radius:10px; font:12px/1.35 system-ui;
+    max-width: 72vw;
+  `;
+  badge.textContent = "CHEST DEBUG: checking...";
+  document.body.appendChild(badge);
+
+  const info = [];
+  const map = document.getElementById("townMap");
+  info.push("townMap=" + (!!map));
+
+  // takofarm2.js がロードされてるか（あなたのJSが window.TakoFarm を作る前提）
+  info.push("TakoFarm=" + (!!window.TakoFarm));
+
+  // 既に宝箱DOMがあるか
+  const chest = document.querySelector(".tf-chest-spot");
+  info.push("chestDOM=" + (!!chest));
+
+  badge.textContent = "CHEST DEBUG: " + info.join(" / ");
+
+  // townMapがあるのに宝箱DOMが無い場合、CSS/重なりの切り分け用に「ダミー宝箱」を強制表示
+  if(map && !chest){
+    const dummy = document.createElement("button");
+    dummy.type = "button";
+    dummy.className = "tf-chest-spot tf-is-active";
+    dummy.style.left = "50%";
+    dummy.style.top  = "85%";
+    dummy.style.position = "absolute";
+    dummy.style.width = "64px";
+    dummy.style.height = "64px";
+    dummy.style.zIndex = "99999";
+    dummy.style.background = "transparent";
+    dummy.style.border = "0";
+    dummy.style.padding = "0";
+
+    const img = document.createElement("img");
+    img.src = "https://ul.h3z.jp/7R07SCTz.png"; // 宝箱画像
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.imageRendering = "pixelated";
+    dummy.appendChild(img);
+
+    dummy.addEventListener("click", () => {
+      alert("ダミー宝箱は表示OK（＝CSS/配置はOK）。\n本物が出ない原因はJS側です。");
+    });
+
+    map.appendChild(dummy);
+    badge.textContent += " / dummy=ON";
+  }
+})();
 </script>
+
 
 
 
