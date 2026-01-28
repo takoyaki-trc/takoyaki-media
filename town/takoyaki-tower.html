@@ -1055,7 +1055,7 @@ function drawBG(){
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, CONF.canvasW, CONF.canvasH);
 
-  // うっすらグリッド（元の演出は残す）
+  // うっすらグリッド
   if (!CONF.grid) return;
   ctx.save();
   ctx.globalAlpha = 0.08;
@@ -1071,22 +1071,19 @@ function drawBG(){
   ctx.restore();
 }
 
-
-// ✅ 上だけ角丸（上2角だけ）
-function roundedTopPath(x, y, w, h, rt){
-  const r = Math.min(rt, w/2, h);
-  ctx.moveTo(x, y + h);                 // 左下
-  ctx.lineTo(x, y + r);                 // 左側上へ
-  ctx.arcTo(x, y, x + r, y, r);         // 左上
-  ctx.lineTo(x + w - r, y);             // 上辺
-  ctx.arcTo(x + w, y, x + w, y + r, r); // 右上
-  ctx.lineTo(x + w, y + h);             // 右側下へ
+// ✅ 四隅角丸パス（これが必要）
+function roundedPath(x, y, w, h, r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.moveTo(x+rr, y);
+  ctx.arcTo(x+w, y, x+w, y+h, rr);
+  ctx.arcTo(x+w, y+h, x, y+h, rr);
+  ctx.arcTo(x, y+h, x, y, rr);
+  ctx.arcTo(x, y, x+w, y, rr);
   ctx.closePath();
 }
 
 // ✅ メインブロック描画（indexを受け取る版）
 // index = 下から何段目か（0が一番下）
-// ここで「最初の数段だけ高さを増やす」見た目補正を入れる
 function drawBlock(b, index){
   const y = b.y + S.cameraY;
   if (y > CONF.canvasH + 120 || y < -240) return;
@@ -1095,23 +1092,20 @@ function drawBlock(b, index){
   const w = Math.round(b.width);
 
   // ✅ 下5段だけ高さブースト（見た目だけ）
-  const baseBoost = [1.65, 1.55, 1.45, 1.35, 1.25, 1.15, 1.05]; // 下5段
-
+  const baseBoost = [1.65, 1.55, 1.45, 1.35, 1.25];
   const boost = baseBoost[index] ?? 1.0;
   const h = Math.round(b.h * boost);
 
- // 角丸（四隅）
-const rAll = Math.max(10, Math.round(Math.min(w, h) * 0.22));
+  const tile = b.tileKey ? IMG[b.tileKey] : null;
 
-// 角丸クリップ（四隅）
-ctx.save();
-ctx.beginPath();
-roundedPath(x, y, w, h, rAll);
-ctx.clip();
+  // 角丸（四隅）
+  const rAll = Math.max(10, Math.round(Math.min(w, h) * 0.22));
 
-// ...（中の画像描画はそのまま）...
-
-ctx.restore();
+  // 角丸クリップ（四隅）
+  ctx.save();
+  ctx.beginPath();
+  roundedPath(x, y, w, h, rAll);
+  ctx.clip();
 
   if (!tile || !tile.naturalWidth){
     const grad = ctx.createLinearGradient(x, y, x, y+h);
@@ -1119,13 +1113,10 @@ ctx.restore();
     grad.addColorStop(1, "#f08b2f");
     ctx.fillStyle = grad;
     ctx.fillRect(x, y, w, h);
-
   } else if (CONF.BLOCK_DRAW_MODE === "COVER"){
     drawImageCover(ctx, tile, x, y, w, h);
-
   } else if (CONF.BLOCK_DRAW_MODE === "STRETCH"){
     ctx.drawImage(tile, x, y, w, h);
-
   } else {
     // TILE
     const scale = h / tile.naturalHeight;
@@ -1137,15 +1128,8 @@ ctx.restore();
 
   ctx.restore();
 
-  // 枠線（上だけ）
-  ctx.save();
-  ctx.strokeStyle = "rgba(0,0,0,.45)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  roundedTopPath(x, y, w, h, rTop);
-  ctx.stroke();
-  ctx.restore();
-}
+ 
+
 
 function draw(){
   ctx.clearRect(0,0,CONF.canvasW, CONF.canvasH);
