@@ -938,4 +938,6 @@
     }
   } // ← renderFarmSide() ここまで
 
+window.TakoFarm = window.TakoFarm || {};
+console.log("[TakoFarm] loaded takofarm2.js");
 
