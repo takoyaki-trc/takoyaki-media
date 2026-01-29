@@ -270,6 +270,16 @@
 
     <div class="stats">
       <div class="pill">Lv：<b id="stLevel">1</b> <small>(XP <span id="stXP">0</span>)</small></div>
+      <div class="pill" style="width:100%">
+  <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;">
+    <div>次Lvまで：<b id="stXpLeft">0</b> XP</div>
+    <small><span id="stXpNow">0</span>/<span id="stXpNeed">0</span></small>
+  </div>
+  <div style="margin-top:8px;border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;height:10px;">
+    <div id="stXpBar" style="height:100%;width:0%;background:rgba(159,255,168,.55);"></div>
+  </div>
+</div>
+
       <div class="pill">解放：<b id="stUnlock">3</b>/25</div>
 
       <div class="pill">獲得種類：<b id="stBook">0</b></div>
@@ -600,19 +610,26 @@
   function rarityLabel(r){ return r || ""; }
 
   // ====== DOM参照 ======
-  const farmEl   = document.getElementById("farm");
-  const stBook   = document.getElementById("stBook");
-  const stGrow   = document.getElementById("stGrow");
-  const stReady  = document.getElementById("stReady");
-  const stBurn   = document.getElementById("stBurn");
-  const stLevel  = document.getElementById("stLevel");
-  const stXP     = document.getElementById("stXP");
-  const stUnlock = document.getElementById("stUnlock");
+const farmEl   = document.getElementById("farm");
 
-  const modal  = document.getElementById("modal");
-  const mTitle = document.getElementById("mTitle");
-  const mBody  = document.getElementById("mBody");
-  const mClose = document.getElementById("mClose");
+const stBook   = document.getElementById("stBook");
+const stGrow   = document.getElementById("stGrow");
+const stReady  = document.getElementById("stReady");
+const stBurn   = document.getElementById("stBurn");
+
+const stLevel  = document.getElementById("stLevel");
+const stXP     = document.getElementById("stXP");        // 現在XP（数値表示）
+const stXpLeft = document.getElementById("stXpLeft");    // 次Lvまで残りXP
+const stXpNeed = document.getElementById("stXpNeed");    // 次Lv必要XP
+const stXpBar  = document.getElementById("stXpBar");     // XPバー
+
+const stUnlock = document.getElementById("stUnlock");
+
+const modal  = document.getElementById("modal");
+const mTitle = document.getElementById("mTitle");
+const mBody  = document.getElementById("mBody");
+const mClose = document.getElementById("mClose");
+
 
   // ====== 状態 ======
   let state  = loadState();
@@ -775,15 +792,26 @@
     }
 
     // stats
-    stGrow.textContent = String(grow);
-    stReady.textContent = String(ready);
-    stBurn.textContent = String(burn);
-    stBook.textContent = String(Object.keys((book && book.got) ? book.got : {}).length);
+stGrow.textContent  = String(grow);
+stReady.textContent = String(ready);
+stBurn.textContent  = String(burn);
+stBook.textContent  = String(Object.keys((book && book.got) ? book.got : {}).length);
 
-    stLevel.textContent = String(player.level);
-    stXP.textContent = String(player.xp);
-    stUnlock.textContent = String(player.unlocked);
-  }
+// ====== Lv / XP 表示 ======
+stLevel.textContent  = String(player.level);
+stXP.textContent     = String(player.xp);
+stUnlock.textContent = String(player.unlocked);
+
+// 次のLvまでのXP
+const need = xpNeedForLevel(player.level);
+const now  = player.xp;
+const left = Math.max(0, need - now);
+const pct  = Math.max(0, Math.min(100, Math.floor((now / need) * 100)));
+
+stXpLeft.textContent = String(left);
+stXpNeed.textContent = String(need);
+stXpBar.style.width  = pct + "%";
+
 
   // ====== マスをタップ ======
   function onPlotTap(i){
