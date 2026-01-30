@@ -142,6 +142,7 @@ body{
 }
 .disp:active{ transform:translateY(1px); }
 .disp.is-locked{ opacity:.45; cursor:not-allowed; }
+
 .disp-top{
   display:flex;
   justify-content:space-between;
@@ -169,6 +170,7 @@ body{
   min-height:32px;
 }
 .disp-sub{ font-size:11px; color:var(--muted); }
+
 .disp-lock{
   position:absolute;
   inset:0;
@@ -196,6 +198,7 @@ body{
   flex-direction:column;
   gap:6px;
   pointer-events:none;
+  z-index:3;
 }
 .bubble{
   align-self:flex-start;
@@ -218,6 +221,103 @@ body{
   50%{ transform:translateY(-4px); }
   100%{ transform:translateY(0); }
 }
+
+/* =========================
+   ★ 新：棚画像 + 6スロット（3段×2）
+   - dispの中に「shelf-stage」を置いて、その上にslotを重ねる方式
+   - disp自体に背景画像を貼る旧方式は使わない
+   ========================= */
+
+.disp.disp-shelf{
+  cursor:default;                 /* クリックはslot側に寄せる */
+  min-height:auto;                /* 中身で高さが決まる */
+}
+
+/* タイトルやバッジは上に */
+.disp.disp-shelf .disp-top,
+.disp.disp-shelf .disp-body{
+  position:relative;
+  z-index:4;
+}
+
+/* 棚ステージ（背景画像） */
+.shelf-stage{
+  position:relative;
+  width:100%;
+  aspect-ratio: 240 / 360;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(255,214,110,.22);
+  background:url("https://ul.h3z.jp/sQP7LGI4.png") center/cover no-repeat;
+}
+
+/* 読みやすさ・なじませ用（不要なら消してOK） */
+.shelf-stage::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.22));
+  pointer-events:none;
+}
+
+/* スロット（押せる） */
+.shelf-slot{
+  position:absolute;
+  border:0;
+  background:transparent;
+  padding:0;
+  cursor:pointer;
+  border-radius:12px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.shelf-slot:active{ transform:translateY(1px); }
+
+.shelf-slot img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.45));
+}
+
+/* 空スロットは点線でわかるように（任意） */
+.shelf-slot.is-empty{
+  outline: 1px dashed rgba(255,255,255,.12);
+  outline-offset: -2px;
+}
+
+/* LOCK中はスロットを押せない */
+.disp.is-locked .shelf-slot{
+  pointer-events:none;
+}
+
+/* ====== 6枠の座標（％） ======
+   ※必要なら 1〜2%ずつ微調整でピタ合わせ
+   - 1段目：slot1/slot2
+   - 2段目：slot3/slot4
+   - 3段目：slot5/slot6
+*/
+
+/* 左列 / 右列 */
+.shelf-slot.slot1,
+.shelf-slot.slot3,
+.shelf-slot.slot5{ left: 16.5%; width: 27%; }
+
+.shelf-slot.slot2,
+.shelf-slot.slot4,
+.shelf-slot.slot6{ left: 56.5%; width: 27%; }
+
+/* 段の高さは全部同じ */
+.shelf-slot.slot1,
+.shelf-slot.slot2{ top: 25.0%; height: 18.5%; }
+
+.shelf-slot.slot3,
+.shelf-slot.slot4{ top: 46.5%; height: 18.5%; }
+
+.shelf-slot.slot5,
+.shelf-slot.slot6{ top: 68.0%; height: 18.5%; }
+
 
 /* ====== インベントリ（まとめ表示） ====== */
 .inv{
@@ -354,79 +454,3 @@ body{
 .roten-panel{ display:none !important; }
 .roten-panel.is-show{ display:block !important; }
 
-
-
-
-
-
-/* ====== 画像棚UI（disp内に棚画像＋6スロット重ね） ====== */
-.disp.disp-shelf6{
-  background: url("https://ul.h3z.jp/sQP7LGI4.png") center/cover no-repeat;
-  padding: 10px;
-  min-height: 420px;            /* ここは棚画像の縦比に合わせて調整 */
-  border-color: rgba(255,214,110,.35);
-}
-
-/* 文字や要素が背景で読みにくい時のための薄い暗幕（任意） */
-.disp.disp-shelf6::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background: linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.35));
-  pointer-events:none;
-}
-
-/* 上の「棚1 / 出店中」などのヘッダは棚の上に浮かせる */
-.disp.disp-shelf6 .disp-top,
-.disp.disp-shelf6 .disp-body,
-.disp.disp-shelf6 .queue{
-  position: relative;
-  z-index: 2;
-}
-
-
-/* ====== 棚のスロット置き場（絶対配置） ====== */
-.shelf6{
-  position:absolute;
-  inset:0;
-  z-index: 1;               /* 背景の上、テキストの下にしたいなら1 */
-  pointer-events:none;      /* テキスト上でも押せるよう、基本はnone */
-}
-
-/* スロット（押す必要があるので slot だけ pointer-events を戻す） */
-.shelf6 .slot{
-  position:absolute;
-  border:0;
-  background:transparent;
-  padding:0;
-  pointer-events:auto;
-  cursor:pointer;
-  border-radius:12px;
-  touch-action: manipulation;
-}
-
-.shelf6 .slot:active{ transform: translateY(1px); }
-
-.shelf6 .slot img{
-  width:100%;
-  height:100%;
-  display:block;
-  object-fit: contain;
-  filter: drop-shadow(0 6px 10px rgba(0,0,0,.45));
-}
-
-/* === 位置（%指定）===
-   ★あなたの棚画像に合わせて後で微調整する箇所
-   1段目：slot1, slot2
-   2段目：slot3, slot4
-   3段目：slot5, slot6
-*/
-
-/* 左列・右列 */
-.shelf6 .slot.slot1, .shelf6 .slot.slot3, .shelf6 .slot.slot5{ left: 17%; width: 27%; }
-.shelf6 .slot.slot2, .shelf6 .slot.slot4, .shelf6 .slot.slot6{ left: 58%; width: 27%; }
-
-/* 各段の縦位置（縦長カード用） */
-.shelf6 .slot.slot1, .shelf6 .slot.slot2{ top: 23%; height: 18%; }
-.shelf6 .slot.slot3, .shelf6 .slot.slot4{ top: 46%; height: 18%; }
-.shelf6 .slot.slot5, .shelf6 .slot.slot6{ top: 69%; height: 18%; }
