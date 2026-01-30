@@ -16,8 +16,11 @@
       --radius:16px;
       --gap:10px;
 
-      /* ▼タイルを「もう一回り」小さく */
-      --tile:84px; /* 96px → 84px */
+      /* ▼タイルサイズ */
+      --tile:84px;
+
+      /* ▼タイル内の画像だけ少し小さく（余白） */
+      --thumbPad:7px; /* ←ここを6〜10くらいで調整OK */
     }
     *{box-sizing:border-box}
     body{
@@ -185,17 +188,19 @@
       transition:transform .12s ease, filter .12s ease;
     }
     .card:active{transform:scale(.985)}
+
+    /* ★ タイル内画像を小さく（余白を作る） */
     .thumb{
       width:100%;
       height:var(--tile);
       display:block;
-      object-fit:cover;
-      background:rgba(255,255,255,.05);
-
-      /* ドット絵系ならこの2つが効くことが多い */
+      object-fit:contain;            /* cover → contain */
+      padding:var(--thumbPad);       /* 余白 */
+      background:rgba(0,0,0,.14);    /* 余白が目立たないように */
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
+
     .meta{
       padding:7px 8px 9px;
       display:flex;
@@ -230,6 +235,24 @@
     }
     .tag b{color:var(--text); font-weight:600}
     .id{opacity:.95}
+
+    /* ★ 所持枚数バッジ */
+    .countBadge{
+      position:absolute;
+      right:6px;
+      top:6px;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.55);
+      color:rgba(255,255,255,.92);
+      font-size:11px;
+      line-height:1;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      pointer-events:none;
+      user-select:none;
+    }
 
     /* ===== SR+ glow ===== */
     .card.is-glow{
@@ -359,9 +382,9 @@
       background:rgba(255,220,120,.08);
     }
 
-    /* スマホ：カードは少し大きめ（ただし今回小さくしたので控えめに） */
+    /* スマホ：カードは少し大きめ */
     @media (max-width: 520px){
-      :root{ --tile:96px; --gap:10px; } /* 110 → 96 */
+      :root{ --tile:96px; --gap:10px; --thumbPad:8px; }
       .field{min-width:140px}
       .backBtn{padding:8px 10px;font-size:12px}
       .backBtn .ico{width:18px;height:18px}
@@ -372,7 +395,6 @@
   <div class="wrap">
     <header>
       <div class="leftHead">
-        <!-- ★ 左上：戻るボタン -->
         <button class="backBtn" id="btnBack" type="button" aria-label="戻る">
           <span class="ico">←</span>
           <span>戻る</span>
@@ -430,6 +452,7 @@
           <div>ID</div><div><b id="mId">-</b></div>
           <div>レア</div><div><b id="mRarity">-</b></div>
           <div>取得</div><div><b id="mAt">-</b></div>
+          <div>所持</div><div><b id="mCount">-</b></div>
         </div>
       </div>
     </div>
@@ -462,9 +485,11 @@
     const mAt = document.getElementById("mAt");
     const mGlow = document.getElementById("mGlow");
     const mClose = document.getElementById("mClose");
+    const mCount = document.getElementById("mCount");
 
-    let all = [];   // raw got
-    let view = [];  // filtered+sorted
+    let all = [];      // raw got
+    let view = [];     // filtered+sorted
+    let countMap = {}; // id -> count
 
     function safeJSONParse(str){
       try { return JSON.parse(str); } catch(e){ return null; }
@@ -495,10 +520,7 @@
       return false;
     }
 
-    // ★ 取得日時ズレ対策：
-    // - 数値は「桁」でms/秒を判定（10桁=秒, 13桁=msが多い）
-    // - ISO文字列はそのままDateに
-    // - 表示は日本時間（Asia/Tokyo）固定でブレを減らす
+    // ★ 取得日時ズレ対策：日本時間固定
     function toDate(at){
       if(at == null || at === "") return null;
 
@@ -524,19 +546,15 @@
     }
 
     function normalizeEpoch(n){
-      // nが「秒」なら *1000、msならそのまま
-      // よくある桁: 10桁=秒, 13桁=ms
-      // それ以外は閾値でも吸う
       const abs = Math.abs(n);
-      if(abs < 1e11) return n * 1000; // 〜10桁程度は秒扱い
-      return n; // ms扱い
+      if(abs < 1e11) return n * 1000; // 秒っぽい
+      return n; // msっぽい
     }
 
     function formatAt(at){
       const d = toDate(at);
       if(!d) return "-";
 
-      // 日本時間固定で表示
       try{
         const fmt = new Intl.DateTimeFormat("ja-JP",{
           timeZone:"Asia/Tokyo",
@@ -544,7 +562,6 @@
           hour:"2-digit", minute:"2-digit",
           hour12:false
         });
-        // "YYYY/MM/DD HH:MM" を "YYYY-MM-DD HH:MM" に寄せる
         const parts = fmt.formatToParts(d);
         const get = (t) => parts.find(p=>p.type===t)?.value ?? "";
         const yyyy = get("year");
@@ -554,7 +571,6 @@
         const mi = get("minute");
         return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
       }catch(e){
-        // もしIntlが使えない環境なら従来フォールバック（端末TZ依存）
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth()+1).padStart(2,"0");
         const dd = String(d.getDate()).padStart(2,"0");
@@ -567,6 +583,20 @@
     function toTime(at){
       const d = toDate(at);
       return d ? d.getTime() : 0;
+    }
+
+    function buildCountMap(){
+      countMap = {};
+      for(const item of all){
+        const id = (item.id ?? "").toString();
+        if(!id) continue;
+        countMap[id] = (countMap[id] || 0) + 1;
+      }
+    }
+
+    function getCount(id){
+      const key = (id ?? "").toString();
+      return countMap[key] || 1;
     }
 
     function load(){
@@ -584,7 +614,7 @@
 
       const obj = safeJSONParse(raw);
 
-      // got は「配列」or「オブジェクト」どちらでも来る可能性があるので吸収
+      // got は「配列」or「オブジェクト」どちらでも吸収
       let gotArr = [];
       if(obj && Array.isArray(obj.got)){
         gotArr = obj.got;
@@ -602,6 +632,7 @@
         at: x?.at ?? ""
       }));
 
+      buildCountMap();
       render();
     }
 
@@ -687,8 +718,15 @@
         meta.appendChild(name);
         meta.appendChild(mini);
 
+        // ★ 所持枚数バッジ
+        const cnt = getCount(item.id);
+        const badge = document.createElement("div");
+        badge.className = "countBadge";
+        badge.textContent = `×${cnt}`;
+
         card.appendChild(img);
         card.appendChild(meta);
+        card.appendChild(badge);
 
         card.addEventListener("click", () => openModal(item));
         card.addEventListener("keydown", (e) => {
@@ -731,6 +769,9 @@
       mAt.textContent = formatAt(item.at);
       mGlow.style.display = isSRPlus(item.rarity) ? "inline-flex" : "none";
 
+      const cnt = getCount(item.id);
+      mCount.textContent = `${cnt} 枚`;
+
       modal.setAttribute("aria-hidden","false");
       document.addEventListener("keydown", onEscClose, { once:false });
     }
@@ -763,13 +804,11 @@
       load();
     });
 
-    // ★ 戻るボタン
+    // 戻る
     btnBack.addEventListener("click", () => {
-      // 履歴があるなら戻る。なければフォールバックへ
       if(history.length > 1){
         history.back();
       }else{
-        // 必要ならここをあなたのトップURLに変更してOK
         location.href = "./index.html";
       }
     });
