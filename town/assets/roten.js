@@ -2,7 +2,7 @@
    - 棚1〜5タップで出品（初期2枠解放）
    - 所持カードは同IDまとめ表示（×枚数）
    - 出店中は行列（吹き出し）を表示（数秒ごと更新）
-   - 畑(tf_v1_book.got) → 露店在庫(roten_v1_inventory) 同期
+   - 図鑑（ダブり）→ 露店在庫(roten_v1_inventory) 同期
 */
 
 (() => {
@@ -12,10 +12,24 @@
     myshop: "roten_v1_myshop",
     market: "roten_v1_market",
     log: "roten_v1_log",
-    farmBook: "tf_v1_book",
+
+    // ★ 図鑑キー（まずはこれを見に行く）
+    dex: "tf_v1_dex",
+
+    // 互換：過去の入荷済み追跡
     syncSeen: "roten_v1_sync_seen",
+
     unlocked: "roten_v1_shop_unlocked" // ★解放棚数（1〜5）
   };
+
+  // ★ 互換：図鑑キーが環境によって違っても拾えるように候補を持つ
+  const DEX_KEY_CANDIDATES = [
+    LS.dex,              // tf_v1_dex
+    "tf_v1_zukan",
+    "takodex_v1",
+    "zukan_v1",
+    "dex_v1"
+  ];
 
   const PRICE_TIERS = [
     { id:"low",  label:"安い", mult: 0.9 },
@@ -84,39 +98,140 @@
     return Math.max(1, Math.min(5, Math.floor(n)));
   }
 
-  // ===== 図鑑→在庫 同期 =====
-  function syncFromFarmBook(){
-    const book = lsGet(LS.farmBook, null);
-    const got = Array.isArray(book?.got) ? book.got : [];
-    if(!got.length) return 0;
+  // =========================================================
+  // ★ 図鑑（ダブり）→ 在庫 同期
+  // 目的：畑の「入手ログ」ではなく、図鑑の「所持（ダブり）」を正とする
+  // - 図鑑の形式が多少違っても拾えるように “スマートに” 抽出する
+  // - 露店側のsyncSeenで「何枚取り込んだか」をカードID単位で保持する
+  // =========================================================
 
-    const seen = lsGet(LS.syncSeen, {});
+  function getDexRaw(){
+    for(const k of DEX_KEY_CANDIDATES){
+      const raw = localStorage.getItem(k);
+      if(raw != null) return { key:k, raw };
+    }
+    return { key:null, raw:null };
+  }
+
+  function normalizeDexEntries(dex){
+    // 想定しうる形を全部吸収して「配列」にする
+    // 例）
+    // - dex.cards: [{id,name,rarity,img,count}, ...]
+    // - dex.list:  [{...}]
+    // - dex.items: [{...}]
+    // - dex.got:   [{...}]  ※ count/owned を持つ場合もある
+    // - dex.byId:  { "TN-001": {...}, ... }
+    if(!dex) return [];
+    if(Array.isArray(dex.cards)) return dex.cards;
+    if(Array.isArray(dex.list))  return dex.list;
+    if(Array.isArray(dex.items)) return dex.items;
+    if(Array.isArray(dex.got))   return dex.got;
+
+    // ダブり専用配列があるケース
+    if(Array.isArray(dex.dupes)) return dex.dupes;
+    if(Array.isArray(dex.dup))   return dex.dup;
+
+    // byId / map形式
+    if(dex.byId && typeof dex.byId === "object"){
+      return Object.keys(dex.byId).map(id => ({ id, ...dex.byId[id] }));
+    }
+    if(dex.map && typeof dex.map === "object"){
+      return Object.keys(dex.map).map(id => ({ id, ...dex.map[id] }));
+    }
+
+    return [];
+  }
+
+  function getEntryCountLike(e){
+    // 「総所持枚数」っぽいもの
+    const c =
+      e?.count ?? e?.qty ?? e?.num ?? e?.n ??
+      e?.owned ?? e?.ownedCount ?? e?.have ?? e?.haveCount;
+    const n = Number(c);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
+
+  function getEntryDupesLike(e){
+    // 「ダブり枚数」っぽいもの（総所持とは別）
+    const d = e?.dupes ?? e?.dup ?? e?.duplicate ?? e?.duplicates;
+    const n = Number(d);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : null;
+  }
+
+  function getDexDuplicatesList(){
+    const { key, raw } = getDexRaw();
+    if(!raw) return { key, dupes: [] };
+
+    const dex = safeJsonParse(raw, null);
+    const entries = normalizeDexEntries(dex);
+
+    // entries から「ダブり分だけ」抽出して返す
+    // - dupes系プロパティがあればそれを優先
+    // - なければ count(総所持) - 1 をダブりとみなす（1枚は“図鑑登録用”）
+    const dupes = [];
+    for(const e of entries){
+      const id = String(e?.id || e?.cardId || e?.no || "").trim();
+      if(!id) continue;
+
+      const name = String(e?.name || e?.title || id);
+      const rarity = String(e?.rarity || e?.rank || "N");
+      const img = e?.img || e?.image || e?.src || null;
+
+      const d = getEntryDupesLike(e);
+      const total = getEntryCountLike(e);
+
+      const dupCount = (d != null) ? d : Math.max(0, total - 1);
+      if(dupCount <= 0) continue;
+
+      dupes.push({ id, name, rarity, img, dupCount });
+    }
+    return { key, dupes };
+  }
+
+  function syncFromDexDuplicates(){
+    const { key, dupes } = getDexDuplicatesList();
+    if(!dupes.length) return 0;
+
+    // syncSeenは「idごとに何枚取り込んだか」も保存（互換のため既存objを流用）
+    const seen = lsGet(LS.syncSeen, {}); // { "TN-001": 3, ... } + 旧形式キーも混在OK
     let inv = lsGet(LS.inv, []);
     if(!Array.isArray(inv)) inv = [];
 
     let added = 0;
-    for(const c of got){
-      if(!c || !c.id) continue;
-      const at = (c.at != null) ? String(c.at) : "";
-      const key = at ? `${c.id}@${at}` : `${c.id}`;
-      if(seen[key]) continue;
 
-      inv.push({
-        id: String(c.id),
-        name: String(c.name || c.id),
-        img: c.img || null,
-        rarity: String(c.rarity || "N"),
-        at: (c.at != null) ? Number(c.at) : now()
-      });
+    for(const d of dupes){
+      const id = String(d.id);
 
-      seen[key] = true;
-      added++;
+      // 既に取り込んだ枚数
+      const already = Number(seen[id] || 0) || 0;
+
+      // 図鑑のダブり枚数が「正」。露店在庫に足りない分だけ足す
+      const need = Math.max(0, Math.floor(d.dupCount) - already);
+      if(need <= 0) continue;
+
+      for(let i=0;i<need;i++){
+        inv.push({
+          id,
+          name: String(d.name || id),
+          img: d.img || null,
+          rarity: String(d.rarity || "N"),
+          at: now() + i // 同時刻重複回避（微差）
+        });
+        added++;
+      }
+
+      seen[id] = already + need;
     }
 
     if(added > 0){
       lsSet(LS.inv, inv);
       lsSet(LS.syncSeen, seen);
-      addLog({ at: now(), title: `畑から入荷 +${added}`, desc: `図鑑の新規入手分が露店在庫に追加された。`, chips:["同期"] });
+      addLog({
+        at: now(),
+        title: `図鑑（ダブり）から入荷 +${added}`,
+        desc: `図鑑のダブり分が露店在庫に追加された。${key ? `（参照:${key}）` : ""}`,
+        chips:["同期","図鑑"]
+      });
     }
     return added;
   }
@@ -125,7 +240,8 @@
     let inv = lsGet(LS.inv, []);
     if(Array.isArray(inv) && inv.length) return;
 
-    syncFromFarmBook();
+    // ★ 図鑑（ダブり）から同期
+    syncFromDexDuplicates();
     inv = lsGet(LS.inv, []);
     if(Array.isArray(inv) && inv.length) return;
 
@@ -138,7 +254,7 @@
       { id:"TN-070", name:"UR：焼かれし紋章", rarity:"UR", at: now()-1000*60*60*60, img:null },
     ];
     lsSet(LS.inv, sample);
-    addLog({ at: now(), title:`テストカード投入`, desc:`畑側のカードが見つからなかったため、テスト用カードを追加した。`, chips:["テスト"] });
+    addLog({ at: now(), title:`テストカード投入`, desc:`図鑑側のダブりカードが見つからなかったため、テスト用カードを追加した。`, chips:["テスト"] });
   }
 
   // ===== 市場 =====
@@ -840,12 +956,19 @@
     const m = ensureMarket();
     const npc = $("#rotenDebugNpc");
     if(!npc) return;
+
+    const dexInfo = (() => {
+      const r = getDexRaw();
+      if(!r.raw) return "無し";
+      return `OK（${r.key}）`;
+    })();
+
     npc.textContent =
       "ROTEN_CUSTOMERS.base: " + (c?.base?.length ?? "ERR") + "人\n" +
       "collabSlots: " + (c?.collabSlots?.length ?? "ERR") + "枠\n" +
       "今日のムード: " + (m?.moodLabel ?? "ERR") + "\n" +
       "解放棚数: " + getUnlocked() + "/5\n" +
-      "畑キー(tf_v1_book): " + (localStorage.getItem(LS.farmBook) ? "OK" : "無し");
+      "図鑑キー: " + dexInfo;
   }
 
   function renderMarket(){
@@ -1090,7 +1213,8 @@
     ensureMarket();
     ensureUnlocked();
 
-    syncFromFarmBook();
+    // ★ 起動時に図鑑（ダブり）から同期
+    syncFromDexDuplicates();
     ensureTestInventoryIfEmpty();
 
     // myshop初期（5枠に矯正）
