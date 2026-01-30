@@ -829,204 +829,306 @@
     }, 3500);
   }
 
-  // ====== 描画 ======
-  function renderTop(){
-    const octoEl = $("#rotenOcto");
-    if(octoEl) octoEl.textContent = String(getOcto());
+ // ====== 描画 ======
+function renderTop(){
+  const octoEl = $("#rotenOcto");
+  if(octoEl) octoEl.textContent = String(getOcto());
+}
+
+function renderNpcDebug(){
+  const c = window.ROTEN_CUSTOMERS;
+  const m = ensureMarket();
+  const npc = $("#rotenDebugNpc");
+  if(!npc) return;
+
+  // ★解放棚数（棚=1〜5）表示はそのまま
+  npc.textContent =
+    "ROTEN_CUSTOMERS.base: " + (c?.base?.length ?? "ERR") + "人\n" +
+    "collabSlots: " + (c?.collabSlots?.length ?? "ERR") + "枠\n" +
+    "今日のムード: " + (m?.moodLabel ?? "ERR") + "\n" +
+    "解放棚数: " + getUnlocked() + "/5\n" +
+    "畑キー(tf_v1_book): " + (localStorage.getItem(LS.farmBook) ? "OK" : "無し");
+}
+
+function renderMarket(){
+  const st = ensureMarket();
+  $("#rotenMood") && ($("#rotenMood").textContent = st.moodLabel || "…");
+  $("#rotenRollover") && ($("#rotenRollover").textContent = "日付が変わったら更新");
+}
+
+/* ==========================================
+   ★ ここから：棚表示を「1棚=6枠」に完全改修
+   - 棚: 5つ（disp 5枚）
+   - 各棚: 6枠（3段×2）
+   - 既存の shop.slots は「出品枠配列」として継続利用
+     → 足りない場合は 30枠に自動拡張（移行）
+   ========================================== */
+
+const SHELF_COUNT = 5;          // 棚1〜5
+const SLOTS_PER_SHELF = 6;      // 1棚あたり6枠（3段×2）
+const TOTAL_SLOTS = SHELF_COUNT * SLOTS_PER_SHELF;
+
+// 既存データが 5枠だけ等の場合に備えて、30枠へ拡張する（破壊しない移行）
+function ensureMyShopSlots30(){
+  const shop = getMyShop();
+  if(!shop || !Array.isArray(shop.slots)){
+    // getMyShop() が必ず形を返す想定だけど念のため
+    return shop;
   }
 
-  function renderNpcDebug(){
-    const c = window.ROTEN_CUSTOMERS;
-    const m = ensureMarket();
-    const npc = $("#rotenDebugNpc");
-    if(!npc) return;
-    npc.textContent =
-      "ROTEN_CUSTOMERS.base: " + (c?.base?.length ?? "ERR") + "人\n" +
-      "collabSlots: " + (c?.collabSlots?.length ?? "ERR") + "枠\n" +
-      "今日のムード: " + (m?.moodLabel ?? "ERR") + "\n" +
-      "解放棚数: " + getUnlocked() + "/5\n" +
-      "畑キー(tf_v1_book): " + (localStorage.getItem(LS.farmBook) ? "OK" : "無し");
+  // すでに30以上ならOK（将来拡張にも耐える）
+  if(shop.slots.length >= TOTAL_SLOTS) return shop;
+
+  // 追加する空枠テンプレ
+  const makeEmpty = (globalIndex) => ({
+    slot: globalIndex + 1,   // 表示用番号（1〜30）
+    state: "idle",           // idle/listed/done など既存に合わせる
+    item: null,
+    priceTier: "mid",
+    duration: "3h",
+    endsAt: 0,
+    lastResult: null,
+  });
+
+  // 現在の枠を保持しつつ、足りない分を後ろに追加
+  const startLen = shop.slots.length;
+  for(let i = startLen; i < TOTAL_SLOTS; i++){
+    shop.slots.push(makeEmpty(i));
   }
 
-  function renderMarket(){
-    const st = ensureMarket();
-    $("#rotenMood") && ($("#rotenMood").textContent = st.moodLabel || "…");
-    $("#rotenRollover") && ($("#rotenRollover").textContent = "日付が変わったら更新");
-  }
+  setMyShop(shop);
+  return shop;
+}
 
-  function renderDisplays(){
-    const wrap = $("#rotenDisplays");
-    if(!wrap) return;
+// スロットごとのバッジ（既存そのまま）
+function dispBadge(s, locked){
+  if(locked) return { cls:"", text:"LOCK" };
+  if(s.state === "listed") return { cls:"wait", text:"出店中" };
+  if(s.state === "done") return { cls:"ok", text:"結果" };
+  if(!s.item) return { cls:"", text:"空き" };
+  return { cls:"", text:"準備" };
+}
 
-    const unlocked = getUnlocked();
-    const shop = getMyShop();
-    const st = ensureMarket();
+function tierLabel(id){ return (PRICE_TIERS.find(x=>x.id===id)?.label) || "普通"; }
+function durLabel(id){ return (DURATIONS.find(x=>x.id===id)?.label) || "3時間"; }
 
-    // 期限切れ→結果化
-    for(const s of shop.slots){
-      if(s.state === "listed" && s.endsAt && now() >= s.endsAt){
-        s.state = "done";
-        s.lastResult = resolveSlotSale(s, st.seed);
-      }
+function renderDisplays(){
+  const wrap = $("#rotenDisplays");
+  if(!wrap) return;
+
+  // ★30枠へ自動拡張（既存ユーザーのデータが5枠でも壊れない）
+  ensureMyShopSlots30();
+
+  const unlockedShelves = getUnlocked();          // 0〜5
+  const unlockedSlots = unlockedShelves * SLOTS_PER_SHELF;
+
+  const shop = getMyShop();
+  const st = ensureMarket();
+
+  // 期限切れ→結果化（30枠に対して行う）
+  for(const s of shop.slots){
+    if(s.state === "listed" && s.endsAt && now() >= s.endsAt){
+      s.state = "done";
+      s.lastResult = resolveSlotSale(s, st.seed);
     }
-    setMyShop(shop);
+  }
+  setMyShop(shop);
 
-    wrap.innerHTML = "";
+  wrap.innerHTML = "";
 
-    let hasListed = false;
+  let hasListed = false;
 
-    shop.slots.forEach((s, idx) => {
-      const locked = (idx >= unlocked);
-      const el = document.createElement("div");
-      el.className = "disp" + (locked ? " is-locked" : "");
-      el.setAttribute("data-slot", String(idx));
+  // 棚（disp）を5枚作る
+  for(let shelfIndex = 0; shelfIndex < SHELF_COUNT; shelfIndex++){
+    const shelfNo = shelfIndex + 1;
+    const shelfLocked = (shelfNo > unlockedShelves);
+
+    // この棚に属する6枠（globalIndex）
+    const base = shelfIndex * SLOTS_PER_SHELF;
+
+    // 棚内に「出店中」が1つでもあれば行列表示
+    const anyListedInShelf = !shelfLocked && shop.slots.slice(base, base + SLOTS_PER_SHELF)
+      .some(x => x.state === "listed");
+
+    const el = document.createElement("div");
+    el.className = "disp disp-shelf" + (shelfLocked ? " is-locked" : "");
+    el.setAttribute("data-shelf", String(shelfNo));
+
+    // 棚の右上バッジは「棚の状態」をざっくり表示（優先：LOCK > 出店中 > 結果 > 空き）
+    let shelfBadge = { cls:"", text:"空き" };
+    if(shelfLocked){
+      shelfBadge = { cls:"", text:"LOCK" };
+    }else{
+      const slice = shop.slots.slice(base, base + SLOTS_PER_SHELF);
+      if(slice.some(x=>x.state==="listed")) shelfBadge = { cls:"wait", text:"出店中" };
+      else if(slice.some(x=>x.state==="done")) shelfBadge = { cls:"ok", text:"結果" };
+      else if(slice.some(x=>x.item)) shelfBadge = { cls:"", text:"準備" };
+      else shelfBadge = { cls:"", text:"空き" };
+    }
+
+    // 6枠ボタン（棚画像の上に重ねる）
+    const slotsHTML = Array.from({length:SLOTS_PER_SHELF}, (_,i)=>{
+      const slotInShelf = i + 1;              // 1〜6
+      const globalIndex = base + i;           // 0〜29
+      const s = shop.slots[globalIndex];
+      const locked = shelfLocked || (globalIndex >= unlockedSlots);
 
       const badge = dispBadge(s, locked);
 
-      const name = s.item ? s.item.name : (locked ? "ロック中" : "空き棚");
-      const sub  = s.item
-        ? `${s.item.id} / ${s.item.rarity}`
-        : (locked ? "レベルで解放" : "タップして出品");
+      // 画像（あれば）
+      const src = s?.item ? thumbSrc(s.item) : "";
+      const img = src ? `<img alt="" src="${escapeHtmlAttr(src)}">` : "";
 
-      const src = s.item ? thumbSrc(s.item) : "";
+      // 空の時は点線枠（CSS側 is-empty）
+      const emptyCls = src ? "" : " is-empty";
 
-      el.innerHTML = `
-        <div class="disp-top">
-          <div class="disp-title">棚${s.slot}</div>
-          <div class="badge ${badge.cls}">${badge.text}</div>
-        </div>
-
-        ${s.state === "listed" && !locked ? `<div class="queue"></div>` : ""}
-
-        <div class="disp-body">
-          <img class="thumb" alt="" ${src ? `src="${escapeHtmlAttr(src)}"` : ""}>
-          <div class="disp-name">${escapeHtml(name)}</div>
-          <div class="disp-sub">${escapeHtml(sub)}</div>
-          ${s.item ? `<div class="disp-sub muted">基準 ${basePriceFor(s.item)} / 価格:${tierLabel(s.priceTier)} / 時間:${durLabel(s.duration)}</div>` : ``}
-        </div>
-
-        ${locked ? `<div class="disp-lock"><span>🔒 ロック中</span></div>` : ``}
+      // data を仕込む：クリックで openSlotModal(globalIndex) を呼ぶ
+      return `
+        <button class="shelf-slot slot${slotInShelf}${emptyCls}"
+          type="button"
+          data-idx="${globalIndex}"
+          data-shelf="${shelfNo}"
+          data-pos="${slotInShelf}"
+          aria-label="棚${shelfNo} スロット${slotInShelf} ${badge.text}">
+          ${img}
+        </button>
       `;
+    }).join("");
 
-      if(!locked){
-        el.addEventListener("click", () => openSlotModal(idx));
-        el.addEventListener("keydown", (e) => { if(e.key === "Enter") openSlotModal(idx); });
-        el.tabIndex = 0;
-      }
+    el.innerHTML = `
+      <div class="disp-top">
+        <div class="disp-title">棚${shelfNo}</div>
+        <div class="badge ${shelfBadge.cls}">${shelfBadge.text}</div>
+      </div>
 
-      // 行列吹き出し
-      if(s.state === "listed" && !locked){
-        hasListed = true;
-        const q = el.querySelector(".queue");
-        if(q){
-          const seed = (st.seed + idx * 101 + Math.floor(now()/3500)) >>> 0;
-          const lines = getQueueLines(seed, 3);
-          q.innerHTML = lines.map(t => `<div class="bubble">${escapeHtml(t)}</div>`).join("");
-        }
-      }
+      ${anyListedInShelf ? `<div class="queue"></div>` : ""}
 
-      wrap.appendChild(el);
-    });
+      <div class="shelf-stage">
+        ${slotsHTML}
+      </div>
 
-    if(hasListed) scheduleQueueTick();
-  }
+      ${shelfLocked ? `<div class="disp-lock"><span>🔒 ロック中</span></div>` : ``}
+    `;
 
-  function dispBadge(s, locked){
-    if(locked) return { cls:"", text:"LOCK" };
-    if(s.state === "listed") return { cls:"wait", text:"出店中" };
-    if(s.state === "done") return { cls:"ok", text:"結果" };
-    if(!s.item) return { cls:"", text:"空き" };
-    return { cls:"", text:"準備" };
-  }
-
-  function tierLabel(id){ return (PRICE_TIERS.find(x=>x.id===id)?.label) || "普通"; }
-  function durLabel(id){ return (DURATIONS.find(x=>x.id===id)?.label) || "3時間"; }
-
-  function renderInventory(){
-    const wrap = $("#rotenInventory");
-    if(!wrap) return;
-
-    const q = ($("#rotenInvSearch")?.value || "").trim().toLowerCase();
-    const sort = $("#rotenInvSort")?.value || "new";
-
-    let list = buildGroupedInventory();
-
-    if(q){
-      list = list.filter(it =>
-        String(it.id).toLowerCase().includes(q) ||
-        String(it.name).toLowerCase().includes(q)
-      );
-    }
-
-    list.sort((a,b) => {
-      if(sort === "id") return String(a.id).localeCompare(String(b.id));
-      if(sort === "rarity") return rarityRank(b.rarity) - rarityRank(a.rarity);
-      if(sort === "count") return (b.count||0) - (a.count||0);
-      return (b.latestAt||0) - (a.latestAt||0);
-    });
-
-    wrap.innerHTML = "";
-
-    if(!list.length){
-      const empty = document.createElement("div");
-      empty.className = "muted";
-      empty.textContent = "持ち物がありません。";
-      wrap.appendChild(empty);
-      return;
-    }
-
-    list.forEach(it => {
-      const el = document.createElement("div");
-      el.className = "inv-card";
-      const src = thumbSrc(it);
-      el.innerHTML = `
-        <img class="thumb" alt="" ${src ? `src="${escapeHtmlAttr(src)}"` : ""}>
-        <div class="inv-meta">
-          <div class="inv-name">${escapeHtml(it.name)}</div>
-          <div class="inv-sub">${escapeHtml(it.id)} / 基準 ${basePriceFor(it)}オクト</div>
-        </div>
-        <div class="inv-right">
-          ${rarityPillHtml(it.rarity)}
-          <div class="pill">×${it.count}</div>
-        </div>
-      `;
-      wrap.appendChild(el);
-    });
-  }
-
-  function renderLog(){
-    const wrap = $("#rotenLog");
-    if(!wrap) return;
-
-    const log = lsGet(LS.log, []);
-    wrap.innerHTML = "";
-
-    if(!log.length){
-      const d = document.createElement("div");
-      d.className = "muted";
-      d.textContent = "まだログがありません。";
-      wrap.appendChild(d);
-      return;
-    }
-
-    log.forEach(item => {
-      const el = document.createElement("div");
-      el.className = "log-item";
-      el.innerHTML = `
-        <div class="t">${escapeHtml(item.title || "ログ")}</div>
-        <div class="d">${escapeHtml(item.desc || "")}</div>
-        <div class="k"></div>
-      `;
-      const k = el.querySelector(".k");
-      (item.chips||[]).forEach(c => {
-        const p = document.createElement("div");
-        p.className = "pill";
-        p.textContent = c;
-        k.appendChild(p);
+    // スロットクリック（棚全体クリックではなく、スロット単位）
+    if(!shelfLocked){
+      el.querySelectorAll(".shelf-slot").forEach(btn=>{
+        btn.addEventListener("click", (ev)=>{
+          const idx = Number(btn.dataset.idx);
+          // 解放枠外は反応させない（念のため）
+          if(idx >= unlockedSlots) return;
+          openSlotModal(idx);
+        });
       });
-      wrap.appendChild(el);
-    });
+    }
+
+    // 行列吹き出し（棚ごとに表示）
+    if(anyListedInShelf){
+      hasListed = true;
+      const q = el.querySelector(".queue");
+      if(q){
+        const seed = (st.seed + shelfIndex * 777 + Math.floor(now()/3500)) >>> 0;
+        const lines = getQueueLines(seed, 3);
+        q.innerHTML = lines.map(t => `<div class="bubble">${escapeHtml(t)}</div>`).join("");
+      }
+    }
+
+    wrap.appendChild(el);
   }
+
+  if(hasListed) scheduleQueueTick();
+}
+
+/* ==========================================
+   ここまで：棚表示の完全改修
+   ========================================== */
+
+
+function renderInventory(){
+  const wrap = $("#rotenInventory");
+  if(!wrap) return;
+
+  const q = ($("#rotenInvSearch")?.value || "").trim().toLowerCase();
+  const sort = $("#rotenInvSort")?.value || "new";
+
+  let list = buildGroupedInventory();
+
+  if(q){
+    list = list.filter(it =>
+      String(it.id).toLowerCase().includes(q) ||
+      String(it.name).toLowerCase().includes(q)
+    );
+  }
+
+  list.sort((a,b) => {
+    if(sort === "id") return String(a.id).localeCompare(String(b.id));
+    if(sort === "rarity") return rarityRank(b.rarity) - rarityRank(a.rarity);
+    if(sort === "count") return (b.count||0) - (a.count||0);
+    return (b.latestAt||0) - (a.latestAt||0);
+  });
+
+  wrap.innerHTML = "";
+
+  if(!list.length){
+    const empty = document.createElement("div");
+    empty.className = "muted";
+    empty.textContent = "持ち物がありません。";
+    wrap.appendChild(empty);
+    return;
+  }
+
+  list.forEach(it => {
+    const el = document.createElement("div");
+    el.className = "inv-card";
+    const src = thumbSrc(it);
+    el.innerHTML = `
+      <img class="thumb" alt="" ${src ? `src="${escapeHtmlAttr(src)}"` : ""}>
+      <div class="inv-meta">
+        <div class="inv-name">${escapeHtml(it.name)}</div>
+        <div class="inv-sub">${escapeHtml(it.id)} / 基準 ${basePriceFor(it)}オクト</div>
+      </div>
+      <div class="inv-right">
+        ${rarityPillHtml(it.rarity)}
+        <div class="pill">×${it.count}</div>
+      </div>
+    `;
+    wrap.appendChild(el);
+  });
+}
+
+function renderLog(){
+  const wrap = $("#rotenLog");
+  if(!wrap) return;
+
+  const log = lsGet(LS.log, []);
+  wrap.innerHTML = "";
+
+  if(!log.length){
+    const d = document.createElement("div");
+    d.className = "muted";
+    d.textContent = "まだログがありません。";
+    wrap.appendChild(d);
+    return;
+  }
+
+  log.forEach(item => {
+    const el = document.createElement("div");
+    el.className = "log-item";
+    el.innerHTML = `
+      <div class="t">${escapeHtml(item.title || "ログ")}</div>
+      <div class="d">${escapeHtml(item.desc || "")}</div>
+      <div class="k"></div>
+    `;
+    const k = el.querySelector(".k");
+    (item.chips||[]).forEach(c => {
+      const p = document.createElement("div");
+      p.className = "pill";
+      p.textContent = c;
+      k.appendChild(p);
+    });
+    wrap.appendChild(el);
+  });
+}
 
   // ===== タブ切替でも反映されるように =====
   function renderAll(){
