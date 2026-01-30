@@ -1,31 +1,21 @@
 /* assets/roten.js
-   ✅ 図鑑(tf_v1_book.got) を唯一の所持源にする
-   ✅ 5棚 × 各6枠（3段×2）
-   ✅ 棚ロック解除（初期2棚→最大5棚）
-   ✅ 出店時間・売却判定
-   ✅ 売れた演出モーダル
-   ✅ 行列吹き出し（出店中の棚に表示）
+   - 棚1〜5タップで出品（初期2枠解放）
+   - 所持カードは同IDまとめ表示（×枚数）
+   - 出店中は行列（吹き出し）を表示（数秒ごと更新）
+   - 畑(tf_v1_book.got) → 露店在庫(roten_v1_inventory) 同期
 */
 
 (() => {
-  /* =========================
-     Storage Keys
-  ========================= */
   const LS = {
-    octo: "roten_v2_octo",
-    myshop: "roten_v2_myshop",
-    market: "roten_v2_market",
-    log: "roten_v2_log",
+    octo: "roten_v1_octo",
+    inv: "roten_v1_inventory",
+    myshop: "roten_v1_myshop",
+    market: "roten_v1_market",
+    log: "roten_v1_log",
     farmBook: "tf_v1_book",
-    unlocked: "roten_v2_shop_unlocked", // 解放棚数（1〜5）
+    syncSeen: "roten_v1_sync_seen",
+    unlocked: "roten_v1_shop_unlocked" // ★解放棚数（1〜5）
   };
-
-  /* =========================
-     Config
-  ========================= */
-  const SHELF_COUNT = 5;
-  const SLOTS_PER_SHELF = 6;
-  const TOTAL_SLOTS = SHELF_COUNT * SLOTS_PER_SHELF;
 
   const PRICE_TIERS = [
     { id:"low",  label:"安い", mult: 0.9 },
@@ -38,6 +28,7 @@
     { id:"6h", label:"6時間", ms: 6 * 60 * 60 * 1000 },
   ];
 
+  // 行列吹き出し（軽いテンポ）
   const QUEUE_LINES = [
     "見てるだけ…見るだけだから…。",
     "今日の棚、匂う。",
@@ -49,10 +40,7 @@
     "棚が呼んでる。"
   ];
 
-  /* =========================
-     Utils
-  ========================= */
-  const $  = (sel, root=document) => root.querySelector(sel);
+  const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
   const now = () => Date.now();
 
@@ -64,13 +52,6 @@
   }
   function lsSet(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 
-  function escapeHtml(s){
-    return String(s)
-      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;").replaceAll("'","&#39;");
-  }
-  function escapeHtmlAttr(s){ return escapeHtml(s).replaceAll("`","&#96;"); }
-
   function todayKeyJST(){
     const d = new Date();
     const y = d.getFullYear();
@@ -79,111 +60,88 @@
     return `${y}-${m}-${da}`;
   }
 
-  function hashToInt(s){
-    let h = 2166136261;
-    for(let i=0;i<s.length;i++){
-      h ^= s.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    return (h >>> 0);
+  function addLog(item){
+    const log = lsGet(LS.log, []);
+    log.unshift(item);
+    if(log.length > 60) log.length = 60;
+    lsSet(LS.log, log);
   }
-  function hashToIndex(s, mod){ return hashToInt(s) % mod; }
 
-  /* =========================
-     Octo
-  ========================= */
   function ensureOcto(){
     const o = localStorage.getItem(LS.octo);
-    if(o == null) localStorage.setItem(LS.octo, "200");
+    if(o == null) localStorage.setItem(LS.octo, String(200));
   }
   function getOcto(){ return Number(localStorage.getItem(LS.octo) || "0") || 0; }
   function setOcto(v){ localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(v)))); }
 
-  /* =========================
-     Unlock shelves
-  ========================= */
+  // ===== 解放棚数 =====
   function ensureUnlocked(){
     const v = localStorage.getItem(LS.unlocked);
-    if(v == null) localStorage.setItem(LS.unlocked, "2"); // 初期2棚
+    if(v == null) localStorage.setItem(LS.unlocked, "2"); // 初期2
   }
-  function getUnlockedShelves(){
+  function getUnlocked(){
     const n = Number(localStorage.getItem(LS.unlocked) || "2");
     return Math.max(1, Math.min(5, Math.floor(n)));
   }
-  function getUnlockedSlots(){
-    return getUnlockedShelves() * SLOTS_PER_SHELF;
-  }
 
-  /* =========================
-     Log
-  ========================= */
-  function addLog(item){
-    const log = lsGet(LS.log, []);
-    log.unshift(item);
-    if(log.length > 80) log.length = 80;
-    lsSet(LS.log, log);
-  }
+  // ===== 図鑑→在庫 同期 =====
+  function syncFromFarmBook(){
+    const book = lsGet(LS.farmBook, null);
+    const got = Array.isArray(book?.got) ? book.got : [];
+    if(!got.length) return 0;
 
-  /* =========================
-     Book (Dex) = source of truth
-     tf_v1_book: { got:[{id,name,img,rarity,at}, ...] }
-  ========================= */
-  function getBook(){
-    const b = lsGet(LS.farmBook, null);
-    const got = Array.isArray(b?.got) ? b.got : [];
-    return got.filter(x => x && x.id);
-  }
-  function setBookGot(newGot){
-    // 形を {got:...} に統一して戻す
-    lsSet(LS.farmBook, { got: newGot });
-  }
+    const seen = lsGet(LS.syncSeen, {});
+    let inv = lsGet(LS.inv, []);
+    if(!Array.isArray(inv)) inv = [];
 
-  // 図鑑から「同IDまとめ」の所持リストを作る
-  function buildGroupedFromBook(){
-    const got = getBook();
-    const map = new Map(); // id -> {id,name,rarity,img, latestAt, count}
-    for(const it of got){
-      const id = String(it.id);
-      const cur = map.get(id);
-      const at = Number(it.at || 0);
-      if(!cur){
-        map.set(id,{
-          id,
-          name: String(it.name || id),
-          rarity: String(it.rarity || "N"),
-          img: it.img || null,
-          latestAt: at,
-          count: 1
-        });
-      }else{
-        cur.count += 1;
-        if(at >= cur.latestAt){
-          cur.latestAt = at;
-          cur.name = String(it.name || cur.name);
-          cur.rarity = String(it.rarity || cur.rarity);
-          cur.img = it.img || cur.img;
-        }
-      }
+    let added = 0;
+    for(const c of got){
+      if(!c || !c.id) continue;
+      const at = (c.at != null) ? String(c.at) : "";
+      const key = at ? `${c.id}@${at}` : `${c.id}`;
+      if(seen[key]) continue;
+
+      inv.push({
+        id: String(c.id),
+        name: String(c.name || c.id),
+        img: c.img || null,
+        rarity: String(c.rarity || "N"),
+        at: (c.at != null) ? Number(c.at) : now()
+      });
+
+      seen[key] = true;
+      added++;
     }
-    return Array.from(map.values());
+
+    if(added > 0){
+      lsSet(LS.inv, inv);
+      lsSet(LS.syncSeen, seen);
+      addLog({ at: now(), title: `畑から入荷 +${added}`, desc: `図鑑の新規入手分が露店在庫に追加された。`, chips:["同期"] });
+    }
+    return added;
   }
 
-  // 図鑑から1枚消費（売れた/棚に置いた後の消費などに使う）
-  function removeOneFromBookById(id){
-    const got = getBook();
-    const idx = got.findIndex(x => x && x.id === id);
-    if(idx < 0) return false;
-    got.splice(idx, 1);
-    setBookGot(got);
-    return true;
+  function ensureTestInventoryIfEmpty(){
+    let inv = lsGet(LS.inv, []);
+    if(Array.isArray(inv) && inv.length) return;
+
+    syncFromFarmBook();
+    inv = lsGet(LS.inv, []);
+    if(Array.isArray(inv) && inv.length) return;
+
+    // テスト（同ID複数枚も入れる）
+    const sample = [
+      { id:"TN-001", name:"焼きたて微笑み", rarity:"N", at: now()-1000*60*60*2, img:null },
+      { id:"TN-001", name:"焼きたて微笑み", rarity:"N", at: now()-1000*60*60*2+1, img:null },
+      { id:"TN-010", name:"マヨの奇跡", rarity:"R", at: now()-1000*60*60*5, img:null },
+      { id:"TN-030", name:"職人の手癖", rarity:"SR", at: now()-1000*60*60*20, img:null },
+      { id:"TN-070", name:"UR：焼かれし紋章", rarity:"UR", at: now()-1000*60*60*60, img:null },
+    ];
+    lsSet(LS.inv, sample);
+    addLog({ at: now(), title:`テストカード投入`, desc:`畑側のカードが見つからなかったため、テスト用カードを追加した。`, chips:["テスト"] });
   }
 
-  function thumbSrc(item){ return item?.img ? String(item.img) : ""; }
-
-  /* =========================
-     Market / Customers (existing data files)
-     - roten.market.js / roten.customers.js を前提
-  ========================= */
+  // ===== 市場 =====
   function getMarketState(){ return lsGet(LS.market, null); }
   function setMarketState(v){ lsSet(LS.market, v); }
 
@@ -205,13 +163,43 @@
     return st;
   }
 
+  function hashToInt(s){
+    let h = 2166136261;
+    for(let i=0;i<s.length;i++){
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0);
+  }
+  function hashToIndex(s, mod){ return hashToInt(s) % mod; }
+
+  // ===== 棚データ（最大5） =====
+  function defaultMyShop(){
+    const slots = [];
+    for(let i=1;i<=5;i++){
+      slots.push({
+        slot: i,
+        state: "empty",    // empty/ready/listed/done
+        item: null,        // {id,name,img,rarity,at} ※棚には1枚だけ
+        priceTier: "mid",
+        duration: "3h",
+        startedAt: null,
+        endsAt: null,
+        lastResult: null
+      });
+    }
+    return { slots };
+  }
+  function getMyShop(){ return lsGet(LS.myshop, defaultMyShop()); }
+  function setMyShop(shop){ lsSet(LS.myshop, shop); }
+
+  // ===== 客層抽選（売却判定） =====
   function getActiveCustomers(){
     const base = window.ROTEN_CUSTOMERS?.base || [];
     const slots = window.ROTEN_CUSTOMERS?.collabSlots || [];
     const collabs = slots.filter(s => s && s.active && s.data).map(s => s.data);
     return base.concat(collabs);
   }
-
   function makeRng(seed){
     let x = seed >>> 0;
     return () => {
@@ -221,7 +209,6 @@
       return (x >>> 0) / 4294967296;
     };
   }
-
   function pickCustomerWeighted(list, rng){
     let total = 0;
     for(const c of list){ const w = Number(c.weight||0); if(w>0) total += w; }
@@ -235,73 +222,23 @@
     }
     return list[list.length-1] || null;
   }
-
   function rarityRank(r){
     switch(r){
       case "N": return 1; case "R": return 2; case "SR": return 3; case "UR": return 4; case "LR": return 5;
       default: return 1;
     }
   }
-
   function basePriceFor(item){
     const bp = window.ROTEN_MARKET?.basePrices || {N:10,R:25,SR:60,UR:120,LR:200};
     return Number(bp[item.rarity] || 10);
   }
   function priceTierMult(id){ return (PRICE_TIERS.find(x=>x.id===id)?.mult) ?? 1.0; }
   function durationMs(id){ return (DURATIONS.find(x=>x.id===id)?.ms) ?? (3*60*60*1000); }
-
   function pickLine(customer, rng){
     const lines = Array.isArray(customer.lines) ? customer.lines : [];
     if(!lines.length) return "……";
     return lines[Math.floor(rng()*lines.length)] || lines[0];
   }
-
-  /* =========================
-     Shop (30 slots)
-  ========================= */
-  function defaultMyShop(){
-    const slots = [];
-    for(let i=0;i<TOTAL_SLOTS;i++){
-      slots.push({
-        slot: i + 1,          // 1..30
-        state: "empty",       // empty/ready/listed/done
-        item: null,           // {id,name,img,rarity,at}
-        priceTier: "mid",
-        duration: "3h",
-        startedAt: null,
-        endsAt: null,
-        lastResult: null
-      });
-    }
-    return { slots };
-  }
-
-  function getMyShop(){ return lsGet(LS.myshop, defaultMyShop()); }
-  function setMyShop(shop){ lsSet(LS.myshop, shop); }
-
-  // 古いデータ（5枠）だったら自動拡張して移行
-  function ensureShopSize(){
-    const shop = getMyShop();
-    if(!shop || !Array.isArray(shop.slots)) {
-      setMyShop(defaultMyShop());
-      return;
-    }
-    if(shop.slots.length === TOTAL_SLOTS) return;
-
-    const newShop = defaultMyShop();
-    // 既存の先頭分だけ移植
-    for(let i=0;i<Math.min(shop.slots.length, newShop.slots.length); i++){
-      const s = shop.slots[i];
-      if(!s) continue;
-      newShop.slots[i] = {
-        ...newShop.slots[i],
-        ...s,
-        slot: i+1
-      };
-    }
-    setMyShop(newShop);
-  }
-
   function slotCountItems(shop){
     return shop.slots.filter(s => s.item && s.state !== "empty").length;
   }
@@ -310,7 +247,6 @@
     const activeCustomers = getActiveCustomers();
     const rng = makeRng((marketSeed + slot.slot * 99991 + (slot.startedAt||0)) >>> 0);
 
-    // 王様抽選
     const king = activeCustomers.find(c=>c.id==="king");
     const kingChanceBase = 0.003; // 0.3%
     const kingBoost = slotCountItems(getMyShop()) >= 2 ? 1.25 : 1.0;
@@ -345,21 +281,52 @@
     return { type: sold ? "SOLD":"UNSOLD", customer, buyMult, sellPrice, line, p };
   }
 
-  /* =========================
-     UI: Back button
-  ========================= */
-  function bindBack(){
-    const btn = $("#rotenBackBtn");
-    if(!btn) return;
-    btn.addEventListener("click", () => {
-      if(history.length > 1) history.back();
-      else location.href = "index.html";
-    });
+  // ===== 在庫を「同IDでまとめる」 =====
+  function buildGroupedInventory(){
+    const inv = lsGet(LS.inv, []).filter(x => x && x.id);
+    const map = new Map(); // id -> { id,name,rarity,img, latestAt, count }
+    for(const it of inv){
+      const key = String(it.id);
+      const cur = map.get(key);
+      if(!cur){
+        map.set(key, {
+          id: String(it.id),
+          name: String(it.name || it.id),
+          rarity: String(it.rarity || "N"),
+          img: it.img || null,
+          latestAt: Number(it.at || 0),
+          count: 1
+        });
+      }else{
+        cur.count += 1;
+        const at = Number(it.at || 0);
+        if(at >= cur.latestAt){
+          cur.latestAt = at;
+          // 画像や名前が後から良い情報で入る場合もあるので更新
+          cur.name = String(it.name || cur.name);
+          cur.rarity = String(it.rarity || cur.rarity);
+          cur.img = it.img || cur.img;
+        }
+      }
+    }
+    return Array.from(map.values());
   }
 
-  /* =========================
-     UI: Tabs
-  ========================= */
+  function removeOneFromInventoryById(id){
+    const inv = lsGet(LS.inv, []);
+    const idx = inv.findIndex(x => x && x.id === id);
+    if(idx >= 0){
+      inv.splice(idx, 1);
+      lsSet(LS.inv, inv);
+      return true;
+    }
+    return false;
+  }
+
+  // ===== 画像 =====
+  function thumbSrc(item){ return item?.img ? String(item.img) : ""; }
+
+  // ===== UI：タブ =====
   function initTabs(){
     const tabs = $$(".roten-tab");
     const panels = $$(".roten-panel");
@@ -374,286 +341,11 @@
     });
   }
 
-  /* =========================
-     Render top / market / debug
-  ========================= */
-  function renderTop(){
-    const octoEl = $("#rotenOcto");
-    if(octoEl) octoEl.textContent = String(getOcto());
-  }
-
-  function renderMarket(){
-    const st = ensureMarket();
-    $("#rotenMood") && ($("#rotenMood").textContent = st.moodLabel || "…");
-    $("#rotenRollover") && ($("#rotenRollover").textContent = "日付が変わったら更新");
-  }
-
-  function renderNpcDebug(){
-    const c = window.ROTEN_CUSTOMERS;
-    const m = ensureMarket();
-    const npc = $("#rotenDebugNpc");
-    if(!npc) return;
-    npc.textContent =
-      "ROTEN_CUSTOMERS.base: " + (c?.base?.length ?? "ERR") + "人\n" +
-      "collabSlots: " + (c?.collabSlots?.length ?? "ERR") + "枠\n" +
-      "今日のムード: " + (m?.moodLabel ?? "ERR") + "\n" +
-      "解放棚数: " + getUnlockedShelves() + "/5\n" +
-      "畑キー(tf_v1_book): " + (localStorage.getItem(LS.farmBook) ? "OK" : "無し");
-  }
-
-  /* =========================
-     Queue bubbles
-  ========================= */
-  let queueTimer = null;
-
-  function getQueueLines(seed, count){
-    const rng = makeRng(seed >>> 0);
-    const lines = [];
-    for(let i=0;i<count;i++){
-      const idx = Math.floor(rng() * QUEUE_LINES.length);
-      lines.push(QUEUE_LINES[idx] || "……");
-    }
-    return lines;
-  }
-
-  function scheduleQueueTick(){
-    if(queueTimer) return;
-    queueTimer = setTimeout(() => {
-      queueTimer = null;
-      renderDisplays(); // 吹き出し更新
-    }, 3500);
-  }
-
-  /* =========================
-     Result modal (演出)
-  ========================= */
-  function ensureResultModal(){
-    if($("#rotenResultModal")) return;
-
-    const div = document.createElement("div");
-    div.id = "rotenResultModal";
-    div.className = "modal";
-    div.innerHTML = `
-      <div class="modal__backdrop" data-close="1"></div>
-      <div class="modal__sheet" role="dialog" aria-label="結果">
-        <div class="modal__grab"></div>
-        <div class="modal__head">
-          <div class="modal__title" id="rotenResultTitle">結果</div>
-          <button class="btn btn-ghost modal__x" type="button" data-close="1">×</button>
-        </div>
-        <div class="modal__body" id="rotenResultBody"></div>
-      </div>
-    `;
-    document.body.appendChild(div);
-
-    div.addEventListener("click", (e) => {
-      const t = e.target;
-      if(!(t instanceof HTMLElement)) return;
-      if(t.getAttribute("data-close") === "1"){
-        div.classList.remove("is-open");
-        div.setAttribute("aria-hidden", "true");
-      }
-    });
-  }
-
-  function openResultModal({title, html}){
-    ensureResultModal();
-    const m = $("#rotenResultModal");
-    const t = $("#rotenResultTitle");
-    const b = $("#rotenResultBody");
-    if(t) t.textContent = title || "結果";
-    if(b) b.innerHTML = html || "";
-    m.classList.add("is-open");
-    m.setAttribute("aria-hidden", "false");
-  }
-
-  /* =========================
-     Displays (5棚×6枠)
-  ========================= */
-  function dispBadge(s, locked){
-    if(locked) return { cls:"", text:"LOCK" };
-    if(s.state === "listed") return { cls:"wait", text:"出店中" };
-    if(s.state === "done") return { cls:"ok", text:"結果" };
-    if(!s.item) return { cls:"", text:"空き" };
-    return { cls:"", text:"準備" };
-  }
-
-  function renderDisplays(){
-    const wrap = $("#rotenDisplays");
-    if(!wrap) return;
-
-    const shop = getMyShop();
-    const st = ensureMarket();
-    const unlockedSlots = getUnlockedSlots();
-    const unlockedShelves = getUnlockedShelves();
-
-    // 期限切れ→結果化（全30枠）
-    for(const s of shop.slots){
-      if(s.state === "listed" && s.endsAt && now() >= s.endsAt){
-        s.state = "done";
-        s.lastResult = resolveSlotSale(s, st.seed);
-      }
-    }
-    setMyShop(shop);
-
-    wrap.innerHTML = "";
-    let hasListed = false;
-
-    for(let shelfIndex=0; shelfIndex<SHELF_COUNT; shelfIndex++){
-      const shelfNo = shelfIndex + 1;
-      const shelfLocked = (shelfNo > unlockedShelves);
-      const base = shelfIndex * SLOTS_PER_SHELF;
-
-      // 棚内に出店中があるか
-      const anyListed = !shelfLocked && shop.slots.slice(base, base+SLOTS_PER_SHELF).some(x=>x.state==="listed");
-      if(anyListed) hasListed = true;
-
-      // 棚バッジ（ざっくり）
-      let shelfBadge = {cls:"", text:"空き"};
-      if(shelfLocked) shelfBadge = {cls:"", text:"LOCK"};
-      else{
-        const slice = shop.slots.slice(base, base+SLOTS_PER_SHELF);
-        if(slice.some(x=>x.state==="listed")) shelfBadge = {cls:"wait", text:"出店中"};
-        else if(slice.some(x=>x.state==="done")) shelfBadge = {cls:"ok", text:"結果"};
-        else if(slice.some(x=>x.item)) shelfBadge = {cls:"", text:"準備"};
-      }
-
-      const el = document.createElement("div");
-      el.className = "disp disp-shelf" + (shelfLocked ? " is-locked" : "");
-      el.setAttribute("data-shelf", String(shelfNo));
-
-      const slotsHTML = Array.from({length:SLOTS_PER_SHELF}, (_,i)=>{
-        const pos = i + 1;               // 1..6
-        const idx = base + i;            // 0..29
-        const s = shop.slots[idx];
-        const locked = shelfLocked || (idx >= unlockedSlots);
-        const badge = dispBadge(s, locked);
-
-        const src = s?.item ? thumbSrc(s.item) : "";
-        const img = src ? `<img alt="" src="${escapeHtmlAttr(src)}">` : "";
-        const emptyCls = src ? "" : " is-empty";
-
-        return `
-          <button class="shelf-slot slot${pos}${emptyCls}"
-            type="button"
-            data-idx="${idx}"
-            aria-label="棚${shelfNo} スロット${pos} ${badge.text}">
-            ${img}
-          </button>
-        `;
-      }).join("");
-
-      el.innerHTML = `
-        <div class="disp-top">
-          <div class="disp-title">棚${shelfNo}</div>
-          <div class="badge ${shelfBadge.cls}">${shelfBadge.text}</div>
-        </div>
-
-        ${anyListed ? `<div class="queue"></div>` : ""}
-
-        <div class="shelf-stage">
-          ${slotsHTML}
-        </div>
-
-        ${shelfLocked ? `<div class="disp-lock"><span>🔒 ロック中</span></div>` : ``}
-      `;
-
-      // スロットクリックでモーダル
-      if(!shelfLocked){
-        el.querySelectorAll(".shelf-slot").forEach(btn=>{
-          btn.addEventListener("click", ()=>{
-            const idx = Number(btn.dataset.idx);
-            if(idx >= unlockedSlots) return;
-            openSlotModal(idx);
-          });
-        });
-      }
-
-      // 行列
-      if(anyListed){
-        const q = el.querySelector(".queue");
-        if(q){
-          const seed = (st.seed + shelfIndex * 777 + Math.floor(now()/3500)) >>> 0;
-          const lines = getQueueLines(seed, 3);
-          q.innerHTML = lines.map(t => `<div class="bubble">${escapeHtml(t)}</div>`).join("");
-        }
-      }
-
-      wrap.appendChild(el);
-    }
-
-    if(hasListed) scheduleQueueTick();
-  }
-
-  /* =========================
-     Inventory render (from book)
-  ========================= */
-  function rarityPillHtml(r){
-    if(r==="LR") return `<div class="pill lr">LR</div>`;
-    if(r==="UR") return `<div class="pill ur">UR</div>`;
-    if(r==="SR") return `<div class="pill sr">SR</div>`;
-    return `<div class="pill">${escapeHtml(r)}</div>`;
-  }
-
-  function renderInventory(){
-    const wrap = $("#rotenInventory");
-    if(!wrap) return;
-
-    const q = ($("#rotenInvSearch")?.value || "").trim().toLowerCase();
-    const sort = $("#rotenInvSort")?.value || "new";
-
-    let list = buildGroupedFromBook();
-
-    if(q){
-      list = list.filter(it =>
-        String(it.id).toLowerCase().includes(q) ||
-        String(it.name).toLowerCase().includes(q)
-      );
-    }
-
-    list.sort((a,b) => {
-      if(sort === "id") return String(a.id).localeCompare(String(b.id));
-      if(sort === "rarity") return rarityRank(b.rarity) - rarityRank(a.rarity);
-      if(sort === "count") return (b.count||0) - (a.count||0);
-      return (b.latestAt||0) - (a.latestAt||0);
-    });
-
-    wrap.innerHTML = "";
-
-    if(!list.length){
-      const empty = document.createElement("div");
-      empty.className = "muted";
-      empty.textContent = "持ち物がありません（畑で収穫すると図鑑に入ります）。";
-      wrap.appendChild(empty);
-      return;
-    }
-
-    list.forEach(it => {
-      const el = document.createElement("div");
-      el.className = "inv-card";
-      const src = thumbSrc(it);
-      el.innerHTML = `
-        <img class="thumb" alt="" ${src ? `src="${escapeHtmlAttr(src)}"` : ""}>
-        <div class="inv-meta">
-          <div class="inv-name">${escapeHtml(it.name)}</div>
-          <div class="inv-sub">${escapeHtml(it.id)} / 基準 ${basePriceFor(it)}オクト</div>
-        </div>
-        <div class="inv-right">
-          ${rarityPillHtml(it.rarity)}
-          <div class="pill">×${it.count}</div>
-        </div>
-      `;
-      wrap.appendChild(el);
-    });
-  }
-
-  /* =========================
-     Modal (assign/start/result/cancel)
-  ========================= */
+  // ===== モーダル状態 =====
   const modalState = {
     open: false,
-    slotIndex: 0, // 0..29
-    pickId: null,
+    slotIndex: 0,       // 0..4
+    pickId: null,       // 選んだカードID（グループ）
     tier: "mid",
     dur: "3h"
   };
@@ -666,23 +358,19 @@
     modalState.open = !!on;
   }
 
-  function slotLabel(idx){
-    const shelf = Math.floor(idx / SLOTS_PER_SHELF) + 1;
-    const pos = (idx % SLOTS_PER_SHELF) + 1;
-    return { shelf, pos };
-  }
-
   function openSlotModal(slotIndex){
-    const unlockedSlots = getUnlockedSlots();
-    if(slotIndex >= unlockedSlots) return;
+    const unlocked = getUnlocked();
+    if(slotIndex >= unlocked) return; // locked
 
     modalState.slotIndex = slotIndex;
 
+    // 棚設定の初期値を引き継ぐ
     const shop = getMyShop();
     const slot = shop.slots[slotIndex];
-
     modalState.tier = slot?.priceTier || "mid";
     modalState.dur  = slot?.duration  || "3h";
+
+    // 既に棚にカードがある場合は、それを選択状態にする
     modalState.pickId = slot?.item?.id || null;
 
     renderModal();
@@ -732,6 +420,7 @@
       closeModal();
     });
 
+    // 検索/ソート
     $("#rotenPickSearch")?.addEventListener("input", renderPickList);
     $("#rotenPickSort")?.addEventListener("change", renderPickList);
 
@@ -742,23 +431,11 @@
 
   function renderModal(){
     const title = $("#rotenModalTitle");
-    const lab = slotLabel(modalState.slotIndex);
-    if(title) title.textContent = `棚${lab.shelf} - スロット${lab.pos}`;
+    if(title) title.textContent = `棚${modalState.slotIndex + 1}`;
 
     renderModalSlotBox();
     renderPickList();
     renderModalControls();
-  }
-
-  function timeLeftText(endsAt){
-    const ms = Math.max(0, (endsAt||0) - now());
-    const sec = Math.floor(ms/1000);
-    const h = Math.floor(sec/3600);
-    const m = Math.floor((sec%3600)/60);
-    const s = sec%60;
-    if(h>0) return `${h}h ${m}m`;
-    if(m>0) return `${m}m ${s}s`;
-    return `${s}s`;
   }
 
   function renderModalSlotBox(){
@@ -768,6 +445,7 @@
     const shop = getMyShop();
     const s = shop.slots[modalState.slotIndex];
 
+    // 出店中は「開始」など無効にしたいので、情報を出す
     let stateTxt = "空き";
     if(s.state === "ready") stateTxt = "準備中";
     if(s.state === "listed") stateTxt = "出店中";
@@ -810,30 +488,10 @@
     `;
 
     // ボタンイベント
-    $("#rotenModalCancel")?.addEventListener("click", () => {
-      cancelListing(modalState.slotIndex);
-      renderAll();
-      renderModal();
-    });
-
-    $("#rotenModalResult")?.addEventListener("click", () => {
-      // 結果演出は別モーダルで出すので、メインモーダルは閉じる
-      showResult(modalState.slotIndex);
-      closeModal();
-      renderAll();
-    });
-
-    $("#rotenModalClear")?.addEventListener("click", () => {
-      clearSlot(modalState.slotIndex);
-      renderAll();
-      renderModal();
-    });
-
-    $("#rotenModalUnassign")?.addEventListener("click", () => {
-      unassignItem(modalState.slotIndex);
-      renderAll();
-      renderModal();
-    });
+    $("#rotenModalCancel")?.addEventListener("click", () => { cancelListing(modalState.slotIndex); renderAll(); renderModal(); });
+    $("#rotenModalResult")?.addEventListener("click", () => { showResult(modalState.slotIndex); renderAll(); renderModal(); });
+    $("#rotenModalClear")?.addEventListener("click", () => { clearSlot(modalState.slotIndex); renderAll(); renderModal(); });
+    $("#rotenModalUnassign")?.addEventListener("click", () => { unassignItem(modalState.slotIndex); renderAll(); renderModal(); });
   }
 
   function renderPickList(){
@@ -843,7 +501,7 @@
     const q = ($("#rotenPickSearch")?.value || "").trim().toLowerCase();
     const sort = $("#rotenPickSort")?.value || "new";
 
-    let list = buildGroupedFromBook();
+    let list = buildGroupedInventory();
 
     if(q){
       list = list.filter(it =>
@@ -856,6 +514,7 @@
       if(sort === "id") return String(a.id).localeCompare(String(b.id));
       if(sort === "rarity") return rarityRank(b.rarity) - rarityRank(a.rarity);
       if(sort === "count") return (b.count||0) - (a.count||0);
+      // new
       return (b.latestAt||0) - (a.latestAt||0);
     });
 
@@ -874,7 +533,6 @@
       el.className = "pickcard" + (modalState.pickId === it.id ? " is-selected" : "");
       const src = thumbSrc(it);
       const rarityP = rarityPillHtml(it.rarity);
-
       el.innerHTML = `
         <img class="thumb" alt="" ${src ? `src="${escapeHtmlAttr(src)}"` : ""}>
         <div style="flex:1;min-width:0;">
@@ -888,13 +546,12 @@
           <div class="pill">×${it.count}</div>
         </div>
       `;
-
       el.addEventListener("click", () => {
         modalState.pickId = it.id;
+        // 選択が変わったら再描画（見た目＆ヒント）
         renderPickList();
         renderModalControls();
       });
-
       wrap.appendChild(el);
     });
   }
@@ -931,20 +588,19 @@
         hint.textContent = `この棚は出店中。中止 or 結果処理後に変更できます。`;
       }else{
         // 所持枚数表示
-        const grouped = buildGroupedFromBook().find(x => x.id === modalState.pickId);
+        const grouped = buildGroupedInventory().find(x => x.id === modalState.pickId);
         const cnt = grouped?.count ?? 0;
         hint.textContent = `選択:${modalState.pickId}（所持×${cnt}） / 価格:${tierTxt} / 時間:${durTxt}`;
       }
     }
   }
 
-  /* =========================
-     Shop operations
-  ========================= */
+  // ====== 棚操作 ======
   function assignToSlot(slotIndex, itemId, opts={}){
-    // 図鑑のグループから参照して棚に「1枚表示」として置く（消費は売れた時）
-    const grouped = buildGroupedFromBook().find(x => x.id === itemId);
-    if(!grouped) return;
+    // itemId（グループID）から「1枚」実体を作る（棚には1枚置く）
+    const inv = lsGet(LS.inv, []);
+    const found = inv.find(x => x && x.id === itemId);
+    if(!found) return;
 
     const shop = getMyShop();
     const s = shop.slots[slotIndex];
@@ -952,13 +608,12 @@
     if(s.state === "listed") return;
 
     s.item = {
-      id: grouped.id,
-      name: grouped.name,
-      img: grouped.img || null,
-      rarity: grouped.rarity,
-      at: grouped.latestAt || now()
+      id: String(found.id),
+      name: String(found.name || found.id),
+      img: found.img || null,
+      rarity: String(found.rarity || "N"),
+      at: Number(found.at || now())
     };
-
     s.state = "ready";
     s.lastResult = null;
     s.startedAt = null;
@@ -983,7 +638,6 @@
     s.lastResult = null;
 
     setMyShop(shop);
-
     addLog({
       at: now(),
       title: `棚${s.slot} 出店開始`,
@@ -1008,7 +662,6 @@
     s.lastResult = null;
 
     setMyShop(shop);
-
     addLog({ at: now(), title:`棚${s.slot} 出店中止`, desc:`出店を取り下げた。今日は風向きが悪かった。`, chips:[] });
   }
 
@@ -1022,12 +675,20 @@
     s.startedAt = null;
     s.endsAt = null;
     s.lastResult = null;
-
     setMyShop(shop);
   }
 
   function unassignItem(slotIndex){
-    clearSlot(slotIndex);
+    const shop = getMyShop();
+    const s = shop.slots[slotIndex];
+    if(!s || s.state === "listed") return;
+
+    s.item = null;
+    s.state = "empty";
+    s.startedAt = null;
+    s.endsAt = null;
+    s.lastResult = null;
+    setMyShop(shop);
   }
 
   function showResult(slotIndex){
@@ -1035,7 +696,7 @@
     const s = shop.slots[slotIndex];
     if(!s) return;
 
-    // 期限切れなら結果生成
+    // 期限切れならまず結果生成
     const st = ensureMarket();
     if(s.state === "listed" && s.endsAt && now() >= s.endsAt){
       s.state = "done";
@@ -1044,10 +705,8 @@
     }
 
     if(s.state !== "done" || !s.lastResult) return;
-
     const res = s.lastResult;
 
-    // 王様まとめ買い
     if(res.type === "KING"){
       commitKingAllBuy();
       return;
@@ -1056,32 +715,14 @@
     if(res.type === "SOLD"){
       setOcto(getOcto() + res.sellPrice);
 
-      // 売れたら図鑑から1枚消費
-      removeOneFromBookById(s.item.id);
+      // 売れたら在庫から1枚消す
+      removeOneFromInventoryById(s.item.id);
 
       addLog({
         at: now(),
-        title: `売れた！ +${res.sellPrice}オクト`,
+        title: `売れた！ ${res.sellPrice}オクト`,
         desc: `${res.customer.name}「${res.line}」`,
         chips: [`倍率:${res.buyMult}`, `確率:${Math.round(res.p*100)}%`]
-      });
-
-      openResultModal({
-        title: "売れた！",
-        html: `
-          <div style="display:flex;gap:10px;align-items:center;">
-            ${s.item.img ? `<img class="thumb" alt="" src="${escapeHtmlAttr(s.item.img)}">` : ``}
-            <div style="min-width:0;">
-              <div style="font-weight:900;">${escapeHtml(s.item.name)}</div>
-              <div class="muted" style="font-size:12px;">${escapeHtml(s.item.id)} / ${escapeHtml(s.item.rarity)}</div>
-              <div style="margin-top:6px;font-weight:900;">＋${res.sellPrice} オクト</div>
-            </div>
-          </div>
-          <div style="margin-top:10px;">
-            <div class="muted">${escapeHtml(res.customer.name)}：</div>
-            <div style="margin-top:4px;">「${escapeHtml(res.line)}」</div>
-          </div>
-        `
       });
 
       // 棚クリア
@@ -1091,8 +732,6 @@
       s.endsAt = null;
       s.lastResult = null;
       setMyShop(shop);
-
-      renderAll();
       return;
     }
 
@@ -1104,45 +743,21 @@
         chips: [`倍率:${res.buyMult}`, `確率:${Math.round(res.p*100)}%`]
       });
 
-      openResultModal({
-        title: "売れ残り…",
-        html: `
-          <div style="display:flex;gap:10px;align-items:center;">
-            ${s.item?.img ? `<img class="thumb" alt="" src="${escapeHtmlAttr(s.item.img)}">` : ``}
-            <div style="min-width:0;">
-              <div style="font-weight:900;">${escapeHtml(s.item?.name || "出品")}</div>
-              <div class="muted" style="font-size:12px;">${escapeHtml(s.item?.id || "")} / ${escapeHtml(s.item?.rarity || "")}</div>
-            </div>
-          </div>
-          <div style="margin-top:10px;">
-            <div class="muted">${escapeHtml(res.customer.name)}：</div>
-            <div style="margin-top:4px;">「${escapeHtml(res.line)}」</div>
-          </div>
-          <div class="muted" style="margin-top:10px;">棚は準備状態に戻りました（再出店できます）。</div>
-        `
-      });
-
-      // 棚は準備に戻す（再出店可）
+      // 棚は準備に戻す（再出店できる）
       s.state = "ready";
       s.startedAt = null;
       s.endsAt = null;
       s.lastResult = null;
       setMyShop(shop);
-
-      renderAll();
       return;
     }
 
     addLog({ at: now(), title:`客が来なかった`, desc:`今日は市場が静かだった。`, chips:[] });
-
-    // 準備に戻す
     s.state = "ready";
     s.startedAt = null;
     s.endsAt = null;
     s.lastResult = null;
     setMyShop(shop);
-
-    renderAll();
   }
 
   function commitKingAllBuy(){
@@ -1163,13 +778,11 @@
         }
       });
       setMyShop(shop);
-      renderAll();
       return;
     }
 
     let total = 0;
     const detail = [];
-
     for(const s of shop.slots){
       if(!s.item) continue;
       const price = Math.max(1, Math.floor(basePriceFor(s.item) * Number(king.buyMult||3) * priceTierMult(s.priceTier)));
@@ -1179,10 +792,10 @@
 
     setOcto(getOcto() + total);
 
-    // 図鑑からそれぞれ1枚ずつ消費 + 棚クリア
+    // 在庫からそれぞれ1枚ずつ消す（棚に置かれている枚数分）
     for(const s of shop.slots){
       if(!s.item) continue;
-      removeOneFromBookById(s.item.id);
+      removeOneFromInventoryById(s.item.id);
       s.item=null; s.state="empty"; s.startedAt=null; s.endsAt=null; s.lastResult=null;
     }
     setMyShop(shop);
@@ -1193,23 +806,194 @@
       desc: `王様「${king.lines?.[0] || "この棚ごと、もらおう。"}」`,
       chips: [`購入:${items.length}枚`, `明細:${detail.join(" / ")}`]
     });
-
-    openResultModal({
-      title: "👑 王様タコ民",
-      html: `
-        <div style="font-weight:900;font-size:16px;">棚ごと買い上げ！</div>
-        <div style="margin-top:8px;">＋${total} オクト</div>
-        <div class="muted" style="margin-top:8px;">${escapeHtml(king.lines?.[0] || "この棚ごと、もらおう。")}</div>
-        <div class="muted" style="margin-top:10px;font-size:11px;">明細：${escapeHtml(detail.join(" / "))}</div>
-      `
-    });
-
-    renderAll();
   }
 
-  /* =========================
-     Log render
-  ========================= */
+  // ====== 行列（吹き出し） ======
+  let queueTimer = null;
+
+  function getQueueLines(seed, count){
+    const rng = makeRng(seed >>> 0);
+    const lines = [];
+    for(let i=0;i<count;i++){
+      const idx = Math.floor(rng() * QUEUE_LINES.length);
+      lines.push(QUEUE_LINES[idx] || "……");
+    }
+    return lines;
+  }
+
+  function scheduleQueueTick(){
+    if(queueTimer) return;
+    queueTimer = setTimeout(() => {
+      queueTimer = null;
+      renderDisplays(); // 吹き出し更新
+    }, 3500);
+  }
+
+  // ====== 描画 ======
+  function renderTop(){
+    const octoEl = $("#rotenOcto");
+    if(octoEl) octoEl.textContent = String(getOcto());
+  }
+
+  function renderNpcDebug(){
+    const c = window.ROTEN_CUSTOMERS;
+    const m = ensureMarket();
+    const npc = $("#rotenDebugNpc");
+    if(!npc) return;
+    npc.textContent =
+      "ROTEN_CUSTOMERS.base: " + (c?.base?.length ?? "ERR") + "人\n" +
+      "collabSlots: " + (c?.collabSlots?.length ?? "ERR") + "枠\n" +
+      "今日のムード: " + (m?.moodLabel ?? "ERR") + "\n" +
+      "解放棚数: " + getUnlocked() + "/5\n" +
+      "畑キー(tf_v1_book): " + (localStorage.getItem(LS.farmBook) ? "OK" : "無し");
+  }
+
+  function renderMarket(){
+    const st = ensureMarket();
+    $("#rotenMood") && ($("#rotenMood").textContent = st.moodLabel || "…");
+    $("#rotenRollover") && ($("#rotenRollover").textContent = "日付が変わったら更新");
+  }
+
+  function renderDisplays(){
+    const wrap = $("#rotenDisplays");
+    if(!wrap) return;
+
+    const unlocked = getUnlocked();
+    const shop = getMyShop();
+    const st = ensureMarket();
+
+    // 期限切れ→結果化
+    for(const s of shop.slots){
+      if(s.state === "listed" && s.endsAt && now() >= s.endsAt){
+        s.state = "done";
+        s.lastResult = resolveSlotSale(s, st.seed);
+      }
+    }
+    setMyShop(shop);
+
+    wrap.innerHTML = "";
+
+    let hasListed = false;
+
+    shop.slots.forEach((s, idx) => {
+      const locked = (idx >= unlocked);
+      const el = document.createElement("div");
+      el.className = "disp" + (locked ? " is-locked" : "");
+      el.setAttribute("data-slot", String(idx));
+
+      const badge = dispBadge(s, locked);
+
+      const name = s.item ? s.item.name : (locked ? "ロック中" : "空き棚");
+      const sub  = s.item
+        ? `${s.item.id} / ${s.item.rarity}`
+        : (locked ? "レベルで解放" : "タップして出品");
+
+      const src = s.item ? thumbSrc(s.item) : "";
+
+      el.innerHTML = `
+        <div class="disp-top">
+          <div class="disp-title">棚${s.slot}</div>
+          <div class="badge ${badge.cls}">${badge.text}</div>
+        </div>
+
+        ${s.state === "listed" && !locked ? `<div class="queue"></div>` : ""}
+
+        <div class="disp-body">
+          <img class="thumb" alt="" ${src ? `src="${escapeHtmlAttr(src)}"` : ""}>
+          <div class="disp-name">${escapeHtml(name)}</div>
+          <div class="disp-sub">${escapeHtml(sub)}</div>
+          ${s.item ? `<div class="disp-sub muted">基準 ${basePriceFor(s.item)} / 価格:${tierLabel(s.priceTier)} / 時間:${durLabel(s.duration)}</div>` : ``}
+        </div>
+
+        ${locked ? `<div class="disp-lock"><span>🔒 ロック中</span></div>` : ``}
+      `;
+
+      if(!locked){
+        el.addEventListener("click", () => openSlotModal(idx));
+        el.addEventListener("keydown", (e) => { if(e.key === "Enter") openSlotModal(idx); });
+        el.tabIndex = 0;
+      }
+
+      // 行列吹き出し
+      if(s.state === "listed" && !locked){
+        hasListed = true;
+        const q = el.querySelector(".queue");
+        if(q){
+          const seed = (st.seed + idx * 101 + Math.floor(now()/3500)) >>> 0;
+          const lines = getQueueLines(seed, 3);
+          q.innerHTML = lines.map(t => `<div class="bubble">${escapeHtml(t)}</div>`).join("");
+        }
+      }
+
+      wrap.appendChild(el);
+    });
+
+    if(hasListed) scheduleQueueTick();
+  }
+
+  function dispBadge(s, locked){
+    if(locked) return { cls:"", text:"LOCK" };
+    if(s.state === "listed") return { cls:"wait", text:"出店中" };
+    if(s.state === "done") return { cls:"ok", text:"結果" };
+    if(!s.item) return { cls:"", text:"空き" };
+    return { cls:"", text:"準備" };
+  }
+
+  function tierLabel(id){ return (PRICE_TIERS.find(x=>x.id===id)?.label) || "普通"; }
+  function durLabel(id){ return (DURATIONS.find(x=>x.id===id)?.label) || "3時間"; }
+
+  function renderInventory(){
+    const wrap = $("#rotenInventory");
+    if(!wrap) return;
+
+    const q = ($("#rotenInvSearch")?.value || "").trim().toLowerCase();
+    const sort = $("#rotenInvSort")?.value || "new";
+
+    let list = buildGroupedInventory();
+
+    if(q){
+      list = list.filter(it =>
+        String(it.id).toLowerCase().includes(q) ||
+        String(it.name).toLowerCase().includes(q)
+      );
+    }
+
+    list.sort((a,b) => {
+      if(sort === "id") return String(a.id).localeCompare(String(b.id));
+      if(sort === "rarity") return rarityRank(b.rarity) - rarityRank(a.rarity);
+      if(sort === "count") return (b.count||0) - (a.count||0);
+      return (b.latestAt||0) - (a.latestAt||0);
+    });
+
+    wrap.innerHTML = "";
+
+    if(!list.length){
+      const empty = document.createElement("div");
+      empty.className = "muted";
+      empty.textContent = "持ち物がありません。";
+      wrap.appendChild(empty);
+      return;
+    }
+
+    list.forEach(it => {
+      const el = document.createElement("div");
+      el.className = "inv-card";
+      const src = thumbSrc(it);
+      el.innerHTML = `
+        <img class="thumb" alt="" ${src ? `src="${escapeHtmlAttr(src)}"` : ""}>
+        <div class="inv-meta">
+          <div class="inv-name">${escapeHtml(it.name)}</div>
+          <div class="inv-sub">${escapeHtml(it.id)} / 基準 ${basePriceFor(it)}オクト</div>
+        </div>
+        <div class="inv-right">
+          ${rarityPillHtml(it.rarity)}
+          <div class="pill">×${it.count}</div>
+        </div>
+      `;
+      wrap.appendChild(el);
+    });
+  }
+
   function renderLog(){
     const wrap = $("#rotenLog");
     if(!wrap) return;
@@ -1244,9 +1028,7 @@
     });
   }
 
-  /* =========================
-     Global render
-  ========================= */
+  // ===== タブ切替でも反映されるように =====
   function renderAll(){
     renderTop();
     renderNpcDebug();
@@ -1256,29 +1038,70 @@
     renderLog();
   }
 
-  /* =========================
-     Bind misc UI
-  ========================= */
+  // ===== 時間表示 =====
+  function timeLeftText(endsAt){
+    const ms = Math.max(0, (endsAt||0) - now());
+    const sec = Math.floor(ms/1000);
+    const h = Math.floor(sec/3600);
+    const m = Math.floor((sec%3600)/60);
+    const s = sec%60;
+    if(h>0) return `${h}h ${m}m`;
+    if(m>0) return `${m}m ${s}s`;
+    return `${s}s`;
+  }
+
+  // ===== リセット =====
+  function resetAll(){
+    localStorage.removeItem(LS.octo);
+    localStorage.removeItem(LS.inv);
+    localStorage.removeItem(LS.myshop);
+    localStorage.removeItem(LS.market);
+    localStorage.removeItem(LS.log);
+    localStorage.removeItem(LS.syncSeen);
+    localStorage.removeItem(LS.unlocked);
+    boot();
+  }
+
+  // ===== util =====
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#39;");
+  }
+  function escapeHtmlAttr(s){
+    return escapeHtml(s).replaceAll("`","&#96;");
+  }
+  function rarityPillHtml(r){
+    if(r==="LR") return `<div class="pill lr">LR</div>`;
+    if(r==="UR") return `<div class="pill ur">UR</div>`;
+    if(r==="SR") return `<div class="pill sr">SR</div>`;
+    return `<div class="pill">${escapeHtml(r)}</div>`;
+  }
+
+  // ===== bind =====
   function bindUI(){
     $("#rotenInvSearch")?.addEventListener("input", renderInventory);
     $("#rotenInvSort")?.addEventListener("change", renderInventory);
+    $("#rotenResetBtn")?.addEventListener("click", resetAll);
   }
 
-  /* =========================
-     Boot
-  ========================= */
   function boot(){
     ensureOcto();
-    ensureUnlocked();
     ensureMarket();
-    ensureShopSize();
-    ensureResultModal();
+    ensureUnlocked();
 
-    bindBack();
+    syncFromFarmBook();
+    ensureTestInventoryIfEmpty();
+
+    // myshop初期（5枠に矯正）
+    const shop = getMyShop();
+    if(!shop || !Array.isArray(shop.slots) || shop.slots.length !== 5){
+      setMyShop(defaultMyShop());
+    }
+
     initTabs();
     bindUI();
     bindModal();
-
     renderAll();
   }
 
@@ -1288,5 +1111,4 @@
     boot();
   }
 })();
-
 
