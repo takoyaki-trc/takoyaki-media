@@ -1214,3 +1214,14 @@ function renderLog(){
   }
 })();
 
+
+(() => {
+  const btn = document.getElementById("rotenBackBtn");
+  if(!btn) return;
+  btn.addEventListener("click", () => {
+    // 履歴があれば戻る、なければトップへ
+    if(history.length > 1) history.back();
+    else location.href = "index.html"; // ここはあなたのトップに合わせて
+  });
+})();
+
