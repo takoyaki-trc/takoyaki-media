@@ -334,363 +334,359 @@
     </div>
   </div>
 
-  <script>
-    // =========================================================
-    // 図鑑 + ダブり集計（IDごとに1枚表示） + バックアップ（復元コード）
-    // =========================================================
+<script>
+  // =========================================================
+  // 図鑑 + ダブり集計（count方式 / IDごとに1枚表示） + バックアップ（復元コード）
+  // ※ファーム側：book.got[id] に {count, at, lastAt} が入る前提
+  // =========================================================
 
-    const LS_KEY = "tf_v1_book";
-    const LS_BACKUP_AT = "tf_v1_book_backup_at";
+  const LS_KEY = "tf_v1_book";
+  const LS_BACKUP_AT = "tf_v1_book_backup_at";
 
-    const elGrid = document.getElementById("grid");
-    const elEmpty = document.getElementById("empty");
-    const elPill = document.getElementById("statPill");
-    const elQ = document.getElementById("q");
-    const elSort = document.getElementById("sort");
-    const btnReload = document.getElementById("btnReload");
-    const btnClear = document.getElementById("btnClear");
-    const btnBack = document.getElementById("btnBack");
-    const btnBackup = document.getElementById("btnBackup");
-    const lastBackupLine = document.getElementById("lastBackupLine");
+  const elGrid = document.getElementById("grid");
+  const elEmpty = document.getElementById("empty");
+  const elPill = document.getElementById("statPill");
+  const elQ = document.getElementById("q");
+  const elSort = document.getElementById("sort");
+  const btnReload = document.getElementById("btnReload");
+  const btnClear = document.getElementById("btnClear");
+  const btnBack = document.getElementById("btnBack");
+  const btnBackup = document.getElementById("btnBackup");
+  const lastBackupLine = document.getElementById("lastBackupLine");
 
-    // card modal
-    const modal = document.getElementById("modal");
-    const mImg = document.getElementById("mImg");
-    const mTitle = document.getElementById("mTitle");
-    const mId = document.getElementById("mId");
-    const mRarity = document.getElementById("mRarity");
-    const mAt = document.getElementById("mAt");
-    const mGlow = document.getElementById("mGlow");
-    const mClose = document.getElementById("mClose");
-    const mCount = document.getElementById("mCount");
+  // card modal
+  const modal = document.getElementById("modal");
+  const mImg = document.getElementById("mImg");
+  const mTitle = document.getElementById("mTitle");
+  const mId = document.getElementById("mId");
+  const mRarity = document.getElementById("mRarity");
+  const mAt = document.getElementById("mAt");
+  const mGlow = document.getElementById("mGlow");
+  const mClose = document.getElementById("mClose");
+  const mCount = document.getElementById("mCount");
 
-    // backup modal
-    const bModal = document.getElementById("bModal");
-    const bClose = document.getElementById("bClose");
-    const pin = document.getElementById("pin");
-    const codeBox = document.getElementById("codeBox");
-    const btnMakeCode = document.getElementById("btnMakeCode");
-    const btnCopyCode = document.getElementById("btnCopyCode");
-    const btnSaveTxt = document.getElementById("btnSaveTxt");
-    const btnRestore = document.getElementById("btnRestore");
-    const filePick = document.getElementById("filePick");
-    const bMsg = document.getElementById("bMsg");
+  // backup modal
+  const bModal = document.getElementById("bModal");
+  const bClose = document.getElementById("bClose");
+  const pin = document.getElementById("pin");
+  const codeBox = document.getElementById("codeBox");
+  const btnMakeCode = document.getElementById("btnMakeCode");
+  const btnCopyCode = document.getElementById("btnCopyCode");
+  const btnSaveTxt = document.getElementById("btnSaveTxt");
+  const btnRestore = document.getElementById("btnRestore");
+  const filePick = document.getElementById("filePick");
+  const bMsg = document.getElementById("bMsg");
 
-    // raw（ダブり含む）
-    let all = [];
-    // 表示用（IDごとに1枚にまとめたリスト）
-    let uniq = [];
-    // 画面表示リスト（検索&並び替え後）
-    let view = [];
-    // id -> count
-    let countMap = {};
+  // ★ ファーム方式：gotは「IDごとに1件」。all = そのまま表示対象（uniq化不要）
+  let all = [];        // 表示対象（1件=1種類）
+  let view = [];       // フィルタ＆ソート後
+  let countMap = {};   // id -> count
 
-    function safeJSONParse(str){ try { return JSON.parse(str); } catch(e){ return null; } }
-    function normalizeText(s){ return (s ?? "").toString().trim().toLowerCase(); }
+  function safeJSONParse(str){ try { return JSON.parse(str); } catch(e){ return null; } }
+  function normalizeText(s){ return (s ?? "").toString().trim().toLowerCase(); }
 
-    function idToNumber(id){
-      const s = (id ?? "").toString();
-      const m = s.match(/(\d+)/g);
-      if(!m) return Number.POSITIVE_INFINITY;
-      const last = m[m.length - 1];
-      const n = parseInt(last, 10);
-      return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+  function idToNumber(id){
+    const s = (id ?? "").toString();
+    const m = s.match(/(\d+)/g);
+    if(!m) return Number.POSITIVE_INFINITY;
+    const last = m[m.length - 1];
+    const n = parseInt(last, 10);
+    return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+  }
+
+  function isSRPlus(rarity){
+    const r = normalizeText(rarity);
+    if(!r) return false;
+    if(r.includes("sr")) return true;
+    if(r.includes("ur")) return true;
+    if(r.includes("lr")) return true;
+    if(r.includes("hr")) return true;
+    if(r.includes("xr")) return true;
+    return false;
+  }
+
+  // 日時（表示は日本時間固定）
+  const te = new TextEncoder();
+  const td = new TextDecoder();
+
+  function toDate(at){
+    if(at == null || at === "") return null;
+    if(typeof at === "number"){
+      return new Date(normalizeEpoch(at));
     }
-    function isSRPlus(rarity){
-      const r = normalizeText(rarity);
-      if(!r) return false;
-      if(r.includes("sr")) return true;
-      if(r.includes("ur")) return true;
-      if(r.includes("lr")) return true;
-      if(r.includes("hr")) return true;
-      if(r.includes("xr")) return true;
-      return false;
+    const s = String(at).trim();
+    if(/^\d+$/.test(s)){
+      const n = Number(s);
+      if(!Number.isFinite(n)) return null;
+      return new Date(normalizeEpoch(n));
     }
-
-    // 日時（表示は日本時間固定）
-    const te = new TextEncoder();
-    const td = new TextDecoder();
-
-    function toDate(at){
-      if(at == null || at === "") return null;
-      if(typeof at === "number"){
-        return new Date(normalizeEpoch(at));
-      }
-      const s = String(at).trim();
-      if(/^\d+$/.test(s)){
-        const n = Number(s);
-        if(!Number.isFinite(n)) return null;
-        return new Date(normalizeEpoch(n));
-      }
-      const d = new Date(s);
-      if(isNaN(d.getTime())) return null;
-      return d;
+    const d = new Date(s);
+    if(isNaN(d.getTime())) return null;
+    return d;
+  }
+  function normalizeEpoch(n){
+    const abs = Math.abs(n);
+    if(abs < 1e11) return n * 1000; // 秒→ms
+    return n; // ms
+  }
+  function fmtTokyo(d){
+    try{
+      const fmt = new Intl.DateTimeFormat("ja-JP",{
+        timeZone:"Asia/Tokyo",
+        year:"numeric", month:"2-digit", day:"2-digit",
+        hour:"2-digit", minute:"2-digit",
+        hour12:false
+      });
+      const parts = fmt.formatToParts(d);
+      const get = (t) => parts.find(p=>p.type===t)?.value ?? "";
+      return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
+    }catch(e){
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mi = String(d.getMinutes()).padStart(2,"0");
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
     }
-    function normalizeEpoch(n){
-      const abs = Math.abs(n);
-      if(abs < 1e11) return n * 1000; // 秒→ms
-      return n; // ms
+  }
+  function formatAt(at){
+    const d = toDate(at);
+    if(!d) return "-";
+    return fmtTokyo(d);
+  }
+  function toTime(at){
+    const d = toDate(at);
+    return d ? d.getTime() : 0;
+  }
+
+  // ★ count方式（ファームのbook.got[id].countをそのまま採用）
+  function buildCountMap(){
+    countMap = {};
+    for(const item of all){
+      const id = (item.id ?? "").toString();
+      if(!id) continue;
+      const c = Number(item.count);
+      countMap[id] = (Number.isFinite(c) && c > 0) ? c : 1;
     }
-    function fmtTokyo(d){
-      try{
-        const fmt = new Intl.DateTimeFormat("ja-JP",{
-          timeZone:"Asia/Tokyo",
-          year:"numeric", month:"2-digit", day:"2-digit",
-          hour:"2-digit", minute:"2-digit",
-          hour12:false
-        });
-        const parts = fmt.formatToParts(d);
-        const get = (t) => parts.find(p=>p.type===t)?.value ?? "";
-        return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
-      }catch(e){
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth()+1).padStart(2,"0");
-        const dd = String(d.getDate()).padStart(2,"0");
-        const hh = String(d.getHours()).padStart(2,"0");
-        const mi = String(d.getMinutes()).padStart(2,"0");
-        return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
-      }
+  }
+  function getCount(id){
+    const key = (id ?? "").toString();
+    return countMap[key] || 1;
+  }
+
+  function updateBackupLine(){
+    const n = Number(localStorage.getItem(LS_BACKUP_AT));
+    if(!n){
+      lastBackupLine.textContent = "バックアップ未作成（万が一のため復元コードを発行してね）";
+      return;
     }
-    function formatAt(at){
-      const d = toDate(at);
-      if(!d) return "-";
-      return fmtTokyo(d);
-    }
-    function toTime(at){
-      const d = toDate(at);
-      return d ? d.getTime() : 0;
-    }
+    lastBackupLine.textContent = `最終バックアップ：${fmtTokyo(new Date(n))}`;
+  }
 
-    // ダブり枚数を集計
-    function buildCountMap(){
-      countMap = {};
-      for(const item of all){
-        const id = (item.id ?? "").toString();
-        if(!id) continue;
-        countMap[id] = (countMap[id] || 0) + 1;
-      }
-    }
-    function getCount(id){
-      const key = (id ?? "").toString();
-      return countMap[key] || 1;
-    }
-
-    // ★ 表示用に「IDごとに1枚」にまとめる（代表は最新atを採用）
-    function buildUniqueList(items){
-      const map = {};
-      for(const item of items){
-        const id = (item.id ?? "").toString();
-        if(!id) continue;
-
-        if(!map[id]){
-          map[id] = { ...item };
-        }else{
-          // 最新取得日時のものを代表にする（見た目が自然）
-          if(toTime(item.at) > toTime(map[id].at)){
-            map[id] = { ...map[id], ...item, at: item.at };
-          }
-        }
-      }
-      return Object.values(map);
-    }
-
-    function updateBackupLine(){
-      const n = Number(localStorage.getItem(LS_BACKUP_AT));
-      if(!n){
-        lastBackupLine.textContent = "バックアップ未作成（万が一のため復元コードを発行してね）";
-        return;
-      }
-      lastBackupLine.textContent = `最終バックアップ：${fmtTokyo(new Date(n))}`;
-    }
-
-    function load(){
-      const raw = localStorage.getItem(LS_KEY);
-      if(!raw){
-        all = [];
-        uniq = [];
-        render();
-        showEmpty(
-          `図鑑データが見つからないよ。<br>
-           localStorage の <code>${LS_KEY}</code> を畑側で保存してから開いてね。`
-        );
-        elPill.textContent = "0 / 0";
-        updateBackupLine();
-        return;
-      }
-
-      const obj = safeJSONParse(raw);
-      let gotArr = [];
-      if(obj && Array.isArray(obj.got)){
-        gotArr = obj.got;
-      } else if(obj && obj.got && typeof obj.got === "object"){
-        gotArr = Object.values(obj.got);
-      } else {
-        gotArr = [];
-      }
-
-      // 生データ（ダブり含む）
-      all = gotArr.map(x => ({
-        id: x?.id ?? "",
-        name: x?.name ?? "",
-        img: x?.img ?? "",
-        rarity: x?.rarity ?? "",
-        at: x?.at ?? ""
-      }));
-
-      // ダブり枚数集計
-      buildCountMap();
-
-      // 表示用（IDごとに1枚）
-      uniq = buildUniqueList(all);
-
+  function load(){
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw){
+      all = [];
       render();
+      showEmpty(
+        `図鑑データが見つからないよ。<br>
+         localStorage の <code>${LS_KEY}</code> を畑側で保存してから開いてね。`
+      );
+      elPill.textContent = "0 / 0";
       updateBackupLine();
+      return;
     }
 
-    function applyFilterSort(){
-      const q = normalizeText(elQ.value);
-      const sort = elSort.value;
+    const obj = safeJSONParse(raw);
 
-      // ★ 検索は uniq（IDごと1枚）に対して行う
-      view = uniq.filter(item => {
-        if(!q) return true;
-        const hay = [ item.id, item.name, item.rarity ].map(normalizeText).join(" ");
-        return hay.includes(q);
+    // got: 配列 or オブジェクト両対応（ファームは基本オブジェクト）
+    let gotArr = [];
+    if(obj && Array.isArray(obj.got)){
+      gotArr = obj.got;
+    } else if(obj && obj.got && typeof obj.got === "object"){
+      gotArr = Object.values(obj.got);
+    } else {
+      gotArr = [];
+    }
+
+    // ★ count / lastAt を取り込む
+    all = gotArr.map(x => ({
+      id: x?.id ?? "",
+      name: x?.name ?? "",
+      img: x?.img ?? "",
+      rarity: x?.rarity ?? "",
+      at: x?.at ?? "",
+      lastAt: x?.lastAt ?? "",
+      count: x?.count ?? 1
+    }));
+
+    buildCountMap();
+    render();
+    updateBackupLine();
+  }
+
+  function applyFilterSort(){
+    const q = normalizeText(elQ.value);
+    const sort = elSort.value;
+
+    // filter（allはすでにIDごと）
+    view = all.filter(item => {
+      if(!q) return true;
+      const hay = [ item.id, item.name, item.rarity ].map(normalizeText).join(" ");
+      return hay.includes(q);
+    });
+
+    // sort
+    if(sort === "new"){
+      // ★ 最終入手(lastAt)があれば優先。なければ at。
+      view.sort((a,b) => {
+        const ta = toTime(a.lastAt || a.at);
+        const tb = toTime(b.lastAt || b.at);
+        return tb - ta;
+      });
+    } else if(sort === "num"){
+      view.sort((a,b) => {
+        const na = idToNumber(a.id);
+        const nb = idToNumber(b.id);
+        if(na !== nb) return na - nb;
+        const ta = toTime(a.lastAt || a.at);
+        const tb = toTime(b.lastAt || b.at);
+        return tb - ta;
+      });
+    }
+
+    // ピル：表示枚数 / 図鑑種類数（all）
+    elPill.textContent = `${view.length} / ${all.length}`;
+  }
+
+  function render(){
+    hideEmpty();
+    applyFilterSort();
+    elGrid.innerHTML = "";
+
+    if(view.length === 0){
+      showEmpty("該当カードがないよ（検索条件を変えてみてね）。");
+      return;
+    }
+
+    const frag = document.createDocumentFragment();
+
+    for(const item of view){
+      const card = document.createElement("div");
+      card.className = "card" + (isSRPlus(item.rarity) ? " is-glow" : "");
+      card.setAttribute("role","button");
+      card.setAttribute("tabindex","0");
+
+      const img = document.createElement("img");
+      img.className = "thumb";
+      img.alt = item.name || item.id || "card";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.src = item.img || "";
+      img.onerror = () => {
+        img.removeAttribute("src");
+        img.alt = "画像なし";
+        img.style.display = "block";
+        img.style.objectFit = "contain";
+      };
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = item.name || "(no name)";
+
+      const mini = document.createElement("div");
+      mini.className = "mini";
+
+      const tag = document.createElement("div");
+      tag.className = "tag";
+      tag.innerHTML = `<span class="id">#${escapeHTML(item.id || "-")}</span>`;
+
+      const rar = document.createElement("div");
+      rar.className = "tag";
+      rar.innerHTML = `<b>${escapeHTML(item.rarity || "-")}</b>`;
+
+      mini.appendChild(tag);
+      mini.appendChild(rar);
+
+      meta.appendChild(name);
+      meta.appendChild(mini);
+
+      const cnt = getCount(item.id);
+      const badge = document.createElement("div");
+      badge.className = "countBadge";
+      badge.textContent = `×${cnt}`;
+
+      card.appendChild(img);
+      card.appendChild(meta);
+      card.appendChild(badge);
+
+      card.addEventListener("click", () => openModal(item));
+      card.addEventListener("keydown", (e) => {
+        if(e.key === "Enter" || e.key === " "){
+          e.preventDefault();
+          openModal(item);
+        }
       });
 
-      if(sort === "new"){
-        view.sort((a,b) => toTime(b.at) - toTime(a.at));
-      } else if(sort === "num"){
-        view.sort((a,b) => {
-          const na = idToNumber(a.id);
-          const nb = idToNumber(b.id);
-          if(na !== nb) return na - nb;
-          return toTime(b.at) - toTime(a.at);
-        });
-      }
-
-      // ★ ピル表示：表示枚数 / 図鑑種類数（uniq）
-      elPill.textContent = `${view.length} / ${uniq.length}`;
+      frag.appendChild(card);
     }
 
-    function render(){
-      hideEmpty();
-      applyFilterSort();
-      elGrid.innerHTML = "";
+    elGrid.appendChild(frag);
+  }
 
-      if(view.length === 0){
-        showEmpty("該当カードがないよ（検索条件を変えてみてね）。");
-        return;
-      }
+  function escapeHTML(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function showEmpty(html){
+    elEmpty.style.display = "block";
+    elEmpty.innerHTML = html;
+  }
+  function hideEmpty(){
+    elEmpty.style.display = "none";
+    elEmpty.innerHTML = "";
+  }
 
-      const frag = document.createDocumentFragment();
+  function openModal(item){
+    mImg.src = item.img || "";
+    mImg.alt = item.name || item.id || "card";
+    mTitle.textContent = item.name || "(no name)";
+    mId.textContent = item.id || "-";
+    mRarity.textContent = item.rarity || "-";
 
-      for(const item of view){
-        const card = document.createElement("div");
-        card.className = "card" + (isSRPlus(item.rarity) ? " is-glow" : "");
-        card.setAttribute("role","button");
-        card.setAttribute("tabindex","0");
+    // ★ モーダルの取得表示も lastAt 優先（ダブり引いたら更新される）
+    mAt.textContent = formatAt(item.lastAt || item.at);
 
-        const img = document.createElement("img");
-        img.className = "thumb";
-        img.alt = item.name || item.id || "card";
-        img.loading = "lazy";
-        img.decoding = "async";
-        img.src = item.img || "";
-        img.onerror = () => {
-          img.removeAttribute("src");
-          img.alt = "画像なし";
-          img.style.display = "block";
-          img.style.objectFit = "contain";
-        };
+    mGlow.style.display = isSRPlus(item.rarity) ? "inline-flex" : "none";
+    mCount.textContent = `${getCount(item.id)} 枚`;
 
-        const meta = document.createElement("div");
-        meta.className = "meta";
+    modal.setAttribute("aria-hidden","false");
+    document.addEventListener("keydown", onEscClose, { once:false });
+  }
+  function closeModal(){
+    modal.setAttribute("aria-hidden","true");
+    mImg.removeAttribute("src");
+    document.removeEventListener("keydown", onEscClose);
+  }
+  function onEscClose(e){
+    if(e.key === "Escape") closeModal();
+  }
+  modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
 
-        const name = document.createElement("div");
-        name.className = "name";
-        name.textContent = item.name || "(no name)";
+  // ★ 全角スペースが混じると事故るので、ここは半角のみで書き直し
+  mClose.addEventListener("click", closeModal);
 
-        const mini = document.createElement("div");
-        mini.className = "mini";
+  // init
+  load();
 
-        const tag = document.createElement("div");
-        tag.className = "tag";
-        tag.innerHTML = `<span class="id">#${escapeHTML(item.id || "-")}</span>`;
-
-        const rar = document.createElement("div");
-        rar.className = "tag";
-        rar.innerHTML = `<b>${escapeHTML(item.rarity || "-")}</b>`;
-
-        mini.appendChild(tag);
-        mini.appendChild(rar);
-
-        meta.appendChild(name);
-        meta.appendChild(mini);
-
-        const cnt = getCount(item.id);
-        const badge = document.createElement("div");
-        badge.className = "countBadge";
-        badge.textContent = `×${cnt}`;
-
-        card.appendChild(img);
-        card.appendChild(meta);
-        card.appendChild(badge);
-
-        card.addEventListener("click", () => openModal(item));
-        card.addEventListener("keydown", (e) => {
-          if(e.key === "Enter" || e.key === " "){
-            e.preventDefault();
-            openModal(item);
-          }
-        });
-
-        frag.appendChild(card);
-      }
-
-      elGrid.appendChild(frag);
-    }
-
-    function escapeHTML(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-    function showEmpty(html){
-      elEmpty.style.display = "block";
-      elEmpty.innerHTML = html;
-    }
-    function hideEmpty(){
-      elEmpty.style.display = "none";
-      elEmpty.innerHTML = "";
-    }
-
-    function openModal(item){
-      mImg.src = item.img || "";
-      mImg.alt = item.name || item.id || "card";
-      mTitle.textContent = item.name || "(no name)";
-      mId.textContent = item.id || "-";
-      mRarity.textContent = item.rarity || "-";
-      mAt.textContent = formatAt(item.at);
-      mGlow.style.display = isSRPlus(item.rarity) ? "inline-flex" : "none";
-      mCount.textContent = `${getCount(item.id)} 枚`;
-
-      modal.setAttribute("aria-hidden","false");
-      document.addEventListener("keydown", onEscClose, { once:false });
-    }
-    function closeModal(){
-      modal.setAttribute("aria-hidden","true");
-      mImg.removeAttribute("src");
-      document.removeEventListener("keydown", onEscClose);
-    }
-    function onEscClose(e){
-      if(e.key === "Escape") closeModal();
-    }
-    modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
-    mClose.addEventListener("click", closeModal);
+  
 
     // =========================================================
     // ★ 復元コード（ユーザーごとに自分で作る）
