@@ -72,47 +72,6 @@
   }
   function lsSet(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 
-   // =========================================================
-// 図鑑（tf_v1_book）の所持枚数を1枚減らす
-// ・最低1枚は残す（図鑑登録用）
-// =========================================================
-function decrementBookCountById(cardId){
-  const id = String(cardId || "").trim();
-  if(!id) return false;
-
-  const raw = localStorage.getItem("tf_v1_book");
-  if(!raw) return false;
-
-  let book;
-  try{
-    book = JSON.parse(raw);
-  }catch(e){
-    return false;
-  }
-
-  if(!book || typeof book !== "object") return false;
-  if(!book.got || typeof book.got !== "object") return false;
-  if(!book.got[id]) return false;
-
-  const entry = book.got[id];
-  const cur = Number(entry.count);
-
-  // count が無い / 不正なら何もしない
-  if(!Number.isFinite(cur)) return false;
-
-  // ★ 最低1枚は残す（ダブりだけ消費）
-  if(cur <= 1) return false;
-
-  entry.count = cur - 1;
-
-  // 保存
-  book.got[id] = entry;
-  localStorage.setItem("tf_v1_book", JSON.stringify(book));
-
-  return true;
-}
-
-
   function todayKeyJST(){
     const d = new Date();
     const y = d.getFullYear();
@@ -1382,6 +1341,5 @@ for(const s of shop.slots){
     boot();
   }
 })();
-
 
   
