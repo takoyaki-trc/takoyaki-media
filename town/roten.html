@@ -9,191 +9,167 @@
 </head>
 <body>
 
-<header class="roten-header">
+ <header class="roten-header">
   <button id="rotenBackBtn" class="roten-back" type="button" aria-label="戻る">←</button>
-
   <div class="roten-headtext">
     <h1 class="roten-title">露店</h1>
     <div class="roten-sub">他店露店 / マイ露店</div>
   </div>
-
-  <button id="rotenResetBtn" class="btn btn-ghost top-reset" type="button">テスト初期化</button>
 </header>
 
-<main id="rotenApp" class="roten-app">
 
-  <!-- ===== ステータスバー（オクト＋資材） ===== -->
-  <section class="ui-card ui-top">
-    <div class="top-left">
-      <div class="chip chip-gold">
-        <span class="chip-label">《オクト》</span>
-        <span id="rotenOcto" class="chip-num">0</span>
-      </div>
-
-      <div class="goods">
-        <div class="gchip" title="種">
-          <span class="gico">🌱</span><span id="rotenSeed" class="gnum">0</span>
-        </div>
-        <div class="gchip" title="水">
-          <span class="gico">💧</span><span id="rotenWater" class="gnum">0</span>
-        </div>
-        <div class="gchip" title="肥料">
-          <span class="gico">🧪</span><span id="rotenFert" class="gnum">0</span>
-        </div>
-      </div>
+  <main id="rotenApp" class="roten-app">
+    <div class="roten-topbar">
+  <div class="roten-balrow">
+    <div class="roten-balance">
+      <span class="tag">《オクト》</span>
+      <span id="rotenOcto" class="num">0</span>
     </div>
 
-    <!-- ここは将来：市場・日替わりの「一言」等を置ける -->
-    <div class="top-right muted mini">棚をタップして出品</div>
-  </section>
-
-  <!-- ===== タブ ===== -->
-  <nav class="roten-tabs ui-tabs" aria-label="露店タブ">
-    <button class="roten-tab is-active ui-tab" data-tab="npc" type="button">他店露店</button>
-    <button class="roten-tab ui-tab" data-tab="my" type="button">マイ露店</button>
-  </nav>
-
-  <!-- =========================
-       他店露店
-       ========================= -->
-  <section class="roten-panel is-show" data-panel="npc">
-    <section class="ui-card">
-      <div class="card-head">
-        <div class="card-title">他店露店</div>
-        <div class="card-sub muted">（ここは後で実装：資材/カードの取引）</div>
+    <!-- ★追加：資材在庫 -->
+    <div class="roten-goods" aria-label="資材在庫">
+      <div class="gchip" title="種">
+        <span class="gico">🌱</span>
+        <span id="rotenSeed" class="gnum">0</span>
       </div>
-
-      <div class="npc-placeholder">
-        <div class="muted">
-          まずはマイ露店の操作性＆演出を完成させる。<br>
-          ※ここは後で「即時取引」「日替わり怪しい取引」を入れる。
-        </div>
+      <div class="gchip" title="水">
+        <span class="gico">💧</span>
+        <span id="rotenWater" class="gnum">0</span>
       </div>
-
-      <pre id="rotenDebugNpc" class="roten-debug"></pre>
-    </section>
-  </section>
-
-  <!-- =========================
-       マイ露店
-       ========================= -->
-  <section class="roten-panel" data-panel="my">
-
-    <!-- 市場（1行に圧縮） -->
-    <section class="ui-card market-line" role="button" tabindex="0">
-      <div class="market-ico">🌙</div>
-      <div class="market-main">
-        <div class="market-title">今日の市場</div>
-        <div class="market-value">
-          <span id="rotenMood">…</span>
-          <span class="muted sep">／</span>
-          <span class="muted">次の更新：</span><span id="rotenRollover" class="muted">…</span>
-        </div>
-      </div>
-      <div class="muted mini">雰囲気だけ</div>
-    </section>
-
-    <!-- 棚（ここが主役） -->
-    <section class="ui-card shelf-card">
-      <div class="card-head">
-        <div class="card-title">マイ露店</div>
-        <div class="card-sub muted">棚1〜5：最初は2枠解放。出店中はタコ民が見に来る。</div>
-      </div>
-
-      <!-- JSがここに棚を描画する（ID維持が重要） -->
-      <div id="rotenDisplays" class="displays ui-displays"></div>
-    </section>
-
-    <!-- 持ち物（所持カード） -->
-    <section class="ui-card">
-      <div class="card-head">
-        <div class="card-title">持ち物</div>
-        <div class="card-sub muted">所持枚数が見える（確認用）</div>
-      </div>
-
-      <div class="toolbar ui-toolbar">
-        <input id="rotenInvSearch" class="inp ui-inp" type="search" placeholder="検索（名前 / ID）">
-        <select id="rotenInvSort" class="sel ui-sel">
-          <option value="new">新しい順</option>
-          <option value="id">ID順</option>
-          <option value="rarity">レア順</option>
-          <option value="count">枚数順</option>
-        </select>
-      </div>
-
-      <div id="rotenInventory" class="inv ui-inv"></div>
-      <div class="hint muted">※棚をタップ → カード選択で出品します（ここは一覧確認用）。</div>
-    </section>
-
-    <!-- ログ -->
-    <section class="ui-card">
-      <div class="card-head">
-        <div class="card-title">露店ログ</div>
-        <div class="card-sub muted">売買の履歴</div>
-      </div>
-      <div id="rotenLog" class="log ui-log"></div>
-    </section>
-
-  </section>
-</main>
-
-<!-- 棚モーダル（既存をそのまま使用） -->
-<div id="rotenModal" class="modal" aria-hidden="true">
-  <div class="modal__backdrop" data-close="1"></div>
-  <div class="modal__sheet" role="dialog" aria-label="棚の操作">
-    <div class="modal__grab"></div>
-
-    <div class="modal__head">
-      <div class="modal__title" id="rotenModalTitle">棚</div>
-      <button class="btn btn-ghost modal__x" type="button" data-close="1">×</button>
-    </div>
-
-    <div class="modal__body">
-      <div id="rotenModalSlotBox" class="slotbox"></div>
-
-      <div class="pickhead">
-        <div class="picktitle">カードを選ぶ</div>
-        <div class="picksub muted">※同じカードはまとめて表示（×枚数）</div>
-      </div>
-      <div class="toolbar ui-toolbar">
-        <input id="rotenPickSearch" class="inp ui-inp" type="search" placeholder="検索（名前 / ID）">
-        <select id="rotenPickSort" class="sel ui-sel">
-          <option value="new">新しい順</option>
-          <option value="id">ID順</option>
-          <option value="rarity">レア順</option>
-          <option value="count">枚数順</option>
-        </select>
-      </div>
-      <div id="rotenPickList" class="picklist"></div>
-
-      <div class="mform">
-        <label class="mlabel">価格</label>
-        <div class="mrow">
-          <button class="btn" data-tier="low" type="button">安い</button>
-          <button class="btn" data-tier="mid" type="button">普通</button>
-          <button class="btn" data-tier="high" type="button">強気</button>
-        </div>
-
-        <label class="mlabel">時間</label>
-        <div class="mrow">
-          <button class="btn" data-dur="1h" type="button">1時間</button>
-          <button class="btn" data-dur="3h" type="button">3時間</button>
-          <button class="btn" data-dur="6h" type="button">6時間</button>
-        </div>
-
-        <div class="mcta">
-          <button id="rotenModalAssign" class="btn btn-primary" type="button">棚に置く</button>
-          <button id="rotenModalStart" class="btn btn-primary" type="button">置いて出店開始</button>
-        </div>
-
-        <div id="rotenModalHint" class="hint"></div>
+      <div class="gchip" title="肥料">
+        <span class="gico">🧪</span>
+        <span id="rotenFert" class="gnum">0</span>
       </div>
     </div>
   </div>
+
+  <button id="rotenResetBtn" class="btn btn-ghost" type="button">テスト初期化</button>
 </div>
 
-<script src="assets/roten.customers.js"></script>
-<script src="assets/roten.market.js"></script>
-<script src="assets/roten.js"></script>
+    <div class="roten-tabs">
+      <button class="roten-tab is-active" data-tab="npc">他店露店</button>
+      <button class="roten-tab" data-tab="my">マイ露店</button>
+    </div>
+
+    <section class="roten-panel is-show" data-panel="npc">
+      <div class="roten-card">
+        <div class="roten-card__title">他店露店（後で実装）</div>
+        <div class="roten-card__text">
+          まずはマイ露店の操作性＆演出を完成させる。<br>
+          ※ここは後で「即時取引」「日替わり怪しい取引」を入れる。
+        </div>
+        <pre id="rotenDebugNpc" class="roten-debug"></pre>
+      </div>
+    </section>
+
+    <section class="roten-panel" data-panel="my">
+
+      <div class="roten-card">
+        <div class="roten-card__title">今日の市場</div>
+        <div class="roten-grid2">
+          <div>
+            <div class="muted">客層の空気</div>
+            <div id="rotenMood" class="bigline">…</div>
+          </div>
+          <div>
+            <div class="muted">次の更新</div>
+            <div id="rotenRollover" class="bigline">…</div>
+          </div>
+        </div>
+        <div class="hint">※答えは教えない。雰囲気だけ。</div>
+      </div>
+
+      <div class="roten-card">
+        <div class="roten-card__title">マイ露店（棚をタップして出品）</div>
+        <div class="hint">棚1〜5：最初は2枠解放。出店中はタコ民が見に来る。</div>
+        <div id="rotenDisplays" class="displays"></div>
+      </div>
+
+      <div class="roten-card">
+        <div class="roten-card__title">持ち物（所持枚数が見える）</div>
+        <div class="toolbar">
+          <input id="rotenInvSearch" class="inp" type="search" placeholder="検索（名前 / ID）">
+          <select id="rotenInvSort" class="sel">
+            <option value="new">新しい順</option>
+            <option value="id">ID順</option>
+            <option value="rarity">レア順</option>
+            <option value="count">枚数順</option>
+          </select>
+        </div>
+        <div id="rotenInventory" class="inv"></div>
+        <div class="hint">※棚をタップ → カード選択で出品します（ここは一覧確認用）。</div>
+      </div>
+
+      <div class="roten-card">
+        <div class="roten-card__title">露店ログ</div>
+        <div id="rotenLog" class="log"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 棚モーダル（カード選択 → 設定 → 開始） -->
+  <div id="rotenModal" class="modal" aria-hidden="true">
+    <div class="modal__backdrop" data-close="1"></div>
+    <div class="modal__sheet" role="dialog" aria-label="棚の操作">
+      <div class="modal__grab"></div>
+
+      <div class="modal__head">
+        <div class="modal__title" id="rotenModalTitle">棚</div>
+        <button class="btn btn-ghost modal__x" type="button" data-close="1">×</button>
+      </div>
+
+      <div class="modal__body">
+        <!-- 現在の棚 -->
+        <div id="rotenModalSlotBox" class="slotbox"></div>
+
+        <!-- カード選択（まとめ表示） -->
+        <div class="pickhead">
+          <div class="picktitle">カードを選ぶ</div>
+          <div class="picksub muted">※同じカードはまとめて表示（×枚数）</div>
+        </div>
+        <div class="toolbar">
+          <input id="rotenPickSearch" class="inp" type="search" placeholder="検索（名前 / ID）">
+          <select id="rotenPickSort" class="sel">
+            <option value="new">新しい順</option>
+            <option value="id">ID順</option>
+            <option value="rarity">レア順</option>
+            <option value="count">枚数順</option>
+          </select>
+        </div>
+        <div id="rotenPickList" class="picklist"></div>
+
+        <!-- 価格/時間 -->
+        <div class="mform">
+          <label class="mlabel">価格</label>
+          <div class="mrow">
+            <button class="btn" data-tier="low" type="button">安い</button>
+            <button class="btn" data-tier="mid" type="button">普通</button>
+            <button class="btn" data-tier="high" type="button">強気</button>
+          </div>
+
+          <label class="mlabel">時間</label>
+          <div class="mrow">
+            <button class="btn" data-dur="1h" type="button">1時間</button>
+            <button class="btn" data-dur="3h" type="button">3時間</button>
+            <button class="btn" data-dur="6h" type="button">6時間</button>
+          </div>
+
+          <div class="mcta">
+            <button id="rotenModalAssign" class="btn btn-primary" type="button">棚に置く</button>
+            <button id="rotenModalStart" class="btn btn-primary" type="button">置いて出店開始</button>
+          </div>
+
+          <div id="rotenModalHint" class="hint"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- データ -->
+  <script src="assets/roten.customers.js"></script>
+  <script src="assets/roten.market.js"></script>
+
+  <!-- ロジック -->
+  <script src="assets/roten.js"></script>
 </body>
 </html>
