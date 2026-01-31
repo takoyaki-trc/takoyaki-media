@@ -113,15 +113,17 @@
     }
     .tag b{color:var(--text);font-weight:600}
     .id{opacity:.95}
+
     .countBadge{
       position:absolute;right:6px;top:6px;
       padding:3px 8px;border-radius:999px;border:1px solid var(--border);
-      background:rgba(0,0,0,.55);color:rgba(255,255,255,.92);
+      background:rgba(0,0,0,.62);color:rgba(255,255,255,.92);
       font-size:11px;line-height:1;
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
       pointer-events:none;user-select:none;
     }
+
     .card.is-glow{
       border-color:rgba(255,230,120,.35);
       box-shadow:
@@ -154,16 +156,19 @@
 
     .modal{
       position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-      padding:16px;background:rgba(0,0,0,.68);z-index:9999;
+      padding:16px;background:rgba(0,0,0,.72);z-index:9999;
     }
     .modal[aria-hidden="false"]{display:flex}
+
+    /* ★ パネルは透けない（読みやすさ優先） */
     .modal__panel{
       width:min(92vw, 560px);
       border-radius:18px;border:1px solid var(--border);
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.18));
+      background:#0f1626;
       box-shadow:0 24px 60px rgba(0,0,0,.5);
       overflow:hidden;position:relative;
     }
+
     .modal__img{width:100%;height:auto;display:block;background:rgba(255,255,255,.05);image-rendering:pixelated;image-rendering:crisp-edges;}
     .modal__body{padding:12px 12px 14px;display:flex;flex-direction:column;gap:10px;}
     .modal__title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
@@ -183,7 +188,11 @@
       color:#ffe9b8;background:rgba(255,220,120,.08);
     }
 
-    /* 復元コードモーダル */
+    /* 復元モーダル内の入力も濃くして読みやすく */
+    #bModal textarea, #bModal input[type="password"]{
+      background:rgba(0,0,0,.35);
+    }
+
     .bm-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
     .bm-title{font-size:14px;font-weight:700}
     .bm-note{color:var(--muted);font-size:12px;line-height:1.4}
@@ -202,24 +211,9 @@
       .backBtn .ico{width:18px;height:18px}
       .modal__panel{width:min(94vw, 560px)}
     }
-
-/* ★ 復元コードモーダルだけ、背景を濃くして可読性UP */
-#bModal .modal__panel{
-  background:#0f1626;          /* 透けない濃いパネル */
-}
-#bModal textarea,
-#bModal input{
-  background:rgba(0,0,0,.35);  /* 入力欄も少し濃く */
-}
-
-#bModal{
-  background:rgba(0,0,0,.78);  /* 0.68→0.78 */
-}
-
-
-    
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <header>
@@ -233,7 +227,7 @@
           <h1>図鑑（tf_v1_book）</h1>
           <div class="sub">
             localStorage の <b>tf_v1_book</b> → got[] を表示します<br>
-            <span id="lastBackupLine" style="color:var(--muted)"></span>
+            <span id="lastBackupLine"></span>
           </div>
         </div>
       </div>
@@ -291,7 +285,7 @@
     </div>
   </div>
 
-  <!-- バックアップ/復元 Modal（ユーザーごと） -->
+  <!-- バックアップ/復元 Modal -->
   <div class="modal" id="bModal" aria-hidden="true" role="dialog" aria-label="バックアップと復元">
     <div class="modal__panel" role="document">
       <div class="modal__body">
@@ -342,12 +336,11 @@
 
   <script>
     // =========================================================
-    // 図鑑 + 所持枚数 + バックアップ（復元コード）
-    // 「ユーザーごと」＝各端末のlocalStorageをその場でコード化して保管
+    // 図鑑 + ダブり集計（IDごとに1枚表示） + バックアップ（復元コード）
     // =========================================================
 
     const LS_KEY = "tf_v1_book";
-    const LS_BACKUP_AT = "tf_v1_book_backup_at"; // ★最後にバックアップした時間（端末ごと）
+    const LS_BACKUP_AT = "tf_v1_book_backup_at";
 
     const elGrid = document.getElementById("grid");
     const elEmpty = document.getElementById("empty");
@@ -383,8 +376,13 @@
     const filePick = document.getElementById("filePick");
     const bMsg = document.getElementById("bMsg");
 
+    // raw（ダブり含む）
     let all = [];
+    // 表示用（IDごとに1枚にまとめたリスト）
+    let uniq = [];
+    // 画面表示リスト（検索&並び替え後）
     let view = [];
+    // id -> count
     let countMap = {};
 
     function safeJSONParse(str){ try { return JSON.parse(str); } catch(e){ return null; } }
@@ -416,15 +414,13 @@
     function toDate(at){
       if(at == null || at === "") return null;
       if(typeof at === "number"){
-        const t = normalizeEpoch(at);
-        return new Date(t);
+        return new Date(normalizeEpoch(at));
       }
       const s = String(at).trim();
       if(/^\d+$/.test(s)){
         const n = Number(s);
         if(!Number.isFinite(n)) return null;
-        const t = normalizeEpoch(n);
-        return new Date(t);
+        return new Date(normalizeEpoch(n));
       }
       const d = new Date(s);
       if(isNaN(d.getTime())) return null;
@@ -432,8 +428,8 @@
     }
     function normalizeEpoch(n){
       const abs = Math.abs(n);
-      if(abs < 1e11) return n * 1000;
-      return n;
+      if(abs < 1e11) return n * 1000; // 秒→ms
+      return n; // ms
     }
     function fmtTokyo(d){
       try{
@@ -465,6 +461,7 @@
       return d ? d.getTime() : 0;
     }
 
+    // ダブり枚数を集計
     function buildCountMap(){
       countMap = {};
       for(const item of all){
@@ -476,6 +473,25 @@
     function getCount(id){
       const key = (id ?? "").toString();
       return countMap[key] || 1;
+    }
+
+    // ★ 表示用に「IDごとに1枚」にまとめる（代表は最新atを採用）
+    function buildUniqueList(items){
+      const map = {};
+      for(const item of items){
+        const id = (item.id ?? "").toString();
+        if(!id) continue;
+
+        if(!map[id]){
+          map[id] = { ...item };
+        }else{
+          // 最新取得日時のものを代表にする（見た目が自然）
+          if(toTime(item.at) > toTime(map[id].at)){
+            map[id] = { ...map[id], ...item, at: item.at };
+          }
+        }
+      }
+      return Object.values(map);
     }
 
     function updateBackupLine(){
@@ -491,6 +507,7 @@
       const raw = localStorage.getItem(LS_KEY);
       if(!raw){
         all = [];
+        uniq = [];
         render();
         showEmpty(
           `図鑑データが見つからないよ。<br>
@@ -511,6 +528,7 @@
         gotArr = [];
       }
 
+      // 生データ（ダブり含む）
       all = gotArr.map(x => ({
         id: x?.id ?? "",
         name: x?.name ?? "",
@@ -519,7 +537,12 @@
         at: x?.at ?? ""
       }));
 
+      // ダブり枚数集計
       buildCountMap();
+
+      // 表示用（IDごとに1枚）
+      uniq = buildUniqueList(all);
+
       render();
       updateBackupLine();
     }
@@ -528,7 +551,8 @@
       const q = normalizeText(elQ.value);
       const sort = elSort.value;
 
-      view = all.filter(item => {
+      // ★ 検索は uniq（IDごと1枚）に対して行う
+      view = uniq.filter(item => {
         if(!q) return true;
         const hay = [ item.id, item.name, item.rarity ].map(normalizeText).join(" ");
         return hay.includes(q);
@@ -545,7 +569,8 @@
         });
       }
 
-      elPill.textContent = `${view.length} / ${all.length}`;
+      // ★ ピル表示：表示枚数 / 図鑑種類数（uniq）
+      elPill.textContent = `${view.length} / ${uniq.length}`;
     }
 
     function render(){
@@ -724,7 +749,7 @@
       if(!pinStr){
         const payload = { v:1, alg:"PLAIN", key:LS_KEY, data_b64:b64uEncodeText(raw) };
         codeBox.value = b64uEncodeText(JSON.stringify(payload));
-        localStorage.setItem(LS_BACKUP_AT, String(Date.now())); // ★ 最終バックアップ時刻
+        localStorage.setItem(LS_BACKUP_AT, String(Date.now()));
         updateBackupLine();
         bMsg.className = "bm-mini bm-ok";
         bMsg.textContent = "発行しました（PINなし / 暗号化なし）。コピー or .txt保存してね。";
