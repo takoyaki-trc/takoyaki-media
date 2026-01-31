@@ -1354,6 +1354,48 @@ for(const s of shop.slots){
     return `${s}s`;
   }
 
+
+// ====== ファーム資材在庫（種/水/肥料）=====
+// ※露店カード在庫(LS.inv)とは別！
+const TF_INV_KEY = "tf_v1_inv";
+
+// 無料（∞）は増減しない
+const TF_FREE = {
+  seed:  new Set(["seed_random"]),
+  water: new Set(["water_plain_free"]),
+  fert:  new Set(["fert_agedama"])
+};
+
+function tfLoadInv(){
+  try{
+    const raw = localStorage.getItem(TF_INV_KEY);
+    if(!raw) return { ver:1, seed:{}, water:{}, fert:{} };
+    const inv = JSON.parse(raw);
+    inv.seed  = inv.seed  || {};
+    inv.water = inv.water || {};
+    inv.fert  = inv.fert  || {};
+    return inv;
+  }catch(e){
+    return { ver:1, seed:{}, water:{}, fert:{} };
+  }
+}
+function tfSaveInv(inv){
+  localStorage.setItem(TF_INV_KEY, JSON.stringify(inv));
+}
+function tfIsFree(type, id){
+  return !!TF_FREE[type]?.has(id);
+}
+function tfInvAdd(inv, type, id, delta){
+  if(tfIsFree(type, id)) return; // 無料は増やさない
+  if(!inv[type]) inv[type] = {};
+  const cur = Number(inv[type][id] ?? 0);
+  inv[type][id] = Math.max(0, cur + (Number(delta)||0));
+}
+
+
+
+
+
   // ===== リセット =====
   function resetAll(){
     localStorage.removeItem(LS.octo);
@@ -1363,6 +1405,8 @@ for(const s of shop.slots){
     localStorage.removeItem(LS.log);
     localStorage.removeItem(LS.syncSeen);
     localStorage.removeItem(LS.unlocked);
+     localStorage.removeItem("tf_v1_inv");
+
     boot();
   }
 
@@ -1390,25 +1434,59 @@ for(const s of shop.slots){
   }
 
   function boot(){
-    ensureOcto();
-    ensureMarket();
-    ensureUnlocked();
+  ensureOcto();
+  ensureMarket();
+  ensureUnlocked();
 
-    // ★ 起動時に図鑑（ダブり）から同期
-    syncFromDexDuplicates();
-    ensureTestInventoryIfEmpty();
+  // ★ 起動時に図鑑（ダブり）から同期
+  syncFromDexDuplicates();
+  ensureTestInventoryIfEmpty();
 
-    // myshop初期（5枠に矯正）
-    const shop = getMyShop();
-    if(!shop || !Array.isArray(shop.slots) || shop.slots.length !== 5){
-      setMyShop(defaultMyShop());
-    }
-
-    initTabs();
-    bindUI();
-    bindModal();
-    renderAll();
+  // myshop初期（5枠に矯正）
+  const shop = getMyShop();
+  if(!shop || !Array.isArray(shop.slots) || shop.slots.length !== 5){
+    setMyShop(defaultMyShop());
   }
+
+  initTabs();
+  bindUI();
+  bindModal();
+  renderAll();
+
+  // ===== テスト購入（ファーム資材の在庫を増やす）=====
+  function setupTestBuy(){
+  const wrap = document.querySelector('[data-panel="npc"]');
+  if(!wrap) return;
+
+  // 二重登録防止
+  if (wrap.__testBuyBound) return;
+  wrap.__testBuyBound = true;
+
+  wrap.addEventListener("click", (e) => {
+    const btn = e.target.closest('button[data-buy]');
+    if(!btn) return;
+
+    const hint = document.getElementById("rotenBuyHint");
+    const id = btn.getAttribute("data-buy");
+
+    let type = null;
+    if (id.startsWith("seed_")) type = "seed";
+    else if (id.startsWith("water_")) type = "water";
+    else if (id.startsWith("fert_")) type = "fert";
+    else return;
+
+    const inv = tfLoadInv();
+    tfInvAdd(inv, type, id, 1);
+    tfSaveInv(inv);
+
+    if(hint) hint.textContent = `購入：${id} を +1（ファーム資材在庫に追加）`;
+  });
+}
+
+
+  setupTestBuy();
+}
+
 
   if(document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", boot);
@@ -1416,30 +1494,3 @@ for(const s of shop.slots){
     boot();
   }
 })();
-
-(function setupTestBuy(){
-  const hint = document.getElementById("rotenBuyHint");
-  const buttons = document.querySelectorAll("button[data-buy]");
-  if(!buttons.length) return;
-
-  buttons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-buy");
-
-      // id から種/水/肥料を判定
-      let type = null;
-      if (id.startsWith("seed_")) type = "seed";
-      else if (id.startsWith("water_")) type = "water";
-      else if (id.startsWith("fert_")) type = "fert";
-      else return;
-
-      const inv = loadInv();
-      invAdd(inv, type, id, 1);
-      saveInv(inv);
-
-      if(hint) hint.textContent = `購入：${id} を +1 しました（ファームに戻って確認）`;
-    });
-  });
-})();
-
-
