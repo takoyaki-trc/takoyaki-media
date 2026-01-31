@@ -941,18 +941,42 @@ if (stXpNow) stXpNow.textContent = String(now);
   }
 
   function addToBook(card){
-    const b = loadBook();
-    if(!b.got) b.got = {};
+  const b = loadBook();
+  if(!b.got) b.got = {};
+
+  const prev = b.got[card.id];
+
+  if(prev){
+    // ✅ 既存カード：count を増やす（古いデータは count が無いので補正）
+    const curCount = Number.isFinite(prev.count) ? prev.count : 1;
+    prev.count = curCount + 1;
+
+    // 情報は最新で上書き（img/nameが変わっても追従）
+    prev.name = card.name;
+    prev.img = card.img;
+    prev.rarity = card.rarity || prev.rarity || "";
+
+    // 最終入手時刻だけ更新（初回 at は残す）
+    prev.lastAt = Date.now();
+
+    b.got[card.id] = prev;
+  }else{
+    // ✅ 新規カード：count=1 で登録
     b.got[card.id] = {
       id: card.id,
       name: card.name,
       img: card.img,
       rarity: card.rarity || "",
-      at: Date.now()
+      count: 1,
+      at: Date.now(),      // 初回入手時刻
+      lastAt: Date.now()   // 最終入手時刻
     };
-    book = b;
-    saveBook(book);
   }
+
+  book = b;
+  saveBook(book);
+}
+
 
   // ====== ステップUI（種→水→肥料：画像カード横スライド）=====
   function cardSlider(items, onSelectId){
