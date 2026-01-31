@@ -12,6 +12,8 @@
     myshop: "roten_v1_myshop",
     market: "roten_v1_market",
     log: "roten_v1_log",
+     book: "tf_v1_book",
+
 
     // ★ 図鑑キー（まずはこれを見に行く）
     dex: "tf_v1_book",
@@ -109,6 +111,46 @@
   // - 露店側のsyncSeenで「何枚取り込んだか」をカードID単位で保持する
   // =========================================================
 
+
+function decrementBookCountById(cardId){
+  const id = String(cardId || "").trim();
+  if(!id) return false;
+
+  const raw = localStorage.getItem(LS.book || "tf_v1_book");
+  if(!raw) return false;
+
+  const book = safeJsonParse(raw, null);
+  if(!book || typeof book !== "object") return false;
+  if(!book.got || typeof book.got !== "object") return false;
+
+  const entry = book.got[id];
+  if(!entry) return false;
+
+  const cur = Number(entry.count);
+  const curCount = Number.isFinite(cur) ? Math.floor(cur) : 1;
+
+  // ★ 最低1枚は残す（図鑑登録分）
+  if(curCount <= 1) return false;
+
+  entry.count = curCount - 1;
+
+  // lastAtは「最後に手に入れた時刻」なので売却では更新しない
+  // もし売却ログを残したいなら soldAt を入れてもOK
+
+  book.got[id] = entry;
+  localStorage.setItem(LS.book || "tf_v1_book", JSON.stringify(book));
+  return true;
+}
+
+
+
+
+
+
+
+
+
+   
   function getDexRaw(){
     for(const k of DEX_KEY_CANDIDATES){
       const raw = localStorage.getItem(k);
@@ -873,6 +915,9 @@ function syncFromDexDuplicates(){
 
       // 売れたら在庫から1枚消す
       removeOneFromInventoryById(s.item.id);
+       // ★ 図鑑（tf_v1_book）側の所持枚数も1枚減らす（ダブり消費）
+decrementBookCountById(s.item.id);
+
 
       addLog({
         at: now(),
@@ -938,22 +983,43 @@ function syncFromDexDuplicates(){
     }
 
     let total = 0;
-    const detail = [];
-    for(const s of shop.slots){
-      if(!s.item) continue;
-      const price = Math.max(1, Math.floor(basePriceFor(s.item) * Number(king.buyMult||3) * priceTierMult(s.priceTier)));
-      total += price;
-      detail.push(`${s.item.id}:${price}`);
-    }
+const detail = [];
+
+// ★ 王様の購入倍率（buyMult）が無い時のデフォルト
+const kingMult = Number(king?.buyMult || 3);
+
+// ★ 棚ごとに計算して合計
+for(const s of shop.slots){
+  if(!s.item) continue;
+
+  const base = basePriceFor(s.item);
+  const tierM = priceTierMult(s.priceTier);
+  const price = Math.max(1, Math.floor(base * kingMult * tierM));
+
+  total += price;
+
+  // ログ用の明細（棚番号/ID/価格）
+  detail.push(`棚${s.slot}:${s.item.id}=${price}`);
+}
 
     setOcto(getOcto() + total);
 
     // 在庫からそれぞれ1枚ずつ消す（棚に置かれている枚数分）
     for(const s of shop.slots){
-      if(!s.item) continue;
-      removeOneFromInventoryById(s.item.id);
-      s.item=null; s.state="empty"; s.startedAt=null; s.endsAt=null; s.lastResult=null;
-    }
+  if(!s.item) continue;
+
+  removeOneFromInventoryById(s.item.id);
+
+  // ★ 図鑑側の所持枚数も1枚減らす（最低1枚は残す仕様）
+  decrementBookCountById(s.item.id);
+
+  s.item=null;
+  s.state="empty";
+  s.startedAt=null;
+  s.endsAt=null;
+  s.lastResult=null;
+}
+
     setMyShop(shop);
 
     addLog({
