@@ -6,71 +6,76 @@
 */
 
 (() => {
+  // =========================
+  // LSキー（★ここはキーだけ）
+  // =========================
   const LS = {
     octo: "roten_v1_octo",
     inv: "roten_v1_inventory",
     myshop: "roten_v1_myshop",
     market: "roten_v1_market",
     log: "roten_v1_log",
-     book: "tf_v1_book",
-
-     // ===== 在庫（farmと同じLSキー）=====
-const LS_INV = "tf_v1_inv";
-
-// 無料（∞扱い）※増減しない
-const FREE_ITEMS = {
-  seed:  new Set(["seed_random"]),
-  water: new Set(["water_plain_free"]),
-  fert:  new Set(["fert_agedama"])
-};
-function isFree(invType, id){ return !!FREE_ITEMS[invType]?.has(id); }
-
-function loadInv(){
-  try{
-    const raw = localStorage.getItem(LS_INV);
-    if(!raw) return { ver:1, seed:{}, water:{}, fert:{} };
-    const inv = JSON.parse(raw);
-    inv.seed  = inv.seed  || {};
-    inv.water = inv.water || {};
-    inv.fert  = inv.fert  || {};
-    return inv;
-  }catch(e){
-    return { ver:1, seed:{}, water:{}, fert:{} };
-  }
-}
-function saveInv(inv){ localStorage.setItem(LS_INV, JSON.stringify(inv)); }
-
-function invAdd(inv, invType, id, delta){
-  if (isFree(invType, id)) return; // 無料は増やさない
-  if(!inv[invType]) inv[invType] = {};
-  const cur = Number(inv[invType][id] ?? 0);
-  inv[invType][id] = Math.max(0, cur + delta);
-}
-
-
-
-    // ★ 図鑑キー（まずはこれを見に行く）
-    dex: "tf_v1_book",
-
-
-    // 互換：過去の入荷済み追跡
+    book: "tf_v1_book",
+    dex:  "tf_v1_book",
     syncSeen: "roten_v1_sync_seen",
-
-    unlocked: "roten_v1_shop_unlocked" // ★解放棚数（1〜5）
+    unlocked: "roten_v1_shop_unlocked"
   };
 
-  // ★ 互換：図鑑キーが環境によって違っても拾えるように候補を持つ
+  // =========================
+  // ファーム資材在庫（種/水/肥料）: tf_v1_inv
+  // （露店カード在庫 rotern_v1_inventory とは別）
+  // =========================
+  const TF_INV_KEY = "tf_v1_inv";
+
+  // 無料（∞扱い）は増減しない
+  const TF_FREE = {
+    seed:  new Set(["seed_random"]),
+    water: new Set(["water_plain_free"]),
+    fert:  new Set(["fert_agedama"])
+  };
+
+  function tfLoadInv(){
+    try{
+      const raw = localStorage.getItem(TF_INV_KEY);
+      if(!raw) return { ver:1, seed:{}, water:{}, fert:{} };
+      const inv = JSON.parse(raw);
+      inv.seed  = inv.seed  || {};
+      inv.water = inv.water || {};
+      inv.fert  = inv.fert  || {};
+      return inv;
+    }catch(e){
+      return { ver:1, seed:{}, water:{}, fert:{} };
+    }
+  }
+  function tfSaveInv(inv){
+    localStorage.setItem(TF_INV_KEY, JSON.stringify(inv));
+  }
+  function tfIsFree(type, id){
+    return !!TF_FREE[type]?.has(id);
+  }
+  function tfInvAdd(inv, type, id, delta){
+    if(tfIsFree(type, id)) return; // 無料は増減しない
+    if(!inv[type]) inv[type] = {};
+    const cur = Number(inv[type][id] ?? 0);
+    inv[type][id] = Math.max(0, cur + (Number(delta)||0));
+  }
+
+  // =========================
+  // 図鑑キー候補（環境差吸収）
+  // =========================
   const DEX_KEY_CANDIDATES = [
-  LS.dex,              // tf_v1_book
-  "tf_v1_book",        // 念のため
-  "tf_v1_dex",
-  "tf_v1_zukan",
-  "takodex_v1",
-  "zukan_v1",
-  "dex_v1"
-];
+    LS.dex,
+    "tf_v1_book",
+    "tf_v1_dex",
+    "tf_v1_zukan",
+    "takodex_v1",
+    "zukan_v1",
+    "dex_v1"
+  ];
 
-
+  // =========================
+  // 定数
+  // =========================
   const PRICE_TIERS = [
     { id:"low",  label:"安い", mult: 0.9 },
     { id:"mid",  label:"普通", mult: 1.0 },
@@ -82,7 +87,6 @@ function invAdd(inv, invType, id, delta){
     { id:"6h", label:"6時間", ms: 6 * 60 * 60 * 1000 },
   ];
 
-  // 行列吹き出し（軽いテンポ）
   const QUEUE_LINES = [
     "見てるだけ…見るだけだから…。",
     "今日の棚、匂う。",
@@ -94,58 +98,39 @@ function invAdd(inv, invType, id, delta){
     "棚が呼んでる。"
   ];
 
-  const $ = (sel, root=document) => root.querySelector(sel);
+  // =========================
+  // util
+  // =========================
+  const $  = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
   const now = () => Date.now();
 
-  function safeJsonParse(str, fallback){ try{ return JSON.parse(str); }catch(e){ return fallback; } }
+  function safeJsonParse(str, fallback){
+    try{ return JSON.parse(str); }catch(e){ return fallback; }
+  }
   function lsGet(key, fallback){
     const v = localStorage.getItem(key);
     if(v == null) return fallback;
     return safeJsonParse(v, fallback);
   }
-  function lsSet(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
-
-   // =========================================================
-// 図鑑（tf_v1_book）の所持枚数を1枚減らす
-// ・最低1枚は残す（図鑑登録用）
-// =========================================================
-function decrementBookCountById(cardId){
-  const id = String(cardId || "").trim();
-  if(!id) return false;
-
-  const raw = localStorage.getItem("tf_v1_book");
-  if(!raw) return false;
-
-  let book;
-  try{
-    book = JSON.parse(raw);
-  }catch(e){
-    return false;
+  function lsSet(key, val){
+    localStorage.setItem(key, JSON.stringify(val));
   }
 
-  if(!book || typeof book !== "object") return false;
-  if(!book.got || typeof book.got !== "object") return false;
-  if(!book.got[id]) return false;
-
-  const entry = book.got[id];
-  const cur = Number(entry.count);
-
-  // count が無い / 不正なら何もしない
-  if(!Number.isFinite(cur)) return false;
-
-  // ★ 最低1枚は残す（ダブりだけ消費）
-  if(cur <= 1) return false;
-
-  entry.count = cur - 1;
-
-  // 保存
-  book.got[id] = entry;
-  localStorage.setItem("tf_v1_book", JSON.stringify(book));
-
-  return true;
-}
-
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#39;");
+  }
+  function escapeHtmlAttr(s){
+    return escapeHtml(s).replaceAll("`","&#96;");
+  }
+  function rarityPillHtml(r){
+    if(r==="LR") return `<div class="pill lr">LR</div>`;
+    if(r==="UR") return `<div class="pill ur">UR</div>`;
+    if(r==="SR") return `<div class="pill sr">SR</div>`;
+    return `<div class="pill">${escapeHtml(r)}</div>`;
+  }
 
   function todayKeyJST(){
     const d = new Date();
@@ -162,14 +147,20 @@ function decrementBookCountById(cardId){
     lsSet(LS.log, log);
   }
 
+  // =========================
+  // オクト / 解放棚
+  // =========================
   function ensureOcto(){
     const o = localStorage.getItem(LS.octo);
     if(o == null) localStorage.setItem(LS.octo, String(200));
   }
-  function getOcto(){ return Number(localStorage.getItem(LS.octo) || "0") || 0; }
-  function setOcto(v){ localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(v)))); }
+  function getOcto(){
+    return Number(localStorage.getItem(LS.octo) || "0") || 0;
+  }
+  function setOcto(v){
+    localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(v))));
+  }
 
-  // ===== 解放棚数 =====
   function ensureUnlocked(){
     const v = localStorage.getItem(LS.unlocked);
     if(v == null) localStorage.setItem(LS.unlocked, "2"); // 初期2
@@ -179,53 +170,43 @@ function decrementBookCountById(cardId){
     return Math.max(1, Math.min(5, Math.floor(n)));
   }
 
-  // =========================================================
-  // ★ 図鑑（ダブり）→ 在庫 同期
-  // 目的：畑の「入手ログ」ではなく、図鑑の「所持（ダブり）」を正とする
-  // - 図鑑の形式が多少違っても拾えるように “スマートに” 抽出する
-  // - 露店側のsyncSeenで「何枚取り込んだか」をカードID単位で保持する
-  // =========================================================
+  // =========================
+  // 図鑑（tf_v1_book）の count を 1 減らす
+  // （最低1枚は残す）
+  // ★ 1個だけ定義（重複禁止）
+  // =========================
+  function decrementBookCountById(cardId){
+    const id = String(cardId || "").trim();
+    if(!id) return false;
 
+    const raw = localStorage.getItem(LS.book || "tf_v1_book");
+    if(!raw) return false;
 
-function decrementBookCountById(cardId){
-  const id = String(cardId || "").trim();
-  if(!id) return false;
+    const book = safeJsonParse(raw, null);
+    if(!book || typeof book !== "object") return false;
+    if(!book.got || typeof book.got !== "object") return false;
 
-  const raw = localStorage.getItem(LS.book || "tf_v1_book");
-  if(!raw) return false;
+    const entry = book.got[id];
+    if(!entry) return false;
 
-  const book = safeJsonParse(raw, null);
-  if(!book || typeof book !== "object") return false;
-  if(!book.got || typeof book.got !== "object") return false;
+    const cur = Number(entry.count);
+    const curCount = Number.isFinite(cur) ? Math.floor(cur) : 1;
 
-  const entry = book.got[id];
-  if(!entry) return false;
+    if(curCount <= 1) return false; // 図鑑登録分は残す
 
-  const cur = Number(entry.count);
-  const curCount = Number.isFinite(cur) ? Math.floor(cur) : 1;
-
-  // ★ 最低1枚は残す（図鑑登録分）
-  if(curCount <= 1) return false;
-
-  entry.count = curCount - 1;
-
-  // lastAtは「最後に手に入れた時刻」なので売却では更新しない
-  // もし売却ログを残したいなら soldAt を入れてもOK
-
-  book.got[id] = entry;
-  localStorage.setItem(LS.book || "tf_v1_book", JSON.stringify(book));
-  return true;
-}
+    entry.count = curCount - 1;
+    book.got[id] = entry;
+    localStorage.setItem(LS.book || "tf_v1_book", JSON.stringify(book));
+    return true;
+  }
 
 
 
 
 
-
-
-
-
-   
+  // =========================
+  // 図鑑（ダブり）→ 露店カード在庫 同期
+  // =========================
   function getDexRaw(){
     for(const k of DEX_KEY_CANDIDATES){
       const raw = localStorage.getItem(k);
@@ -235,28 +216,20 @@ function decrementBookCountById(cardId){
   }
 
   function normalizeDexEntries(dex){
-    // 想定しうる形を全部吸収して「配列」にする
-    // 例）
-    // - dex.cards: [{id,name,rarity,img,count}, ...]
-    // - dex.list:  [{...}]
-    // - dex.items: [{...}]
-    // - dex.got:   [{...}]  ※ count/owned を持つ場合もある
-    // - dex.byId:  { "TN-001": {...}, ... }
     if(!dex) return [];
     if(Array.isArray(dex.cards)) return dex.cards;
     if(Array.isArray(dex.list))  return dex.list;
     if(Array.isArray(dex.items)) return dex.items;
     if(Array.isArray(dex.got))   return dex.got;
-     if(dex.got && typeof dex.got === "object" && !Array.isArray(dex.got)){
-  return Object.values(dex.got);
-}
 
+    // got が object(map)形式
+    if(dex.got && typeof dex.got === "object" && !Array.isArray(dex.got)){
+      return Object.values(dex.got);
+    }
 
-    // ダブり専用配列があるケース
     if(Array.isArray(dex.dupes)) return dex.dupes;
     if(Array.isArray(dex.dup))   return dex.dup;
 
-    // byId / map形式
     if(dex.byId && typeof dex.byId === "object"){
       return Object.keys(dex.byId).map(id => ({ id, ...dex.byId[id] }));
     }
@@ -268,7 +241,6 @@ function decrementBookCountById(cardId){
   }
 
   function getEntryCountLike(e){
-    // 「総所持枚数」っぽいもの
     const c =
       e?.count ?? e?.qty ?? e?.num ?? e?.n ??
       e?.owned ?? e?.ownedCount ?? e?.have ?? e?.haveCount;
@@ -277,7 +249,6 @@ function decrementBookCountById(cardId){
   }
 
   function getEntryDupesLike(e){
-    // 「ダブり枚数」っぽいもの（総所持とは別）
     const d = e?.dupes ?? e?.dup ?? e?.duplicate ?? e?.duplicates;
     const n = Number(d);
     return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : null;
@@ -290,9 +261,6 @@ function decrementBookCountById(cardId){
     const dex = safeJsonParse(raw, null);
     const entries = normalizeDexEntries(dex);
 
-    // entries から「ダブり分だけ」抽出して返す
-    // - dupes系プロパティがあればそれを優先
-    // - なければ count(総所持) - 1 をダブりとみなす（1枚は“図鑑登録用”）
     const dupes = [];
     for(const e of entries){
       const id = String(e?.id || e?.cardId || e?.no || "").trim();
@@ -313,251 +281,105 @@ function decrementBookCountById(cardId){
     return { key, dupes };
   }
 
-function syncFromDexDuplicates(){
-  const { key, dupes } = getDexDuplicatesList();
+  function syncFromDexDuplicates(){
+    const { key, dupes } = getDexDuplicatesList();
 
-  // 露店在庫
-  let inv = lsGet(LS.inv, []);
-  if(!Array.isArray(inv)) inv = [];
+    let inv = lsGet(LS.inv, []);
+    if(!Array.isArray(inv)) inv = [];
 
-  // 現在の在庫枚数（idごと）
-  const invCount = {};
-  for(const it of inv){
-    const id = String(it?.id || "");
-    if(!id) continue;
-    invCount[id] = (invCount[id] || 0) + 1;
-  }
+    const invCount = {};
+    for(const it of inv){
+      const id = String(it?.id || "");
+      if(!id) continue;
+      invCount[id] = (invCount[id] || 0) + 1;
+    }
 
-  let changed = 0;
+    let changed = 0;
 
-  // ① 足りない分を追加（図鑑ダブりを正とする）
-  for(const d of dupes){
-    const id = String(d.id);
-    const want = Math.max(0, Math.floor(d.dupCount || 0));     // 欲しいダブり在庫
-    const have = Math.max(0, invCount[id] || 0);               // 現在の露店在庫
-    const need = want - have;
+    // 足りない分を追加
+    for(const d of dupes){
+      const id = String(d.id);
+      const want = Math.max(0, Math.floor(d.dupCount || 0));
+      const have = Math.max(0, invCount[id] || 0);
+      const need = want - have;
+      if(need <= 0) continue;
 
-    if(need <= 0) continue;
+      for(let i=0;i<need;i++){
+        inv.push({
+          id,
+          name: String(d.name || id),
+          img: d.img || null,
+          rarity: String(d.rarity || "N"),
+          at: now() + i
+        });
+      }
+      changed += need;
+    }
 
-    for(let i=0;i<need;i++){
-      inv.push({
-        id,
-        name: String(d.name || id),
-        img: d.img || null,
-        rarity: String(d.rarity || "N"),
-        at: now() + i
+    // 多すぎる分を削除（古い順）
+    const wantMap = {};
+    for(const d of dupes) wantMap[String(d.id)] = Math.max(0, Math.floor(d.dupCount||0));
+
+    const byId = new Map();
+    inv.forEach((it, idx) => {
+      const id = String(it?.id || "");
+      if(!id) return;
+      if(!byId.has(id)) byId.set(id, []);
+      byId.get(id).push({ idx, at: Number(it.at||0) });
+    });
+
+    for(const [id, arr] of byId.entries()){
+      const want = wantMap[id] ?? 0;
+      const have = arr.length;
+      const over = have - want;
+      if(over <= 0) continue;
+
+      arr.sort((a,b)=> (a.at||0) - (b.at||0));
+      const removeIdxs = arr.slice(0, over).map(x=>x.idx).sort((a,b)=>b-a);
+      for(const ridx of removeIdxs){
+        inv.splice(ridx, 1);
+        changed++;
+      }
+    }
+
+    if(changed > 0){
+      lsSet(LS.inv, inv);
+      addLog({
+        at: now(),
+        title: `図鑑（ダブり）同期`,
+        desc: `図鑑のダブり枚数に合わせて在庫を更新した。${key ? `（参照:${key}）` : ""}`,
+        chips:["同期","図鑑"]
       });
     }
-    changed += need;
+
+    return changed;
   }
-
-  // ② 多すぎる分を削除（図鑑ダブりより在庫が多い場合）
-  //    ※通常は起きにくいけど、テスト投入/旧データでズレた時に整う
-  const wantMap = {};
-  for(const d of dupes) wantMap[String(d.id)] = Math.max(0, Math.floor(d.dupCount||0));
-
-  // idごとに「余剰」を計算して古い順に削除
-  const byId = new Map();
-  inv.forEach((it, idx) => {
-    const id = String(it?.id || "");
-    if(!id) return;
-    if(!byId.has(id)) byId.set(id, []);
-    byId.get(id).push({ idx, at: Number(it.at||0) });
-  });
-
-  for(const [id, arr] of byId.entries()){
-    const want = wantMap[id] ?? 0;
-    const have = arr.length;
-    const over = have - want;
-    if(over <= 0) continue;
-
-    // 古い順に over 個削除
-    arr.sort((a,b)=> (a.at||0) - (b.at||0));
-    const removeIdxs = arr.slice(0, over).map(x=>x.idx).sort((a,b)=>b-a);
-    for(const ridx of removeIdxs){
-      inv.splice(ridx, 1);
-      changed++;
-    }
-  }
-
-  if(changed > 0){
-    lsSet(LS.inv, inv);
-    addLog({
-      at: now(),
-      title: `図鑑（ダブり）同期`,
-      desc: `図鑑のダブり枚数に合わせて在庫を更新した。${key ? `（参照:${key}）` : ""}`,
-      chips:["同期","図鑑"]
-    });
-  }
-
-  return changed;
-}
 
   function ensureTestInventoryIfEmpty(){
     let inv = lsGet(LS.inv, []);
     if(Array.isArray(inv) && inv.length) return;
 
-    // ★ 図鑑（ダブり）から同期
     syncFromDexDuplicates();
     inv = lsGet(LS.inv, []);
     if(Array.isArray(inv) && inv.length) return;
 
-    // テスト（同ID複数枚も入れる）
     const sample = [
-      { id:"TN-001", name:"焼きたて微笑み", rarity:"N", at: now()-1000*60*60*2, img:null },
-      { id:"TN-001", name:"焼きたて微笑み", rarity:"N", at: now()-1000*60*60*2+1, img:null },
-      { id:"TN-010", name:"マヨの奇跡", rarity:"R", at: now()-1000*60*60*5, img:null },
-      { id:"TN-030", name:"職人の手癖", rarity:"SR", at: now()-1000*60*60*20, img:null },
+      { id:"TN-001", name:"焼きたて微笑み", rarity:"N",  at: now()-1000*60*60*2,  img:null },
+      { id:"TN-001", name:"焼きたて微笑み", rarity:"N",  at: now()-1000*60*60*2+1,img:null },
+      { id:"TN-010", name:"マヨの奇跡",     rarity:"R",  at: now()-1000*60*60*5,  img:null },
+      { id:"TN-030", name:"職人の手癖",     rarity:"SR", at: now()-1000*60*60*20, img:null },
       { id:"TN-070", name:"UR：焼かれし紋章", rarity:"UR", at: now()-1000*60*60*60, img:null },
     ];
     lsSet(LS.inv, sample);
     addLog({ at: now(), title:`テストカード投入`, desc:`図鑑側のダブりカードが見つからなかったため、テスト用カードを追加した。`, chips:["テスト"] });
   }
 
-  // ===== 市場 =====
-  function getMarketState(){ return lsGet(LS.market, null); }
-  function setMarketState(v){ lsSet(LS.market, v); }
-
-  function ensureMarket(){
-    const mk = window.ROTEN_MARKET;
-    const key = todayKeyJST();
-    let st = getMarketState();
-    if(!st || st.todayKey !== key){
-      const idx = hashToIndex(key, mk.moods.length);
-      st = {
-        todayKey: key,
-        moodId: mk.moods[idx].id,
-        moodLabel: mk.moods[idx].label,
-        moodHint: mk.moods[idx].hint,
-        seed: hashToInt(key + "|roten")
-      };
-      setMarketState(st);
-    }
-    return st;
-  }
-
-  function hashToInt(s){
-    let h = 2166136261;
-    for(let i=0;i<s.length;i++){
-      h ^= s.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    return (h >>> 0);
-  }
-  function hashToIndex(s, mod){ return hashToInt(s) % mod; }
-
-  // ===== 棚データ（最大5） =====
-  function defaultMyShop(){
-    const slots = [];
-    for(let i=1;i<=5;i++){
-      slots.push({
-        slot: i,
-        state: "empty",    // empty/ready/listed/done
-        item: null,        // {id,name,img,rarity,at} ※棚には1枚だけ
-        priceTier: "mid",
-        duration: "3h",
-        startedAt: null,
-        endsAt: null,
-        lastResult: null
-      });
-    }
-    return { slots };
-  }
-  function getMyShop(){ return lsGet(LS.myshop, defaultMyShop()); }
-  function setMyShop(shop){ lsSet(LS.myshop, shop); }
-
-  // ===== 客層抽選（売却判定） =====
-  function getActiveCustomers(){
-    const base = window.ROTEN_CUSTOMERS?.base || [];
-    const slots = window.ROTEN_CUSTOMERS?.collabSlots || [];
-    const collabs = slots.filter(s => s && s.active && s.data).map(s => s.data);
-    return base.concat(collabs);
-  }
-  function makeRng(seed){
-    let x = seed >>> 0;
-    return () => {
-      x ^= x << 13; x >>>= 0;
-      x ^= x >>> 17; x >>>= 0;
-      x ^= x << 5;  x >>>= 0;
-      return (x >>> 0) / 4294967296;
-    };
-  }
-  function pickCustomerWeighted(list, rng){
-    let total = 0;
-    for(const c of list){ const w = Number(c.weight||0); if(w>0) total += w; }
-    if(total<=0) return list[0] || null;
-    let r = rng()*total;
-    for(const c of list){
-      const w = Number(c.weight||0);
-      if(w<=0) continue;
-      r -= w;
-      if(r<=0) return c;
-    }
-    return list[list.length-1] || null;
-  }
-  function rarityRank(r){
-    switch(r){
-      case "N": return 1; case "R": return 2; case "SR": return 3; case "UR": return 4; case "LR": return 5;
-      default: return 1;
-    }
-  }
-  function basePriceFor(item){
-    const bp = window.ROTEN_MARKET?.basePrices || {N:10,R:25,SR:60,UR:120,LR:200};
-    return Number(bp[item.rarity] || 10);
-  }
-  function priceTierMult(id){ return (PRICE_TIERS.find(x=>x.id===id)?.mult) ?? 1.0; }
-  function durationMs(id){ return (DURATIONS.find(x=>x.id===id)?.ms) ?? (3*60*60*1000); }
-  function pickLine(customer, rng){
-    const lines = Array.isArray(customer.lines) ? customer.lines : [];
-    if(!lines.length) return "……";
-    return lines[Math.floor(rng()*lines.length)] || lines[0];
-  }
-  function slotCountItems(shop){
-    return shop.slots.filter(s => s.item && s.state !== "empty").length;
-  }
-
-  function resolveSlotSale(slot, marketSeed){
-    const activeCustomers = getActiveCustomers();
-    const rng = makeRng((marketSeed + slot.slot * 99991 + (slot.startedAt||0)) >>> 0);
-
-    const king = activeCustomers.find(c=>c.id==="king");
-    const kingChanceBase = 0.003; // 0.3%
-    const kingBoost = slotCountItems(getMyShop()) >= 2 ? 1.25 : 1.0;
-    const kingChance = king ? Math.min(0.01, kingChanceBase * kingBoost) : 0;
-    if(king && rng() < kingChance) return { type:"KING", customer: king };
-
-    const list = activeCustomers.filter(c=>c.id!=="king");
-    const customer = pickCustomerWeighted(list, rng);
-    if(!customer) return { type:"NO_CUSTOMER", customer:null };
-
-    let buyMult = Number(customer.buyMult || 1);
-    if(customer.id === "masked"){
-      buyMult = Math.round((0.8 + rng()*1.7) * 100) / 100;
-    }
-
-    const pt = priceTierMult(slot.priceTier);
-    const rarity = rarityRank(slot.item.rarity);
-
-    const pricePenalty = pt >= 1.2 ? 0.18 : (pt <= 0.95 ? -0.05 : 0.0);
-    const rarityPenalty = (rarity - 1) * 0.04;
-    const customerPower = Math.min(0.22, Math.max(-0.05, (buyMult - 1) * 0.12));
-
-    let p = 0.72;
-    p = p - pricePenalty - rarityPenalty + customerPower;
-    p = Math.max(0.08, Math.min(0.95, p));
-
-    const sold = rng() < p;
-    const base = basePriceFor(slot.item);
-    const sellPrice = Math.max(1, Math.floor(base * buyMult * pt));
-    const line = pickLine(customer, rng);
-
-    return { type: sold ? "SOLD":"UNSOLD", customer, buyMult, sellPrice, line, p };
-  }
-
-  // ===== 在庫を「同IDでまとめる」 =====
+  // =========================
+  // 在庫を「同IDでまとめる」
+  // =========================
   function buildGroupedInventory(){
     const inv = lsGet(LS.inv, []).filter(x => x && x.id);
-    const map = new Map(); // id -> { id,name,rarity,img, latestAt, count }
+    const map = new Map();
     for(const it of inv){
       const key = String(it.id);
       const cur = map.get(key);
@@ -575,7 +397,6 @@ function syncFromDexDuplicates(){
         const at = Number(it.at || 0);
         if(at >= cur.latestAt){
           cur.latestAt = at;
-          // 画像や名前が後から良い情報で入る場合もあるので更新
           cur.name = String(it.name || cur.name);
           cur.rarity = String(it.rarity || cur.rarity);
           cur.img = it.img || cur.img;
@@ -596,8 +417,13 @@ function syncFromDexDuplicates(){
     return false;
   }
 
-  // ===== 画像 =====
-  function thumbSrc(item){ return item?.img ? String(item.img) : ""; }
+  function thumbSrc(item){
+    return item?.img ? String(item.img) : "";
+  }
+
+
+
+   
 
   // ===== UI：タブ =====
   function initTabs(){
@@ -1393,10 +1219,9 @@ function tfInvAdd(inv, type, id, delta){
 }
 
 
-
-
-
-  // ===== リセット =====
+  // =========================
+  // reset / bind / boot
+  // =========================
   function resetAll(){
     localStorage.removeItem(LS.octo);
     localStorage.removeItem(LS.inv);
@@ -1405,88 +1230,69 @@ function tfInvAdd(inv, type, id, delta){
     localStorage.removeItem(LS.log);
     localStorage.removeItem(LS.syncSeen);
     localStorage.removeItem(LS.unlocked);
-     localStorage.removeItem("tf_v1_inv");
+    localStorage.removeItem(TF_INV_KEY); // ★tf_v1_inv
 
     boot();
   }
 
-  // ===== util =====
-  function escapeHtml(s){
-    return String(s)
-      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;").replaceAll("'","&#39;");
-  }
-  function escapeHtmlAttr(s){
-    return escapeHtml(s).replaceAll("`","&#96;");
-  }
-  function rarityPillHtml(r){
-    if(r==="LR") return `<div class="pill lr">LR</div>`;
-    if(r==="UR") return `<div class="pill ur">UR</div>`;
-    if(r==="SR") return `<div class="pill sr">SR</div>`;
-    return `<div class="pill">${escapeHtml(r)}</div>`;
-  }
-
-  // ===== bind =====
   function bindUI(){
     $("#rotenInvSearch")?.addEventListener("input", renderInventory);
     $("#rotenInvSort")?.addEventListener("change", renderInventory);
     $("#rotenResetBtn")?.addEventListener("click", resetAll);
   }
 
-  function boot(){
-  ensureOcto();
-  ensureMarket();
-  ensureUnlocked();
+  function setupTestBuy(){
+    // NPCパネル内のボタンをイベント委譲で拾う（動的DOMでもOK）
+    const wrap = document.querySelector('[data-panel="npc"]');
+    if(!wrap) return;
 
-  // ★ 起動時に図鑑（ダブり）から同期
-  syncFromDexDuplicates();
-  ensureTestInventoryIfEmpty();
+    // 二重登録防止（再bootでも増えない）
+    if (wrap.__testBuyBound) return;
+    wrap.__testBuyBound = true;
 
-  // myshop初期（5枠に矯正）
-  const shop = getMyShop();
-  if(!shop || !Array.isArray(shop.slots) || shop.slots.length !== 5){
-    setMyShop(defaultMyShop());
+    wrap.addEventListener("click", (e) => {
+      const btn = e.target.closest?.('button[data-buy]');
+      if(!btn) return;
+
+      const hint = document.getElementById("rotenBuyHint");
+      const id = btn.getAttribute("data-buy") || "";
+
+      let type = null;
+      if (id.startsWith("seed_")) type = "seed";
+      else if (id.startsWith("water_")) type = "water";
+      else if (id.startsWith("fert_")) type = "fert";
+      else return;
+
+      const inv = tfLoadInv();
+      tfInvAdd(inv, type, id, 1);
+      tfSaveInv(inv);
+
+      if(hint) hint.textContent = `購入：${id} を +1（ファーム資材在庫に追加）`;
+    });
   }
 
-  initTabs();
-  bindUI();
-  bindModal();
-  renderAll();
+  function boot(){
+    ensureOcto();
+    ensureMarket();
+    ensureUnlocked();
 
-  // ===== テスト購入（ファーム資材の在庫を増やす）=====
-  function setupTestBuy(){
-  const wrap = document.querySelector('[data-panel="npc"]');
-  if(!wrap) return;
+    // ★ 起動時に図鑑（ダブり）→露店在庫へ同期
+    syncFromDexDuplicates();
+    ensureTestInventoryIfEmpty();
 
-  // 二重登録防止
-  if (wrap.__testBuyBound) return;
-  wrap.__testBuyBound = true;
+    // ここにあなたの「myshop初期矯正」などがあるならそのままOK
+    const shop = getMyShop?.();
+    if(shop && Array.isArray(shop.slots) && shop.slots.length !== 5){
+      setMyShop(defaultMyShop());
+    }
 
-  wrap.addEventListener("click", (e) => {
-    const btn = e.target.closest('button[data-buy]');
-    if(!btn) return;
+    initTabs();
+    bindUI();
+    bindModal();
+    renderAll();
 
-    const hint = document.getElementById("rotenBuyHint");
-    const id = btn.getAttribute("data-buy");
-
-    let type = null;
-    if (id.startsWith("seed_")) type = "seed";
-    else if (id.startsWith("water_")) type = "water";
-    else if (id.startsWith("fert_")) type = "fert";
-    else return;
-
-    const inv = tfLoadInv();
-    tfInvAdd(inv, type, id, 1);
-    tfSaveInv(inv);
-
-    if(hint) hint.textContent = `購入：${id} を +1（ファーム資材在庫に追加）`;
-  });
-}
-
-
-  setupTestBuy();
-}
-
+    setupTestBuy();
+  }
 
   if(document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", boot);
@@ -1494,3 +1300,7 @@ function tfInvAdd(inv, type, id, delta){
     boot();
   }
 })();
+
+
+
+  
