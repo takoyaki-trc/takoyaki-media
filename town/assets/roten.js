@@ -1234,36 +1234,38 @@ for(const s of shop.slots){
     });
   }
 
-  function boot(){
-    ensureOcto();
-    ensureMarket();
-    ensureUnlocked();
+ function boot(){
+  // ★ UIは先に生かす（ここが重要：エラーがあってもタブは動く）
+  initTabs();
+  bindUI();
+  bindModal();
+  setupTestBuy();
 
-    // ★ 起動時に図鑑（ダブり）→露店在庫へ同期
-    syncFromDexDuplicates();
-    ensureTestInventoryIfEmpty();
+  // ★ 以降で落ちてもUIは死なない
+  try{
+    // ここから下は「存在するなら」呼ぶ
+    if (typeof ensureOcto === "function") ensureOcto();
+    if (typeof ensureUnlocked === "function") ensureUnlocked();
+    if (typeof ensureMarket === "function") ensureMarket();
 
-    // ここにあなたの「myshop初期矯正」などがあるならそのままOK
-    const shop = getMyShop?.();
-    if(shop && Array.isArray(shop.slots) && shop.slots.length !== 5){
-      setMyShop(defaultMyShop());
+    if (typeof syncFromDexDuplicates === "function") syncFromDexDuplicates();
+    if (typeof ensureTestInventoryIfEmpty === "function") ensureTestInventoryIfEmpty();
+
+    // myshop 初期矯正（関数が揃ってる時だけ）
+    if (typeof getMyShop === "function" && typeof setMyShop === "function" && typeof defaultMyShop === "function"){
+      const shop = getMyShop();
+      if(shop && Array.isArray(shop.slots) && shop.slots.length !== 5){
+        setMyShop(defaultMyShop());
+      }
     }
 
-    initTabs();
-    bindUI();
-    bindModal();
-    renderAll();
-
-    setupTestBuy();
+    // 最後に描画
+    if (typeof renderAll === "function") renderAll();
+  }catch(err){
+    console.error("[roten boot error]", err);
   }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", boot);
-  }else{
-    boot();
-  }
-})();
-
+}
+ 
 
 
   
