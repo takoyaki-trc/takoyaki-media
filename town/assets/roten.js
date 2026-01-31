@@ -14,7 +14,8 @@
     log: "roten_v1_log",
 
     // ★ 図鑑キー（まずはこれを見に行く）
-    dex: "tf_v1_dex",
+    dex: "tf_v1_book",
+
 
     // 互換：過去の入荷済み追跡
     syncSeen: "roten_v1_sync_seen",
@@ -24,12 +25,15 @@
 
   // ★ 互換：図鑑キーが環境によって違っても拾えるように候補を持つ
   const DEX_KEY_CANDIDATES = [
-    LS.dex,              // tf_v1_dex
-    "tf_v1_zukan",
-    "takodex_v1",
-    "zukan_v1",
-    "dex_v1"
-  ];
+  LS.dex,              // tf_v1_book
+  "tf_v1_book",        // 念のため
+  "tf_v1_dex",
+  "tf_v1_zukan",
+  "takodex_v1",
+  "zukan_v1",
+  "dex_v1"
+];
+
 
   const PRICE_TIERS = [
     { id:"low",  label:"安い", mult: 0.9 },
@@ -126,6 +130,10 @@
     if(Array.isArray(dex.list))  return dex.list;
     if(Array.isArray(dex.items)) return dex.items;
     if(Array.isArray(dex.got))   return dex.got;
+     if(dex.got && typeof dex.got === "object" && !Array.isArray(dex.got)){
+  return Object.values(dex.got);
+}
+
 
     // ダブり専用配列があるケース
     if(Array.isArray(dex.dupes)) return dex.dupes;
@@ -188,53 +196,85 @@
     return { key, dupes };
   }
 
-  function syncFromDexDuplicates(){
-    const { key, dupes } = getDexDuplicatesList();
-    if(!dupes.length) return 0;
+function syncFromDexDuplicates(){
+  const { key, dupes } = getDexDuplicatesList();
 
-    // syncSeenは「idごとに何枚取り込んだか」も保存（互換のため既存objを流用）
-    const seen = lsGet(LS.syncSeen, {}); // { "TN-001": 3, ... } + 旧形式キーも混在OK
-    let inv = lsGet(LS.inv, []);
-    if(!Array.isArray(inv)) inv = [];
+  // 露店在庫
+  let inv = lsGet(LS.inv, []);
+  if(!Array.isArray(inv)) inv = [];
 
-    let added = 0;
+  // 現在の在庫枚数（idごと）
+  const invCount = {};
+  for(const it of inv){
+    const id = String(it?.id || "");
+    if(!id) continue;
+    invCount[id] = (invCount[id] || 0) + 1;
+  }
 
-    for(const d of dupes){
-      const id = String(d.id);
+  let changed = 0;
 
-      // 既に取り込んだ枚数
-      const already = Number(seen[id] || 0) || 0;
+  // ① 足りない分を追加（図鑑ダブりを正とする）
+  for(const d of dupes){
+    const id = String(d.id);
+    const want = Math.max(0, Math.floor(d.dupCount || 0));     // 欲しいダブり在庫
+    const have = Math.max(0, invCount[id] || 0);               // 現在の露店在庫
+    const need = want - have;
 
-      // 図鑑のダブり枚数が「正」。露店在庫に足りない分だけ足す
-      const need = Math.max(0, Math.floor(d.dupCount) - already);
-      if(need <= 0) continue;
+    if(need <= 0) continue;
 
-      for(let i=0;i<need;i++){
-        inv.push({
-          id,
-          name: String(d.name || id),
-          img: d.img || null,
-          rarity: String(d.rarity || "N"),
-          at: now() + i // 同時刻重複回避（微差）
-        });
-        added++;
-      }
-
-      seen[id] = already + need;
-    }
-
-    if(added > 0){
-      lsSet(LS.inv, inv);
-      lsSet(LS.syncSeen, seen);
-      addLog({
-        at: now(),
-        title: `図鑑（ダブり）から入荷 +${added}`,
-        desc: `図鑑のダブり分が露店在庫に追加された。${key ? `（参照:${key}）` : ""}`,
-        chips:["同期","図鑑"]
+    for(let i=0;i<need;i++){
+      inv.push({
+        id,
+        name: String(d.name || id),
+        img: d.img || null,
+        rarity: String(d.rarity || "N"),
+        at: now() + i
       });
     }
-    return added;
+    changed += need;
   }
+
+  // ② 多すぎる分を削除（図鑑ダブりより在庫が多い場合）
+  //    ※通常は起きにくいけど、テスト投入/旧データでズレた時に整う
+  const wantMap = {};
+  for(const d of dupes) wantMap[String(d.id)] = Math.max(0, Math.floor(d.dupCount||0));
+
+  // idごとに「余剰」を計算して古い順に削除
+  const byId = new Map();
+  inv.forEach((it, idx) => {
+    const id = String(it?.id || "");
+    if(!id) return;
+    if(!byId.has(id)) byId.set(id, []);
+    byId.get(id).push({ idx, at: Number(it.at||0) });
+  });
+
+  for(const [id, arr] of byId.entries()){
+    const want = wantMap[id] ?? 0;
+    const have = arr.length;
+    const over = have - want;
+    if(over <= 0) continue;
+
+    // 古い順に over 個削除
+    arr.sort((a,b)=> (a.at||0) - (b.at||0));
+    const removeIdxs = arr.slice(0, over).map(x=>x.idx).sort((a,b)=>b-a);
+    for(const ridx of removeIdxs){
+      inv.splice(ridx, 1);
+      changed++;
+    }
+  }
+
+  if(changed > 0){
+    lsSet(LS.inv, inv);
+    addLog({
+      at: now(),
+      title: `図鑑（ダブり）同期`,
+      desc: `図鑑のダブり枚数に合わせて在庫を更新した。${key ? `（参照:${key}）` : ""}`,
+      chips:["同期","図鑑"]
+    });
+  }
+
+  return changed;
+}
 
   function ensureTestInventoryIfEmpty(){
     let inv = lsGet(LS.inv, []);
