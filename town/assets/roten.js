@@ -14,6 +14,40 @@
     log: "roten_v1_log",
      book: "tf_v1_book",
 
+     // ===== 在庫（farmと同じLSキー）=====
+const LS_INV = "tf_v1_inv";
+
+// 無料（∞扱い）※増減しない
+const FREE_ITEMS = {
+  seed:  new Set(["seed_random"]),
+  water: new Set(["water_plain_free"]),
+  fert:  new Set(["fert_agedama"])
+};
+function isFree(invType, id){ return !!FREE_ITEMS[invType]?.has(id); }
+
+function loadInv(){
+  try{
+    const raw = localStorage.getItem(LS_INV);
+    if(!raw) return { ver:1, seed:{}, water:{}, fert:{} };
+    const inv = JSON.parse(raw);
+    inv.seed  = inv.seed  || {};
+    inv.water = inv.water || {};
+    inv.fert  = inv.fert  || {};
+    return inv;
+  }catch(e){
+    return { ver:1, seed:{}, water:{}, fert:{} };
+  }
+}
+function saveInv(inv){ localStorage.setItem(LS_INV, JSON.stringify(inv)); }
+
+function invAdd(inv, invType, id, delta){
+  if (isFree(invType, id)) return; // 無料は増やさない
+  if(!inv[invType]) inv[invType] = {};
+  const cur = Number(inv[invType][id] ?? 0);
+  inv[invType][id] = Math.max(0, cur + delta);
+}
+
+
 
     // ★ 図鑑キー（まずはこれを見に行く）
     dex: "tf_v1_book",
@@ -1382,4 +1416,30 @@ for(const s of shop.slots){
     boot();
   }
 })();
+
+(function setupTestBuy(){
+  const hint = document.getElementById("rotenBuyHint");
+  const buttons = document.querySelectorAll("button[data-buy]");
+  if(!buttons.length) return;
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-buy");
+
+      // id から種/水/肥料を判定
+      let type = null;
+      if (id.startsWith("seed_")) type = "seed";
+      else if (id.startsWith("water_")) type = "water";
+      else if (id.startsWith("fert_")) type = "fert";
+      else return;
+
+      const inv = loadInv();
+      invAdd(inv, type, id, 1);
+      saveInv(inv);
+
+      if(hint) hint.textContent = `購入：${id} を +1 しました（ファームに戻って確認）`;
+    });
+  });
+})();
+
 
