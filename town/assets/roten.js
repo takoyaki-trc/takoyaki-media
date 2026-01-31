@@ -1181,43 +1181,6 @@ for(const s of shop.slots){
   }
 
 
-// ====== ファーム資材在庫（種/水/肥料）=====
-// ※露店カード在庫(LS.inv)とは別！
-const TF_INV_KEY = "tf_v1_inv";
-
-// 無料（∞）は増減しない
-const TF_FREE = {
-  seed:  new Set(["seed_random"]),
-  water: new Set(["water_plain_free"]),
-  fert:  new Set(["fert_agedama"])
-};
-
-function tfLoadInv(){
-  try{
-    const raw = localStorage.getItem(TF_INV_KEY);
-    if(!raw) return { ver:1, seed:{}, water:{}, fert:{} };
-    const inv = JSON.parse(raw);
-    inv.seed  = inv.seed  || {};
-    inv.water = inv.water || {};
-    inv.fert  = inv.fert  || {};
-    return inv;
-  }catch(e){
-    return { ver:1, seed:{}, water:{}, fert:{} };
-  }
-}
-function tfSaveInv(inv){
-  localStorage.setItem(TF_INV_KEY, JSON.stringify(inv));
-}
-function tfIsFree(type, id){
-  return !!TF_FREE[type]?.has(id);
-}
-function tfInvAdd(inv, type, id, delta){
-  if(tfIsFree(type, id)) return; // 無料は増やさない
-  if(!inv[type]) inv[type] = {};
-  const cur = Number(inv[type][id] ?? 0);
-  inv[type][id] = Math.max(0, cur + (Number(delta)||0));
-}
-
 
   // =========================
   // reset / bind / boot
