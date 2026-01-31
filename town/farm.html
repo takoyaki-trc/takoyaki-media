@@ -410,54 +410,176 @@
     ],
   };
 
-  // ====== 種 / 水 / 肥料（画像カード / 5種ずつ）=====
-  // ※imgは「UIカード用の絵」。手元で差し替える想定。現状は既存のカード画像を仮置きしてる。
-  const SEEDS = [
-    { id:"seed_basic", name:"普通のタネ", desc:"基本のたこ焼き。まずはここから。", factor:1.00, img:"https://ul.h3z.jp/4pGUPjRA.png", fx:"安定" },
-    { id:"seed_soft",  name:"地元のタネ", desc:"ふわっと仕上がる。焦げにくい…気がする。", factor:1.00, img:"https://ul.h3z.jp/7moREJnl.png", fx:"気分" },
-    { id:"seed_spicy", name:"通信のタネ", desc:"辛い。失敗しても言い訳できる。", factor:1.00, img:"https://ul.h3z.jp/TWaE9GsS.png", fx:"勢い" },
-    { id:"seed_chee",  name:"たこぴのタネ", desc:"伸びる。自信も伸びる。", factor:1.00, img:"https://ul.h3z.jp/Db4V9w6K.png", fx:"映え" },
-    { id:"seed_rare",  name:"GHOSTのタネ", desc:"当たりやすい“気配”だけは最強。", factor:1.00, img:"https://ul.h3z.jp/2PY5Smnu.png", fx:"気配" },
-  ];
 
-  // 水：レア率補正（rarityMul）あり / 5種
-  const WATERS = [
-    {
-      id:"water_plain", name:"普通の水", desc:"クセのない水。", factor:0.90, fx:"収穫時間 -10%",
-      img:"https://ul.h3z.jp/tnPHMqxN.png",
-      rarityMul:{ N:1.00, R:1.00, SR:1.00, UR:1.00, LR:1.00 }
-    },
-    {
-      id:"water_spring", name:"温泉の水", desc:"湯の川の気配。", factor:0.88, fx:"収穫時間 -12%",
-      img:"https://ul.h3z.jp/Q8392V7N.png",
-      rarityMul:{ N:0.98, R:1.05, SR:1.10, UR:1.20, LR:1.10 }
-    },
-    {
-      id:"water_gold", name:"黄金の水", desc:"レアが上がりやすい。", factor:0.80, fx:"収穫時間 -20%",
-      img:"https://ul.h3z.jp/BCXLFeGI.png",
-      rarityMul:{ N:0.95, R:1.10, SR:1.25, UR:1.45, LR:1.20 }
-    },
-    {
-      id:"water_myst", name:"怪しい水", desc:"博打の香り。", factor:0.70, fx:"収穫時間 -30%",
-      img:"https://ul.h3z.jp/wMBupVzu.png",
-      rarityMul:{ N:0.90, R:1.00, SR:1.15, UR:1.65, LR:1.45 }
-    },
-    {
-      id:"water_void", name:"虚無の水", desc:"心が無になる。なぜか当たりも増える。", factor:0.78, fx:"収穫時間 -22%",
-      img:"https://ul.h3z.jp/l47TH2Ml.png",
-      rarityMul:{ N:0.92, R:1.08, SR:1.30, UR:1.35, LR:1.35 }
-    },
-  ];
+https://ul.h3z.jp/4pGUPjRA.png", fx:"安定" },
+https://ul.h3z.jp/7moREJnl.png", fx:"気分" },
+https://ul.h3z.jp/TWaE9GsS.png", fx:"勢い" },
+https://ul.h3z.jp/Db4V9w6K.png", fx:"映え" },
+https://ul.h3z.jp/2PY5Smnu.png", fx:"気配" },
 
-  // 肥料：時間短縮だけ / 5種
-  const FERTS = [
-    { id:"fert_small", name:"肥料：小", desc:"少しだけ時短。", factor:0.90, fx:"収穫時間 -10%", img:"https://ul.h3z.jp/grlvMXBT.png" },
-    { id:"fert_mid",   name:"肥料：中", desc:"ほどよく時短。", factor:0.80, fx:"収穫時間 -20%", img:"https://ul.h3z.jp/uISdf4dn.png" },
-    { id:"fert_str",   name:"肥料：強", desc:"一気に時短。", factor:0.70, fx:"収穫時間 -30%", img:"https://ul.h3z.jp/YNtkOAIi.png" },
-    { id:"fert_mad",   name:"肥料：魔", desc:"時短。倫理は不明。", factor:0.65, fx:"収穫時間 -35%", img:"https://ul.h3z.jp/sv5Y8d9u.png" },
-    { id:"fert_king",  name:"肥料：王", desc:"最速。運営に怒られそう。", factor:0.60, fx:"収穫時間 -40%", img:"https://ul.h3z.jp/e2B7lU9p.png" },
-  ];
+// ====== 種 / 水 / 肥料（画像カード）=====
+// ※imgは仮。手元で差し替えてOK（今は既存カード画像を仮置き）
 
+const SEEDS = [
+  {
+    id:"seed_random",
+    name:"【なに出るタネ】",
+    desc:"何が育つかは完全ランダム。\n店主も知らない。",
+    factor:1.00,
+    img:"https://ul.h3z.jp/7moREJnl.png",
+    fx:"完全ランダム"
+  },
+  {
+    id:"seed_shop",
+    name:"【店頭タネ】",
+    desc:"店で生まれたタネ。\n店頭ナンバーを宿している。",
+    factor:1.00,
+    img:"https://ul.h3z.jp/SvLLVa7m.png",
+    fx:"店頭の気配"
+  },
+  {
+    id:"seed_line",
+    name:"【回線タネ】",
+    desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。",
+    factor:1.00,
+    img:"https://ul.h3z.jp/TWaE9GsS.png",
+    fx:"回線由来"
+  },
+  {
+    id:"seed_special",
+    name:"【たこぴのタネ】",
+    desc:"今はまだ何も起きない。\nそのうち何か起きる。",
+    factor:1.00,
+    img:"https://ul.h3z.jp/Db4V9w6K.png",
+    fx:"待て"
+  },
+   {
+    id:"seed_colabo",
+    name:"【コラボのタネ】",
+    desc:"今はまだ何も起きない。\nそのうち何か起きる。",
+    factor:1.00,
+    img:"https://ul.h3z.jp/Db4V9w6K.png",
+    fx:"待て"
+  },
+];
+
+// ✅ 水：倍率ではなく「確率をそのまま」持つ
+// rates は合計100でなくてもOK（重みとして扱う）
+const WATERS = [
+  {
+    id:"water_plain_free",
+    name:"《ただの水》",
+    desc:"無料・UR/LRなし。\n無課金の基準。",
+    factor:1.00,
+    fx:"基準（水）",
+    img:"https://ul.h3z.jp/tnPHMqxN.png",
+    rates:{ N:62.5, R:31.2, SR:6.3, UR:0, LR:0 }
+  },
+  {
+    id:"water_nice",
+    name:"《なんか良さそうな水》",
+    desc:"ちょい上振れ・LRなし。\n初心者の背中押し。",
+    factor:0.98,
+    fx:"ちょい上振れ",
+    img:"https://ul.h3z.jp/Q8392V7N.png",
+    rates:{ N:57.2, R:31.8, SR:8.9, UR:2.1, LR:0 }
+  },
+  {
+    id:"water_suspicious",
+    name:"《怪しい水》",
+    desc:"現実準拠・標準。\n実パックと同じ空気。",
+    factor:0.95,
+    fx:"標準（現実準拠）",
+    img:"https://ul.h3z.jp/wMBupVzu.png",
+    rates:{ N:61.5, R:30.8, SR:6.15, UR:1.03, LR:0.51 }
+  },
+  {
+    id:"water_overdo",
+    name:"《やりすぎな水》",
+    desc:"勝負水・現実より上。\n体感で強い。",
+    factor:0.90,
+    fx:"勝負",
+    img:"https://ul.h3z.jp/BCXLFeGI.png",
+    rates:{ N:49.7, R:31.9, SR:12.8, UR:4.1, LR:1.5 }
+  },
+  {
+    id:"water_regret",
+    name:"《押さなきゃよかった水》",
+    desc:"確定枠・狂気。\n事件製造機（SNS向け）",
+    factor:1.00,
+    fx:"事件",
+    img:"https://ul.h3z.jp/l47TH2Ml.png",
+    rates:{ N:99.97, R:0, SR:0, UR:0, LR:0.03 }
+  },
+];
+
+// ✅ 肥料：時短＋副作用（収穫時に参照）
+const FERTS = [
+  {
+    id:"fert_agedama",
+    name:"①ただの揚げ玉",
+    desc:"時短0。\n《焼きすぎたカード》率UP",
+    factor:1.00,
+    fx:"時短 0%",
+    img:"https://ul.h3z.jp/grlvMXBT.png",
+    burnCardUp:0.12,     // ★焼きすぎカード抽選（例：12%）
+    rawCardChance:0.00,
+    mantra:false,
+    skipGrowAnim:false
+  },
+  {
+    id:"fert_feel",
+    name:"②《気のせい肥料》",
+    desc:"早くなった気がする。\n気のせいかもしれない。",
+    factor:0.95,
+    fx:"時短 5%",
+    img:"https://ul.h3z.jp/uISdf4dn.png",
+    burnCardUp:0.00,
+    rawCardChance:0.00,
+    mantra:false,
+    skipGrowAnim:false
+  },
+  {
+    id:"fert_guts",
+    name:"③《根性論ぶち込み肥料》",
+    desc:"理由はない。\n気合いだ。",
+    factor:0.80,
+    fx:"時短 20%",
+    img:"https://ul.h3z.jp/YNtkOAIi.png",
+    burnCardUp:0.00,
+    rawCardChance:0.00,
+    mantra:true,          // ★収穫セリフを精神論にする（任意演出）
+    skipGrowAnim:false
+  },
+  {
+    id:"fert_skip",
+    name:"④《工程すっ飛ばし肥料》",
+    desc:"途中は、\n見なかったことにした。",
+    factor:0.60,
+    fx:"時短 40%",
+    img:"https://ul.h3z.jp/sv5Y8d9u.png",
+    burnCardUp:0.00,
+    rawCardChance:0.01,   // ★生焼け 1% 前後
+    mantra:false,
+    skipGrowAnim:true     // ★焼き工程演出省略（将来用）
+  },
+  {
+    id:"fert_timeno",
+    name:"⑤《時間を信じない肥料》",
+    desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》",
+    factor:0.10,           // ★時短90〜100%に相当（最短1時間制限は別途適用）
+    fx:"時短 90〜100%",
+    img:"https://ul.h3z.jp/e2B7lU9p.png",
+    burnCardUp:0.00,
+    rawCardChance:0.03,    // ★生焼け 2〜3%
+    mantra:false,
+    skipGrowAnim:true
+  },
+];
+
+
+
+  
   // ====== XP / レベル ======
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
@@ -561,30 +683,66 @@
 
   // ====== レア抽選（水補正）=====
   function pickRarityWithWater(waterId){
-    const water = WATERS.find(x => x.id === waterId);
-    const wm = (water && water.rarityMul) ? water.rarityMul : {};
+  const w = WATERS.find(x => x.id === waterId);
 
-    const weights = {};
+  // ✅ 新方式：water.rates を優先
+  if (w && w.rates) {
+    const rates = w.rates;
+    const keys = ["N","R","SR","UR","LR"];
     let total = 0;
-
-    for (const k of Object.keys(BASE_RARITY_RATE)){
-      const w = BASE_RARITY_RATE[k] * (wm[k] ?? 1);
-      weights[k] = Math.max(0, w);
-      total += weights[k];
-    }
+    for (const k of keys) total += Math.max(0, Number(rates[k] ?? 0));
 
     if (total <= 0) return "N";
 
     let r = Math.random() * total;
-    for (const k of Object.keys(weights)){
-      r -= weights[k];
+    for (const k of keys) {
+      r -= Math.max(0, Number(rates[k] ?? 0));
       if (r <= 0) return k;
     }
     return "N";
   }
 
+  // 旧方式（保険）：BASE_RARITY_RATE を使う
+  const keys = Object.keys(BASE_RARITY_RATE);
+  let total = 0;
+  for (const k of keys) total += Math.max(0, BASE_RARITY_RATE[k]);
+
+  let r = Math.random() * total;
+  for (const k of keys){
+    r -= Math.max(0, BASE_RARITY_RATE[k]);
+    if (r <= 0) return k;
+  }
+  return "N";
+}
+
   // SR予兆込みの収穫抽選
   function drawRewardForPlot(p){
+    // ★肥料副作用：先に特殊カード抽選
+const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
+if (fert) {
+  // 焼きすぎカード（例：揚げ玉）
+  const burnP = Number(fert.burnCardUp ?? 0);
+  if (burnP > 0 && Math.random() < burnP) {
+    return {
+      id:"SP-BURN",
+      name:"焼きすぎたカード",
+      img:PLOT_IMG.BURN,      // 仮画像（あとで専用画像に差し替えOK）
+      rarity:"SP"
+    };
+  }
+
+  // 生焼けカード（工程スキップ/時間を信じない）
+  const rawP = Number(fert.rawCardChance ?? 0);
+  if (rawP > 0 && Math.random() < rawP) {
+    return {
+      id:"SP-RAW",
+      name:"ドロドロ生焼けカード",
+      img:PLOT_IMG.GROW1,     // 仮画像
+      rarity:"SP"
+    };
+  }
+}
+
     const highList = ["SR", "UR", "LR"];
     const pickHigh = () => {
       const r = highList[Math.floor(Math.random() * highList.length)];
