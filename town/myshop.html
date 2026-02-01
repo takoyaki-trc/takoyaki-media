@@ -588,21 +588,6 @@
   // =========================================================
   // 滞在中のセリフ（性格ごと）
   // =========================================================
-  const LEAVE_LINES = [
-  "……財布と心が、今日は噛み合わなかった。",
-  "……また来る。焼かれる覚悟ができたら。",
-  "……買わない勇気も、立派な消費行動だよね。",
-  "……今はその時じゃない。たこ焼きがそう言った。",
-  "……これは試練だ。次に来た時が本番だ。",
-  "……匂いだけで満腹になるとは思わなかった。",
-  "……この棚、強すぎる。今日は撤退。",
-  "……買わなかった。でも、負けた気はしている。",
-  "……たこ焼きは逃げない。今日は俺が逃げる。",
-  "……脳内会議、否決で終了。"
-];
-
-  
-  
   const VISITOR_LINES = {
     careful: [
       "どうしようかな…",
@@ -836,36 +821,22 @@
     }, rand(3000, 6000));
 
     // 滞在：10〜30秒
-   
+    stageStayTimer = setTimeout(()=>{
+      setStageEmpty("……考えた末、去っていった。");
+    }, rand(10000, 30000));
+  }
 
-function setStageVisitor(vObj, initialMsg){
-  clearStageTimers();
-
-  const s = loadStage();
-  s.hasVisitor = true;
-  s.vUrl  = vObj?.url || "";
-  s.vName = vObj?.name || "客タコ民";
-  s.vType = vObj?.type || "";
-  s.vMsg  = initialMsg || "……";
-  saveStage(s);
-  renderStage();
-
-  // 滞在中：性格セリフをローテ（3〜6秒）
-  const lines = VISITOR_LINES[s.vType] || ["……"];
-  stageTalkTimer = setInterval(()=>{
-    const cur = loadStage();
-    if(!cur.hasVisitor) return;
-    cur.vMsg = pick(lines);
-    saveStage(cur);
-    renderStage();
-  }, rand(3000, 6000));
-
-  // 滞在：10〜30秒 → 去り際セリフをランダム
-  stageStayTimer = setTimeout(()=>{
-    setStageEmpty(pick(LEAVE_LINES));
-  }, rand(10000, 30000));
-}
-
+  function renderStage(){
+    const s = loadStage();
+    stageName.textContent = s.vName || "—";
+    stageMsg.textContent  = s.vMsg  || "—";
+    if(s.hasVisitor && s.vUrl){
+      stageVisitor.src = s.vUrl;
+      stageVisitor.classList.add("show");
+    }else{
+      stageVisitor.classList.remove("show");
+    }
+  }
 
   // 客画像選択：できれば customer.id に合わせる（無ければランダム）
   function pickVisitorForCustomer(customerId){
@@ -873,19 +844,6 @@ function setStageVisitor(vObj, initialMsg){
     return byType || pick(ASSETS.visitors);
   }
 
-function renderStage(){
-  const s = loadStage();
-  stageName.textContent = s.vName || "—";
-  stageMsg.textContent  = s.vMsg  || "—";
-  if(s.hasVisitor && s.vUrl){
-    stageVisitor.src = s.vUrl;
-    stageVisitor.classList.add("show");
-  }else{
-    stageVisitor.classList.remove("show");
-  }
-}
-
-    
   // =========================================================
   // Core state
   // =========================================================
