@@ -372,6 +372,35 @@
     .toast .box.show{display:block}
     .toast .box b{font-weight:900}
     .toast .box .small{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.35}
+
+    /* ★売れた時の強調ポップアップ */
+.toast .box.show{
+  display:block;
+  animation: popIn .18s ease-out;
+}
+
+@keyframes popIn{
+  from{ transform: translateY(8px) scale(.98); opacity: 0; }
+  to  { transform: translateY(0)   scale(1);   opacity: 1; }
+}
+
+/* 状態別（JSで class を付ける） */
+.toast .box.toast--sale{
+  border-color: rgba(255,211,138,.55);
+  background: linear-gradient(180deg, rgba(255,211,138,.22), rgba(0,0,0,.72));
+  box-shadow: 0 16px 44px rgba(0,0,0,.55);
+}
+
+.toast .box.toast--sale b{
+  font-size: 14px;
+  letter-spacing: .02em;
+}
+
+.toast .box.toast--sale .small{
+  font-size: 13px;
+  color: rgba(255,255,255,.92);
+}
+
   </style>
 </head>
 <body>
@@ -663,13 +692,26 @@
     }[m]));
   }
 
-  function toast(t, s){
-    toastTitle.textContent = t;
-    toastSub.textContent = s || "";
-    toastBox.classList.add("show");
-    clearTimeout(toastBox.__t);
-    toastBox.__t = setTimeout(()=> toastBox.classList.remove("show"), 2200);
-  }
+ function toast(t, s, type){
+  toastTitle.textContent = t;
+  toastSub.textContent = s || "";
+
+  // いったん全部外す
+  toastBox.classList.remove("toast--sale");
+
+  // 種類で強調（売れた時）
+  if(type === "sale") toastBox.classList.add("toast--sale");
+
+  toastBox.classList.add("show");
+  clearTimeout(toastBox.__t);
+
+  // ★2秒固定表示
+  toastBox.__t = setTimeout(()=> {
+    toastBox.classList.remove("show");
+    toastBox.classList.remove("toast--sale");
+  }, 2000);
+}
+
 
   function pushLog(title, msg, meta){
     const log = lsGet(LS.log, { ver:1, items:[] });
@@ -957,16 +999,18 @@
   // 価格計算
   // =========================================================
   function basePriceFor(card){
-    const p = Number(card?.raw?.price ?? card?.raw?.basePrice ?? card?.price ?? 0);
-    if(isFinite(p) && p > 0) return Math.floor(p);
+  const p = Number(card?.raw?.price ?? card?.raw?.basePrice ?? card?.price ?? 0);
+  if(isFinite(p) && p > 0) return Math.floor(p);
 
-    const r = String(card?.rarity || "").toUpperCase();
-    const map = { "N":10, "R":18, "SR":30, "UR":45, "LR":70 };
-    for(const k of Object.keys(map)){
-      if(r === k || r.includes(k)) return map[k];
-    }
-    return 12;
+  const r = String(card?.rarity || "").toUpperCase();
+  const map = { "N":500, "R":800, "SR":2000, "UR":5000, "LR":10000 };
+
+  for(const k of Object.keys(map)){
+    if(r === k || r.includes(k)) return map[k];
   }
+  return 500; // ★fallback（不明ならN扱い）
+}
+
   function tierMult(tier){
     if(tier === "安い") return 0.80;
     if(tier === "高い") return 1.30;
@@ -1478,7 +1522,8 @@
       addRep(customer.repDeltaOnBuy);
 
       pushLog(`売れた！(棚${slotIdx+1})`, `${customer.name} が「${cardName}」を買った`, `+${result.price}octo / p=${Math.round(result.chance*100)}%`);
-      toast("💰 売れた！", `棚${slotIdx+1}：+${result.price}オクト`);
+      toast("💰 売れた！", `棚${slotIdx+1}：+${result.price}オクト`, "sale");
+
 
       slot.item = null;
       slot.createdAt = 0;
