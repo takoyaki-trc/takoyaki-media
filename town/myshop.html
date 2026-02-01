@@ -569,7 +569,6 @@
       <div class="small" id="toastSub">—</div>
     </div>
   </div>
-
 <script>
 (() => {
   "use strict";
@@ -655,7 +654,17 @@
     "……お腹は空いた。決断は空振った。",
     "……次は買う。たぶん。おそらく。",
     "……買わずに帰るのが一番高い買い物だった。",
-    "……棚の圧が強すぎて、俺が焼けた。"
+    "……棚の圧が強すぎて、俺が焼けた。",
+    "……今日は“無課金”で帰る。精神課金だけした。",
+    "……視線だけ買った。現金は買ってない。",
+    "……買ったら負けな気がして…負けた。",
+    "……棚が俺に強い。俺が弱い。",
+    "……また来る（来るとは言ってない）。",
+    "……買わないのに満足してしまった。怖い。",
+    "……見ただけで経験値入った気がした。",
+    "……決断しないのが最適解だと脳が言った。",
+    "……帰宅してから後悔する予定です。",
+    "……買わなかった。だが物語は始まった。"
   ];
 
   /* =========================
@@ -673,22 +682,26 @@
       cheap: [
         "今日は安く焼かれたい…",
         "コスパ…コスパ…",
-        "値札に焼かれる準備OK"
+        "値札に焼かれる準備OK",
+        "財布が軽い。棚も軽いの頼む。"
       ],
       rare: [
         "SR以上…匂いで分かる…はず。",
         "今日はレアの波が来てる気がする。",
-        "光ってくれ…頼む…"
+        "光ってくれ…頼む…",
+        "キラの気配…してる…（幻）"
       ],
       ur: [
         "UR以上が無いなら…帰る。",
         "派手に焼かれたい。",
-        "光の圧を感じたい。"
+        "光の圧を感じたい。",
+        "UR…UR…（呪文）"
       ],
       any: [
         "今日はノリで決める。",
         "運命に任せる。",
-        "棚に呼ばれた気がする。"
+        "棚に呼ばれた気がする。",
+        "脳内ジャンケンで決める。"
       ]
     };
     return map[goalId] || ["……"];
@@ -828,6 +841,7 @@
   const STAGE_DEFAULT = {
     ver:1,
     hasVisitor:false,
+    leaving:false,        // ★追加：退店中フラグ（showを付け直さない）
     vUrl:"",
     vName:"—",
     vMsg:"まだ誰も来ていない。",
@@ -853,17 +867,20 @@
   let stageTalkTimer=null;
   let stageSellTimer=null;
   let stageLeaveTimer=null;
+  let stageFailSafeTimer=null; // ★追加：強制退店保険
 
   function clearStageTimers(){
     if(stageTalkTimer){ clearInterval(stageTalkTimer); stageTalkTimer=null; }
     if(stageSellTimer){ clearTimeout(stageSellTimer); stageSellTimer=null; }
     if(stageLeaveTimer){ clearTimeout(stageLeaveTimer); stageLeaveTimer=null; }
+    if(stageFailSafeTimer){ clearTimeout(stageFailSafeTimer); stageFailSafeTimer=null; }
   }
 
   function setStageEmpty(msg){
     clearStageTimers();
     const s = loadStage();
     s.hasVisitor=false;
+    s.leaving=false;
     s.vUrl="";
     s.vName="—";
     s.vMsg=msg || "まだ誰も来ていない。";
@@ -885,7 +902,8 @@
       stageVisitor.src = s.vUrl;
     }
 
-    if(s.hasVisitor && s.vUrl){
+    // ★重要：leaving中はshowを付け直さない
+    if(s.hasVisitor && s.vUrl && !s.leaving){
       stageVisitor.classList.add("show");
     }else{
       stageVisitor.classList.remove("show");
@@ -1041,7 +1059,6 @@
 
   /* =========================
      Tick (来客の予定)
-     ※既存キーを維持しつつ、nextAtBySlot を継続利用
   ========================= */
   function loadTick(){
     const t = lsGet(LS.tick, { ver:1, nextAtBySlot:{} });
@@ -1124,52 +1141,15 @@
      Customer types（購入率＋評判）
   ========================= */
   const CUSTOMER_TYPES = [
-    {
-      id:"impulse",
-      name:"即決タコ民",
-      repDeltaOnBuy:+1,
-      baseBuy: 0.42,
-      lines: VISITOR_LINES.impulse
-    },
-    {
-      id:"picky",
-      name:"こだわりタコ民",
-      repDeltaOnBuy:+1,
-      baseBuy: 0.45,
-      lines: VISITOR_LINES.picky
-    },
-    {
-      id:"king",
-      name:"王様タコ民",
-      repDeltaOnBuy:+3,
-      baseBuy: 0.55,
-      lines: VISITOR_LINES.king
-    },
-    {
-      id:"flipper",
-      name:"転売タコ民",
-      repDeltaOnBuy:-4,
-      baseBuy: 0.44,
-      lines: VISITOR_LINES.flipper
-    },
-    {
-      id:"careful",
-      name:"慎重タコ民",
-      repDeltaOnBuy:+1,
-      baseBuy: 0.38,
-      lines: VISITOR_LINES.careful
-    },
-    {
-      id:"looker",
-      name:"冷やかしタコ民",
-      repDeltaOnBuy:-1,
-      baseBuy: 0.22,
-      lines: VISITOR_LINES.looker
-    }
+    { id:"impulse", name:"即決タコ民", repDeltaOnBuy:+1, baseBuy:0.42, lines:VISITOR_LINES.impulse },
+    { id:"picky",   name:"こだわりタコ民", repDeltaOnBuy:+1, baseBuy:0.45, lines:VISITOR_LINES.picky },
+    { id:"king",    name:"王様タコ民", repDeltaOnBuy:+3, baseBuy:0.55, lines:VISITOR_LINES.king },
+    { id:"flipper", name:"転売タコ民", repDeltaOnBuy:-4, baseBuy:0.44, lines:VISITOR_LINES.flipper },
+    { id:"careful", name:"慎重タコ民", repDeltaOnBuy:+1, baseBuy:0.38, lines:VISITOR_LINES.careful },
+    { id:"looker",  name:"冷やかしタコ民", repDeltaOnBuy:-1, baseBuy:0.22, lines:VISITOR_LINES.looker }
   ];
 
   function chooseCustomer(rep){
-    // 夜＆評判で重み変化
     const night = isNight();
     const weights = CUSTOMER_TYPES.map(t=>{
       if(t.id==="king") return rep>=55 ? 7 : 3;
@@ -1180,7 +1160,6 @@
       return rep>=60 ? 24 : 20; // picky
     });
 
-    // 評判70以上で常連発生（pickyを常連扱いで増）
     if(rep>=70){
       const idx = CUSTOMER_TYPES.findIndex(x=>x.id==="picky");
       if(idx>=0) weights[idx] += 10;
@@ -1204,10 +1183,8 @@
      Goal selection
   ========================= */
   function chooseGoal(customerId, rep){
-    // 王様はレア狙い寄り、転売は安狙い寄り
     if(customerId==="king") return "rare";
     if(customerId==="flipper") return "cheap";
-    // 評判高いほどレア狙い増
     const roll = Math.random();
     if(rep>=70){
       if(roll<0.22) return "ur";
@@ -1232,7 +1209,7 @@
   function canUseSlot(idx, lv){ return lv >= (SHELF_UNLOCK[idx] || 99); }
 
   function slotSummaryText(slot){
-    if(!slot.item) return { t:"未出品", d:"棚のカード部分をタップして出品。" };
+    if(!slot.item) return { t:"未出品", d:"棚のカード部分をタップして出品。（※ダブりのみ出品可）" };
     const c = slot.item;
     const base = basePriceFor({ rarity:c.rarity, raw:c.raw, price:c.price });
     const price = Math.max(1, Math.floor(base * tierMult(slot.priceTier)));
@@ -1353,7 +1330,7 @@
   }
 
   /* =========================
-     Modal pick
+     Modal pick（★ダブりのみ）
   ========================= */
   function openPickModal(slotIdx){
     currentPickSlot = slotIdx;
@@ -1366,14 +1343,18 @@
     const shop = loadMyShop();
     const slot = shop.slots[slotIdx];
 
-    pickTitleEl.textContent = `棚${slotIdx+1}に出品するカード`;
-    pickHintEl.textContent = `所持数（count）が1以上のカードが表示されます。出品すると所持数が1減ります。`;
+    // ★ダブりのみ（count>=2）を表示
+    pickTitleEl.textContent = `棚${slotIdx+1}に出品するカード（ダブりのみ）`;
+    pickHintEl.textContent = `所持数（count）が2以上のカードだけ表示。出品すると所持数が1減ります。`;
     pickEmptyEl.style.display = "none";
 
-    const owned = listOwnedCardsFromBook();
+    const ownedAll = listOwnedCardsFromBook();
+    const owned = ownedAll.filter(c => Number(c.count||0) >= 2);
+
     if(owned.length === 0){
       pickCardsEl.innerHTML = "";
       pickEmptyEl.style.display = "block";
+      pickEmptyEl.textContent = "ダブりカード（2枚以上）がありません。まずはファームで同じカードを2枚以上集めてね。";
     }else{
       pickCardsEl.innerHTML = owned.map(c=>{
         const base = basePriceFor(c);
@@ -1417,12 +1398,20 @@
     const slot = shop.slots[currentPickSlot];
     if(!slot) return;
 
-    // 既に出品中なら一旦戻す
+    // 既に出品中なら一旦戻す（= count +1）
     if(slot.item){
       incrementBookCountById(String(slot.item.id), slot.item.raw || slot.item);
     }
 
-    // 所持を減らす
+    // ★ダブりチェック：出品前の時点で count>=2 が必要
+    const bookNow = loadFarmBook();
+    const curCnt = Math.max(0, Number(bookNow?.got?.[cardId]?.count || 0));
+    if(curCnt < 2){
+      toast("ダブりが足りない", "このカードは2枚以上ないと出品できない");
+      return;
+    }
+
+    // 所持を減らす（count-1）
     const ok = decrementBookCountById(cardId);
     if(!ok){
       toast("所持数が足りない", "他のカードを選んでね");
@@ -1599,7 +1588,6 @@
     });
 
     scored.sort((a,b)=>b.score-a.score);
-    // 上位2つからランダム（単調防止）
     const top = scored.slice(0, Math.min(2, scored.length));
     return pick(top).idx;
   }
@@ -1608,17 +1596,13 @@
   function computeBuyChance(customer, goalId, targetSlotIdx, stayMs){
     const rep = loadRep().rep;
 
-    // 基礎
     let p = Number(customer.baseBuy || 0.35);
 
-    // 滞在ボーナス（10s→+0, 30s→+0.25）
     const stayBoost = clamp((stayMs - 10000) / 20000, 0, 1) * 0.25;
     p += stayBoost;
 
-    // 評判係数
     p *= repFactor(rep);
 
-    // 目的補正（狙いの棚が条件満たさないと下がる）
     const shop = loadMyShop();
     const slot = shop.slots[targetSlotIdx];
     const rarity = String(slot?.item?.rarity||"").toUpperCase();
@@ -1630,30 +1614,43 @@
     if(goalId==="ur" && !(isUR || isLR)) p *= 0.25;
     if(goalId==="rare" && !(isSR || isUR || isLR)) p *= 0.65;
 
-    // 転売は買いやすいが評判ダメージ（既にrepDeltaで表現）
     if(customer.id==="flipper") p *= 1.08;
-    // 王様は波がある（買う時は買う）
     if(customer.id==="king") p *= 1.05;
 
     return clamp(p, 0.05, 0.95);
   }
 
-  // 価格決定
   function computePrice(slot){
     const item = slot.item;
     const base = basePriceFor({ rarity:item.rarity, raw:item.raw, price:item.price });
     return Math.max(1, Math.floor(base * tierMult(slot.priceTier)));
   }
 
-  // 客をステージに出す（フェードはCSSのshowで勝手に）
+  // ★退店開始（showを付け直されないようにする）
+  function beginLeave(leaveMsg){
+    const s = loadStage();
+    if(!s.hasVisitor) return;
+
+    // 退店中は喋らない（show復活の原因を断つ）
+    if(stageTalkTimer){ clearInterval(stageTalkTimer); stageTalkTimer=null; }
+
+    s.leaving = true;
+    saveStage(s);
+    renderStage(); // showが外れる
+
+    // フェードが終わった頃に完全無人へ
+    setTimeout(()=>{
+      setStageEmpty(leaveMsg || pick(LEAVE_LINES));
+    }, 650);
+  }
+
+  // 客をステージに出す
   function spawnVisitor(){
-    // 既に客が居るなら発生させない
     const cur = loadStage();
     if(cur.hasVisitor) return;
 
     const active = getActiveSlots();
     if(active.length===0){
-      // 在庫ゼロは静か
       setStageEmpty("……棚が空だ。誰も来ない。");
       return;
     }
@@ -1661,14 +1658,12 @@
     const rep = loadRep().rep;
     const customer = chooseCustomer(rep);
 
-    // 夜限定イベント客（lookerを夜イベント化）
     const night = isNight();
     let eventNight = false;
     if(night && Math.random()<0.22){
       eventNight = true;
     }
 
-    // 評判70以上 常連解放（pickyを常連化して演出）
     let isRegular = false;
     if(rep>=70 && Math.random()<0.28){
       isRegular = true;
@@ -1681,10 +1676,13 @@
     const willBuyChance = computeBuyChance(customer, goalId, targetIdx, stayMs);
     const willBuy = Math.random() < willBuyChance;
 
-    // ステージ状態更新
     const vAsset = pickVisitorAsset(customer.id);
+
+    // 状態セット
+    clearStageTimers();
     const s = loadStage();
     s.hasVisitor = true;
+    s.leaving = false;
     s.vUrl = vAsset.url;
     s.vName = isRegular ? "常連タコ民" : (eventNight ? "夜限定タコ民" : customer.name);
     s.vType = customer.id;
@@ -1692,26 +1690,24 @@
     s.stayMs = stayMs;
     s.willBuy = willBuy;
     s.targetSlot = targetIdx;
-    s.vMsg = pick(goalLines(goalId)); // まず目的セリフ
+    s.vMsg = pick(goalLines(goalId));
     saveStage(s);
 
-    // 来客EXP +1（来るだけで育つ）
+    // 来客EXP +1
     const a = addExp(1);
     const lvState = a.state;
     lvState.totalVisit += 1;
     saveLevel(lvState);
 
-    // 特別演出
     if(customer.id==="king") stageFlash("gold");
     if(customer.id==="flipper") stageFlash("pink");
 
     renderStage();
 
-    // 滞在中：性格セリフ＋目的セリフ混ぜる（3〜6秒）
-    clearStageTimers();
+    // 滞在中セリフ
     stageTalkTimer = setInterval(()=>{
       const cur2 = loadStage();
-      if(!cur2.hasVisitor) return;
+      if(!cur2.hasVisitor || cur2.leaving) return;
       const baseLines = VISITOR_LINES[cur2.vType] || ["……"];
       const gLines = goalLines(cur2.vGoal);
       cur2.vMsg = (Math.random()<0.55) ? pick(baseLines) : pick(gLines);
@@ -1722,32 +1718,35 @@
     // 売買判定：去る1秒前
     stageSellTimer = setTimeout(()=>{
       const cur3 = loadStage();
-      if(!cur3.hasVisitor) return;
+      if(!cur3.hasVisitor || cur3.leaving) return;
       resolveSaleAtStage();
     }, Math.max(0, stayMs - 1000));
 
-    // 去る（1秒後にフェードアウト完了＆セリフ）
+    // 去る
     stageLeaveTimer = setTimeout(()=>{
       const cur4 = loadStage();
-      // ここで “売れた後” でも “売れなかった後” でも必ず去る
-      stageVisitor.classList.remove("show");
-      setTimeout(()=>{
-        // フェードが終わった頃に無人状態へ
-        setStageEmpty(pick(LEAVE_LINES));
-      }, 650);
+      if(!cur4.hasVisitor) return;
+      beginLeave(pick(LEAVE_LINES));
     }, stayMs);
+
+    // ★保険：何があっても35秒で帰る（夜限定が帰らない事故対策）
+    stageFailSafeTimer = setTimeout(()=>{
+      const cur5 = loadStage();
+      if(cur5.hasVisitor){
+        beginLeave("……夜の客は、静かに溶けた。");
+      }
+    }, 35000);
   }
 
-  // 売買処理（棚のどれかが売れる）
+  // 売買処理
   function resolveSaleAtStage(){
     const st = loadStage();
-    if(!st.hasVisitor) return;
+    if(!st.hasVisitor || st.leaving) return;
 
     const shop = loadMyShop();
     const idx = st.targetSlot;
     const slot = shop.slots[idx];
 
-    // ターゲット棚が空だった（入替や取り下げが起きた）→その時点で売買なし
     if(!slot || !slot.item){
       st.vMsg = "……棚が変わった。今日は縁がなかった。";
       saveStage(st);
@@ -1757,26 +1756,19 @@
 
     const customer = CUSTOMER_TYPES.find(c=>c.id===st.vType) || { id:st.vType, name:st.vName, repDeltaOnBuy:0, baseBuy:0.3 };
 
-    // willBuy は来店時に決めたが、棚状況変化もあるので微調整
-    // 目的未達なら買わない方向に寄せる
-    const rep = loadRep().rep;
     const stayMs = st.stayMs || 15000;
     const chance = computeBuyChance(customer, st.vGoal, idx, stayMs);
     const sold = st.willBuy ? (Math.random() < Math.max(chance, 0.18)) : (Math.random() < Math.min(chance, 0.35));
 
     if(!sold){
-      // 売れない：評判ちょい下げ
       addRep(-0.4);
       pushLog("売れなかった", `${st.vName} は見ただけで去りそうだ`, `棚${idx+1} / p=${Math.round(chance*100)}%`);
-      // ここでは去らない（去りタイマーが担当）
       return;
     }
 
-    // 売れた
     const price = computePrice(slot);
     const cardName = slot.item.name;
 
-    // 売上・EXP
     saveOcto(loadOcto() + price);
 
     const r2 = addExp(4);
@@ -1784,29 +1776,24 @@
     lv2.totalSold += 1;
     saveLevel(lv2);
 
-    // 評判変動
     addRep(customer.repDeltaOnBuy);
 
-    // ログ & トースト（カード名入り）
     pushLog("売れた！", `${st.vName} が「${cardName}」を買った`, `棚${idx+1} / +${price}octo`);
     toast("💰 売れた！", `「${cardName}」 +${price}オクト`, "sale");
 
-    // 特別演出
     if(st.vType==="king") stageFlash("gold");
     if(st.vType==="flipper") stageFlash("pink");
 
-    // 棚からカードを消す（出品時に図鑑countは減っているので戻さない）
+    // 棚からカードを消す
     slot.item = null;
     slot.createdAt = 0;
     shop.slots[idx] = slot;
     saveMyShop(shop);
 
-    // tick消す（その棚はもう売る物が無い）
     const t = loadTick();
     if(t.nextAtBySlot) delete t.nextAtBySlot[String(idx)];
     saveTick(t);
 
-    // ステージのセリフを購入後に変更（去る直前なので短く）
     const st2 = loadStage();
     st2.vMsg = (st.vType==="king")
       ? "……余は満足した。"
@@ -1816,7 +1803,6 @@
     saveStage(st2);
     renderStage();
 
-    // UI更新
     renderAll();
   }
 
@@ -1834,11 +1820,9 @@
         applyDayNight();
         updateNextTag();
 
-        // 既に客が居るなら何もしない（売買はタイマーで走る）
         const st = loadStage();
         if(st.hasVisitor) return;
 
-        // 最短nextAtに到達したら来客
         const t = ensureNextAtForActiveSlots();
         const n = now();
         const list = Object.entries(t.nextAtBySlot||{})
@@ -1849,11 +1833,8 @@
 
         const nextAt = Math.min(...list.map(x=>x.v));
         if(n >= nextAt){
-          // いずれかの棚の来客タイミング → ステージに来客（どの棚が売れるかは目的で決める）
           spawnVisitor();
 
-          // 全棚のnextAtを少し先送り（来客イベントはまとめて扱う）
-          // ※ 既存仕様に近く、過剰発生を防ぐ
           const tt = loadTick();
           Object.keys(tt.nextAtBySlot||{}).forEach(k=>{
             if(tt.nextAtBySlot[k]) tt.nextAtBySlot[k] = n + nextVisitDelayMs();
@@ -1886,13 +1867,11 @@
       return;
     }
 
-    // 既に客がいるなら失敗（体験の統一）
     if(loadStage().hasVisitor){
       toast("呼び込み失敗", "いま客がいる！");
       return;
     }
 
-    // CT 60秒
     cd.nextOkAt = now() + 60*1000;
     saveShout(cd);
 
@@ -1978,12 +1957,17 @@
     if(localStorage.getItem(LS.log) == null) lsSet(LS.log, { ver:1, items:[] });
     if(localStorage.getItem(LS.stage) == null) lsSet(LS.stage, STAGE_DEFAULT);
 
-    // 旧版のlastEvent等が残ってても動くように初期化（安全）
     const shop = loadMyShop();
     saveMyShop(shop);
 
     if(!loadStage().updatedAt){
       setStageEmpty("まだ誰も来ていない。");
+    }else{
+      // ★もし途中状態が残っていても、leaving中に固まってたら解除
+      const st = loadStage();
+      if(st.leaving){
+        setStageEmpty("……夜明けでリセットされた。");
+      }
     }
 
     renderAll();
@@ -1994,6 +1978,8 @@
   boot();
 })();
 </script>
+
+
 </body>
 </html>
 
