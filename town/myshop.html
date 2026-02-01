@@ -529,145 +529,163 @@
       <div class="small" id="toastSub">—</div>
     </div>
   </div>
+
 <script>
 (() => {
-  "use strict";
+"use strict";
 
-  /* =========================================================
-     ASSETS
-  ========================================================= */
-  const ASSETS = {
-    bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
-    bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
-    visitors: [
-      { id:"v01", name:"慎重タコ民", type:"careful", url:"https://ul.h3z.jp/lsTSkndD.png" },
-      { id:"v02", name:"即決タコ民", type:"impulse", url:"https://ul.h3z.jp/YckjGopx.png" },
-      { id:"v03", name:"冷やかしタコ民", type:"looker",  url:"https://ul.h3z.jp/PIsx6jd0.png" },
-      { id:"v04", name:"こだわりタコ民", type:"picky",   url:"https://ul.h3z.jp/j8ZOooGi.png" },
-      { id:"v05", name:"王様タコ民",   type:"king",    url:"https://ul.h3z.jp/CaRoJGA6.png" },
-      { id:"v06", name:"転売タコ民",   type:"flipper", url:"https://ul.h3z.jp/C015QuqC.png" }
-    ]
-  };
+/* =====================================================
+   露店ステージ 完全安定版（人物6人・カード復活）
+===================================================== */
 
-  const VISITOR_LINES = {
-    careful:  ["どうしようかな…","今日は見送るべきか…","悪くはないけど…"],
-    impulse: ["おっ、これいい！","今買わないと後悔するかも","直感がそう言ってる"],
-    looker:  ["ふーん","見るだけ見る","賑やかだなあ"],
-    picky:   ["匂いは悪くない","焼きにムラがないか…","慎重に選びたい"],
-    king:    ["よい","余は迷わぬ","この棚、気に入った"],
-    flipper: ["回るか…？","これは動く","利益の匂いがする"]
-  };
+/* ========= アセット ========= */
+const ASSETS = {
+  bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
+  bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
+};
 
-  /* =========================================================
-     LocalStorage Keys
-  ========================================================= */
-  const LS = {
-    stage: "roten_v1_stage",
-    shout: "roten_v1_shout_cd"
-  };
-
-  /* =========================================================
-     DOM
-  ========================================================= */
-  const $ = (q, el=document)=>el.querySelector(q);
-  const stageBg      = $("#stageBg");
-  const stageVisitor = $("#stageVisitor");
-  const stageName    = $("#stageName");
-  const stageMsg     = $("#stageMsg");
-  const stageTimeTag = $("#stageTimeTag");
-
-  /* =========================================================
-     Utils
-  ========================================================= */
-  const now = ()=>Date.now();
-  const pick = (a)=>a[Math.floor(Math.random()*a.length)];
-  const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-
-  function isNight(){
-    const h = new Date().getHours();
-    return h>=18 || h<=5;
+/* ========= 客タコ民（6人固定） ========= */
+const CUSTOMERS = [
+  {
+    id:"v01",
+    name:"慎重タコ民",
+    img:"https://ul.h3z.jp/lsTSkndD.png",
+    lines:["どうしようかな…","今日は様子見で…","焼き色はいいんだけど…"]
+  },
+  {
+    id:"v02",
+    name:"即決タコ民",
+    img:"https://ul.h3z.jp/YckjGopx.png",
+    lines:["これ買う！","迷う時間がもったいない","今がタイミング！"]
+  },
+  {
+    id:"v03",
+    name:"冷やかしタコ民",
+    img:"https://ul.h3z.jp/PIsx6jd0.png",
+    lines:["見るだけね","ふーん","写真撮っていい？"]
+  },
+  {
+    id:"v04",
+    name:"金欠タコ民",
+    img:"https://ul.h3z.jp/j8ZOooGi.png",
+    lines:["今日は財布が…","給料日なら…","匂いだけで幸せ"]
+  },
+  {
+    id:"v05",
+    name:"通ぶりタコ民",
+    img:"https://ul.h3z.jp/CaRoJGA6.png",
+    lines:["この焼きは分かってる","ソースの主張がいい","これは職人技"]
+  },
+  {
+    id:"v06",
+    name:"王様タコ民",
+    img:"https://ul.h3z.jp/C015QuqC.png",
+    lines:["余は満足だ","買おう","よい、実に良い"]
   }
+];
 
-  function applyDayNight(){
-    stageBg.src = isNight() ? ASSETS.bgNight : ASSETS.bgDay;
-    stageTimeTag.textContent = isNight() ? "夜" : "昼";
-  }
+/* ========= LocalStorage ========= */
+const LS = {
+  book: "tf_v1_book",
+  shop: "roten_v1_myshop",
+  stage:"roten_v1_stage"
+};
 
-  /* =========================================================
-     来店ステージ（滞在管理）
-  ========================================================= */
-  let stayTimer = null;
-  let talkTimer = null;
+/* ========= DOM ========= */
+const $ = q => document.querySelector(q);
+const stageBg = $("#stageBg");
+const stageVisitor = $("#stageVisitor");
+const stageName = $("#stageName");
+const stageMsg = $("#stageMsg");
+const shelvesEl = $("#shelves");
 
-  function clearStageTimers(){
-    if(stayTimer){ clearTimeout(stayTimer); stayTimer=null; }
-    if(talkTimer){ clearInterval(talkTimer); talkTimer=null; }
-  }
+/* ========= Utils ========= */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const now = () => Date.now();
 
-  function setStageEmpty(msg="まだ誰も来ていない。"){
-    clearStageTimers();
-    stageVisitor.classList.remove("show");
-    stageName.textContent = "—";
-    stageMsg.textContent  = msg;
-  }
+/* ========= 昼夜 ========= */
+function isNight(){
+  const h = new Date().getHours();
+  return h>=18 || h<=5;
+}
 
-  function showVisitor(visitor){
-    clearStageTimers();
+/* ========= 図鑑 ========= */
+function loadBook(){
+  const b = JSON.parse(localStorage.getItem(LS.book) || '{"got":{}}');
+  return b.got || {};
+}
 
-    stageVisitor.src = visitor.url;
-    stageVisitor.classList.add("show");
-    stageName.textContent = visitor.name;
+/* ========= 店 ========= */
+function loadShop(){
+  return JSON.parse(localStorage.getItem(LS.shop) || '{"slots":[{},{},{},{},{}]}');
+}
+function saveShop(s){
+  localStorage.setItem(LS.shop, JSON.stringify(s));
+}
 
-    const lines = VISITOR_LINES[visitor.type] || ["……"];
-    stageMsg.textContent = pick(lines);
+/* ========= ステージ ========= */
+function showVisitor(cust){
+  stageVisitor.src = cust.img;
+  stageVisitor.classList.add("show");
+  stageName.textContent = cust.name;
+  stageMsg.textContent = pick(cust.lines);
+}
+function clearVisitor(){
+  stageVisitor.classList.remove("show");
+  stageName.textContent = "—";
+  stageMsg.textContent = "まだ誰も来ていない。";
+}
 
-    /* セリフ切り替え */
-    talkTimer = setInterval(()=>{
-      stageMsg.textContent = pick(lines);
-    }, rand(3000,6000));
+/* ========= 棚描画（カード復活） ========= */
+function renderShelves(){
+  const shop = loadShop();
+  const book = loadBook();
 
-    /* 滞在時間 */
-    stayTimer = setTimeout(()=>{
-      setStageEmpty("……考えた末、去っていった。");
-    }, rand(10000,30000));
-  }
+  shelvesEl.innerHTML = shop.slots.map((slot,idx)=>{
+    let html = "";
+    if(slot.item && book[slot.item.id]){
+      const c = book[slot.item.id];
+      html = `
+        <img src="${c.img || ""}" style="width:100%;image-rendering:pixelated">
+        <div class="name">${c.name || "カード"}</div>
+      `;
+    }else{
+      html = `<div class="ph">（空）</div>`;
+    }
 
-  /* =========================================================
-     呼び込み
-  ========================================================= */
-  $("#shoutBtn").addEventListener("click", ()=>{
-    const cd = JSON.parse(localStorage.getItem(LS.shout)||'{"next":0}');
-    if(cd.next > now()) return;
+    return `
+      <div class="shelf" data-idx="${idx}">
+        <div class="slot">${html}</div>
+      </div>
+    `;
+  }).join("");
+}
 
-    const v = pick(ASSETS.visitors);
-    showVisitor(v);
+/* ========= 来客 ========= */
+function visitorEvent(){
+  const shop = loadShop();
+  const active = shop.slots.find(s=>s.item);
+  if(!active) return;
 
-    cd.next = now() + 60000;
-    localStorage.setItem(LS.shout, JSON.stringify(cd));
-  });
+  const cust = pick(CUSTOMERS);
+  showVisitor(cust);
 
-  /* =========================================================
-     CSS微調整（位置）
-  ========================================================= */
-  stageVisitor.style.position = "absolute";
-  stageVisitor.style.bottom   = "32px";   // ← 少し上
-  stageVisitor.style.left     = "50%";
-  stageVisitor.style.transform= "translateX(-50%)";
-  stageVisitor.style.height   = "150px";
-  stageVisitor.style.imageRendering = "pixelated";
+  setTimeout(clearVisitor, 1200);
+}
 
-  /* =========================================================
-     boot
-  ========================================================= */
-  function boot(){
-    applyDayNight();
-    setStageEmpty();
-    setInterval(applyDayNight, 60000);
-  }
-  boot();
+/* ========= 起動 ========= */
+function boot(){
+  stageBg.src = isNight() ? ASSETS.bgNight : ASSETS.bgDay;
+  clearVisitor();
+  renderShelves();
+
+  // 15秒に1回テスト来客（まず動く確認用）
+  setInterval(visitorEvent, 15000);
+}
+
+boot();
 })();
 </script>
-
 
 </body>
 </html>
