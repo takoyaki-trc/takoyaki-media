@@ -108,7 +108,7 @@
       position:relative;
       width:100%;
       max-width:980px;
-      height:192px;               /* 表示高：固定（ドット感のため） */
+      height:192px;
       border-radius:14px;
       overflow:hidden;
       border:1px solid rgba(255,255,255,.14);
@@ -125,10 +125,10 @@
     }
     .stage-visitor{
       position:absolute;
-      bottom:0;
+      bottom:22px;              /* ★少し上に（修正） */
       left:50%;
       transform:translateX(-50%);
-      height:150px;              /* 客の表示高さ（基準） */
+      height:150px;
       image-rendering: pixelated;
       display:none;
       pointer-events:none;
@@ -535,19 +535,60 @@
   "use strict";
 
   // =========================================================
-  // ★ ここがあなたのURL（確定）
+  // ★ URL（確定）＋ 6人の性格（type）を持たせる
   // =========================================================
   const ASSETS = {
     bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
     bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
-    // いまは客1枚。17人できたらここに足していく
     visitors: [
-      { id:"v01", name:"ｔもも", url:"https://ul.h3z.jp/lsTSkndD.png" },
-       { id:"v02", name:"客タコ民", url:"https://ul.h3z.jp/YckjGopx.png" },
-   { id:"v03", name:"客タコ民", url:"https://ul.h3z.jp/PIsx6jd0.png" },
-   { id:"v04", name:"客タコ民", url:"https://ul.h3z.jp/j8ZOooGi.png" },
-   { id:"v05", name:"客タコ民", url:"https://ul.h3z.jp/CaRoJGA6.png" },
-   { id:"v06", name:"客タコ民", url:"https://ul.h3z.jp/C015QuqC.png" }
+      { id:"v01", name:"慎重タコ民", type:"careful", url:"https://ul.h3z.jp/lsTSkndD.png" },
+      { id:"v02", name:"即決タコ民", type:"impulse", url:"https://ul.h3z.jp/YckjGopx.png" },
+      { id:"v03", name:"冷やかしタコ民", type:"looker",  url:"https://ul.h3z.jp/PIsx6jd0.png" },
+      { id:"v04", name:"こだわりタコ民", type:"picky",   url:"https://ul.h3z.jp/j8ZOooGi.png" },
+      { id:"v05", name:"王様タコ民",   type:"king",    url:"https://ul.h3z.jp/CaRoJGA6.png" },
+      { id:"v06", name:"転売タコ民",   type:"flipper", url:"https://ul.h3z.jp/C015QuqC.png" }
+    ]
+  };
+
+  // =========================================================
+  // 滞在中のセリフ（性格ごと）
+  // =========================================================
+  const VISITOR_LINES = {
+    careful: [
+      "どうしようかな…",
+      "もう少し見てから…",
+      "今日は買うべきか…",
+      "うーん…悩む…"
+    ],
+    impulse: [
+      "おっ、いいじゃん",
+      "今が買い時かも！",
+      "これいっとく？",
+      "勢いでいく！"
+    ],
+    looker: [
+      "ふーん",
+      "見るだけ見よ",
+      "賑やかだなあ",
+      "写真だけ撮ろ"
+    ],
+    picky: [
+      "匂いは悪くない…",
+      "焼きのムラは…？",
+      "慎重に選びたい",
+      "今日は“普通”が強い日…"
+    ],
+    king: [
+      "よい。",
+      "余は迷わぬ。",
+      "この棚…格がある。",
+      "買おう。"
+    ],
+    flipper: [
+      "回るか…？",
+      "これは動く。",
+      "利益の匂いがする",
+      "買う。評判は知らん。"
     ]
   };
 
@@ -564,7 +605,6 @@
     shout:    "roten_v1_shout_cd",
     farmInv:  "tf_v1_inv",
     farmBook: "tf_v1_book",
-    // ステージ表示の直近客（見た目用）
     stage:    "roten_v1_stage"
   };
 
@@ -607,6 +647,7 @@
   const fmt = (n) => (Number(n||0)).toLocaleString("ja-JP");
   const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
   function safeJSON(raw, fallback){ try{ return JSON.parse(raw);}catch(e){ return fallback; } }
   function lsGet(key, fallback){
@@ -676,7 +717,7 @@
   // =========================================================
   // ステージ状態（見た目用）
   // =========================================================
-  const STAGE_DEFAULT = { ver:1, hasVisitor:false, vUrl:"", vName:"—", vMsg:"まだ誰も来ていない。", updatedAt:0 };
+  const STAGE_DEFAULT = { ver:1, hasVisitor:false, vUrl:"", vName:"—", vMsg:"まだ誰も来ていない。", vType:"", updatedAt:0 };
   function loadStage(){
     const s = lsGet(LS.stage, STAGE_DEFAULT);
     return { ...STAGE_DEFAULT, ...s };
@@ -685,24 +726,58 @@
     s.updatedAt = now();
     lsSet(LS.stage, s);
   }
+
+  // =========================================================
+  // ★滞在管理（10〜30秒）＋セリフ更新（3〜6秒）
+  // =========================================================
+  let stageStayTimer = null;
+  let stageTalkTimer = null;
+
+  function clearStageTimers(){
+    if(stageStayTimer){ clearTimeout(stageStayTimer); stageStayTimer = null; }
+    if(stageTalkTimer){ clearInterval(stageTalkTimer); stageTalkTimer = null; }
+  }
+
   function setStageEmpty(msg){
+    clearStageTimers();
     const s = loadStage();
     s.hasVisitor = false;
     s.vUrl = "";
     s.vName = "—";
     s.vMsg = msg || "まだ誰も来ていない。";
+    s.vType = "";
     saveStage(s);
     renderStage();
   }
-  function setStageVisitor(vUrl, vName, vMsg){
+
+  function setStageVisitor(vObj, initialMsg){
+    clearStageTimers();
+
     const s = loadStage();
     s.hasVisitor = true;
-    s.vUrl = vUrl || "";
-    s.vName = vName || "客タコ民";
-    s.vMsg  = vMsg  || "……";
+    s.vUrl  = vObj?.url || "";
+    s.vName = vObj?.name || "客タコ民";
+    s.vType = vObj?.type || "";
+    s.vMsg  = initialMsg || "……";
     saveStage(s);
     renderStage();
+
+    // 滞在中：性格セリフをローテ（3〜6秒）
+    const lines = VISITOR_LINES[s.vType] || ["……"];
+    stageTalkTimer = setInterval(()=>{
+      const cur = loadStage();
+      if(!cur.hasVisitor) return;
+      cur.vMsg = pick(lines);
+      saveStage(cur);
+      renderStage();
+    }, rand(3000, 6000));
+
+    // 滞在：10〜30秒
+    stageStayTimer = setTimeout(()=>{
+      setStageEmpty("……考えた末、去っていった。");
+    }, rand(10000, 30000));
   }
+
   function renderStage(){
     const s = loadStage();
     stageName.textContent = s.vName || "—";
@@ -713,6 +788,12 @@
     }else{
       stageVisitor.classList.remove("show");
     }
+  }
+
+  // 客画像選択：できれば customer.id に合わせる（無ければランダム）
+  function pickVisitorForCustomer(customerId){
+    const byType = ASSETS.visitors.find(v => v.type === customerId);
+    return byType || pick(ASSETS.visitors);
   }
 
   // =========================================================
@@ -896,13 +977,8 @@
   }
 
   // =========================================================
-  // 客タイプ（今は画像は共通。後で17人分に差し替え）
+  // 客タイプ（既存）
   // =========================================================
-  function visitorUrl(){
-    // 将来：ここをランダムで17人から選ぶだけ
-    return pick(ASSETS.visitors).url;
-  }
-
   const CUSTOMER_TYPES = [
     {
       id:"fast",
@@ -980,12 +1056,11 @@
   ];
 
   function chooseCustomer(rep){
-    // 重み：評判で少し変化（簡易）
     const weights = CUSTOMER_TYPES.map(t=>{
       if(t.id==="king") return rep>=55 ? 6 : 3;
       if(t.id==="flipper") return rep>=70 ? 4 : 7;
       if(t.id==="fast") return 34 + (rep<40? 10:0);
-      return 48 + (rep>=60? 10:0); // picky
+      return 48 + (rep>=60? 10:0);
     });
     const total = weights.reduce((a,b)=>a+b,0) || 1;
     let r = Math.random() * total;
@@ -1208,19 +1283,16 @@
     const slot = shop.slots[currentPickSlot];
     if(!slot) return;
 
-    // 既に出品中なら一旦戻す
     if(slot.item){
       incrementBookCountById(String(slot.item.id), slot.item.raw || slot.item);
     }
 
-    // 所持を減らして出品
     const ok = decrementBookCountById(cardId);
     if(!ok){
       toast("所持数が足りない", "他のカードを選んでね");
       return;
     }
 
-    // bookから情報を取り、スナップ作成
     const book = loadFarmBook();
     const raw = book.got[cardId] || {};
     const snap = {
@@ -1238,7 +1310,6 @@
     shop.slots[currentPickSlot] = slot;
     saveMyShop(shop);
 
-    // 次来客をセット
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(currentPickSlot)] = now() + nextVisitDelayMs();
@@ -1262,7 +1333,6 @@
 
     const act = btn ? btn.getAttribute("data-act") : null;
 
-    // 棚カード本体タップ＝出品/入替
     if(!act && shelf){
       const lv = loadLevel().lv;
       if(!canUseSlot(idx, lv)){
@@ -1288,7 +1358,7 @@
       saveMyShop(shop);
 
       pushLog(`棚${idx+1} 価格帯`, `価格帯を「${next}」に変更`, "");
-      // 次来客を少し早める（気持ちよさ）
+
       const t = loadTick();
       t.nextAtBySlot = t.nextAtBySlot || {};
       if(slot.item){
@@ -1330,7 +1400,7 @@
   });
 
   // =========================================================
-  // 来客・販売ループ（棚ごと 3〜5分）
+  // 来客・販売ループ
   // =========================================================
   function ensureNextAtForActiveSlots(){
     const shop = loadMyShop();
@@ -1366,13 +1436,10 @@
     return { sold, price, chance:p, base:tiered };
   }
 
-  function showStageForEvent(customerName, line, showVisitorFlag){
-    const url = showVisitorFlag ? visitorUrl() : "";
-    if(showVisitorFlag){
-      setStageVisitor(url, customerName, line);
-    }else{
-      setStageEmpty(line || "……");
-    }
+  // ★ ステージ表示：6人画像＋滞在制御に差し替え
+  function showStageForEvent(customer, initialLine){
+    const v = pickVisitorForCustomer(customer.id);
+    setStageVisitor(v, initialLine);
   }
 
   function applySaleResult(slotIdx, result){
@@ -1389,52 +1456,40 @@
     s1.totalVisit += 1;
     saveLevel(s1);
 
-    // ステージに「客」を大きく表示（このタイミングが“来店”）
-    showStageForEvent(customer.name, result.line, true);
+    // ステージに表示（滞在10〜30秒）
+    showStageForEvent(customer, result.line);
 
     // lastEvent（棚の下の小表示）
+    const vMini = pickVisitorForCustomer(customer.id);
     slot.lastEvent = {
       vname: customer.name,
       vmsg: result.line,
-      vavatar: visitorUrl() // 小アイコンも同じ画像（後で差し替え可）
+      vavatar: vMini.url
     };
 
     if(result.sold){
-      // 売上
       saveOcto(loadOcto() + result.price);
 
-      // EXP +4（売却）
       const r2 = addExp(4);
       const s2 = r2.state;
       s2.totalSold += 1;
       saveLevel(s2);
 
-      // 評判変動
       addRep(customer.repDeltaOnBuy);
 
       pushLog(`売れた！(棚${slotIdx+1})`, `${customer.name} が「${cardName}」を買った`, `+${result.price}octo / p=${Math.round(result.chance*100)}%`);
       toast("💰 売れた！", `棚${slotIdx+1}：+${result.price}オクト`);
 
-      // 売れたら棚は空
       slot.item = null;
       slot.createdAt = 0;
 
-      // tick消す
       const t = loadTick();
       if(t.nextAtBySlot) delete t.nextAtBySlot[String(slotIdx)];
       saveTick(t);
-
-      // 客は去る→少し間を置いて無人表示へ
-      setTimeout(()=> setStageEmpty("……祭りの音だけが残った。"), 900);
-
     }else{
-      // 売れない：評判ちょい下げ
       addRep(-0.6);
-
       pushLog(`売れなかった(棚${slotIdx+1})`, `${customer.name} は見ただけで帰った`, `p=${Math.round(result.chance*100)}%`);
-
-      // 見て帰る→少し間を置いて無人表示へ
-      setTimeout(()=> setStageEmpty("……見て、去っていった。"), 900);
+      // ★去る演出は滞在タイマーが担当（ここで即消さない）
     }
 
     shop.slots[slotIdx] = slot;
@@ -1482,7 +1537,6 @@
           const nextAt = Number(t.nextAtBySlot[key]||0);
           if(!nextAt || n < nextAt) return;
 
-          // 来客発生
           const customer = chooseCustomer(rep);
           const line = pick(customer.lines);
           const res = computeSell(slot, rep, customer);
@@ -1490,7 +1544,6 @@
           applySaleResult(idx, { customer, line, sold:res.sold, price:res.price, chance:res.chance, base:res.base });
           changed = true;
 
-          // 次来客（売れた場合、棚が空になるので tick は消える）
           const shop2 = loadMyShop();
           if(shop2.slots[idx]?.item){
             const tt = loadTick();
@@ -1532,14 +1585,12 @@
       return;
     }
 
-    // ランダム棚を即来客に
     const idx = pick(active);
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(idx)] = now();
     saveTick(t);
 
-    // CT 60秒
     cd.nextOkAt = now() + 60*1000;
     saveShout(cd);
 
@@ -1617,7 +1668,6 @@
   // boot
   // =========================================================
   function boot(){
-    // 初期キーが無くても壊れない
     if(localStorage.getItem(LS.octo) == null) saveOcto(0);
     if(localStorage.getItem(LS.lvl) == null) lsSet(LS.lvl, LEVEL_DEFAULT);
     if(localStorage.getItem(LS.rep) == null) lsSet(LS.rep, { ver:1, rep:50 });
@@ -1625,7 +1675,6 @@
     if(localStorage.getItem(LS.log) == null) lsSet(LS.log, { ver:1, items:[] });
     if(localStorage.getItem(LS.stage) == null) lsSet(LS.stage, STAGE_DEFAULT);
 
-    // 起動時は無人表示
     if(!loadStage().updatedAt){
       setStageEmpty("まだ誰も来ていない。");
     }
@@ -1640,5 +1689,6 @@
 </script>
 </body>
 </html>
+
 
 
