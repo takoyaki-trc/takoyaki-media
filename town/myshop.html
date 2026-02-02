@@ -415,16 +415,13 @@
   </div>
 
   <div class="wrap">
-
-    <!-- stats -->
     <div class="stats" id="stats"></div>
 
-    <!-- 来店ステージ -->
     <div class="card stage-card">
       <div class="card-h">
         <div>
-          <div class="card-title">本日も営業中</div>
-          <div class="card-desc">カードを選んで棚に陳列しよう！</div>
+          <div class="card-title">来店ステージ</div>
+          <div class="card-desc">背景（昼/夜）に、客タコ民（透過）を重ねて表示。誰もいない時は背景だけ。</div>
         </div>
         <div class="pill">
           <span>評判</span>
@@ -449,9 +446,7 @@
       </div>
     </div>
 
-    <!-- main grid -->
     <div class="grid">
-      <!-- left -->
       <div class="card">
         <div class="card-h">
           <div>
@@ -465,7 +460,6 @@
         </div>
       </div>
 
-      <!-- right -->
       <div class="card">
         <div class="card-h">
           <div>
@@ -499,7 +493,6 @@
 
   </div>
 
-  <!-- modal: pick card -->
   <div class="modal" id="pickModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-label="出品するカードを選ぶ">
       <div class="sheet-h">
@@ -521,7 +514,6 @@
     </div>
   </div>
 
-  <!-- modal: help -->
   <div class="modal" id="helpModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-label="ヘルプ">
       <div class="sheet-h">
@@ -546,7 +538,6 @@
     </div>
   </div>
 
-  <!-- toast -->
   <div class="toast" aria-live="polite" aria-atomic="true">
     <div class="box" id="toastBox">
       <b id="toastTitle">—</b>
@@ -558,9 +549,6 @@
 (() => {
   "use strict";
 
-  /* =========================
-     ASSETS
-  ========================= */
   const ASSETS = {
     bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
     bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
@@ -574,51 +562,15 @@
     ]
   };
 
-  /* =========================
-     VISITOR LINES
-  ========================= */
   const VISITOR_LINES = {
-    careful: [
-      "どうしようかな…",
-      "もう少し見てから…",
-      "今日は買うべきか…",
-      "財布に相談中…（既読スルー）"
-    ],
-    impulse: [
-      "おっ、いいじゃん",
-      "今が買い時かも！",
-      "これいっとく？",
-      "勢いで買う！…たぶん！"
-    ],
-    looker: [
-      "ふーん",
-      "見るだけ見よ",
-      "賑やかだなあ",
-      "撮って帰るわ（買わない）"
-    ],
-    picky: [
-      "匂いは悪くない…",
-      "焼きのムラは…？",
-      "慎重に選びたい",
-      "今日は“普通”が強い日…"
-    ],
-    king: [
-      "よい。",
-      "余は迷わぬ。",
-      "この棚…格がある。",
-      "買う。異論はない。"
-    ],
-    flipper: [
-      "回るか…？",
-      "これは動く。",
-      "利益の匂いがする",
-      "買う。評判は知らん。"
-    ]
+    careful: ["どうしようかな…","もう少し見てから…","今日は買うべきか…","財布に相談中…（既読スルー）"],
+    impulse: ["おっ、いいじゃん","今が買い時かも！","これいっとく？","勢いで買う！…たぶん！"],
+    looker:  ["ふーん","見るだけ見よ","賑やかだなあ","撮って帰るわ（買わない）"],
+    picky:   ["匂いは悪くない…","焼きのムラは…？","慎重に選びたい","今日は“普通”が強い日…"],
+    king:    ["よい。","余は迷わぬ。","この棚…格がある。","買う。異論はない。"],
+    flipper: ["回るか…？","これは動く。","利益の匂いがする","買う。評判は知らん。"]
   };
 
-  /* =========================
-     LEAVE LINES（増量）
-  ========================= */
   const LEAVE_LINES = [
     "……財布と心が、今日は噛み合わなかった。",
     "……また来る。焼かれる覚悟ができたら。",
@@ -652,9 +604,6 @@
     "……焼かれる前に撤収。"
   ];
 
-  /* =========================
-     GOALS（目的）
-  ========================= */
   const GOALS = [
     { id:"cheap", label:"安いのを狙ってる" },
     { id:"rare",  label:"SR以上が欲しい" },
@@ -671,9 +620,6 @@
     return map[goalId] || ["……"];
   }
 
-  /* =========================
-     LocalStorage Keys
-  ========================= */
   const LS = {
     octo:     "roten_v1_octo",
     myshop:   "roten_v1_myshop",
@@ -687,9 +633,6 @@
     stage:    "roten_v1_stage"
   };
 
-  /* =========================
-     DOM
-  ========================= */
   const $ = (q, el=document) => el.querySelector(q);
 
   const statsEl = $("#stats");
@@ -718,9 +661,6 @@
   const toastTitle = $("#toastTitle");
   const toastSub = $("#toastSub");
 
-  /* =========================
-     Utils
-  ========================= */
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const now = () => Date.now();
   const fmt = (n) => (Number(n||0)).toLocaleString("ja-JP");
@@ -785,9 +725,6 @@
     }).join("");
   }
 
-  /* =========================
-     Day / Night
-  ========================= */
   function isNight(){
     const h = new Date().getHours();
     return (h >= 18 || h <= 5);
@@ -798,9 +735,6 @@
     stageTimeTag.textContent = night ? "夜" : "昼";
   }
 
-  /* =========================
-     Stage state
-  ========================= */
   const STAGE_DEFAULT = {
     ver:1,
     hasVisitor:false,
@@ -840,13 +774,12 @@
     const s = loadStage();
     stageName.textContent = s.vName || "—";
     stageMsg.textContent  = s.vMsg  || "—";
-
     if(s.vUrl) stageVisitor.src = s.vUrl;
 
     if(s.hasVisitor && s.vUrl && !s.leaving){
-      stageVisitor.classList.add("show"); // フェードイン
+      stageVisitor.classList.add("show");
     }else{
-      stageVisitor.classList.remove("show"); // フェードアウト
+      stageVisitor.classList.remove("show");
     }
   }
 
@@ -874,15 +807,78 @@
     if(stageTalkTimer){ clearInterval(stageTalkTimer); stageTalkTimer=null; }
     s.leaving = true;
     saveStage(s);
-    renderStage(); // フェードアウト開始
+    renderStage();
 
     setTimeout(()=>{
       setStageEmpty(msg || pick(LEAVE_LINES));
-    }, 650); // CSSフェード完了頃
+    }, 650);
   }
-/* =========================
-     Core state
+
+  /* =========================
+     ★追加：復帰時にステージのタイマーを復元
   ========================= */
+  function resumeStageTimersIfNeeded(){
+    const st = loadStage();
+    if(!st.hasVisitor) return;
+
+    // leavingのまま固まってたら強制リセット
+    if(st.leaving){
+      setStageEmpty("……風が吹いて、客は消えた。");
+      return;
+    }
+
+    // updatedAtが無い/壊れてるなら安全に退店
+    const startedAt = Number(st.updatedAt||0);
+    const stayMs = Math.max(0, Number(st.stayMs||0));
+
+    if(!startedAt || stayMs <= 0){
+      beginLeave("……時間の辻褄が合わない。客は帰った。");
+      return;
+    }
+
+    const elapsed = now() - startedAt;
+    const remain = stayMs - elapsed;
+
+    clearStageTimers();
+    renderStage(); // 表示は一旦正す
+
+    // 既に滞在時間を過ぎている→即退店
+    if(remain <= 0){
+      beginLeave(pick(LEAVE_LINES));
+      return;
+    }
+
+    // セリフ更新復元
+    stageTalkTimer = setInterval(()=>{
+      const s2 = loadStage();
+      if(!s2.hasVisitor || s2.leaving) return;
+      const baseLines = VISITOR_LINES[s2.vType] || ["……"];
+      const gLines = goalLines(s2.vGoal);
+      s2.vMsg = (Math.random()<0.55) ? pick(baseLines) : pick(gLines);
+      saveStage(s2);
+      renderStage();
+    }, rand(3000, 6000));
+
+    // 売買判定：残り時間の「1秒前」に合わせて復元
+    const sellIn = Math.max(0, remain - 1000);
+    stageSellTimer = setTimeout(()=>{
+      const s2 = loadStage();
+      if(!s2.hasVisitor || s2.leaving) return;
+      resolveSaleAtStage();
+    }, sellIn);
+
+    // 退店復元
+    stageLeaveTimer = setTimeout(()=>{
+      beginLeave(pick(LEAVE_LINES));
+    }, remain);
+
+    // 保険（復元時点から最大35秒以内で退店）
+    stageFailsafeTimer = setTimeout(()=>{
+      const s2 = loadStage();
+      if(s2.hasVisitor) beginLeave("……夜の客は、静かに溶けた。");
+    }, Math.min(35000, remain + 5000));
+  }
+
   function loadOcto(){
     const v = Number(localStorage.getItem(LS.octo) || 0);
     return isFinite(v) ? v : 0;
@@ -933,9 +929,6 @@
     return s;
   }
 
-  /* =========================
-     Farm Inv / Book
-  ========================= */
   function loadFarmInv(){
     const inv = lsGet(LS.farmInv, { ver:1, seed:{}, water:{}, fert:{} });
     inv.seed = inv.seed || {};
@@ -994,9 +987,6 @@
     return true;
   }
 
-  /* =========================
-     MyShop
-  ========================= */
   const SHOP_DEFAULT = {
     ver:1,
     slots: [
@@ -1020,9 +1010,6 @@
   }
   function saveMyShop(s){ lsSet(LS.myshop, s); }
 
-  /* =========================
-     Tick (来客の予定)
-  ========================= */
   function loadTick(){
     const t = lsGet(LS.tick, { ver:1, nextAtBySlot:{} });
     t.nextAtBySlot = t.nextAtBySlot || {};
@@ -1030,7 +1017,7 @@
   }
   function saveTick(t){ lsSet(LS.tick, t); }
   function nextVisitDelayMs(){
-    return (180 + Math.floor(Math.random()*121)) * 1000; // 3〜5分
+    return (180 + Math.floor(Math.random()*121)) * 1000;
   }
   const SHELF_UNLOCK = [1,1,2,3,4];
   function canUseSlot(idx, lv){ return lv >= (SHELF_UNLOCK[idx] || 99); }
@@ -1072,15 +1059,9 @@
     stageNextTag.textContent = `次：${sec}s`;
   }
 
-  /* =========================
-     Shout cooldown
-  ========================= */
   function loadShout(){ return lsGet(LS.shout, { ver:1, nextOkAt:0 }); }
   function saveShout(s){ lsSet(LS.shout, s); }
 
-  /* =========================
-     Price base
-  ========================= */
   function basePriceFor(card){
     const p = Number(card?.raw?.price ?? card?.raw?.basePrice ?? card?.price ?? 0);
     if(isFinite(p) && p > 0) return Math.floor(p);
@@ -1101,9 +1082,6 @@
     return 0.80 + (rep/100)*0.40;
   }
 
-  /* =========================
-     Customer types（ステージ用）
-  ========================= */
   const CUSTOMER_TYPES = [
     { id:"impulse", name:"即決タコ民", repDeltaOnBuy:+1, baseBuy:0.42 },
     { id:"picky",   name:"こだわりタコ民", repDeltaOnBuy:+1, baseBuy:0.45 },
@@ -1121,7 +1099,7 @@
       if(t.id==="looker") return night ? 10 : 14;
       if(t.id==="impulse") return rep<40 ? 18 : 22;
       if(t.id==="careful") return 16;
-      return rep>=60 ? 24 : 20; // picky
+      return rep>=60 ? 24 : 20;
     });
 
     if(rep>=70){
@@ -1210,15 +1188,11 @@
     const rep = loadRep().rep;
 
     let p = Number(customer.baseBuy || 0.35);
-
-    // ★滞在ボーナス（10s→+0 / 30s→+0.25）
     const stayBoost = clamp((stayMs - 10000) / 20000, 0, 1) * 0.25;
     p += stayBoost;
 
-    // ★評判
     p *= repFactor(rep);
 
-    // ★目的補正
     const shop = loadMyShop();
     const slot = shop.slots[targetSlotIdx];
     const rarity = String(slot?.item?.rarity||"").toUpperCase();
@@ -1242,9 +1216,6 @@
     return Math.max(1, Math.floor(base * tierMult(slot.priceTier)));
   }
 
-  /* =========================
-     Spawn visitor (stage only)
-  ========================= */
   function spawnVisitor(){
     const cur = loadStage();
     if(cur.hasVisitor) return;
@@ -1288,7 +1259,6 @@
     s.vMsg = pick(goalLines(goalId));
     saveStage(s);
 
-    // 来客EXP +1
     const a = addExp(1);
     const lvState = a.state;
     lvState.totalVisit += 1;
@@ -1296,7 +1266,6 @@
 
     renderStage();
 
-    // 滞在中：セリフ更新
     stageTalkTimer = setInterval(()=>{
       const st = loadStage();
       if(!st.hasVisitor || st.leaving) return;
@@ -1307,19 +1276,16 @@
       renderStage();
     }, rand(3000, 6000));
 
-    // ★売買判定：消える1秒前（要件）
     stageSellTimer = setTimeout(()=>{
       const st = loadStage();
       if(!st.hasVisitor || st.leaving) return;
       resolveSaleAtStage();
     }, Math.max(0, stayMs - 1000));
 
-    // ★去る（フェードアウト）
     stageLeaveTimer = setTimeout(()=>{
       beginLeave(pick(LEAVE_LINES));
     }, stayMs);
 
-    // ★保険：最大35秒で強制退店
     stageFailsafeTimer = setTimeout(()=>{
       const st = loadStage();
       if(st.hasVisitor){
@@ -1348,7 +1314,6 @@
     const stayMs = st.stayMs || 15000;
     const chance = computeBuyChance(customer, st.vGoal, idx, stayMs);
 
-    // 来店時のwillBuyをベースに微調整
     const sold = st.willBuy ? (Math.random() < Math.max(chance, 0.18)) : (Math.random() < Math.min(chance, 0.35));
 
     if(!sold){
@@ -1357,7 +1322,6 @@
       return;
     }
 
-    // ★売れた
     const price = computePrice(slot);
     const cardName = slot.item.name;
 
@@ -1370,22 +1334,18 @@
 
     addRep(customer.repDeltaOnBuy);
 
-    // ★ポップアップにカード名
     pushLog("売れた！", `${st.vName} が「${cardName}」を買った`, `棚${idx+1} / +${price}octo`);
     toast("💰 売れた！", `「${cardName}」 +${price}オクト`, "sale");
 
-    // 棚から消す（出品時に図鑑countは減ってるので戻さない）
     slot.item = null;
     slot.createdAt = 0;
     shop.slots[idx] = slot;
     saveMyShop(shop);
 
-    // tick消す
     const t = loadTick();
     if(t.nextAtBySlot) delete t.nextAtBySlot[String(idx)];
     saveTick(t);
 
-    // ステージセリフを短く
     const st2 = loadStage();
     st2.vMsg = (st.vType==="king")
       ? "……余は満足した。"
@@ -1398,9 +1358,6 @@
     renderAll();
   }
 
-  /* =========================
-     Shelves UI
-  ========================= */
   const PRICE_TIERS = ["安い","普通","高い"];
   let currentPickSlot = -1;
 
@@ -1458,9 +1415,6 @@
     }).join("");
   }
 
-  /* =========================
-     Stats / Inv / Book
-  ========================= */
   function renderStats(){
     const lv = loadLevel();
     const rep = loadRep().rep;
@@ -1525,9 +1479,6 @@
     bookChipsEl.innerHTML = html;
   }
 
-  /* =========================
-     Modal: pick (ダブりのみ)
-  ========================= */
   function openPickModal(slotIdx){
     currentPickSlot = slotIdx;
     const lv = loadLevel().lv;
@@ -1592,12 +1543,10 @@
     const slot = shop.slots[currentPickSlot];
     if(!slot) return;
 
-    // 既に出品中なら戻す（count+1）
     if(slot.item){
       incrementBookCountById(String(slot.item.id), slot.item.raw || slot.item);
     }
 
-    // ダブりチェック（count>=2 必須）
     const bookNow = loadFarmBook();
     const curCnt = Math.max(0, Number(bookNow?.got?.[cardId]?.count || 0));
     if(curCnt < 2){
@@ -1605,7 +1554,6 @@
       return;
     }
 
-    // 出品＝count-1
     const ok = decrementBookCountById(cardId);
     if(!ok){
       toast("所持数が足りない", "他のカードを選んでね");
@@ -1627,7 +1575,6 @@
     shop.slots[currentPickSlot] = slot;
     saveMyShop(shop);
 
-    // tickセット
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(currentPickSlot)] = now() + nextVisitDelayMs();
@@ -1640,9 +1587,6 @@
     toast("出品完了", `棚${currentPickSlot+1}に「${snap.name}」を置いた`);
   });
 
-  /* =========================
-     Shelf actions
-  ========================= */
   shelvesEl.addEventListener("click", (e)=>{
     const btn = e.target.closest("button");
     const slotTap = e.target.closest(".slot");
@@ -1688,7 +1632,6 @@
       const slot = shop.slots[idx];
       if(!slot.item) return;
 
-      // 取り下げ＝count+1
       incrementBookCountById(String(slot.item.id), slot.item.raw || slot.item);
 
       pushLog(`棚${idx+1} 取り下げ`, `${slot.item.name} を取り下げた`, "");
@@ -1708,9 +1651,6 @@
     }
   });
 
-  /* =========================
-     Loop：来客発生（ステージのみ）
-  ========================= */
   let loopTimer = null;
 
   function startLoop(){
@@ -1734,7 +1674,6 @@
         if(n >= nextAt){
           spawnVisitor();
 
-          // 全棚のnextAtを先送り（過剰発生防止）
           const tt = loadTick();
           Object.keys(tt.nextAtBySlot||{}).forEach(k=>{
             if(tt.nextAtBySlot[k]) tt.nextAtBySlot[k] = n + nextVisitDelayMs();
@@ -1749,9 +1688,6 @@
     }, 1000);
   }
 
-  /* =========================
-     呼び込み（即来客）
-  ========================= */
   async function doShout(){
     const cd = loadShout();
     const n = now();
@@ -1797,9 +1733,6 @@
     }
   }
 
-  /* =========================
-     Render all
-  ========================= */
   function renderAll(){
     renderStats();
     renderShelves();
@@ -1812,9 +1745,6 @@
     updateNextTag();
   }
 
-  /* =========================
-     Events
-  ========================= */
   $("#backBtn").addEventListener("click", ()=>{
     location.href = "./roten.html";
   });
@@ -1846,9 +1776,6 @@
 
   $("#shoutBtn").addEventListener("click", doShout);
 
-  /* =========================
-     Boot
-  ========================= */
   function boot(){
     if(localStorage.getItem(LS.octo) == null) saveOcto(0);
     if(localStorage.getItem(LS.lvl) == null) lsSet(LS.lvl, LEVEL_DEFAULT);
@@ -1857,11 +1784,11 @@
     if(localStorage.getItem(LS.log) == null) lsSet(LS.log, { ver:1, items:[] });
     if(localStorage.getItem(LS.stage) == null) lsSet(LS.stage, STAGE_DEFAULT);
 
-    // 途中でleavingが残ってたら解除
-    const st = loadStage();
-    if(st.leaving) setStageEmpty("……夜明けでリセットされた。");
-
     renderAll();
+
+    // ★ここが修正の本体：客が残ってる時にタイマー復元
+    resumeStageTimersIfNeeded();
+
     startLoop();
     setInterval(updateShoutBtn, 250);
   }
@@ -1871,3 +1798,4 @@
 </script>
 </body>
 </html>
+
