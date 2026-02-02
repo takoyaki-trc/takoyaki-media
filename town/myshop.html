@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ja">
 <head>
@@ -549,26 +550,143 @@
 (() => {
   "use strict";
 
+  /* =========================================================
+     ✅ 追加タコ民 15人 + 既存6人 = 合計21人
+     - 画像URL（追加15人）は仮で既存のどれかを流用
+       → あとで差し替えたい場合は url を差し替えるだけ
+  ========================================================= */
+
   const ASSETS = {
     bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
     bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
     visitors: [
-      { id:"v01", name:"慎重タコ民", type:"careful", url:"https://ul.h3z.jp/lsTSkndD.png" },
-      { id:"v02", name:"即決タコ民", type:"impulse", url:"https://ul.h3z.jp/YckjGopx.png" },
-      { id:"v03", name:"冷やかしタコ民", type:"looker",  url:"https://ul.h3z.jp/PIsx6jd0.png" },
-      { id:"v04", name:"こだわりタコ民", type:"picky",   url:"https://ul.h3z.jp/j8ZOooGi.png" },
-      { id:"v05", name:"王様タコ民",   type:"king",    url:"https://ul.h3z.jp/CaRoJGA6.png" },
-      { id:"v06", name:"転売タコ民",   type:"flipper", url:"https://ul.h3z.jp/C015QuqC.png" }
+      // 既存6
+      { id:"v01", name:"慎重タコ民", type:"careful", url:"https://ul.h3z.jp/6uaLx3AV.png" },
+      { id:"v02", name:"即決タコ民", type:"impulse", url:"https://ul.h3z.jp/W1dFrooC.png" },
+      { id:"v03", name:"冷やかしタコ民", type:"looker",  url:"https://ul.h3z.jp/mD6ZkWGr.png" },
+      { id:"v04", name:"こだわりタコ民", type:"picky",   url:"https://ul.h3z.jp/Qd8XI65E.png" },
+      { id:"v05", name:"王様タコ民",   type:"king",    url:"https://ul.h3z.jp/rb2bib3m.png" },
+      { id:"v06", name:"転売タコ民",   type:"flipper", url:"https://ul.h3z.jp/L2XIaBYd.png" },
+
+      // 追加15（画像は仮：後で差し替えOK）
+      { id:"v07", name:"札束タコ民",     type:"rich",     url:"https://ul.h3z.jp/pZKu3lSE.png" },  // 仮：王様
+      { id:"v08", name:"踏破タコ民",     type:"climber",  url:"https://ul.h3z.jp/45QUKopT.png" },  // 仮：慎重
+      { id:"v09", name:"ナビタコ民",     type:"guide",    url:"https://ul.h3z.jp/1RRwKTMt.png" },  // 仮：冷やかし
+      { id:"v10", name:"ほぐしタコ民",   type:"relax",    url:"https://ul.h3z.jp/dbBbLypa.png" },  // 仮：こだわり
+      { id:"v11", name:"返し職人タコ民", type:"artisan",  url:"https://ul.h3z.jp/OA5StkvT.png" },  // 仮：即決
+      { id:"v12", name:"ゼロ理論タコ民", type:"diet",     url:"https://ul.h3z.jp/KVImBYZ8.png" },  // 仮：冷やかし
+      { id:"v13", name:"枠外タコ民",     type:"overflow", url:"https://ul.h3z.jp/q4UllqyX.png" },  // 仮：転売
+      { id:"v14", name:"未開封保護タコ民",type:"collector",url:"https://ul.h3z.jp/zSvGyVq9.png" }, // 仮：慎重
+      { id:"v15", name:"裏棚タコ民",     type:"shadow",   url:"https://ul.h3z.jp/IBKDrVAm.png" },  // 仮：冷やかし
+      { id:"v16", name:"替え玉タコ民",   type:"ramen",    url:"https://ul.h3z.jp/NViRwhdj.png" },  // 仮：即決
+      { id:"v17", name:"投げ銭タコ民",   type:"streamer", url:"https://ul.h3z.jp/8PukOegd.png" },  // 仮：こだわり
+      { id:"v18", name:"舌判定タコ民",   type:"gourmet",  url:"https://ul.h3z.jp/We4UXFSI.png" },  // 仮：こだわり
+      { id:"v19", name:"即バリタコ民",   type:"opener",   url:"https://ul.h3z.jp/9usFHTdU.png" },  // 仮：即決
+      { id:"v20", name:"宴タコ民",       type:"party",    url:"https://ul.h3z.jp/pByCAUMC.png" },  // 仮：転売（派手枠）
+      { id:"v21", name:"覚悟タコ民",     type:"pilgrim",  url:"https://ul.h3z.jp/eW2dluw2.png" }   // 仮：慎重
     ]
   };
 
   const VISITOR_LINES = {
+    // 既存
     careful: ["どうしようかな…","もう少し見てから…","今日は買うべきか…","財布に相談中…（既読スルー）"],
     impulse: ["おっ、いいじゃん","今が買い時かも！","これいっとく？","勢いで買う！…たぶん！"],
     looker:  ["ふーん","見るだけ見よ","賑やかだなあ","撮って帰るわ（買わない）"],
     picky:   ["匂いは悪くない…","焼きのムラは…？","慎重に選びたい","今日は“普通”が強い日…"],
     king:    ["よい。","余は迷わぬ。","この棚…格がある。","買う。異論はない。"],
-    flipper: ["回るか…？","これは動く。","利益の匂いがする","買う。評判は知らん。"]
+    flipper: ["回るか…？","これは動く。","利益の匂いがする","買う。評判は知らん。"],
+
+    // 追加15（ギャグ全開）
+    rich: [
+      "値段？ ああ、雰囲気代だろう",
+      "高い？ それは“希少”という意味だ",
+      "棚ごと欲しいが…今日は我慢する",
+      "焼きの格が違う"
+    ],
+    climber: [
+      "この棚…登れるな",
+      "酸素が薄い。レアの高度だ",
+      "頂上（UR）は近い…気がする",
+      "ここで撤退は恥だ"
+    ],
+    guide: [
+      "こちらが“後悔ゾーン”です",
+      "右を見ると財布、左を見ると欲望",
+      "今買うと“語れる思い出”になります",
+      "出口は…あ、閉まりました"
+    ],
+    relax: [
+      "肩の力、抜いて…買いな？",
+      "悩みは筋肉に出る",
+      "この棚、ツボ押してくる",
+      "物欲リンパ流れてる"
+    ],
+    artisan: [
+      "焼き面…美しい",
+      "これは返しが神",
+      "手が勝手に回転を想像する",
+      "…買う理由が多すぎる"
+    ],
+    diet: [
+      "これはカード。つまり0カロリー",
+      "買っても太らない。むしろ痩せる",
+      "罪悪感が焼かれている",
+      "理論上、無限に買える"
+    ],
+    overflow: [
+      "あ、俺ちょっとはみ出てる？",
+      "棚から出てるのが味",
+      "規格外が一番うまい",
+      "枠に収まらない人生でね"
+    ],
+    collector: [
+      "触らない。眺める",
+      "買うか…保存か…",
+      "これは2枚必要なやつ",
+      "未所持の匂いがする"
+    ],
+    shadow: [
+      "表に出てるのが全てとは限らん",
+      "この棚、裏がある",
+      "相場は…まだ静かだな",
+      "焼かれているのは誰だ？"
+    ],
+    ramen: [
+      "これは…濃い",
+      "替え玉（追加購入）できる？",
+      "スープは無いが深みはある",
+      "〆に1枚、いっとくか"
+    ],
+    streamer: [
+      "みんな見てる〜？",
+      "今から運試しするよ〜",
+      "当たったら神回",
+      "外れても“美味しい”"
+    ],
+    gourmet: [
+      "香りが語りかけてくる",
+      "焼きの思想がある",
+      "これは“食後に語れる”",
+      "軽率には買えない"
+    ],
+    opener: [
+      "開けたい",
+      "今すぐ開けたい",
+      "結果より“音”",
+      "我慢？ なにそれ？"
+    ],
+    party: [
+      "今日は全部祭り",
+      "財布？ 酔ってる",
+      "景気よく焼こう",
+      "買う理由しかない"
+    ],
+    pilgrim: [
+      "ここまで6時間",
+      "買わない選択肢は無い",
+      "帰りも6時間",
+      "記念になるやつ頼む"
+    ]
   };
 
   const LEAVE_LINES = [
@@ -601,7 +719,24 @@
     "……今日は“見学”で焼かれた。",
     "……買わなかった。でも物語は始まった。",
     "……匂いに負けた。購入には勝った。",
-    "……焼かれる前に撤収。"
+    "……焼かれる前に撤収。",
+
+    // 追加15の“個性強い去り際”を混ぜる（元のノリ維持）
+    "……今日は買わなかった。理由？“物語が完成しすぎている”",
+    "……今日はベースキャンプまで。次は山頂制覇だ",
+    "……案内はした。決断は任せた（任せすぎた）",
+    "……今日は見送り。心はほぐれた",
+    "……今日は勉強代として“見学”",
+    "……今日は理論だけ持ち帰る",
+    "……買わなかった。俺が規格外すぎた",
+    "……今日は“存在確認”で満足",
+    "……今日は動かない。それが支配だ",
+    "……今日は腹八分。次は全部いく",
+    "……今日は配信外。闇が深い",
+    "……今日は見送る。完成度が高すぎた",
+    "……今日は買わなかった。偉すぎて泣いた",
+    "……帰る。明日、請求を見る",
+    "……今日は買わなかった。逆に一生覚えてる"
   ];
 
   const GOALS = [
@@ -814,20 +949,15 @@
     }, 650);
   }
 
-  /* =========================
-     ★追加：復帰時にステージのタイマーを復元
-  ========================= */
   function resumeStageTimersIfNeeded(){
     const st = loadStage();
     if(!st.hasVisitor) return;
 
-    // leavingのまま固まってたら強制リセット
     if(st.leaving){
       setStageEmpty("……風が吹いて、客は消えた。");
       return;
     }
 
-    // updatedAtが無い/壊れてるなら安全に退店
     const startedAt = Number(st.updatedAt||0);
     const stayMs = Math.max(0, Number(st.stayMs||0));
 
@@ -840,15 +970,13 @@
     const remain = stayMs - elapsed;
 
     clearStageTimers();
-    renderStage(); // 表示は一旦正す
+    renderStage();
 
-    // 既に滞在時間を過ぎている→即退店
     if(remain <= 0){
       beginLeave(pick(LEAVE_LINES));
       return;
     }
 
-    // セリフ更新復元
     stageTalkTimer = setInterval(()=>{
       const s2 = loadStage();
       if(!s2.hasVisitor || s2.leaving) return;
@@ -859,7 +987,6 @@
       renderStage();
     }, rand(3000, 6000));
 
-    // 売買判定：残り時間の「1秒前」に合わせて復元
     const sellIn = Math.max(0, remain - 1000);
     stageSellTimer = setTimeout(()=>{
       const s2 = loadStage();
@@ -867,12 +994,10 @@
       resolveSaleAtStage();
     }, sellIn);
 
-    // 退店復元
     stageLeaveTimer = setTimeout(()=>{
       beginLeave(pick(LEAVE_LINES));
     }, remain);
 
-    // 保険（復元時点から最大35秒以内で退店）
     stageFailsafeTimer = setTimeout(()=>{
       const s2 = loadStage();
       if(s2.hasVisitor) beginLeave("……夜の客は、静かに溶けた。");
@@ -1082,29 +1207,78 @@
     return 0.80 + (rep/100)*0.40;
   }
 
+  /* =========================================================
+     ✅ 客タイプを21に拡張（既存6 + 追加15）
+     - repDeltaOnBuy：買った時の評判変動（世界観）
+     - baseBuy：基本購入率
+  ========================================================= */
   const CUSTOMER_TYPES = [
-    { id:"impulse", name:"即決タコ民", repDeltaOnBuy:+1, baseBuy:0.42 },
-    { id:"picky",   name:"こだわりタコ民", repDeltaOnBuy:+1, baseBuy:0.45 },
-    { id:"king",    name:"王様タコ民", repDeltaOnBuy:+3, baseBuy:0.55 },
-    { id:"flipper", name:"転売タコ民", repDeltaOnBuy:-4, baseBuy:0.44 },
-    { id:"careful", name:"慎重タコ民", repDeltaOnBuy:+1, baseBuy:0.38 },
-    { id:"looker",  name:"冷やかしタコ民", repDeltaOnBuy:-1, baseBuy:0.22 }
+    // 既存6
+    { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+1, baseBuy:0.42 },
+    { id:"picky",    name:"こだわりタコ民",   repDeltaOnBuy:+1, baseBuy:0.45 },
+    { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+3, baseBuy:0.55 },
+    { id:"flipper",  name:"転売タコ民",       repDeltaOnBuy:-4, baseBuy:0.44 },
+    { id:"careful",  name:"慎重タコ民",       repDeltaOnBuy:+1, baseBuy:0.38 },
+    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 },
+
+    // 追加15
+    { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+2, baseBuy:0.50 }, // 金持ちは買うと景気UP
+    { id:"climber",  name:"踏破タコ民",        repDeltaOnBuy:+1, baseBuy:0.40 },
+    { id:"guide",    name:"ナビタコ民",        repDeltaOnBuy: 0, baseBuy:0.30 }, // 案内はするが買うとは限らん
+    { id:"relax",    name:"ほぐしタコ民",      repDeltaOnBuy:+1, baseBuy:0.36 },
+    { id:"artisan",  name:"返し職人タコ民",    repDeltaOnBuy:+2, baseBuy:0.46 }, // 職人が買うと“評価”上がる
+    { id:"diet",     name:"ゼロ理論タコ民",    repDeltaOnBuy:+1, baseBuy:0.48 }, // 理論で買う
+    { id:"overflow", name:"枠外タコ民",        repDeltaOnBuy: 0, baseBuy:0.33 },
+    { id:"collector",name:"未開封保護タコ民",  repDeltaOnBuy:+1, baseBuy:0.41 },
+    { id:"shadow",   name:"裏棚タコ民",        repDeltaOnBuy:-2, baseBuy:0.35 }, // 影は噂を置いていく
+    { id:"ramen",    name:"替え玉タコ民",      repDeltaOnBuy:+1, baseBuy:0.44 },
+    { id:"streamer", name:"投げ銭タコ民",      repDeltaOnBuy:+2, baseBuy:0.39 }, // 拡散で評判UP
+    { id:"gourmet",  name:"舌判定タコ民",      repDeltaOnBuy:+2, baseBuy:0.37 }, // うるさいが評価は高い
+    { id:"opener",   name:"即バリタコ民",      repDeltaOnBuy:+1, baseBuy:0.52 }, // 開封欲が強すぎる
+    { id:"party",    name:"宴タコ民",          repDeltaOnBuy:-1, baseBuy:0.47 }, // ノリは良いが後で荒れる
+    { id:"pilgrim",  name:"覚悟タコ民",        repDeltaOnBuy:+3, baseBuy:0.58 }  // 片道6時間は強い
   ];
 
   function chooseCustomer(rep){
     const night = isNight();
+
+    // 21種の重み（世界観）
     const weights = CUSTOMER_TYPES.map(t=>{
-      if(t.id==="king") return rep>=55 ? 7 : 3;
-      if(t.id==="flipper") return rep>=70 ? 4 : 7;
-      if(t.id==="looker") return night ? 10 : 14;
-      if(t.id==="impulse") return rep<40 ? 18 : 22;
-      if(t.id==="careful") return 16;
-      return rep>=60 ? 24 : 20;
+      // 既存
+      if(t.id==="king")     return rep>=55 ? 7 : 3;
+      if(t.id==="flipper")  return rep>=70 ? 4 : 7;
+      if(t.id==="looker")   return night ? 10 : 14;
+      if(t.id==="impulse")  return rep<40 ? 18 : 22;
+      if(t.id==="careful")  return 16;
+      if(t.id==="picky")    return rep>=60 ? 24 : 20;
+
+      // 追加
+      if(t.id==="rich")     return rep>=60 ? 10 : 6;
+      if(t.id==="climber")  return night ? 6 : 9;
+      if(t.id==="guide")    return 8;
+      if(t.id==="relax")    return night ? 10 : 7;
+      if(t.id==="artisan")  return rep>=55 ? 10 : 7;
+      if(t.id==="diet")     return 9;
+      if(t.id==="overflow") return 7;
+      if(t.id==="collector")return rep>=50 ? 10 : 8;
+      if(t.id==="shadow")   return night ? 11 : 6;
+      if(t.id==="ramen")    return 9;
+      if(t.id==="streamer") return rep>=45 ? 9 : 6;
+      if(t.id==="gourmet")  return rep>=65 ? 10 : 6;
+      if(t.id==="opener")   return 10;
+      if(t.id==="party")    return night ? 10 : 6;
+      if(t.id==="pilgrim")  return rep>=45 ? 8 : 5;
+
+      return 8;
     });
 
+    // rep高いと“こだわり/グルメ/職人”が増えやすい微補正
     if(rep>=70){
-      const idx = CUSTOMER_TYPES.findIndex(x=>x.id==="picky");
-      if(idx>=0) weights[idx] += 10;
+      const bump = ["picky","gourmet","artisan","king","pilgrim"];
+      bump.forEach(id=>{
+        const idx = CUSTOMER_TYPES.findIndex(x=>x.id===id);
+        if(idx>=0) weights[idx] += 6;
+      });
     }
 
     const total = weights.reduce((a,b)=>a+b,0) || 1;
@@ -1122,8 +1296,19 @@
   }
 
   function chooseGoal(customerId, rep){
+    // 個性を少し反映
     if(customerId==="king") return "rare";
     if(customerId==="flipper") return "cheap";
+    if(customerId==="rich") return (Math.random()<0.55 ? "ur" : "rare");
+    if(customerId==="collector") return "rare";
+    if(customerId==="gourmet") return "rare";
+    if(customerId==="artisan") return "rare";
+    if(customerId==="pilgrim") return (Math.random()<0.45 ? "ur" : "rare");
+    if(customerId==="diet") return "any";
+    if(customerId==="opener") return "any";
+    if(customerId==="shadow") return (Math.random()<0.6 ? "cheap" : "rare");
+    if(customerId==="party") return "any";
+
     const roll = Math.random();
     if(rep>=70){
       if(roll<0.22) return "ur";
@@ -1204,8 +1389,13 @@
     if(goalId==="ur" && !(isUR || isLR)) p *= 0.25;
     if(goalId==="rare" && !(isSR || isUR || isLR)) p *= 0.65;
 
-    if(customer.id==="flipper") p *= 1.08;
-    if(customer.id==="king") p *= 1.05;
+    // ちょい個性補正
+    if(customer.id==="flipper")  p *= 1.08;
+    if(customer.id==="king")     p *= 1.05;
+    if(customer.id==="rich")     p *= 1.06;
+    if(customer.id==="opener")   p *= 1.08;
+    if(customer.id==="shadow")   p *= 0.92;
+    if(customer.id==="gourmet")  p *= 0.96;
 
     return clamp(p, 0.05, 0.95);
   }
@@ -1347,11 +1537,14 @@
     saveTick(t);
 
     const st2 = loadStage();
-    st2.vMsg = (st.vType==="king")
-      ? "……余は満足した。"
-      : (st.vType==="flipper")
-      ? "……回った。撤収。"
-      : "……買った。焼かれた。";
+    st2.vMsg =
+      (st.vType==="king")     ? "……余は満足した。"
+    : (st.vType==="flipper")  ? "……回った。撤収。"
+    : (st.vType==="rich")     ? "……投資、完了。"
+    : (st.vType==="opener")   ? "……開封音、勝利。"
+    : (st.vType==="shadow")   ? "……噂は買った。物は…また今度。"
+    : (st.vType==="pilgrim")  ? "……片道6時間、報われた。"
+    : "……買った。焼かれた。";
     saveStage(st2);
     renderStage();
 
@@ -1785,10 +1978,7 @@
     if(localStorage.getItem(LS.stage) == null) lsSet(LS.stage, STAGE_DEFAULT);
 
     renderAll();
-
-    // ★ここが修正の本体：客が残ってる時にタイマー復元
     resumeStageTimersIfNeeded();
-
     startLoop();
     setInterval(updateShoutBtn, 250);
   }
@@ -1798,4 +1988,3 @@
 </script>
 </body>
 </html>
-
