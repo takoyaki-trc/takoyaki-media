@@ -1635,14 +1635,38 @@
     renderAll();
   }
 
-  const fixBtn = document.querySelector("#fixBtn");
+ const fixBtn = document.querySelector("#fixBtn");
+
 fixBtn.addEventListener("click", ()=>{
-  localStorage.removeItem("roten_v1_shout_cd");
-  localStorage.removeItem("roten_v1_stage");
-  localStorage.removeItem("roten_v1_shop_tick"); // 必要なときだけ
-  alert("呼び込み/来店状態だけ初期化しました（レベルは残ります）");
+
+  // ① 客状態だけ安全にリセット
+  const STAGE_DEFAULT = {
+    ver:1,
+    hasVisitor:false,
+    leaving:false,
+    vUrl:"",
+    vName:"—",
+    vMsg:"まだ誰も来ていない。",
+    vType:"",
+    vGoal:"",
+    stayMs:0,
+    targetSlot:-1,
+    updatedAt: Date.now()
+  };
+
+  localStorage.setItem("roten_v1_stage", JSON.stringify(STAGE_DEFAULT));
+
+  // ② 来客タイマーだけ初期化（詰まり対策）
+  localStorage.removeItem("roten_v1_shop_tick");
+
+  // ❌ shout_cd は触らない（超重要）
+  // localStorage.removeItem("roten_v1_shout_cd"); ← 消さない！
+
+  alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
+
   location.reload();
 });
+
 
 
   /* ==========================
