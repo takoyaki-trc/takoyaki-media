@@ -30,7 +30,7 @@
       font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
     }
     body.noscroll{ overflow:hidden; touch-action:none; }
-    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 140px} /* 下の固定ボタン分を増やす */
+    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 110px}
     .mono{font-family:var(--mono)}
     .btn{
       border:1px solid var(--line);
@@ -420,22 +420,25 @@
       justify-content:flex-end;
     }
 
-    /* ★下部右下：バックアップ/復元 */
-    .bottom-actions{
+    /* ★右下固定：バックアップ/復元 */
+    .fab-wrap{
       position:fixed;
       right:12px;
       bottom:12px;
       z-index:60;
       display:flex;
+      flex-direction:column;
       gap:8px;
-      align-items:center;
     }
-    .bottom-actions .btn{
-      padding:10px 12px;
+    .fab-wrap .btn{
+      box-shadow: 0 12px 30px rgba(0,0,0,.45);
       border-radius:14px;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      background:rgba(0,0,0,.35);
+      padding:10px 12px;
+    }
+    .fab-wrap .btn.ghost{
+      background: rgba(255,255,255,.10);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
   </style>
 </head>
@@ -447,7 +450,6 @@
         <div class="title">マイ露店</div>
       </div>
       <div class="top-actions">
-        <!-- ★バックアップ＋復元は下部へ移動 -->
         <button class="btn ghost" id="helpBtn" type="button">？</button>
       </div>
     </div>
@@ -463,10 +465,8 @@
           <div class="card-desc">背景（昼/夜）に、客タコ民（透過）を重ねて表示。誰もいない時は背景だけ。</div>
         </div>
 
-        <!-- ★評判ピルを削除し、その場所に「修理」を移動 -->
-        <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;">
-          <button class="btn ghost" id="fixBtn" type="button">修理</button>
-        </div>
+        <!-- ★評判ピルを削除し、ここに修理を移動 -->
+        <button class="btn ghost" id="fixBtn" type="button">修理</button>
       </div>
       <div class="card-b">
         <div class="stage" id="stage">
@@ -518,10 +518,10 @@
     </div>
   </div>
 
-  <!-- ★下部右下にバックアップ/復元 -->
-  <div class="bottom-actions" aria-label="バックアップ操作">
-    <button class="btn" id="backupBtn" type="button">バックアップ</button>
-    <button class="btn" id="restoreBtn" type="button">復元</button>
+  <!-- ★右下固定：バックアップ/復元 -->
+  <div class="fab-wrap" aria-label="バックアップと復元">
+    <button class="btn ghost" id="backupBtn" type="button">バックアップ</button>
+    <button class="btn ghost" id="restoreBtn" type="button">復元</button>
   </div>
 
   <div class="modal" id="pickModal" aria-hidden="true">
@@ -558,7 +558,8 @@
           ・来客だけでも EXP +1（育つ）<br>
           ・売れたら EXP 追加 +4（合計+5）<br>
           ・王様が買うと評判UP / 転売が買うと評判DOWN<br>
-          ・「呼び込み」は60秒に1回、<b>次の来客を1人だけ前倒し</b>できる<br><br>
+          ・「呼び込み」は60秒に1回、<b>通常スケジュール（次：xxx）は変えずに</b>、呼び込んだ客だけ先に来る<br>
+          ・もし通常の来客タイミングと被ったら、通常の方は<b>待機</b>して、呼び込み客が帰ったら来る<br><br>
           <b>棚解放</b><br>
           Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5
         </div>
@@ -675,7 +676,10 @@
     tick:     "roten_v1_shop_tick",
     shout:    "roten_v1_shout_cd",
     farmBook: "tf_v1_book",
-    stage:    "roten_v1_stage"
+    stage:    "roten_v1_stage",
+
+    // ★追加：呼び込み/待機キュー（次表示に影響しない）
+    queue:    "roten_v1_queue"
   };
 
   const $ = (q, el=document) => el.querySelector(q);
@@ -715,6 +719,7 @@
   const backupBtn = $("#backupBtn");
   const restoreBtn = $("#restoreBtn");
   const restoreFile = $("#restoreFile");
+  const fixBtn = $("#fixBtn");
 
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const now = () => Date.now();
@@ -812,7 +817,8 @@
     vGoal:"",
     stayMs:0,
     targetSlot:-1,
-    updatedAt:0
+    updatedAt:0,
+    source:"" // "normal" | "shout"
   };
   function loadStage(){
     const s = lsGet(LS.stage, STAGE_DEFAULT);
@@ -846,6 +852,70 @@
     }
   }
 
+  /* ==========================
+     ★呼び込み/待機キュー
+     - shoutPending: 呼び込み客の出現予約（通常スケジュールは触らない）
+     - normalPending: 通常スケジュールで「到達済み」になった来客を待機させる
+  ========================== */
+  const QUEUE_DEFAULT = {
+    ver:1,
+    shoutPending:false,
+    shoutTargetSlot:null,
+    shoutSpawnAt:0,   // 予約の実行時刻（3秒後など）
+    normalPending:false,
+    normalTargetSlot:null,
+    queuedAt:0
+  };
+  function loadQueue(){
+    const q = lsGet(LS.queue, QUEUE_DEFAULT);
+    return { ...QUEUE_DEFAULT, ...q };
+  }
+  function saveQueue(q){ lsSet(LS.queue, q); }
+
+  function clearNormalPending(){
+    const q = loadQueue();
+    q.normalPending = false;
+    q.normalTargetSlot = null;
+    q.queuedAt = 0;
+    saveQueue(q);
+  }
+
+  // 「通常スケジュールが到達したのに、今は来れない」時に待機させる
+  function checkDueAndQueueNormal(){
+    const st = loadStage();
+    if(st.hasVisitor) {
+      // 客がいる間だけでなく、呼び込み予約中も待機判定に使う
+    }
+
+    const q = loadQueue();
+    if(q.normalPending) return; // 既に待機中
+
+    const lv = loadLevel().lv;
+    const shop = loadMyShop();
+    const t = ensureNextAtForActiveSlots();
+    const nowMs = now();
+
+    const activeIdx = [];
+    shop.slots.forEach((s, idx)=>{
+      if(s.item && canUseSlot(idx, lv)) activeIdx.push(idx);
+    });
+    if(activeIdx.length===0) return;
+
+    const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
+    if(due.length===0) return;
+
+    // どれを待機させるか：従来同様にランダム
+    const targetSlot = pick(due);
+
+    q.normalPending = true;
+    q.normalTargetSlot = targetSlot;
+    q.queuedAt = nowMs;
+    saveQueue(q);
+
+    // 表示は触らない（次：xxx のカウントはそのまま 0 になるだけ）
+    pushLog("待機", `通常来客（棚${targetSlot+1}）が待機になった`, "");
+  }
+
   function setStageEmpty(msg){
     clearStageTimers();
     const s = loadStage();
@@ -858,8 +928,12 @@
     s.vGoal="";
     s.stayMs=0;
     s.targetSlot=-1;
+    s.source="";
     saveStage(s);
     renderStage();
+
+    // ★客が帰った瞬間に、待機している通常来客がいれば即来店（ただし呼び込み予約が優先）
+    trySpawnQueuedIfPossible();
   }
 
   function beginLeave(msg){
@@ -1038,9 +1112,6 @@
   const SHELF_UNLOCK = [1,1,2,3,4];
   function canUseSlot(idx, lv){ return lv >= (SHELF_UNLOCK[idx] || 99); }
 
-  /* ★修正：既存の nextAt を「上書きリセット」しない
-     - 欠けている場合のみ設定する（未来の値は保持）
-  */
   function ensureNextAtForActiveSlots(){
     const shop = loadMyShop();
     const lv = loadLevel().lv;
@@ -1055,11 +1126,9 @@
         return;
       }
       const cur = Number(t.nextAtBySlot[key]||0);
-      if(!cur){
+      if(!cur || cur < n - 60*1000){
         t.nextAtBySlot[key] = n + nextVisitDelayMs();
       }
-      // ★cur が過去でもそのまま（due判定で即来客になるだけ）
-      // ★「呼び込み押したら次カウンターがリセット」を防ぐ
     });
 
     saveTick(t);
@@ -1564,7 +1633,7 @@
     shop.slots[slotIdx].createdAt = 0;
     saveMyShop(shop);
 
-    // この棚だけ次回を再設定
+    // ★通常来客のスケジュール更新は「来店した瞬間」扱いなので、ここで次回を再設定
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(slotIdx)] = now() + nextVisitDelayMs();
@@ -1583,7 +1652,7 @@
   }
 
   /* ==========================
-     スケジュール
+     スケジュール（表示/再開）
   ========================== */
   function scheduleStage(){
     applyDayNight();
@@ -1610,31 +1679,14 @@
 
   let spawnLockUntil = 0;
 
-  function tick(){
-    updateNextTag();
-    updateShoutUI();
-
-    const st = loadStage();
-    if(st.hasVisitor) return;
-
-    const nowMs = now();
-    if(nowMs < spawnLockUntil) return;
-
-    const lv = loadLevel().lv;
-    const shop = loadMyShop();
-    const t = ensureNextAtForActiveSlots();
-
-    const activeIdx = [];
-    shop.slots.forEach((s, idx)=>{
-      if(s.item && canUseSlot(idx, lv)) activeIdx.push(idx);
-    });
-    if(activeIdx.length===0) return;
-
-    const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
-    if(due.length===0) return;
-
-    const targetSlot = pick(due);
-    toast("誰かくる！", `棚${targetSlot+1} を見てる気配…`, "");
+  /* ==========================
+     ★共通：来客生成（normal / shout / queued normal）
+     - type: "normal" or "shout"
+     - IMPORTANT: shout は tick(nextAtBySlot) を変更しない（次：xxx表示が動かない）
+  ========================== */
+  function spawnVisitorSoon(targetSlot, type){
+    const typeLabel = (type==="shout") ? "呼び込み" : "通常";
+    toast("誰かくる！", `${typeLabel}：棚${targetSlot+1} を見てる気配…`, "");
 
     spawnLockUntil = now() + 3500;
 
@@ -1660,6 +1712,7 @@
       s.vMsg = msg;
       s.stayMs = stayMs;
       s.targetSlot = targetSlot;
+      s.source = (type==="shout") ? "shout" : "normal";
       saveStage(s);
       renderStage();
 
@@ -1683,17 +1736,119 @@
       stageSellTimer = setTimeout(()=> saleProcess(), Math.max(1000, stayMs - 1000));
       stageLeaveTimer = setTimeout(()=> beginLeave(pick(LEAVE_LINES)), stayMs);
 
-      const tickObj = loadTick();
-      tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
-      saveTick(tickObj);
+      // ★通常/待機の通常だけ：ここで「来店した」扱いにして次回スケジュールを更新
+      if(type !== "shout"){
+        const tickObj = loadTick();
+        tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
+        saveTick(tickObj);
+
+        // 待機だった通常来客を消化したのでクリア
+        const q = loadQueue();
+        if(q.normalPending && Number(q.normalTargetSlot) === Number(targetSlot)){
+          clearNormalPending();
+        }
+      }else{
+        // ★呼び込みは nextAtBySlot を一切触らない（次：xxx表示は変化させない）
+        // ただし、ログは残す
+        pushLog("呼び込み来店", `棚${targetSlot+1} に呼び込み客が来た`, "");
+      }
 
       renderAll();
     }, 3000);
   }
 
+  // 客がいない瞬間に「待機中の通常来客」を優先的に出す（ただし呼び込み予約があるなら先にそっち）
+  function trySpawnQueuedIfPossible(){
+    const st = loadStage();
+    if(st.hasVisitor) return;
+    const nowMs = now();
+    if(nowMs < spawnLockUntil) return;
+
+    const q = loadQueue();
+
+    // 1) 呼び込み予約があるなら、予約の時刻を待つ/実行する
+    if(q.shoutPending){
+      if(nowMs >= Number(q.shoutSpawnAt||0)){
+        const target = Number(q.shoutTargetSlot);
+        q.shoutPending = false;
+        q.shoutTargetSlot = null;
+        q.shoutSpawnAt = 0;
+        saveQueue(q);
+        spawnVisitorSoon(target, "shout");
+      }
+      return;
+    }
+
+    // 2) 待機中の通常来客がいるなら即出す
+    if(q.normalPending && q.normalTargetSlot != null){
+      const target = Number(q.normalTargetSlot);
+      spawnVisitorSoon(target, "normal");
+      return;
+    }
+  }
+
+  function tick(){
+    updateNextTag();
+    updateShoutUI();
+
+    const st = loadStage();
+    const nowMs = now();
+
+    // ★客がいる時：通常スケジュールが到達していたら「待機」に積む（表示はそのまま）
+    if(st.hasVisitor){
+      checkDueAndQueueNormal();
+      return;
+    }
+
+    // ★スポーンロック中は何もしない（表示だけ更新）
+    if(nowMs < spawnLockUntil) return;
+
+    // ★呼び込み予約がある場合：通常は止めて、被りがあれば待機へ
+    const q = loadQueue();
+    if(q.shoutPending){
+      // 被り対策：ここで通常がdueになったら待機に積む（次表示は変えない）
+      checkDueAndQueueNormal();
+
+      // 予約時刻になったら呼び込みを実行
+      if(nowMs >= Number(q.shoutSpawnAt||0)){
+        const target = Number(q.shoutTargetSlot);
+        q.shoutPending = false;
+        q.shoutTargetSlot = null;
+        q.shoutSpawnAt = 0;
+        saveQueue(q);
+        spawnVisitorSoon(target, "shout");
+      }
+      return;
+    }
+
+    // ★待機中の通常があるなら先に出す（次表示は 0s になっているはず）
+    if(q.normalPending && q.normalTargetSlot != null){
+      spawnVisitorSoon(Number(q.normalTargetSlot), "normal");
+      return;
+    }
+
+    // ★通常の来客判定（従来ロジック）
+    const lv = loadLevel().lv;
+    const shop = loadMyShop();
+    const t = ensureNextAtForActiveSlots();
+
+    const activeIdx = [];
+    shop.slots.forEach((s, idx)=>{
+      if(s.item && canUseSlot(idx, lv)) activeIdx.push(idx);
+    });
+    if(activeIdx.length===0) return;
+
+    const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
+    if(due.length===0) return;
+
+    const targetSlot = pick(due);
+    spawnVisitorSoon(targetSlot, "normal");
+  }
+
   /* ==========================
-     呼び込み（1人だけ前倒し）＋CD
-     ★修正：次カウンターを「全体リセット」しない（既存nextAtは保持）
+     呼び込み（次：xxx表示を変えない）
+     - nextAtBySlot を触らず、呼び込み客だけ予約して出す
+     - 被り（通常のdue）になったら通常を待機させる
   ========================== */
   function shout(){
     const st = loadStage();
@@ -1728,10 +1883,8 @@
     saveShout(cd);
     updateShoutUI();
 
-    // ★既存nextAtを保持したまま、最短の棚だけ前倒し
+    // 呼び込み対象：次が一番早い棚（従来の思想）
     const t = ensureNextAtForActiveSlots();
-    const nowMs = now();
-
     let target = active[0];
     let best = Infinity;
     for(const idx of active){
@@ -1739,15 +1892,20 @@
       if(at < best){ best = at; target = idx; }
     }
 
-    // ★選んだ棚だけ前倒し（他の棚は触らない）
-    t.nextAtBySlot[String(target)] = Math.min(
-      Number(t.nextAtBySlot[String(target)]||Infinity),
-      nowMs + 1500
-    );
-    saveTick(t);
+    // ★次：xxx（スケジュール表示）を一切変えないので、tickは触らない
 
-    toast("呼び込み！", `棚${target+1} の気配が濃くなった…`, "");
-    pushLog("呼び込み", `棚${target+1} を前倒しした`, "");
+    // ★呼び込み予約を積む（3秒後に来る）
+    const q = loadQueue();
+    q.shoutPending = true;
+    q.shoutTargetSlot = target;
+    q.shoutSpawnAt = n + 3000;
+    saveQueue(q);
+
+    // ★もしこの瞬間に通常のdueがあるなら待機に積む（表示はそのまま）
+    checkDueAndQueueNormal();
+
+    toast("呼び込み！", `棚${target+1} に“先に”客を呼んだ（次表示は変えない）`, "");
+    pushLog("呼び込み", `棚${target+1} を呼び込んだ（通常スケジュールは保持）`, "");
     renderAll();
   }
 
@@ -1770,7 +1928,8 @@
     const keys = [
       LS.octo, LS.myshop, LS.log, LS.lvl, LS.rep, LS.tick, LS.shout, LS.stage,
       LS.farmBook,
-      "tf_v1_inv"
+      "tf_v1_inv",
+      LS.queue
     ];
 
     const data = {};
@@ -1832,7 +1991,6 @@
         localStorage.setItem(k, JSON.stringify(v));
       }
     }
-
     return true;
   }
 
@@ -1863,9 +2021,10 @@
   });
 
   /* ==========================
-     修理ボタン（配置だけ移動・機能は同じ）
+     修理ボタン
+     - ステージ状態と tick を修理
+     - ★キューも安全にクリア（変な待機が残らないように）
   ========================== */
-  const fixBtn = document.querySelector("#fixBtn");
   fixBtn.addEventListener("click", ()=>{
     const STAGE_DEFAULT2 = {
       ver:1,
@@ -1878,11 +2037,14 @@
       vGoal:"",
       stayMs:0,
       targetSlot:-1,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      source:""
     };
 
-    localStorage.setItem("roten_v1_stage", JSON.stringify(STAGE_DEFAULT2));
-    localStorage.removeItem("roten_v1_shop_tick");
+    localStorage.setItem(LS.stage, JSON.stringify(STAGE_DEFAULT2));
+    localStorage.removeItem(LS.tick);
+
+    localStorage.setItem(LS.queue, JSON.stringify(QUEUE_DEFAULT));
 
     alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
     location.reload();
@@ -1940,11 +2102,15 @@
   renderAll();
   scheduleStage();
 
+  // ★起動直後に、もし待機/呼び込み予約があれば実行条件だけ整える
+  trySpawnQueuedIfPossible();
+
   setInterval(tick, 1000);
 
 })();
 </script>
 </body>
 </html>
+
 
 
