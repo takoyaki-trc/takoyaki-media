@@ -30,7 +30,7 @@
       font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
     }
     body.noscroll{ overflow:hidden; touch-action:none; }
-    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 90px}
+    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 140px} /* 下の固定ボタン分を増やす */
     .mono{font-family:var(--mono)}
     .btn{
       border:1px solid var(--line);
@@ -419,6 +419,24 @@
       flex-wrap:wrap;
       justify-content:flex-end;
     }
+
+    /* ★下部右下：バックアップ/復元 */
+    .bottom-actions{
+      position:fixed;
+      right:12px;
+      bottom:12px;
+      z-index:60;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .bottom-actions .btn{
+      padding:10px 12px;
+      border-radius:14px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      background:rgba(0,0,0,.35);
+    }
   </style>
 </head>
 <body>
@@ -429,11 +447,8 @@
         <div class="title">マイ露店</div>
       </div>
       <div class="top-actions">
-        <!-- ★バックアップ＋復元ボタン -->
-        <button class="btn ghost" id="backupBtn" type="button">バックアップ</button>
-        <button class="btn ghost" id="restoreBtn" type="button">復元</button>
+        <!-- ★バックアップ＋復元は下部へ移動 -->
         <button class="btn ghost" id="helpBtn" type="button">？</button>
-        <button class="btn ghost" id="fixBtn" type="button">修理</button>
       </div>
     </div>
   </div>
@@ -447,9 +462,10 @@
           <div class="card-title">来店ステージ</div>
           <div class="card-desc">背景（昼/夜）に、客タコ民（透過）を重ねて表示。誰もいない時は背景だけ。</div>
         </div>
-        <div class="pill">
-          <span>評判</span>
-          <b id="repText" class="mono">—</b>
+
+        <!-- ★評判ピルを削除し、その場所に「修理」を移動 -->
+        <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;">
+          <button class="btn ghost" id="fixBtn" type="button">修理</button>
         </div>
       </div>
       <div class="card-b">
@@ -480,7 +496,6 @@
 
           <div class="head-actions-row">
             <button class="btn warn" id="shoutBtn" type="button">呼び込み</button>
-            <!-- ★ここだけでCD表示（ボタン文言には出さない） -->
             <div class="cd mono" id="shoutCd">—</div>
           </div>
         </div>
@@ -501,6 +516,12 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ★下部右下にバックアップ/復元 -->
+  <div class="bottom-actions" aria-label="バックアップ操作">
+    <button class="btn" id="backupBtn" type="button">バックアップ</button>
+    <button class="btn" id="restoreBtn" type="button">復元</button>
   </div>
 
   <div class="modal" id="pickModal" aria-hidden="true">
@@ -548,7 +569,6 @@
     </div>
   </div>
 
-  <!-- ★売れた時に画面が一瞬光る -->
   <div class="sale-flash" id="saleFlash" aria-hidden="true"></div>
 
   <div class="toast" aria-live="polite" aria-atomic="true">
@@ -558,7 +578,6 @@
     </div>
   </div>
 
-  <!-- ★復元用：隠しファイル入力 -->
   <input id="restoreFile" type="file" accept="application/json" style="display:none" />
 
 <script>
@@ -664,7 +683,6 @@
   const statsEl = $("#stats");
   const shelvesEl = $("#shelves");
   const logEl = $("#log");
-  const repTextEl = $("#repText");
 
   const stageBg = $("#stageBg");
   const stageVisitor = $("#stageVisitor");
@@ -1020,6 +1038,9 @@
   const SHELF_UNLOCK = [1,1,2,3,4];
   function canUseSlot(idx, lv){ return lv >= (SHELF_UNLOCK[idx] || 99); }
 
+  /* ★修正：既存の nextAt を「上書きリセット」しない
+     - 欠けている場合のみ設定する（未来の値は保持）
+  */
   function ensureNextAtForActiveSlots(){
     const shop = loadMyShop();
     const lv = loadLevel().lv;
@@ -1034,9 +1055,11 @@
         return;
       }
       const cur = Number(t.nextAtBySlot[key]||0);
-      if(!cur || cur < n - 60*1000){
+      if(!cur){
         t.nextAtBySlot[key] = n + nextVisitDelayMs();
       }
+      // ★cur が過去でもそのまま（due判定で即来客になるだけ）
+      // ★「呼び込み押したら次カウンターがリセット」を防ぐ
     });
 
     saveTick(t);
@@ -1059,14 +1082,13 @@
   function loadShout(){ return lsGet(LS.shout, { ver:1, nextOkAt:0 }); }
   function saveShout(s){ lsSet(LS.shout, s); }
 
-  /* ★修正：ボタン文言に秒数を出さない（CD欄だけ） */
   function updateShoutUI(){
     const cd = loadShout();
     const n = now();
     const remainMs = Math.max(0, Number(cd.nextOkAt||0) - n);
     const remain = Math.ceil(remainMs/1000);
 
-    shoutBtn.textContent = "呼び込み"; // ←固定
+    shoutBtn.textContent = "呼び込み";
     if(remain > 0){
       shoutBtn.disabled = true;
       shoutCdEl.textContent = `CD: ${remain}s`;
@@ -1335,7 +1357,6 @@
   function renderStats(){
     const lv = loadLevel();
     const rep = loadRep().rep;
-    repTextEl.textContent = String(rep);
 
     const shop = loadMyShop();
     const listed = shop.slots.filter(s=>!!s.item).length;
@@ -1543,7 +1564,7 @@
     shop.slots[slotIdx].createdAt = 0;
     saveMyShop(shop);
 
-    // ★この棚だけ次回を再設定
+    // この棚だけ次回を再設定
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(slotIdx)] = now() + nextVisitDelayMs();
@@ -1672,8 +1693,7 @@
 
   /* ==========================
      呼び込み（1人だけ前倒し）＋CD
-     ★修正：CDを先にセットしない（出品棚が無い時にCD消費しない）
-     ★修正：次タイマー(来客スケジュール)は「選んだ棚だけ」前倒しで、他は触らない
+     ★修正：次カウンターを「全体リセット」しない（既存nextAtは保持）
   ========================== */
   function shout(){
     const st = loadStage();
@@ -1708,6 +1728,7 @@
     saveShout(cd);
     updateShoutUI();
 
+    // ★既存nextAtを保持したまま、最短の棚だけ前倒し
     const t = ensureNextAtForActiveSlots();
     const nowMs = now();
 
@@ -1719,7 +1740,10 @@
     }
 
     // ★選んだ棚だけ前倒し（他の棚は触らない）
-    t.nextAtBySlot[String(target)] = Math.min(Number(t.nextAtBySlot[String(target)]||Infinity), nowMs + 1500);
+    t.nextAtBySlot[String(target)] = Math.min(
+      Number(t.nextAtBySlot[String(target)]||Infinity),
+      nowMs + 1500
+    );
     saveTick(t);
 
     toast("呼び込み！", `棚${target+1} の気配が濃くなった…`, "");
@@ -1791,7 +1815,6 @@
       return false;
     }
 
-    // 安全のため、入れるのはバックアップに含まれているキーだけ
     const keys = Array.isArray(payload.keys) ? payload.keys : Object.keys(data);
 
     for(const k of keys){
@@ -1803,7 +1826,6 @@
         continue;
       }
 
-      // オリジナルがJSONならJSON.stringifyで戻す。文字列ならそのまま。
       if(typeof v === "string"){
         localStorage.setItem(k, v);
       }else{
@@ -1841,7 +1863,7 @@
   });
 
   /* ==========================
-     修理ボタン（あなたのまま）
+     修理ボタン（配置だけ移動・機能は同じ）
   ========================== */
   const fixBtn = document.querySelector("#fixBtn");
   fixBtn.addEventListener("click", ()=>{
@@ -1924,4 +1946,5 @@
 </script>
 </body>
 </html>
+
 
