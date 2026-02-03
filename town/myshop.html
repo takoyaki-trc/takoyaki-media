@@ -379,6 +379,8 @@
         <button class="btn warn" id="shoutBtn" type="button">呼び込み</button>
         <button class="btn ghost" id="helpBtn" type="button">？</button>
         <button class="btn ghost" id="fixBtn" type="button">修理</button>
+        <button class="btn ghost" id="backupBtn">保存</button>
+<button class="btn ghost" id="restoreBtn">復元</button>
 
       </div>
     </div>
@@ -1715,19 +1717,120 @@ fixBtn.addEventListener("click", ()=>{
   });
 
   shoutBtn.addEventListener("click", shout);
+  <!-- ✅ 起動～バックアップ/復元（完全版） -->
+  <script>
+  (() => {
+    "use strict";
 
-  /* ==========================
-     起動
-  ========================== */
-  applyDayNight();
-  renderAll();
-  scheduleStage();
+    /* =========================================
+       ここより上にあなたの既存コード全部
+       （applyDayNight / renderAll / tick など含む）
+       ========================================= */
 
-  setInterval(tick, 1000);
 
-})();
-</script>
+    /* ==========================
+       起動
+    ========================== */
+    applyDayNight();
+    renderAll();
+    scheduleStage();
+
+    setInterval(tick, 1000);
+
+
+    /* =========================
+       🔵 バックアップ/復元（完全版）
+       - JSON.stringify(localStorage) は使わない
+       - localStorageを全部走査して「キー→文字列値」を保存
+       - 復元は「roten_ / tf_」だけを上書き（安全）
+       - backupBtn/restoreBtn が無くても落ちない
+    ========================== */
+
+    const backupBtn  = document.querySelector("#backupBtn");
+    const restoreBtn = document.querySelector("#restoreBtn");
+
+    function exportLocalStorage(){
+      const obj = {};
+      for(let i=0; i<localStorage.length; i++){
+        const key = localStorage.key(i);
+        obj[key] = localStorage.getItem(key); // ★必ず文字列
+      }
+      return obj;
+    }
+
+    function importLocalStorage(obj){
+      // ✅ たこ焼き系だけ復元（他のサイトデータを消さない）
+      const allowPrefixes = ["roten_", "tf_"];
+
+      // 既存の対象キーだけ削除
+      const removeKeys = [];
+      for(let i=0; i<localStorage.length; i++){
+        const key = localStorage.key(i);
+        if(allowPrefixes.some(p => key.startsWith(p))){
+          removeKeys.push(key);
+        }
+      }
+      removeKeys.forEach(k => localStorage.removeItem(k));
+
+      // バックアップ側も対象キーだけ復元
+      for(const k in obj){
+        if(allowPrefixes.some(p => k.startsWith(p))){
+          localStorage.setItem(k, String(obj[k])); // ★必ず文字列で保存
+        }
+      }
+    }
+
+    // 保存（JSONダウンロード）
+    if(backupBtn){
+      backupBtn.addEventListener("click", ()=>{
+        const dataObj = exportLocalStorage();
+        const json = JSON.stringify(dataObj, null, 2);
+
+        const blob = new Blob([json], {type:"application/json"});
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "takoyaki_backup.json";
+        a.click();
+
+        URL.revokeObjectURL(url);
+
+        alert("バックアップ保存しました！（takoyaki_backup.json）");
+      });
+    }
+
+    // 復元（JSON読み込み）
+    if(restoreBtn){
+      restoreBtn.addEventListener("click", ()=>{
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "application/json";
+
+        input.onchange = e=>{
+          const file = e.target.files && e.target.files[0];
+          if(!file) return;
+
+          const reader = new FileReader();
+          reader.onload = ()=>{
+            try{
+              const obj = JSON.parse(reader.result);
+              importLocalStorage(obj);
+              alert("復元完了！リロードします");
+              location.reload();
+            }catch(err){
+              console.error(err);
+              alert("復元に失敗：JSON形式が違うか壊れています");
+            }
+          };
+          reader.readAsText(file);
+        };
+
+        input.click();
+      });
+    }
+
+  })();
+  </script>
 </body>
 </html>
-
-
