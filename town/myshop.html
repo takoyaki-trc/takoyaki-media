@@ -44,6 +44,7 @@
       letter-spacing:.02em;
     }
     .btn:active{transform:translateY(1px)}
+    .btn.warn obvious{background:linear-gradient(180deg, rgba(255,211,138,.18), rgba(255,255,255,.10));}
     .btn.warn{background:linear-gradient(180deg, rgba(255,211,138,.18), rgba(255,255,255,.10));}
     .btn.ghost{background:transparent}
     .btn[disabled]{opacity:.55;cursor:not-allowed}
@@ -152,6 +153,7 @@
       border:1px solid rgba(255,255,255,.16);
       background:rgba(0,0,0,.58);
       border-radius:14px;
+      note: none;
       padding:8px 10px;
       line-height:1.25;
     }
@@ -735,21 +737,28 @@
   }
 
   /* =========================================================
-     log
+     log（表示されない事故を潰す：常に初期形を保証）
   ========================================================= */
-  function pushLog(title, msg, meta){
+  function ensureLogShape(){
     const log = lsGet(LS.log, { ver:1, items:[] });
-    log.items = Array.isArray(log.items) ? log.items : [];
+    if(!log || typeof log !== "object") return { ver:1, items:[] };
+    if(!Array.isArray(log.items)) log.items = [];
+    log.ver = 1;
+    return log;
+  }
+
+  function pushLog(title, msg, meta){
+    const log = ensureLogShape();
     log.items.unshift({ at: now(), title, msg, meta: meta || "" });
     log.items = log.items.slice(0, 80);
     lsSet(LS.log, log);
-    renderLog();
+    renderLog(); // ★必ず更新
   }
 
   function renderLog(){
-    if(!logEl) return; // 念のため
-    const log = lsGet(LS.log, { ver:1, items:[] });
-    const items = Array.isArray(log.items) ? log.items : [];
+    if(!logEl) return;
+    const log = ensureLogShape();
+    const items = log.items;
 
     if(items.length === 0){
       logEl.innerHTML = `
@@ -778,7 +787,6 @@
 
   /* =========================================================
      stage (客の状態)
-     - pending: 予約中（誰かくる→3秒後出現）を明確化
   ========================================================= */
   const STAGE_DEFAULT = {
     ver:1,
@@ -793,7 +801,7 @@
     vMsg:"まだ誰も来ていない。",
     vType:"",
     vGoal:"",
-    vBuyTag:"",     // "LOW" / "HIGH" / ""
+    vBuyTag:"",
     stayMs:0,
     targetSlot:-1,
     updatedAt:0
@@ -819,8 +827,6 @@
 
   function renderStage(){
     const s = loadStage();
-
-    // 名前色
     stageName.classList.remove("badname","bluename");
     if(s.vBuyTag === "LOW") stageName.classList.add("badname");
     if(s.vBuyTag === "HIGH") stageName.classList.add("bluename");
@@ -844,7 +850,6 @@
     s.pending=false;
     s.pendingSlot=-1;
     s.pendingAt=0;
-
     s.vUrl="";
     s.vName="—";
     s.vMsg=msg || "まだ誰も来ていない。";
@@ -1081,6 +1086,35 @@
   }
 
   /* =========================================================
+     ★連続湧きバグ修正（本体）
+     - due(<=now) の棚が残ると、客がいない瞬間に pending が連発する
+     - pending に入る瞬間／客が出現した瞬間に、due棚を全部未来へ逃がす
+  ========================================================= */
+  function pushDueSlotsToFuture(reason){
+    const t = loadTick();
+    const shop = loadMyShop();
+    const lv = loadLevel().lv;
+    const n = now();
+    t.nextAtBySlot = t.nextAtBySlot || {};
+
+    let moved = 0;
+    for(let i=0;i<shop.slots.length;i++){
+      if(!shop.slots[i].item) continue;
+      if(!canUseSlot(i, lv)) continue;
+      const key = String(i);
+      const at = Number(t.nextAtBySlot[key]||0);
+      if(at <= n){ // ★期限切れ or 0
+        t.nextAtBySlot[key] = n + nextVisitDelayMs();
+        moved++;
+      }
+    }
+    saveTick(t);
+    if(moved>0 && reason){
+      pushLog("タイマー調整", `連続来店防止：期限切れ棚を未来へ（${moved}件）`, reason);
+    }
+  }
+
+  /* =========================================================
      呼び込み（タイマー表示 + 予約方式）
   ========================================================= */
   function loadShout(){ return lsGet(LS.shout, { ver:1, nextOkAt:0 }); }
@@ -1136,7 +1170,6 @@
   }
 
   function basePriceFor(card){
-    // データに明示 price があるならそれを優先
     const p = Number(card?.raw?.price ?? card?.raw?.basePrice ?? card?.price ?? 0);
     if(isFinite(p) && p > 0) return Math.floor(p);
     return rarityBasePrice(card?.rarity);
@@ -1148,23 +1181,21 @@
     return 1.00;
   }
   function repFactor(rep){
-    // 評判で全体の相場が動く（0.80〜1.20）
     return 0.80 + (rep/100)*0.40;
   }
 
   /* =========================================================
      タコ民性格：買う確率 + 値切り/高値倍率
-     - buyMultMin〜buyMultMax が「確実に高い/安い」の判定に使われる
   ========================================================= */
   const CUSTOMER_TYPES = [
     { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+1, baseBuy:0.42, buyMultMin:0.95, buyMultMax:1.05 },
-    { id:"picky",    name:"こだわりタコ民",   repDeltaOnBuy:+1, baseBuy:0.45, buyMultMin:0.90, buyMultMax:1.00 }, // 値切り寄り
-    { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+3, baseBuy:0.55, buyMultMin:1.10, buyMultMax:1.25 }, // 確実に高い（青）
-    { id:"flipper",  name:"転売タコ民",       repDeltaOnBuy:-4, baseBuy:0.44, buyMultMin:0.75, buyMultMax:0.90 }, // 値切り（赤）
+    { id:"picky",    name:"こだわりタコ民",   repDeltaOnBuy:+1, baseBuy:0.45, buyMultMin:0.90, buyMultMax:1.00 },
+    { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+3, baseBuy:0.55, buyMultMin:1.10, buyMultMax:1.25 },
+    { id:"flipper",  name:"転売タコ民",       repDeltaOnBuy:-4, baseBuy:0.44, buyMultMin:0.75, buyMultMax:0.90 },
     { id:"careful",  name:"慎重タコ民",       repDeltaOnBuy:+1, baseBuy:0.38, buyMultMin:0.90, buyMultMax:1.00 },
-    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22, buyMultMin:0.85, buyMultMax:0.95 }, // ちょい値切り（赤）
+    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22, buyMultMin:0.85, buyMultMax:0.95 },
 
-    { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+2, baseBuy:0.50, buyMultMin:1.05, buyMultMax:1.35 }, // 高値寄り
+    { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+2, baseBuy:0.50, buyMultMin:1.05, buyMultMax:1.35 },
     { id:"climber",  name:"踏破タコ民",        repDeltaOnBuy:+1, baseBuy:0.40, buyMultMin:0.95, buyMultMax:1.10 },
     { id:"guide",    name:"ナビタコ民",        repDeltaOnBuy: 0, baseBuy:0.30, buyMultMin:0.90, buyMultMax:1.00 },
     { id:"relax",    name:"ほぐしタコ民",      repDeltaOnBuy:+1, baseBuy:0.36, buyMultMin:0.95, buyMultMax:1.10 },
@@ -1172,13 +1203,13 @@
     { id:"diet",     name:"ゼロ理論タコ民",    repDeltaOnBuy:+1, baseBuy:0.48, buyMultMin:0.90, buyMultMax:1.10 },
     { id:"overflow", name:"枠外タコ民",        repDeltaOnBuy: 0, baseBuy:0.33, buyMultMin:0.85, buyMultMax:1.15 },
     { id:"collector",name:"未開封保護タコ民",  repDeltaOnBuy:+1, baseBuy:0.41, buyMultMin:1.00, buyMultMax:1.10 },
-    { id:"shadow",   name:"裏棚タコ民",        repDeltaOnBuy:-2, baseBuy:0.35, buyMultMin:0.80, buyMultMax:0.95 }, // 赤
+    { id:"shadow",   name:"裏棚タコ民",        repDeltaOnBuy:-2, baseBuy:0.35, buyMultMin:0.80, buyMultMax:0.95 },
     { id:"ramen",    name:"替え玉タコ民",      repDeltaOnBuy:+1, baseBuy:0.44, buyMultMin:0.95, buyMultMax:1.10 },
     { id:"streamer", name:"投げ銭タコ民",      repDeltaOnBuy:+2, baseBuy:0.39, buyMultMin:1.00, buyMultMax:1.25 },
     { id:"gourmet",  name:"舌判定タコ民",      repDeltaOnBuy:+2, baseBuy:0.37, buyMultMin:1.00, buyMultMax:1.20 },
     { id:"opener",   name:"即バリタコ民",      repDeltaOnBuy:+1, baseBuy:0.52, buyMultMin:0.95, buyMultMax:1.15 },
-    { id:"party",    name:"宴タコ民",          repDeltaOnBuy:-1, baseBuy:0.47, buyMultMin:0.90, buyMultMax:1.20 }, // 気分
-    { id:"pilgrim",  name:"覚悟タコ民",        repDeltaOnBuy:+3, baseBuy:0.58, buyMultMin:1.05, buyMultMax:1.30 }  // 青寄り
+    { id:"party",    name:"宴タコ民",          repDeltaOnBuy:-1, baseBuy:0.47, buyMultMin:0.90, buyMultMax:1.20 },
+    { id:"pilgrim",  name:"覚悟タコ民",        repDeltaOnBuy:+3, baseBuy:0.58, buyMultMin:1.05, buyMultMax:1.30 }
   ];
 
   function chooseCustomer(rep){
@@ -1241,9 +1272,7 @@
   }
 
   function buyTagForCustomer(cust){
-    // 赤：評判落とす客（repDelta<0）
     if(Number(cust.repDeltaOnBuy||0) < 0) return "LOW";
-    // 青：確実に高値（min>1）
     if(Number(cust.buyMultMin||1) > 1.00) return "HIGH";
     return "";
   }
@@ -1341,7 +1370,6 @@
       const rar  = slot.item ? (slot.item.rarity || "-") : "-";
       const base = slot.item ? basePriceFor(slot.item) : 0;
       const rep = loadRep().rep;
-
       const price = slot.item ? Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep))) : 0;
 
       info.innerHTML = `
@@ -1557,7 +1585,7 @@
   }
 
   /* =========================================================
-     next timer表示（pending中は混乱しない表示に）
+     next timer表示
   ========================================================= */
   function nextArrivalInfo(){
     const st = loadStage();
@@ -1596,7 +1624,7 @@
 
   /* =========================================================
      呼び込み（nextAtは弄らない、pendingを作るだけ）
-     - 「0秒直前に押すとリセット」に見える問題を潰す
+     ★pendingに入る瞬間に due棚を未来へ逃がす（連続湧き防止）
   ========================================================= */
   function shout(){
     const st = loadStage();
@@ -1621,12 +1649,15 @@
       return;
     }
 
+    // ★ここ：0秒棚を残さない（呼び込み直後の連続湧き防止）
+    pushDueSlotsToFuture("呼び込み開始");
+
     // クールダウン開始
     const cd = loadShout();
     cd.nextOkAt = now() + 60000;
     saveShout(cd);
 
-    // ターゲットは「次が一番近い棚」（自然）
+    // ターゲットは「次が一番近い棚」
     const t = ensureNextAtForActiveSlots();
     let target = active[0];
     let bestAt = Infinity;
@@ -1635,11 +1666,10 @@
       if(at < bestAt){ bestAt = at; target = idx; }
     }
 
-    // ★ nextAtBySlot は絶対に変更しない（ここが今回のキモ）
     const s = loadStage();
     s.pending = true;
     s.pendingSlot = target;
-    s.pendingAt = now() + 3000; // 3秒後に出現
+    s.pendingAt = now() + 3000;
     s.vName = "—";
     s.vMsg = "呼び込み中…（3秒後に客が来る）";
     s.vUrl = "";
@@ -1653,11 +1683,39 @@
     renderAll();
   }
 
+  function updateShoutButtonUI(){
+    const left = shoutCooldownSec();
+    const st = loadStage();
+
+    if(st.pending){
+      shoutBtn.textContent = "呼び込み（準備中）";
+      shoutSub.textContent = "客を呼んでいる…";
+      shoutBtn.disabled = true;
+      return;
+    }
+
+    if(st.hasVisitor){
+      shoutBtn.textContent = "呼び込み（客対応中）";
+      shoutSub.textContent = "客がいる間は不可";
+      shoutBtn.disabled = true;
+      return;
+    }
+
+    if(left > 0){
+      shoutBtn.textContent = `呼び込み ${left}s`;
+      shoutSub.textContent = "クールダウン中";
+      shoutBtn.disabled = true;
+    }else{
+      shoutBtn.textContent = "呼び込み OK";
+      shoutSub.textContent = "次の来客を予約";
+      shoutBtn.disabled = false;
+    }
+  }
+
   /* =========================================================
-     生成/スケジュール
+     売買
   ========================================================= */
   function repBuyProbFactor(rep){
-    // 評判低いと買いにくい、高いと少し買いやすい
     return clamp(0.90 + (rep-50)*0.004, 0.75, 1.20);
   }
 
@@ -1668,7 +1726,6 @@
   }
 
   function computeCustomerPay(price, cust){
-    // 客の「値切り/高値」を買値倍率で反映
     const min = Number(cust.buyMultMin ?? 1.0);
     const max = Number(cust.buyMultMax ?? 1.0);
     const mult = clamp(min + Math.random() * Math.max(0, (max-min)), 0.5, 1.8);
@@ -1696,6 +1753,9 @@
     const st0 = loadStage();
     if(st0.hasVisitor) return;
 
+    // ★ここ：出現した瞬間にも due棚を未来へ（ダメ押し）
+    pushDueSlotsToFuture("来店（連続防止）");
+
     const rep = loadRep().rep;
     const cust = chooseCustomer(rep);
     const asset = pickVisitorAsset(cust.id);
@@ -1722,7 +1782,6 @@
     saveStage(s);
     renderStage();
 
-    // 到着EXP +1
     const lvup = addExp(1);
     if(lvup.leveled){
       pushLog("レベルアップ", `Lv${lvup.state.lv}になった！`, "");
@@ -1741,19 +1800,17 @@
 
     const st = loadStage();
 
-    // pending中 → 時間になったら出現（この間 nextAt は変更しない）
+    // pending中 → 時間になったら出現
     if(st.pending){
       if(now() >= Number(st.pendingAt||0)){
         const target = Number(st.pendingSlot||0);
-        spawnVisitorForSlot(target, "呼び込み");
-      }else{
-        // まだ待ち
-        return;
+        spawnVisitorForSlot(target, "呼び込み/予約");
       }
+      return; // ★pending中は絶対ここで終わる（余計な予約を作らない）
     }
 
     // 客がいるなら何もしない
-    if(loadStage().hasVisitor) return;
+    if(st.hasVisitor) return;
 
     // 通常スケジュール
     const nowMs = now();
@@ -1764,7 +1821,10 @@
     const due = active.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
     if(due.length===0) return;
 
-    // 誰かくる → 3秒後出現（pendingにする）
+    // ★ここ：due棚が残ると連続来店になるので、先に未来へ逃がす
+    pushDueSlotsToFuture("通常来店予約");
+
+    // 誰かくる → 3秒後出現（pending）
     const targetSlot = pick(due);
 
     const s = loadStage();
@@ -1783,9 +1843,6 @@
     renderAll();
   }
 
-  /* =========================================================
-     売買処理（値切り/高値、目立つポップアップ）
-  ========================================================= */
   function saleProcess(){
     const st = loadStage();
     if(!st.hasVisitor || st.leaving) return;
@@ -1801,14 +1858,11 @@
     const rep = loadRep().rep;
     const cust = CUSTOMER_TYPES.find(x=>x.id===st.vType) || CUSTOMER_TYPES[0];
 
-    // 表示価格（棚値段×評判相場）
     const displayPrice = computeDisplayPrice(slot.item, slot.priceTier, rep);
 
-    // 滞在時間で買いやすさUP
     const stayMs = Number(st.stayMs||0);
     const stayFactor = clamp(stayMs/16000, 0.6, 1.25);
 
-    // 目標（goal）で買いやすさ変化
     const rar = String(slot.item.rarity||"").toUpperCase();
     const isSR = rar.includes("SR") || rar.includes("UR") || rar.includes("LR") || rar.includes("HR") || rar.includes("XR");
     const isUR = rar.includes("UR") || rar.includes("LR") || rar.includes("HR") || rar.includes("XR");
@@ -1831,26 +1885,21 @@
       return;
     }
 
-    // ★客の性格で買値を決める（値切り/高値）
     const pay = computeCustomerPay(displayPrice, cust);
 
-    // 売れた：オクト追加
     saveOcto(loadOcto() + pay);
 
-    // EXP
     const lv = addExp(4);
 
-    // 評判変動
     const repState = addRep(cust.repDeltaOnBuy);
 
     const soldItem = slot.item;
 
-    // 棚から消す
     shop.slots[slotIdx].item = null;
     shop.slots[slotIdx].createdAt = 0;
     saveMyShop(shop);
 
-    // ★売れた棚だけ「次回」を更新（ここは自然な挙動）
+    // 売れた棚だけ次回更新（それ以外は pushDueSlotsToFuture が守る）
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(slotIdx)] = now() + nextVisitDelayMs();
@@ -1858,10 +1907,9 @@
 
     pushLog("売れた！",
       `${soldItem.name||soldItem.id} が ${fmt(pay)} OCTOで売れた`,
-      `棚${slotIdx+1} / 表示${fmt(displayPrice)} / 係数(${cust.buyMultMin}〜${cust.buyMultMax}) / rep ${repState.rep}`
+      `棚${slotIdx+1} / 表示${fmt(displayPrice)} / rep ${repState.rep}`
     );
 
-    // 目立つポップアップ（売れた）
     toast(
       "🎉 売れた！！",
       `${soldItem.name||soldItem.id} / +${fmt(pay)} OCTO`,
@@ -1893,11 +1941,9 @@
     applyDayNight();
     updateNextTag();
     updateShoutButtonUI();
+    renderStage();
   }
 
-  /* =========================================================
-     next timer初期化
-  ========================================================= */
   function initTimers(){
     ensureNextAtForActiveSlots();
     updateNextTag();
@@ -1953,30 +1999,30 @@
   ========================================================= */
   function boot(){
     applyDayNight();
-    renderStage();
-    initTimers();
-    renderAll();
+    ensureNextAtForActiveSlots();
 
-    // 初回の「ログが見えない」対策で必ず1件入れる（空なら）
-    const lg = lsGet(LS.log, { ver:1, items:[] });
-    if(!Array.isArray(lg.items) || lg.items.length===0){
+    // ログ初期化：空なら1件入れる
+    const lg = ensureLogShape();
+    if(lg.items.length===0){
       pushLog("起動", "マイ露店を起動しました", "");
     }else{
       renderLog();
     }
 
+    // stage初期描画
+    renderStage();
+    initTimers();
+    renderAll();
+
     // 定期
     setInterval(tick, 1000);
   }
 
-  // 画面が復帰した時も更新
   document.addEventListener("visibilitychange", ()=>{
     if(!document.hidden){
       applyDayNight();
       initTimers();
-      updateNextTag();
-      updateShoutButtonUI();
-      renderLog();
+      renderAll();
     }
   });
 
@@ -1986,3 +2032,4 @@
 </script>
 </body>
 </html>
+
