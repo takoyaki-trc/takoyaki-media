@@ -40,6 +40,7 @@
       border-radius:12px;
       cursor:pointer;
       font-weight:800;
+      white-space:nowrap;
     }
     .btn:active{transform:translateY(1px)}
     .btn.warn{background:linear-gradient(180deg, rgba(255,211,138,.18), rgba(255,255,255,.10));}
@@ -68,7 +69,7 @@
     }
     .titlebox{flex:1;min-width:0}
     .title{font-size:16px;font-weight:900;letter-spacing:.02em}
-    .top-actions{display:flex;gap:8px}
+    .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
     /* cards */
     .card{
@@ -263,10 +264,10 @@
     .sheet-h b{font-size:14px}
     .sheet-b{
       padding:12px;
-      overflow:auto;              /* ★ここがスクロール領域 */
+      overflow:auto;
       -webkit-overflow-scrolling: touch;
       flex: 1 1 auto;
-      touch-action: pan-y;        /* ★モーダル内スクロール優先 */
+      touch-action: pan-y;
     }
     .sheet-actions{display:flex;gap:8px;justify-content:flex-end;padding:12px;border-top:1px solid var(--line);flex:0 0 auto}
     .close{width:40px;height:40px;border-radius:12px}
@@ -329,7 +330,7 @@
     }
     .csub .tagmini b{color:var(--text);font-weight:700}
 
-    /* toast */
+    /* toast（通常） */
     .toast{
       position:fixed;
       left:12px;
@@ -357,15 +358,67 @@
       from{ transform: translateY(8px) scale(.98); opacity: 0; }
       to  { transform: translateY(0)   scale(1);   opacity: 1; }
     }
+
+    /* ★売れた：さらに目立たせる（グロー＋拡大＋強い枠） */
     .toast .box.toast--sale{
-      border-color: rgba(255,211,138,.55);
-      background: linear-gradient(180deg, rgba(255,211,138,.22), rgba(0,0,0,.72));
-      box-shadow: 0 16px 44px rgba(0,0,0,.55);
+      border-color: rgba(255,211,138,.90);
+      background: linear-gradient(180deg, rgba(255,211,138,.28), rgba(0,0,0,.80));
+      box-shadow:
+        0 22px 70px rgba(0,0,0,.70),
+        0 0 0 1px rgba(255,211,138,.25) inset,
+        0 0 40px rgba(255,211,138,.20);
+      transform-origin:center;
+      animation: salePop .20s ease-out, salePulse 1.2s ease-in-out infinite;
     }
-    .toast .box.toast--sale b{font-size:14px;letter-spacing:.02em}
-    .toast .box.toast--sale .small{font-size:13px;color:rgba(255,255,255,.92)}
-    .toast .box b{font-weight:900}
-    .toast .box .small{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.35}
+    @keyframes salePop{
+      from{ transform: translateY(16px) scale(.92); opacity:0; }
+      to  { transform: translateY(0)    scale(1);   opacity:1; }
+    }
+    @keyframes salePulse{
+      0%,100%{ filter: drop-shadow(0 0 0 rgba(255,211,138,0)); }
+      50%{ filter: drop-shadow(0 0 14px rgba(255,211,138,.35)); }
+    }
+    .toast .box.toast--sale b{
+      font-size:18px;
+      letter-spacing:.02em;
+      text-shadow: 0 2px 0 rgba(0,0,0,.25);
+    }
+    .toast .box.toast--sale .small{
+      font-size:14px;
+      color:rgba(255,255,255,.96);
+    }
+
+    /* ★売れた時のフラッシュ（画面が一瞬光る） */
+    .sale-flash{
+      position:fixed; inset:0;
+      pointer-events:none;
+      background: radial-gradient(circle at 50% 55%, rgba(255,211,138,.22), rgba(0,0,0,0) 55%);
+      opacity:0;
+      z-index:190;
+    }
+    .sale-flash.show{
+      animation: flash .55s ease-out;
+    }
+    @keyframes flash{
+      0%{ opacity:0; }
+      18%{ opacity:1; }
+      100%{ opacity:0; }
+    }
+
+    /* 呼び込みボタンの小さなタイマー表示 */
+    .cd{
+      font-size:11px;
+      color:var(--muted);
+      margin-left:8px;
+      align-self:center;
+    }
+    .head-actions-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
   </style>
 </head>
 <body>
@@ -376,10 +429,10 @@
         <div class="title">マイ露店</div>
       </div>
       <div class="top-actions">
-        <button class="btn warn" id="shoutBtn" type="button">呼び込み</button>
+        <!-- ★バックアップボタン追加 -->
+        <button class="btn ghost" id="backupBtn" type="button">バックアップ</button>
         <button class="btn ghost" id="helpBtn" type="button">？</button>
         <button class="btn ghost" id="fixBtn" type="button">修理</button>
-
       </div>
     </div>
   </div>
@@ -423,7 +476,12 @@
             <div class="card-title">棚（出品）</div>
             <div class="card-desc">棚にカードを置くだけ。売買は来店ステージで発生。</div>
           </div>
-          <button class="btn" id="refreshBtn" type="button">更新</button>
+
+          <!-- ★更新ボタン削除 → ここに呼び込み移動＋タイマー表示 -->
+          <div class="head-actions-row">
+            <button class="btn warn" id="shoutBtn" type="button">呼び込み</button>
+            <div class="cd mono" id="shoutCd">—</div>
+          </div>
         </div>
         <div class="card-b">
           <div class="shelves" id="shelves"></div>
@@ -488,6 +546,9 @@
       </div>
     </div>
   </div>
+
+  <!-- ★売れた時に画面が一瞬光る -->
+  <div class="sale-flash" id="saleFlash" aria-hidden="true"></div>
 
   <div class="toast" aria-live="polite" aria-atomic="true">
     <div class="box" id="toastBox">
@@ -624,10 +685,12 @@
   const toastBox = $("#toastBox");
   const toastTitle = $("#toastTitle");
   const toastSub = $("#toastSub");
+  const saleFlash = $("#saleFlash");
 
   const backBtn = $("#backBtn");
-  const refreshBtn = $("#refreshBtn");
   const shoutBtn = $("#shoutBtn");
+  const shoutCdEl = $("#shoutCd");
+  const backupBtn = $("#backupBtn");
 
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const now = () => Date.now();
@@ -649,17 +712,27 @@
     }[m]));
   }
 
+  function triggerSaleFlash(){
+    saleFlash.classList.remove("show");
+    // reflow
+    void saleFlash.offsetWidth;
+    saleFlash.classList.add("show");
+  }
+
   function toast(t, s, type){
     toastTitle.textContent = t;
     toastSub.textContent = s || "";
     toastBox.classList.remove("toast--sale");
-    if(type === "sale") toastBox.classList.add("toast--sale");
+    if(type === "sale"){
+      toastBox.classList.add("toast--sale");
+      triggerSaleFlash();
+    }
     toastBox.classList.add("show");
     clearTimeout(toastBox.__t);
     toastBox.__t = setTimeout(()=>{
       toastBox.classList.remove("show");
       toastBox.classList.remove("toast--sale");
-    }, 3000);
+    }, (type==="sale" ? 4200 : 3000));
   }
 
   function pushLog(title, msg, meta){
@@ -818,7 +891,6 @@
   function loadRep(){
     const v = lsGet(LS.rep, { ver:1, rep:50 });
     v.rep = clamp(Number(v.rep ?? 50), 0, 100);
-    // ★小数暴走防止：整数固定
     v.rep = Math.round(v.rep);
     return v;
   }
@@ -981,6 +1053,23 @@
 
   function loadShout(){ return lsGet(LS.shout, { ver:1, nextOkAt:0 }); }
   function saveShout(s){ lsSet(LS.shout, s); }
+
+  function updateShoutUI(){
+    const cd = loadShout();
+    const n = now();
+    const remainMs = Math.max(0, Number(cd.nextOkAt||0) - n);
+    const remain = Math.ceil(remainMs/1000);
+
+    if(remain > 0){
+      shoutBtn.disabled = true;
+      shoutBtn.textContent = `呼び込み（${remain}s）`;
+      shoutCdEl.textContent = `CD: ${remain}s`;
+    }else{
+      shoutBtn.disabled = false;
+      shoutBtn.textContent = "呼び込み";
+      shoutCdEl.textContent = "CD: OK";
+    }
+  }
 
   function basePriceFor(card){
     const p = Number(card?.raw?.price ?? card?.raw?.basePrice ?? card?.price ?? 0);
@@ -1456,7 +1545,9 @@
     saveTick(t);
 
     pushLog("売れた！", `${soldItem.name||soldItem.id} が ${fmt(price)} OCTOで売れた`, `棚${slotIdx+1} / rep ${repState.rep}`);
-    toast("売れた！", `${soldItem.name||soldItem.id} / +${fmt(price)} OCTO`, "sale");
+
+    // ★売れたポップアップを“とても目立つ”ように
+    toast("🔥 売れた！！ 🔥", `${soldItem.name||soldItem.id} ／ +${fmt(price)} OCTO`, "sale");
 
     if(lv.leveled){
       pushLog("レベルアップ", `Lv${lv.state.lv}になった！`, "");
@@ -1498,6 +1589,7 @@
 
   function tick(){
     updateNextTag();
+    updateShoutUI();
 
     const st = loadStage();
     if(st.hasVisitor) return;
@@ -1582,9 +1674,7 @@
   }
 
   /* ==========================
-     ★修正：呼び込み（1人だけ前倒し）
-     - 全棚を0にしない
-     - 既に客がいる時は不可
+     呼び込み（1人だけ前倒し）＋CD
   ========================== */
   function shout(){
     const st = loadStage();
@@ -1598,10 +1688,12 @@
     if(Number(cd.nextOkAt||0) > n){
       const sec = Math.ceil((cd.nextOkAt - n)/1000);
       toast("まだ無理", `呼び込みは ${sec}s 後`, "");
+      updateShoutUI();
       return;
     }
     cd.nextOkAt = n + 60000;
     saveShout(cd);
+    updateShoutUI();
 
     const shop = loadMyShop();
     const lv = loadLevel().lv;
@@ -1618,7 +1710,7 @@
 
     const t = ensureNextAtForActiveSlots();
     const nowMs = now();
-    // 基本：次が一番遅い棚に前倒ししても良いが、分かりやすく “最短の棚” をさらに前倒し
+    // “最短の棚” をさらに前倒し
     let target = active[0];
     let best = Infinity;
     for(const idx of active){
@@ -1626,7 +1718,7 @@
       if(at < best){ best = at; target = idx; }
     }
 
-    // ★ここが核心：選んだ棚だけ前倒し
+    // ★選んだ棚だけ前倒し
     t.nextAtBySlot[String(target)] = Math.min(Number(t.nextAtBySlot[String(target)]||Infinity), nowMs + 1500);
     saveTick(t);
 
@@ -1635,39 +1727,83 @@
     renderAll();
   }
 
- const fixBtn = document.querySelector("#fixBtn");
+  /* ==========================
+     ★バックアップ（JSONダウンロード）
+  ========================== */
+  function downloadText(filename, text){
+    const blob = new Blob([text], { type:"application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 1500);
+  }
 
-fixBtn.addEventListener("click", ()=>{
+  function makeBackup(){
+    const keys = [
+      LS.octo, LS.myshop, LS.log, LS.lvl, LS.rep, LS.tick, LS.shout, LS.stage,
+      LS.farmBook,
+      // 露店と連動する可能性が高いので、畑の資材在庫も一応含める（存在しなければnull）
+      "tf_v1_inv"
+    ];
 
-  // ① 客状態だけ安全にリセット
-  const STAGE_DEFAULT = {
-    ver:1,
-    hasVisitor:false,
-    leaving:false,
-    vUrl:"",
-    vName:"—",
-    vMsg:"まだ誰も来ていない。",
-    vType:"",
-    vGoal:"",
-    stayMs:0,
-    targetSlot:-1,
-    updatedAt: Date.now()
-  };
+    const data = {};
+    for(const k of keys){
+      const raw = localStorage.getItem(k);
+      if(raw == null){
+        data[k] = null;
+        continue;
+      }
+      // JSONとして読めるならJSONで保存、ダメなら生文字
+      const parsed = safeJSON(raw, null);
+      data[k] = (parsed !== null) ? parsed : raw;
+    }
 
-  localStorage.setItem("roten_v1_stage", JSON.stringify(STAGE_DEFAULT));
+    const d = new Date();
+    const pad = (n)=> String(n).padStart(2,"0");
+    const stamp = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    const filename = `takoyaki-myshop-backup-${stamp}.json`;
 
-  // ② 来客タイマーだけ初期化（詰まり対策）
-  localStorage.removeItem("roten_v1_shop_tick");
+    const payload = {
+      exportedAt: d.toISOString(),
+      note: "マイ露店のlocalStorageバックアップ（復元は手動 or 復元ボタン実装で可能）",
+      keys,
+      data
+    };
 
-  // ❌ shout_cd は触らない（超重要）
-  // localStorage.removeItem("roten_v1_shout_cd"); ← 消さない！
+    downloadText(filename, JSON.stringify(payload, null, 2));
+    toast("バックアップ作成", `${filename} を保存しました`, "");
+    pushLog("バックアップ", "ローカルデータをJSONに書き出した", filename);
+  }
 
-  alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
+  /* ==========================
+     修理ボタン（あなたのまま）
+  ========================== */
+  const fixBtn = document.querySelector("#fixBtn");
+  fixBtn.addEventListener("click", ()=>{
+    const STAGE_DEFAULT2 = {
+      ver:1,
+      hasVisitor:false,
+      leaving:false,
+      vUrl:"",
+      vName:"—",
+      vMsg:"まだ誰も来ていない。",
+      vType:"",
+      vGoal:"",
+      stayMs:0,
+      targetSlot:-1,
+      updatedAt: Date.now()
+    };
 
-  location.reload();
-});
+    localStorage.setItem("roten_v1_stage", JSON.stringify(STAGE_DEFAULT2));
+    localStorage.removeItem("roten_v1_shop_tick");
 
-
+    alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
+    location.reload();
+  });
 
   /* ==========================
      全描画
@@ -1678,6 +1814,7 @@ fixBtn.addEventListener("click", ()=>{
     renderLog();
     applyDayNight();
     updateNextTag();
+    updateShoutUI();
   }
 
   /* ==========================
@@ -1709,12 +1846,9 @@ fixBtn.addEventListener("click", ()=>{
     else location.href = "./index.html";
   });
 
-  refreshBtn.addEventListener("click", ()=>{
-    renderAll();
-    toast("更新", "表示を更新しました", "");
-  });
-
   shoutBtn.addEventListener("click", shout);
+
+  backupBtn.addEventListener("click", makeBackup);
 
   /* ==========================
      起動
