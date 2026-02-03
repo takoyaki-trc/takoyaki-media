@@ -1,1 +1,1150 @@
 
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>入口｜たこ焼きトレカの街</title>
+  <style>
+    :root{
+      --bg:#05060b;
+      --panel:rgba(255,255,255,.08);
+      --line:rgba(255,255,255,.14);
+      --text:#fff;
+      --muted:rgba(255,255,255,.72);
+      --good:#9fffa8;
+      --warn:#ffd38a;
+      --bad:#ff9aa5;
+      --btn:rgba(255,255,255,.12);
+      --btn2:rgba(255,255,255,.18);
+      --shadow:0 14px 40px rgba(0,0,0,.55);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
+      background: radial-gradient(1200px 800px at 50% 35%, rgba(120,140,255,.10), transparent 55%),
+                  radial-gradient(900px 600px at 30% 70%, rgba(140,255,200,.07), transparent 60%),
+                  var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* ===== 星（CSSだけで軽量）===== */
+    .stars, .stars2{
+      position:fixed; inset:0;
+      pointer-events:none;
+      background-repeat:repeat;
+      opacity:.85;
+      z-index:0;
+    }
+    .stars{
+      background-image:
+        radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,.85), transparent 60%),
+        radial-gradient(1px 1px at 80px 120px, rgba(255,255,255,.55), transparent 60%),
+        radial-gradient(1px 1px at 150px 60px, rgba(255,255,255,.75), transparent 60%),
+        radial-gradient(1px 1px at 220px 180px, rgba(255,255,255,.45), transparent 60%),
+        radial-gradient(1px 1px at 300px 90px, rgba(255,255,255,.65), transparent 60%);
+      background-size: 320px 220px;
+      animation: drift 38s linear infinite;
+    }
+    .stars2{
+      background-image:
+        radial-gradient(2px 2px at 40px 50px, rgba(255,255,255,.20), transparent 60%),
+        radial-gradient(1px 1px at 120px 140px, rgba(255,255,255,.25), transparent 60%),
+        radial-gradient(2px 2px at 260px 160px, rgba(255,255,255,.16), transparent 60%),
+        radial-gradient(1px 1px at 310px 30px, rgba(255,255,255,.22), transparent 60%);
+      background-size: 360px 260px;
+      animation: drift2 64s linear infinite;
+      opacity:.65;
+    }
+    @keyframes drift{ from{transform:translateY(0)} to{transform:translateY(-220px)} }
+    @keyframes drift2{ from{transform:translateY(0)} to{transform:translateY(-260px)} }
+
+    /* ===== レイアウト ===== */
+    .wrap{
+      position:relative;
+      z-index:1;
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:28px 14px 22px;
+      gap:14px;
+    }
+
+    .stage{
+      width:min(520px, 100%);
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .stage-top{
+      padding:16px 16px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.20);
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .brand .title{
+      font-weight:900;
+      letter-spacing:.04em;
+      font-size:15px;
+    }
+    .brand .sub{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      font-size:12px;
+      max-width:58%;
+    }
+    .pill .avatar{
+      width:22px;height:22px;border-radius:8px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      flex:0 0 22px;
+      display:grid;place-items:center;
+      overflow:hidden;
+    }
+    .pill img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+    .pill .name{
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+      color:#fff;
+    }
+
+    .scene{
+      position:relative;
+      padding:18px 14px 10px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
+      background:
+        radial-gradient(260px 160px at 50% 30%, rgba(120,140,255,.18), transparent 70%),
+        radial-gradient(240px 140px at 50% 70%, rgba(255,200,120,.10), transparent 75%),
+        rgba(0,0,0,.18);
+    }
+
+    /* 扉＋門番の中央演出 */
+    .gateRow{
+      width:100%;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      gap:14px;
+      padding:6px 0 0;
+      min-height:180px;
+    }
+    .door{
+      width:140px; height:160px;
+      border-radius:18px 18px 22px 22px;
+      border:1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(90px 120px at 50% 40%, rgba(120,180,255,.35), rgba(0,0,0,.0) 60%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      position:relative;
+      box-shadow:0 0 22px rgba(140,180,255,.18);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      user-select:none;
+    }
+    .door::before{
+      content:"";
+      position:absolute; inset:-30px;
+      background:conic-gradient(from 0deg, transparent 0 40%, rgba(180,220,255,.22) 45% 55%, transparent 60% 100%);
+      animation: shimmer 4.2s linear infinite;
+      opacity:.8;
+    }
+    @keyframes shimmer{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
+    .doorCore{
+      position:relative;
+      width:92px;height:120px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(80px 90px at 50% 35%, rgba(255,255,255,.10), transparent 70%),
+        linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.10));
+      display:grid;place-items:center;
+      box-shadow: inset 0 0 20px rgba(120,180,255,.18);
+    }
+    .doorCore .sigil{
+      width:42px;height:42px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(120,180,255,.18);
+      display:grid;place-items:center;
+      font-weight:900;
+      letter-spacing:.08em;
+      font-family:var(--mono);
+      opacity:.9;
+    }
+
+    .guard{
+      width:120px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    }
+    .guard .img{
+      width:74px;height:74px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);
+      display:grid;place-items:center;
+      overflow:hidden;
+      box-shadow:0 10px 24px rgba(0,0,0,.35);
+      user-select:none;
+    }
+    .guard .img img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+    .guard .badge{
+      font-size:11px;
+      color:rgba(255,255,255,.85);
+      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.14);
+      padding:6px 8px;
+      border-radius:999px;
+      max-width:120px;
+      text-align:center;
+    }
+
+    .dialog{
+      width:100%;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;
+      background:rgba(0,0,0,.28);
+      padding:10px 12px;
+      color:rgba(255,255,255,.92);
+      font-size:13px;
+      line-height:1.5;
+    }
+    .dialog .small{color:var(--muted); font-size:12px; display:block; margin-top:2px;}
+
+    .actions{
+      width:100%;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      padding:10px 0 6px;
+    }
+    .btn{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.10);
+      color:var(--text);
+      padding:12px 12px;
+      border-radius:14px;
+      font-weight:800;
+      letter-spacing:.02em;
+      cursor:pointer;
+      box-shadow:0 10px 24px rgba(0,0,0,.25);
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{
+      background:linear-gradient(180deg, rgba(120,180,255,.28), rgba(255,255,255,.10));
+      border-color:rgba(140,200,255,.35);
+    }
+    .btn.ghost{
+      background:rgba(255,255,255,.06);
+    }
+
+    .footer{
+      padding:10px 16px 14px;
+      border-top:1px solid rgba(255,255,255,.10);
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:rgba(0,0,0,.18);
+    }
+    .footer .hint{
+      display:flex; flex-direction:column; gap:2px;
+      overflow:hidden;
+    }
+    .footer .hint b{
+      color:rgba(255,255,255,.92);
+      font-size:12px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .footer .hint span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .footer .mini{
+      display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .chip{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      padding:6px 8px;
+      border-radius:999px;
+      font-size:11px;
+      color:rgba(255,255,255,.85);
+    }
+
+    /* ===== モーダル共通 ===== */
+    .modal{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      background:rgba(0,0,0,.62);
+      z-index:50;
+    }
+    .modal.on{display:flex}
+    .modal .card{
+      width:min(520px, 100%);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background:linear-gradient(180deg, rgba(20,22,40,.96), rgba(10,12,20,.92));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .modal .head{
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.22);
+    }
+    .modal .head .ttl{font-weight:900}
+    .modal .close{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .modal .body{padding:14px}
+
+    .field{
+      display:flex; flex-direction:column; gap:6px;
+      margin:0 0 12px;
+    }
+    .field label{font-size:12px;color:var(--muted)}
+    .field input{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      outline:none;
+      font-weight:700;
+    }
+    .row{
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+
+    /* ===== アバター選択 ===== */
+    .avatarGrid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+    .avOpt{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      border-radius:14px;
+      padding:8px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .avOpt.on{
+      border-color:rgba(120,180,255,.45);
+      box-shadow:0 0 0 2px rgba(120,180,255,.18) inset;
+    }
+    .avOpt .img{
+      width:52px;height:52px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+      overflow:hidden;
+      display:grid;place-items:center;
+    }
+    .avOpt img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+    .avOpt .nm{font-size:11px;color:rgba(255,255,255,.88); text-align:center; line-height:1.2}
+
+    /* ===== 住民票（トレカ風）===== */
+    .residentCard{
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:18px;
+      overflow:hidden;
+      background:
+        radial-gradient(220px 180px at 30% 25%, rgba(255,220,130,.12), transparent 60%),
+        radial-gradient(260px 200px at 80% 70%, rgba(120,180,255,.14), transparent 65%),
+        rgba(255,255,255,.04);
+      box-shadow:0 16px 40px rgba(0,0,0,.45);
+    }
+    .rcTop{
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+    }
+    .rar{
+      font-family:var(--mono);
+      font-weight:900;
+      letter-spacing:.08em;
+      font-size:12px;
+      padding:6px 8px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+    }
+    .rcMid{
+      padding:12px 14px;
+      display:grid;
+      grid-template-columns: 96px 1fr;
+      gap:12px;
+      align-items:start;
+    }
+    .rcAv{
+      width:96px;height:96px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      overflow:hidden;
+      display:grid;place-items:center;
+    }
+    .rcAv img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+    .rcInfo .big{
+      font-weight:900;
+      font-size:16px;
+      letter-spacing:.02em;
+      margin:0 0 2px;
+      word-break:break-word;
+    }
+    .rcInfo .sub{
+      color:var(--muted);
+      font-size:12px;
+      margin:0 0 10px;
+    }
+    .stats{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+    }
+    .stat{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:8px 10px;
+      background:rgba(0,0,0,.18);
+      font-size:12px;
+      color:rgba(255,255,255,.9);
+    }
+    .stat b{display:block; font-size:11px; color:var(--muted); margin-bottom:2px; font-weight:700}
+    .rcBot{
+      padding:10px 14px 14px;
+      border-top:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.16);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .quote{
+      font-size:12px;
+      color:rgba(255,255,255,.88);
+      line-height:1.4;
+    }
+    .quote .mut{color:var(--muted)}
+    .rcBtns{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+    .sbtn{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-weight:800;
+      font-size:12px;
+    }
+    .sbtn:active{transform:translateY(1px)}
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="stars2"></div>
+
+  <main class="wrap">
+    <section class="stage" aria-label="入口">
+      <div class="stage-top">
+        <div class="brand">
+          <div class="title">たこ焼きトレカの街・入口</div>
+          <div class="sub">— 異空間ゲート —</div>
+        </div>
+
+        <div class="pill" title="住民情報">
+          <div class="avatar" id="pillAvatar">🙂</div>
+          <div class="name" id="pillName">名無しのタコ民</div>
+        </div>
+      </div>
+
+      <div class="scene">
+        <div class="gateRow">
+          <div class="door" aria-label="扉（ゲート）">
+            <div class="doorCore">
+              <div class="sigil">TRC</div>
+            </div>
+          </div>
+
+          <div class="guard" aria-label="門番">
+            <div class="img" id="guardImg">🛡️</div>
+            <div class="badge" id="guardBadge">門番タコ民</div>
+          </div>
+        </div>
+
+        <div class="dialog" id="gateDialog">
+          ……ここは たこ焼きトレカの街。<br>
+          <span class="small">名を名乗れ。住民票を発行してやろう。</span>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="enterBtn" type="button">街へ入る</button>
+          <button class="btn ghost" id="residentBtn" type="button">住民票を見る</button>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="hint">
+          <b id="hintTitle">門番メモ</b>
+          <span id="hintText">初回は住民登録が必要だ。</span>
+        </div>
+        <div class="mini">
+          <span class="chip" id="chipLv">Lv --</span>
+          <span class="chip" id="chipTitle">称号：---</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== 登録/編集モーダル ===== -->
+  <div class="modal" id="regModal" aria-hidden="true">
+    <div class="card">
+      <div class="head">
+        <div class="ttl">住民登録</div>
+        <button class="close" id="regClose" type="button">×</button>
+      </div>
+      <div class="body">
+        <div class="field">
+          <label for="nickInput">ニックネーム（あとで変更OK）</label>
+          <input id="nickInput" type="text" maxlength="16" placeholder="例：たこぴ太郎 / 焼き師のmika など" />
+        </div>
+
+        <div class="field">
+          <label>アバター（タコ民アイコン）</label>
+          <div class="avatarGrid" id="avatarGrid"></div>
+        </div>
+
+        <div class="row">
+          <button class="btn primary" id="regSave" type="button" style="flex:1">登録する</button>
+          <button class="btn" id="regCancel" type="button" style="flex:1">あとで</button>
+        </div>
+
+        <div style="margin-top:10px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.5">
+          ※ データは端末の <b>localStorage</b> に保存されます（サーバ送信なし）。<br>
+          ※ ブラウザのデータ削除で消えるので、のちほど「達成の記録」などにバックアップ導線を足してもOK。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 住民票モーダル ===== -->
+  <div class="modal" id="rcModal" aria-hidden="true">
+    <div class="card">
+      <div class="head">
+        <div class="ttl">住民票</div>
+        <button class="close" id="rcClose" type="button">×</button>
+      </div>
+      <div class="body">
+        <div class="residentCard">
+          <div class="rcTop">
+            <div class="rar" id="rcRarity">CITIZEN</div>
+            <div class="rar" id="rcLv">Lv 1</div>
+          </div>
+
+          <div class="rcMid">
+            <div class="rcAv" id="rcAvatar">🙂</div>
+            <div class="rcInfo">
+              <div class="big" id="rcName">名無しのタコ民</div>
+              <div class="sub" id="rcTitle">称号：はじまりの焼き手</div>
+
+              <div class="stats">
+                <div class="stat"><b>総EXP</b><span id="stExp">0</span></div>
+                <div class="stat"><b>総ログイン</b><span id="stDays">0</span>日</div>
+                <div class="stat"><b>畑（収穫数）</b><span id="stHarvest">0</span></div>
+                <div class="stat"><b>露店（売上）</b><span id="stSales">0</span> オクト</div>
+                <div class="stat"><b>露店（販売回数）</b><span id="stSellCount">0</span></div>
+                <div class="stat"><b>最高スコア</b><span id="stBest">0</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rcBot">
+            <div class="quote">
+              <div id="rcQuote">「今日も焼かれに来たのか。」</div>
+              <div class="mut" id="rcQuoteSub">門番より</div>
+            </div>
+            <div class="rcBtns">
+              <button class="sbtn" id="editBtn" type="button">名前/アバター変更</button>
+              <button class="sbtn" id="exportBtn" type="button">データをコピー</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.5">
+          ※ 住民票は「町の外」に置くことで、町マップの密度を上げずに拡張できます。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    /* =========================================================
+       gate.html / 入口 + 住民票 完全版
+       - localStorageのみ
+       - 初回ニックネーム登録（変更OK）
+       - タコ民アバター選択（変更OK）
+       - 住民票（トレカ風）表示
+       - 既存キー(tf_v1_book / roten_v1_octo等)があれば軽く拾う
+       - 他ページから呼べるAPI(window.TRCResident.*)
+       ========================================================= */
+
+    // ★ あなたの「町ページ」URLに合わせてここだけ変更してOK
+    const TOWN_URL = "town/index.html"; // 例: "town/index.html" or "/takoyaki-media/town/index.html"
+
+    // ===== localStorage keys（新規：住民票）=====
+    const KEY = {
+      resident: "trc_v1_resident", // 住民票（名前/アバター/exp/統計）
+      lastLogin: "trc_v1_last_login", // 入口を開いた日
+    };
+
+    // ===== 既存プロジェクトのキー（あれば拾う）=====
+    const EXIST = {
+      farmBook: "tf_v1_book",
+      rotenOcto: "roten_v1_octo",
+      rotenLog:  "roten_v1_log"
+    };
+
+    // ===== アバター候補（差し替え自由）=====
+    // 画像URLをあなたのタコ民PNGに変えると最高になる（今はダミー絵文字/色）
+    const AVATARS = [
+      { id:"av_guard", name:"門番", emoji:"🛡️", img:"" },
+      { id:"av_farmer", name:"農家", emoji:"🌱", img:"" },
+      { id:"av_shop", name:"露店", emoji:"🏮", img:"" },
+      { id:"av_hero", name:"勇者", emoji:"⚔️", img:"" },
+      { id:"av_sage", name:"賢者", emoji:"📜", img:"" },
+      { id:"av_ninja", name:"忍者", emoji:"🥷", img:"" },
+      { id:"av_ghost", name:"GHOST", emoji:"👻", img:"" },
+      { id:"av_takopi", name:"たこぴ", emoji:"🐙", img:"" },
+    ];
+
+    // ====== DOM ======
+    const $ = (sel, root=document) => root.querySelector(sel);
+
+    const pillName = $("#pillName");
+    const pillAvatar = $("#pillAvatar");
+
+    const enterBtn = $("#enterBtn");
+    const residentBtn = $("#residentBtn");
+    const gateDialog = $("#gateDialog");
+    const hintTitle = $("#hintTitle");
+    const hintText  = $("#hintText");
+    const chipLv = $("#chipLv");
+    const chipTitle = $("#chipTitle");
+
+    const regModal = $("#regModal");
+    const regClose = $("#regClose");
+    const regSave  = $("#regSave");
+    const regCancel= $("#regCancel");
+    const nickInput= $("#nickInput");
+    const avatarGrid = $("#avatarGrid");
+
+    const rcModal = $("#rcModal");
+    const rcClose = $("#rcClose");
+    const editBtn = $("#editBtn");
+    const exportBtn = $("#exportBtn");
+
+    const rcName = $("#rcName");
+    const rcAvatar = $("#rcAvatar");
+    const rcTitle = $("#rcTitle");
+    const rcLv = $("#rcLv");
+    const rcRarity = $("#rcRarity");
+    const rcQuote = $("#rcQuote");
+    const rcQuoteSub = $("#rcQuoteSub");
+
+    const stExp = $("#stExp");
+    const stDays = $("#stDays");
+    const stHarvest = $("#stHarvest");
+    const stSales = $("#stSales");
+    const stSellCount = $("#stSellCount");
+    const stBest = $("#stBest");
+
+    const guardImg = $("#guardImg");
+    const guardBadge = $("#guardBadge");
+
+    // ====== util ======
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+    const todayKey = () => {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${day}`;
+    };
+
+    function safeJSONParse(raw, fallback){
+      try{ return JSON.parse(raw); }catch(_){ return fallback; }
+    }
+
+    function loadResident(){
+      const raw = localStorage.getItem(KEY.resident);
+      const base = {
+        ver:1,
+        nick:"",
+        avatarId:"av_guard",
+        exp:0,
+        days:0,
+        best:0,
+        farmHarvest:0,
+        rotenSales:0,
+        rotenSellCount:0,
+        lastSeenDay:"",
+        createdAt: Date.now()
+      };
+      if(!raw) return base;
+      const r = safeJSONParse(raw, base);
+      return Object.assign(base, r);
+    }
+
+    function saveResident(r){
+      localStorage.setItem(KEY.resident, JSON.stringify(r));
+    }
+
+    function getAvatarById(id){
+      return AVATARS.find(a=>a.id===id) || AVATARS[0];
+    }
+
+    // レベル計算：expに基づく（簡単で気持ちいい曲線）
+    function calcLevel(exp){
+      exp = Math.max(0, Math.floor(Number(exp)||0));
+      // Lv1=0、Lv2=40、Lv3=100、Lv4=180...（だんだん重く）
+      let lv = 1;
+      let need = 40;
+      let cur = exp;
+      while(cur >= need){
+        cur -= need;
+        lv++;
+        need = Math.floor(need * 1.35 + 10);
+        if(lv >= 99) break;
+      }
+      return { lv, nextNeed: need, curToNext: cur };
+    }
+
+    // 称号：レベル帯＋行動で決める（世界観ギャグ系）
+    function calcTitle(r, lv){
+      const h = r.farmHarvest||0;
+      const s = r.rotenSellCount||0;
+
+      if(lv>=30) return "称号：焼かれし伝説の住民";
+      if(lv>=20) return "称号：超・焼き手（ほぼ神）";
+      if(lv>=15) return "称号：焦げと半熟の両刀使い";
+      if(lv>=10) return "称号：半熟マスター";
+      if(h>=50)  return "称号：畑の沼に沈んだ焼き手";
+      if(s>=20)  return "称号：露店の顔（値札の化身）";
+      if(lv>=5)  return "称号：見習い焼き師";
+      return "称号：はじまりの焼き手";
+    }
+
+    // レアリティ表示（気持ちよさ優先）
+    function calcRarity(lv){
+      if(lv>=30) return "LR CITIZEN";
+      if(lv>=20) return "UR CITIZEN";
+      if(lv>=12) return "SR CITIZEN";
+      if(lv>=6)  return "R  CITIZEN";
+      return "N  CITIZEN";
+    }
+
+    function pickQuote(r, lv){
+      const list = [
+        "「扉は開いている。問題は、お前の腹だ。」",
+        "「今日も焼かれに来たのか。…いい顔だ。」",
+        "「住民票は嘘をつかない。嘘をつくのは人間だ。」",
+        "「焦げても価値は残る。…たぶん。」",
+        "「半熟は未完成じゃない。“余白”だ。」"
+      ];
+      // 日付で固定（毎日ちょっと違う感じ）
+      const key = todayKey();
+      let hash = 0;
+      for(let i=0;i<key.length;i++) hash = (hash*31 + key.charCodeAt(i)) >>> 0;
+      const idx = hash % list.length;
+      return list[idx];
+    }
+
+    // ===== 既存データから「それっぽい」統計を拾う（無ければ0）=====
+    function syncFromExisting(r){
+      // 1) 畑：tf_v1_book の got を数える
+      const bookRaw = localStorage.getItem(EXIST.farmBook);
+      if(bookRaw){
+        const book = safeJSONParse(bookRaw, null);
+        const got = book && book.got ? book.got : null;
+        if(got && typeof got === "object"){
+          let total = 0;
+          for(const k in got){
+            const v = got[k];
+            // count を持っていれば使う、無ければ1扱い
+            const c = (v && typeof v.count === "number") ? v.count : 1;
+            total += Math.max(0, c|0);
+          }
+          // 既に住民票側が多ければ減らさない（上書き事故回避）
+          r.farmHarvest = Math.max(r.farmHarvest||0, total);
+        }
+      }
+
+      // 2) 露店：オクト残高はあるが「売上」は別なので、ログがあれば拾う
+      const logRaw = localStorage.getItem(EXIST.rotenLog);
+      if(logRaw){
+        const log = safeJSONParse(logRaw, null);
+        // 想定：配列ログ or {items:[...]} 等、形が違っても落ちない
+        const arr = Array.isArray(log) ? log : (log && Array.isArray(log.items) ? log.items : null);
+        if(arr){
+          // ざっくり：文字列に「売れた」「販売」「購入」っぽいのがあれば回数+1
+          let sellCount = r.rotenSellCount||0;
+          for(const it of arr){
+            const t = String(it && (it.text||it.msg||it) || "");
+            if(/売れ|販売|購入/.test(t)) sellCount++;
+          }
+          r.rotenSellCount = Math.max(r.rotenSellCount||0, sellCount);
+        }
+      }
+
+      return r;
+    }
+
+    // ===== ログイン日数管理（入口を開いたら1日1回カウント）=====
+    function touchLoginDay(r){
+      const t = todayKey();
+      const last = localStorage.getItem(KEY.lastLogin) || "";
+      if(last !== t){
+        localStorage.setItem(KEY.lastLogin, t);
+        r.days = (r.days||0) + 1;
+        // 入口に来たEXP（少量だけ）＝習慣化の火種
+        r.exp = (r.exp||0) + 5;
+      }
+      r.lastSeenDay = t;
+      return r;
+    }
+
+    // ===== UI更新 =====
+    function setAvatarNode(node, av){
+      // nodeがdivの場合：imgか絵文字
+      node.innerHTML = "";
+      if(av.img){
+        const img = document.createElement("img");
+        img.src = av.img;
+        img.alt = av.name;
+        img.loading = "lazy";
+        node.appendChild(img);
+      }else{
+        node.textContent = av.emoji || "🙂";
+      }
+    }
+
+    function renderTop(r){
+      const nick = r.nick && r.nick.trim() ? r.nick.trim() : "名無しのタコ民";
+      const av = getAvatarById(r.avatarId);
+      pillName.textContent = nick;
+      setAvatarNode(pillAvatar, av);
+
+      // 門番も同じアバターで統一（世界観）
+      setAvatarNode(guardImg, getAvatarById("av_guard"));
+      guardBadge.textContent = "門番タコ民";
+
+      const {lv} = calcLevel(r.exp||0);
+      chipLv.textContent = `Lv ${lv}`;
+      chipTitle.textContent = calcTitle(r, lv).replace("称号：","");
+    }
+
+    function renderGateText(r){
+      const nick = r.nick && r.nick.trim() ? r.nick.trim() : "";
+      if(!nick){
+        gateDialog.innerHTML = `……ここは たこ焼きトレカの街。<br><span class="small">名を名乗れ。住民票を発行してやろう。</span>`;
+        hintTitle.textContent = "門番メモ";
+        hintText.textContent  = "初回は住民登録が必要だ。";
+      }else{
+        const {lv} = calcLevel(r.exp||0);
+        const title = calcTitle(r, lv).replace("称号：","");
+        gateDialog.innerHTML = `……<b>${nick}</b>か。<br><span class="small">称号「${title}」── 入場を許可する。</span>`;
+        hintTitle.textContent = "門番メモ";
+        hintText.textContent  = "住民票はいつでも変更できる。";
+      }
+    }
+
+    function openModal(m){ m.classList.add("on"); m.setAttribute("aria-hidden","false"); }
+    function closeModal(m){ m.classList.remove("on"); m.setAttribute("aria-hidden","true"); }
+
+    function buildAvatarGrid(selectedId){
+      avatarGrid.innerHTML = "";
+      AVATARS.forEach(av=>{
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "avOpt" + (av.id===selectedId ? " on" : "");
+        b.dataset.id = av.id;
+
+        const img = document.createElement("div");
+        img.className = "img";
+        if(av.img){
+          const im = document.createElement("img");
+          im.src = av.img;
+          im.alt = av.name;
+          im.loading = "lazy";
+          img.appendChild(im);
+        }else{
+          img.textContent = av.emoji || "🙂";
+        }
+
+        const nm = document.createElement("div");
+        nm.className = "nm";
+        nm.textContent = av.name;
+
+        b.appendChild(img);
+        b.appendChild(nm);
+
+        b.addEventListener("click", ()=>{
+          // 単純に選択状態を更新
+          [...avatarGrid.querySelectorAll(".avOpt")].forEach(x=>x.classList.remove("on"));
+          b.classList.add("on");
+        });
+
+        avatarGrid.appendChild(b);
+      });
+    }
+
+    function getSelectedAvatarId(){
+      const on = avatarGrid.querySelector(".avOpt.on");
+      return on ? on.dataset.id : AVATARS[0].id;
+    }
+
+    function openRegister(r, mode="register"){
+      $(".ttl", regModal).textContent = (mode==="edit") ? "住民情報の変更" : "住民登録";
+      nickInput.value = r.nick || "";
+      buildAvatarGrid(r.avatarId || AVATARS[0].id);
+      openModal(regModal);
+      nickInput.focus();
+    }
+
+    function openResidentCard(r){
+      // 最新同期（あれば）
+      r = syncFromExisting(r);
+      const lvInfo = calcLevel(r.exp||0);
+      const lv = lvInfo.lv;
+
+      const nick = r.nick && r.nick.trim() ? r.nick.trim() : "名無しのタコ民";
+      const av = getAvatarById(r.avatarId);
+
+      rcName.textContent = nick;
+      rcTitle.textContent = calcTitle(r, lv);
+      rcLv.textContent = `Lv ${lv}`;
+      rcRarity.textContent = calcRarity(lv);
+
+      setAvatarNode(rcAvatar, av);
+
+      stExp.textContent = String(Math.floor(r.exp||0));
+      stDays.textContent = String(Math.floor(r.days||0));
+      stHarvest.textContent = String(Math.floor(r.farmHarvest||0));
+      stSales.textContent = String(Math.floor(r.rotenSales||0));
+      stSellCount.textContent = String(Math.floor(r.rotenSellCount||0));
+      stBest.textContent = String(Math.floor(r.best||0));
+
+      rcQuote.textContent = pickQuote(r, lv);
+      rcQuoteSub.textContent = "門番より";
+
+      saveResident(r);
+      renderTop(r);
+      renderGateText(r);
+
+      openModal(rcModal);
+    }
+
+    // ===== 他ページからの加算API（必要になったら使う）=====
+    // 例：畑で収穫したら window.TRCResident.addHarvest(1); window.TRCResident.addExp(10);
+    function apiGet(){
+      return loadResident();
+    }
+    function apiSave(patch){
+      const r = loadResident();
+      Object.assign(r, patch || {});
+      saveResident(r);
+      return r;
+    }
+    function apiAddExp(n){
+      const r = loadResident();
+      r.exp = (r.exp||0) + (Number(n)||0);
+      saveResident(r);
+      return r;
+    }
+    function apiAddHarvest(n){
+      const r = loadResident();
+      r.farmHarvest = (r.farmHarvest||0) + (Number(n)||0);
+      // 収穫EXP（軽く）
+      r.exp = (r.exp||0) + Math.max(0, (Number(n)||0))*2;
+      saveResident(r);
+      return r;
+    }
+    function apiAddSale(octo, count=1){
+      const r = loadResident();
+      r.rotenSales = (r.rotenSales||0) + (Number(octo)||0);
+      r.rotenSellCount = (r.rotenSellCount||0) + (Number(count)||0);
+      r.exp = (r.exp||0) + Math.max(0, (Number(count)||0))*3;
+      saveResident(r);
+      return r;
+    }
+    function apiSetBestScore(score){
+      const r = loadResident();
+      const s = Math.floor(Number(score)||0);
+      r.best = Math.max(r.best||0, s);
+      r.exp = (r.exp||0) + Math.min(30, Math.floor(s/50)); // ちょいボーナス
+      saveResident(r);
+      return r;
+    }
+
+    window.TRCResident = {
+      get: apiGet,
+      save: apiSave,
+      addExp: apiAddExp,
+      addHarvest: apiAddHarvest,
+      addSale: apiAddSale,
+      setBestScore: apiSetBestScore,
+    };
+
+    // ===== イベント =====
+    enterBtn.addEventListener("click", ()=>{
+      const r = loadResident();
+      const nick = r.nick && r.nick.trim();
+      if(!nick){
+        openRegister(r, "register");
+        return;
+      }
+      // 入場：軽い演出→遷移
+      enterBtn.disabled = true;
+      enterBtn.textContent = "扉が開いている…";
+      setTimeout(()=>{ location.href = TOWN_URL; }, 350);
+    });
+
+    residentBtn.addEventListener("click", ()=>{
+      const r = loadResident();
+      const nick = r.nick && r.nick.trim();
+      if(!nick){
+        openRegister(r, "register");
+        return;
+      }
+      openResidentCard(r);
+    });
+
+    regClose.addEventListener("click", ()=> closeModal(regModal));
+    regCancel.addEventListener("click", ()=> closeModal(regModal));
+
+    regSave.addEventListener("click", ()=>{
+      const r = loadResident();
+      const nick = (nickInput.value||"").trim();
+      if(!nick){
+        nickInput.focus();
+        nickInput.placeholder = "名前が必要だ（16文字まで）";
+        return;
+      }
+      const avatarId = getSelectedAvatarId();
+      r.nick = nick.slice(0,16);
+      r.avatarId = avatarId;
+      saveResident(r);
+      closeModal(regModal);
+
+      renderTop(r);
+      renderGateText(r);
+
+      // 登録後は住民票を見せると気持ちいい
+      setTimeout(()=> openResidentCard(loadResident()), 120);
+    });
+
+    rcClose.addEventListener("click", ()=> closeModal(rcModal));
+    editBtn.addEventListener("click", ()=>{
+      closeModal(rcModal);
+      const r = loadResident();
+      openRegister(r, "edit");
+    });
+
+    exportBtn.addEventListener("click", async ()=>{
+      const r = loadResident();
+      const text = JSON.stringify(r, null, 2);
+      try{
+        await navigator.clipboard.writeText(text);
+        exportBtn.textContent = "コピーした！";
+        setTimeout(()=> exportBtn.textContent = "データをコピー", 1200);
+      }catch(e){
+        // クリップボード不可端末用：prompt fallback
+        prompt("コピーして保存してね（バックアップ用）", text);
+      }
+    });
+
+    // モーダル背景クリックで閉じる
+    [regModal, rcModal].forEach(m=>{
+      m.addEventListener("click", (e)=>{
+        if(e.target === m) closeModal(m);
+      });
+    });
+
+    // ===== 初期化 =====
+    function init(){
+      let r = loadResident();
+      r = syncFromExisting(r);
+      r = touchLoginDay(r);
+      saveResident(r);
+
+      renderTop(r);
+      renderGateText(r);
+
+      // 初回なら登録を促す（押し付けず、やさしく）
+      if(!(r.nick && r.nick.trim())){
+        setTimeout(()=> openRegister(r, "register"), 180);
+      }
+    }
+    init();
+
+  })();
+  </script>
+</body>
+</html>
