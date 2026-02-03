@@ -429,8 +429,9 @@
         <div class="title">マイ露店</div>
       </div>
       <div class="top-actions">
-        <!-- ★バックアップボタン追加 -->
+        <!-- ★バックアップ＋復元ボタン -->
         <button class="btn ghost" id="backupBtn" type="button">バックアップ</button>
+        <button class="btn ghost" id="restoreBtn" type="button">復元</button>
         <button class="btn ghost" id="helpBtn" type="button">？</button>
         <button class="btn ghost" id="fixBtn" type="button">修理</button>
       </div>
@@ -477,9 +478,9 @@
             <div class="card-desc">棚にカードを置くだけ。売買は来店ステージで発生。</div>
           </div>
 
-          <!-- ★更新ボタン削除 → ここに呼び込み移動＋タイマー表示 -->
           <div class="head-actions-row">
             <button class="btn warn" id="shoutBtn" type="button">呼び込み</button>
+            <!-- ★ここだけでCD表示（ボタン文言には出さない） -->
             <div class="cd mono" id="shoutCd">—</div>
           </div>
         </div>
@@ -556,6 +557,9 @@
       <div class="small" id="toastSub">—</div>
     </div>
   </div>
+
+  <!-- ★復元用：隠しファイル入力 -->
+  <input id="restoreFile" type="file" accept="application/json" style="display:none" />
 
 <script>
 (() => {
@@ -691,6 +695,8 @@
   const shoutBtn = $("#shoutBtn");
   const shoutCdEl = $("#shoutCd");
   const backupBtn = $("#backupBtn");
+  const restoreBtn = $("#restoreBtn");
+  const restoreFile = $("#restoreFile");
 
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const now = () => Date.now();
@@ -714,7 +720,6 @@
 
   function triggerSaleFlash(){
     saleFlash.classList.remove("show");
-    // reflow
     void saleFlash.offsetWidth;
     saleFlash.classList.add("show");
   }
@@ -1054,19 +1059,19 @@
   function loadShout(){ return lsGet(LS.shout, { ver:1, nextOkAt:0 }); }
   function saveShout(s){ lsSet(LS.shout, s); }
 
+  /* ★修正：ボタン文言に秒数を出さない（CD欄だけ） */
   function updateShoutUI(){
     const cd = loadShout();
     const n = now();
     const remainMs = Math.max(0, Number(cd.nextOkAt||0) - n);
     const remain = Math.ceil(remainMs/1000);
 
+    shoutBtn.textContent = "呼び込み"; // ←固定
     if(remain > 0){
       shoutBtn.disabled = true;
-      shoutBtn.textContent = `呼び込み（${remain}s）`;
       shoutCdEl.textContent = `CD: ${remain}s`;
     }else{
       shoutBtn.disabled = false;
-      shoutBtn.textContent = "呼び込み";
       shoutCdEl.textContent = "CD: OK";
     }
   }
@@ -1530,7 +1535,7 @@
     // 売れた
     saveOcto(loadOcto() + price);
 
-    const lv = addExp(4); // ★売れた分だけ +4（到着で+1は別）
+    const lv = addExp(4);
     const repState = addRep(cust.repDeltaOnBuy);
 
     const soldItem = slot.item;
@@ -1538,15 +1543,13 @@
     shop.slots[slotIdx].createdAt = 0;
     saveMyShop(shop);
 
-    // ★この棚だけ次回を再設定（連続湧き防止の核心）
+    // ★この棚だけ次回を再設定
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(slotIdx)] = now() + nextVisitDelayMs();
     saveTick(t);
 
     pushLog("売れた！", `${soldItem.name||soldItem.id} が ${fmt(price)} OCTOで売れた`, `棚${slotIdx+1} / rep ${repState.rep}`);
-
-    // ★売れたポップアップを“とても目立つ”ように
     toast("🔥 売れた！！ 🔥", `${soldItem.name||soldItem.id} ／ +${fmt(price)} OCTO`, "sale");
 
     if(lv.leveled){
@@ -1584,7 +1587,6 @@
     setStageEmpty("まだ誰も来ていない。");
   }
 
-  // ★安全弁：出現処理の多重起動を防ぐ
   let spawnLockUntil = 0;
 
   function tick(){
@@ -1610,15 +1612,12 @@
     const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
     if(due.length===0) return;
 
-    // 来客開始（まず「誰かくる！」→3秒後出現）
     const targetSlot = pick(due);
     toast("誰かくる！", `棚${targetSlot+1} を見てる気配…`, "");
 
-    // ★出現待ちの間はロック（多重発火防止）
     spawnLockUntil = now() + 3500;
 
     setTimeout(()=>{
-      // もしその間に誰か来てたら中断
       const st2 = loadStage();
       if(st2.hasVisitor) return;
 
@@ -1643,7 +1642,6 @@
       saveStage(s);
       renderStage();
 
-      // 到着EXP +1
       const lvup = addExp(1);
       if(lvup.leveled){
         pushLog("レベルアップ", `Lv${lvup.state.lv}になった！`, "");
@@ -1664,7 +1662,6 @@
       stageSellTimer = setTimeout(()=> saleProcess(), Math.max(1000, stayMs - 1000));
       stageLeaveTimer = setTimeout(()=> beginLeave(pick(LEAVE_LINES)), stayMs);
 
-      // ★その棚だけ次回を更新（ここも連続湧き防止）
       const tickObj = loadTick();
       tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
       saveTick(tickObj);
@@ -1675,6 +1672,8 @@
 
   /* ==========================
      呼び込み（1人だけ前倒し）＋CD
+     ★修正：CDを先にセットしない（出品棚が無い時にCD消費しない）
+     ★修正：次タイマー(来客スケジュール)は「選んだ棚だけ」前倒しで、他は触らない
   ========================== */
   function shout(){
     const st = loadStage();
@@ -1691,14 +1690,10 @@
       updateShoutUI();
       return;
     }
-    cd.nextOkAt = n + 60000;
-    saveShout(cd);
-    updateShoutUI();
 
     const shop = loadMyShop();
     const lv = loadLevel().lv;
 
-    // 有効棚から「1つだけ」選んで前倒し
     const active = [];
     shop.slots.forEach((s, idx)=>{
       if(s.item && canUseSlot(idx, lv)) active.push(idx);
@@ -1708,9 +1703,14 @@
       return;
     }
 
+    // ★ここで初めてCD消費
+    cd.nextOkAt = n + 60000;
+    saveShout(cd);
+    updateShoutUI();
+
     const t = ensureNextAtForActiveSlots();
     const nowMs = now();
-    // “最短の棚” をさらに前倒し
+
     let target = active[0];
     let best = Infinity;
     for(const idx of active){
@@ -1718,7 +1718,7 @@
       if(at < best){ best = at; target = idx; }
     }
 
-    // ★選んだ棚だけ前倒し
+    // ★選んだ棚だけ前倒し（他の棚は触らない）
     t.nextAtBySlot[String(target)] = Math.min(Number(t.nextAtBySlot[String(target)]||Infinity), nowMs + 1500);
     saveTick(t);
 
@@ -1746,7 +1746,6 @@
     const keys = [
       LS.octo, LS.myshop, LS.log, LS.lvl, LS.rep, LS.tick, LS.shout, LS.stage,
       LS.farmBook,
-      // 露店と連動する可能性が高いので、畑の資材在庫も一応含める（存在しなければnull）
       "tf_v1_inv"
     ];
 
@@ -1757,7 +1756,6 @@
         data[k] = null;
         continue;
       }
-      // JSONとして読めるならJSONで保存、ダメなら生文字
       const parsed = safeJSON(raw, null);
       data[k] = (parsed !== null) ? parsed : raw;
     }
@@ -1769,7 +1767,7 @@
 
     const payload = {
       exportedAt: d.toISOString(),
-      note: "マイ露店のlocalStorageバックアップ（復元は手動 or 復元ボタン実装で可能）",
+      note: "マイ露店のlocalStorageバックアップ（復元は復元ボタンで可能）",
       keys,
       data
     };
@@ -1778,6 +1776,69 @@
     toast("バックアップ作成", `${filename} を保存しました`, "");
     pushLog("バックアップ", "ローカルデータをJSONに書き出した", filename);
   }
+
+  /* ==========================
+     ★復元（JSONアップロード → localStorage書き戻し）
+  ========================== */
+  function restoreFromPayload(payload){
+    if(!payload || typeof payload !== "object"){
+      toast("復元失敗", "JSONの形式が不正です", "");
+      return false;
+    }
+    const data = payload.data;
+    if(!data || typeof data !== "object"){
+      toast("復元失敗", "data が見つかりません", "");
+      return false;
+    }
+
+    // 安全のため、入れるのはバックアップに含まれているキーだけ
+    const keys = Array.isArray(payload.keys) ? payload.keys : Object.keys(data);
+
+    for(const k of keys){
+      if(!(k in data)) continue;
+      const v = data[k];
+
+      if(v === null || v === undefined){
+        localStorage.removeItem(k);
+        continue;
+      }
+
+      // オリジナルがJSONならJSON.stringifyで戻す。文字列ならそのまま。
+      if(typeof v === "string"){
+        localStorage.setItem(k, v);
+      }else{
+        localStorage.setItem(k, JSON.stringify(v));
+      }
+    }
+
+    return true;
+  }
+
+  function openRestoreDialog(){
+    restoreFile.value = "";
+    restoreFile.click();
+  }
+
+  restoreFile.addEventListener("change", async ()=>{
+    const file = restoreFile.files && restoreFile.files[0];
+    if(!file) return;
+
+    try{
+      const text = await file.text();
+      const payload = JSON.parse(text);
+
+      if(!confirm("復元しますか？（今のデータは上書きされます）")) return;
+
+      const ok = restoreFromPayload(payload);
+      if(ok){
+        pushLog("復元", "バックアップから復元した", file.name);
+        toast("復元OK", "ページを再読み込みします", "");
+        setTimeout(()=> location.reload(), 650);
+      }
+    }catch(e){
+      toast("復元失敗", "JSONを読み込めませんでした", "");
+    }
+  });
 
   /* ==========================
      修理ボタン（あなたのまま）
@@ -1831,7 +1892,6 @@
     unlockBodyScroll();
   }
 
-  // modal close
   pickCloseBtn.addEventListener("click", closePickModal);
   pickCancelBtn.addEventListener("click", closePickModal);
   pickModal.addEventListener("click", (e)=>{ if(e.target===pickModal) closePickModal(); });
@@ -1849,6 +1909,7 @@
   shoutBtn.addEventListener("click", shout);
 
   backupBtn.addEventListener("click", makeBackup);
+  restoreBtn.addEventListener("click", openRestoreDialog);
 
   /* ==========================
      起動
@@ -1863,3 +1924,4 @@
 </script>
 </body>
 </html>
+
