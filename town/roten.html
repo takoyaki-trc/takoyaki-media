@@ -3,179 +3,124 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>露店｜たこぴのお店</title>
+  <title>露店</title>
 
-  <!-- ⭐ roten専用CSSのみ（他は絶対読まない） -->
+  <!-- 露店専用 -->
   <link rel="stylesheet" href="assets/roten.css">
 </head>
 
 <body>
-
-<!-- =====================================================
-  🔷 HUD（常時表示バー）
-===================================================== -->
-<header class="hd">
-  <div class="hud">
-
-    <div class="hud-left">
-      <a href="./index.html" class="hud-back">←</a>
-
-      <div class="hud-title">
-        <div class="ttl">露店</div>
-        <div class="sub">たこぴのお店</div>
-      </div>
+  <header class="roten-header">
+    <div class="roten-head-inner">
+      <div class="roten-title">露店</div>
+      <div class="roten-sub">マイ露店 / たこぴのお店</div>
     </div>
+  </header>
 
-    <div class="hud-right">
+  <main id="rotenApp" class="roten-app">
 
-      <!-- オクト -->
-      <div class="hud-chip hud-octo" id="hudOcto">
-        🪙 <span id="octoNow">0</span>
+    <!-- ====== HUD（数字は“サブ”にする） ====== -->
+    <section class="hud">
+      <div class="hud-left">
+        <div class="hud-pill">
+          <span class="tag">《オクト》</span>
+          <span class="num" id="octoNow">0</span>
+        </div>
+
+        <div class="hud-pill">
+          <span class="ico">🌱</span><span>種</span><b id="chipSeed">0</b>
+          <span class="sep">/</span>
+          <span class="ico">💧</span><span>水</span><b id="chipWater">0</b>
+          <span class="sep">/</span>
+          <span class="ico">🧪</span><span>肥料</span><b id="chipFert">0</b>
+        </div>
+
+        <div class="hud-pill">
+          <span class="ico">📗</span><span>図鑑所持</span><b id="chipBookOwned">0</b>
+        </div>
       </div>
 
-      <!-- 資材 -->
-      <button id="btnOpenInv" class="hud-chip">
-        🌱<span id="chipSeed">0</span>
-        /
-        💧<span id="chipWater">0</span>
-        /
-        🧪<span id="chipFert">0</span>
-      </button>
+      <div class="hud-right">
+        <button class="btn btn-ghost" id="btnOpenInv" type="button">所持資材</button>
+        <button class="btn btn-ghost" id="btnOpenRates" type="button">水のレア率メモ</button>
+        <button class="btn btn-ghost" id="btnGiveOcto" type="button">+100（テスト）</button>
+      </div>
+    </section>
 
-      <!-- 図鑑 -->
-      <a href="./zukan.html" class="hud-chip">
-        📗 図鑑 <span id="chipDex">0</span>
+    <!-- ====== タブ（RPGっぽく大きめ） ====== -->
+    <section class="tabs" role="tablist" aria-label="露店タブ">
+      <a class="tab" href="https://takoyaki-trc.github.io/takoyaki-media/town/myshop.html" role="tab" aria-selected="false">
+        マイ露店へ
       </a>
+      <button class="tab is-active" type="button" role="tab" aria-selected="true">
+        たこぴのお店
+      </button>
+    </section>
 
-    </div>
-  </div>
-</header>
+    <!-- ====== たこぴ店主ドーン（武器屋） ====== -->
+    <section class="shop-hero">
+      <div class="hero-card">
+        <div class="hero-imgwrap">
+          <img
+            class="hero-img"
+            id="takopiHeroImg"
+            src="https://ul.h3z.jp/6MpVi7u2.png"
+            alt="たこぴ"
+          />
+        </div>
 
+        <div class="hero-dialog">
+          <div class="hero-name">たこぴ</div>
+          <div class="hero-text" id="takopiSay">
+            「いらっしゃい…たこ。<br>オクトで“未来”を買うの、すき…たこ？」
+          </div>
 
+          <div class="hero-actions">
+            <button class="btn" id="btnMikuji" type="button">🎲 たこ焼きみくじ</button>
+            <button class="btn" id="btnLaunchPresent" type="button">🎁 公開記念プレゼント</button>
+          </div>
 
-<main class="wrap">
+          <div class="hero-note" id="heroNote">
+            ※無料資材（なに出るタネ／ただの水／ただの揚げ玉）は∞扱い。買う意味がない…たこ。
+          </div>
+        </div>
+      </div>
+    </section>
 
-<!-- =====================================================
-  🔷 店主（RPGショップ演出ゾーン）
-===================================================== -->
-<section class="keeper">
-
-  <div class="keeper-hero">
-
-    <!-- 顔ドーン -->
-    <img
-      class="keeper-face"
-      src="https://ul.h3z.jp/6MpVi7u2.png"
-      alt="たこぴ"
-    />
-
-    <!-- セリフ -->
-    <div class="keeper-bubble">
-
-      <div class="keeper-name">たこぴ</div>
-
-      <div class="keeper-text" id="takopiSay">
-        「いらっしゃい…たこ。<br>
-        オクトで“未来”を仕入れていく…たこ？」
+    <!-- ====== ブロック分け：ショップ ====== -->
+    <section class="block">
+      <div class="block-head">
+        <div class="block-title">購入（タップで買う）</div>
+        <div class="block-sub">買った資材は <b>ファーム(tf_v1_inv)</b> に入る。</div>
       </div>
 
-      <div class="keeper-actions">
-        <button id="btnMikuji" class="kbtn">🎲 たこ焼きみくじ</button>
-        <button id="btnGift" class="kbtn">🎁 プレゼント</button>
-        <button id="btnTakopiTalk" class="kbtn ghost">🗯 ひとこと</button>
+      <!-- 種/水/肥料タブ -->
+      <div class="goods-tabs" aria-label="資材タブ">
+        <button class="goods-tab is-active" data-kind="seed" type="button">種</button>
+        <button class="goods-tab" data-kind="water" type="button">水</button>
+        <button class="goods-tab" data-kind="fert" type="button">肥料</button>
       </div>
 
+      <!-- 商品棚（2列タイル） -->
+      <div class="goods-grid" id="goodsGrid"></div>
+    </section>
+
+  </main>
+
+  <!-- ====== MODAL ====== -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal__backdrop" id="modalBg"></div>
+    <div class="modal__sheet" role="dialog" aria-label="モーダル">
+      <div class="modal__grab"></div>
+      <div class="modal__head">
+        <div class="modal__title" id="modalTitle">タイトル</div>
+        <button class="btn modal__x" id="modalX" type="button">閉じる</button>
+      </div>
+      <div id="modalBody" class="modal__body"></div>
     </div>
   </div>
-</section>
 
-
-
-<!-- =====================================================
-  🔷 メインパネル（タブ切替）
-===================================================== -->
-<section class="panel">
-
-  <!-- ===== タブ ===== -->
-  <div class="tabs">
-
-    <button class="tab is-active" data-tab="buy">
-      🛒 仕入れ
-    </button>
-
-    <button class="tab" data-tab="sell">
-      💰 売却
-    </button>
-
-    <button class="tab" data-tab="inv">
-      📦 在庫
-    </button>
-
-  </div>
-
-
-
-  <!-- =====================================================
-    🟢 BUY（仕入れ）
-  ===================================================== -->
-  <div class="tabpane is-show" data-pane="buy">
-
-    <div class="subtabs">
-      <button class="subtab is-active" data-sub="seed">🌱 種</button>
-      <button class="subtab" data-sub="water">💧 水</button>
-      <button class="subtab" data-sub="fert">🧪 肥料</button>
-    </div>
-
-    <!-- JSがここにカード描画 -->
-    <div id="shopGrid" class="grid"></div>
-
-  </div>
-
-
-
-  <!-- =====================================================
-    🟡 SELL（売却）
-  ===================================================== -->
-  <div class="tabpane" data-pane="sell">
-
-    <div class="sell-head">
-      <div class="sell-title">図鑑カード売却（即決）</div>
-      <div class="sell-sub">所持枚数を指定して売れる…たこ</div>
-    </div>
-
-    <div id="sellList" class="sell-list"></div>
-
-  </div>
-
-
-
-  <!-- =====================================================
-    🔵 INV（在庫）
-  ===================================================== -->
-  <div class="tabpane" data-pane="inv">
-
-    <div id="invWrap" class="inv-wrap"></div>
-
-  </div>
-
-</section>
-
-
-
-<!-- =====================================================
-  🔷 Toast
-===================================================== -->
-<div id="toast" class="toast"></div>
-
-
-
-<!-- =====================================================
-  🔷 JS
-===================================================== -->
-<script src="assets/roten.js"></script>
-
-</main>
+  <script src="assets/roten.js"></script>
 </body>
 </html>
-
 
