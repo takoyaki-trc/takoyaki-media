@@ -3,138 +3,185 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>露店（たこぴのお店）</title>
+  <title>露店</title>
   <link rel="stylesheet" href="assets/roten.css">
 </head>
-
 <body>
-<header class="hd">
-  <!-- ===== HUD ===== -->
-  <div class="hud">
-    <div class="hud-left">
-      <a class="hud-back" href="./index.html" aria-label="戻る">←</a>
-      <div class="hud-title">
-        <div class="ttl">露店</div>
-        <div class="sub">たこぴのお店（資材ショップ）</div>
-      </div>
-    </div>
 
-    <div class="hud-right">
-      <div class="hud-chip hud-octo" id="hudOcto" title="オクト">
-        <span class="ico" aria-hidden="true">🪙</span>
-        <span class="num" id="octoNow">0</span>
-      </div>
+<header class="rt-header">
+  <a class="rt-back" href="./index.html" aria-label="戻る">←</a>
 
-      <button class="hud-chip hud-inv" id="btnOpenInv" type="button" title="所持資材">
-        <span class="ico" aria-hidden="true">🌱</span><span class="num" id="chipSeed">0</span>
-        <span class="sep">/</span>
-        <span class="ico" aria-hidden="true">💧</span><span class="num" id="chipWater">0</span>
-        <span class="sep">/</span>
-        <span class="ico" aria-hidden="true">🧪</span><span class="num" id="chipFert">0</span>
-      </button>
+  <div class="rt-headtext">
+    <div class="rt-title">露店</div>
+    <div class="rt-sub">たこぴのお店 / 売却 / 在庫</div>
+  </div>
 
-      <a class="hud-chip hud-dex" href="./zukan.html" title="図鑑へ">
-        <span class="ico" aria-hidden="true">📗</span>
-        <span class="txt">図鑑</span>
-        <span class="num" id="chipDex">0</span>
-      </a>
-    </div>
+  <div class="rt-money" aria-label="所持オクト">
+    <span class="rt-coin" aria-hidden="true">🪙</span>
+    <span id="octoNow" class="rt-money__num">0</span>
   </div>
 </header>
 
-<main class="wrap">
-  <!-- ===== 店主（世界観ゾーン） ===== -->
-  <section class="keeper">
-    <div class="keeper-hero">
-      <img class="keeper-face" alt="たこぴ" src="https://ul.h3z.jp/6MpVi7u2.png">
-      <div class="keeper-bubble">
-        <div class="keeper-name">たこぴ</div>
-        <div class="keeper-text" id="takopiSay">
-          「いらっしゃい…たこ。<br>オクトで“未来”を仕入れるの、すき…たこ？」
-        </div>
-        <div class="keeper-sub">
-          ※無料資材（ただの水/なに出るタネ/ただの揚げ玉）は ∞ 扱い。ここでは買えない（買う意味がない）…たこ。
-        </div>
+<main class="rt-wrap">
 
-        <div class="keeper-actions">
-          <button class="kbtn" id="btnMikuji" type="button">🎲 たこ焼きみくじ（1日1回）</button>
-          <button class="kbtn" id="btnGift" type="button">🎁 たこぴからプレゼント</button>
-          <button class="kbtn ghost" id="btnTakopiTalk" type="button">🗯 たこぴの一言</button>
+  <!-- ========== 店主バンッ（RPG感） ========== -->
+  <section class="rt-npc" aria-label="店主">
+    <div class="rt-npc__imgwrap">
+      <img class="rt-npc__img" src="https://ul.h3z.jp/6MpVi7u2.png" alt="たこぴ">
+      <div class="rt-npc__name">たこぴ</div>
+    </div>
+
+    <div class="rt-npc__bubble">
+      <div class="rt-npc__say" id="takopiSay">
+        「いらっしゃい…たこ。<br>🪙で“仕入れ”するの、すき…たこ？」
+      </div>
+
+      <div class="rt-npc__chips">
+        <button class="rt-chip" id="btnGift" type="button">🎁 公開記念ギフト</button>
+        <button class="rt-chip" id="btnMikuji" type="button">🎲 たこ焼きみくじ（1日1回）</button>
+        <a class="rt-chip" href="./zukan.html">📚 図鑑へ</a>
+      </div>
+
+      <div class="rt-npc__mini">
+        <div class="rt-minirow">
+          <span class="rt-mini" title="所持資材（合計）">🌱種 <b id="chipSeed">0</b></span>
+          <span class="rt-mini" title="所持資材（合計）">💧水 <b id="chipWater">0</b></span>
+          <span class="rt-mini" title="所持資材（合計）">🧪肥料 <b id="chipFert">0</b></span>
+        </div>
+        <div class="rt-minirow">
+          <span class="rt-mini" title="売却可能（ダブりのみ）">🃏売れるダブり <b id="chipDup">0</b></span>
+          <span class="rt-mini" title="相場更新まで">⏱更新まで <b id="chipNext">--:--</b></span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ===== 機能タブ ===== -->
-  <section class="panel">
-    <div class="tabs" role="tablist" aria-label="機能タブ">
-      <button class="tab is-active" data-tab="buy" type="button" role="tab" aria-selected="true">購入</button>
-      <button class="tab" data-tab="sell" type="button" role="tab" aria-selected="false">売却（即決）</button>
-      <button class="tab" data-tab="inv" type="button" role="tab" aria-selected="false">在庫</button>
-    </div>
+  <!-- ========== 相場ボード（大きく） ========== -->
+  <section class="rt-board" aria-label="相場">
+    <div class="rt-board__top">
+      <div class="rt-board__title">《今日のチャート》</div>
 
-    <!-- BUY -->
-    <div class="tabpane is-show" data-pane="buy">
-      <div class="subtabs" role="tablist" aria-label="購入タブ">
-        <button class="subtab is-active" data-sub="seed" type="button">🌱 種</button>
-        <button class="subtab" data-sub="water" type="button">💧 水</button>
-        <button class="subtab" data-sub="fert" type="button">🧪 肥料</button>
-      </div>
-
-      <div class="grid" id="shopGrid"></div>
-
-      <div class="note">
-        <div class="note-ttl">取引のコツ…たこ</div>
-        <div class="note-txt" id="buyHint">
-          「確認画面は、捨てた…たこ。<br>+10 とか +50 で一気に“仕入れる”…たこ。」
+      <div class="rt-board__right">
+        <div class="rt-pricebig">
+          <span id="boardPrice" class="rt-pricebig__num">--</span>
+          <span class="rt-pricebig__coin">🪙</span>
+          <span id="boardMult" class="rt-pricebig__mult">(×1.00)</span>
+        </div>
+        <div class="rt-board__sub">
+          <span>レア：<b id="boardRare">N</b></span>
+          <span class="rt-dot">•</span>
+          <span>次更新：<b id="boardNext">--:--</b></span>
         </div>
       </div>
     </div>
 
-    <!-- SELL -->
-    <div class="tabpane" data-pane="sell">
-      <div class="sell-head">
-        <div class="sell-title">図鑑（tf_v1_book）から即決売却</div>
-        <div class="sell-sub">売ると図鑑の <b>count</b> が減る。0になったら消える。</div>
-      </div>
-
-      <div class="sell-tools">
-        <button class="mini" id="btnSellSortNew" type="button">最近入手順</button>
-        <button class="mini" id="btnSellSortCount" type="button">枚数順</button>
-        <button class="mini ghost" id="btnSellInfo" type="button">価格ルール</button>
-      </div>
-
-      <div class="sell-list" id="sellList"></div>
+    <div class="rt-rarebar" role="tablist" aria-label="レア選択（相場）">
+      <button class="rt-rare is-on" data-rare="N"  type="button">N</button>
+      <button class="rt-rare"       data-rare="R"  type="button">R</button>
+      <button class="rt-rare"       data-rare="SR" type="button">SR</button>
+      <button class="rt-rare"       data-rare="UR" type="button">UR</button>
+      <button class="rt-rare"       data-rare="LR" type="button">LR</button>
     </div>
 
-    <!-- INV -->
-    <div class="tabpane" data-pane="inv">
-      <div class="inv-wrap" id="invWrap"></div>
+    <div class="rt-chartwrap">
+      <canvas id="chart" width="1200" height="520" aria-label="相場チャート"></canvas>
+    </div>
+
+    <div class="rt-board__foot">
+      <span class="rt-muted">※15分ごとに相場が動く（仮想通貨っぽい揺れ幅）。表示は選択レアの1本線のみ。</span>
     </div>
   </section>
 
-  <section class="debug">
-    <button class="mini ghost" id="btnGiveOcto" type="button">+100🪙（テスト）</button>
+  <!-- ========== モード切替（ごちゃらないための完全分離） ========== -->
+  <section class="rt-modes" aria-label="モード">
+    <button class="rt-mode is-on" data-mode="buy" type="button">仕入れ（資材）</button>
+    <button class="rt-mode" data-mode="sell" type="button">売却（ダブり）</button>
+    <button class="rt-mode" data-mode="inv" type="button">在庫（確認）</button>
   </section>
+
+  <!-- ========== 仕入れ（資材） ========== -->
+  <section class="rt-panel is-show" data-panel="buy" aria-label="仕入れ">
+    <div class="rt-box">
+      <div class="rt-box__title">たこぴのお店（資材ショップ）</div>
+      <div class="rt-box__sub rt-muted">「買う」じゃない…“取引”…たこ。</div>
+
+      <div class="rt-subtabs" aria-label="資材カテゴリ">
+        <button class="rt-subtab is-on" data-sub="seed"  type="button">🌱 種</button>
+        <button class="rt-subtab"       data-sub="water" type="button">💧 水</button>
+        <button class="rt-subtab"       data-sub="fert"  type="button">🧪 肥料</button>
+      </div>
+
+      <div id="buyGrid" class="rt-grid" aria-label="商品一覧"></div>
+    </div>
+  </section>
+
+  <!-- ========== 売却（ダブりのみ） ========== -->
+  <section class="rt-panel" data-panel="sell" aria-label="売却">
+    <div class="rt-box">
+      <div class="rt-box__title">カード売却（ダブりのみ）</div>
+      <div class="rt-box__sub rt-muted">図鑑用に1枚は残る。売れるのは “ダブり分だけ”。</div>
+
+      <div class="rt-selltop">
+        <div class="rt-sellhint">
+          選択レアの相場で売値が変わる：<b id="sellPriceHint">--</b>
+          <span class="rt-muted">（基礎×倍率）</span>
+        </div>
+      </div>
+
+      <div id="sellList" class="rt-selllist" aria-label="売却リスト"></div>
+      <div class="rt-muted rt-small" style="margin-top:10px;">
+        ※売却は確認画面なし。ミス防止のため <b>2秒だけ取り消し</b> を出す。
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 在庫（確認） ========== -->
+  <section class="rt-panel" data-panel="inv" aria-label="在庫">
+    <div class="rt-box">
+      <div class="rt-box__title">在庫（確認）</div>
+      <div class="rt-box__sub rt-muted">ここは“閲覧専用”。売買はしない。</div>
+
+      <div class="rt-invcols">
+        <div class="rt-invcol">
+          <div class="rt-invttl">🌱 種</div>
+          <div id="invSeed" class="rt-invlist"></div>
+        </div>
+        <div class="rt-invcol">
+          <div class="rt-invttl">💧 水</div>
+          <div id="invWater" class="rt-invlist"></div>
+        </div>
+        <div class="rt-invcol">
+          <div class="rt-invttl">🧪 肥料</div>
+          <div id="invFert" class="rt-invlist"></div>
+        </div>
+      </div>
+
+      <div class="rt-muted rt-small" style="margin-top:10px;">
+        ※資材在庫は <b>tf_v1_inv</b> を参照（ファームと共有）。
+      </div>
+    </div>
+  </section>
+
 </main>
 
-<!-- ===== Modal ===== -->
-<div class="modal" id="modal" aria-hidden="true">
-  <div class="modal-bg" id="modalBg"></div>
-  <div class="modal-sheet" role="dialog" aria-label="モーダル">
-    <div class="modal-head">
-      <div class="modal-title" id="modalTitle">タイトル</div>
-      <button class="mini" id="modalClose" type="button">閉じる</button>
+<!-- ========== モーダル ========== -->
+<div class="rt-modal" id="modal" aria-hidden="true">
+  <div class="rt-modal__bg" id="modalBg"></div>
+  <div class="rt-modal__sheet" role="dialog" aria-label="モーダル">
+    <div class="rt-modal__head">
+      <div class="rt-modal__title" id="modalTitle">タイトル</div>
+      <button class="rt-btn rt-btn--ghost" id="modalX" type="button">閉じる</button>
     </div>
-    <div class="modal-body" id="modalBody"></div>
+    <div class="rt-modal__body" id="modalBody"></div>
   </div>
 </div>
 
-<!-- ===== Toast ===== -->
-<div class="toast" id="toast" aria-live="polite"></div>
+<!-- ========== トースト（演出） ========== -->
+<div class="rt-toast" id="toast" aria-hidden="true"></div>
 
 <script src="assets/roten.js"></script>
 </body>
 </html>
+
 
 
