@@ -325,11 +325,11 @@
     if (fert) {
       const burnP = Number(fert.burnCardUp ?? 0);
       if (burnP > 0 && Math.random() < burnP) {
-        return { id:"SP-BURN", name:"焼きすぎたカード", img:PLOT_IMG.BURN, rarity:"SP" };
+        return { id:"SP-BURN", name:"焼きすぎたカード", img:"https://ul.h3z.jp/VSQupsYH.png", rarity:"SP" };
       }
       const rawP = Number(fert.rawCardChance ?? 0);
       if (rawP > 0 && Math.random() < rawP) {
-        return { id:"SP-RAW", name:"ドロドロ生焼けカード", img:PLOT_IMG.GROW1, rarity:"SP" };
+        return { id:"SP-RAW", name:"ドロドロ生焼けカード", img:"https://ul.h3z.jp/5E5NpGKP.png", rarity:"SP" };
       }
     }
 
