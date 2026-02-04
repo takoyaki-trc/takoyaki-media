@@ -8,6 +8,7 @@
      ✅ ロックマス：押すと「レベルアップで解放」
      ✅ openModalのイベント多重登録を防止（安定化）
      ✅ ★無料（∞）を廃止 → 無料タネ/無料水/無料肥料も在庫制（有料化前提）
+     ✅ ★たこぴのタネ：専用8枚から排出（将来増やせる）
   ========================== */
 
   // マス画像（状態ごと）
@@ -101,7 +102,7 @@
     { id:"seed_random", name:"【なに出るタネ】", desc:"何が育つかは完全ランダム。\n店主も知らない。", factor:1.00, img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
     { id:"seed_shop", name:"【店頭タネ】", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", factor:1.00, img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
     { id:"seed_line", name:"【回線タネ】", desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor:1.00, img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
-    { id:"seed_special", name:"【たこぴのタネ】", desc:"今はまだ何も起きない。\nそのうち何か起きる。", factor:1.00, img:"https://ul.h3z.jp/29OsEvjf.png", fx:"待て" },
+    { id:"seed_special", name:"【たこぴのタネ】", desc:"今はまだ何も起きない。\nそのうち何か起きる。", factor:1.00, img:"https://ul.h3z.jp/29OsEvjf.png", fx:"たこぴ専用8枚" },
     { id:"seed_colabo", name:"【コラボのタネ】", desc:"今はまだ何も起きない。\nそのうち何か起きる。", factor:1.00, img:"https://ul.h3z.jp/AWBcxVls.png", fx:"シリアル解放" },
   ];
 
@@ -119,6 +120,22 @@
     { id:"fert_guts", name:"③《根性論ぶち込み肥料》", desc:"理由はない。\n気合いだ。", factor:0.80, fx:"時短 20%", img:"https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp:0.00, rawCardChance:0.00, mantra:true, skipGrowAnim:false },
     { id:"fert_skip", name:"④《工程すっ飛ばし肥料》", desc:"途中は、\n見なかったことにした。", factor:0.60, fx:"時短 40%", img:"https://ul.h3z.jp/FqPzx12Q.png", burnCardUp:0.00, rawCardChance:0.01, mantra:false, skipGrowAnim:true },
     { id:"fert_timeno", name:"⑤《時間を信じない肥料》", desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》", factor:0.10, fx:"時短 90〜100%", img:"https://ul.h3z.jp/l2njWY57.png", burnCardUp:0.00, rawCardChance:0.03, mantra:false, skipGrowAnim:true },
+  ];
+
+  // =========================
+  // ★たこぴのタネ専用（8枚）
+  // 将来ここに追加して増やすだけでOK
+  // =========================
+  const TAKOPI_SEED_POOL = [
+    // ★ここをあなたの8枚に置き換える（img をあなたのURLへ）
+    { id:"TP-001", name:"届け！たこぴ便", img:"https://ul.h3z.jp/rjih1Em9.png", rarity:"N" },
+    { id:"TP-002", name:"ハロウィンたこぴ", img:"https://ul.h3z.jp/hIDWKss0.png", rarity:"N" },
+    { id:"TP-003", name:"紅葉たこぴ", img:"https://ul.h3z.jp/G05m1hbT.png", rarity:"N" },
+    { id:"TP-004", name:"クリスマスたこぴ", img:"https://ul.h3z.jp/FGEKvxhK.png", rarity:"N" },
+    { id:"TP-005", name:"お年玉たこぴ", img:"https://example.com/takopi5.png", rarity:"N" },
+    { id:"TP-006", name:"バレンタインたこぴ", img:"https://ul.h3z.jp/J0kj3CLb.png", rarity:"N" },
+    { id:"TP-007", name:"お年玉たこぴ", img:"https://example.com/takopi5.png", rarity:"N" },
+    { id:"TP-008", name:"バレンタインたこぴ", img:"https://ul.h3z.jp/J0kj3CLb.png", rarity:"N" },
   ];
 
   const MAX_PLOTS = 25;
@@ -321,6 +338,7 @@
   }
 
   function drawRewardForPlot(p){
+    // ① 肥料のSP抽選（焼きすぎ / 生焼け）
     const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
     if (fert) {
       const burnP = Number(fert.burnCardUp ?? 0);
@@ -333,6 +351,13 @@
       }
     }
 
+    // ② ★たこぴのタネ専用：8枚から排出（将来増やすのもここに追加するだけ）
+    if (p && p.seedId === "seed_special") {
+      const c = pick(TAKOPI_SEED_POOL);
+      return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
+    }
+
+    // ③ 通常：水でレア率→レアのプールから1枚
     const rarity = pickRarityWithWater(p ? p.waterId : null);
     const pool = (CARD_POOLS && CARD_POOLS[rarity]) ? CARD_POOLS[rarity] : (CARD_POOLS?.N || []);
     const c = pick(pool);
@@ -633,7 +658,7 @@
       document.getElementById("btnConfirm").addEventListener("click", () => {
         addToBook(reward);
 
-        const gain = XP_BY_RARITY[reward.rarity] ?? 4;
+        const gain = XP_BY_RARITY[reward.rarity] ?? 4; // SPや未定義は4
         addXP(gain);
 
         state.plots[i] = defaultPlot();
@@ -895,3 +920,4 @@
   render();
   setInterval(tick, TICK_MS);
 })();
+
