@@ -7,6 +7,7 @@
      ✅ XP & Level：最初3マス、収穫XP、レベルアップで解放（最大25）
      ✅ ロックマス：押すと「レベルアップで解放」
      ✅ openModalのイベント多重登録を防止（安定化）
+     ✅ ★無料（∞）を廃止 → 無料タネ/無料水/無料肥料も在庫制（有料化前提）
   ========================== */
 
   // マス画像（状態ごと）
@@ -173,14 +174,17 @@
     return { leveled, unlockedDelta };
   }
 
+  // =========================================================
+  // ★無料（∞）廃止：すべて在庫制（有料化前提）
+  // =========================================================
   const FREE_ITEMS = {
-    seed:  new Set(["seed_random"]),
-    water: new Set(["water_plain_free"]),
-    fert:  new Set(["fert_agedama"])
+    seed:  new Set([]),
+    water: new Set([]),
+    fert:  new Set([])
   };
 
   function isFree(invType, id){
-    return !!FREE_ITEMS[invType]?.has(id);
+    return false;
   }
 
   function defaultInv(){
@@ -200,6 +204,10 @@
       inv.seed  = inv.seed  || {};
       inv.water = inv.water || {};
       inv.fert  = inv.fert  || {};
+      // ★新しい項目が増えた時の穴埋め
+      for(const x of SEEDS)  if(!(x.id in inv.seed))  inv.seed[x.id]=0;
+      for(const x of WATERS) if(!(x.id in inv.water)) inv.water[x.id]=0;
+      for(const x of FERTS)  if(!(x.id in inv.fert))  inv.fert[x.id]=0;
       return inv;
     }catch(e){
       return defaultInv();
@@ -208,21 +216,18 @@
   function saveInv(inv){ localStorage.setItem(LS_INV, JSON.stringify(inv)); }
 
   function invGet(inv, invType, id){
-    if (isFree(invType, id)) return Infinity;
     const box = inv[invType] || {};
     const n = Number(box[id] ?? 0);
     return Number.isFinite(n) ? n : 0;
   }
 
   function invAdd(inv, invType, id, delta){
-    if (isFree(invType, id)) return;
     if(!inv[invType]) inv[invType] = {};
     const cur = Number(inv[invType][id] ?? 0);
     inv[invType][id] = Math.max(0, cur + delta);
   }
 
   function invDec(inv, invType, id){
-    if (isFree(invType, id)) return true;
     const cur = invGet(inv, invType, id);
     if(cur <= 0) return false;
     invAdd(inv, invType, id, -1);
@@ -694,9 +699,8 @@
 
     const list = items.map(x => {
       const cnt = invGet(inv, invType, x.id);
-      const isInf = (cnt === Infinity);
-      const cntLabel = isInf ? "∞" : String(cnt);
-      const disabled = (!isInf && cnt <= 0);
+      const cntLabel = String(cnt);
+      const disabled = (cnt <= 0);
 
       const isColaboSeed = (invType === "seed" && x.id === "seed_colabo");
 
@@ -720,7 +724,7 @@
     }).join("");
 
     openModal("選択", `
-      <div class="step">無料は∞／それ以外は所持数が必要。<br>コラボのタネはシリアルで増える。</div>
+      <div class="step">※すべて在庫制。露店で買って増やす。</div>
       <div class="cards">${list}</div>
       <div class="row">
         <button type="button" id="btnBackStep">戻る</button>
