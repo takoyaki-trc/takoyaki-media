@@ -3,160 +3,137 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>露店｜たこぴのお店</title>
-
-  <!-- ✅ 露店専用のみ（重要：takofarm.cssは絶対読み込まない） -->
+  <title>露店（たこぴのお店）</title>
   <link rel="stylesheet" href="assets/roten.css">
 </head>
 
-<body class="roten-page">
+<body>
+<header class="hd">
+  <!-- ===== HUD ===== -->
+  <div class="hud">
+    <div class="hud-left">
+      <a class="hud-back" href="./index.html" aria-label="戻る">←</a>
+      <div class="hud-title">
+        <div class="ttl">露店</div>
+        <div class="sub">たこぴのお店（資材ショップ）</div>
+      </div>
+    </div>
 
+    <div class="hud-right">
+      <div class="hud-chip hud-octo" id="hudOcto" title="オクト">
+        <span class="ico" aria-hidden="true">🪙</span>
+        <span class="num" id="octoNow">0</span>
+      </div>
 
+      <button class="hud-chip hud-inv" id="btnOpenInv" type="button" title="所持資材">
+        <span class="ico" aria-hidden="true">🌱</span><span class="num" id="chipSeed">0</span>
+        <span class="sep">/</span>
+        <span class="ico" aria-hidden="true">💧</span><span class="num" id="chipWater">0</span>
+        <span class="sep">/</span>
+        <span class="ico" aria-hidden="true">🧪</span><span class="num" id="chipFert">0</span>
+      </button>
 
-
-<!-- =====================================================
-   ヘッダー
-===================================================== -->
-<header class="roten-header">
-  <a href="./index.html">← 戻る</a>
-
-  <div class="roten-title">
-    露店｜たこぴのお店
-  </div>
-
-  <div class="roten-money">
-    🪙 <span>0</span>
+      <a class="hud-chip hud-dex" href="./zukan.html" title="図鑑へ">
+        <span class="ico" aria-hidden="true">📗</span>
+        <span class="txt">図鑑</span>
+        <span class="num" id="chipDex">0</span>
+      </a>
+    </div>
   </div>
 </header>
 
+<main class="wrap">
+  <!-- ===== 店主（世界観ゾーン） ===== -->
+  <section class="keeper">
+    <div class="keeper-hero">
+      <img class="keeper-face" alt="たこぴ" src="https://ul.h3z.jp/6MpVi7u2.png">
+      <div class="keeper-bubble">
+        <div class="keeper-name">たこぴ</div>
+        <div class="keeper-text" id="takopiSay">
+          「いらっしゃい…たこ。<br>オクトで“未来”を仕入れるの、すき…たこ？」
+        </div>
+        <div class="keeper-sub">
+          ※無料資材（ただの水/なに出るタネ/ただの揚げ玉）は ∞ 扱い。ここでは買えない（買う意味がない）…たこ。
+        </div>
 
+        <div class="keeper-actions">
+          <button class="kbtn" id="btnMikuji" type="button">🎲 たこ焼きみくじ（1日1回）</button>
+          <button class="kbtn" id="btnGift" type="button">🎁 たこぴからプレゼント</button>
+          <button class="kbtn ghost" id="btnTakopiTalk" type="button">🗯 たこぴの一言</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
-
-<!-- =====================================================
-   店主バンッ（RPG風）
-===================================================== -->
-<section class="roten-hero">
-  <img
-    class="roten-hero-img"
-    src="https://ul.h3z.jp/6MpVi7u2.png"
-    alt="たこぴ">
-
-  <div class="roten-hero-msg">
-    「いらっしゃい…たこ。<br>
-     相場は生き物…焦ると焼ける…たこ。」
-  </div>
-</section>
-
-
-
-
-<!-- =====================================================
-   相場ボード（主役）
-===================================================== -->
-<section class="roten-market">
-
-  <div class="roten-market-head">
-    <div class="roten-market-title">
-      SR 相場
+  <!-- ===== 機能タブ ===== -->
+  <section class="panel">
+    <div class="tabs" role="tablist" aria-label="機能タブ">
+      <button class="tab is-active" data-tab="buy" type="button" role="tab" aria-selected="true">購入</button>
+      <button class="tab" data-tab="sell" type="button" role="tab" aria-selected="false">売却（即決）</button>
+      <button class="tab" data-tab="inv" type="button" role="tab" aria-selected="false">在庫</button>
     </div>
 
-    <div class="roten-market-timer">
-      次の更新まで <span id="timer">--:--</span>
+    <!-- BUY -->
+    <div class="tabpane is-show" data-pane="buy">
+      <div class="subtabs" role="tablist" aria-label="購入タブ">
+        <button class="subtab is-active" data-sub="seed" type="button">🌱 種</button>
+        <button class="subtab" data-sub="water" type="button">💧 水</button>
+        <button class="subtab" data-sub="fert" type="button">🧪 肥料</button>
+      </div>
+
+      <div class="grid" id="shopGrid"></div>
+
+      <div class="note">
+        <div class="note-ttl">取引のコツ…たこ</div>
+        <div class="note-txt" id="buyHint">
+          「確認画面は、捨てた…たこ。<br>+10 とか +50 で一気に“仕入れる”…たこ。」
+        </div>
+      </div>
     </div>
-  </div>
 
-  <canvas class="roten-chart"></canvas>
+    <!-- SELL -->
+    <div class="tabpane" data-pane="sell">
+      <div class="sell-head">
+        <div class="sell-title">図鑑（tf_v1_book）から即決売却</div>
+        <div class="sell-sub">売ると図鑑の <b>count</b> が減る。0になったら消える。</div>
+      </div>
 
-</section>
+      <div class="sell-tools">
+        <button class="mini" id="btnSellSortNew" type="button">最近入手順</button>
+        <button class="mini" id="btnSellSortCount" type="button">枚数順</button>
+        <button class="mini ghost" id="btnSellInfo" type="button">価格ルール</button>
+      </div>
 
+      <div class="sell-list" id="sellList"></div>
+    </div>
 
+    <!-- INV -->
+    <div class="tabpane" data-pane="inv">
+      <div class="inv-wrap" id="invWrap"></div>
+    </div>
+  </section>
 
-
-<!-- =====================================================
-   レアリティ切替（1本チャート用）
-===================================================== -->
-<div class="roten-rarities">
-  <button class="roten-chip active" data-r="N">N</button>
-  <button class="roten-chip" data-r="R">R</button>
-  <button class="roten-chip" data-r="SR">SR</button>
-  <button class="roten-chip" data-r="UR">UR</button>
-  <button class="roten-chip" data-r="LR">LR</button>
-</div>
-
-
-
-
-<!-- =====================================================
-   モード切替（完全分離）
-===================================================== -->
-<div class="roten-tabs">
-  <button class="roten-tab active" data-tab="buy">
-    仕入れ
-  </button>
-
-  <button class="roten-tab" data-tab="sell">
-    売却
-  </button>
-
-  <button class="roten-tab" data-tab="inv">
-    在庫
-  </button>
-</div>
-
-
-
-
-<!-- =====================================================
-   コンテンツ表示エリア（JSが中身生成）
-===================================================== -->
-<main class="roten-content">
-  <!-- JS描画 -->
+  <section class="debug">
+    <button class="mini ghost" id="btnGiveOcto" type="button">+100🪙（テスト）</button>
+  </section>
 </main>
 
+<!-- ===== Modal ===== -->
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-bg" id="modalBg"></div>
+  <div class="modal-sheet" role="dialog" aria-label="モーダル">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">タイトル</div>
+      <button class="mini" id="modalClose" type="button">閉じる</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
 
+<!-- ===== Toast ===== -->
+<div class="toast" id="toast" aria-live="polite"></div>
 
-
-<!-- =====================================================
-   トースト（演出用）
-===================================================== -->
-<div class="roten-toast"></div>
-
-
-
-
-<!-- =====================================================
-   JS（露店専用のみ）
-===================================================== -->
 <script src="assets/roten.js"></script>
-
-
-
-
-<!-- =====================================================
-   タイマー表示（軽量カウントダウン）
-===================================================== -->
-<script>
-(function(){
-  const el = document.getElementById("timer");
-
-  setInterval(()=>{
-    const s = JSON.parse(localStorage.getItem("roten_v1_state")||"{}");
-    if(!s.next) return;
-
-    const left = s.next - Date.now();
-
-    const m = Math.floor(left/60000);
-    const sec = Math.floor((left%60000)/1000);
-
-    el.textContent = m + ":" + sec.toString().padStart(2,"0");
-  },1000);
-})();
-</script>
-
-
-
-
 </body>
 </html>
-
 
