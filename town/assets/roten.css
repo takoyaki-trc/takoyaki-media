@@ -1,651 +1,326 @@
+/* =====================================================
+   roten.css
+   露店専用CSS（takofarmと完全分離・衝突ゼロ設計）
+   すべて .roten- 名前空間
+===================================================== */
+
+
+/* =========================
+   ルートカラー
+========================= */
 :root{
-  --bg:#0b0f1a;
-  --panel:#10172a;
-  --panel2:#0e1526;
-  --line:rgba(255,255,255,.12);
-  --text:#eaf0ff;
-  --muted:rgba(234,240,255,.72);
+  --roten-bg:#0f1220;
+  --roten-panel:#141826;
+  --roten-panel2:#0c101a;
+  --roten-line:#263246;
 
-  --good:#9fffa8;
-  --warn:#ffd38a;
-  --bad:#ff9aa5;
+  --roten-text:#ffffff;
+  --roten-muted:#9aa4b6;
 
-  --shadow: 0 14px 40px rgba(0,0,0,.45);
-  --radius: 16px;
+  --roten-green:#7cffb2;
+  --roten-red:#ff7c7c;
+  --roten-blue:#6bb7ff;
 
-  --maxw: 880px;
+  --roten-radius:14px;
 }
 
-*{ box-sizing:border-box; }
 
-html,body{ height:100%; }
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
-  color:var(--text);
 
-  /* ✅ 白く透けないよう、完全に“黒ベース固定” */
-  background: radial-gradient(1200px 600px at 30% -10%, rgba(107,183,255,.18), transparent 55%),
-              radial-gradient(900px 500px at 90% 10%, rgba(255,211,138,.14), transparent 60%),
-              linear-gradient(#070a12, #0b0f1a 40%, #070a12);
-  background-attachment: fixed;
-
-  /* overscrollで下が白く見えるのを防ぐ */
-  overscroll-behavior: none;
+/* =====================================================
+   全体ラッパ
+===================================================== */
+.roten-page{
+  min-height:100vh;
+  background:var(--roten-bg);
+  color:var(--roten-text);
+  display:flex;
+  flex-direction:column;
 }
 
-a{ color:inherit; text-decoration:none; }
-.rt-muted{ color:var(--muted); }
-.rt-small{ font-size:12px; }
-.rt-dot{ opacity:.6; padding:0 6px; }
 
-.rt-wrap{
-  max-width: var(--maxw);
-  margin:0 auto;
-  padding: 12px 14px 28px;
-}
 
-/* ========== header ========== */
-.rt-header{
-  position:sticky;
-  top:0;
-  z-index:50;
+/* =====================================================
+   ヘッダー
+===================================================== */
+.roten-header{
   display:flex;
   align-items:center;
-  gap:10px;
-  padding: 10px 12px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  background: rgba(7,10,18,.78);
-  backdrop-filter: blur(10px);
+  justify-content:space-between;
+
+  padding:12px 16px;
+
+  background:var(--roten-panel2);
+  border-bottom:1px solid var(--roten-line);
 }
 
-.rt-back{
-  width:40px;height:40px;
-  display:flex;align-items:center;justify-content:center;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:rgba(255,255,255,.06);
+.roten-title{
   font-weight:900;
+  font-size:16px;
 }
 
-.rt-headtext{ display:flex; flex-direction:column; line-height:1.15; }
-.rt-title{ font-weight:1000; letter-spacing:.02em; }
-.rt-sub{ font-size:12px; color:var(--muted); }
-
-.rt-money{
-  margin-left:auto;
-  display:flex; align-items:center; gap:8px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.06);
-  padding: 8px 10px;
-  border-radius: 999px;
-  box-shadow: 0 8px 22px rgba(0,0,0,.22);
-}
-.rt-coin{ font-size:16px; }
-.rt-money__num{ font-weight:1000; font-variant-numeric: tabular-nums; }
-
-/* ========== NPC ========== */
-.rt-npc{
-  display:grid;
-  grid-template-columns: 120px 1fr;
-  gap:12px;
-  margin-top:12px;
-  padding: 12px;
-  border:1px solid var(--line);
-  border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(16,23,42,.92), rgba(14,21,38,.92));
-  box-shadow: var(--shadow);
-}
-
-.rt-npc__imgwrap{
-  position:relative;
-  border:1px solid rgba(255,255,255,.10);
-  border-radius: 16px;
-  background: rgba(255,255,255,.04);
-  padding: 10px;
-  display:flex; align-items:center; justify-content:center;
-  overflow:hidden;
-}
-.rt-npc__img{
-  width:100%;
-  max-width:110px;
-  height:auto;
-  display:block;
-  filter: drop-shadow(0 12px 18px rgba(0,0,0,.35));
-}
-.rt-npc__name{
-  position:absolute;
-  left:10px; bottom:10px;
-  font-size:12px;
-  font-weight:1000;
-  padding: 5px 8px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.32);
-}
-
-.rt-npc__bubble{
-  display:grid;
-  gap:10px;
-}
-.rt-npc__say{
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.22);
-  border-radius: 16px;
-  padding: 10px 12px;
-  line-height:1.45;
-  font-weight:800;
-}
-.rt-npc__chips{
-  display:flex; flex-wrap:wrap;
-  gap:8px;
-}
-.rt-chip{
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  border-radius: 999px;
-  padding: 8px 10px;
+.roten-money{
   font-weight:900;
-  cursor:pointer;
-}
-.rt-chip:active{ transform: translateY(1px); }
-
-.rt-npc__mini{
-  display:grid;
-  gap:6px;
-}
-.rt-minirow{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
-.rt-mini{
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.05);
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size:12px;
-  color: var(--muted);
-}
-.rt-mini b{ color:var(--text); font-weight:1000; }
-
-/* ========== board ========== */
-.rt-board{
-  margin-top:12px;
-  border:1px solid var(--line);
-  border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(16,23,42,.92), rgba(14,21,38,.92));
-  box-shadow: var(--shadow);
-  overflow:hidden;
+  font-size:18px;
 }
 
-.rt-board__top{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  padding: 12px 12px 10px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.03);
-}
 
-.rt-board__title{
-  font-weight:1000;
-  letter-spacing:.02em;
-}
-.rt-board__right{
-  text-align:right;
-}
-.rt-pricebig{
-  display:flex;
-  align-items:baseline;
-  justify-content:flex-end;
-  gap:6px;
-  font-variant-numeric: tabular-nums;
-}
-.rt-pricebig__num{
-  font-size:22px;
-  font-weight:1000;
-}
-.rt-pricebig__mult{
-  font-size:12px;
-  color: var(--muted);
-}
 
-.rt-board__sub{
-  margin-top:4px;
-  font-size:12px;
-  color: var(--muted);
-}
-
-.rt-rarebar{
-  display:flex;
-  gap:8px;
-  padding: 10px 12px;
-  border-bottom:1px solid rgba(255,255,255,.06);
-  flex-wrap:wrap;
-}
-.rt-rare{
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  border-radius: 12px;
-  padding: 8px 10px;
-  font-weight:1000;
-  cursor:pointer;
-}
-.rt-rare.is-on{
-  outline:2px solid rgba(107,183,255,.35);
-  background: rgba(107,183,255,.12);
-}
-
-.rt-chartwrap{
-  padding: 10px 10px 12px;
-}
-#chart{
-  width:100%;
-  height:auto;
-  display:block;
-  border-radius: 14px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.18);
-}
-
-.rt-board__foot{
-  padding: 0 12px 12px;
-}
-
-/* ========== modes ========== */
-.rt-modes{
-  margin-top:12px;
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap:10px;
-}
-.rt-mode{
-  border:1px solid var(--line);
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  border-radius: 16px;
-  padding: 12px 10px;
-  font-weight:1000;
-  cursor:pointer;
-}
-.rt-mode.is-on{
-  background: rgba(159,255,168,.12);
-  outline:2px solid rgba(159,255,168,.25);
-}
-
-/* ========== panels ========== */
-.rt-panel{ display:none; margin-top:12px; }
-.rt-panel.is-show{ display:block; }
-
-.rt-box{
-  border:1px solid var(--line);
-  border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(16,23,42,.92), rgba(14,21,38,.92));
-  box-shadow: var(--shadow);
-  padding: 12px;
-}
-.rt-box__title{
-  font-weight:1000;
-  margin-bottom:6px;
-}
-.rt-box__sub{
-  font-size:12px;
-  margin-bottom:10px;
-}
-
-/* ========== sub tabs (buy) ========== */
-.rt-subtabs{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-bottom:10px;
-}
-.rt-subtab{
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  border-radius: 12px;
-  padding: 8px 10px;
-  font-weight:1000;
-  cursor:pointer;
-}
-.rt-subtab.is-on{
-  outline:2px solid rgba(255,211,138,.25);
-  background: rgba(255,211,138,.12);
-}
-
-/* ========== grid cards (buy) ========== */
-.rt-grid{
-  display:grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap:10px;
-}
-@media (min-width:720px){
-  .rt-grid{ grid-template-columns: repeat(3, 1fr); }
-}
-.rt-item{
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.05);
-  border-radius: 16px;
-  padding: 10px;
-  display:grid;
-  gap:8px;
-  position:relative;
-  overflow:hidden;
-}
-.rt-item__imgbox{
-  width:100%;
-  height: 120px;
-  border-radius: 14px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.18);
-  overflow:hidden;
-  display:flex; align-items:center; justify-content:center;
-}
-.rt-item__imgbox img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  display:block;
-}
-.rt-item__name{ font-weight:1000; font-size:13px; }
-.rt-item__desc{ font-size:12px; color:var(--muted); line-height:1.4; min-height: 34px; }
-.rt-item__meta{
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  font-size:12px;
-  color:var(--muted);
-}
-.rt-item__meta b{ color:var(--text); }
-
-.rt-item__btns{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:8px;
-}
-.rt-btn{
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.08);
-  color: var(--text);
-  border-radius: 14px;
-  padding: 10px 10px;
-  font-weight:1000;
-  cursor:pointer;
-}
-.rt-btn--ghost{ background: rgba(255,255,255,.04); }
-.rt-btn--good{ background: rgba(159,255,168,.12); border-color: rgba(159,255,168,.25); }
-.rt-btn:disabled{ opacity:.55; cursor:not-allowed; }
-.rt-btn:active{ transform: translateY(1px); }
-
-.rt-pill{
-  position:absolute;
-  right:10px; top:10px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.25);
-  border-radius: 999px;
-  padding: 4px 8px;
-  font-size:12px;
-  font-weight:1000;
-}
-
-/* ========== sell list ========== */
-.rt-selltop{
+/* =====================================================
+   店主バンッ（RPG風）
+===================================================== */
+.roten-hero{
   display:flex;
   align-items:center;
+  gap:14px;
+
+  padding:14px 16px;
+
+  background:var(--roten-panel);
+  border-bottom:1px solid var(--roten-line);
+}
+
+.roten-hero-img{
+  width:84px;
+  image-rendering:pixelated;
+}
+
+.roten-hero-msg{
+  font-size:14px;
+  color:var(--roten-muted);
+  line-height:1.5;
+}
+
+
+
+/* =====================================================
+   相場ボード（主役）
+===================================================== */
+.roten-market{
+  padding:14px 16px;
+  background:var(--roten-panel2);
+  border-bottom:1px solid var(--roten-line);
+}
+
+.roten-market-head{
+  display:flex;
   justify-content:space-between;
-  gap:10px;
-  margin-bottom:10px;
-}
-.rt-sellhint{
-  font-size:12px;
-  color:var(--muted);
-}
-.rt-sellhint b{ color:var(--text); }
-
-.rt-selllist{
-  display:grid;
-  gap:10px;
-}
-.rt-sellrow{
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.05);
-  border-radius: 16px;
-  padding: 10px;
-  display:grid;
-  grid-template-columns: 56px 1fr auto;
-  gap:10px;
   align-items:center;
-}
-.rt-thumb{
-  width:56px;height:56px;
-  border-radius: 14px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.18);
-  overflow:hidden;
-}
-.rt-thumb img{
-  width:100%; height:100%;
-  object-fit:cover;
-  display:block;
-}
-.rt-sellmain{
-  min-width:0;
-}
-.rt-sellname{
-  font-weight:1000;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.rt-sellsub{
-  margin-top:4px;
-  font-size:12px;
-  color:var(--muted);
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-.rt-sellctl{
-  display:grid;
-  gap:8px;
-  justify-items:end;
-}
-.rt-qty{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.18);
-  border-radius: 999px;
-  padding: 6px 8px;
-}
-.rt-qty button{
-  width:28px;height:28px;
-  border-radius: 999px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.08);
-  color: var(--text);
-  font-weight:1000;
-  cursor:pointer;
-}
-.rt-qty button:active{ transform: translateY(1px); }
-.rt-qty .rt-qtynum{
-  min-width: 30px;
-  text-align:center;
-  font-weight:1000;
-  font-variant-numeric: tabular-nums;
-}
-.rt-sellbtn{
-  min-width: 160px;
-}
-
-/* ========== inv ========== */
-.rt-invcols{
-  display:grid;
-  gap:10px;
-}
-@media (min-width:720px){
-  .rt-invcols{
-    grid-template-columns: repeat(3, 1fr);
-    align-items:start;
-  }
-}
-.rt-invcol{
-  border:1px solid rgba(255,255,255,.08);
-  background: rgba(0,0,0,.14);
-  border-radius: 16px;
-  padding: 10px;
-}
-.rt-invttl{
-  font-weight:1000;
   margin-bottom:8px;
 }
-.rt-invlist{
-  display:grid;
-  gap:6px;
+
+.roten-market-title{
+  font-weight:900;
 }
-.rt-invitem{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
+
+.roten-market-timer{
   font-size:12px;
-  color:var(--muted);
-  padding: 6px 8px;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius: 12px;
-  background: rgba(255,255,255,.04);
+  color:var(--roten-muted);
 }
-.rt-invitem b{ color:var(--text); font-weight:1000; }
 
-/* ========== modal ========== */
-.rt-modal{
-  position:fixed;
-  inset:0;
-  display:none;
-  z-index:2000;
-}
-.rt-modal[aria-hidden="false"]{ display:block; }
+/* チャート領域 */
+.roten-chart{
+  width:100%;
+  height:200px;
 
-.rt-modal__bg{
-  position:absolute; inset:0;
-  background: rgba(0,0,0,.62);
-  backdrop-filter: blur(6px);
+  background:#070b10;
+  border-radius:12px;
+
+  border:1px solid var(--roten-line);
 }
-.rt-modal__sheet{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform: translate(-50%, -50%);
-  width: min(740px, 94vw);
-  max-height: 86vh;
-  overflow:hidden;
-  border-radius: 18px;
-  border:1px solid rgba(255,255,255,.12);
-  background: linear-gradient(180deg, rgba(16,23,42,.98), rgba(14,21,38,.98));
-  box-shadow: var(--shadow);
-}
-.rt-modal__head{
+
+
+
+/* =====================================================
+   レアリティチップ
+===================================================== */
+.roten-rarities{
   display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  padding: 12px 12px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.03);
-}
-.rt-modal__title{
-  font-weight:1000;
-}
-.rt-modal__body{
-  padding: 12px;
-  overflow:auto;
-  max-height: calc(86vh - 56px);
+  gap:6px;
+  padding:12px 12px 6px;
 }
 
-/* ========== mikuji ========== */
-.rt-mikuji{
-  display:grid;
-  gap:12px;
-}
-.rt-yaki{
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap:10px;
-}
-.rt-yaki button{
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.05);
-  border-radius: 16px;
-  padding: 8px;
+.roten-chip{
+  flex:1;
+  padding:8px 0;
+
+  border-radius:10px;
+  border:1px solid var(--roten-line);
+
+  background:var(--roten-panel);
+  color:var(--roten-muted);
+
+  font-weight:700;
+  font-size:13px;
+
   cursor:pointer;
 }
-.rt-yaki img{
-  width:100%;
-  height:86px;
-  object-fit:contain;
-  display:block;
-  border-radius: 14px;
-  background: rgba(0,0,0,.18);
-  border:1px solid rgba(255,255,255,.10);
-}
-.rt-glow{
-  border:1px solid rgba(159,255,168,.22);
-  background: rgba(159,255,168,.10);
-  border-radius: 16px;
-  padding: 10px;
-}
-.rt-glow .rt-big{
-  font-weight:1000;
-  font-size:16px;
-  margin-bottom:6px;
-}
-.rt-glow img{
-  width:100%;
-  max-width: 360px;
-  display:block;
-  margin: 10px auto 0;
-  border-radius: 16px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.18);
+
+.roten-chip.active{
+  color:#000;
+  background:var(--roten-green);
 }
 
-/* ========== toast ========== */
-.rt-toast{
+
+
+/* =====================================================
+   モード切替（仕入れ/売却/在庫）
+===================================================== */
+.roten-tabs{
+  display:flex;
+  gap:6px;
+
+  padding:10px 12px;
+}
+
+.roten-tab{
+  flex:1;
+
+  padding:10px 0;
+
+  border-radius:12px;
+  border:1px solid var(--roten-line);
+
+  background:var(--roten-panel);
+  color:var(--roten-muted);
+
+  font-weight:900;
+  cursor:pointer;
+}
+
+.roten-tab.active{
+  background:var(--roten-blue);
+  color:#000;
+}
+
+
+
+/* =====================================================
+   コンテンツ領域
+===================================================== */
+.roten-content{
+  flex:1;
+  padding:12px;
+  display:grid;
+  gap:8px;
+}
+
+
+
+/* =====================================================
+   商品/カード 行UI
+===================================================== */
+.roten-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  background:var(--roten-panel);
+  border:1px solid var(--roten-line);
+
+  border-radius:12px;
+  padding:8px 10px;
+}
+
+.roten-row img{
+  width:44px;
+  height:60px;
+  object-fit:cover;
+  border-radius:6px;
+}
+
+.roten-name{
+  flex:1;
+  font-size:13px;
+}
+
+.roten-price{
+  font-weight:900;
+  font-size:13px;
+}
+
+
+
+/* =====================================================
+   数量UI
+===================================================== */
+.roten-qty{
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+
+.roten-qty button{
+  width:26px;
+  height:26px;
+
+  border-radius:6px;
+  border:1px solid var(--roten-line);
+
+  background:#0b1018;
+  color:white;
+
+  font-weight:900;
+  cursor:pointer;
+}
+
+
+
+/* =====================================================
+   ボタン
+===================================================== */
+.roten-btn{
+  padding:6px 10px;
+
+  border-radius:8px;
+  border:1px solid var(--roten-line);
+
+  background:#0b1018;
+  color:white;
+
+  font-weight:900;
+  cursor:pointer;
+}
+
+.roten-btn.buy{
+  background:var(--roten-green);
+  color:#000;
+}
+
+.roten-btn.sell{
+  background:var(--roten-red);
+  color:#000;
+}
+
+
+
+/* =====================================================
+   トースト（演出）
+===================================================== */
+.roten-toast{
   position:fixed;
+  bottom:20px;
   left:50%;
-  bottom:16px;
-  transform: translateX(-50%);
-  z-index:3000;
+  transform:translateX(-50%);
+
+  background:#000c;
+  padding:10px 14px;
+
+  border-radius:12px;
+  border:1px solid var(--roten-line);
+
+  font-size:13px;
+
   display:none;
-  max-width: min(720px, 92vw);
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.72);
-  color: var(--text);
-  border-radius: 16px;
-  padding: 10px 12px;
-  font-size:12px;
-  box-shadow: 0 14px 40px rgba(0,0,0,.45);
-}
-.rt-toast.is-show{ display:block; }
-.rt-toast b{ font-weight:1000; }
-
-/* small screens */
-@media (max-width:420px){
-  .rt-npc{ grid-template-columns: 98px 1fr; }
-  .rt-sellrow{ grid-template-columns: 56px 1fr; }
-  .rt-sellctl{ justify-items:stretch; }
-  .rt-sellbtn{ min-width: 100%; }
+  z-index:9999;
 }
 
-/* reduce motion */
-@media (prefers-reduced-motion: reduce){
-  .rt-chip:active, .rt-btn:active, .rt-qty button:active{ transform:none; }
+.roten-toast.show{
+  display:block;
+  animation:rotenPop .4s ease;
+}
+
+@keyframes rotenPop{
+  0%{transform:translateX(-50%) scale(.9)}
+  100%{transform:translateX(-50%) scale(1)}
 }
 
