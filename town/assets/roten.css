@@ -1,326 +1,477 @@
-/* =====================================================
-   roten.css
-   露店専用CSS（takofarmと完全分離・衝突ゼロ設計）
-   すべて .roten- 名前空間
-===================================================== */
-
-
-/* =========================
-   ルートカラー
-========================= */
 :root{
-  --roten-bg:#0f1220;
-  --roten-panel:#141826;
-  --roten-panel2:#0c101a;
-  --roten-line:#263246;
-
-  --roten-text:#ffffff;
-  --roten-muted:#9aa4b6;
-
-  --roten-green:#7cffb2;
-  --roten-red:#ff7c7c;
-  --roten-blue:#6bb7ff;
-
-  --roten-radius:14px;
+  --bg:#0f1220;
+  --panel:rgba(255,255,255,.06);
+  --line:rgba(255,255,255,.14);
+  --text:#fff;
+  --muted:rgba(255,255,255,.72);
+  --good:#9fffa8;
+  --warn:#ffd38a;
+  --bad:#ff9aa5;
+  --btn:rgba(255,255,255,.10);
+  --btn2:rgba(255,255,255,.14);
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --radius:16px;
 }
 
-
-
-/* =====================================================
-   全体ラッパ
-===================================================== */
-.roten-page{
-  min-height:100vh;
-  background:var(--roten-bg);
-  color:var(--roten-text);
-  display:flex;
-  flex-direction:column;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
+  color:var(--text);
+  background:
+    linear-gradient(rgba(15,18,32,.78), rgba(15,18,32,.78)),
+    url("https://ul.h3z.jp/8DNhFtiC.png");
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
 }
 
+a{color:inherit}
 
-
-/* =====================================================
-   ヘッダー
-===================================================== */
-.roten-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-
-  padding:12px 16px;
-
-  background:var(--roten-panel2);
-  border-bottom:1px solid var(--roten-line);
+.wrap{
+  max-width:860px;
+  margin:0 auto;
+  padding:12px 14px 24px;
 }
 
-.roten-title{
-  font-weight:900;
-  font-size:16px;
+/* ===== HUD ===== */
+.hd{position:sticky; top:0; z-index:30; backdrop-filter: blur(8px);}
+.hud{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  background:rgba(15,18,32,.72);
 }
-
-.roten-money{
-  font-weight:900;
-  font-size:18px;
-}
-
-
-
-/* =====================================================
-   店主バンッ（RPG風）
-===================================================== */
-.roten-hero{
-  display:flex;
-  align-items:center;
-  gap:14px;
-
-  padding:14px 16px;
-
-  background:var(--roten-panel);
-  border-bottom:1px solid var(--roten-line);
-}
-
-.roten-hero-img{
-  width:84px;
-  image-rendering:pixelated;
-}
-
-.roten-hero-msg{
-  font-size:14px;
-  color:var(--roten-muted);
-  line-height:1.5;
-}
-
-
-
-/* =====================================================
-   相場ボード（主役）
-===================================================== */
-.roten-market{
-  padding:14px 16px;
-  background:var(--roten-panel2);
-  border-bottom:1px solid var(--roten-line);
-}
-
-.roten-market-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:8px;
-}
-
-.roten-market-title{
-  font-weight:900;
-}
-
-.roten-market-timer{
-  font-size:12px;
-  color:var(--roten-muted);
-}
-
-/* チャート領域 */
-.roten-chart{
-  width:100%;
-  height:200px;
-
-  background:#070b10;
+.hud-left{display:flex; gap:10px; align-items:center;}
+.hud-back{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:40px; height:36px;
+  border:1px solid var(--line);
   border-radius:12px;
+  text-decoration:none;
+  background:rgba(255,255,255,.06);
+  font-weight:900;
+}
+.hud-title .ttl{font-weight:1000; line-height:1.1}
+.hud-title .sub{font-size:12px; color:var(--muted); margin-top:2px}
 
-  border:1px solid var(--roten-line);
+.hud-right{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
+}
+.hud-chip{
+  display:inline-flex; gap:8px; align-items:center;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.06);
+  padding:8px 10px;
+  border-radius:999px;
+  font-size:12px;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.hud-chip .ico{font-size:14px}
+.hud-chip .sep{opacity:.7}
+.hud-chip .num{font-weight:1000}
+.hud-chip .txt{opacity:.9}
+.hud-chip:active{transform:translateY(1px)}
+
+.hud-pop{ animation:hudPop .22s ease-out 0s 1; }
+@keyframes hudPop{
+  0%{ transform:scale(1); }
+  55%{ transform:scale(1.08); }
+  100%{ transform:scale(1); }
 }
 
+/* ===== 店主ゾーン ===== */
+.keeper{
+  margin-top:12px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:rgba(255,255,255,.05);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.keeper-hero{
+  display:grid;
+  grid-template-columns: 120px 1fr;
+  gap:12px;
+  padding:12px;
+  align-items:center;
+}
+.keeper-face{
+  width:120px; height:120px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  object-fit:cover;
+}
+.keeper-bubble{
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:rgba(0,0,0,.18);
+  padding:12px 12px;
+}
+.keeper-name{font-weight:1000; margin-bottom:6px}
+.keeper-text{line-height:1.55; font-weight:700}
+.keeper-sub{margin-top:8px; font-size:12px; color:var(--muted); line-height:1.5}
 
+.keeper-actions{
+  display:flex; flex-wrap:wrap; gap:8px;
+  margin-top:10px;
+}
+.kbtn{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.10);
+  color:var(--text);
+  padding:10px 12px;
+  border-radius:14px;
+  font-weight:900;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.kbtn.ghost{background:transparent}
+.kbtn:active{transform:translateY(1px)}
 
-/* =====================================================
-   レアリティチップ
-===================================================== */
-.roten-rarities{
+/* ===== パネル ===== */
+.panel{
+  margin-top:12px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:rgba(255,255,255,.05);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+/* tabs */
+.tabs{
   display:flex;
-  gap:6px;
-  padding:12px 12px 6px;
+  gap:8px;
+  padding:10px;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.04);
 }
-
-.roten-chip{
+.tab{
   flex:1;
-  padding:8px 0;
-
-  border-radius:10px;
-  border:1px solid var(--roten-line);
-
-  background:var(--roten-panel);
-  color:var(--roten-muted);
-
-  font-weight:700;
-  font-size:13px;
-
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.08);
+  color:var(--text);
+  padding:10px 12px;
+  border-radius:14px;
+  font-weight:1000;
   cursor:pointer;
 }
+.tab.is-active{
+  background:rgba(159,255,168,.12);
+  border-color:rgba(159,255,168,.35);
+}
+.tab:active{transform:translateY(1px)}
 
-.roten-chip.active{
-  color:#000;
-  background:var(--roten-green);
+.tabpane{display:none; padding:12px}
+.tabpane.is-show{display:block}
+
+/* subtabs */
+.subtabs{
+  display:flex; gap:8px;
+  margin-bottom:10px;
+}
+.subtab{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  padding:9px 10px;
+  border-radius:999px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.subtab.is-active{
+  background:rgba(107,183,255,.14);
+  border-color:rgba(107,183,255,.35);
+}
+.subtab:active{transform:translateY(1px)}
+
+/* shop grid */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap:10px;
+}
+@media (min-width:720px){
+  .grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
 }
 
+.card{
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(0,0,0,.16);
+  overflow:hidden;
+  position:relative;
+}
+.card .imgbox{
+  height:150px;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  display:flex; align-items:center; justify-content:center;
+}
+.card .imgbox img{
+  width:100%; height:100%;
+  object-fit:contain;
+  display:block;
+}
+.card .body{ padding:10px; }
+.card .name{ font-weight:1000; margin-bottom:6px; }
+.card .desc{ font-size:12px; color:var(--muted); line-height:1.45; min-height:36px; }
+.card .meta{
+  display:flex; justify-content:space-between; align-items:center;
+  gap:8px; margin-top:8px;
+  font-size:12px; color:var(--muted);
+}
+.badge{
+  display:inline-flex; gap:6px; align-items:center;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.06);
+  padding:4px 8px; border-radius:999px;
+}
+.badge b{ color:#fff; }
 
+.card .actions{
+  display:flex; gap:8px; flex-wrap:wrap;
+  margin-top:10px;
+}
+.qbtn{
+  flex:1 1 auto;
+  min-width: 92px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.10);
+  color:var(--text);
+  padding:10px 10px;
+  border-radius:14px;
+  font-weight:1000;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.qbtn:active{transform:translateY(1px)}
+.qbtn:disabled{opacity:.55; filter:saturate(.6); cursor:not-allowed; transform:none;}
+.qbtn.primary{
+  background:rgba(159,255,168,.14);
+  border-color:rgba(159,255,168,.35);
+}
 
-/* =====================================================
-   モード切替（仕入れ/売却/在庫）
-===================================================== */
-.roten-tabs{
-  display:flex;
-  gap:6px;
+.spark{
+  position:absolute;
+  inset:-40px;
+  pointer-events:none;
+  opacity:0;
+  background:
+    radial-gradient(circle at 30% 35%, rgba(255,255,255,.70), transparent 45%),
+    radial-gradient(circle at 75% 55%, rgba(255,255,255,.45), transparent 50%),
+    linear-gradient(120deg, transparent 0%, rgba(255,255,255,.35) 35%, transparent 70%);
+  transform:translateX(-22px);
+  mix-blend-mode:screen;
+}
+.card.is-spark .spark{
+  opacity:.9;
+  animation:sparkMove .55s ease-out 0s 1;
+}
+@keyframes sparkMove{
+  0%{ transform:translateX(-26px); filter:blur(.2px); }
+  100%{ transform:translateX(26px); filter:blur(.2px); }
+}
 
+/* notes */
+.note{
+  margin-top:10px;
+  border:1px dashed rgba(255,211,138,.45);
+  background:rgba(255,211,138,.10);
+  border-radius:16px;
   padding:10px 12px;
 }
+.note-ttl{font-weight:1000}
+.note-txt{margin-top:6px; font-size:12px; color:var(--muted); line-height:1.5}
 
-.roten-tab{
-  flex:1;
+/* sell */
+.sell-head{margin-bottom:10px}
+.sell-title{font-weight:1000}
+.sell-sub{font-size:12px; color:var(--muted); margin-top:4px; line-height:1.5}
 
-  padding:10px 0;
+.sell-tools{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px}
 
-  border-radius:12px;
-  border:1px solid var(--roten-line);
-
-  background:var(--roten-panel);
-  color:var(--roten-muted);
-
-  font-weight:900;
-  cursor:pointer;
-}
-
-.roten-tab.active{
-  background:var(--roten-blue);
-  color:#000;
-}
-
-
-
-/* =====================================================
-   コンテンツ領域
-===================================================== */
-.roten-content{
-  flex:1;
-  padding:12px;
+.sell-list{display:grid; gap:10px}
+.sell-item{
   display:grid;
-  gap:8px;
-}
-
-
-
-/* =====================================================
-   商品/カード 行UI
-===================================================== */
-.roten-row{
-  display:flex;
-  align-items:center;
+  grid-template-columns: 86px 1fr;
   gap:10px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(0,0,0,.16);
+  overflow:hidden;
+}
+.sell-thumb{
+  width:86px; height:110px;
+  border-right:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  display:flex; align-items:center; justify-content:center;
+}
+.sell-thumb img{width:100%; height:100%; object-fit:cover; display:block}
+.sell-body{padding:10px}
+.sell-name{font-weight:1000; margin-bottom:4px}
+.sell-meta{font-size:12px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap}
+.sell-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+.sell-actions .qbtn{min-width:120px}
+.sell-actions .qbtn.danger{
+  background:rgba(255,154,165,.14);
+  border-color:rgba(255,154,165,.35);
+}
 
-  background:var(--roten-panel);
-  border:1px solid var(--roten-line);
+/* inv */
+.inv-wrap{display:grid; gap:10px}
+.inv-block{
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(0,0,0,.16);
+  padding:10px;
+}
+.inv-ttl{font-weight:1000; margin-bottom:8px}
+.inv-row{
+  display:flex; justify-content:space-between; gap:10px;
+  padding:8px 0;
+  border-top:1px dashed rgba(255,255,255,.10);
+  font-size:12px;
+  color:var(--muted);
+}
+.inv-row:first-of-type{border-top:0}
+.inv-row b{color:#fff}
 
+/* debug */
+.debug{margin-top:12px; display:flex; justify-content:flex-end}
+
+/* modal */
+.modal{
+  position:fixed; inset:0;
+  display:none;
+  align-items:flex-end; justify-content:center;
+  background:rgba(0,0,0,.55);
+  padding:14px;
+  z-index:1000;
+}
+.modal[aria-hidden="false"]{display:flex}
+.modal-sheet{
+  width:min(820px, 100%);
+  max-height:86vh;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:rgba(15,18,32,.92);
+  box-shadow:var(--shadow);
+}
+.modal-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px;
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+}
+.modal-title{font-weight:1000}
+.modal-body{
+  padding:12px 14px 14px;
+  overflow:auto;
+  max-height: calc(86vh - 54px);
+}
+
+.mini{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.10);
+  color:var(--text);
+  padding:9px 10px;
   border-radius:12px;
-  padding:8px 10px;
+  font-weight:1000;
+  cursor:pointer;
 }
+.mini.ghost{background:transparent}
+.mini:active{transform:translateY(1px)}
 
-.roten-row img{
-  width:44px;
-  height:60px;
-  object-fit:cover;
-  border-radius:6px;
+/* toast */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:16px;
+  transform:translateX(-50%);
+  z-index:2000;
+  display:none;
+  max-width:min(720px, 92vw);
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(0,0,0,.72);
+  padding:10px 12px;
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  font-size:12px;
+  line-height:1.45;
 }
+.toast.show{display:block}
+.toast b{color:#fff}
 
-.roten-name{
-  flex:1;
-  font-size:13px;
+/* mikuji */
+.mikuji-plate{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:10px;
+  margin-top:10px;
 }
-
-.roten-price{
-  font-weight:900;
-  font-size:13px;
+@media (min-width:720px){
+  .mikuji-plate{ grid-template-columns: repeat(6, 1fr); }
 }
-
-
-
-/* =====================================================
-   数量UI
-===================================================== */
-.roten-qty{
+.mikuji-tako{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.06);
+  border-radius:14px;
+  padding:8px;
+  cursor:pointer;
   display:flex;
   align-items:center;
-  gap:4px;
+  justify-content:center;
+  aspect-ratio:1/1;
+  position:relative;
+  overflow:hidden;
 }
-
-.roten-qty button{
-  width:26px;
-  height:26px;
-
-  border-radius:6px;
-  border:1px solid var(--roten-line);
-
-  background:#0b1018;
-  color:white;
-
-  font-weight:900;
-  cursor:pointer;
+.mikuji-tako:active{transform:translateY(1px)}
+.mikuji-tako .dot{
+  width:78%;
+  height:78%;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.20);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.22), transparent 45%),
+    radial-gradient(circle at 70% 70%, rgba(255,255,255,.12), transparent 55%),
+    linear-gradient(180deg, rgba(255,211,138,.18), rgba(255,154,165,.10));
 }
-
-
-
-/* =====================================================
-   ボタン
-===================================================== */
-.roten-btn{
-  padding:6px 10px;
-
-  border-radius:8px;
-  border:1px solid var(--roten-line);
-
-  background:#0b1018;
-  color:white;
-
-  font-weight:900;
-  cursor:pointer;
+.mikuji-up{
+  border:1px solid var(--line);
+  background:rgba(0,0,0,.18);
+  border-radius:16px;
+  padding:12px;
+  margin-top:12px;
 }
-
-.roten-btn.buy{
-  background:var(--roten-green);
-  color:#000;
+.mikuji-big{
+  width:min(420px, 100%);
+  aspect-ratio: 1/1;
+  margin:10px auto 0;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.26), transparent 45%),
+    radial-gradient(circle at 70% 70%, rgba(255,255,255,.12), transparent 55%),
+    linear-gradient(180deg, rgba(255,211,138,.22), rgba(255,154,165,.14));
+  position:relative;
+  overflow:hidden;
 }
-
-.roten-btn.sell{
-  background:var(--roten-red);
-  color:#000;
+.mikuji-big.glow::after{
+  content:"";
+  position:absolute;
+  inset:-40px;
+  background:
+    radial-gradient(circle at 30% 35%, rgba(255,255,255,.78), transparent 45%),
+    radial-gradient(circle at 75% 55%, rgba(255,255,255,.52), transparent 50%),
+    linear-gradient(120deg, transparent 0%, rgba(255,255,255,.38) 35%, transparent 70%);
+  mix-blend-mode:screen;
+  animation:sparkMove .8s ease-out 0s 1;
 }
-
-
-
-/* =====================================================
-   トースト（演出）
-===================================================== */
-.roten-toast{
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-
-  background:#000c;
-  padding:10px 14px;
-
-  border-radius:12px;
-  border:1px solid var(--roten-line);
-
-  font-size:13px;
-
-  display:none;
-  z-index:9999;
-}
-
-.roten-toast.show{
-  display:block;
-  animation:rotenPop .4s ease;
-}
-
-@keyframes rotenPop{
-  0%{transform:translateX(-50%) scale(.9)}
-  100%{transform:translateX(-50%) scale(1)}
-}
-
