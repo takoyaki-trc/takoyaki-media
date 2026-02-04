@@ -8,7 +8,7 @@
      ✅ ロックマス：押すと「レベルアップで解放」
      ✅ openModalのイベント多重登録を防止（安定化）
      ✅ ★無料（∞）を廃止 → 無料タネ/無料水/無料肥料も在庫制（有料化前提）
-     ✅ ★NEW：たこぴ/店頭/ダーツ（回線）を “専用プール確定” に
+     ✅ ★たこぴのタネ：専用8枚から排出（将来増やせる）
   ========================== */
 
   // マス画像（状態ごと）
@@ -102,7 +102,7 @@
     { id:"seed_random", name:"【なに出るタネ】", desc:"何が育つかは完全ランダム。\n店主も知らない。", factor:1.00, img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
     { id:"seed_shop", name:"【店頭タネ】", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", factor:1.00, img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
     { id:"seed_line", name:"【回線タネ】", desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor:1.00, img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
-    { id:"seed_special", name:"【たこぴのタネ】", desc:"たこぴの気配。\nたこぴカードしか出ない。", factor:1.00, img:"https://ul.h3z.jp/29OsEvjf.png", fx:"たこぴ確定" },
+    { id:"seed_special", name:"【たこぴのタネ】", desc:"今はまだ何も起きない。\nそのうち何か起きる。", factor:1.00, img:"https://ul.h3z.jp/29OsEvjf.png", fx:"たこぴ専用8枚" },
     { id:"seed_colabo", name:"【コラボのタネ】", desc:"今はまだ何も起きない。\nそのうち何か起きる。", factor:1.00, img:"https://ul.h3z.jp/AWBcxVls.png", fx:"シリアル解放" },
   ];
 
@@ -123,52 +123,25 @@
   ];
 
   // =========================
-  // ★たこぴのタネ専用（8枚）※ここを増やすだけで将来拡張OK
+  // ★たこぴのタネ専用（8枚）
+  // 将来ここに追加して増やすだけでOK
   // =========================
   const TAKOPI_SEED_POOL = [
-    { id:"TP-001", name:"たこぴ覚醒（仮）", img:"https://example.com/takopi1.png", rarity:"N" },
-    { id:"TP-002", name:"たこぴの圧（仮）", img:"https://example.com/takopi2.png", rarity:"N" },
-    { id:"TP-003", name:"たこぴの耳打ち（仮）", img:"https://example.com/takopi3.png", rarity:"R" },
-    { id:"TP-004", name:"裏のたこぴ（仮）", img:"https://example.com/takopi4.png", rarity:"R" },
-    { id:"TP-005", name:"焼かれた哲学（仮）", img:"https://example.com/takopi5.png", rarity:"SR" },
-    { id:"TP-006", name:"都市伝説の種（仮）", img:"https://example.com/takopi6.png", rarity:"SR" },
-    { id:"TP-007", name:"たこぴ神託（仮）", img:"https://example.com/takopi7.png", rarity:"UR" },
-    { id:"TP-008", name:"焼かれし伝説（仮）", img:"https://example.com/takopi8.png", rarity:"LR" },
-  ];
-
-  // =========================
-  // ★店頭タネ専用（12枚）※ここを増やすだけで将来拡張OK
-  // =========================
-  const SHOP_SEED_POOL = [
-    { id:"TS-001", name:"店頭の気配①（仮）", img:"https://example.com/shop1.png", rarity:"N" },
-    { id:"TS-002", name:"店頭の気配②（仮）", img:"https://example.com/shop2.png", rarity:"N" },
-    { id:"TS-003", name:"店頭の気配③（仮）", img:"https://example.com/shop3.png", rarity:"N" },
-    { id:"TS-004", name:"店頭の気配④（仮）", img:"https://example.com/shop4.png", rarity:"R" },
-    { id:"TS-005", name:"店頭の気配⑤（仮）", img:"https://example.com/shop5.png", rarity:"R" },
-    { id:"TS-006", name:"店頭の気配⑥（仮）", img:"https://example.com/shop6.png", rarity:"R" },
-    { id:"TS-007", name:"店頭の気配⑦（仮）", img:"https://example.com/shop7.png", rarity:"SR" },
-    { id:"TS-008", name:"店頭の気配⑧（仮）", img:"https://example.com/shop8.png", rarity:"SR" },
-    { id:"TS-009", name:"店頭の気配⑨（仮）", img:"https://example.com/shop9.png", rarity:"SR" },
-    { id:"TS-010", name:"店頭の気配⑩（仮）", img:"https://example.com/shop10.png", rarity:"UR" },
-    { id:"TS-011", name:"店頭の気配⑪（仮）", img:"https://example.com/shop11.png", rarity:"UR" },
-    { id:"TS-012", name:"店頭の気配⑫（仮）", img:"https://example.com/shop12.png", rarity:"LR" },
-  ];
-
-  // =========================
-  // ★ダーツのタネ専用（5枚）※ここを増やすだけで将来拡張OK
-  // ※今回は「回線タネ(seed_line)＝ダーツ」として扱う
-  // =========================
-  const DARTS_SEED_POOL = [
-    { id:"TD-001", name:"Darts Seed 01（仮）", img:"https://example.com/darts1.png", rarity:"N" },
-    { id:"TD-002", name:"Darts Seed 02（仮）", img:"https://example.com/darts2.png", rarity:"R" },
-    { id:"TD-003", name:"Darts Seed 03（仮）", img:"https://example.com/darts3.png", rarity:"SR" },
-    { id:"TD-004", name:"Darts Seed 04（仮）", img:"https://example.com/darts4.png", rarity:"UR" },
-    { id:"TD-005", name:"Darts Seed 05（仮）", img:"https://example.com/darts5.png", rarity:"LR" },
+    // ★ここをあなたの8枚に置き換える（img をあなたのURLへ）
+    { id:"TP-001", name:"届け！たこぴ便", img:"https://ul.h3z.jp/rjih1Em9.png", rarity:"N" },
+    { id:"TP-002", name:"ハロウィンたこぴ", img:"https://ul.h3z.jp/hIDWKss0.png", rarity:"N" },
+    { id:"TP-003", name:"紅葉たこぴ", img:"https://ul.h3z.jp/G05m1hbT.png", rarity:"N" },
+    { id:"TP-004", name:"クリスマスたこぴ", img:"https://ul.h3z.jp/FGEKvxhK.png", rarity:"N" },
+    { id:"TP-005", name:"お年玉たこぴ", img:"https://example.com/takopi5.png", rarity:"N" },
+    { id:"TP-006", name:"バレンタインたこぴ", img:"https://ul.h3z.jp/J0kj3CLb.png", rarity:"N" },
+    { id:"TP-007", name:"お年玉たこぴ", img:"https://example.com/takopi5.png", rarity:"N" },
+    { id:"TP-008", name:"バレンタインたこぴ", img:"https://ul.h3z.jp/J0kj3CLb.png", rarity:"N" },
   ];
 
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
 
+  // ★元コードの N:1000 は異常値だったので、自然な値に
   const XP_BY_RARITY = { N:4, R:7, SR:30, UR:80, LR:120 };
 
   function xpNeedForLevel(level){
@@ -218,6 +191,19 @@
     return { leveled, unlockedDelta };
   }
 
+  // =========================================================
+  // ★無料（∞）廃止：すべて在庫制（有料化前提）
+  // =========================================================
+  const FREE_ITEMS = {
+    seed:  new Set([]),
+    water: new Set([]),
+    fert:  new Set([])
+  };
+
+  function isFree(invType, id){
+    return false;
+  }
+
   function defaultInv(){
     const inv = { ver:1, seed:{}, water:{}, fert:{} };
     SEEDS.forEach(x => inv.seed[x.id] = 0);
@@ -235,6 +221,7 @@
       inv.seed  = inv.seed  || {};
       inv.water = inv.water || {};
       inv.fert  = inv.fert  || {};
+      // ★新しい項目が増えた時の穴埋め
       for(const x of SEEDS)  if(!(x.id in inv.seed))  inv.seed[x.id]=0;
       for(const x of WATERS) if(!(x.id in inv.water)) inv.water[x.id]=0;
       for(const x of FERTS)  if(!(x.id in inv.fert))  inv.fert[x.id]=0;
@@ -350,46 +337,48 @@
     return "N";
   }
 
-  // ========================================
-  // ★重要：種ごとの “確定プール” を最優先にする
-  // ・seed_special(たこぴ) → TAKOPI_SEED_POOL（8）
-  // ・seed_shop(店頭)     → SHOP_SEED_POOL（12）
-  // ・seed_line(ダーツ)   → DARTS_SEED_POOL（5）
-  // これらは水/肥料SPを無視して100%固定排出
-  // ========================================
   function drawRewardForPlot(p){
-    if (p && p.seedId === "seed_special") {
-      const c = pick(TAKOPI_SEED_POOL);
-      return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
-    }
-    if (p && p.seedId === "seed_shop") {
-      const c = pick(SHOP_SEED_POOL);
-      return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
-    }
-    if (p && p.seedId === "seed_line") {
-      const c = pick(DARTS_SEED_POOL);
-      return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
-    }
 
-    // ① 肥料のSP抽選（焼きすぎ / 生焼け） ※専用プール以外のみ
-    const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
-    if (fert) {
-      const burnP = Number(fert.burnCardUp ?? 0);
-      if (burnP > 0 && Math.random() < burnP) {
-        return { id:"SP-BURN", name:"焼きすぎたカード", img:"https://ul.h3z.jp/VSQupsYH.png", rarity:"SP" };
-      }
-      const rawP = Number(fert.rawCardChance ?? 0);
-      if (rawP > 0 && Math.random() < rawP) {
-        return { id:"SP-RAW", name:"ドロドロ生焼けカード", img:"https://ul.h3z.jp/5E5NpGKP.png", rarity:"SP" };
-      }
-    }
-
-    // ② 通常：水でレア率→レアのプールから1枚
-    const rarity = pickRarityWithWater(p ? p.waterId : null);
-    const pool = (CARD_POOLS && CARD_POOLS[rarity]) ? CARD_POOLS[rarity] : (CARD_POOLS?.N || []);
-    const c = pick(pool);
-    return { id:c.no, name:c.name, img:c.img, rarity };
+  // ========================================
+  // ★最優先：たこぴのタネ（100%たこぴ固定）
+  // ・肥料SP（焼きすぎ/生焼け）も無効化
+  // ・水のレア率も無視
+  // ========================================
+  if (p && p.seedId === "seed_special") {
+    const c = pick(TAKOPI_SEED_POOL);
+    return {
+      id: c.id,
+      name: c.name,
+      img: c.img,
+      rarity: (c.rarity || "N")
+    };
   }
+
+  // ========================================
+  // ① 肥料のSP抽選（焼きすぎ / 生焼け）
+  // ※たこぴタネ以外の時だけ発動
+  // ========================================
+  const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
+  if (fert) {
+    const burnP = Number(fert.burnCardUp ?? 0);
+    if (burnP > 0 && Math.random() < burnP) {
+      return { id:"SP-BURN", name:"焼きすぎたカード", img:"https://ul.h3z.jp/VSQupsYH.png", rarity:"SP" };
+    }
+    const rawP = Number(fert.rawCardChance ?? 0);
+    if (rawP > 0 && Math.random() < rawP) {
+      return { id:"SP-RAW", name:"ドロドロ生焼けカード", img:"https://ul.h3z.jp/5E5NpGKP.png", rarity:"SP" };
+    }
+  }
+
+  // ========================================
+  // ② 通常：水でレア率 → レアのプールから1枚
+  // ========================================
+  const rarity = pickRarityWithWater(p ? p.waterId : null);
+  const pool = (CARD_POOLS && CARD_POOLS[rarity]) ? CARD_POOLS[rarity] : (CARD_POOLS?.N || []);
+  const c = pick(pool);
+  return { id:c.no, name:c.name, img:c.img, rarity };
+}
+
 
   function rarityLabel(r){ return r || ""; }
 
@@ -418,10 +407,12 @@
   let activeIndex = -1;
   let draft = null;
 
+  // ===== モーダル安定化（イベント多重登録を防ぐ）
   function onBackdrop(e){ if(e.target === modal) closeModal(); }
   function onEsc(e){ if(e.key === "Escape") closeModal(); }
 
   function openModal(title, html){
+    // まず安全に一旦解除
     modal.removeEventListener("click", onBackdrop);
     document.removeEventListener("keydown", onEsc);
 
@@ -493,6 +484,7 @@
   }
 
   function render(){
+    // 最新ロード
     player = loadPlayer();
     book = loadBook();
 
@@ -682,7 +674,7 @@
       document.getElementById("btnConfirm").addEventListener("click", () => {
         addToBook(reward);
 
-        const gain = XP_BY_RARITY[reward.rarity] ?? 4;
+        const gain = XP_BY_RARITY[reward.rarity] ?? 4; // SPや未定義は4
         addXP(gain);
 
         state.plots[i] = defaultPlot();
@@ -829,6 +821,7 @@
       0.35, 1.0
     );
 
+    // 最短1時間
     const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000);
     const now = Date.now();
 
@@ -923,27 +916,23 @@
     render();
   }
 
-  const btnReset = document.getElementById("btnReset");
-  if (btnReset) {
-    btnReset.addEventListener("click", () => {
-      if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済みを全消去します。OK？")) return;
+  document.getElementById("btnReset").addEventListener("click", () => {
+    if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済みを全消去します。OK？")) return;
 
-      localStorage.removeItem(LS_STATE);
-      localStorage.removeItem(LS_BOOK);
-      localStorage.removeItem(LS_PLAYER);
-      localStorage.removeItem(LS_INV);
-      localStorage.removeItem(LS_CODES_USED);
+    localStorage.removeItem(LS_STATE);
+    localStorage.removeItem(LS_BOOK);
+    localStorage.removeItem(LS_PLAYER);
+    localStorage.removeItem(LS_INV);
+    localStorage.removeItem(LS_CODES_USED);
 
-      state = loadState();
-      book = loadBook();
-      player = loadPlayer();
-      inv = loadInv();
+    state = loadState();
+    book = loadBook();
+    player = loadPlayer();
+    inv = loadInv();
 
-      render();
-    });
-  }
+    render();
+  });
 
   render();
   setInterval(tick, TICK_MS);
 })();
-
