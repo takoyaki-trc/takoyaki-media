@@ -338,31 +338,47 @@
   }
 
   function drawRewardForPlot(p){
-    // ① 肥料のSP抽選（焼きすぎ / 生焼け）
-    const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
-    if (fert) {
-      const burnP = Number(fert.burnCardUp ?? 0);
-      if (burnP > 0 && Math.random() < burnP) {
-        return { id:"SP-BURN", name:"焼きすぎたカード", img:"https://ul.h3z.jp/VSQupsYH.png", rarity:"SP" };
-      }
-      const rawP = Number(fert.rawCardChance ?? 0);
-      if (rawP > 0 && Math.random() < rawP) {
-        return { id:"SP-RAW", name:"ドロドロ生焼けカード", img:"https://ul.h3z.jp/5E5NpGKP.png", rarity:"SP" };
-      }
-    }
 
-    // ② ★たこぴのタネ専用：8枚から排出（将来増やすのもここに追加するだけ）
-    if (p && p.seedId === "seed_special") {
-      const c = pick(TAKOPI_SEED_POOL);
-      return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
-    }
-
-    // ③ 通常：水でレア率→レアのプールから1枚
-    const rarity = pickRarityWithWater(p ? p.waterId : null);
-    const pool = (CARD_POOLS && CARD_POOLS[rarity]) ? CARD_POOLS[rarity] : (CARD_POOLS?.N || []);
-    const c = pick(pool);
-    return { id:c.no, name:c.name, img:c.img, rarity };
+  // ========================================
+  // ★最優先：たこぴのタネ（100%たこぴ固定）
+  // ・肥料SP（焼きすぎ/生焼け）も無効化
+  // ・水のレア率も無視
+  // ========================================
+  if (p && p.seedId === "seed_special") {
+    const c = pick(TAKOPI_SEED_POOL);
+    return {
+      id: c.id,
+      name: c.name,
+      img: c.img,
+      rarity: (c.rarity || "N")
+    };
   }
+
+  // ========================================
+  // ① 肥料のSP抽選（焼きすぎ / 生焼け）
+  // ※たこぴタネ以外の時だけ発動
+  // ========================================
+  const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
+  if (fert) {
+    const burnP = Number(fert.burnCardUp ?? 0);
+    if (burnP > 0 && Math.random() < burnP) {
+      return { id:"SP-BURN", name:"焼きすぎたカード", img:"https://ul.h3z.jp/VSQupsYH.png", rarity:"SP" };
+    }
+    const rawP = Number(fert.rawCardChance ?? 0);
+    if (rawP > 0 && Math.random() < rawP) {
+      return { id:"SP-RAW", name:"ドロドロ生焼けカード", img:"https://ul.h3z.jp/5E5NpGKP.png", rarity:"SP" };
+    }
+  }
+
+  // ========================================
+  // ② 通常：水でレア率 → レアのプールから1枚
+  // ========================================
+  const rarity = pickRarityWithWater(p ? p.waterId : null);
+  const pool = (CARD_POOLS && CARD_POOLS[rarity]) ? CARD_POOLS[rarity] : (CARD_POOLS?.N || []);
+  const c = pick(pool);
+  return { id:c.no, name:c.name, img:c.img, rarity };
+}
+
 
   function rarityLabel(r){ return r || ""; }
 
