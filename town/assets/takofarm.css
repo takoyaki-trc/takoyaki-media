@@ -1,3 +1,11 @@
+/* =========================================================
+   takofarm.css（完全版 / Firefox & Chrome 安定版）
+   - normalize：box-sizing / img block / html&body width
+   - 背景：body直貼りをやめて ::before fixed に分離（ズレ対策の本命）
+   - wrap：width:100% 追加
+   - grid：丸め差保険（min-width:0 等）
+   ========================================================= */
+
 /* ==== cross-browser normalize (safe) ==== */
 *{ box-sizing:border-box; }
 html,body{ width:100%; }
@@ -17,20 +25,39 @@ img{ display:block; }
   --lock:rgba(255,255,255,.06);
 }
 
-/* ===== 背景 ===== */
+/* ===== 背景（Firefox/Chrome一致させる） ===== */
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
   color:var(--text);
+  background:var(--bg);
+  position:relative;
+  min-height:100dvh;
+  overflow-x:hidden;
+}
+
+/* 背景を fixed レイヤーに分離（cover計算差を吸収） */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
   background:
     linear-gradient(rgba(15,18,32,.72), rgba(15,18,32,.72)),
     url("https://ul.h3z.jp/8DNhFtiC.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  transform:translateZ(0);
 }
 
-.wrap{max-width:520px;margin:0 auto;padding:12px 14px 18px}
+/* wrap：丸め差保険 */
+.wrap{
+  max-width:520px;
+  width:100%;
+  margin:0 auto;
+  padding:12px 14px 18px;
+}
 
 /* ===== 上部：ヘッダー ===== */
 .topbar{
@@ -94,7 +121,7 @@ h1{
   border-radius:16px;
   padding:10px 12px;
   margin-top:2px;
-  margin-bottom: 25px;
+  margin-bottom:25px;
 }
 .xpTop{
   display:flex;
@@ -126,6 +153,9 @@ h1{
   grid-template-columns:repeat(5, 1fr);
   gap:8px;
   user-select:none;
+
+  /* grid丸め差の保険（Firefox/Chrome） */
+  align-content:start;
 }
 .plot{
   aspect-ratio:1/1;
@@ -137,6 +167,9 @@ h1{
   justify-content:center;
   position:relative;
   overflow:hidden;
+
+  /* grid丸め差の保険 */
+  min-width:0;
 }
 .plot button{
   width:100%;
@@ -364,3 +397,4 @@ h1{
   0%   { transform:translateX(-18px) rotate(0deg); filter:blur(.2px); }
   100% { transform:translateX(18px)  rotate(0deg); filter:blur(.2px); }
 }
+
