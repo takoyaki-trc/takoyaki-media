@@ -1,82 +1,19 @@
 (() => {
   /* ==========================
-     たこ焼きファーム v1.1（分割版 / UI改善：横スライド卒業）
-     ✅ 種/水/肥料：横スライド → 「検索＋並び替え＋グリッド一覧」
+     たこ焼きファーム v1.1（分割版）
      ✅ 収穫モーダル画像：contain＋最大高さ
      ✅ 戻って再タップでカードが変わる：p.reward を保存して固定
+     ✅ 種×(追加対応) / 水×5 / 肥料×5：画像カードで横スライド
      ✅ XP & Level：最初3マス、収穫XP、レベルアップで解放（最大25）
      ✅ ロックマス：押すと「レベルアップで解放」
      ✅ openModalのイベント多重登録を防止（安定化）
-     ✅ 無料（∞）廃止 → 全アイテム在庫制（有料化前提）
-     ✅ 専用タネ（たこぴ/ショップ/ダーツ）：専用プール固定（肥料SP/水レア率無効）
+     ✅ ★無料（∞）を廃止 → 無料タネ/無料水/無料肥料も在庫制（有料化前提）
+     ✅ ★たこぴのタネ：専用8枚から排出（肥料SP/水レア率は無効化）
+     ✅ ★ショップのタネ：専用12枚から排出（肥料SP/水レア率は無効化）
+     ✅ ★ダーツのタネ：専用5枚から排出（肥料SP/水レア率は無効化）
   ========================== */
 
-  // =========================================================
-  // 0) 追加CSS（JS内で注入：CSSファイルを触らずにUIを改善）
-  // =========================================================
-  const STYLE = `
-  /* ===== picker (種/水/肥料) ===== */
-  .pkWrap{display:flex;flex-direction:column;gap:10px}
-  .pkTop{position:sticky;top:0;z-index:2;padding:6px 0 10px;backdrop-filter:blur(8px)}
-  .pkCtrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .pkSearch{
-    flex:1 1 180px;min-width:180px;padding:10px 12px;border-radius:12px;
-    border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;outline:none;
-  }
-  .pkSort{
-    flex:0 0 auto;padding:10px 12px;border-radius:12px;
-    border:1px solid var(--line);background:rgba(255,255,255,.06);color:#fff;outline:none;
-  }
-  .pkHint{opacity:.85;font-size:12px;line-height:1.4;margin:4px 0 0}
-  .pkGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  @media (min-width:520px){.pkGrid{grid-template-columns:repeat(3,minmax(0,1fr));}}
-  @media (min-width:860px){.pkGrid{grid-template-columns:repeat(4,minmax(0,1fr));}}
-  .pkItem{
-    border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:16px;
-    padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.22);
-    display:flex;flex-direction:column;gap:8px;
-  }
-  .pkItemTop{display:flex;gap:10px;align-items:center}
-  .pkThumb{
-    width:64px;height:64px;border-radius:12px;overflow:hidden;position:relative;
-    border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);
-    display:grid;place-items:center;flex:0 0 auto;
-  }
-  .pkThumb img{
-    width:100%;height:100%;object-fit:contain;
-    image-rendering: pixelated;
-  }
-  .pkCntBadge{
-    position:absolute;right:6px;bottom:6px;
-    padding:2px 6px;border-radius:999px;
-    background:rgba(0,0,0,.55);
-    border:1px solid rgba(255,255,255,.18);
-    font-weight:900;font-size:11px;color:#fff;
-  }
-  .pkMeta{min-width:0;flex:1 1 auto}
-  .pkName{font-weight:900;line-height:1.2;font-size:14px;margin-bottom:2px}
-  .pkFx{font-size:12px;opacity:.9;line-height:1.2}
-  .pkDesc{
-    font-size:12px;opacity:.78;white-space:pre-line;
-    overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
-  }
-  .pkBtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
-  .pkBtn{
-    flex:1 1 auto;padding:10px 10px;border-radius:12px;
-    border:1px solid var(--line);background:var(--btn2);color:#fff;font-weight:900;
-  }
-  .pkBtn.secondary{background:rgba(255,255,255,.10)}
-  .pkBtn[disabled]{opacity:.45}
-  `;
-  (function injectStyle(){
-    const s = document.createElement("style");
-    s.textContent = STYLE;
-    document.head.appendChild(s);
-  })();
-
-  // =========================================================
-  // 1) 定数/データ
-  // =========================================================
+  // マス画像（状態ごと）
   const PLOT_IMG = {
     EMPTY: "https://ul.h3z.jp/muPEAkao.png",
     GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
@@ -93,9 +30,10 @@
   const LS_INV = "tf_v1_inv";
   const LS_CODES_USED = "tf_v1_codes_used";
 
+  // ★ヒント文に合わせて 5時間
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
   const READY_TO_BURN_MS = 8 * 60 * 60 * 1000;  // READYから8時間で焦げ
-  const TICK_MS = 3000;                         // ★スマホ安定優先（1秒→3秒）
+  const TICK_MS = 1000;
 
   const BASE_RARITY_RATE = { N:70, R:20, SR:8, UR:1.8, LR:0.2 };
 
@@ -162,13 +100,21 @@
     ],
   };
 
+  // =========================================================
+  // ★タネ一覧（ここに追加したIDが「種を選ぶ」に並ぶ）
+  // =========================================================
   const SEEDS = [
     { id:"seed_random", name:"【なに出るタネ】", desc:"何が育つかは完全ランダム。\n店主も知らない。", factor:1.00, img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
     { id:"seed_shop", name:"【店頭タネ】", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", factor:1.00, img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
     { id:"seed_line", name:"【回線タネ】", desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor:1.00, img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
+
     { id:"seed_special", name:"【たこぴのタネ】", desc:"このタネを植えたら、\n必ず「たこぴ8枚」から出る。", factor:1.00, img:"https://ul.h3z.jp/29OsEvjf.png", fx:"たこぴ専用8枚" },
+
+    // ★追加：タネ自体が別（ショップ専用/ダーツ専用）
+    // ※画像URLはあなたのタネ画像に差し替えてOK（今は仮のまま）
     { id:"seed_shop_only",  name:"【ショップのタネ】", desc:"ショップ専用。\nこのタネからしか出ない12枚。", factor:1.00, img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"ショップ専用12枚" },
     { id:"seed_darts_only", name:"【ダーツのタネ】",  desc:"ダーツ専用。\nこのタネからしか出ない5枚。",  factor:1.00, img:"https://ul.h3z.jp/AonxB5x7.png", fx:"ダーツ専用5枚" },
+
     { id:"seed_colabo", name:"【コラボのタネ】", desc:"シリアル入力で増える。\nそのうち何か起きる。", factor:1.00, img:"https://ul.h3z.jp/AWBcxVls.png", fx:"シリアル解放" },
   ];
 
@@ -188,6 +134,10 @@
     { id:"fert_timeno", name:"⑤《時間を信じない肥料》", desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》", factor:0.10, fx:"時短 90〜100%", img:"https://ul.h3z.jp/l2njWY57.png", burnCardUp:0.00, rawCardChance:0.03, mantra:false, skipGrowAnim:true },
   ];
 
+  // =========================
+  // ★たこぴのタネ専用（8枚）
+  // ※ここは「必ずこの8枚」になる（重複やplaceholderはあなたが後で整理してOK）
+  // =========================
   const TAKOPI_SEED_POOL = [
     { id:"TP-001", name:"届け！たこぴ便", img:"https://ul.h3z.jp/rjih1Em9.png", rarity:"N" },
     { id:"TP-002", name:"ハロウィンたこぴ", img:"https://ul.h3z.jp/hIDWKss0.png", rarity:"N" },
@@ -199,6 +149,9 @@
     { id:"TP-008", name:"バレンタインたこぴ（差替予定）", img:"https://example.com/takopi8.png", rarity:"N" },
   ];
 
+  // =========================
+  // ★ショップのタネ専用（12枚）
+  // =========================
   const SHOP_SEED_POOL = [
     { id:"SHP-001", name:"ショップカード1（仮）",  img:"https://example.com/shop1.png",  rarity:"N" },
     { id:"SHP-002", name:"ショップカード2（仮）",  img:"https://example.com/shop2.png",  rarity:"N" },
@@ -214,6 +167,9 @@
     { id:"SHP-012", name:"ショップカード12（仮）", img:"https://example.com/shop12.png", rarity:"LR" },
   ];
 
+  // =========================
+  // ★ダーツのタネ専用（5枚）
+  // =========================
   const DARTS_SEED_POOL = [
     { id:"DRT-001", name:"ダーツカード1（仮）", img:"https://example.com/darts1.png", rarity:"N"  },
     { id:"DRT-002", name:"ダーツカード2（仮）", img:"https://example.com/darts2.png", rarity:"R"  },
@@ -234,6 +190,7 @@
   function defaultPlayer(){
     return { ver:1, level:1, xp:0, unlocked:START_UNLOCK };
   }
+
   function loadPlayer(){
     try{
       const raw = localStorage.getItem(LS_PLAYER);
@@ -273,12 +230,32 @@
     return { leveled, unlockedDelta };
   }
 
-  // 無料（∞）廃止：全部在庫制
+  // =========================================================
+  // ★無料（∞）廃止：すべて在庫制（有料化前提）
+  // =========================================================
+  const FREE_ITEMS = {
+    seed:  new Set([]),
+    water: new Set([]),
+    fert:  new Set([])
+  };
+
+  function isFree(invType, id){
+    return false;
+  }
+
   function defaultInv(){
     const inv = { ver:1, seed:{}, water:{}, fert:{} };
     SEEDS.forEach(x => inv.seed[x.id] = 0);
     WATERS.forEach(x => inv.water[x.id] = 0);
     FERTS.forEach(x => inv.fert[x.id] = 0);
+
+    // ★テストを楽にするなら初期所持を付けてもOK（不要なら削除）
+    // inv.seed["seed_special"]   = 1;
+    // inv.seed["seed_shop_only"] = 1;
+    // inv.seed["seed_darts_only"]= 1;
+    // inv.water["water_plain_free"] = 1;
+    // inv.fert["fert_agedama"] = 1;
+
     return inv;
   }
 
@@ -291,6 +268,7 @@
       inv.seed  = inv.seed  || {};
       inv.water = inv.water || {};
       inv.fert  = inv.fert  || {};
+      // ★新しい項目が増えた時の穴埋め
       for(const x of SEEDS)  if(!(x.id in inv.seed))  inv.seed[x.id]=0;
       for(const x of WATERS) if(!(x.id in inv.water)) inv.water[x.id]=0;
       for(const x of FERTS)  if(!(x.id in inv.fert))  inv.fert[x.id]=0;
@@ -306,11 +284,13 @@
     const n = Number(box[id] ?? 0);
     return Number.isFinite(n) ? n : 0;
   }
+
   function invAdd(inv, invType, id, delta){
     if(!inv[invType]) inv[invType] = {};
     const cur = Number(inv[invType][id] ?? 0);
     inv[invType][id] = Math.max(0, cur + delta);
   }
+
   function invDec(inv, invType, id){
     const cur = invGet(inv, invType, id);
     if(cur <= 0) return false;
@@ -404,8 +384,13 @@
     return "N";
   }
 
+  // =========================================================
+  // ★報酬抽選
+  // - たこぴ/ショップ/ダーツの「専用タネ」は、必ず専用プールから
+  // - その3タネの時は「肥料SP（焼きすぎ/生焼け）」も「水レア率」も無効化
+  // =========================================================
   function drawRewardForPlot(p){
-    // 専用タネ群：固定プール（肥料SP/水レア率無効）
+    // ★専用タネ群：まず最優先で分岐（100%固定）
     if (p && p.seedId === "seed_special") {
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
@@ -419,7 +404,7 @@
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
     }
 
-    // 肥料SP（焼きすぎ/生焼け）
+    // ① 肥料のSP抽選（焼きすぎ / 生焼け）※専用タネ以外だけ
     const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
     if (fert) {
       const burnP = Number(fert.burnCardUp ?? 0);
@@ -432,7 +417,7 @@
       }
     }
 
-    // 通常：水でレア率 → プールから1枚
+    // ② 通常：水でレア率 → レアのプールから1枚
     const rarity = pickRarityWithWater(p ? p.waterId : null);
     const pool = (CARD_POOLS && CARD_POOLS[rarity]) ? CARD_POOLS[rarity] : (CARD_POOLS?.N || []);
     const c = pick(pool);
@@ -441,9 +426,6 @@
 
   function rarityLabel(r){ return r || ""; }
 
-  // =========================================================
-  // 2) DOM参照
-  // =========================================================
   const farmEl   = document.getElementById("farm");
   const stBook   = document.getElementById("stBook");
   const stGrow   = document.getElementById("stGrow");
@@ -469,13 +451,12 @@
   let activeIndex = -1;
   let draft = null;
 
-  // =========================================================
-  // 3) モーダル安定化
-  // =========================================================
+  // ===== モーダル安定化（イベント多重登録を防ぐ）
   function onBackdrop(e){ if(e.target === modal) closeModal(); }
   function onEsc(e){ if(e.key === "Escape") closeModal(); }
 
   function openModal(title, html){
+    // まず安全に一旦解除
     modal.removeEventListener("click", onBackdrop);
     document.removeEventListener("keydown", onEsc);
 
@@ -497,9 +478,6 @@
   }
   mClose.addEventListener("click", closeModal);
 
-  // =========================================================
-  // 4) シリアル入力（コラボのタネ）
-  // =========================================================
   function openRedeemModal(){
     openModal("シリアル入力（コラボのタネ）", `
       <div class="step">
@@ -549,10 +527,8 @@
     });
   }
 
-  // =========================================================
-  // 5) 画面描画
-  // =========================================================
   function render(){
+    // 最新ロード
     player = loadPlayer();
     book = loadBook();
 
@@ -606,8 +582,9 @@
         const denom = Math.max(1, end - start);
         const progress = (Date.now() - start) / denom;
 
-        if (progress < 0.5) img = PLOT_IMG.GROW1;
-        else {
+        if (progress < 0.5) {
+          img = PLOT_IMG.GROW1;
+        } else {
           if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100;
           else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65;
           else img = PLOT_IMG.GROW2;
@@ -673,9 +650,6 @@
     if (stXpNow) stXpNow.textContent = String(now);
   }
 
-  // =========================================================
-  // 6) 畑タップ
-  // =========================================================
   function onPlotTap(i){
     activeIndex = i;
     player = loadPlayer();
@@ -731,7 +705,7 @@
         <div class="reward">
           <div class="big">${reward.name}（${reward.id}）</div>
           <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>確認ボタンを押すと図鑑に追加され、このマスは空になる。</div>
-          <img class="img" src="${reward.img}" alt="${reward.name}" style="max-height:52vh;object-fit:contain;">
+          <img class="img" src="${reward.img}" alt="${reward.name}">
         </div>
         <div class="row">
           <button type="button" id="btnCancel">閉じる</button>
@@ -775,9 +749,6 @@
     }
   }
 
-  // =========================================================
-  // 7) 図鑑追加
-  // =========================================================
   function addToBook(card){
     const b = loadBook();
     if(!b.got) b.got = {};
@@ -808,156 +779,80 @@
     saveBook(book);
   }
 
-  // =========================================================
-  // 8) グリッド式ピッカー（検索・並び替え・在庫バッジ）
-  // =========================================================
-  function norm(s){
-    return String(s || "").toLowerCase().replace(/\s+/g,"");
-  }
-
-  function openPicker({ title, items, invType, onPickId, onBack }){
+  function cardSlider(items, onSelectId, invType){
     inv = loadInv();
 
-    openModal(title, `
-      <div class="pkWrap">
-        <div class="pkTop">
-          <div class="pkCtrl">
-            <input id="pkSearch" class="pkSearch" type="text" placeholder="検索（名前/効果/説明）">
-            <select id="pkSort" class="pkSort">
-              <option value="count_desc">所持数が多い順</option>
-              <option value="count_asc">所持数が少ない順</option>
-              <option value="name_asc">名前順</option>
-              <option value="name_desc">名前逆</option>
-            </select>
+    const list = items.map(x => {
+      const cnt = invGet(inv, invType, x.id);
+      const cntLabel = String(cnt);
+      const disabled = (cnt <= 0);
+
+      const isColaboSeed = (invType === "seed" && x.id === "seed_colabo");
+
+      return `
+        <div class="c">
+          <div class="imgbox" style="position:relative;">
+            <img src="${x.img}" alt="${x.name}">
+            <div class="cntBadge">×${cntLabel}</div>
           </div>
-          <div class="pkHint">※すべて在庫制。露店で買って増やす。</div>
-        </div>
+          <div class="name">${x.name}</div>
+          <div class="desc">${(x.desc || "").replace(/\n/g,"<br>")}</div>
+          <div class="fx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
 
-        <div id="pkGrid" class="pkGrid"></div>
+          ${isColaboSeed ? `<button type="button" data-redeem="1">シリアル入力</button>` : ``}
 
-        <div class="row">
-          <button type="button" id="pkBack">戻る</button>
-          <button type="button" id="pkClose">閉じる</button>
+          <button type="button" data-pick="${x.id}" ${disabled ? "disabled" : ""}>
+            ${disabled ? "在庫なし" : "これにする"}
+          </button>
         </div>
+      `;
+    }).join("");
+
+    openModal("選択", `
+      <div class="step">※すべて在庫制。露店で買って増やす。</div>
+      <div class="cards">${list}</div>
+      <div class="row">
+        <button type="button" id="btnBackStep">戻る</button>
+        <button type="button" id="btnCloseStep">閉じる</button>
       </div>
     `);
 
-    const elSearch = document.getElementById("pkSearch");
-    const elSort   = document.getElementById("pkSort");
-    const elGrid   = document.getElementById("pkGrid");
-    const elBack   = document.getElementById("pkBack");
-    const elClose  = document.getElementById("pkClose");
-
-    elSort.value = "count_desc";
-
-    function getCount(id){ return invGet(inv, invType, id); }
-
-    function sortList(list, mode){
-      const arr = list.slice();
-      if(mode === "name_asc")  arr.sort((a,b)=>String(a.name).localeCompare(String(b.name), "ja"));
-      if(mode === "name_desc") arr.sort((a,b)=>String(b.name).localeCompare(String(a.name), "ja"));
-      if(mode === "count_asc") arr.sort((a,b)=>(getCount(a.id)||0)-(getCount(b.id)||0));
-      if(mode === "count_desc")arr.sort((a,b)=>(getCount(b.id)||0)-(getCount(a.id)||0));
-      return arr;
-    }
-
-    function renderGrid(){
-      inv = loadInv(); // ★表示するたび最新在庫
-      const q = norm(elSearch.value);
-      let list = items;
-
-      if(q){
-        list = list.filter(it => {
-          const key = norm(it.name) + "|" + norm(it.desc) + "|" + norm(it.fx);
-          return key.includes(q);
-        });
-      }
-
-      list = sortList(list, elSort.value);
-
-      elGrid.innerHTML = list.map(it => {
-        const cnt = Math.max(0, Number(getCount(it.id) || 0));
-        const disabled = cnt <= 0;
-        const isColaboSeed = (invType === "seed" && it.id === "seed_colabo");
-
-        return `
-          <div class="pkItem" data-id="${it.id}">
-            <div class="pkItemTop">
-              <div class="pkThumb">
-                <img src="${it.img}" alt="">
-                <div class="pkCntBadge">×${cnt}</div>
-              </div>
-              <div class="pkMeta">
-                <div class="pkName">${it.name || it.id}</div>
-                <div class="pkFx">${it.fx ? `効果：<b>${it.fx}</b>` : ""}</div>
-              </div>
-            </div>
-            <div class="pkDesc">${(it.desc || "").replace(/\n/g,"\n")}</div>
-
-            <div class="pkBtns">
-              ${isColaboSeed ? `<button type="button" class="pkBtn secondary" data-redeem="1">シリアル入力</button>` : ``}
-              <button type="button" class="pkBtn" data-pick="${it.id}" ${disabled ? "disabled" : ""}>
-                ${disabled ? "在庫なし" : "これにする"}
-              </button>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      // pick
-      elGrid.querySelectorAll("button[data-pick]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          if(btn.disabled) return;
-          const id = btn.getAttribute("data-pick");
-          onPickId(id);
-        });
+    mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
+      btn.addEventListener("click", () => {
+        if(btn.disabled) return;
+        onSelectId(btn.getAttribute("data-pick"));
       });
+    });
 
-      // redeem
-      const redeemBtn = elGrid.querySelector("button[data-redeem]");
-      if(redeemBtn) redeemBtn.addEventListener("click", openRedeemModal);
-    }
+    const redeemBtn = mBody.querySelector("button[data-redeem]");
+    if (redeemBtn) redeemBtn.addEventListener("click", openRedeemModal);
 
-    elSearch.addEventListener("input", renderGrid, { passive:true });
-    elSort.addEventListener("change", renderGrid, { passive:true });
-
-    elBack.addEventListener("click", () => { if(typeof onBack === "function") onBack(); });
-    elClose.addEventListener("click", closeModal);
-
-    renderGrid();
+    return {
+      setTitle(t){ mTitle.textContent = t; },
+      onBack(fn){ document.getElementById("btnBackStep").addEventListener("click", fn); },
+      onClose(){ document.getElementById("btnCloseStep").addEventListener("click", closeModal); },
+    };
   }
 
-  // =========================================================
-  // 9) 植える手順
-  // =========================================================
   function showSeedStep(){
-    openPicker({
-      title: "種を選ぶ",
-      items: SEEDS,
-      invType: "seed",
-      onPickId: (id) => { draft.seedId = id; showWaterStep(); },
-      onBack: () => closeModal()
-    });
+    const ui = cardSlider(SEEDS, (id) => { draft.seedId = id; showWaterStep(); }, "seed");
+    ui.setTitle("種を選ぶ");
+    ui.onBack(() => closeModal());
+    ui.onClose();
   }
 
   function showWaterStep(){
-    openPicker({
-      title: "水を選ぶ",
-      items: WATERS,
-      invType: "water",
-      onPickId: (id) => { draft.waterId = id; showFertStep(); },
-      onBack: () => showSeedStep()
-    });
+    const ui = cardSlider(WATERS, (id) => { draft.waterId = id; showFertStep(); }, "water");
+    ui.setTitle("水を選ぶ");
+    ui.onBack(() => showSeedStep());
+    ui.onClose();
   }
 
   function showFertStep(){
-    openPicker({
-      title: "肥料を選ぶ",
-      items: FERTS,
-      invType: "fert",
-      onPickId: (id) => { draft.fertId = id; confirmPlant(); },
-      onBack: () => showWaterStep()
-    });
+    const ui = cardSlider(FERTS, (id) => { draft.fertId = id; confirmPlant(); }, "fert");
+    ui.setTitle("肥料を選ぶ");
+    ui.onBack(() => showWaterStep());
+    ui.onClose();
   }
 
   function confirmPlant(){
@@ -970,7 +865,8 @@
       0.35, 1.0
     );
 
-    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000); // 最短1時間
+    // 最短1時間
+    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000);
     const now = Date.now();
 
     openModal("植える確認", `
@@ -1038,9 +934,6 @@
     });
   }
 
-  // =========================================================
-  // 10) 時間経過
-  // =========================================================
   function tick(){
     const now = Date.now();
     let changed = false;
@@ -1067,30 +960,23 @@
     render();
   }
 
-  // =========================================================
-  // 11) リセット
-  // =========================================================
-  const btnReset = document.getElementById("btnReset");
-  if(btnReset){
-    btnReset.addEventListener("click", () => {
-      if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済みを全消去します。OK？")) return;
+  document.getElementById("btnReset").addEventListener("click", () => {
+    if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済みを全消去します。OK？")) return;
 
-      localStorage.removeItem(LS_STATE);
-      localStorage.removeItem(LS_BOOK);
-      localStorage.removeItem(LS_PLAYER);
-      localStorage.removeItem(LS_INV);
-      localStorage.removeItem(LS_CODES_USED);
+    localStorage.removeItem(LS_STATE);
+    localStorage.removeItem(LS_BOOK);
+    localStorage.removeItem(LS_PLAYER);
+    localStorage.removeItem(LS_INV);
+    localStorage.removeItem(LS_CODES_USED);
 
-      state = loadState();
-      book = loadBook();
-      player = loadPlayer();
-      inv = loadInv();
+    state = loadState();
+    book = loadBook();
+    player = loadPlayer();
+    inv = loadInv();
 
-      render();
-    });
-  }
+    render();
+  });
 
-  // start
   render();
   setInterval(tick, TICK_MS);
 })();
