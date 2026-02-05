@@ -636,80 +636,147 @@
   // - 長文説明は「装備詳細パネル」に出す
   // =========================================================
   function openEquipGrid(kind){
-    inv = loadInv();
-    equip = loadEquip();
+  inv = loadInv();
+  equip = loadEquip();
 
-    const isSeed = kind==="seed";
-    const isWater= kind==="water";
-    const isFert = kind==="fert";
+  const isSeed = kind==="seed";
+  const isWater= kind==="water";
+  const isFert = kind==="fert";
 
-    const items = isSeed ? SEEDS : isWater ? WATERS : FERTS;
-    const invType = kind; // "seed" | "water" | "fert"
-    const title = isSeed ? "🌱 タネ装備" : isWater ? "💧 水装備" : "🧂 肥料装備";
+  const items = isSeed ? SEEDS : isWater ? WATERS : FERTS;
+  const invType = kind; // "seed" | "water" | "fert"
+  const title = isSeed ? "🌱 タネ装備（SHOP）" : isWater ? "💧 水装備（SHOP）" : "🧂 肥料装備（SHOP）";
+  const currentId = isSeed ? equip.seedId : isWater ? equip.waterId : equip.fertId;
 
-    const currentId = isSeed ? equip.seedId : isWater ? equip.waterId : equip.fertId;
+  // ちょい厨二の店主ボイス（ワクワク演出）
+  const shopLine =
+    isSeed  ? "……そのタネ、今夜なにを孵す？"
+  : isWater ? "……水は正直だ。確率の顔が変わる。"
+  :          "……肥料は近道。だが、副作用もある。";
 
-    const cards = items.map(x=>{
-      const cnt = invGet(inv, invType, x.id);
-      const disabled = (cnt <= 0);
-      const selected = (x.id === currentId);
+  const cards = items.map(x=>{
+    const cnt = invGet(inv, invType, x.id);
+    const disabled = (cnt <= 0);
+    const selected = (x.id === currentId);
 
-      return `
-        <button type="button" class="gridCard ${selected ? "isSel":""}" data-pick="${x.id}" ${disabled ? "disabled":""}>
-          <div class="gImg">
-            <img src="${x.img}" alt="${x.name}">
-            <div class="gCnt">×${cnt}</div>
-          </div>
-          <div class="gName">${x.name}</div>
-          <div class="gTag">${x.fx ? x.fx : ""}</div>
-        </button>
-      `;
-    }).join("");
+    // 小さいタグ（効果）を短く
+    const fx = (x.fx || "").toString();
+    const fxShort = fx.length > 10 ? fx.slice(0,10)+"…" : fx;
 
-    const extra = (isSeed ? `
-      <div style="display:flex;gap:10px;margin-top:10px;">
-        <button type="button" id="btnRedeem" style="flex:1;border-radius:12px;border:1px solid var(--line);background:var(--btn2);color:#fff;font-weight:900;padding:12px;">
-          🎫 シリアル入力（コラボ）
-        </button>
+    // 在庫0の時の札
+    const sold = disabled ? `<div class="shop-sold">SOLD</div>` : "";
+
+    // 選択中の札
+    const eq = selected ? `<div class="shop-eq">装備中</div>` : "";
+
+    return `
+      <button type="button"
+        class="shop-card ${selected ? "isSel":""}"
+        data-kind="${kind}"
+        data-pick="${x.id}"
+        ${disabled ? "disabled":""}
+        aria-label="${x.name}">
+        <div class="shop-thumb">
+          <img src="${x.img}" alt="${x.name}">
+          ${sold}
+          ${eq}
+          <div class="shop-count">×${cnt}</div>
+        </div>
+
+        <div class="shop-meta">
+          <div class="shop-name">${x.name}</div>
+          <div class="shop-fx">${fxShort}</div>
+        </div>
+      </button>
+    `;
+  }).join("");
+
+  const extra = isSeed ? `
+    <div class="shop-actions">
+      <button type="button" class="shop-btn shop-btn--ticket" id="btnRedeem">
+        🎫 シリアル入力（コラボ）
+      </button>
+      <button type="button" class="shop-btn" id="btnCloseEquip">戻る</button>
+    </div>
+  ` : `
+    <div class="shop-actions">
+      <button type="button" class="shop-btn" id="btnCloseEquip">戻る</button>
+    </div>
+  `;
+
+  openModal(title, `
+    <div class="shop-wrap">
+      <div class="shop-sign">
+        <div class="shop-sign__title">装備を選べ</div>
+        <div class="shop-sign__sub">${shopLine}</div>
       </div>
-    ` : ``);
 
-    openModal(title, `
-      <div class="step">タップで即装備（在庫0は選べない）。</div>
-      <div class="gridWrap">${cards}</div>
+      <div class="shop-grid">
+        ${cards}
+      </div>
+
+      <div class="shop-owner">
+        <div class="shop-owner__face">店主</div>
+        <div class="shop-owner__msg">
+          「<b>${isSeed?"タネ":"アイテム"}</b>は“気配”だ。<br>
+          迷ったら <b>画像が強そう</b> なのを選べ。」
+        </div>
+      </div>
+
       ${extra}
-      <div class="row">
-        <button type="button" id="btnCloseEquip">閉じる</button>
-      </div>
-    `);
+    </div>
+  `);
 
-    const closeBtn = document.getElementById("btnCloseEquip");
-    if(closeBtn) closeBtn.addEventListener("click", closeModal);
+  const closeBtn = document.getElementById("btnCloseEquip");
+  if(closeBtn) closeBtn.addEventListener("click", closeModal);
 
-    if(isSeed){
-      const redeemBtn = document.getElementById("btnRedeem");
-      if(redeemBtn) redeemBtn.addEventListener("click", openRedeemModal);
-    }
-
-    if(mBody){
-      mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const id = btn.getAttribute("data-pick");
-          if(!id) return;
-
-          if(isSeed) equip.seedId = id;
-          else if(isWater) equip.waterId = id;
-          else if(isFert) equip.fertId = id;
-
-          saveEquip(equip);
-          closeModal();
-
-          setEquipDetail(kind);
-          render();
-        });
-      });
-    }
+  if(isSeed){
+    const redeemBtn = document.getElementById("btnRedeem");
+    if(redeemBtn) redeemBtn.addEventListener("click", openRedeemModal);
   }
+
+  // クリックで即装備
+  if(mBody){
+    mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        if(btn.disabled) return;
+        const id = btn.getAttribute("data-pick");
+        if(!id) return;
+
+        if(isSeed) equip.seedId = id;
+        else if(isWater) equip.waterId = id;
+        else if(isFert) equip.fertId = id;
+
+        saveEquip(equip);
+
+        // 装備の気持ちよさ：即「装備した！」演出（短い）
+        const picked = items.find(it=>it.id===id);
+        closeModal();
+
+        openModal("装備完了", `
+          <div class="reward">
+            <div class="big">装備した！</div>
+            <div class="mini"><b>${picked?.name || id}</b></div>
+            <img class="img" src="${picked?.img || ""}" alt="">
+          </div>
+          <div class="row">
+            <button type="button" class="primary" id="btnOkEq">OK</button>
+          </div>
+        `);
+
+        const ok = document.getElementById("btnOkEq");
+        if(ok){
+          ok.addEventListener("click", ()=>{
+            closeModal();
+            setEquipDetail(kind);
+            render();
+          });
+        }
+      });
+    });
+  }
+}
+
 
   function shortName(name){
     if(!name) return "-";
