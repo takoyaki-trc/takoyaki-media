@@ -7,6 +7,10 @@
    ✅ 公開記念プレゼント: 1回だけ
    ✅ 無料∞を廃止：無料タネ/無料水/無料肥料も「有料で購入 → 在庫+1」
    ✅ コラボのタネ（seed_colabo）は「シリアルで増える」ので購入不可
+   ✅ デバッグ：オクト＋1000ボタン（#btnDebugPlus1000）
+   ✅ 新規販売タネ追加：
+      - ブッ刺さりタネ（seed_bussasari）
+      - なまら買わさるタネ（seed_namara_kawasar）
    ✅ ポップアップ無反応対策：
       - DOM要素が無いと落ちない（nullガード）
       - クリックイベントが最終的に必ず openModal へ到達
@@ -58,6 +62,10 @@
   function setOcto(v){
     localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v)||0))));
   }
+  function addOcto(delta){
+    const now = getOcto();
+    setOcto(now + Number(delta || 0));
+  }
 
   function invDefault(){
     // ファームと共通の形
@@ -100,6 +108,11 @@
     { id:"seed_shop",    name:"【店頭タネ】", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
     { id:"seed_line",    name:"【回線タネ】", desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
     { id:"seed_special", name:"【たこぴのタネ】", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/29OsEvjf.png", fx:"待て" },
+
+    // ✅ 追加：販売タネ
+    { id:"seed_bussasari",      name:"【ブッ刺さりタネ】", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/i1TXfGH5.png", fx:"刺さり補正" },
+    { id:"seed_namara_kawasar", name:"【なまら買わさるタネ】", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/VxZ660Wc.png", fx:"買わさり圧" },
+
     { id:"seed_colabo",  name:"【コラボのタネ】", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/AWBcxVls.png", fx:"シリアル解放" },
   ];
 
@@ -126,6 +139,11 @@
     seed_shop: 18,
     seed_line: 18,
     seed_special: 38,
+
+    // ✅ 追加タネ（仮価格）
+    seed_bussasari: 26,
+    seed_namara_kawasar: 30,
+
     // seed_colabo は購入不可
 
     water_plain_free: 10,    // ★無料だったが有料化
@@ -270,11 +288,13 @@
     const chipWater = $("#chipWater");
     const chipFert  = $("#chipFert");
     const chipBookOwned = $("#chipBookOwned");
+    const chipBookDup = $("#chipBookDup"); // HTMLにあるので拾う（無くても落ちない）
 
     if(chipSeed)  chipSeed.textContent  = String(totalKind(inv, "seed"));
     if(chipWater) chipWater.textContent = String(totalKind(inv, "water"));
     if(chipFert)  chipFert.textContent  = String(totalKind(inv, "fert"));
     if(chipBookOwned) chipBookOwned.textContent = String(calcBookOwned());
+    if(chipBookDup) chipBookDup.textContent = "0"; // いまは未計算。必要なら後で実装可。
 
     // みくじボタン表示
     const done = localStorage.getItem(LS.mikujiDate) === todayKey();
@@ -590,7 +610,7 @@
     $$(".ball", grill).forEach(b => {
       b.addEventListener("click", () => {
         const idx = Number(b.getAttribute("data-i")||0);
-        doMikuji(idx);
+        doMikuji(idx); // ✅ idxを渡しても落ちない
       }, { once:true });
     });
   }
@@ -615,11 +635,12 @@
     return table[0];
   }
 
-  function doMikuji(){
+  function doMikuji(_idx){
+    // _idx は演出に使いたければ使える（今は未使用でもOK）
     const reward = rollMikujiReward();
 
     if(reward.type === "octo"){
-      setOcto(getOcto() + reward.qty);
+      addOcto(reward.qty);
     }else{
       const inv = ensureInvKeys();
       inv[reward.type] = inv[reward.type] || {};
@@ -740,6 +761,15 @@
       give.disabled = true;
     }
 
+    // ✅ デバッグ：オクト＋1000
+    $("#btnDebugPlus1000")?.addEventListener("click", () => {
+      addOcto(1000);
+      pushLog("デバッグ：オクト +1000");
+      refreshHUD();
+      setTakopiSayRandom();
+      toast("🧪 デバッグ：オクト +1000");
+    });
+
     $("#btnOpenInv")?.addEventListener("click", () => {
       openInvModal();
       // 無反応に見えないよう、セリフも更新
@@ -791,7 +821,5 @@
 
   boot();
 })();
-
-
 
 
