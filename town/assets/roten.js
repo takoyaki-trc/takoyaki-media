@@ -1,825 +1,781 @@
-/* =========================================================
-   roten.js（RPG武器屋風：たこぴのお店 / 完全版）
-   ✅ 資材在庫: tf_v1_inv（seed/water/fert）= ファームと完全共通
-   ✅ 図鑑: tf_v1_book（got[id].count 合計を “所持” として表示）
-   ✅ オクト: roten_v1_octo
-   ✅ たこ焼きみくじ: 1日1回
-   ✅ 公開記念プレゼント: 1回だけ
-   ✅ 無料∞を廃止：無料タネ/無料水/無料肥料も「有料で購入 → 在庫+1」
-   ✅ コラボのタネ（seed_colabo）は「シリアルで増える」ので購入不可
-   ✅ デバッグ：オクト＋1000ボタン（#btnDebugPlus1000）
-   ✅ 新規販売タネ追加：
-      - ブッ刺さりタネ（seed_bussasari）
-      - なまら買わさるタネ（seed_namara_kawasar）
-   ✅ ポップアップ無反応対策：
-      - DOM要素が無いと落ちない（nullガード）
-      - クリックイベントが最終的に必ず openModal へ到達
-      - モーダル内ボタンも "modalBody内で検索" して確実に拾う
-   ✅ ファーム側SEEDS/WATERS/FERTSの画像・説明を露店へ反映（同じURL/文言）
-========================================================= */
 (() => {
   "use strict";
 
+  /* =========================
+     Keys（ファーム/図鑑と共通）
+  ========================== */
   const LS = {
     octo: "roten_v1_octo",
-    inv: "tf_v1_inv",
-    book: "tf_v1_book",
-    mikujiDate: "roten_v1_mikuji_date",
-    launchGift: "roten_v1_launch_gift_claimed",
-    log: "roten_v1_log",
-    // シリアル使用済み（ファームと同じキーに揃える）
-    codesUsed: "tf_v1_codes_used"
+    inv: "tf_v1_inv",      // ★ファーム在庫と共通
+    book: "tf_v1_book",    // ★図鑑と共通
+    gift: "roten_v1_gift_2026_public",
+    mikuji: "roten_v1_mikuji_day",
   };
 
-  // ---------- utils ----------
-  const $  = (sel, root=document) => root.querySelector(sel);
-  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  /* =========================
+     データ（ファームと同じIDを使う）
+     ※必要最小限（ショップに必要な分）
+  ========================== */
+  const FREE = {
+    seed:  new Set(["seed_random"]),
+    water: new Set(["water_plain_free"]),
+    fert:  new Set(["fert_agedama"]),
+  };
 
-  function todayKey(){
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const da = String(d.getDate()).padStart(2,"0");
-    return `${y}-${m}-${da}`;
+  const SEEDS = [
+    { id:"seed_random",  name:"【なに出るタネ】", desc:"何が育つかは完全ランダム。\n店主も知らない。", img:"https://ul.h3z.jp/gnyvP580.png",  unit: 0 },
+    { id:"seed_shop",    name:"【店頭タネ】",     desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", img:"https://ul.h3z.jp/IjvuhWoY.png", unit: 18 },
+    { id:"seed_line",    name:"【回線タネ】",     desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", img:"https://ul.h3z.jp/AonxB5x7.png", unit: 18 },
+    { id:"seed_special", name:"【たこぴのタネ】", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/29OsEvjf.png", unit: 180 },
+    { id:"seed_colabo",  name:"【コラボのタネ】", desc:"シリアルで増える。\nここでは買えない。", img:"https://ul.h3z.jp/AWBcxVls.png", unit: -1 },
+  ];
+
+  const WATERS = [
+    { id:"water_plain_free", name:"《ただの水》",        desc:"無料・UR/LRなし。\n無課金の基準。", img:"https://ul.h3z.jp/13XdhuHi.png", unit: 0 },
+    { id:"water_nice",       name:"《なんか良さそうな水》", desc:"ちょい上振れ・LRなし。\n初心者の背中押し。", img:"https://ul.h3z.jp/3z04ypEd.png", unit: 30 },
+    { id:"water_suspicious", name:"《怪しい水》",        desc:"現実準拠・標準。\n実パックと同じ空気。", img:"https://ul.h3z.jp/wtCO9mec.png", unit: 50 },
+    { id:"water_overdo",     name:"《やりすぎな水》",    desc:"勝負水・現実より上。\n体感で強い。", img:"https://ul.h3z.jp/vsL9ggf6.png", unit: 90 },
+    { id:"water_regret",     name:"《押さなきゃよかった水》", desc:"確定枠・狂気。\n事件製造機（SNS向け）", img:"https://ul.h3z.jp/L0nafMOp.png", unit: 120 },
+  ];
+
+  const FERTS = [
+    { id:"fert_agedama", name:"①ただの揚げ玉", desc:"時短0。\n《焼きすぎたカード》率UP", img:"https://ul.h3z.jp/9p5fx53n.png", unit: 0 },
+    { id:"fert_feel",    name:"②《気のせい肥料》", desc:"早くなった気がする。\n気のせいかもしれない。", img:"https://ul.h3z.jp/XqFTb7sw.png", unit: 20 },
+    { id:"fert_guts",    name:"③《根性論ぶち込み肥料》", desc:"理由はない。\n気合いだ。", img:"https://ul.h3z.jp/bT9ZcNnS.png", unit: 45 },
+    { id:"fert_skip",    name:"④《工程すっ飛ばし肥料》", desc:"途中は、\n見なかったことにした。", img:"https://ul.h3z.jp/FqPzx12Q.png", unit: 80 },
+    { id:"fert_timeno",  name:"⑤《時間を信じない肥料》", desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》", img:"https://ul.h3z.jp/l2njWY57.png", unit: 160 },
+  ];
+
+  /* =========================
+     Util
+  ========================== */
+  const $ = (s, el=document) => el.querySelector(s);
+  const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
+
+  function nowJstYmd(){
+    // JST固定（環境差を避けるためUTC+9で計算）
+    const t = Date.now() + 9*60*60*1000;
+    const d = new Date(t);
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth()+1).padStart(2,"0");
+    const day = String(d.getUTCDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
   }
 
   function loadJSON(key, fallback){
     try{
       const raw = localStorage.getItem(key);
       if(!raw) return fallback;
-      return JSON.parse(raw);
-    }catch(e){
-      return fallback;
-    }
+      const obj = JSON.parse(raw);
+      return (obj && typeof obj === "object") ? obj : fallback;
+    }catch(e){ return fallback; }
   }
   function saveJSON(key, obj){
     localStorage.setItem(key, JSON.stringify(obj));
   }
 
-  function getOcto(){
-    return Number(localStorage.getItem(LS.octo) || 0);
+  function loadOcto(){
+    const n = Number(localStorage.getItem(LS.octo) ?? 0);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
   }
-  function setOcto(v){
-    localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v)||0))));
+  function saveOcto(n){
+    localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(n))));
   }
   function addOcto(delta){
-    const now = getOcto();
-    setOcto(now + Number(delta || 0));
+    const cur = loadOcto();
+    const next = Math.max(0, cur + Math.floor(delta));
+    saveOcto(next);
+    return next;
   }
 
-  function invDefault(){
-    // ファームと共通の形
-    return { ver:1, seed:{}, water:{}, fert:{} };
-  }
-  function loadInv(){
-    const inv = loadJSON(LS.inv, invDefault());
-    inv.seed  = inv.seed  || {};
-    inv.water = inv.water || {};
-    inv.fert  = inv.fert  || {};
+  function defaultInv(){
+    const inv = { ver:1, seed:{}, water:{}, fert:{} };
+    for(const x of SEEDS) inv.seed[x.id] = 0;
+    for(const x of WATERS) inv.water[x.id] = 0;
+    for(const x of FERTS) inv.fert[x.id] = 0;
     return inv;
   }
-  function saveInv(inv){
-    saveJSON(LS.inv, inv);
+  function loadInv(){
+    const inv = loadJSON(LS.inv, defaultInv());
+    inv.seed = inv.seed || {};
+    inv.water = inv.water || {};
+    inv.fert = inv.fert || {};
+    return inv;
+  }
+  function saveInv(inv){ saveJSON(LS.inv, inv); }
+
+  function isFree(type, id){ return !!FREE[type]?.has(id); }
+
+  function invGet(inv, type, id){
+    if(isFree(type,id)) return Infinity;
+    const box = inv[type] || {};
+    const n = Number(box[id] ?? 0);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
+  function invAdd(inv, type, id, delta){
+    if(isFree(type,id)) return;
+    if(!inv[type]) inv[type] = {};
+    const cur = Number(inv[type][id] ?? 0);
+    const next = Math.max(0, Math.floor(cur + delta));
+    inv[type][id] = next;
   }
 
-  // 図鑑（所持数合計）
-  function calcBookOwned(){
-    const book = loadJSON(LS.book, null);
-    if(!book || !book.got) return 0;
-    let total = 0;
-    for(const k of Object.keys(book.got)){
-      const c = Number(book.got[k]?.count || 0);
-      if(c > 0) total += c;
-    }
-    return total;
+  function loadBook(){
+    const b = loadJSON(LS.book, { ver:1, got:{} });
+    b.got = b.got || {};
+    return b;
+  }
+  function saveBook(b){ saveJSON(LS.book, b); }
+
+  function rarityFromIdOrRec(rec){
+    // 図鑑データに rarity があれば使う。なければ "N" 扱い。
+    return (rec && rec.rarity) ? String(rec.rarity) : "N";
+  }
+  function sellUnitPrice(rarity){
+    // 即決の目安（好きに調整してOK）
+    // SP（焼きすぎ/生焼け等）が来た場合は30
+    const r = String(rarity||"N").toUpperCase();
+    if(r === "LR") return 220;
+    if(r === "UR") return 120;
+    if(r === "SR") return 45;
+    if(r === "R")  return 18;
+    if(r === "SP") return 30;
+    return 6; // N
   }
 
-  // ログ（任意）
-  function pushLog(msg){
-    const a = loadJSON(LS.log, []);
-    a.unshift({ t: Date.now(), msg });
-    saveJSON(LS.log, a.slice(0, 80));
-  }
+  /* =========================
+     UI refs
+  ========================== */
+  const elOctoNow = $("#octoNow");
+  const elHudOcto = $("#hudOcto");
+  const elChipSeed = $("#chipSeed");
+  const elChipWater = $("#chipWater");
+  const elChipFert = $("#chipFert");
+  const elChipDex = $("#chipDex");
 
-  // ---------- FARM MASTER（露店に反映） ----------
-  // ※あなたが貼ったファームの定義に合わせて「画像/名前/説明」をそのまま採用
-  const SEEDS = [
-    { id:"seed_random",  name:"【なに出るタネ】", desc:"何が育つかは完全ランダム。\n店主も知らない。", img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
-    { id:"seed_shop",    name:"【店頭タネ】", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
-    { id:"seed_line",    name:"【回線タネ】", desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
-    { id:"seed_special", name:"【たこぴのタネ】", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/29OsEvjf.png", fx:"待て" },
+  const elShopGrid = $("#shopGrid");
+  const elSellList = $("#sellList");
+  const elInvWrap = $("#invWrap");
 
-    // ✅ 追加：販売タネ
-    { id:"seed_bussasari",      name:"【ブッ刺さりタネ】", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/i1TXfGH5.png", fx:"刺さり補正" },
-    { id:"seed_namara_kawasar", name:"【なまら買わさるタネ】", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/VxZ660Wc.png", fx:"買わさり圧" },
-
-    { id:"seed_colabo",  name:"【コラボのタネ】", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/AWBcxVls.png", fx:"シリアル解放" },
-  ];
-
-  const WATERS = [
-    { id:"water_plain_free", name:"《ただの水》", desc:"無料・UR/LRなし。\n無課金の基準。", img:"https://ul.h3z.jp/13XdhuHi.png", fx:"基準（水）" },
-    { id:"water_nice",       name:"《なんか良さそうな水》", desc:"ちょい上振れ・LRなし。\n初心者の背中押し。", img:"https://ul.h3z.jp/3z04ypEd.png", fx:"ちょい上振れ" },
-    { id:"water_suspicious", name:"《怪しい水》", desc:"現実準拠・標準。\n実パックと同じ空気。", img:"https://ul.h3z.jp/wtCO9mec.png", fx:"標準（現実準拠）" },
-    { id:"water_overdo",     name:"《やりすぎな水》", desc:"勝負水・現実より上。\n体感で強い。", img:"https://ul.h3z.jp/vsL9ggf6.png", fx:"勝負" },
-    { id:"water_regret",     name:"《押さなきゃよかった水》", desc:"確定枠・狂気。\n事件製造機（SNS向け）", img:"https://ul.h3z.jp/L0nafMOp.png", fx:"事件" },
-  ];
-
-  const FERTS = [
-    { id:"fert_agedama", name:"①ただの揚げ玉", desc:"時短0。\n《焼きすぎたカード》率UP", img:"https://ul.h3z.jp/9p5fx53n.png", fx:"時短 0%" },
-    { id:"fert_feel",    name:"②《気のせい肥料》", desc:"早くなった気がする。\n気のせいかもしれない。", img:"https://ul.h3z.jp/XqFTb7sw.png", fx:"時短 5%" },
-    { id:"fert_guts",    name:"③《根性論ぶち込み肥料》", desc:"理由はない。\n気合いだ。", img:"https://ul.h3z.jp/bT9ZcNnS.png", fx:"時短 20%" },
-    { id:"fert_skip",    name:"④《工程すっ飛ばし肥料》", desc:"途中は、\n見なかったことにした。", img:"https://ul.h3z.jp/FqPzx12Q.png", fx:"時短 40%" },
-    { id:"fert_timeno",  name:"⑤《時間を信じない肥料》", desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》", img:"https://ul.h3z.jp/l2njWY57.png", fx:"時短 90〜100%" },
-  ];
-
-  // 露店販売価格（オクト）
-  // ※ここだけは露店側の仕様なので、ゲームバランスに合わせて調整OK
-  const PRICE = {
-    seed_random: 12,
-    seed_shop: 18,
-    seed_line: 18,
-    seed_special: 38,
-
-    // ✅ 追加タネ（仮価格）
-    seed_bussasari: 26,
-    seed_namara_kawasar: 30,
-
-    // seed_colabo は購入不可
-
-    water_plain_free: 10,    // ★無料だったが有料化
-    water_nice: 14,
-    water_suspicious: 18,
-    water_overdo: 26,
-    water_regret: 40,
-
-    fert_agedama: 10,        // ★無料だったが有料化
-    fert_feel: 12,
-    fert_guts: 16,
-    fert_skip: 22,
-    fert_timeno: 36,
-  };
-
-  // ---------- GOODS（マスター統合） ----------
-  // kind: seed/water/fert
-  function buildGoods(){
-    const goods = [];
-
-    for(const s of SEEDS){
-      const isColabo = (s.id === "seed_colabo");
-      goods.push({
-        kind: "seed",
-        id: s.id,
-        name: s.name,
-        desc: s.desc,
-        fx: s.fx,
-        img: s.img,
-        price: isColabo ? null : (PRICE[s.id] ?? 18),
-        buyable: !isColabo,
-        tag: isColabo ? "シリアル限定" : "販売"
-      });
-    }
-    for(const w of WATERS){
-      goods.push({
-        kind: "water",
-        id: w.id,
-        name: w.name,
-        desc: w.desc,
-        fx: w.fx,
-        img: w.img,
-        price: (PRICE[w.id] ?? 18),
-        buyable: true,
-        tag: "販売"
-      });
-    }
-    for(const f of FERTS){
-      goods.push({
-        kind: "fert",
-        id: f.id,
-        name: f.name,
-        desc: f.desc,
-        fx: f.fx,
-        img: f.img,
-        price: (PRICE[f.id] ?? 18),
-        buyable: true,
-        tag: "販売"
-      });
-    }
-    return goods;
-  }
-
-  const GOODS = buildGoods();
-
-  const SAY = [
-    "「いらっしゃい…たこ。オクトで“未来”を買うの、すき…たこ？」",
-    "「種は物語…水は運…肥料は代償…たこ。」",
-    "「ボタン押しても無反応に見えた？…今は喋れるようにした…たこ。」",
-    "「買う？…買わない？…どっちでもいいけど、見ていきな…たこ。」"
-  ];
-
-  // ---------- modal（必ず動く） ----------
   const modal = $("#modal");
   const modalBg = $("#modalBg");
-  const modalX  = $("#modalX");
   const modalTitle = $("#modalTitle");
-  const modalBody  = $("#modalBody");
+  const modalBody = $("#modalBody");
+  const modalClose = $("#modalClose");
 
+  const toast = $("#toast");
+
+  /* =========================
+     Modal / Toast
+  ========================== */
   function openModal(title, html){
-    if(!modal || !modalTitle || !modalBody) return; // DOM無いなら何もしない（落ちない）
-    modalTitle.textContent = title || "メニュー";
-    modalBody.innerHTML = html || "";
-    modal.classList.add("is-open");
+    modalTitle.textContent = title;
+    modalBody.innerHTML = html;
     modal.setAttribute("aria-hidden","false");
   }
   function closeModal(){
-    if(!modal) return;
-    modal.classList.remove("is-open");
     modal.setAttribute("aria-hidden","true");
-    if(modalBody) modalBody.innerHTML = "";
+    modalBody.innerHTML = "";
+  }
+  modalBg.addEventListener("click", closeModal);
+  modalClose.addEventListener("click", closeModal);
+  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape" && modal.getAttribute("aria-hidden")==="false") closeModal(); });
+
+  let toastTimer = null;
+  function showToast(html, ms=1200){
+    toast.innerHTML = html;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> toast.classList.remove("show"), ms);
   }
 
-  // 背景・×で閉じる（存在する時だけ）
-  modalBg?.addEventListener("click", closeModal);
-  modalX?.addEventListener("click", closeModal);
-  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeModal(); });
-
-  // ---------- render ----------
-  let currentKind = "seed";
-
-  function ownedCount(inv, kind, id){
-    const bucket = inv[kind] || {};
-    return Number(bucket[id] || 0);
+  function hudPop(el){
+    if(!el) return;
+    el.classList.remove("hud-pop");
+    // reflow
+    void el.offsetWidth;
+    el.classList.add("hud-pop");
   }
-  function totalKind(inv, kind){
-    const bucket = inv[kind] || {};
-    let total = 0;
-    for(const k of Object.keys(bucket)){
-      total += Number(bucket[k] || 0);
+
+  function sparkCard(cardEl){
+    if(!cardEl) return;
+    cardEl.classList.remove("is-spark");
+    void cardEl.offsetWidth;
+    cardEl.classList.add("is-spark");
+    setTimeout(()=> cardEl.classList.remove("is-spark"), 650);
+  }
+
+  /* =========================
+     Render HUD
+  ========================== */
+  function totalInvCount(inv, type, items){
+    let sum = 0;
+    for(const it of items){
+      const n = invGet(inv, type, it.id);
+      if(n === Infinity) continue; // 無料は∞なので合計に足さない（見た目優先）
+      sum += n;
     }
-    return total;
+    return sum;
   }
 
-  function ensureInvKeys(){
+  function renderHud(){
+    const octo = loadOcto();
     const inv = loadInv();
-    inv.seed  = inv.seed  || {};
-    inv.water = inv.water || {};
-    inv.fert  = inv.fert  || {};
-    // 穴埋め（新規追加があっても反映される）
-    for(const g of GOODS){
-      if(!(g.id in inv[g.kind])) inv[g.kind][g.id] = 0;
+    const book = loadBook();
+
+    elOctoNow.textContent = String(octo);
+    elChipSeed.textContent = String(totalInvCount(inv, "seed", SEEDS));
+    elChipWater.textContent = String(totalInvCount(inv, "water", WATERS));
+    elChipFert.textContent = String(totalInvCount(inv, "fert", FERTS));
+    elChipDex.textContent = String(Object.keys(book.got || {}).length);
+  }
+
+  /* =========================
+     Tabs
+  ========================== */
+  function setTab(tab){
+    $$(".tab").forEach(b=>{
+      const on = (b.dataset.tab === tab);
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-selected", on ? "true":"false");
+    });
+    $$(".tabpane").forEach(p=>{
+      p.classList.toggle("is-show", p.dataset.pane === tab);
+    });
+    if(tab === "sell") renderSell();
+    if(tab === "inv") renderInv();
+  }
+
+  $$(".tab").forEach(b=>{
+    b.addEventListener("click", ()=> setTab(b.dataset.tab));
+  });
+
+  function setSub(sub){
+    $$(".subtab").forEach(b=> b.classList.toggle("is-active", b.dataset.sub === sub));
+    renderShop(sub);
+  }
+  $$(".subtab").forEach(b=>{
+    b.addEventListener("click", ()=> setSub(b.dataset.sub));
+  });
+
+  /* =========================
+     Shop（購入）
+  ========================== */
+  function verbLabel(){
+    // たこぴショップなので口調固定
+    return "仕入れる…たこ";
+  }
+
+  function formatUnitCost(unit, qty){
+    const total = unit * qty;
+    return `🪙 ${total}`;
+  }
+
+  function buyItem(type, id, unit, qty, cardEl){
+    if(qty <= 0) return;
+    if(unit < 0){
+      showToast(`💭 それは…ここでは取引できない…たこ`);
+      return;
     }
+    if(isFree(type,id)){
+      showToast(`∞ は…買う意味がない…たこ`);
+      return;
+    }
+
+    const cost = unit * qty;
+    const octo = loadOcto();
+    if(octo < cost){
+      showToast(`💦 オクトが足りない…たこ<br><span style="opacity:.8">必要：<b>🪙${cost}</b> / 今：🪙${octo}</span>`, 1600);
+      hudPop(elHudOcto);
+      return;
+    }
+
+    // pay
+    saveOcto(octo - cost);
+
+    // add inv
+    const inv = loadInv();
+    invAdd(inv, type, id, qty);
     saveInv(inv);
-    return inv;
+
+    // feedback
+    const item = (type==="seed"?SEEDS:type==="water"?WATERS:FERTS).find(x=>x.id===id);
+    const name = item ? item.name : id;
+
+    showToast(
+      `✨ <b>${name}</b> ×${qty} 仕入れた…たこ！<br><span style="opacity:.85">🪙 -${cost}</span>`,
+      1300
+    );
+    sparkCard(cardEl);
+    renderHud();
+    hudPop(elHudOcto);
+    // 資材HUDもポン（どれか）
+    if(type==="seed") hudPop($("#btnOpenInv"));
+    if(type==="water") hudPop($("#btnOpenInv"));
+    if(type==="fert") hudPop($("#btnOpenInv"));
+
+    // リレンダー（所持数バッジ反映）
+    // ただしカクつき防止で、今のタブだけ部分更新
+    const activeSub = $(".subtab.is-active")?.dataset.sub || "seed";
+    renderShop(activeSub);
   }
 
-  function setTakopiSayRandom(){
-    const t = SAY[Math.floor(Math.random()*SAY.length)];
-    const el = $("#takopiSay");
-    if(el) el.innerHTML = t;
-  }
+  function cardHtml(type, item, inv){
+    const cnt = invGet(inv, type, item.id);
+    const cntLabel = (cnt === Infinity) ? "∞" : String(cnt);
+    const unit = Number(item.unit ?? 0);
 
-  function refreshHUD(){
-    const inv = ensureInvKeys();
-    const octo = getOcto();
+    const canBuy = unit >= 0 && !isFree(type, item.id);
+    const btnText = (q) => canBuy ? `🪙払って${verbLabel()}（+${q}）` : (unit < 0 ? "取引不可" : "∞（無料）");
 
-    const octoNow = $("#octoNow");
-    if(octoNow) octoNow.textContent = String(octo);
+    // よく使う数量：1/10/50
+    const q1 = 1, q10 = 10, q50 = 50;
 
-    const chipSeed  = $("#chipSeed");
-    const chipWater = $("#chipWater");
-    const chipFert  = $("#chipFert");
-    const chipBookOwned = $("#chipBookOwned");
-    const chipBookDup = $("#chipBookDup"); // HTMLにあるので拾う（無くても落ちない）
+    const disabled1  = !canBuy;
+    const disabled10 = !canBuy;
+    const disabled50 = !canBuy;
 
-    if(chipSeed)  chipSeed.textContent  = String(totalKind(inv, "seed"));
-    if(chipWater) chipWater.textContent = String(totalKind(inv, "water"));
-    if(chipFert)  chipFert.textContent  = String(totalKind(inv, "fert"));
-    if(chipBookOwned) chipBookOwned.textContent = String(calcBookOwned());
-    if(chipBookDup) chipBookDup.textContent = "0"; // いまは未計算。必要なら後で実装可。
+    return `
+      <div class="card" data-type="${type}" data-id="${item.id}">
+        <div class="spark"></div>
+        <div class="imgbox">
+          <img src="${item.img}" alt="${item.name}">
+        </div>
+        <div class="body">
+          <div class="name">${item.name}</div>
+          <div class="desc">${String(item.desc||"").replace(/\n/g,"<br>")}</div>
 
-    // みくじボタン表示
-    const done = localStorage.getItem(LS.mikujiDate) === todayKey();
-    const btnM = $("#btnMikuji");
-    if(btnM){
-      btnM.textContent = done ? "🎲 たこ焼きみくじ（本日済）" : "🎲 たこ焼きみくじ（1日1回）";
-      btnM.disabled = done;
-    }
-
-    // 公開記念プレゼント表示
-    const claimed = localStorage.getItem(LS.launchGift) === "1";
-    const giftBtn = $("#btnLaunchPresent");
-    if(giftBtn){
-      giftBtn.textContent = claimed ? "🎁 公開記念プレゼント（受取済）" : "🎁 公開記念プレゼント（1回だけ）";
-      giftBtn.disabled = claimed;
-    }
-  }
-
-  function renderGoods(){
-    const inv = ensureInvKeys();
-    const grid = $("#goodsGrid");
-    if(!grid) return;
-
-    const list = GOODS.filter(g => g.kind === currentKind);
-
-    grid.innerHTML = list.map(g => {
-      const own = String(ownedCount(inv, g.kind, g.id));
-      const canBuy = !!g.buyable;
-      const priceLabel = canBuy ? `価格：${g.price}オクト` : "価格：—（購入不可）";
-      const btnLabel   = canBuy ? `買う（${g.price}オクト）` : "シリアルで入手";
-      const dis = canBuy ? "" : "disabled";
-      const badge = g.tag ? `<span class="miniTag">${g.tag}</span>` : "";
-
-      return `
-        <article class="good" data-kind="${g.kind}" data-id="${g.id}">
-          <div class="good-top">
-            <div class="good-img"><img src="${g.img}" alt="${g.name}" loading="lazy"></div>
-            <div class="good-meta">
-              <div class="good-name">${g.name} ${badge}</div>
-              <div class="good-desc">${(g.desc||"").replace(/\n/g,"<br>")}</div>
-              <div class="good-fx">${g.fx ? `効果：<b>${g.fx}</b>` : ""}</div>
-            </div>
+          <div class="meta">
+            <span class="badge">所持：<b>×${cntLabel}</b></span>
+            <span class="badge">単価：<b>${unit < 0 ? "—" : (isFree(type,item.id) ? "無料" : `🪙${unit}`)}</b></span>
           </div>
-          <div class="good-row">
-            <div class="good-owned">所持×<b>${own}</b></div>
-            <div class="good-buy">
-              <div class="price">${priceLabel}</div>
-              <button class="btn buybtn" ${dis} data-act="${canBuy ? "buy" : "serial"}">${btnLabel}</button>
-            </div>
+
+          <div class="actions">
+            <button class="qbtn" data-buy="${q1}" ${disabled1?"disabled":""}>${btnText(q1)}<br><span style="opacity:.85">${formatUnitCost(unit,q1)}</span></button>
+            <button class="qbtn primary" data-buy="${q10}" ${disabled10?"disabled":""}>${btnText(q10)}<br><span style="opacity:.85">${formatUnitCost(unit,q10)}</span></button>
+            <button class="qbtn" data-buy="${q50}" ${disabled50?"disabled":""}>${btnText(q50)}<br><span style="opacity:.85">${formatUnitCost(unit,q50)}</span></button>
           </div>
-        </article>
-      `;
-    }).join("");
+        </div>
+      </div>
+    `;
+  }
 
-    // handlers（必ず発火→openModalへ）
-    $$(".good", grid).forEach(card => {
-      const kind = card.getAttribute("data-kind");
-      const id   = card.getAttribute("data-id");
-      const item = GOODS.find(x => x.kind===kind && x.id===id);
-      if(!item) return;
+  function renderShop(sub){
+    const inv = loadInv();
+    const type = (sub==="seed") ? "seed" : (sub==="water") ? "water" : "fert";
+    const items = (type==="seed") ? SEEDS : (type==="water") ? WATERS : FERTS;
 
-      const btn = $(".buybtn", card);
-      btn?.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    elShopGrid.innerHTML = items.map(it => cardHtml(type, it, inv)).join("");
 
-        if(item.buyable){
-          confirmBuy(item);
-        }else{
-          // コラボのタネはシリアル入力へ
-          openSerialModal();
-        }
+    // bind
+    $$(".card", elShopGrid).forEach(card=>{
+      const type = card.dataset.type;
+      const id = card.dataset.id;
+      const items = (type==="seed") ? SEEDS : (type==="water") ? WATERS : FERTS;
+      const item = items.find(x=>x.id===id);
+      const unit = Number(item?.unit ?? 0);
+
+      $$("button[data-buy]", card).forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const qty = Number(btn.getAttribute("data-buy") || 0);
+          buyItem(type, id, unit, qty, card);
+        });
       });
     });
   }
 
-  // ---------- BUY FLOW（ワクワク演出） ----------
-  function confirmBuy(item){
-    const inv = ensureInvKeys();
-    const octo = getOcto();
-    const own = ownedCount(inv, item.kind, item.id);
+  /* =========================
+     Inventory modal + tab
+  ========================== */
+  function invRows(type, items, inv){
+    return items.map(it=>{
+      const n = invGet(inv, type, it.id);
+      const val = (n === Infinity) ? "∞" : String(n);
+      return `<div class="inv-row"><span>${it.name}</span><span><b>×${val}</b></span></div>`;
+    }).join("");
+  }
 
-    const can = octo >= Number(item.price||0);
+  function renderInv(){
+    const inv = loadInv();
+    elInvWrap.innerHTML = `
+      <div class="inv-block">
+        <div class="inv-ttl">🌱 種（tf_v1_inv.seed）</div>
+        ${invRows("seed", SEEDS, inv)}
+      </div>
+      <div class="inv-block">
+        <div class="inv-ttl">💧 水（tf_v1_inv.water）</div>
+        ${invRows("water", WATERS, inv)}
+      </div>
+      <div class="inv-block">
+        <div class="inv-ttl">🧪 肥料（tf_v1_inv.fert）</div>
+        ${invRows("fert", FERTS, inv)}
+      </div>
+    `;
+  }
 
-    openModal("🛒 購入する", `
-      <div class="pop-wrap">
-        <div class="pop-head">
-          <div class="pop-img"><img src="${item.img}" alt="${item.name}"></div>
-          <div class="pop-info">
-            <div class="pop-name">${item.name}</div>
-            <div class="pop-desc">${(item.desc||"").replace(/\n/g,"<br>")}</div>
-            <div class="pop-meta">
-              <span>所持：<b>${own}</b></span>
-              <span>価格：<b>${item.price}</b>オクト</span>
-            </div>
-            <div class="pop-fx">${item.fx ? `効果：<b>${item.fx}</b>` : ""}</div>
-          </div>
+  function openInvModal(){
+    const inv = loadInv();
+    openModal("所持資材", `
+      <div class="inv-wrap">
+        <div class="inv-block">
+          <div class="inv-ttl">🌱 種</div>
+          ${invRows("seed", SEEDS, inv)}
         </div>
-
-        <div class="pop-say">
-          <div class="spark">✨</div>
-          <div class="note">
-            たこぴ：<br>
-            「それを買うの…？ いいね…たこ。<br>
-            でもね、買うってことは、“焼く”ってこと…たこ。」
-          </div>
+        <div class="inv-block">
+          <div class="inv-ttl">💧 水</div>
+          ${invRows("water", WATERS, inv)}
         </div>
-
-        <div class="pop-actions">
-          <button class="btn big" id="doBuy" ${can ? "" : "disabled"}>購入する</button>
-          <button class="btn btn-ghost" id="cancelBuy">やめる</button>
-          <div class="warnline">${can ? "" : "オクトが足りない…たこ。"}</div>
+        <div class="inv-block">
+          <div class="inv-ttl">🧪 肥料</div>
+          ${invRows("fert", FERTS, inv)}
         </div>
       </div>
     `);
+  }
+  $("#btnOpenInv").addEventListener("click", openInvModal);
 
-    const root = modalBody || document;
-    $("#cancelBuy", root)?.addEventListener("click", closeModal);
-    $("#doBuy", root)?.addEventListener("click", () => {
-      doBuy(item);
-      closeModal();
-    });
+  /* =========================
+     Sell（即決売却）
+  ========================== */
+  let sellSort = "new"; // "new" | "count"
+
+  function bookToList(book){
+    const got = book.got || {};
+    const arr = Object.keys(got).map(id => {
+      const rec = got[id] || {};
+      const count = Number(rec.count ?? 0);
+      const rarity = rarityFromIdOrRec(rec);
+      const unit = sellUnitPrice(rarity);
+      const lastAt = Number(rec.lastAt ?? rec.at ?? 0);
+      return {
+        id,
+        name: rec.name || id,
+        img: rec.img || "",
+        rarity,
+        count: Math.max(0, count|0),
+        unit,
+        lastAt
+      };
+    }).filter(x=>x.count>0);
+    if(sellSort === "count") arr.sort((a,b)=> (b.count-a.count) || (b.lastAt-a.lastAt));
+    else arr.sort((a,b)=> (b.lastAt-a.lastAt) || (b.count-a.count));
+    return arr;
   }
 
-  function doBuy(item){
-    const price = Number(item.price||0);
-    const octo = getOcto();
-    if(octo < price) return;
+  function decBookCount(id, delta){
+    const book = loadBook();
+    if(!book.got) book.got = {};
+    const rec = book.got[id];
+    if(!rec) return { ok:false };
 
-    const inv = ensureInvKeys();
-    inv[item.kind] = inv[item.kind] || {};
-    inv[item.kind][item.id] = Number(inv[item.kind][item.id] || 0) + 1;
+    const cur = Number(rec.count ?? 0);
+    const next = Math.max(0, cur - delta);
 
-    setOcto(octo - price);
-    saveInv(inv);
-
-    pushLog(`購入：${item.name} -${price}オクト`);
-    setTakopiSayRandom();
-    refreshHUD();
-    renderGoods();
-    toast(`購入！ ${item.name}（+1）`);
+    if(next <= 0){
+      delete book.got[id];
+    }else{
+      rec.count = next;
+      rec.lastAt = Date.now();
+      book.got[id] = rec;
+    }
+    saveBook(book);
+    return { ok:true, next };
   }
 
-  // ---------- simple toast ----------
-  function toast(text){
-    const el = $("#toast");
-    if(!el) return;
-    el.textContent = text;
-    el.classList.add("is-show");
-    clearTimeout(toast._t);
-    toast._t = setTimeout(()=> el.classList.remove("is-show"), 1600);
+  function sell(id, rarity, qty){
+    const book = loadBook();
+    const rec = book.got?.[id];
+    const cur = Number(rec?.count ?? 0);
+    if(cur <= 0){
+      showToast("💭 もう持ってない…たこ");
+      renderSell();
+      renderHud();
+      return;
+    }
+    const sellQty = Math.min(cur, Math.max(1, qty|0));
+    const unit = sellUnitPrice(rarity);
+    const gain = unit * sellQty;
+
+    const r = decBookCount(id, sellQty);
+    if(!r.ok){
+      showToast("💦 売却に失敗…たこ", 1500);
+      return;
+    }
+    addOcto(gain);
+
+    showToast(`✨ <b>${rec.name || id}</b> ×${sellQty} 売った…たこ！<br><span style="opacity:.85">🪙 +${gain}</span>`, 1300);
+    hudPop(elHudOcto);
+    renderSell();
+    renderHud();
   }
 
-  // ---------- inventory modal ----------
-  function openInvModal(){
-    const inv = ensureInvKeys();
+  function renderSell(){
+    const book = loadBook();
+    const list = bookToList(book);
 
-    function list(kindLabel, kindKey){
-      const items = GOODS.filter(g => g.kind === kindKey);
-      const lines = items.map(g => {
-        const c = String(ownedCount(inv, g.kind, g.id));
-        const memo = (!g.buyable && g.id==="seed_colabo") ? "（シリアル限定）" : "";
-        return `<div class="inv-row">
-          <div class="inv-left">
-            <span class="inv-name">${g.name}</span>
-            <span class="inv-memo">${memo}</span>
+    if(list.length === 0){
+      elSellList.innerHTML = `
+        <div class="inv-block">
+          <div class="inv-ttl">売れるカードがない…たこ</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5">
+            畑で収穫して図鑑（tf_v1_book）に登録すると、ここに出る…たこ。
           </div>
-          <div class="inv-right">×<b>${c}</b></div>
-        </div>`;
-      }).join("");
-      return `
-        <div class="inv-box">
-          <div class="inv-title">${kindLabel}</div>
-          ${lines || `<div class="note">まだ何もない…たこ。</div>`}
         </div>
       `;
-    }
-
-    openModal("📦 所持資材", `
-      <div class="mikuji-wrap">
-        <div class="note">※所持数は <b>tf_v1_inv</b>（ファーム在庫）と完全連動。</div>
-        ${list("🌱 種", "seed")}
-        ${list("💧 水", "water")}
-        ${list("🧪 肥料", "fert")}
-        <div class="row">
-          <button class="btn btn-ghost" id="okInv" type="button">閉じる</button>
-        </div>
-      </div>
-    `);
-
-    const root = modalBody || document;
-    $("#okInv", root)?.addEventListener("click", closeModal);
-  }
-
-  // ---------- serial（コラボのタネ） ----------
-  const REDEEM_TABLE = {
-    "COLABO-TEST-1": { seed_colabo: 1 },
-    "COLABO-TEST-5": { seed_colabo: 5 },
-  };
-
-  function loadUsedCodes(){
-    const obj = loadJSON(LS.codesUsed, {});
-    return (obj && typeof obj === "object") ? obj : {};
-  }
-  function saveUsedCodes(obj){
-    saveJSON(LS.codesUsed, obj);
-  }
-
-  function openSerialModal(){
-    openModal("🔑 シリアル入力（コラボのタネ）", `
-      <div class="pop-wrap">
-        <div class="note">
-          「コラボのタネ」は <b>購入できない</b>。<br>
-          シリアルを入力すると在庫が増える…たこ。
-        </div>
-
-        <div class="serial-row">
-          <input id="redeemCode" class="serial-in" type="text" placeholder="例：COLABO-TEST-1" autocomplete="off">
-          <button id="redeemBtn" class="btn big">使う</button>
-        </div>
-
-        <div class="note">※同じコードは<b>1回だけ</b>。使ったら戻れない…たこ。</div>
-
-        <div class="row">
-          <button class="btn btn-ghost" id="serialClose" type="button">閉じる</button>
-        </div>
-      </div>
-    `);
-
-    const root = modalBody || document;
-
-    $("#serialClose", root)?.addEventListener("click", closeModal);
-
-    $("#redeemBtn", root)?.addEventListener("click", () => {
-      const code = ( $("#redeemCode", root)?.value || "" ).trim().toUpperCase();
-      if(!code){ alert("コードを入力してね"); return; }
-
-      const used = loadUsedCodes();
-      if(used[code]){ alert("このコードは使用済み。"); return; }
-
-      const payload = REDEEM_TABLE[code];
-      if(!payload){ alert("無効なコードです。"); return; }
-
-      const inv = ensureInvKeys();
-      if(payload.seed_colabo){
-        inv.seed["seed_colabo"] = Number(inv.seed["seed_colabo"]||0) + (Number(payload.seed_colabo)||0);
-      }
-      saveInv(inv);
-
-      used[code] = { at: Date.now(), payload };
-      saveUsedCodes(used);
-
-      pushLog(`シリアル：${code}（コラボのタネ +${payload.seed_colabo||0}）`);
-      toast(`成功！コラボのタネ +${payload.seed_colabo||0}`);
-      refreshHUD();
-      renderGoods();
-      closeModal();
-    });
-  }
-
-  // ---------- rates modal ----------
-  function openRatesModal(){
-    openModal("💧 水のレア率メモ", `
-      <div class="mikuji-wrap">
-        <div class="note">
-          ここは“説明”じゃなく“ワクワク”用のメモ。<br>
-          ・ただの水：基準（ただし有料）<br>
-          ・なんか良さそう：ちょい上振れ<br>
-          ・怪しい水：現実準拠の空気<br>
-          ・やりすぎ：勝負<br>
-          ・押さなきゃよかった：事件
-        </div>
-        <button class="btn btn-ghost" id="okRates" type="button">閉じる</button>
-      </div>
-    `);
-    const root = modalBody || document;
-    $("#okRates", root)?.addEventListener("click", closeModal);
-  }
-
-  // ---------- daily mikuji ----------
-  function openMikuji(){
-    const done = localStorage.getItem(LS.mikujiDate) === todayKey();
-    if(done){
-      openModal("🎲 たこ焼きみくじ", `<div class="mikuji-wrap"><div class="note">今日はもう引いた…たこ。明日またおいで…たこ。</div></div>`);
       return;
     }
 
-    // たこ焼き画像（仮）
-    const ballImg = "https://ul.h3z.jp/7moREJnl.png";
-
-    openModal("🎲 たこ焼きみくじ（1日1回）", `
-      <div class="mikuji-wrap">
-        <div class="note">
-          たこぴ：<br>
-          「焼き台から1つ選んで…たこ。<br>
-          当たったたこ焼きの中から、何か出る…たこ。」
+    elSellList.innerHTML = list.map(x=>{
+      const totalAll = x.unit * x.count;
+      return `
+        <div class="sell-item" data-sell-id="${x.id}">
+          <div class="sell-thumb">${x.img ? `<img src="${x.img}" alt="${x.name}">` : ""}</div>
+          <div class="sell-body">
+            <div class="sell-name">${x.name}</div>
+            <div class="sell-meta">
+              <span class="badge">ID：<b>${x.id}</b></span>
+              <span class="badge">レア：<b>${x.rarity}</b></span>
+              <span class="badge">所持：<b>×${x.count}</b></span>
+              <span class="badge">単価：<b>🪙${x.unit}</b></span>
+            </div>
+            <div class="sell-actions">
+              <button class="qbtn" data-sellq="1">即決：1枚（🪙${x.unit}）</button>
+              <button class="qbtn primary" data-sellq="10">即決：10枚（🪙${x.unit*10}）</button>
+              <button class="qbtn danger" data-sellall="1">全部売る（🪙${totalAll}）</button>
+            </div>
+          </div>
         </div>
+      `;
+    }).join("");
 
-        <div class="grill" id="grill">
-          ${Array.from({length:9}).map((_,i)=>`
-            <button class="ball" type="button" data-i="${i}">
-              <img src="${ballImg}" alt="たこ焼き">
-            </button>
-          `).join("")}
-        </div>
+    $$(".sell-item").forEach(row=>{
+      const id = row.getAttribute("data-sell-id");
+      const book = loadBook();
+      const rec = book.got?.[id];
+      const rarity = rarityFromIdOrRec(rec);
 
-        <div class="note">※押した瞬間、今日の運命が確定する…たこ。</div>
-      </div>
-    `);
-
-    const root = modalBody || document;
-    const grill = $("#grill", root);
-    $$(".ball", grill).forEach(b => {
-      b.addEventListener("click", () => {
-        const idx = Number(b.getAttribute("data-i")||0);
-        doMikuji(idx); // ✅ idxを渡しても落ちない
-      }, { once:true });
+      $$("button[data-sellq]", row).forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const q = Number(btn.getAttribute("data-sellq")||1);
+          sell(id, rarity, q);
+        });
+      });
+      const allBtn = $("button[data-sellall]", row);
+      if(allBtn){
+        allBtn.addEventListener("click", ()=> {
+          const cur = Number(loadBook().got?.[id]?.count ?? 0);
+          sell(id, rarity, cur);
+        });
+      }
     });
   }
 
-  function rollMikujiReward(){
-    // 確率（合計100）
-    const table = [
-      { w:24, type:"seed",  id:"seed_shop",   qty:1, label:"店頭タネ×1" },
-      { w:24, type:"seed",  id:"seed_line",   qty:1, label:"回線タネ×1" },
-      { w:8,  type:"seed",  id:"seed_special",qty:1, label:"たこぴのタネ×1" },
-      { w:18, type:"water", id:"water_nice",  qty:1, label:"なんか良さそうな水×1" },
-      { w:12, type:"water", id:"water_overdo",qty:1, label:"やりすぎな水×1" },
-      { w:10, type:"fert",  id:"fert_guts",   qty:1, label:"根性論ぶち込み肥料×1" },
-      { w:4,  type:"octo",  id:"octo",        qty:50,label:"オクト+50" },
+  $("#btnSellSortNew").addEventListener("click", ()=>{ sellSort="new"; renderSell(); showToast("並び替え：最近入手順"); });
+  $("#btnSellSortCount").addEventListener("click", ()=>{ sellSort="count"; renderSell(); showToast("並び替え：枚数順"); });
+  $("#btnSellInfo").addEventListener("click", ()=>{
+    openModal("即決価格ルール", `
+      <div class="inv-block">
+        <div class="inv-ttl">価格（1枚あたり）</div>
+        <div class="inv-row"><span>N</span><span><b>🪙6</b></span></div>
+        <div class="inv-row"><span>R</span><span><b>🪙18</b></span></div>
+        <div class="inv-row"><span>SR</span><span><b>🪙45</b></span></div>
+        <div class="inv-row"><span>UR</span><span><b>🪙120</b></span></div>
+        <div class="inv-row"><span>LR</span><span><b>🪙220</b></span></div>
+        <div class="inv-row"><span>SP（特殊）</span><span><b>🪙30</b></span></div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.5">
+          ※好きに調整OK。ここは “経済の気持ちよさ” を優先した基準…たこ。
+        </div>
+      </div>
+    `);
+  });
+
+  /* =========================
+     Events
+  ========================== */
+  $("#btnGiveOcto").addEventListener("click", ()=>{
+    addOcto(100);
+    renderHud();
+    hudPop(elHudOcto);
+    showToast("🪙 +100（テスト）");
+  });
+
+  $("#btnTakopiTalk").addEventListener("click", ()=>{
+    const lines = [
+      "「在庫は…心の保険…たこ」",
+      "「急いだ取引ほど…後で響く…たこ」",
+      "「買うより…仕入れる…たこ」",
+      "「未来は…レシートじゃ返せない…たこ」",
+      "「数字が増えると…人は安心する…たこ」",
     ];
-    const r = Math.random()*100;
-    let acc=0;
+    $("#takopiSay").innerHTML = lines[Math.floor(Math.random()*lines.length)];
+    showToast("🗯 たこぴが何か言った…たこ", 900);
+  });
+
+  /* =========================
+     Gift（1回だけ）
+  ========================== */
+  function claimGift(){
+    const flag = localStorage.getItem(LS.gift);
+    if(flag){
+      showToast("🎁 もう受け取ってる…たこ", 1200);
+      return;
+    }
+
+    const inv = loadInv();
+    // 店頭タネ10 / 回線タネ10 / たこぴのタネ1
+    invAdd(inv, "seed", "seed_shop", 10);
+    invAdd(inv, "seed", "seed_line", 10);
+    invAdd(inv, "seed", "seed_special", 1);
+
+    // 水と肥料 各3個ずつ（無料枠は∞なので有料側を配る）
+    invAdd(inv, "water", "water_nice", 3);
+    invAdd(inv, "water", "water_suspicious", 3);
+    invAdd(inv, "water", "water_overdo", 3);
+
+    invAdd(inv, "fert", "fert_feel", 3);
+    invAdd(inv, "fert", "fert_guts", 3);
+    invAdd(inv, "fert", "fert_skip", 3);
+
+    saveInv(inv);
+    localStorage.setItem(LS.gift, String(Date.now()));
+
+    renderHud();
+    const activeSub = $(".subtab.is-active")?.dataset.sub || "seed";
+    renderShop(activeSub);
+
+    showToast(
+      `🎁 <b>公開記念プレゼント</b> を受け取った…たこ！<br>
+       <span style="opacity:.85">店頭タネ×10 / 回線タネ×10 / たこぴのタネ×1 / 水×9 / 肥料×9</span>`,
+      2200
+    );
+    hudPop($("#btnOpenInv"));
+  }
+
+  $("#btnGift").addEventListener("click", claimGift);
+
+  /* =========================
+     Mikuji（1日1回）
+  ========================== */
+  function mikujiReward(){
+    // 報酬テーブル（ここは好きに調整OK）
+    const table = [
+      { w: 26, kind:"octo", amount: 60, label:"🪙 +60" },
+      { w: 20, kind:"octo", amount: 120, label:"🪙 +120" },
+      { w: 10, kind:"seed", id:"seed_shop", amount: 3, label:"🌱 店頭タネ×3" },
+      { w: 10, kind:"seed", id:"seed_line", amount: 3, label:"🌱 回線タネ×3" },
+      { w: 8,  kind:"water", id:"water_nice", amount: 2, label:"💧 良さ水×2" },
+      { w: 8,  kind:"fert",  id:"fert_guts", amount: 1, label:"🧪 根性肥料×1" },
+      { w: 6,  kind:"water", id:"water_overdo", amount: 1, label:"💧 やりすぎ×1" },
+      { w: 4,  kind:"seed", id:"seed_special", amount: 1, label:"🌱 たこぴのタネ×1" },
+      { w: 4,  kind:"fert", id:"fert_timeno", amount: 1, label:"🧪 時間を信じない×1" },
+      { w: 4,  kind:"octo", amount: 300, label:"🪙 +300（当たり…たこ）" },
+    ];
+    const total = table.reduce((a,b)=>a+b.w,0);
+    let r = Math.random()*total;
     for(const t of table){
-      acc += t.w;
-      if(r <= acc) return t;
+      r -= t.w;
+      if(r<=0) return t;
     }
     return table[0];
   }
 
-  function doMikuji(_idx){
-    // _idx は演出に使いたければ使える（今は未使用でもOK）
-    const reward = rollMikujiReward();
-
-    if(reward.type === "octo"){
-      addOcto(reward.qty);
-    }else{
-      const inv = ensureInvKeys();
-      inv[reward.type] = inv[reward.type] || {};
-      inv[reward.type][reward.id] = Number(inv[reward.type][reward.id] || 0) + reward.qty;
-      saveInv(inv);
-    }
-
-    localStorage.setItem(LS.mikujiDate, todayKey());
-    pushLog(`みくじ：${reward.label}`);
-
-    const ballImg = "https://ul.h3z.jp/7moREJnl.png";
-    openModal("✨ みくじ結果 ✨", `
-      <div class="mikuji-wrap">
-        <div class="reveal">
-          <img class="glow" src="${ballImg}" alt="たこ焼き（当たり）">
-          <div style="font-weight:900; font-size:16px;">✨ ${reward.label} ✨</div>
-          <div class="note">たこぴ：<br>「……ねぇ、知ってるたこ？<br>“当たり”は、焼ける前に受け取るもの…たこ。」</div>
-        </div>
-        <div class="row">
-          <button class="btn big" id="okMikuji">OK</button>
-        </div>
-      </div>
-    `);
-
-    const root = modalBody || document;
-    $("#okMikuji", root)?.addEventListener("click", () => {
-      closeModal();
-      refreshHUD();
-      renderGoods();
-    });
+  function canMikujiToday(){
+    const today = nowJstYmd();
+    const done = localStorage.getItem(LS.mikuji);
+    return done !== today;
   }
 
-  // ---------- launch present (one time) ----------
-  function openLaunchPresent(){
-    const claimed = localStorage.getItem(LS.launchGift) === "1";
-    if(claimed){
-      openModal("🎁 公開記念プレゼント", `<div class="mikuji-wrap"><div class="note">もう受け取った…たこ。大事に使って…たこ。</div></div>`);
+  function openMikuji(){
+    if(!canMikujiToday()){
+      showToast("🎲 今日はもう引いた…たこ", 1400);
       return;
     }
 
-    openModal("🎁 公開記念プレゼント（1回だけ）", `
-      <div class="mikuji-wrap">
-        <div class="note">
-          たこぴ：<br>
-          「ホームページ公開記念…たこ。<br>
-          “最初の火種”をあげる…たこ。」
-        </div>
+    openModal("🎲 たこ焼きみくじ（1日1回）", `
+      <div style="font-size:12px;color:var(--muted);line-height:1.5">
+        焼き台のたこ焼きから <b>1つ</b> 選ぶ…たこ。<br>
+        選んだらアップで光って、中からアイテムが出る…たこ。
+      </div>
 
-        <div class="inv-box">
-          <div class="inv-title">内容</div>
-          <div class="note">🌱 店頭タネ×10</div>
-          <div class="note">🌱 回線タネ×10</div>
-          <div class="note">🌱 たこぴのタネ×1</div>
-          <hr class="sep">
-          <div class="note">💧 なんか良さそう×3 / 怪しい×3 / やりすぎ×3</div>
-          <div class="note">🧪 気のせい×3 / 根性×3 / 工程すっ飛ばし×3</div>
-        </div>
+      <div class="mikuji-plate" id="mikujiPlate">
+        ${Array.from({length:12}).map((_,i)=>`
+          <button class="mikuji-tako" type="button" data-i="${i}">
+            <div class="dot"></div>
+          </button>
+        `).join("")}
+      </div>
 
-        <div class="row">
-          <button class="btn big" id="claimGift">受け取る（取り消し不可）</button>
-          <button class="btn btn-ghost" id="cancelGift">やめる</button>
+      <div class="mikuji-up" id="mikujiUp" style="display:none;">
+        <div style="font-weight:1000">選んだ…たこ</div>
+        <div class="mikuji-big" id="mikujiBig"></div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.5" id="mikujiResult"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="mini" id="btnMikujiOk" type="button">受け取る</button>
         </div>
-
-        <div class="note">※1回だけ。押したら戻れない…たこ。</div>
       </div>
     `);
 
-    const root = modalBody || document;
-    $("#cancelGift", root)?.addEventListener("click", closeModal);
-    $("#claimGift", root)?.addEventListener("click", () => {
-      claimLaunchGift();
+    const plate = $("#mikujiPlate", modalBody);
+    const up = $("#mikujiUp", modalBody);
+    const big = $("#mikujiBig", modalBody);
+    const result = $("#mikujiResult", modalBody);
+
+    let chosen = false;
+    let reward = null;
+
+    plate.addEventListener("click", (e)=>{
+      const btn = e.target.closest(".mikuji-tako");
+      if(!btn || chosen) return;
+      chosen = true;
+
+      // 演出：アップ表示
+      up.style.display = "block";
+      big.classList.add("glow");
+
+      reward = mikujiReward();
+      result.innerHTML = `……<br><b>中から出た：</b> ${reward.label} <br><span style="opacity:.85">（今日の運は固定された…たこ）</span>`;
+    });
+
+    $("#btnMikujiOk", modalBody).addEventListener("click", ()=>{
+      if(!reward){
+        showToast("まず選ぶ…たこ", 1200);
+        return;
+      }
+
+      // 付与
+      if(reward.kind === "octo"){
+        addOcto(reward.amount);
+        hudPop(elHudOcto);
+      }else{
+        const inv = loadInv();
+        invAdd(inv, reward.kind, reward.id, reward.amount);
+        saveInv(inv);
+        hudPop($("#btnOpenInv"));
+      }
+
+      localStorage.setItem(LS.mikuji, nowJstYmd());
+
+      renderHud();
+      const activeSub = $(".subtab.is-active")?.dataset.sub || "seed";
+      renderShop(activeSub);
+
+      showToast(`🎲 みくじ結果：<b>${reward.label}</b> を受け取った…たこ！`, 1800);
       closeModal();
     });
   }
 
-  function claimLaunchGift(){
-    const inv = ensureInvKeys();
+  $("#btnMikuji").addEventListener("click", openMikuji);
 
-    inv.seed["seed_shop"]    = Number(inv.seed["seed_shop"]||0) + 10;
-    inv.seed["seed_line"]    = Number(inv.seed["seed_line"]||0) + 10;
-    inv.seed["seed_special"] = Number(inv.seed["seed_special"]||0) + 1;
+  /* =========================
+     Init
+  ========================== */
+  // 初期タブ
+  setTab("buy");
+  setSub("seed");
 
-    inv.water["water_nice"]       = Number(inv.water["water_nice"]||0) + 3;
-    inv.water["water_suspicious"] = Number(inv.water["water_suspicious"]||0) + 3;
-    inv.water["water_overdo"]     = Number(inv.water["water_overdo"]||0) + 3;
+  // 初回レンダー
+  renderHud();
+  renderShop("seed");
 
-    inv.fert["fert_feel"] = Number(inv.fert["fert_feel"]||0) + 3;
-    inv.fert["fert_guts"] = Number(inv.fert["fert_guts"]||0) + 3;
-    inv.fert["fert_skip"] = Number(inv.fert["fert_skip"]||0) + 3;
-
-    saveInv(inv);
-    localStorage.setItem(LS.launchGift, "1");
-    pushLog("公開記念プレゼント受取");
-
-    setTakopiSayRandom();
-    refreshHUD();
-    renderGoods();
-    toast("プレゼント受取！");
-  }
-
-  // ---------- wiring ----------
-  function wireTabs(){
-    $$(".goods-tab").forEach(btn => {
-      btn.addEventListener("click", () => {
-        $$(".goods-tab").forEach(b => b.classList.remove("is-active"));
-        btn.classList.add("is-active");
-        currentKind = btn.getAttribute("data-kind") || "seed";
-        renderGoods();
-      });
-    });
-  }
-
-  function wireButtons(){
-    // +100（テスト）削除：存在してても無効化（押しても何もしない）
-    const give = $("#btnGiveOcto");
-    if(give){
-      give.style.display = "none";
-      give.disabled = true;
-    }
-
-    // ✅ デバッグ：オクト＋1000
-    $("#btnDebugPlus1000")?.addEventListener("click", () => {
-      addOcto(1000);
-      pushLog("デバッグ：オクト +1000");
-      refreshHUD();
-      setTakopiSayRandom();
-      toast("🧪 デバッグ：オクト +1000");
-    });
-
-    $("#btnOpenInv")?.addEventListener("click", () => {
-      openInvModal();
-      // 無反応に見えないよう、セリフも更新
-      setTakopiSayRandom();
-    });
-
-    $("#btnOpenRates")?.addEventListener("click", () => {
-      openRatesModal();
-      setTakopiSayRandom();
-    });
-
-    $("#btnMikuji")?.addEventListener("click", () => {
-      openMikuji();
-      setTakopiSayRandom();
-    });
-
-    $("#btnLaunchPresent")?.addEventListener("click", () => {
-      openLaunchPresent();
-      setTakopiSayRandom();
-    });
-
-    // （もし「カード売却ページ」ボタンがあるなら、クリックで新規タブで開く）
-    // HTML側に #btnSellCards がある想定。無ければ何もしない。
-    $("#btnSellCards")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      // 同階層に sell.html を置く想定。必要ならパス変更してOK。
-      window.open("./sell.html", "_blank", "noopener");
-      toast("売却ページを開いた！");
-      setTakopiSayRandom();
-    });
-
-    // コラボシリアルボタンが独立である場合（任意）
-    $("#btnSerial")?.addEventListener("click", () => {
-      openSerialModal();
-      setTakopiSayRandom();
-    });
-  }
-
-  function boot(){
-    // まずinv穴埋め（反映されない問題対策：キー不足で0扱いにならないように）
-    ensureInvKeys();
-
-    setTakopiSayRandom();
-    wireTabs();
-    wireButtons();
-    refreshHUD();
-    renderGoods();
-  }
-
-  boot();
 })();
-
 
