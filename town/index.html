@@ -130,60 +130,112 @@ body::before{
 
 /* ================================
    MAP 基準（iPhoneズレ対策 完全版）
-   ここを丸ごと置き換え
+   ★ここを丸ごと置き換え
 ================================ */
 
 /* 余計な左右ズレ要因を殺す */
 html, body{
   margin: 0;
   padding: 0;
+  width: 100%;
 }
 
-/* タイトルGIFはそのままOK（微調整だけ） */
+/* iOSで横幅がズレる時の保険（親の影響で右に出るのを防ぐ） */
+body{
+  overflow-x: hidden;
+}
+
+/* タイトルGIF（そのままでOK） */
 .title-gif{
   width: min(720px, 90%);
   margin: 0 auto 24px;
   display: block;
 }
 
-/* MAPの「座標基準」：画像と同じ箱に固定 */
+/* =========================
+   MAPの「座標基準」
+   - 画像と同じ箱（map-wrap）を基準にする
+   - 余計なpadding/transformの影響を受けにくくする
+========================= */
 .map-wrap{
-  position: relative;
-  width: 100%;
-  max-width: 800px;      /* PC上限（必要なら調整） */
-  margin: 0 auto;        /* 地図自体を左右中央に固定 */
-  padding: 0;            /* ← ここが重要：%座標のズレ原因を消す */
-  box-sizing: border-box;
-  overflow: visible;
+  position: relative !important;
+  display: block;
+  width: 100% !important;
+  max-width: 800px;          /* PC上限 */
+  margin: 0 auto !important; /* 中央固定 */
+  padding: 0 !important;     /* ← %座標のズレ原因を消す */
+  border: 0 !important;
+  box-sizing: border-box !important;
+
+  /* iOSの合成/丸め誤差でズレるのを抑える */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
-/* 画像：親の幅に必ずフィット（余計な指定を完全に潰す） */
+/* 画像：map-wrap に100%フィット（余計な指定を全部潰す） */
 .map-wrap .map-img{
-  display: block;
+  position: relative;        /* 念のため */
+  display: block !important;
   width: 100% !important;
   max-width: 100% !important;
   height: auto !important;
   margin: 0 !important;
   padding: 0 !important;
+  border: 0 !important;
+  box-sizing: border-box !important;
+
   image-rendering: pixelated;
+
+  /* iOSで画像が“微妙に横にずれる”時の保険 */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
-/* 当たり判定（hotspot）：必ずmap-wrap基準でabsolute */
-.map-wrap .hotspot{
+/* =========================
+   当たり判定 / 建物（共通）
+   - 必ず map-wrap を基準に absolute
+========================= */
+.map-wrap .hotspot,
+.map-wrap .tf-building{
   position: absolute !important;
   display: block !important;
   z-index: 60 !important; /* 画像より上 */
   cursor: pointer;
-  /* 調整中だけON */
-  /* background: rgba(0,255,255,0.25); */
+
+  /* iOSのタップ/合成ズレを抑える */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+
+  /* タップ遅延/拡大を抑制（iPhone向け） */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 建物リンク内の画像も「基準箱いっぱい」 */
+.map-wrap .tf-building > img{
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* ホバー演出（PC） */
-.map-wrap .hotspot:hover{
-  outline: 2px solid rgba(255,255,200,0.9);
-  box-shadow: 0 0 12px rgba(255,255,200,0.9);
+@media (hover:hover){
+  .map-wrap .hotspot:hover,
+  .map-wrap .tf-building:hover{
+    outline: 2px solid rgba(255,255,200,0.9);
+    box-shadow: 0 0 12px rgba(255,255,200,0.9);
+  }
 }
 
+/* =========================
+   調整用：ズレ確認（必要な時だけON）
+   これをONにすると、基準箱と当たり判定が見える
+========================= */
+/*
+.map-wrap{ outline:2px solid red; }
+.map-wrap .map-img{ outline:2px solid lime; }
+.map-wrap .hotspot, .map-wrap .tf-building{ background: rgba(0,255,255,0.25); }
+*/
 
 /* =========================
    フッター下の“でかい余白”を潰す（原因2つを上書き）
