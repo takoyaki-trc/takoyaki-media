@@ -1,17 +1,17 @@
 (() => {
-  "use strict";
-
   /* ==========================
-     たこ焼きファーム v1.1（分割版） → v1.2（装備式UI 統合版）
-     ✅ v1.1のロジック（在庫/XP/ロック/シリアル/専用タネ/肥料SP/水レア率/報酬固定）を丸ごと保持
-     ✅ 追加：装備式UI（上部バー）＋グリッド一覧（短文カード）＋詳細パネル（常設）
-     ✅ EMPTYマスは装備中の3点セットでワンタップ植え
-     ✅ シリアル入力（コラボのタネ）は継続（モーダル）
-     ✅ 既存localStorage互換維持（新キー tf_v1_equip 追加のみ）
+     たこ焼きファーム v1.1（分割版）
+     ✅ 収穫モーダル画像：contain＋最大高さ
+     ✅ 戻って再タップでカードが変わる：p.reward を保存して固定
+     ✅ 種×(追加対応) / 水×5 / 肥料×5：画像カードで横スライド
+     ✅ XP & Level：最初3マス、収穫XP、レベルアップで解放（最大25）
+     ✅ ロックマス：押すと「レベルアップで解放」
+     ✅ openModalのイベント多重登録を防止（安定化）
+     ✅ ★無料（∞）を廃止 → 無料タネ/無料水/無料肥料も在庫制（有料化前提）
+     ✅ ★たこぴのタネ：専用8枚から排出（肥料SP/水レア率は無効化）
+     ✅ ★ショップのタネ：専用12枚から排出（肥料SP/水レア率は無効化）
+     ✅ ★ダーツのタネ：専用5枚から排出（肥料SP/水レア率は無効化）
   ========================== */
-
-  // 「🛒ショップ」押下で飛ぶ先（必要なら後で調整）
-  const SHOP_URL = "./roten.html";
 
   // マス画像（状態ごと）
   const PLOT_IMG = {
@@ -29,9 +29,6 @@
   const LS_PLAYER = "tf_v1_player";
   const LS_INV = "tf_v1_inv";
   const LS_CODES_USED = "tf_v1_codes_used";
-
-  // ★追加：装備（v1.2）
-  const LS_EQUIP = "tf_v1_equip";
 
   // ★ヒント文に合わせて 5時間
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
@@ -139,6 +136,7 @@
 
   // =========================
   // ★たこぴのタネ専用（8枚）
+  // ※ここは「必ずこの8枚」になる（重複やplaceholderはあなたが後で整理してOK）
   // =========================
   const TAKOPI_SEED_POOL = [
     { id:"TP-001", name:"届け！たこぴ便", img:"https://ul.h3z.jp/rjih1Em9.png", rarity:"N" },
@@ -428,41 +426,6 @@
 
   function rarityLabel(r){ return r || ""; }
 
-  // =========================================================
-  // ★装備（v1.2追加）
-  // =========================================================
-  function defaultEquip(){
-    return {
-      ver:1,
-      seedId: SEEDS[0]?.id || null,
-      waterId: WATERS[0]?.id || null,
-      fertId: FERTS[0]?.id || null
-    };
-  }
-  function loadEquip(){
-    try{
-      const raw = localStorage.getItem(LS_EQUIP);
-      if(!raw) return defaultEquip();
-      const e = JSON.parse(raw);
-      if(!e || typeof e !== "object") return defaultEquip();
-      const def = defaultEquip();
-      return {
-        ver:1,
-        seedId: (SEEDS.some(s=>s.id===e.seedId) ? e.seedId : def.seedId),
-        waterId:(WATERS.some(w=>w.id===e.waterId) ? e.waterId : def.waterId),
-        fertId: (FERTS.some(f=>f.id===e.fertId) ? e.fertId : def.fertId),
-      };
-    }catch(_e){
-      return defaultEquip();
-    }
-  }
-  function saveEquip(e){ localStorage.setItem(LS_EQUIP, JSON.stringify(e)); }
-
-  let equip = loadEquip();
-
-  // =========================================================
-  // DOM
-  // =========================================================
   const farmEl   = document.getElementById("farm");
   const stBook   = document.getElementById("stBook");
   const stGrow   = document.getElementById("stGrow");
@@ -481,36 +444,18 @@
   const mBody  = document.getElementById("mBody");
   const mClose = document.getElementById("mClose");
 
-  // 装備バー（HTMLに置いたID：無ければ無視される）
-  const btnEquipSeed  = document.getElementById("btnEquipSeed");
-  const btnEquipWater = document.getElementById("btnEquipWater");
-  const btnEquipFert  = document.getElementById("btnEquipFert");
-  const btnGoShop     = document.getElementById("btnGoShop");
-
-  // 装備詳細パネル（常設）
-  const equipDetailTitle = document.getElementById("equipDetailTitle");
-  const equipDetailBody  = document.getElementById("equipDetailBody");
-
-  // =========================================================
-  // data
-  // =========================================================
   let state  = loadState();
   let book   = loadBook();
   let inv    = loadInv();
 
-  // v1.1で使っていた「選択→植える」用（残しておく：互換/保険）
   let activeIndex = -1;
   let draft = null;
 
-  // =========================================================
-  // モーダル安定化（イベント多重登録を防ぐ）
-  // =========================================================
+  // ===== モーダル安定化（イベント多重登録を防ぐ）
   function onBackdrop(e){ if(e.target === modal) closeModal(); }
   function onEsc(e){ if(e.key === "Escape") closeModal(); }
 
   function openModal(title, html){
-    if(!modal || !mTitle || !mBody) return;
-
     // まず安全に一旦解除
     modal.removeEventListener("click", onBackdrop);
     document.removeEventListener("keydown", onEsc);
@@ -524,8 +469,6 @@
   }
 
   function closeModal(){
-    if(!modal || !mBody) return;
-
     modal.setAttribute("aria-hidden","true");
     modal.removeEventListener("click", onBackdrop);
     document.removeEventListener("keydown", onEsc);
@@ -533,49 +476,8 @@
     activeIndex = -1;
     draft = null;
   }
-  if(mClose) mClose.addEventListener("click", closeModal);
+  mClose.addEventListener("click", closeModal);
 
-  // =========================================================
-  // 装備詳細パネル更新（v1.2）
-  // =========================================================
-  function setEquipDetail(kind){
-    if(!equipDetailTitle || !equipDetailBody) return;
-
-    const s = SEEDS.find(x=>x.id===equip.seedId);
-    const w = WATERS.find(x=>x.id===equip.waterId);
-    const f = FERTS.find(x=>x.id===equip.fertId);
-
-    let item = null;
-    let label = "";
-    if(kind==="seed"){ item=s; label="🌱 タネ"; }
-    else if(kind==="water"){ item=w; label="💧 水"; }
-    else if(kind==="fert"){ item=f; label="🧂 肥料"; }
-    else {
-      // デフォルト：全部まとめ表示
-      equipDetailTitle.textContent = "装備中";
-      equipDetailBody.innerHTML = `
-        <div style="opacity:.9;font-weight:900;margin-bottom:6px;">🌱 ${s?.name||"-"} / 💧 ${w?.name||"-"} / 🧂 ${f?.name||"-"}</div>
-        <div style="opacity:.8;line-height:1.5;">
-          <div><b>タネ</b>：${(s?.desc||"").replace(/\n/g,"<br>")}</div>
-          <div style="margin-top:6px;"><b>水</b>：${(w?.desc||"").replace(/\n/g,"<br>")}</div>
-          <div style="margin-top:6px;"><b>肥料</b>：${(f?.desc||"").replace(/\n/g,"<br>")}</div>
-        </div>
-      `;
-      return;
-    }
-
-    equipDetailTitle.textContent = `${label}：${item?.name||"-"}`;
-    equipDetailBody.innerHTML = `
-      <div style="opacity:.9;line-height:1.55;">
-        ${(item?.desc||"").replace(/\n/g,"<br>")}
-        ${item?.fx ? `<div style="margin-top:6px;">効果：<b>${item.fx}</b></div>` : ``}
-      </div>
-    `;
-  }
-
-  // =========================================================
-  // シリアル入力（コラボのタネ）… v1.1の仕様そのまま
-  // =========================================================
   function openRedeemModal(){
     openModal("シリアル入力（コラボのタネ）", `
       <div class="step">
@@ -595,598 +497,40 @@
       </div>
     `);
 
-    const redeemClose = document.getElementById("redeemClose");
-    if(redeemClose){
-      redeemClose.addEventListener("click", () => {
-        closeModal();
-      });
-    }
+    document.getElementById("redeemClose").addEventListener("click", () => {
+      closeModal();
+      showSeedStep();
+    });
 
-    const redeemBtn = document.getElementById("redeemBtn");
-    if(redeemBtn){
-      redeemBtn.addEventListener("click", () => {
-        const code = (document.getElementById("redeemCode")?.value || "").trim().toUpperCase();
-        if(!code){ alert("コードを入力してね"); return; }
+    document.getElementById("redeemBtn").addEventListener("click", () => {
+      const code = (document.getElementById("redeemCode").value || "").trim().toUpperCase();
+      if(!code){ alert("コードを入力してね"); return; }
 
-        const used = loadUsedCodes();
-        if(used[code]){ alert("このコードは使用済み。"); return; }
+      const used = loadUsedCodes();
+      if(used[code]){ alert("このコードは使用済み。"); return; }
 
-        const payload = REDEEM_TABLE[code];
-        if(!payload){ alert("無効なコードです。"); return; }
+      const payload = REDEEM_TABLE[code];
+      if(!payload){ alert("無効なコードです。"); return; }
 
-        inv = loadInv();
-        if(payload.seed_colabo){
-          invAdd(inv, "seed", "seed_colabo", Number(payload.seed_colabo) || 0);
-        }
-        saveInv(inv);
+      inv = loadInv();
+      if(payload.seed_colabo){
+        invAdd(inv, "seed", "seed_colabo", Number(payload.seed_colabo) || 0);
+      }
+      saveInv(inv);
 
-        used[code] = { at: Date.now(), payload };
-        saveUsedCodes(used);
+      used[code] = { at: Date.now(), payload };
+      saveUsedCodes(used);
 
-        alert(`成功！【コラボのタネ】×${payload.seed_colabo || 0} を付与した。`);
-        closeModal();
-        render();
-      });
-    }
-  }
-
-  // =========================================================
-  // ★装備グリッド（v1.2）
-  // - グリッドは短文：画像+名前+在庫+効果タグ
-  // - 長文説明は「装備詳細パネル」に出す
-  // =========================================================
-  function openEquipGrid(kind){
-  inv = loadInv();
-  equip = loadEquip();
-
-  const isSeed = kind==="seed";
-  const isWater= kind==="water";
-  const isFert = kind==="fert";
-
-  const items = isSeed ? SEEDS : isWater ? WATERS : FERTS;
-  const invType = kind; // "seed" | "water" | "fert"
-  const title = isSeed ? "🌱 タネ装備（SHOP）" : isWater ? "💧 水装備（SHOP）" : "🧂 肥料装備（SHOP）";
-  const currentId = isSeed ? equip.seedId : isWater ? equip.waterId : equip.fertId;
-
-  // ちょい厨二の店主ボイス（ワクワク演出）
-  const shopLine =
-    isSeed  ? "……そのタネ、今夜なにを孵す？"
-  : isWater ? "……水は正直だ。確率の顔が変わる。"
-  :          "……肥料は近道。だが、副作用もある。";
-
-  const cards = items.map(x=>{
-    const cnt = invGet(inv, invType, x.id);
-    const disabled = (cnt <= 0);
-    const selected = (x.id === currentId);
-
-    // 小さいタグ（効果）を短く
-    const fx = (x.fx || "").toString();
-    const fxShort = fx.length > 10 ? fx.slice(0,10)+"…" : fx;
-
-    // 在庫0の時の札
-    const sold = disabled ? `<div class="shop-sold">SOLD</div>` : "";
-
-    // 選択中の札
-    const eq = selected ? `<div class="shop-eq">装備中</div>` : "";
-
-    return `
-      <button type="button"
-        class="shop-card ${selected ? "isSel":""}"
-        data-kind="${kind}"
-        data-pick="${x.id}"
-        ${disabled ? "disabled":""}
-        aria-label="${x.name}">
-        <div class="shop-thumb">
-          <img src="${x.img}" alt="${x.name}">
-          ${sold}
-          ${eq}
-          <div class="shop-count">×${cnt}</div>
-        </div>
-
-        <div class="shop-meta">
-          <div class="shop-name">${x.name}</div>
-          <div class="shop-fx">${fxShort}</div>
-        </div>
-      </button>
-    `;
-  }).join("");
-
-  const extra = isSeed ? `
-    <div class="shop-actions">
-      <button type="button" class="shop-btn shop-btn--ticket" id="btnRedeem">
-        🎫 シリアル入力（コラボ）
-      </button>
-      <button type="button" class="shop-btn" id="btnCloseEquip">戻る</button>
-    </div>
-  ` : `
-    <div class="shop-actions">
-      <button type="button" class="shop-btn" id="btnCloseEquip">戻る</button>
-    </div>
-  `;
-
-  openModal(title, `
-    <div class="shop-wrap">
-      <div class="shop-sign">
-        <div class="shop-sign__title">装備を選べ</div>
-        <div class="shop-sign__sub">${shopLine}</div>
-      </div>
-
-      <div class="shop-grid">
-        ${cards}
-      </div>
-
-      <div class="shop-owner">
-        <div class="shop-owner__face">店主</div>
-        <div class="shop-owner__msg">
-          「<b>${isSeed?"タネ":"アイテム"}</b>は“気配”だ。<br>
-          迷ったら <b>画像が強そう</b> なのを選べ。」
-        </div>
-      </div>
-
-      ${extra}
-    </div>
-  `);
-
-  const closeBtn = document.getElementById("btnCloseEquip");
-  if(closeBtn) closeBtn.addEventListener("click", closeModal);
-
-  if(isSeed){
-    const redeemBtn = document.getElementById("btnRedeem");
-    if(redeemBtn) redeemBtn.addEventListener("click", openRedeemModal);
-  }
-
-  // クリックで即装備
-  if(mBody){
-    mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        if(btn.disabled) return;
-        const id = btn.getAttribute("data-pick");
-        if(!id) return;
-
-        if(isSeed) equip.seedId = id;
-        else if(isWater) equip.waterId = id;
-        else if(isFert) equip.fertId = id;
-
-        saveEquip(equip);
-
-        // 装備の気持ちよさ：即「装備した！」演出（短い）
-        const picked = items.find(it=>it.id===id);
-        closeModal();
-
-        openModal("装備完了", `
-          <div class="reward">
-            <div class="big">装備した！</div>
-            <div class="mini"><b>${picked?.name || id}</b></div>
-            <img class="img" src="${picked?.img || ""}" alt="">
-          </div>
-          <div class="row">
-            <button type="button" class="primary" id="btnOkEq">OK</button>
-          </div>
-        `);
-
-        const ok = document.getElementById("btnOkEq");
-        if(ok){
-          ok.addEventListener("click", ()=>{
-            closeModal();
-            setEquipDetail(kind);
-            render();
-          });
-        }
-      });
+      alert(`成功！【コラボのタネ】×${payload.seed_colabo || 0} を付与した。`);
+      closeModal();
+      showSeedStep();
     });
   }
-}
 
-
-  function shortName(name){
-    if(!name) return "-";
-    return name.length > 10 ? name.slice(0,10) + "…" : name;
-  }
-
-  // =========================================================
-  // 図鑑追加（v1.1そのまま）
-  // =========================================================
-  function addToBook(card){
-    const b = loadBook();
-    if(!b.got) b.got = {};
-
-    const prev = b.got[card.id];
-
-    if(prev){
-      const curCount = Number.isFinite(prev.count) ? prev.count : 1;
-      prev.count = curCount + 1;
-      prev.name = card.name;
-      prev.img = card.img;
-      prev.rarity = card.rarity || prev.rarity || "";
-      prev.lastAt = Date.now();
-      b.got[card.id] = prev;
-    }else{
-      b.got[card.id] = {
-        id: card.id,
-        name: card.name,
-        img: card.img,
-        rarity: card.rarity || "",
-        count: 1,
-        at: Date.now(),
-        lastAt: Date.now()
-      };
-    }
-
-    book = b;
-    saveBook(book);
-  }
-
-  // =========================================================
-  // ★ワンタップ植え（装備中3点セットで即植え）
-  // =========================================================
-  function plantAt(index){
-    inv = loadInv();
-    equip = loadEquip();
-
-    const seedId  = equip.seedId;
-    const waterId = equip.waterId;
-    const fertId  = equip.fertId;
-
-    const okSeed  = invGet(inv, "seed",  seedId)  > 0;
-    const okWater = invGet(inv, "water", waterId) > 0;
-    const okFert  = invGet(inv, "fert",  fertId)  > 0;
-
-    if(!okSeed || !okWater || !okFert){
-      const miss = [
-        !okSeed ? "タネ" : null,
-        !okWater ? "水" : null,
-        !okFert ? "肥料" : null,
-      ].filter(Boolean).join(" / ");
-
-      openModal("在庫不足", `
-        <div class="step">植えるには在庫が足りない：<b>${miss}</b></div>
-        <div class="row">
-          <button type="button" id="btnGoShop2">🛒 ショップへ</button>
-          <button type="button" class="primary" id="btnClose2">閉じる</button>
-        </div>
-      `);
-
-      const go = document.getElementById("btnGoShop2");
-      const cl = document.getElementById("btnClose2");
-      if(go) go.addEventListener("click", ()=>{ location.href = SHOP_URL; });
-      if(cl) cl.addEventListener("click", closeModal);
-      return;
-    }
-
-    // 消費
-    invDec(inv, "seed", seedId);
-    invDec(inv, "water", waterId);
-    invDec(inv, "fert", fertId);
-    saveInv(inv);
-
-    const seed  = SEEDS.find(x=>x.id===seedId);
-    const water = WATERS.find(x=>x.id===waterId);
-    const fert  = FERTS.find(x=>x.id===fertId);
-
-    const factor = clamp(
-      (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
-      0.35, 1.0
-    );
-
-    // 最短1時間
-    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000);
-    const now = Date.now();
-
-    const srHint =
-      (waterId === "water_overdo" && fertId === "fert_timeno") ? "SR100" :
-      (waterId === "water_overdo") ? "SR65" :
-      "NONE";
-
-    state.plots[index] = {
-      state: "GROW",
-      seedId, waterId, fertId,
-      startAt: now,
-      readyAt: now + growMs,
-      srHint
-    };
-    saveState(state);
-
-    setEquipDetail();
-    render();
-  }
-
-  // =========================================================
-  // v1.1の「横スライドで選ぶ」機構（残し：互換/保険）
-  // ※装備式UIがある場合は通常使わない
-  // =========================================================
-  function cardSlider(items, onSelectId, invType){
-    inv = loadInv();
-
-    const list = items.map(x => {
-      const cnt = invGet(inv, invType, x.id);
-      const cntLabel = String(cnt);
-      const disabled = (cnt <= 0);
-
-      const isColaboSeed = (invType === "seed" && x.id === "seed_colabo");
-
-      return `
-        <div class="c">
-          <div class="imgbox" style="position:relative;">
-            <img src="${x.img}" alt="${x.name}">
-            <div class="cntBadge">×${cntLabel}</div>
-          </div>
-          <div class="name">${x.name}</div>
-          <div class="desc">${(x.desc || "").replace(/\n/g,"<br>")}</div>
-          <div class="fx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
-
-          ${isColaboSeed ? `<button type="button" data-redeem="1">シリアル入力</button>` : ``}
-
-          <button type="button" data-pick="${x.id}" ${disabled ? "disabled" : ""}>
-            ${disabled ? "在庫なし" : "これにする"}
-          </button>
-        </div>
-      `;
-    }).join("");
-
-    openModal("選択", `
-      <div class="step">※すべて在庫制。露店で買って増やす。</div>
-      <div class="cards">${list}</div>
-      <div class="row">
-        <button type="button" id="btnBackStep">戻る</button>
-        <button type="button" id="btnCloseStep">閉じる</button>
-      </div>
-    `);
-
-    if(mBody){
-      mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
-        btn.addEventListener("click", () => {
-          if(btn.disabled) return;
-          onSelectId(btn.getAttribute("data-pick"));
-        });
-      });
-
-      const redeemBtn = mBody.querySelector("button[data-redeem]");
-      if (redeemBtn) redeemBtn.addEventListener("click", openRedeemModal);
-    }
-
-    const back = document.getElementById("btnBackStep");
-    const close = document.getElementById("btnCloseStep");
-
-    return {
-      setTitle(t){ if(mTitle) mTitle.textContent = t; },
-      onBack(fn){ if(back) back.addEventListener("click", fn); },
-      onClose(){ if(close) close.addEventListener("click", closeModal); },
-    };
-  }
-
-  function showSeedStep(){
-    const ui = cardSlider(SEEDS, (id) => { draft.seedId = id; showWaterStep(); }, "seed");
-    ui.setTitle("種を選ぶ");
-    ui.onBack(() => closeModal());
-    ui.onClose();
-  }
-
-  function showWaterStep(){
-    const ui = cardSlider(WATERS, (id) => { draft.waterId = id; showFertStep(); }, "water");
-    ui.setTitle("水を選ぶ");
-    ui.onBack(() => showSeedStep());
-    ui.onClose();
-  }
-
-  function showFertStep(){
-    const ui = cardSlider(FERTS, (id) => { draft.fertId = id; confirmPlant(); }, "fert");
-    ui.setTitle("肥料を選ぶ");
-    ui.onBack(() => showWaterStep());
-    ui.onClose();
-  }
-
-  function confirmPlant(){
-    const seed  = SEEDS.find(x=>x.id===draft.seedId);
-    const water = WATERS.find(x=>x.id===draft.waterId);
-    const fert  = FERTS.find(x=>x.id===draft.fertId);
-
-    const factor = clamp(
-      (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
-      0.35, 1.0
-    );
-
-    // 最短1時間
-    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000);
-    const now = Date.now();
-
-    openModal("植える確認", `
-      <div class="step">この内容で植える？（収穫まで約 <b>${fmtRemain(growMs)}</b>）</div>
-      <div class="reward">
-        <div class="big">選択</div>
-        <div class="mini">
-          種：${seed?.name || "-"}<br>
-          水：${water?.name || "-"}<br>
-          肥料：${fert?.name || "-"}<br><br>
-          時短係数：<b>${factor.toFixed(2)}</b>
-        </div>
-      </div>
-      <div class="row">
-        <button type="button" id="btnRe">選び直す</button>
-        <button type="button" class="primary" id="btnPlant">植える</button>
-      </div>
-    `);
-
-    const re = document.getElementById("btnRe");
-    const plant = document.getElementById("btnPlant");
-
-    if(re) re.addEventListener("click", showSeedStep);
-
-    if(plant){
-      plant.addEventListener("click", () => {
-        inv = loadInv();
-
-        const okSeed  = invGet(inv, "seed",  draft.seedId)  > 0;
-        const okWater = invGet(inv, "water", draft.waterId) > 0;
-        const okFert  = invGet(inv, "fert",  draft.fertId)  > 0;
-
-        if(!okSeed || !okWater || !okFert){
-          openModal("在庫が足りない", `
-            <div class="step">所持数が足りないため植えられない。</div>
-            <div class="row"><button type="button" id="btnOk">OK</button></div>
-          `);
-          const ok = document.getElementById("btnOk");
-          if(ok){
-            ok.addEventListener("click", () => {
-              closeModal();
-              showSeedStep();
-            });
-          }
-          return;
-        }
-
-        invDec(inv, "seed",  draft.seedId);
-        invDec(inv, "water", draft.waterId);
-        invDec(inv, "fert",  draft.fertId);
-        saveInv(inv);
-
-        const srHint =
-          (draft.waterId === "water_overdo" && draft.fertId === "fert_timeno") ? "SR100" :
-          (draft.waterId === "water_overdo") ? "SR65" :
-          "NONE";
-
-        const p = {
-          state: "GROW",
-          seedId: draft.seedId,
-          waterId: draft.waterId,
-          fertId: draft.fertId,
-          startAt: now,
-          readyAt: now + growMs,
-          srHint
-        };
-
-        state.plots[activeIndex] = p;
-        saveState(state);
-        closeModal();
-        render();
-      });
-    }
-  }
-
-  // =========================================================
-  // 盤面タップ（v1.1保持 + v1.2のワンタップ植え）
-  // =========================================================
-  function onPlotTap(i){
-    player = loadPlayer();
-    equip = loadEquip();
-
-    if (i >= player.unlocked) {
-      openModal("ロック中", `
-        <div class="step">このマスはまだ使えない。<br>収穫でXPを稼いで <b>Lvアップ</b> すると解放される。</div>
-        <div class="row"><button type="button" id="btnOk">OK</button></div>
-      `);
-      const ok = document.getElementById("btnOk");
-      if(ok) ok.addEventListener("click", closeModal);
-      return;
-    }
-
-    const p = state.plots[i] || defaultPlot();
-
-    // ★EMPTYは装備で即植え（v1.2）
-    if (p.state === "EMPTY") {
-      plantAt(i);
-      return;
-    }
-
-    if (p.state === "GROW") {
-      const seed = SEEDS.find(x=>x.id===p.seedId);
-      const water = WATERS.find(x=>x.id===p.waterId);
-      const fert = FERTS.find(x=>x.id===p.fertId);
-      const remain = (p.readyAt||0) - Date.now();
-
-      openModal("育成中", `
-        <div class="step">このマスは育成中。収穫まであと <b>${fmtRemain(remain)}</b></div>
-        <div class="reward">
-          <div class="big">設定</div>
-          <div class="mini">
-            種：${seed?seed.name:"-"}<br>
-            水：${water?water.name:"-"}<br>
-            肥料：${fert?fert.name:"-"}
-          </div>
-        </div>
-        <div class="row"><button type="button" id="btnOk">OK</button></div>
-      `);
-      const ok = document.getElementById("btnOk");
-      if(ok) ok.addEventListener("click", closeModal);
-      return;
-    }
-
-    if (p.state === "READY") {
-      if (!p.reward) {
-        p.reward = drawRewardForPlot(p);
-        saveState(state);
-      }
-      const reward = p.reward;
-
-      openModal("収穫！", `
-        <div class="step">収穫したカードを確認してから図鑑に登録する。</div>
-        <div class="reward">
-          <div class="big">${reward.name}（${reward.id}）</div>
-          <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>確認ボタンを押すと図鑑に追加され、このマスは空になる。</div>
-          <img class="img" src="${reward.img}" alt="${reward.name}">
-        </div>
-        <div class="row">
-          <button type="button" id="btnCancel">閉じる</button>
-          <button type="button" class="primary" id="btnConfirm">確認して図鑑へ</button>
-        </div>
-      `);
-
-      const cancel = document.getElementById("btnCancel");
-      const confirm = document.getElementById("btnConfirm");
-
-      if(cancel) cancel.addEventListener("click", closeModal);
-
-      if(confirm){
-        confirm.addEventListener("click", () => {
-          addToBook(reward);
-
-          const gain = XP_BY_RARITY[reward.rarity] ?? 4; // SPや未定義は4
-          addXP(gain);
-
-          state.plots[i] = defaultPlot();
-          saveState(state);
-
-          closeModal();
-          location.href = "./zukan.html";
-        });
-      }
-      return;
-    }
-
-    if (p.state === "BURN") {
-      openModal("焼けた…", `
-        <div class="step">放置しすぎて焼けた。回収するとマスが空になる。</div>
-        <div class="row">
-          <button type="button" id="btnBack">戻る</button>
-          <button type="button" class="primary" id="btnClear">回収して空にする</button>
-        </div>
-      `);
-      const back = document.getElementById("btnBack");
-      const clear = document.getElementById("btnClear");
-
-      if(back) back.addEventListener("click", closeModal);
-      if(clear){
-        clear.addEventListener("click", () => {
-          state.plots[i] = defaultPlot();
-          saveState(state);
-          closeModal();
-          render();
-        });
-      }
-      return;
-    }
-  }
-
-  // =========================================================
-  // render（v1.1保持 + v1.2の装備バー/詳細更新）
-  // =========================================================
   function render(){
     // 最新ロード
     player = loadPlayer();
     book = loadBook();
-    inv = loadInv();
-    equip = loadEquip();
-
-    if(!farmEl) return;
 
     farmEl.innerHTML = "";
     let grow = 0, ready = 0, burn = 0;
@@ -1273,9 +617,6 @@
         b.className = "badge bad";
         b.textContent = "BURN";
         d.appendChild(b);
-      } else {
-        // EMPTY
-        label = "タップで植える";
       }
 
       btn.innerHTML = `
@@ -1287,43 +628,312 @@
       farmEl.appendChild(d);
     }
 
-    if(stGrow)  stGrow.textContent  = String(grow);
-    if(stReady) stReady.textContent = String(ready);
-    if(stBurn)  stBurn.textContent  = String(burn);
-    if(stBook)  stBook.textContent  = String(Object.keys((book && book.got) ? book.got : {}).length);
+    stGrow.textContent  = String(grow);
+    stReady.textContent = String(ready);
+    stBurn.textContent  = String(burn);
+    stBook.textContent  = String(Object.keys((book && book.got) ? book.got : {}).length);
 
-    if(stLevel)  stLevel.textContent  = String(player.level);
-    if(stXP)     stXP.textContent     = String(player.xp);
-    if(stUnlock) stUnlock.textContent = String(player.unlocked);
+    stLevel.textContent  = String(player.level);
+    stXP.textContent     = String(player.xp);
+    stUnlock.textContent = String(player.unlocked);
 
     const need = xpNeedForLevel(player.level);
     const now  = player.xp;
     const left = Math.max(0, need - now);
     const pct  = Math.max(0, Math.min(100, Math.floor((now / need) * 100)));
 
-    if(stXpLeft) stXpLeft.textContent = String(left);
-    if(stXpNeed) stXpNeed.textContent = String(need);
-    if(stXpBar)  stXpBar.style.width  = pct + "%";
+    stXpLeft.textContent = String(left);
+    stXpNeed.textContent = String(need);
+    stXpBar.style.width  = pct + "%";
 
     const stXpNow = document.getElementById("stXpNow");
     if (stXpNow) stXpNow.textContent = String(now);
-
-    // ★装備バー表示
-    const s = SEEDS.find(x=>x.id===equip.seedId);
-    const w = WATERS.find(x=>x.id===equip.waterId);
-    const f = FERTS.find(x=>x.id===equip.fertId);
-
-    if(btnEquipSeed)  btnEquipSeed.textContent  = `🌱 ${shortName(s?.name)}`;
-    if(btnEquipWater) btnEquipWater.textContent = `💧 ${shortName(w?.name)}`;
-    if(btnEquipFert)  btnEquipFert.textContent  = `🧂 ${shortName(f?.name)}`;
-
-    // ★装備詳細更新
-    setEquipDetail();
   }
 
-  // =========================================================
-  // tick（v1.1そのまま）
-  // =========================================================
+  function onPlotTap(i){
+    activeIndex = i;
+    player = loadPlayer();
+
+    if (i >= player.unlocked) {
+      openModal("ロック中", `
+        <div class="step">このマスはまだ使えない。<br>収穫でXPを稼いで <b>Lvアップ</b> すると解放される。</div>
+        <div class="row"><button type="button" id="btnOk">OK</button></div>
+      `);
+      document.getElementById("btnOk").addEventListener("click", closeModal);
+      return;
+    }
+
+    const p = state.plots[i] || defaultPlot();
+
+    if (p.state === "EMPTY") {
+      draft = { seedId:null, waterId:null, fertId:null };
+      showSeedStep();
+      return;
+    }
+
+    if (p.state === "GROW") {
+      const seed = SEEDS.find(x=>x.id===p.seedId);
+      const water = WATERS.find(x=>x.id===p.waterId);
+      const fert = FERTS.find(x=>x.id===p.fertId);
+      const remain = (p.readyAt||0) - Date.now();
+
+      openModal("育成中", `
+        <div class="step">このマスは育成中。収穫まであと <b>${fmtRemain(remain)}</b></div>
+        <div class="reward">
+          <div class="big">設定</div>
+          <div class="mini">
+            種：${seed?seed.name:"-"}<br>
+            水：${water?water.name:"-"}<br>
+            肥料：${fert?fert.name:"-"}
+          </div>
+        </div>
+        <div class="row"><button type="button" id="btnOk">OK</button></div>
+      `);
+      document.getElementById("btnOk").addEventListener("click", closeModal);
+      return;
+    }
+
+    if (p.state === "READY") {
+      if (!p.reward) {
+        p.reward = drawRewardForPlot(p);
+        saveState(state);
+      }
+      const reward = p.reward;
+
+      openModal("収穫！", `
+        <div class="step">収穫したカードを確認してから図鑑に登録する。</div>
+        <div class="reward">
+          <div class="big">${reward.name}（${reward.id}）</div>
+          <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>確認ボタンを押すと図鑑に追加され、このマスは空になる。</div>
+          <img class="img" src="${reward.img}" alt="${reward.name}">
+        </div>
+        <div class="row">
+          <button type="button" id="btnCancel">閉じる</button>
+          <button type="button" class="primary" id="btnConfirm">確認して図鑑へ</button>
+        </div>
+      `);
+
+      document.getElementById("btnCancel").addEventListener("click", closeModal);
+
+      document.getElementById("btnConfirm").addEventListener("click", () => {
+        addToBook(reward);
+
+        const gain = XP_BY_RARITY[reward.rarity] ?? 4; // SPや未定義は4
+        addXP(gain);
+
+        state.plots[i] = defaultPlot();
+        saveState(state);
+
+        closeModal();
+        location.href = "./zukan.html";
+      });
+      return;
+    }
+
+    if (p.state === "BURN") {
+      openModal("焼けた…", `
+        <div class="step">放置しすぎて焼けた。回収するとマスが空になる。</div>
+        <div class="row">
+          <button type="button" id="btnBack">戻る</button>
+          <button type="button" class="primary" id="btnClear">回収して空にする</button>
+        </div>
+      `);
+      document.getElementById("btnBack").addEventListener("click", closeModal);
+      document.getElementById("btnClear").addEventListener("click", () => {
+        state.plots[i] = defaultPlot();
+        saveState(state);
+        closeModal();
+        render();
+      });
+      return;
+    }
+  }
+
+  function addToBook(card){
+    const b = loadBook();
+    if(!b.got) b.got = {};
+
+    const prev = b.got[card.id];
+
+    if(prev){
+      const curCount = Number.isFinite(prev.count) ? prev.count : 1;
+      prev.count = curCount + 1;
+      prev.name = card.name;
+      prev.img = card.img;
+      prev.rarity = card.rarity || prev.rarity || "";
+      prev.lastAt = Date.now();
+      b.got[card.id] = prev;
+    }else{
+      b.got[card.id] = {
+        id: card.id,
+        name: card.name,
+        img: card.img,
+        rarity: card.rarity || "",
+        count: 1,
+        at: Date.now(),
+        lastAt: Date.now()
+      };
+    }
+
+    book = b;
+    saveBook(book);
+  }
+
+  function cardSlider(items, onSelectId, invType){
+    inv = loadInv();
+
+    const list = items.map(x => {
+      const cnt = invGet(inv, invType, x.id);
+      const cntLabel = String(cnt);
+      const disabled = (cnt <= 0);
+
+      const isColaboSeed = (invType === "seed" && x.id === "seed_colabo");
+
+      return `
+        <div class="c">
+          <div class="imgbox" style="position:relative;">
+            <img src="${x.img}" alt="${x.name}">
+            <div class="cntBadge">×${cntLabel}</div>
+          </div>
+          <div class="name">${x.name}</div>
+          <div class="desc">${(x.desc || "").replace(/\n/g,"<br>")}</div>
+          <div class="fx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
+
+          ${isColaboSeed ? `<button type="button" data-redeem="1">シリアル入力</button>` : ``}
+
+          <button type="button" data-pick="${x.id}" ${disabled ? "disabled" : ""}>
+            ${disabled ? "在庫なし" : "これにする"}
+          </button>
+        </div>
+      `;
+    }).join("");
+
+    openModal("選択", `
+      <div class="step">※すべて在庫制。露店で買って増やす。</div>
+      <div class="cards">${list}</div>
+      <div class="row">
+        <button type="button" id="btnBackStep">戻る</button>
+        <button type="button" id="btnCloseStep">閉じる</button>
+      </div>
+    `);
+
+    mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
+      btn.addEventListener("click", () => {
+        if(btn.disabled) return;
+        onSelectId(btn.getAttribute("data-pick"));
+      });
+    });
+
+    const redeemBtn = mBody.querySelector("button[data-redeem]");
+    if (redeemBtn) redeemBtn.addEventListener("click", openRedeemModal);
+
+    return {
+      setTitle(t){ mTitle.textContent = t; },
+      onBack(fn){ document.getElementById("btnBackStep").addEventListener("click", fn); },
+      onClose(){ document.getElementById("btnCloseStep").addEventListener("click", closeModal); },
+    };
+  }
+
+  function showSeedStep(){
+    const ui = cardSlider(SEEDS, (id) => { draft.seedId = id; showWaterStep(); }, "seed");
+    ui.setTitle("種を選ぶ");
+    ui.onBack(() => closeModal());
+    ui.onClose();
+  }
+
+  function showWaterStep(){
+    const ui = cardSlider(WATERS, (id) => { draft.waterId = id; showFertStep(); }, "water");
+    ui.setTitle("水を選ぶ");
+    ui.onBack(() => showSeedStep());
+    ui.onClose();
+  }
+
+  function showFertStep(){
+    const ui = cardSlider(FERTS, (id) => { draft.fertId = id; confirmPlant(); }, "fert");
+    ui.setTitle("肥料を選ぶ");
+    ui.onBack(() => showWaterStep());
+    ui.onClose();
+  }
+
+  function confirmPlant(){
+    const seed  = SEEDS.find(x=>x.id===draft.seedId);
+    const water = WATERS.find(x=>x.id===draft.waterId);
+    const fert  = FERTS.find(x=>x.id===draft.fertId);
+
+    const factor = clamp(
+      (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
+      0.35, 1.0
+    );
+
+    // 最短1時間
+    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000);
+    const now = Date.now();
+
+    openModal("植える確認", `
+      <div class="step">この内容で植える？（収穫まで約 <b>${fmtRemain(growMs)}</b>）</div>
+      <div class="reward">
+        <div class="big">選択</div>
+        <div class="mini">
+          種：${seed?.name || "-"}<br>
+          水：${water?.name || "-"}<br>
+          肥料：${fert?.name || "-"}<br><br>
+          時短係数：<b>${factor.toFixed(2)}</b>
+        </div>
+      </div>
+      <div class="row">
+        <button type="button" id="btnRe">選び直す</button>
+        <button type="button" class="primary" id="btnPlant">植える</button>
+      </div>
+    `);
+
+    document.getElementById("btnRe").addEventListener("click", showSeedStep);
+
+    document.getElementById("btnPlant").addEventListener("click", () => {
+      inv = loadInv();
+
+      const okSeed  = invGet(inv, "seed",  draft.seedId)  > 0;
+      const okWater = invGet(inv, "water", draft.waterId) > 0;
+      const okFert  = invGet(inv, "fert",  draft.fertId)  > 0;
+
+      if(!okSeed || !okWater || !okFert){
+        openModal("在庫が足りない", `
+          <div class="step">所持数が足りないため植えられない。</div>
+          <div class="row"><button type="button" id="btnOk">OK</button></div>
+        `);
+        document.getElementById("btnOk").addEventListener("click", () => {
+          closeModal();
+          showSeedStep();
+        });
+        return;
+      }
+
+      invDec(inv, "seed",  draft.seedId);
+      invDec(inv, "water", draft.waterId);
+      invDec(inv, "fert",  draft.fertId);
+      saveInv(inv);
+
+      const srHint =
+        (draft.waterId === "water_overdo" && draft.fertId === "fert_timeno") ? "SR100" :
+        (draft.waterId === "water_overdo") ? "SR65" :
+        "NONE";
+
+      const p = {
+        state: "GROW",
+        seedId: draft.seedId,
+        waterId: draft.waterId,
+        fertId: draft.fertId,
+        startAt: now,
+        readyAt: now + growMs,
+        srHint
+      };
+
+      state.plots[activeIndex] = p;
+      saveState(state);
+      closeModal();
+      render();
+    });
+  }
+
   function tick(){
     const now = Date.now();
     let changed = false;
@@ -1350,49 +960,24 @@
     render();
   }
 
-  // =========================================================
-  // 装備バーのイベント（v1.2）
-  // =========================================================
-  if(btnEquipSeed)  btnEquipSeed.addEventListener("click", ()=> openEquipGrid("seed"));
-  if(btnEquipWater) btnEquipWater.addEventListener("click", ()=> openEquipGrid("water"));
-  if(btnEquipFert)  btnEquipFert.addEventListener("click", ()=> openEquipGrid("fert"));
-  if(btnGoShop)     btnGoShop.addEventListener("click", ()=> location.href = SHOP_URL);
+  document.getElementById("btnReset").addEventListener("click", () => {
+    if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済みを全消去します。OK？")) return;
 
-  // =========================================================
-  // リセット（v1.1保持 + 装備キーも消す）
-  // =========================================================
-  const btnReset = document.getElementById("btnReset");
-  if(btnReset){
-    btnReset.addEventListener("click", () => {
-      if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済み・装備を全消去します。OK？")) return;
+    localStorage.removeItem(LS_STATE);
+    localStorage.removeItem(LS_BOOK);
+    localStorage.removeItem(LS_PLAYER);
+    localStorage.removeItem(LS_INV);
+    localStorage.removeItem(LS_CODES_USED);
 
-      localStorage.removeItem(LS_STATE);
-      localStorage.removeItem(LS_BOOK);
-      localStorage.removeItem(LS_PLAYER);
-      localStorage.removeItem(LS_INV);
-      localStorage.removeItem(LS_CODES_USED);
-      localStorage.removeItem(LS_EQUIP);
+    state = loadState();
+    book = loadBook();
+    player = loadPlayer();
+    inv = loadInv();
 
-      state = loadState();
-      book = loadBook();
-      player = loadPlayer();
-      inv = loadInv();
-      equip = loadEquip();
-      saveEquip(equip);
-
-      render();
-    });
-  }
-
-  // =========================================================
-  // 初期化
-  // =========================================================
-  // 初回の安定用（装備が無い場合に保存）
-  saveEquip(loadEquip());
+    render();
+  });
 
   render();
   setInterval(tick, TICK_MS);
-
 })();
-
 
