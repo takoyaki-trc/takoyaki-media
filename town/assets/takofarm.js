@@ -95,7 +95,7 @@
 
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
   const READY_TO_BURN_MS = 8 * 60 * 60 * 1000;  // READYから8時間で焦げ
-  const TICK_MS = 1000;
+  const TICK_MS = 3000;                         // ★スマホ安定優先（1秒→3秒）
 
   const BASE_RARITY_RATE = { N:70, R:20, SR:8, UR:1.8, LR:0.2 };
 
@@ -731,7 +731,7 @@
         <div class="reward">
           <div class="big">${reward.name}（${reward.id}）</div>
           <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>確認ボタンを押すと図鑑に追加され、このマスは空になる。</div>
-          <img class="img" src="${reward.img}" alt="${reward.name}">
+          <img class="img" src="${reward.img}" alt="${reward.name}" style="max-height:52vh;object-fit:contain;">
         </div>
         <div class="row">
           <button type="button" id="btnCancel">閉じる</button>
@@ -862,6 +862,7 @@
     }
 
     function renderGrid(){
+      inv = loadInv(); // ★表示するたび最新在庫
       const q = norm(elSearch.value);
       let list = items;
 
@@ -1069,22 +1070,25 @@
   // =========================================================
   // 11) リセット
   // =========================================================
-  document.getElementById("btnReset").addEventListener("click", () => {
-    if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済みを全消去します。OK？")) return;
+  const btnReset = document.getElementById("btnReset");
+  if(btnReset){
+    btnReset.addEventListener("click", () => {
+      if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済みを全消去します。OK？")) return;
 
-    localStorage.removeItem(LS_STATE);
-    localStorage.removeItem(LS_BOOK);
-    localStorage.removeItem(LS_PLAYER);
-    localStorage.removeItem(LS_INV);
-    localStorage.removeItem(LS_CODES_USED);
+      localStorage.removeItem(LS_STATE);
+      localStorage.removeItem(LS_BOOK);
+      localStorage.removeItem(LS_PLAYER);
+      localStorage.removeItem(LS_INV);
+      localStorage.removeItem(LS_CODES_USED);
 
-    state = loadState();
-    book = loadBook();
-    player = loadPlayer();
-    inv = loadInv();
+      state = loadState();
+      book = loadBook();
+      player = loadPlayer();
+      inv = loadInv();
 
-    render();
-  });
+      render();
+    });
+  }
 
   // start
   render();
