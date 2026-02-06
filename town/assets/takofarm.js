@@ -1,5 +1,4 @@
-(() => {
-  /* ==========================
+/* ==========================
      たこ焼きファーム v1.1（分割版）
      ✅ 収穫モーダル画像：contain＋最大高さ
      ✅ 戻って再タップでカードが変わる：p.reward を保存して固定
@@ -12,6 +11,9 @@
      ✅ ★ショップのタネ：専用12枚から排出（肥料SP/水レア率は無効化）
      ✅ ★ダーツのタネ：専用5枚から排出（肥料SP/水レア率は無効化）
   ========================== */
+
+  (() => {
+  "use strict";
 
   // マス画像（状態ごと）
   const PLOT_IMG = {
@@ -102,20 +104,65 @@
 
   // =========================================================
   // ★タネ一覧（ここに追加したIDが「種を選ぶ」に並ぶ）
+  // 完全版 2026最新版
   // =========================================================
   const SEEDS = [
-    { id:"seed_random", name:"【なに出るタネ】", desc:"何が育つかは完全ランダム。\n店主も知らない。", factor:1.00, img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
-    { id:"seed_shop", name:"【店頭タネ】", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", factor:1.00, img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
-    { id:"seed_line", name:"【回線タネ】", desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor:1.00, img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
-
-    { id:"seed_special", name:"【たこぴのタネ】", desc:"このタネを植えたら、\n必ず「たこぴ8枚」から出る。", factor:1.00, img:"https://ul.h3z.jp/29OsEvjf.png", fx:"たこぴ専用8枚" },
-
-    // ★追加：タネ自体が別（ショップ専用/ダーツ専用）
-    // ※画像URLはあなたのタネ画像に差し替えてOK（今は仮のまま）
-    { id:"seed_shop_only",  name:"【ショップのタネ】", desc:"ショップ専用。\nこのタネからしか出ない12枚。", factor:1.00, img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"ショップ専用12枚" },
-    { id:"seed_darts_only", name:"【ダーツのタネ】",  desc:"ダーツ専用。\nこのタネからしか出ない5枚。",  factor:1.00, img:"https://ul.h3z.jp/AonxB5x7.png", fx:"ダーツ専用5枚" },
-
-    { id:"seed_colabo", name:"【コラボのタネ】", desc:"シリアル入力で増える。\nそのうち何か起きる。", factor:1.00, img:"https://ul.h3z.jp/AWBcxVls.png", fx:"シリアル解放" },
+    {
+      id:"seed_random",
+      name:"なに出るタネ",
+      desc:"何が育つかは完全ランダム。\n店主も知らない。",
+      factor:1.00,
+      img:"https://ul.h3z.jp/gnyvP580.png",
+      fx:"完全ランダム"
+    },
+    {
+      id:"seed_shop",
+      name:"店頭タネ",
+      desc:"店で生まれたタネ。\n店頭ナンバーを宿している。",
+      factor:1.00,
+      img:"https://ul.h3z.jp/IjvuhWoY.png",
+      fx:"店頭の気配"
+    },
+    {
+      id:"seed_line",
+      name:"回線タネ",
+      desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。",
+      factor:1.00,
+      img:"https://ul.h3z.jp/AonxB5x7.png",
+      fx:"回線由来"
+    },
+    {
+      id:"seed_special",
+      name:"たこぴのタネ",
+      desc:"このタネを植えたら、\n必ず「たこぴ8枚」から出る。",
+      factor:1.00,
+      img:"https://ul.h3z.jp/29OsEvjf.png",
+      fx:"たこぴ専用8枚"
+    },
+    {
+      id:"seed_bussasari",
+      name:"ブッ刺さりタネ",
+      desc:"心に刺さる。\n財布にも刺さる。",
+      factor:1.05,
+      img:"https://ul.h3z.jp/MjWkTaU3.png",
+      fx:"刺さり補正"
+    },
+    {
+      id:"seed_namara_kawasar",
+      name:"なまら買わさるタネ",
+      desc:"気付いたら買ってる。\nレジ前の魔物。",
+      factor:1.08,
+      img:"https://ul.h3z.jp/yiqHzfi0.png",
+      fx:"買わさり圧"
+    },
+    {
+      id:"seed_colabo",
+      name:"コラボ【グラタンのタネ】",
+      desc:"今はまだ何も起きない。\nそのうち何か起きる。",
+      factor:1.00,
+      img:"https://ul.h3z.jp/wbnwoTzm.png",
+      fx:"シリアル解放"
+    }
   ];
 
   const WATERS = [
@@ -136,7 +183,6 @@
 
   // =========================
   // ★たこぴのタネ専用（8枚）
-  // ※ここは「必ずこの8枚」になる（重複やplaceholderはあなたが後で整理してOK）
   // =========================
   const TAKOPI_SEED_POOL = [
     { id:"TP-001", name:"届け！たこぴ便", img:"https://ul.h3z.jp/rjih1Em9.png", rarity:"N" },
@@ -149,9 +195,7 @@
     { id:"TP-008", name:"バレンタインたこぴ（差替予定）", img:"https://example.com/takopi8.png", rarity:"N" },
   ];
 
-  // =========================
-  // ★ショップのタネ専用（12枚）
-  // =========================
+  // （あなたの貼り付けに合わせて残してあります：未使用でもOK）
   const SHOP_SEED_POOL = [
     { id:"SHP-001", name:"ショップカード1（仮）",  img:"https://example.com/shop1.png",  rarity:"N" },
     { id:"SHP-002", name:"ショップカード2（仮）",  img:"https://example.com/shop2.png",  rarity:"N" },
@@ -167,9 +211,6 @@
     { id:"SHP-012", name:"ショップカード12（仮）", img:"https://example.com/shop12.png", rarity:"LR" },
   ];
 
-  // =========================
-  // ★ダーツのタネ専用（5枚）
-  // =========================
   const DARTS_SEED_POOL = [
     { id:"DRT-001", name:"ダーツカード1（仮）", img:"https://example.com/darts1.png", rarity:"N"  },
     { id:"DRT-002", name:"ダーツカード2（仮）", img:"https://example.com/darts2.png", rarity:"R"  },
@@ -248,14 +289,6 @@
     SEEDS.forEach(x => inv.seed[x.id] = 0);
     WATERS.forEach(x => inv.water[x.id] = 0);
     FERTS.forEach(x => inv.fert[x.id] = 0);
-
-    // ★テストを楽にするなら初期所持を付けてもOK（不要なら削除）
-    // inv.seed["seed_special"]   = 1;
-    // inv.seed["seed_shop_only"] = 1;
-    // inv.seed["seed_darts_only"]= 1;
-    // inv.water["water_plain_free"] = 1;
-    // inv.fert["fert_agedama"] = 1;
-
     return inv;
   }
 
@@ -268,7 +301,6 @@
       inv.seed  = inv.seed  || {};
       inv.water = inv.water || {};
       inv.fert  = inv.fert  || {};
-      // ★新しい項目が増えた時の穴埋め
       for(const x of SEEDS)  if(!(x.id in inv.seed))  inv.seed[x.id]=0;
       for(const x of WATERS) if(!(x.id in inv.water)) inv.water[x.id]=0;
       for(const x of FERTS)  if(!(x.id in inv.fert))  inv.fert[x.id]=0;
@@ -385,12 +417,24 @@
   }
 
   // =========================================================
+  // ★ここが追加：レアリティ最低保証（SR/URなど）
+  // =========================================================
+  function bumpRarity(base, minRarity){
+    const order = ["N","R","SR","UR","LR"];
+    const bi = order.indexOf(base);
+    const mi = order.indexOf(minRarity);
+    if(bi < 0) return minRarity;
+    if(mi < 0) return base;
+    return order[Math.max(bi, mi)];
+  }
+
+  // =========================================================
   // ★報酬抽選
   // - たこぴ/ショップ/ダーツの「専用タネ」は、必ず専用プールから
   // - その3タネの時は「肥料SP（焼きすぎ/生焼け）」も「水レア率」も無効化
+  // - ★追加：srHint(SR65/SR100) のとき収穫レアを高レア保証
   // =========================================================
   function drawRewardForPlot(p){
-    // ★専用タネ群：まず最優先で分岐（100%固定）
     if (p && p.seedId === "seed_special") {
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
@@ -417,8 +461,19 @@
       }
     }
 
-    // ② 通常：水でレア率 → レアのプールから1枚
-    const rarity = pickRarityWithWater(p ? p.waterId : null);
+    // ② 通常：水でレア率 → srHintがあるなら最低保証を付ける
+    let rarity = pickRarityWithWater(p ? p.waterId : null);
+
+    // ★ここが本題：GROW2_SR65 / GROW2_SR100 が出る育成なら「高レア保証」
+    if(p && p.srHint === "SR65"){
+      // 最低SR以上にする
+      rarity = bumpRarity(rarity, "SR");
+    }
+    if(p && p.srHint === "SR100"){
+      // 最低UR以上にする（LRが出たらそのまま）
+      rarity = bumpRarity(rarity, "UR");
+    }
+
     const pool = (CARD_POOLS && CARD_POOLS[rarity]) ? CARD_POOLS[rarity] : (CARD_POOLS?.N || []);
     const c = pick(pool);
     return { id:c.no, name:c.name, img:c.img, rarity };
@@ -456,7 +511,6 @@
   function onEsc(e){ if(e.key === "Escape") closeModal(); }
 
   function openModal(title, html){
-    // まず安全に一旦解除
     modal.removeEventListener("click", onBackdrop);
     document.removeEventListener("keydown", onEsc);
 
@@ -528,7 +582,6 @@
   }
 
   function render(){
-    // 最新ロード
     player = loadPlayer();
     book = loadBook();
 
