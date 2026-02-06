@@ -4,15 +4,25 @@
   // =========================
   // マス画像（状態ごと）
   // =========================
-  const PLOT_IMG = {
-    EMPTY: "https://ul.h3z.jp/muPEAkao.png",
-    GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
-    GROW2: "https://ul.h3z.jp/tD4LUB6F.png",
-    READY: "https://ul.h3z.jp/AmlnQA1b.png",
-    BURN:  "https://ul.h3z.jp/q9hxngx6.png",
-    GROW2_SR65:  "https://ul.h3z.jp/W086w3xd.png",
-    GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
-  };
+ const PLOT_IMG = {
+  EMPTY: "https://ul.h3z.jp/muPEAkao.png",
+
+  // 通常成長
+  GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
+  GROW2: "https://ul.h3z.jp/tD4LUB6F.png",
+
+  // ★コラボ（グラタン）専用成長GIF
+  COLABO_GROW1: "https://ul.h3z.jp/cq1soJdm.gif",
+  COLABO_GROW2: "https://ul.h3z.jp/I6Iu4J32.gif",
+
+  READY: "https://ul.h3z.jp/AmlnQA1b.png",
+  BURN:  "https://ul.h3z.jp/q9hxngx6.png",
+
+  // SR保証系（※コラボタネでは出さない）
+  GROW2_SR65:  "https://ul.h3z.jp/W086w3xd.png",
+  GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
+};
+
 
   // =========================
   // LocalStorage Keys
