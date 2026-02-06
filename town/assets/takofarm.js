@@ -160,11 +160,11 @@
   // ※ここをあなたの実カード画像に差し替えれば完成
   // =========================
   const BUSSASARI_POOL = [
-    { id:"BS-001", name:"ブッ刺さり①（仮）", img:"https://example.com/bussasari1.png", rarity:"N" },
-    { id:"BS-002", name:"ブッ刺さり②（仮）", img:"https://example.com/bussasari2.png", rarity:"N" },
-    { id:"BS-003", name:"ブッ刺さり③（仮）", img:"https://example.com/bussasari3.png", rarity:"N" },
-    { id:"BS-004", name:"ブッ刺さり④（仮）", img:"https://example.com/bussasari4.png", rarity:"N" },
-    { id:"BS-005", name:"ブッ刺さり⑤（仮）", img:"https://example.com/bussasari5.png", rarity:"N" },
+    { id:"BS-001", name:"對馬裕佳子", img:"https://ul.h3z.jp/l5roYZJ4.png", rarity:"N" },
+    { id:"BS-002", name:"佐俣雄一郎", img:"https://ul.h3z.jp/BtOTLlSo.png", rarity:"N" },
+    { id:"BS-003", name:"井上諒", img:"https://ul.h3z.jp/P5vsAste.png", rarity:"N" },
+    { id:"BS-004", name:"仁木治", img:"https://ul.h3z.jp/ZGBzzH2r.png", rarity:"N" },
+    { id:"BS-005", name:"稲石裕", img:"https://ul.h3z.jp/nmiaCKae.png", rarity:"N" },
   ];
 
   // =========================
