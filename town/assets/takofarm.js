@@ -4,25 +4,24 @@
   // =========================
   // マス画像（状態ごと）
   // =========================
- const PLOT_IMG = {
-  EMPTY: "https://ul.h3z.jp/muPEAkao.png",
+  const PLOT_IMG = {
+    EMPTY: "https://ul.h3z.jp/muPEAkao.png",
 
-  // 通常成長
-  GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
-  GROW2: "https://ul.h3z.jp/tD4LUB6F.png",
+    // 通常成長
+    GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
+    GROW2: "https://ul.h3z.jp/tD4LUB6F.png",
 
-  // ★コラボ（グラタン）専用成長GIF
-  COLABO_GROW1: "https://ul.h3z.jp/cq1soJdm.gif",
-  COLABO_GROW2: "https://ul.h3z.jp/I6Iu4J32.gif",
+    // ★コラボ（グラタン）専用成長GIF
+    COLABO_GROW1: "https://ul.h3z.jp/cq1soJdm.gif",
+    COLABO_GROW2: "https://ul.h3z.jp/I6Iu4J32.gif",
 
-  READY: "https://ul.h3z.jp/AmlnQA1b.png",
-  BURN:  "https://ul.h3z.jp/q9hxngx6.png",
+    READY: "https://ul.h3z.jp/AmlnQA1b.png",
+    BURN:  "https://ul.h3z.jp/q9hxngx6.png",
 
-  // SR保証系（※コラボタネでは出さない）
-  GROW2_SR65:  "https://ul.h3z.jp/W086w3xd.png",
-  GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
-};
-
+    // SR保証系（※コラボタネでは出さない）
+    GROW2_SR65:  "https://ul.h3z.jp/W086w3xd.png",
+    GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
+  };
 
   // =========================
   // LocalStorage Keys
@@ -30,7 +29,7 @@
   const LS_STATE  = "tf_v1_state";
   const LS_BOOK   = "tf_v1_book";
   const LS_PLAYER = "tf_v1_player";
-  const LS_INV = "tf_v1_inv";
+  const LS_INV    = "tf_v1_inv";
   const LS_CODES_USED = "tf_v1_codes_used";
 
   // 育成時間など
@@ -115,9 +114,15 @@
     { id:"seed_shop",   name:"店頭タネ",     desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", factor:1.00, img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
     { id:"seed_line",   name:"回線タネ",     desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor:1.00, img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
     { id:"seed_special",name:"たこぴのタネ", desc:"このタネを植えたら、\n必ず「たこぴ8枚」から出る。", factor:1.00, img:"https://ul.h3z.jp/29OsEvjf.png", fx:"たこぴ専用8枚" },
-    { id:"seed_bussasari", name:"ブッ刺さりタネ", desc:"心に刺さる。\n財布にも刺さる。", factor:1.05, img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり補正" },
-    { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\nレジ前の魔物。", factor:1.08, img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり圧" },
-    { id:"seed_colabo", name:"コラボ【グラタンのタネ】", desc:"2種類だけ。\nN or LR（たまに事件）。", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" }
+
+    // ★あなた指定：ブッ刺さりは「専用5種（全部N）」
+    { id:"seed_bussasari", name:"ブッ刺さりタネ", desc:"刺さるのは心だけ。\n出るのは5枚だけ（全部N）。", factor:1.05, img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり固定5枚" },
+
+    // ★あなた指定：なまら買わさるは「専用12種（レア内訳固定）」
+    { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor:1.08, img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり固定12枚" },
+
+    // ★コラボ（グラタン）：2種固定（1=LR,2=N）/ 成長GIF
+    { id:"seed_colabo", name:"コラボ【グラタンのタネ】", desc:"2種類だけ。\n①LR / ②N（たまに事件）。", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" }
   ];
 
   const WATERS = [
@@ -151,15 +156,45 @@
   ];
 
   // =========================
-  // ★グラタンのタネ専用（2種類：N / LR）
-  // ※ここだけの“固定2種”にするので、水/肥料の影響は受けない仕様
+  // ✅ ブッ刺さりタネ：専用5種（全部N固定）
+  // ※ここをあなたの実カード画像に差し替えれば完成
   // =========================
-  const GRATIN_SEED_POOL = {
-    N:  [{ id:"GTN-001", name:"伝説のたこ焼きライバー",  img:"https://ul.h3z.jp/OflHnQyw.png",  rarity:"LR"  }],
-    LR: [{ id:"GTN-002", name:"たこ焼き実況者ライバー", img:"https://ul.h3z.jp/000sFFxk.png", rarity:"N" }],
-  };
+  const BUSSASARI_POOL = [
+    { id:"BS-001", name:"ブッ刺さり①（仮）", img:"https://example.com/bussasari1.png", rarity:"N" },
+    { id:"BS-002", name:"ブッ刺さり②（仮）", img:"https://example.com/bussasari2.png", rarity:"N" },
+    { id:"BS-003", name:"ブッ刺さり③（仮）", img:"https://example.com/bussasari3.png", rarity:"N" },
+    { id:"BS-004", name:"ブッ刺さり④（仮）", img:"https://example.com/bussasari4.png", rarity:"N" },
+    { id:"BS-005", name:"ブッ刺さり⑤（仮）", img:"https://example.com/bussasari5.png", rarity:"N" },
+  ];
 
-  // LRの出現率（好きに変えてOK：例 3%）
+  // =========================
+  // ✅ なまら買わさるタネ：専用12種（レア内訳固定）
+  // 1=LR,2=N,3=N,4=SR,5=SR,6=SR,7=SR,8=UR,9=R,10=SR,11=R,12=SR
+  // =========================
+  const NAMARA_POOL = [
+    { id:"NK-001", name:"なまら①（仮）", img:"https://example.com/namara1.png",  rarity:"LR" },
+    { id:"NK-002", name:"なまら②（仮）", img:"https://example.com/namara2.png",  rarity:"N"  },
+    { id:"NK-003", name:"なまら③（仮）", img:"https://example.com/namara3.png",  rarity:"N"  },
+    { id:"NK-004", name:"なまら④（仮）", img:"https://example.com/namara4.png",  rarity:"SR" },
+    { id:"NK-005", name:"なまら⑤（仮）", img:"https://example.com/namara5.png",  rarity:"SR" },
+    { id:"NK-006", name:"なまら⑥（仮）", img:"https://example.com/namara6.png",  rarity:"SR" },
+    { id:"NK-007", name:"なまら⑦（仮）", img:"https://example.com/namara7.png",  rarity:"SR" },
+    { id:"NK-008", name:"なまら⑧（仮）", img:"https://example.com/namara8.png",  rarity:"UR" },
+    { id:"NK-009", name:"なまら⑨（仮）", img:"https://example.com/namara9.png",  rarity:"R"  },
+    { id:"NK-010", name:"なまら⑩（仮）", img:"https://example.com/namara10.png", rarity:"SR" },
+    { id:"NK-011", name:"なまら⑪（仮）", img:"https://example.com/namara11.png", rarity:"R"  },
+    { id:"NK-012", name:"なまら⑫（仮）", img:"https://example.com/namara12.png", rarity:"SR" },
+  ];
+
+  // =========================
+  // ✅ グラタン：2種固定（①LR / ②N）
+  // ※あなたの画像に差し替えてOK
+  // =========================
+  const GRATIN_POOL = [
+    { id:"GTN-001", name:"グラタン①（LR）", img:"https://example.com/gratin1.png", rarity:"LR" },
+    { id:"GTN-002", name:"グラタン②（N）",  img:"https://example.com/gratin2.png", rarity:"N"  },
+  ];
+  // ①LRが出る確率（例：3%）
   const GRATIN_LR_CHANCE = 0.03;
 
   // =========================================================
@@ -210,9 +245,6 @@
   // =========================================================
   // ★無料（∞）廃止：すべて在庫制
   // =========================================================
-  const FREE_ITEMS = { seed:new Set([]), water:new Set([]), fert:new Set([]) };
-  function isFree(invType, id){ return false; }
-
   function defaultInv(){
     const inv = { ver:1, seed:{}, water:{}, fert:{} };
     SEEDS.forEach(x => inv.seed[x.id] = 0);
@@ -220,7 +252,6 @@
     FERTS.forEach(x => inv.fert[x.id] = 0);
     return inv;
   }
-
   function loadInv(){
     try{
       const raw = localStorage.getItem(LS_INV);
@@ -237,7 +268,6 @@
     }catch(e){ return defaultInv(); }
   }
   function saveInv(inv){ localStorage.setItem(LS_INV, JSON.stringify(inv)); }
-
   function invGet(inv, invType, id){
     const box = inv[invType] || {};
     const n = Number(box[id] ?? 0);
@@ -317,7 +347,6 @@
       let total = 0;
       for (const k of keys) total += Math.max(0, Number(rates[k] ?? 0));
       if (total <= 0) return "N";
-
       let r = Math.random() * total;
       for (const k of keys) {
         r -= Math.max(0, Number(rates[k] ?? 0));
@@ -325,7 +354,6 @@
       }
       return "N";
     }
-
     const keys = Object.keys(BASE_RARITY_RATE);
     let total = 0;
     for (const k of keys) total += Math.max(0, BASE_RARITY_RATE[k]);
@@ -375,7 +403,6 @@
     const order = ["LR","UR","SR","R","N"];
     const startIdx = order.indexOf(startRarity);
     const list = (startIdx >= 0) ? order.slice(startIdx) : order;
-
     for(const r of list){
       const pool = filterPoolBySeed(seedId, getPoolByRarity(r));
       if(pool.length) return { rarity:r, card: pick(pool) };
@@ -385,31 +412,48 @@
   }
 
   // =========================================================
-  // ★グラタン2種抽選（N / LR）
+  // ✅ 固定タネ抽選
   // =========================================================
+  function pickBussasariReward(){
+    const c = pick(BUSSASARI_POOL);
+    return { id:c.id, name:c.name, img:c.img, rarity:"N" }; // ★全部N固定
+  }
+
+  function pickNamaraReward(){
+    const c = pick(NAMARA_POOL);
+    return { id:c.id, name:c.name, img:c.img, rarity:c.rarity }; // ★内訳固定
+  }
+
   function pickGratinReward(){
     const isLR = (Math.random() < GRATIN_LR_CHANCE);
-    const rarity = isLR ? "LR" : "N";
-    const c = pick(GRATIN_SEED_POOL[rarity]);
-    return { id:c.id, name:c.name, img:c.img, rarity:c.rarity || rarity };
+    const c = isLR ? GRATIN_POOL.find(x=>x.rarity==="LR") : GRATIN_POOL.find(x=>x.rarity==="N");
+    return { id:c.id, name:c.name, img:c.img, rarity:c.rarity };
   }
 
   // =========================================================
   // ★報酬抽選
   // - seed_special：たこぴ専用
-  // - seed_colabo：グラタン2種固定（N/LR）※水/肥料の影響なし
+  // - seed_colabo：グラタン2種固定（①LR/②N）※水/肥料/肥料SP/保証の影響なし
+  // - seed_bussasari：5種固定（全部N）
+  // - seed_namara_kawasar：12種固定（内訳固定）
   // - それ以外：肥料SP → 水レア → srHint保証 → 種制限（店頭/回線）
   // =========================================================
   function drawRewardForPlot(p){
-    // たこぴ専用
     if (p && p.seedId === "seed_special") {
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
     }
 
-    // ★グラタン専用（2種固定）
     if (p && p.seedId === "seed_colabo") {
       return pickGratinReward();
+    }
+
+    if (p && p.seedId === "seed_bussasari") {
+      return pickBussasariReward();
+    }
+
+    if (p && p.seedId === "seed_namara_kawasar") {
+      return pickNamaraReward();
     }
 
     // ① 肥料のSP抽選（焼きすぎ / 生焼け）
@@ -427,14 +471,12 @@
 
     // ② 通常：水でレア率 → srHintがあるなら最低保証
     let rarity = pickRarityWithWater(p ? p.waterId : null);
-
     if(p && p.srHint === "SR65")  rarity = bumpRarity(rarity, "SR");
     if(p && p.srHint === "SR100") rarity = bumpRarity(rarity, "UR");
 
     // ③ 種による候補制限（店頭/回線）
     const seedId = p ? p.seedId : null;
     const filtered = filterPoolBySeed(seedId, getPoolByRarity(rarity));
-
     const picked = (filtered.length)
       ? { rarity, card: pick(filtered) }
       : fallbackPickBySeed(seedId, rarity);
@@ -602,12 +644,17 @@
         const denom = Math.max(1, end - start);
         const progress = (Date.now() - start) / denom;
 
-        if (progress < 0.5) {
-          img = PLOT_IMG.GROW1;
+        // ✅コラボ（グラタン）だけ成長GIFに固定（SR65/100は絶対出さない）
+        if (p.seedId === "seed_colabo") {
+          img = (progress < 0.5) ? PLOT_IMG.COLABO_GROW1 : PLOT_IMG.COLABO_GROW2;
         } else {
-          if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100;
-          else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65;
-          else img = PLOT_IMG.GROW2;
+          if (progress < 0.5) {
+            img = PLOT_IMG.GROW1;
+          } else {
+            if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100;
+            else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65;
+            else img = PLOT_IMG.GROW2;
+          }
         }
 
         label = `育成中 ${fmtRemain(remain)}`;
@@ -774,7 +821,6 @@
     if(!b.got) b.got = {};
 
     const prev = b.got[card.id];
-
     if(prev){
       const curCount = Number.isFinite(prev.count) ? prev.count : 1;
       prev.count = curCount + 1;
@@ -794,9 +840,7 @@
         lastAt: Date.now()
       };
     }
-
-    book = b;
-    saveBook(book);
+    saveBook(b);
   }
 
   function cardSlider(items, onSelectId, invType){
@@ -927,7 +971,9 @@
       invDec(inv, "fert",  draft.fertId);
       saveInv(inv);
 
+      // ✅コラボは保証を絶対乗せない（SR65/100画像も出さないため）
       const srHint =
+        (draft.seedId === "seed_colabo") ? "NONE" :
         (draft.waterId === "water_overdo" && draft.fertId === "fert_timeno") ? "SR100" :
         (draft.waterId === "water_overdo") ? "SR65" :
         "NONE";
