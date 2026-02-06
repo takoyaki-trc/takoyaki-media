@@ -155,8 +155,8 @@
   // ※ここだけの“固定2種”にするので、水/肥料の影響は受けない仕様
   // =========================
   const GRATIN_SEED_POOL = {
-    N:  [{ id:"GTN-001", name:"グラタンのたこ焼き（N）",  img:"https://example.com/gratin_n.png",  rarity:"N"  }],
-    LR: [{ id:"GTN-002", name:"禁断グラタン神話（LR）", img:"https://example.com/gratin_lr.png", rarity:"LR" }],
+    N:  [{ id:"GTN-001", name:"伝説のたこ焼きライバー",  img:"https://ul.h3z.jp/OflHnQyw.png",  rarity:"LR"  }],
+    LR: [{ id:"GTN-002", name:"たこ焼き実況者ライバー", img:"https://ul.h3z.jp/000sFFxk.png", rarity:"N" }],
   };
 
   // LRの出現率（好きに変えてOK：例 3%）
