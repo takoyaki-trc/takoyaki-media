@@ -157,7 +157,6 @@
 
   // =========================
   // ✅ ブッ刺さりタネ：専用5種（全部N固定）
-  // ※ここをあなたの実カード画像に差し替えれば完成
   // =========================
   const BUSSASARI_POOL = [
     { id:"BS-001", name:"對馬裕佳子", img:"https://ul.h3z.jp/l5roYZJ4.png", rarity:"N" },
@@ -169,7 +168,6 @@
 
   // =========================
   // ✅ なまら買わさるタネ：専用12種（レア内訳固定）
-  // 1=LR,2=N,3=N,4=SR,5=SR,6=SR,7=SR,8=UR,9=R,10=SR,11=R,12=SR
   // =========================
   const NAMARA_POOL = [
     { id:"NK-001", name:"イカさま焼き", img:"https://ul.h3z.jp/1UB3EY1B.png",  rarity:"LR" },
@@ -188,7 +186,6 @@
 
   // =========================
   // ✅ グラタン：2種固定（①LR / ②N）
-  // ※あなたの画像に差し替えてOK
   // =========================
   const GRATIN_POOL = [
     { id:"GTN-001", name:"グラタン①（LR）", img:"https://example.com/gratin1.png", rarity:"LR" },
@@ -376,8 +373,6 @@
 
   // =========================================================
   // ★種ごとに「出るTN番号」を制限
-  //  - 店頭タネ(seed_shop) : TN-001〜TN-025
-  //  - 回線タネ(seed_line) : TN-026〜TN-050
   // =========================================================
   function makeTNSet(from, to){
     const set = new Set();
@@ -416,12 +411,12 @@
   // =========================================================
   function pickBussasariReward(){
     const c = pick(BUSSASARI_POOL);
-    return { id:c.id, name:c.name, img:c.img, rarity:"N" }; // ★全部N固定
+    return { id:c.id, name:c.name, img:c.img, rarity:"N" };
   }
 
   function pickNamaraReward(){
     const c = pick(NAMARA_POOL);
-    return { id:c.id, name:c.name, img:c.img, rarity:c.rarity }; // ★内訳固定
+    return { id:c.id, name:c.name, img:c.img, rarity:c.rarity };
   }
 
   function pickGratinReward(){
@@ -432,11 +427,6 @@
 
   // =========================================================
   // ★報酬抽選
-  // - seed_special：たこぴ専用
-  // - seed_colabo：グラタン2種固定（①LR/②N）※水/肥料/肥料SP/保証の影響なし
-  // - seed_bussasari：5種固定（全部N）
-  // - seed_namara_kawasar：12種固定（内訳固定）
-  // - それ以外：肥料SP → 水レア → srHint保証 → 種制限（店頭/回線）
   // =========================================================
   function drawRewardForPlot(p){
     if (p && p.seedId === "seed_special") {
@@ -456,7 +446,6 @@
       return pickNamaraReward();
     }
 
-    // ① 肥料のSP抽選（焼きすぎ / 生焼け）
     const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
     if (fert) {
       const burnP = Number(fert.burnCardUp ?? 0);
@@ -469,12 +458,10 @@
       }
     }
 
-    // ② 通常：水でレア率 → srHintがあるなら最低保証
     let rarity = pickRarityWithWater(p ? p.waterId : null);
     if(p && p.srHint === "SR65")  rarity = bumpRarity(rarity, "SR");
     if(p && p.srHint === "SR100") rarity = bumpRarity(rarity, "UR");
 
-    // ③ 種による候補制限（店頭/回線）
     const seedId = p ? p.seedId : null;
     const filtered = filterPoolBySeed(seedId, getPoolByRarity(rarity));
     const picked = (filtered.length)
@@ -515,7 +502,6 @@
   let activeIndex = -1;
   let draft = null;
 
-  // ===== モーダル安定化（イベント多重登録を防ぐ）
   function onBackdrop(e){ if(e.target === modal) closeModal(); }
   function onEsc(e){ if(e.key === "Escape") closeModal(); }
 
@@ -658,19 +644,11 @@
         }
 
         label = `育成中 ${fmtRemain(remain)}`;
-        const b = document.createElement("div");
-        b.className = "badge warn";
-        b.textContent = "GROW";
-        d.appendChild(b);
 
       } else if (p.state === "READY") {
         ready++;
         img = PLOT_IMG.READY;
         label = "収穫";
-        const b = document.createElement("div");
-        b.className = "badge good";
-        b.textContent = "READY";
-        d.appendChild(b);
 
         const fx = document.createElement("div");
         fx.className = "plot-fx plot-fx--mild";
@@ -680,10 +658,6 @@
         burn++;
         img = PLOT_IMG.BURN;
         label = "焦げ";
-        const b = document.createElement("div");
-        b.className = "badge bad";
-        b.textContent = "BURN";
-        d.appendChild(b);
       }
 
       btn.innerHTML = `
@@ -785,7 +759,7 @@
       document.getElementById("btnConfirm").addEventListener("click", () => {
         addToBook(reward);
 
-        const gain = XP_BY_RARITY[reward.rarity] ?? 4; // SPや未定義は4
+        const gain = XP_BY_RARITY[reward.rarity] ?? 4;
         addXP(gain);
 
         state.plots[i] = defaultPlot();
