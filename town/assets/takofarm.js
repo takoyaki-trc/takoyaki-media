@@ -172,18 +172,18 @@
   // 1=LR,2=N,3=N,4=SR,5=SR,6=SR,7=SR,8=UR,9=R,10=SR,11=R,12=SR
   // =========================
   const NAMARA_POOL = [
-    { id:"NK-001", name:"なまら①（仮）", img:"https://example.com/namara1.png",  rarity:"LR" },
-    { id:"NK-002", name:"なまら②（仮）", img:"https://example.com/namara2.png",  rarity:"N"  },
-    { id:"NK-003", name:"なまら③（仮）", img:"https://example.com/namara3.png",  rarity:"N"  },
-    { id:"NK-004", name:"なまら④（仮）", img:"https://example.com/namara4.png",  rarity:"SR" },
-    { id:"NK-005", name:"なまら⑤（仮）", img:"https://example.com/namara5.png",  rarity:"SR" },
-    { id:"NK-006", name:"なまら⑥（仮）", img:"https://example.com/namara6.png",  rarity:"SR" },
-    { id:"NK-007", name:"なまら⑦（仮）", img:"https://example.com/namara7.png",  rarity:"SR" },
-    { id:"NK-008", name:"なまら⑧（仮）", img:"https://example.com/namara8.png",  rarity:"UR" },
-    { id:"NK-009", name:"なまら⑨（仮）", img:"https://example.com/namara9.png",  rarity:"R"  },
-    { id:"NK-010", name:"なまら⑩（仮）", img:"https://example.com/namara10.png", rarity:"SR" },
-    { id:"NK-011", name:"なまら⑪（仮）", img:"https://example.com/namara11.png", rarity:"R"  },
-    { id:"NK-012", name:"なまら⑫（仮）", img:"https://example.com/namara12.png", rarity:"SR" },
+    { id:"NK-001", name:"イカさま焼き", img:"https://ul.h3z.jp/1UB3EY1B.png",  rarity:"LR" },
+    { id:"NK-002", name:"定番のソース", img:"https://ul.h3z.jp/MBZcFmq9.png",  rarity:"N"  },
+    { id:"NK-003", name:"すっぴん", img:"https://ul.h3z.jp/A6botkfp.png",  rarity:"N"  },
+    { id:"NK-004", name:"チーズソースマヨ", img:"https://ul.h3z.jp/MmkNjIJM.png",  rarity:"SR" },
+    { id:"NK-005", name:"めんたいマヨ", img:"https://ul.h3z.jp/9oc1iVPt.png",  rarity:"SR" },
+    { id:"NK-006", name:"ねぎ味噌", img:"https://ul.h3z.jp/vf60iccW.png",  rarity:"SR" },
+    { id:"NK-007", name:"牡蠣だし醤油", img:"https://ul.h3z.jp/zwVHhrgx.png",  rarity:"SR" },
+    { id:"NK-008", name:"塩こしょう", img:"https://ul.h3z.jp/KlgnlC2H.png",  rarity:"UR" },
+    { id:"NK-009", name:"辛口ソース", img:"https://ul.h3z.jp/OavcxTBn.png",  rarity:"R"  },
+    { id:"NK-010", name:"ぶっかけ揚げ玉からしマヨ", img:"https://ul.h3z.jp/CcOw6yLq.png", rarity:"SR" },
+    { id:"NK-011", name:"塩マヨペッパー", img:"https://ul.h3z.jp/7UJoTCe7.png", rarity:"R"  },
+    { id:"NK-012", name:"てりたま", img:"https://ul.h3z.jp/MU6ehdTH.png", rarity:"SR" },
   ];
 
   // =========================
