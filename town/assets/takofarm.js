@@ -12,10 +12,13 @@
      ✅ ★ダーツのタネ：専用5枚から排出（肥料SP/水レア率は無効化）
   ========================== */
 
-  (() => {
+ 
+(() => {
   "use strict";
 
+  // =========================
   // マス画像（状態ごと）
+  // =========================
   const PLOT_IMG = {
     EMPTY: "https://ul.h3z.jp/muPEAkao.png",
     GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
@@ -26,6 +29,9 @@
     GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
   };
 
+  // =========================
+  // LocalStorage Keys
+  // =========================
   const LS_STATE  = "tf_v1_state";
   const LS_BOOK   = "tf_v1_book";
   const LS_PLAYER = "tf_v1_player";
@@ -37,8 +43,12 @@
   const READY_TO_BURN_MS = 8 * 60 * 60 * 1000;  // READYから8時間で焦げ
   const TICK_MS = 1000;
 
+  // ベース（使わないなら水ratesが優先される）
   const BASE_RARITY_RATE = { N:70, R:20, SR:8, UR:1.8, LR:0.2 };
 
+  // =========================================================
+  // カードプール（あなたの現行のまま）
+  // =========================================================
   const CARD_POOLS = {
     N: [
       { no:"TN-005", name:"たこ焼きタワー112", img:"https://ul.h3z.jp/LoXMSiYd.jpg" },
@@ -103,8 +113,7 @@
   };
 
   // =========================================================
-  // ★タネ一覧（ここに追加したIDが「種を選ぶ」に並ぶ）
-  // 完全版 2026最新版
+  // ★タネ一覧（完全版 2026最新版）
   // =========================================================
   const SEEDS = [
     {
@@ -195,7 +204,7 @@
     { id:"TP-008", name:"バレンタインたこぴ（差替予定）", img:"https://example.com/takopi8.png", rarity:"N" },
   ];
 
-  // （あなたの貼り付けに合わせて残してあります：未使用でもOK）
+  // （未使用でもOK：残しておく）
   const SHOP_SEED_POOL = [
     { id:"SHP-001", name:"ショップカード1（仮）",  img:"https://example.com/shop1.png",  rarity:"N" },
     { id:"SHP-002", name:"ショップカード2（仮）",  img:"https://example.com/shop2.png",  rarity:"N" },
@@ -272,17 +281,10 @@
   }
 
   // =========================================================
-  // ★無料（∞）廃止：すべて在庫制（有料化前提）
+  // ★無料（∞）廃止：すべて在庫制
   // =========================================================
-  const FREE_ITEMS = {
-    seed:  new Set([]),
-    water: new Set([]),
-    fert:  new Set([])
-  };
-
-  function isFree(invType, id){
-    return false;
-  }
+  const FREE_ITEMS = { seed:new Set([]), water:new Set([]), fert:new Set([]) };
+  function isFree(invType, id){ return false; }
 
   function defaultInv(){
     const inv = { ver:1, seed:{}, water:{}, fert:{} };
@@ -429,26 +431,68 @@
   }
 
   // =========================================================
+  // ★ここが本題：種ごとに「出るTN番号」を制限する
+  //  - 店頭タネ(seed_shop) : TN-001〜TN-025
+  //  - 回線タネ(seed_line) : TN-026〜TN-050
+  //  - 他は制限なし（完全ランダムなど）
+  // =========================================================
+  function makeTNSet(from, to){
+    const set = new Set();
+    for(let i=from;i<=to;i++){
+      set.add(`TN-${String(i).padStart(3,"0")}`);
+    }
+    return set;
+  }
+  const SHOP_TN_SET = makeTNSet(1, 25);
+  const LINE_TN_SET = makeTNSet(26, 50);
+
+  function filterPoolBySeed(seedId, pool){
+    if(!Array.isArray(pool)) return [];
+    if(seedId === "seed_shop"){
+      return pool.filter(c => SHOP_TN_SET.has(c.no));
+    }
+    if(seedId === "seed_line"){
+      return pool.filter(c => LINE_TN_SET.has(c.no));
+    }
+    return pool;
+  }
+
+  function getPoolByRarity(rarity){
+    const p = (CARD_POOLS && CARD_POOLS[rarity]) ? CARD_POOLS[rarity] : [];
+    return Array.isArray(p) ? p : [];
+  }
+
+  // 「そのレア帯に存在しない」時の救済（下位レアへ落とす）
+  function fallbackPickBySeed(seedId, startRarity){
+    const order = ["LR","UR","SR","R","N"]; // 上から落とす
+    const startIdx = order.indexOf(startRarity);
+    const list = (startIdx >= 0) ? order.slice(startIdx) : order;
+
+    for(const r of list){
+      const pool = filterPoolBySeed(seedId, getPoolByRarity(r));
+      if(pool.length) return { rarity:r, card: pick(pool) };
+    }
+    // それでも無いなら、最後の保険：N全体
+    const baseN = getPoolByRarity("N");
+    return { rarity:"N", card: pick(baseN.length ? baseN : [{no:"TN-000",name:"NO DATA",img:""}]) };
+  }
+
+  // =========================================================
   // ★報酬抽選
-  // - たこぴ/ショップ/ダーツの「専用タネ」は、必ず専用プールから
-  // - その3タネの時は「肥料SP（焼きすぎ/生焼け）」も「水レア率」も無効化
-  // - ★追加：srHint(SR65/SR100) のとき収穫レアを高レア保証
+  // - seed_special は必ず TAKOPI_SEED_POOL
+  // - 肥料SP（焼きすぎ/生焼け）
+  // - 水でレア抽選
+  // - srHint(SR65/SR100) なら高レア最低保証
+  // - ★さらに seed_shop/seed_line ならTN番号で候補を制限
   // =========================================================
   function drawRewardForPlot(p){
+    // ★専用タネ（たこぴ）
     if (p && p.seedId === "seed_special") {
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
     }
-    if (p && p.seedId === "seed_shop_only") {
-      const c = pick(SHOP_SEED_POOL);
-      return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
-    }
-    if (p && p.seedId === "seed_darts_only") {
-      const c = pick(DARTS_SEED_POOL);
-      return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
-    }
 
-    // ① 肥料のSP抽選（焼きすぎ / 生焼け）※専用タネ以外だけ
+    // ① 肥料のSP抽選（焼きすぎ / 生焼け）
     const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
     if (fert) {
       const burnP = Number(fert.burnCardUp ?? 0);
@@ -461,22 +505,28 @@
       }
     }
 
-    // ② 通常：水でレア率 → srHintがあるなら最低保証を付ける
+    // ② 通常：水でレア率 → srHintがあるなら最低保証
     let rarity = pickRarityWithWater(p ? p.waterId : null);
 
-    // ★ここが本題：GROW2_SR65 / GROW2_SR100 が出る育成なら「高レア保証」
+    // ★GROW2_SR65 / GROW2_SR100 の育成なら「高レア保証」
     if(p && p.srHint === "SR65"){
-      // 最低SR以上にする
-      rarity = bumpRarity(rarity, "SR");
+      rarity = bumpRarity(rarity, "SR"); // 最低SR
     }
     if(p && p.srHint === "SR100"){
-      // 最低UR以上にする（LRが出たらそのまま）
-      rarity = bumpRarity(rarity, "UR");
+      rarity = bumpRarity(rarity, "UR"); // 最低UR（LRが出たらそのまま）
     }
 
-    const pool = (CARD_POOLS && CARD_POOLS[rarity]) ? CARD_POOLS[rarity] : (CARD_POOLS?.N || []);
-    const c = pick(pool);
-    return { id:c.no, name:c.name, img:c.img, rarity };
+    // ★種による候補制限（店頭/回線）
+    const seedId = p ? p.seedId : null;
+    const filtered = filterPoolBySeed(seedId, getPoolByRarity(rarity));
+
+    // ★そのレア帯に対象TNが無い場合：下位に落として必ず拾う
+    const picked = (filtered.length)
+      ? { rarity, card: pick(filtered) }
+      : fallbackPickBySeed(seedId, rarity);
+
+    const c = picked.card;
+    return { id:c.no, name:c.name, img:c.img, rarity: picked.rarity };
   }
 
   function rarityLabel(r){ return r || ""; }
@@ -582,6 +632,7 @@
   }
 
   function render(){
+    // 最新ロード
     player = loadPlayer();
     book = loadBook();
 
@@ -1033,4 +1084,3 @@
   render();
   setInterval(tick, TICK_MS);
 })();
-
