@@ -117,14 +117,10 @@
     { id:"seed_line",   name:"回線タネ",     desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor:1.00, img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
     { id:"seed_special",name:"たこぴのタネ", desc:"このタネを植えたら、\n必ず「たこぴ8枚」から出る。", factor:1.00, img:"https://ul.h3z.jp/29OsEvjf.png", fx:"たこぴ専用8枚" },
 
-    // ★あなた指定：ブッ刺さりは「専用5種（全部N）」
     { id:"seed_bussasari", name:"ブッ刺さりタネ", desc:"刺さるのは心だけ。\n出るのは5枚だけ（全部N）。", factor:1.05, img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり固定5枚" },
-
-    // ★あなた指定：なまら買わさるは「専用12種（レア内訳固定）」
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor:1.08, img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり固定12枚" },
 
-    // ★コラボ（グラタン）：2種固定（1=LR,2=N）/ 成長GIF
-    // ※シリアル付与は「露店側」で実装する前提。ファーム側では入力UIを持たない。
+    // ★コラボ（グラタン）：シリアル付与は露店側
     { id:"seed_colabo", name:"コラボ【グラタンのタネ】", desc:"2種類だけ。\n①LR / ②N（たまに事件）。", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"露店で入手" }
   ];
 
@@ -194,7 +190,6 @@
     { id:"GTN-001", name:"グラタン①（LR）", img:"https://ul.h3z.jp/zJubnlOw.png", rarity:"LR" },
     { id:"GTN-002", name:"グラタン②（N）",  img:"https://ul.h3z.jp/1VQvIP7v.png", rarity:"N"  },
   ];
-  // ①LRが出る確率（例：3%）
   const GRATIN_LR_CHANCE = 0.03;
 
   // =========================================================
@@ -426,12 +421,10 @@
     const c = pick(BUSSASARI_POOL);
     return { id:c.id, name:c.name, img:c.img, rarity:"N" };
   }
-
   function pickNamaraReward(){
     const c = pick(NAMARA_POOL);
     return { id:c.id, name:c.name, img:c.img, rarity:c.rarity };
   }
-
   function pickGratinReward(){
     const isLR = (Math.random() < GRATIN_LR_CHANCE);
     const c = isLR ? GRATIN_POOL.find(x=>x.rarity==="LR") : GRATIN_POOL.find(x=>x.rarity==="N");
@@ -446,15 +439,12 @@
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
     }
-
     if (p && p.seedId === "seed_colabo") {
       return pickGratinReward();
     }
-
     if (p && p.seedId === "seed_bussasari") {
       return pickBussasariReward();
     }
-
     if (p && p.seedId === "seed_namara_kawasar") {
       return pickNamaraReward();
     }
@@ -570,10 +560,43 @@
   let inv    = loadInv();
 
   // =========================================================
-  // ✅ モーダル中の背景スクロール完全ロック
+  // ✅ モーダル中：背景だけロックして「モーダル内はスクロールOK」
   // =========================================================
   let __scrollY = 0;
   let __locked = false;
+
+  function isInsideModalContent(target){
+    return !!(target && (target === mBody || mBody.contains(target)));
+  }
+
+  // モーダル内スクロール可能か（溢れてるか）
+  function modalCanScroll(){
+    return mBody && (mBody.scrollHeight > mBody.clientHeight + 1);
+  }
+
+  // iOS対策：モーダル外のtouchmoveだけ止める
+  function preventTouchMove(e){
+    if(modal.getAttribute("aria-hidden") !== "false") return;
+
+    // ✅モーダル内の操作なら止めない（ここが今回の肝）
+    if(isInsideModalContent(e.target)){
+      // ただし、モーダル内がスクロールできない（短い）なら背景に伝播しやすいので止める
+      if(!modalCanScroll()){
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // ✅モーダル外（背景）だけ完全停止
+    e.preventDefault();
+  }
+
+  // PCのホイールも、モーダル外は止める（背景スクロール防止）
+  function preventWheel(e){
+    if(modal.getAttribute("aria-hidden") !== "false") return;
+    if(isInsideModalContent(e.target)) return;
+    e.preventDefault();
+  }
 
   function lockScroll(){
     if(__locked) return;
@@ -581,18 +604,25 @@
 
     __scrollY = window.scrollY || document.documentElement.scrollTop || 0;
 
-    // body固定（iOS/Android両対応寄り）
+    // 背景を固定
     document.body.style.position = "fixed";
     document.body.style.top = `-${__scrollY}px`;
     document.body.style.left = "0";
     document.body.style.right = "0";
     document.body.style.width = "100%";
     document.body.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
-    document.body.style.overscrollBehavior = "none";
 
-    // iOSの「裏が動く」最終防衛
+    // ✅touchAction:none は「モーダル内スクロールまで殺す端末がある」ので付けない
+    // document.body.style.touchAction = "none";  // ←削除
+
+    // モーダル内はスクロールできるように（CSSいじらない前提でJSで最低限）
+    mBody.style.maxHeight = "72vh";
+    mBody.style.overflowY = "auto";
+    mBody.style.webkitOverflowScrolling = "touch"; // iOS慣性
+
+    // 背景だけ止める
     document.addEventListener("touchmove", preventTouchMove, { passive:false });
+    document.addEventListener("wheel", preventWheel, { passive:false });
   }
 
   function unlockScroll(){
@@ -600,24 +630,22 @@
     __locked = false;
 
     document.removeEventListener("touchmove", preventTouchMove, { passive:false });
+    document.removeEventListener("wheel", preventWheel, { passive:false });
 
+    // 戻す
     document.body.style.position = "";
     document.body.style.top = "";
     document.body.style.left = "";
     document.body.style.right = "";
     document.body.style.width = "";
     document.body.style.overflow = "";
-    document.body.style.touchAction = "";
-    document.body.style.overscrollBehavior = "";
+
+    // mBodyの付与を戻す（他モーダルにも影響させない）
+    mBody.style.maxHeight = "";
+    mBody.style.overflowY = "";
+    mBody.style.webkitOverflowScrolling = "";
 
     window.scrollTo(0, __scrollY);
-  }
-
-  function preventTouchMove(e){
-    // モーダル表示中のみ止める
-    if(modal.getAttribute("aria-hidden") === "false"){
-      e.preventDefault();
-    }
   }
 
   function onBackdrop(e){ if(e.target === modal) closeModal(); }
@@ -815,7 +843,6 @@
         const denom = Math.max(1, end - start);
         const progress = (Date.now() - start) / denom;
 
-        // ✅コラボ（グラタン）だけ成長GIFに固定（SR65/100は絶対出さない）
         if (p.seedId === "seed_colabo") {
           img = (progress < 0.5) ? PLOT_IMG.COLABO_GROW1 : PLOT_IMG.COLABO_GROW2;
         } else {
@@ -939,7 +966,6 @@
     invDec(inv, "fert",  fertId);
     saveInv(inv);
 
-    // ✅コラボは保証を絶対乗せない（SR65/100画像も出さないため）
     const srHint =
       (seedId === "seed_colabo") ? "NONE" :
       (waterId === "water_overdo" && fertId === "fert_timeno") ? "SR100" :
