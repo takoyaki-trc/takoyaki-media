@@ -449,8 +449,15 @@
       return pickNamaraReward();
     }
 
+    // =====================================================
+    // ✅ A案：SR保証演出が出ているマスでは「肥料SP抽選」をしない
+    //  - p.srHint が SR65 / SR100 のときは
+    //    焼きすぎ/生焼け（SP）を完全に封印
+    // =====================================================
+    const hasGuarantee = !!(p && (p.srHint === "SR65" || p.srHint === "SR100"));
+
     const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
-    if (fert) {
+    if (fert && !hasGuarantee) {
       const burnP = Number(fert.burnCardUp ?? 0);
       if (burnP > 0 && Math.random() < burnP) {
         return { id:"SP-BURN", name:"焼きすぎたカード", img:"https://ul.h3z.jp/VSQupsYH.png", rarity:"SP" };
@@ -1167,3 +1174,4 @@
   render();
   setInterval(tick, TICK_MS);
 })();
+
