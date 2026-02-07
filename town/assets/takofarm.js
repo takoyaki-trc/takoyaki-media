@@ -18,7 +18,9 @@
     READY: "https://ul.h3z.jp/AmlnQA1b.png",
     BURN:  "https://ul.h3z.jp/q9hxngx6.png",
 
-    // SR保証系（※コラボタネでは出さない）
+    // ✅ SR保証系（※コラボ/固定タネでは出さない）
+    //  - SR65  : SR以上確定の時だけ表示
+    //  - SR100 : UR以上確定の時だけ表示（あなたの指定）
     GROW2_SR65:  "https://ul.h3z.jp/W086w3xd.png",
     GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
   };
@@ -449,15 +451,11 @@
       return pickNamaraReward();
     }
 
-    // =====================================================
-    // ✅ A案：SR保証演出が出ているマスでは「肥料SP抽選」をしない
-    //  - p.srHint が SR65 / SR100 のときは
-    //    焼きすぎ/生焼け（SP）を完全に封印
-    // =====================================================
-    const hasGuarantee = !!(p && (p.srHint === "SR65" || p.srHint === "SR100"));
+    // ✅ SR/UR確定の見た目が出るときは“確定”を壊さない（SP抽選しない）
+    const isGuaranteed = (p && (p.srHint === "SR65" || p.srHint === "SR100"));
 
     const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
-    if (fert && !hasGuarantee) {
+    if (fert && !isGuaranteed) {
       const burnP = Number(fert.burnCardUp ?? 0);
       if (burnP > 0 && Math.random() < burnP) {
         return { id:"SP-BURN", name:"焼きすぎたカード", img:"https://ul.h3z.jp/VSQupsYH.png", rarity:"SP" };
@@ -469,8 +467,10 @@
     }
 
     let rarity = pickRarityWithWater(p ? p.waterId : null);
+
+    // ✅ 演出と中身を一致（SR65=SR以上 / SR100=UR以上）
     if(p && p.srHint === "SR65")  rarity = bumpRarity(rarity, "SR");
-    if(p && p.srHint === "SR100") rarity = bumpRarity(rarity, "UR");
+    if(p && p.srHint === "SR100") rarity = bumpRarity(rarity, "UR"); // ← UR以上確定（指定通り）
 
     const seedId = p ? p.seedId : null;
     const filtered = filterPoolBySeed(seedId, getPoolByRarity(rarity));
@@ -576,29 +576,22 @@
     return !!(target && (target === mBody || mBody.contains(target)));
   }
 
-  // モーダル内スクロール可能か（溢れてるか）
   function modalCanScroll(){
     return mBody && (mBody.scrollHeight > mBody.clientHeight + 1);
   }
 
-  // iOS対策：モーダル外のtouchmoveだけ止める
   function preventTouchMove(e){
     if(modal.getAttribute("aria-hidden") !== "false") return;
 
-    // ✅モーダル内の操作なら止めない（ここが今回の肝）
     if(isInsideModalContent(e.target)){
-      // ただし、モーダル内がスクロールできない（短い）なら背景に伝播しやすいので止める
       if(!modalCanScroll()){
         e.preventDefault();
       }
       return;
     }
-
-    // ✅モーダル外（背景）だけ完全停止
     e.preventDefault();
   }
 
-  // PCのホイールも、モーダル外は止める（背景スクロール防止）
   function preventWheel(e){
     if(modal.getAttribute("aria-hidden") !== "false") return;
     if(isInsideModalContent(e.target)) return;
@@ -611,7 +604,6 @@
 
     __scrollY = window.scrollY || document.documentElement.scrollTop || 0;
 
-    // 背景を固定
     document.body.style.position = "fixed";
     document.body.style.top = `-${__scrollY}px`;
     document.body.style.left = "0";
@@ -619,15 +611,10 @@
     document.body.style.width = "100%";
     document.body.style.overflow = "hidden";
 
-    // ✅touchAction:none は「モーダル内スクロールまで殺す端末がある」ので付けない
-    // document.body.style.touchAction = "none";  // ←削除
-
-    // モーダル内はスクロールできるように（CSSいじらない前提でJSで最低限）
     mBody.style.maxHeight = "72vh";
     mBody.style.overflowY = "auto";
-    mBody.style.webkitOverflowScrolling = "touch"; // iOS慣性
+    mBody.style.webkitOverflowScrolling = "touch";
 
-    // 背景だけ止める
     document.addEventListener("touchmove", preventTouchMove, { passive:false });
     document.addEventListener("wheel", preventWheel, { passive:false });
   }
@@ -639,7 +626,6 @@
     document.removeEventListener("touchmove", preventTouchMove, { passive:false });
     document.removeEventListener("wheel", preventWheel, { passive:false });
 
-    // 戻す
     document.body.style.position = "";
     document.body.style.top = "";
     document.body.style.left = "";
@@ -647,7 +633,6 @@
     document.body.style.width = "";
     document.body.style.overflow = "";
 
-    // mBodyの付与を戻す（他モーダルにも影響させない）
     mBody.style.maxHeight = "";
     mBody.style.overflowY = "";
     mBody.style.webkitOverflowScrolling = "";
@@ -771,7 +756,6 @@
       </div>
     `);
 
-    // pick
     mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
       btn.addEventListener("click", () => {
         if(btn.disabled) return;
@@ -789,7 +773,6 @@
     document.getElementById("gridClose").addEventListener("click", closeModal);
   }
 
-  // HUD buttons
   equipSeedBtn.addEventListener("click", ()=> openPickGrid("seed"));
   equipWaterBtn.addEventListener("click", ()=> openPickGrid("water"));
   equipFertBtn.addEventListener("click", ()=> openPickGrid("fert"));
@@ -856,8 +839,9 @@
           if (progress < 0.5) {
             img = PLOT_IMG.GROW1;
           } else {
-            if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100;
-            else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65;
+            // ✅ SR確定時だけこの画像が出る
+            if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100; // UR以上確定
+            else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65; // SR以上確定
             else img = PLOT_IMG.GROW2;
           }
         }
@@ -973,10 +957,18 @@
     invDec(inv, "fert",  fertId);
     saveInv(inv);
 
+    // ✅ SR/UR確定演出は「通常抽選ルート」だけ（固定タネ/コラボは除外）
+    const isFixedSeed =
+      (seedId === "seed_colabo") ||
+      (seedId === "seed_special") ||
+      (seedId === "seed_bussasari") ||
+      (seedId === "seed_namara_kawasar");
+
+    // ✅ あなたの指定：SR100の画像はUR以上確定の時だけ
     const srHint =
-      (seedId === "seed_colabo") ? "NONE" :
-      (waterId === "water_overdo" && fertId === "fert_timeno") ? "SR100" :
-      (waterId === "water_overdo") ? "SR65" :
+      (isFixedSeed) ? "NONE" :
+      (waterId === "water_overdo" && fertId === "fert_timeno") ? "SR100" : // UR以上確定
+      (waterId === "water_overdo") ? "SR65" :                               // SR以上確定
       "NONE";
 
     state.plots[index] = {
@@ -1147,7 +1139,6 @@
     render();
   }
 
-  // ✅ btnReset が無いページでも落ちない（無反応防止）
   const btnReset = document.getElementById("btnReset");
   if(btnReset){
     btnReset.addEventListener("click", () => {
