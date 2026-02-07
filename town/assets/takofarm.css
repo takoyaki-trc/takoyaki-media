@@ -213,8 +213,22 @@ h1{
   padding:8px 10px;border-radius:12px;
   font-weight:900;
 }
-.sheetBody{padding:12px 14px 14px}
+
+/* ★ここは「伸びすぎ防止」だけ。スクロールは #mBody に任せる */
+.sheetBody{
+  padding:12px 14px 14px;
+}
+
 .step{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5}
+
+/* ✅ モーダル本文は縦スクロールOK（JSロックと噛み合う） */
+#mBody{
+  max-height: 72vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
 
 /* ====== Card slider ====== */
 .cards{
@@ -361,7 +375,7 @@ h1{
 }
 
 /* =========================
-   ✅ 装備HUD（追記）
+   ✅ 装備HUD
 ========================= */
 .loadoutWrap{
   margin: 14px 0 10px;
@@ -441,6 +455,7 @@ h1{
   justify-content:center;
 }
 
+/* HUDは“詰まって見える”方が気持ちいいので cover のままOK */
 .equipImg img{
   width: 100%;
   height: 100%;
@@ -464,33 +479,24 @@ h1{
 }
 
 /* =========================
-   ✅ 選択グリッド（追記） 3列＋モーダル内スクロール対応（完全版）
+   ✅ 選択グリッド（モーダル内スクロール＋サイズ統一）
 ========================= */
 
-/* まず、モーダルの中身（sheetBody）が伸びすぎないようにする */
-.sheetBody{
-  padding:12px 14px 14px;
-  max-height: 72vh;            /* ★モーダル内の最大高さ */
-  overflow: hidden;            /* ★スクロールは gridWrap 側に寄せる */
-}
-
-/* グリッド自体を縦スクロール可能にする */
+/* グリッド自体を縦スクロール可能にする（ここが本体） */
 .gridWrap{
   display:grid;
-
-  /* ★ 2列→3列 */
   grid-template-columns: repeat(3, 1fr);
-
   gap: 10px;
   margin-top: 10px;
 
-  /* ★ここが重要：グリッド内だけスクロール */
+  /* ★確実にスクロール */
   max-height: 56vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 
-  /* スクロール時の見栄え */
   padding: 2px 2px 6px;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 /* カード */
@@ -503,30 +509,31 @@ h1{
   text-align: left;
   box-shadow: 0 10px 20px rgba(0,0,0,.22);
 }
+.gridCard:disabled{ opacity: .55; }
+.gridCard.isSelected{ outline: 2px solid rgba(255,255,255,.35); }
 
-.gridCard:disabled{
-  opacity: .55;
-}
-
-.gridCard.isSelected{
-  outline: 2px solid rgba(255,255,255,.35);
-}
-
-/* 画像 */
+/* 画像枠：ここで“見た目の統一”を作る */
 .gridImg{
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 92px;                 /* ★固定（バラつき防止） */
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.18);
+
+  display:grid;
+  place-items:center;
+  padding: 8px;                 /* ★余白を統一 */
 }
+
+/* 画像は必ず枠内に収める（右だけデカい問題を止める） */
 .gridImg img{
-  width:100%;
-  height:100%;
-  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;          /* ★ここが重要 */
   image-rendering: pixelated;
+  display:block;
 }
 
 /* バッジ */
@@ -593,23 +600,9 @@ h1{
   font-weight: 900;
 }
 
-/* ✅ スマホ：小さすぎる場合は 3列→2列に自動で戻す（保険） */
+/* ✅ スマホ：小さすぎる場合は 3列→2列 */
 @media (max-width: 380px){
-  .gridWrap{
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .gridWrap{ grid-template-columns: repeat(2, 1fr); }
   .gridDesc{ display:none; }
 }
-/* ✅ モーダル本文は必ず縦スクロールできるようにする */
-#mBody{
-  max-height: 72vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
 
-/* ✅ グリッド自体が長くなった時もスクロールを邪魔しない */
-.gridWrap{
-  overflow: visible;
-}
