@@ -464,15 +464,36 @@ h1{
 }
 
 /* =========================
-   ✅ 選択グリッド（追記）
+   ✅ 選択グリッド（追記） 3列＋モーダル内スクロール対応（完全版）
 ========================= */
-.gridWrap{
-  display:grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-top: 10px;
+
+/* まず、モーダルの中身（sheetBody）が伸びすぎないようにする */
+.sheetBody{
+  padding:12px 14px 14px;
+  max-height: 72vh;            /* ★モーダル内の最大高さ */
+  overflow: hidden;            /* ★スクロールは gridWrap 側に寄せる */
 }
 
+/* グリッド自体を縦スクロール可能にする */
+.gridWrap{
+  display:grid;
+
+  /* ★ 2列→3列 */
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 10px;
+  margin-top: 10px;
+
+  /* ★ここが重要：グリッド内だけスクロール */
+  max-height: 56vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  /* スクロール時の見栄え */
+  padding: 2px 2px 6px;
+}
+
+/* カード */
 .gridCard{
   border-radius: 16px;
   border: 1px solid var(--line, rgba(255,255,255,.14));
@@ -491,6 +512,7 @@ h1{
   outline: 2px solid rgba(255,255,255,.35);
 }
 
+/* 画像 */
 .gridImg{
   position: relative;
   width: 100%;
@@ -507,6 +529,7 @@ h1{
   image-rendering: pixelated;
 }
 
+/* バッジ */
 .gridCnt{
   position:absolute;
   right:8px;
@@ -518,7 +541,6 @@ h1{
   background: rgba(0,0,0,.55);
   border: 1px solid rgba(255,255,255,.14);
 }
-
 .gridSel{
   position:absolute;
   left:8px;
@@ -530,7 +552,6 @@ h1{
   background: rgba(255,255,255,.14);
   border: 1px solid rgba(255,255,255,.18);
 }
-
 .gridEmpty{
   position:absolute;
   left:8px;
@@ -543,6 +564,7 @@ h1{
   border: 1px solid rgba(255,80,90,.35);
 }
 
+/* テキスト */
 .gridName{
   margin-top: 8px;
   font-weight: 900;
@@ -571,9 +593,10 @@ h1{
   font-weight: 900;
 }
 
-/* スマホ最適化：2列のままでもカードが見やすいように */
-@media (max-width: 420px){
-  .loadoutSub{ display:none; }
+/* ✅ スマホ：小さすぎる場合は 3列→2列に自動で戻す（保険） */
+@media (max-width: 380px){
+  .gridWrap{
+    grid-template-columns: repeat(2, 1fr);
+  }
   .gridDesc{ display:none; }
 }
-
