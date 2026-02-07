@@ -576,20 +576,11 @@
     return !!(target && (target === mBody || mBody.contains(target)));
   }
 
-  function modalCanScroll(){
-    return mBody && (mBody.scrollHeight > mBody.clientHeight + 1);
-  }
-
+  // ✅ ここが重要：モーダル内は触っても止めない（＝スクロール殺さない）
   function preventTouchMove(e){
     if(modal.getAttribute("aria-hidden") !== "false") return;
-
-    if(isInsideModalContent(e.target)){
-      if(!modalCanScroll()){
-        e.preventDefault();
-      }
-      return;
-    }
-    e.preventDefault();
+    if(isInsideModalContent(e.target)) return; // ← モーダル内は全部許可
+    e.preventDefault(); // 背景だけ止める
   }
 
   function preventWheel(e){
@@ -611,9 +602,12 @@
     document.body.style.width = "100%";
     document.body.style.overflow = "hidden";
 
+    // ✅ モーダル本文は必ずスクロール可能に（スマホ対策）
     mBody.style.maxHeight = "72vh";
     mBody.style.overflowY = "auto";
     mBody.style.webkitOverflowScrolling = "touch";
+    mBody.style.overscrollBehavior = "contain";
+    mBody.style.touchAction = "pan-y";
 
     document.addEventListener("touchmove", preventTouchMove, { passive:false });
     document.addEventListener("wheel", preventWheel, { passive:false });
@@ -636,6 +630,8 @@
     mBody.style.maxHeight = "";
     mBody.style.overflowY = "";
     mBody.style.webkitOverflowScrolling = "";
+    mBody.style.overscrollBehavior = "";
+    mBody.style.touchAction = "";
 
     window.scrollTo(0, __scrollY);
   }
