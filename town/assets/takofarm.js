@@ -32,6 +32,9 @@
   const LS_INV    = "tf_v1_inv";
   const LS_CODES_USED = "tf_v1_codes_used";
 
+  // ✅ 装備（種/水/肥料）
+  const LS_LOADOUT = "tf_v1_loadout";
+
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
   const READY_TO_BURN_MS = 8 * 60 * 60 * 1000;  // READYから8時間で焦げ
@@ -188,8 +191,8 @@
   // ✅ グラタン：2種固定（①LR / ②N）
   // =========================
   const GRATIN_POOL = [
-    { id:"GTN-001", name:"グラタン①（LR）", img:"https://example.com/gratin1.png", rarity:"LR" },
-    { id:"GTN-002", name:"グラタン②（N）",  img:"https://example.com/gratin2.png", rarity:"N"  },
+    { id:"GTN-001", name:"グラタン①（LR）", img:"https://ul.h3z.jp/zJubnlOw.png", rarity:"LR" },
+    { id:"GTN-002", name:"グラタン②（N）",  img:"https://ul.h3z.jp/1VQvIP7v.png", rarity:"N"  },
   ];
   // ①LRが出る確率（例：3%）
   const GRATIN_LR_CHANCE = 0.03;
@@ -281,6 +284,33 @@
     invAdd(inv, invType, id, -1);
     return true;
   }
+
+  // =========================================================
+  // ✅ 装備（ロードアウト）
+  // =========================================================
+  function defaultLoadout(){
+    return { ver:1, seedId:null, waterId:null, fertId:null };
+  }
+  function loadLoadout(){
+    try{
+      const raw = localStorage.getItem(LS_LOADOUT);
+      if(!raw) return defaultLoadout();
+      const obj = JSON.parse(raw);
+      if(!obj || typeof obj !== "object") return defaultLoadout();
+      return {
+        ver:1,
+        seedId:  obj.seedId  || null,
+        waterId: obj.waterId || null,
+        fertId:  obj.fertId  || null
+      };
+    }catch(e){
+      return defaultLoadout();
+    }
+  }
+  function saveLoadout(l){
+    localStorage.setItem(LS_LOADOUT, JSON.stringify(l));
+  }
+  let loadout = loadLoadout();
 
   function loadUsedCodes(){
     try{
@@ -490,6 +520,22 @@
   const stXpBar  = document.getElementById("stXpBar");
   const stUnlock = document.getElementById("stUnlock");
 
+  const equipSeedBtn  = document.getElementById("equipSeed");
+  const equipWaterBtn = document.getElementById("equipWater");
+  const equipFertBtn  = document.getElementById("equipFert");
+
+  const equipSeedImg  = document.getElementById("equipSeedImg");
+  const equipWaterImg = document.getElementById("equipWaterImg");
+  const equipFertImg  = document.getElementById("equipFertImg");
+
+  const equipSeedName  = document.getElementById("equipSeedName");
+  const equipWaterName = document.getElementById("equipWaterName");
+  const equipFertName  = document.getElementById("equipFertName");
+
+  const equipSeedCnt  = document.getElementById("equipSeedCnt");
+  const equipWaterCnt = document.getElementById("equipWaterCnt");
+  const equipFertCnt  = document.getElementById("equipFertCnt");
+
   const modal  = document.getElementById("modal");
   const mTitle = document.getElementById("mTitle");
   const mBody  = document.getElementById("mBody");
@@ -498,9 +544,6 @@
   let state  = loadState();
   let book   = loadBook();
   let inv    = loadInv();
-
-  let activeIndex = -1;
-  let draft = null;
 
   function onBackdrop(e){ if(e.target === modal) closeModal(); }
   function onEsc(e){ if(e.key === "Escape") closeModal(); }
@@ -522,11 +565,12 @@
     modal.removeEventListener("click", onBackdrop);
     document.removeEventListener("keydown", onEsc);
     mBody.innerHTML = "";
-    activeIndex = -1;
-    draft = null;
   }
   mClose.addEventListener("click", closeModal);
 
+  // =========================================================
+  // ✅ シリアル入力（種グリッド内から呼ぶ）
+  // =========================================================
   function openRedeemModal(){
     openModal("シリアル入力（コラボのタネ）", `
       <div class="step">
@@ -548,7 +592,7 @@
 
     document.getElementById("redeemClose").addEventListener("click", () => {
       closeModal();
-      showSeedStep();
+      openPickGrid("seed");
     });
 
     document.getElementById("redeemBtn").addEventListener("click", () => {
@@ -572,10 +616,140 @@
 
       alert(`成功！【コラボのタネ】×${payload.seed_colabo || 0} を付与した。`);
       closeModal();
-      showSeedStep();
+      openPickGrid("seed");
+      renderLoadout();
     });
   }
 
+  // =========================================================
+  // ✅ 装備表示更新
+  // =========================================================
+  function renderLoadout(){
+    inv = loadInv();
+    loadout = loadLoadout();
+
+    const seed  = SEEDS.find(x=>x.id===loadout.seedId)  || null;
+    const water = WATERS.find(x=>x.id===loadout.waterId) || null;
+    const fert  = FERTS.find(x=>x.id===loadout.fertId)  || null;
+
+    if(seed){
+      equipSeedImg.src = seed.img;
+      equipSeedName.textContent = seed.name;
+      equipSeedCnt.textContent = `×${invGet(inv,"seed",seed.id)}`;
+    }else{
+      equipSeedImg.src = PLOT_IMG.EMPTY;
+      equipSeedName.textContent = "未装備";
+      equipSeedCnt.textContent = "×0";
+    }
+
+    if(water){
+      equipWaterImg.src = water.img;
+      equipWaterName.textContent = water.name;
+      equipWaterCnt.textContent = `×${invGet(inv,"water",water.id)}`;
+    }else{
+      equipWaterImg.src = PLOT_IMG.EMPTY;
+      equipWaterName.textContent = "未装備";
+      equipWaterCnt.textContent = "×0";
+    }
+
+    if(fert){
+      equipFertImg.src = fert.img;
+      equipFertName.textContent = fert.name;
+      equipFertCnt.textContent = `×${invGet(inv,"fert",fert.id)}`;
+    }else{
+      equipFertImg.src = PLOT_IMG.EMPTY;
+      equipFertName.textContent = "未装備";
+      equipFertCnt.textContent = "×0";
+    }
+  }
+
+  // =========================================================
+  // ✅ グリッド選択UI
+  // =========================================================
+  function openPickGrid(kind){
+    inv = loadInv();
+    loadout = loadLoadout();
+
+    const isSeed  = (kind === "seed");
+    const isWater = (kind === "water");
+    const isFert  = (kind === "fert");
+
+    const items = isSeed ? SEEDS : isWater ? WATERS : FERTS;
+    const invType = isSeed ? "seed" : isWater ? "water" : "fert";
+
+    const title = isSeed ? "種を選ぶ" : isWater ? "水を選ぶ" : "肥料を選ぶ";
+
+    const cells = items.map(x => {
+      const cnt = invGet(inv, invType, x.id);
+      const disabled = (cnt <= 0);
+      const selected =
+        (isSeed && loadout.seedId === x.id) ||
+        (isWater && loadout.waterId === x.id) ||
+        (isFert && loadout.fertId === x.id);
+
+      const redeemBtn = (isSeed && x.id === "seed_colabo")
+        ? `<button class="gridSmallBtn" type="button" data-redeem="1">シリアル入力</button>`
+        : ``;
+
+      return `
+        <button class="gridCard ${selected ? "isSelected":""}" type="button" data-pick="${x.id}" ${disabled ? "disabled":""}>
+          <div class="gridImg">
+            <img src="${x.img}" alt="${x.name}">
+            <div class="gridCnt">×${cnt}</div>
+            ${selected ? `<div class="gridSel">装備中</div>` : ``}
+            ${disabled ? `<div class="gridEmpty">在庫なし</div>` : ``}
+          </div>
+          <div class="gridName">${x.name}</div>
+          <div class="gridDesc">${(x.desc || "").replace(/\n/g,"<br>")}</div>
+          <div class="gridFx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
+          ${redeemBtn}
+        </button>
+      `;
+    }).join("");
+
+    openModal(title, `
+      <div class="step">※すべて在庫制。露店で買って増やす。<br>装備は消費しない（植えた時に消費）。</div>
+      <div class="gridWrap">${cells}</div>
+      <div class="row">
+        <button type="button" id="gridClose">閉じる</button>
+      </div>
+    `);
+
+    // pick
+    mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
+      btn.addEventListener("click", () => {
+        if(btn.disabled) return;
+        const id = btn.getAttribute("data-pick");
+        const l = loadLoadout();
+        if(isSeed)  l.seedId = id;
+        if(isWater) l.waterId = id;
+        if(isFert)  l.fertId = id;
+        saveLoadout(l);
+        renderLoadout();
+        closeModal();
+      });
+    });
+
+    // redeem
+    const redeem = mBody.querySelector("button[data-redeem]");
+    if(redeem){
+      redeem.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openRedeemModal();
+      });
+    }
+
+    document.getElementById("gridClose").addEventListener("click", closeModal);
+  }
+
+  // HUD buttons
+  equipSeedBtn.addEventListener("click", ()=> openPickGrid("seed"));
+  equipWaterBtn.addEventListener("click", ()=> openPickGrid("water"));
+  equipFertBtn.addEventListener("click", ()=> openPickGrid("fert"));
+
+  // =========================================================
+  // ✅ 描画
+  // =========================================================
   function render(){
     player = loadPlayer();
     book = loadBook();
@@ -584,7 +758,7 @@
     let grow = 0, ready = 0, burn = 0;
 
     for(let i=0;i<MAX_PLOTS;i++){
-      const p = state.plots[i] || defaultPlot();
+      const p = state.plots[i] || { state:"EMPTY" };
 
       const d = document.createElement("div");
       d.className = "plot";
@@ -594,7 +768,6 @@
 
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.dataset.i = String(i);
 
       if(locked){
         const b = document.createElement("div");
@@ -689,10 +862,96 @@
 
     const stXpNow = document.getElementById("stXpNow");
     if (stXpNow) stXpNow.textContent = String(now);
+
+    renderLoadout();
   }
 
+  // =========================================================
+  // ✅ 空きマス：ワンタップ植え
+  // =========================================================
+  function ensureLoadoutOrOpen(){
+    loadout = loadLoadout();
+    if(!loadout.seedId){ openPickGrid("seed"); return false; }
+    if(!loadout.waterId){ openPickGrid("water"); return false; }
+    if(!loadout.fertId){ openPickGrid("fert"); return false; }
+    return true;
+  }
+
+  function plantAt(index){
+    inv = loadInv();
+    loadout = loadLoadout();
+
+    const seedId  = loadout.seedId;
+    const waterId = loadout.waterId;
+    const fertId  = loadout.fertId;
+
+    const okSeed  = invGet(inv, "seed",  seedId)  > 0;
+    const okWater = invGet(inv, "water", waterId) > 0;
+    const okFert  = invGet(inv, "fert",  fertId)  > 0;
+
+    if(!okSeed || !okWater || !okFert){
+      const lack = (!okSeed) ? "タネ" : (!okWater) ? "ミズ" : "ヒリョウ";
+      const goKind = (!okSeed) ? "seed" : (!okWater) ? "water" : "fert";
+      openModal("在庫が足りない", `
+        <div class="step">
+          <b>${lack}</b> の在庫が足りないため植えられない。<br>
+          露店で買うか、装備を変えてね。
+        </div>
+        <div class="row">
+          <button type="button" id="btnChange">装備を変える</button>
+          <button type="button" class="primary" id="btnOk">OK</button>
+        </div>
+      `);
+      document.getElementById("btnChange").addEventListener("click", ()=>{
+        closeModal();
+        openPickGrid(goKind);
+      });
+      document.getElementById("btnOk").addEventListener("click", closeModal);
+      return;
+    }
+
+    const seed  = SEEDS.find(x=>x.id===seedId);
+    const water = WATERS.find(x=>x.id===waterId);
+    const fert  = FERTS.find(x=>x.id===fertId);
+
+    const factor = clamp(
+      (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
+      0.35, 1.0
+    );
+
+    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000);
+    const now = Date.now();
+
+    invDec(inv, "seed",  seedId);
+    invDec(inv, "water", waterId);
+    invDec(inv, "fert",  fertId);
+    saveInv(inv);
+
+    // ✅コラボは保証を絶対乗せない（SR65/100画像も出さないため）
+    const srHint =
+      (seedId === "seed_colabo") ? "NONE" :
+      (waterId === "water_overdo" && fertId === "fert_timeno") ? "SR100" :
+      (waterId === "water_overdo") ? "SR65" :
+      "NONE";
+
+    state.plots[index] = {
+      state: "GROW",
+      seedId,
+      waterId,
+      fertId,
+      startAt: now,
+      readyAt: now + growMs,
+      srHint
+    };
+
+    saveState(state);
+    render();
+  }
+
+  // =========================================================
+  // マス操作
+  // =========================================================
   function onPlotTap(i){
-    activeIndex = i;
     player = loadPlayer();
 
     if (i >= player.unlocked) {
@@ -704,11 +963,12 @@
       return;
     }
 
-    const p = state.plots[i] || defaultPlot();
+    const p = state.plots[i] || { state:"EMPTY" };
 
     if (p.state === "EMPTY") {
-      draft = { seedId:null, waterId:null, fertId:null };
-      showSeedStep();
+      // ✅装備が揃っていればワンタップ植え
+      if(!ensureLoadoutOrOpen()) return;
+      plantAt(i);
       return;
     }
 
@@ -762,7 +1022,7 @@
         const gain = XP_BY_RARITY[reward.rarity] ?? 4;
         addXP(gain);
 
-        state.plots[i] = defaultPlot();
+        state.plots[i] = { state:"EMPTY" };
         saveState(state);
 
         closeModal();
@@ -781,7 +1041,7 @@
       `);
       document.getElementById("btnBack").addEventListener("click", closeModal);
       document.getElementById("btnClear").addEventListener("click", () => {
-        state.plots[i] = defaultPlot();
+        state.plots[i] = { state:"EMPTY" };
         saveState(state);
         closeModal();
         render();
@@ -817,157 +1077,6 @@
     saveBook(b);
   }
 
-  function cardSlider(items, onSelectId, invType){
-    inv = loadInv();
-
-    const list = items.map(x => {
-      const cnt = invGet(inv, invType, x.id);
-      const disabled = (cnt <= 0);
-      const isColaboSeed = (invType === "seed" && x.id === "seed_colabo");
-
-      return `
-        <div class="c">
-          <div class="imgbox" style="position:relative;">
-            <img src="${x.img}" alt="${x.name}">
-            <div class="cntBadge">×${String(cnt)}</div>
-          </div>
-          <div class="name">${x.name}</div>
-          <div class="desc">${(x.desc || "").replace(/\n/g,"<br>")}</div>
-          <div class="fx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
-
-          ${isColaboSeed ? `<button type="button" data-redeem="1">シリアル入力</button>` : ``}
-
-          <button type="button" data-pick="${x.id}" ${disabled ? "disabled" : ""}>
-            ${disabled ? "在庫なし" : "これにする"}
-          </button>
-        </div>
-      `;
-    }).join("");
-
-    openModal("選択", `
-      <div class="step">※すべて在庫制。露店で買って増やす。</div>
-      <div class="cards">${list}</div>
-      <div class="row">
-        <button type="button" id="btnBackStep">戻る</button>
-        <button type="button" id="btnCloseStep">閉じる</button>
-      </div>
-    `);
-
-    mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
-      btn.addEventListener("click", () => {
-        if(btn.disabled) return;
-        onSelectId(btn.getAttribute("data-pick"));
-      });
-    });
-
-    const redeemBtn = mBody.querySelector("button[data-redeem]");
-    if (redeemBtn) redeemBtn.addEventListener("click", openRedeemModal);
-
-    return {
-      setTitle(t){ mTitle.textContent = t; },
-      onBack(fn){ document.getElementById("btnBackStep").addEventListener("click", fn); },
-      onClose(){ document.getElementById("btnCloseStep").addEventListener("click", closeModal); },
-    };
-  }
-
-  function showSeedStep(){
-    const ui = cardSlider(SEEDS, (id) => { draft.seedId = id; showWaterStep(); }, "seed");
-    ui.setTitle("種を選ぶ");
-    ui.onBack(() => closeModal());
-    ui.onClose();
-  }
-  function showWaterStep(){
-    const ui = cardSlider(WATERS, (id) => { draft.waterId = id; showFertStep(); }, "water");
-    ui.setTitle("水を選ぶ");
-    ui.onBack(() => showSeedStep());
-    ui.onClose();
-  }
-  function showFertStep(){
-    const ui = cardSlider(FERTS, (id) => { draft.fertId = id; confirmPlant(); }, "fert");
-    ui.setTitle("肥料を選ぶ");
-    ui.onBack(() => showWaterStep());
-    ui.onClose();
-  }
-
-  function confirmPlant(){
-    const seed  = SEEDS.find(x=>x.id===draft.seedId);
-    const water = WATERS.find(x=>x.id===draft.waterId);
-    const fert  = FERTS.find(x=>x.id===draft.fertId);
-
-    const factor = clamp(
-      (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
-      0.35, 1.0
-    );
-
-    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000);
-    const now = Date.now();
-
-    openModal("植える確認", `
-      <div class="step">この内容で植える？（収穫まで約 <b>${fmtRemain(growMs)}</b>）</div>
-      <div class="reward">
-        <div class="big">選択</div>
-        <div class="mini">
-          種：${seed?.name || "-"}<br>
-          水：${water?.name || "-"}<br>
-          肥料：${fert?.name || "-"}<br><br>
-          時短係数：<b>${factor.toFixed(2)}</b>
-        </div>
-      </div>
-      <div class="row">
-        <button type="button" id="btnRe">選び直す</button>
-        <button type="button" class="primary" id="btnPlant">植える</button>
-      </div>
-    `);
-
-    document.getElementById("btnRe").addEventListener("click", showSeedStep);
-
-    document.getElementById("btnPlant").addEventListener("click", () => {
-      inv = loadInv();
-
-      const okSeed  = invGet(inv, "seed",  draft.seedId)  > 0;
-      const okWater = invGet(inv, "water", draft.waterId) > 0;
-      const okFert  = invGet(inv, "fert",  draft.fertId)  > 0;
-
-      if(!okSeed || !okWater || !okFert){
-        openModal("在庫が足りない", `
-          <div class="step">所持数が足りないため植えられない。</div>
-          <div class="row"><button type="button" id="btnOk">OK</button></div>
-        `);
-        document.getElementById("btnOk").addEventListener("click", () => {
-          closeModal();
-          showSeedStep();
-        });
-        return;
-      }
-
-      invDec(inv, "seed",  draft.seedId);
-      invDec(inv, "water", draft.waterId);
-      invDec(inv, "fert",  draft.fertId);
-      saveInv(inv);
-
-      // ✅コラボは保証を絶対乗せない（SR65/100画像も出さないため）
-      const srHint =
-        (draft.seedId === "seed_colabo") ? "NONE" :
-        (draft.waterId === "water_overdo" && draft.fertId === "fert_timeno") ? "SR100" :
-        (draft.waterId === "water_overdo") ? "SR65" :
-        "NONE";
-
-      state.plots[activeIndex] = {
-        state: "GROW",
-        seedId: draft.seedId,
-        waterId: draft.waterId,
-        fertId: draft.fertId,
-        startAt: now,
-        readyAt: now + growMs,
-        srHint
-      };
-
-      saveState(state);
-      closeModal();
-      render();
-    });
-  }
-
   function tick(){
     const now = Date.now();
     let changed = false;
@@ -995,22 +1104,26 @@
   }
 
   document.getElementById("btnReset").addEventListener("click", () => {
-    if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済みを全消去します。OK？")) return;
+    if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済み・装備を全消去します。OK？")) return;
 
     localStorage.removeItem(LS_STATE);
     localStorage.removeItem(LS_BOOK);
     localStorage.removeItem(LS_PLAYER);
     localStorage.removeItem(LS_INV);
     localStorage.removeItem(LS_CODES_USED);
+    localStorage.removeItem(LS_LOADOUT);
 
     state = loadState();
     book = loadBook();
     player = loadPlayer();
     inv = loadInv();
+    loadout = loadLoadout();
 
     render();
   });
 
+  // 初期
+  renderLoadout();
   render();
   setInterval(tick, TICK_MS);
 })();
