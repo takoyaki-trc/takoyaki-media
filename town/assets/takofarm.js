@@ -36,6 +36,9 @@
   // ✅ 装備（種/水/肥料）
   const LS_LOADOUT = "tf_v1_loadout";
 
+  // ✅ オクト（露店と共通のキーを使う）
+  const LS_OCTO = "roten_v1_octo";
+
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
   const READY_TO_BURN_MS = 8 * 60 * 60 * 1000;  // READYから8時間で焦げ
@@ -221,24 +224,6 @@
   function savePlayer(p){ localStorage.setItem(LS_PLAYER, JSON.stringify(p)); }
   let player = loadPlayer();
 
-  function addXP(amount){
-    if(!Number.isFinite(amount) || amount <= 0) return { leveled:false, unlockedDelta:0 };
-    let leveled = false, unlockedDelta = 0;
-    player.xp += Math.floor(amount);
-
-    while(player.xp >= xpNeedForLevel(player.level)){
-      player.xp -= xpNeedForLevel(player.level);
-      player.level += 1;
-      leveled = true;
-      if(player.unlocked < MAX_PLOTS){
-        player.unlocked += 1;
-        unlockedDelta += 1;
-      }
-    }
-    savePlayer(player);
-    return { leveled, unlockedDelta };
-  }
-
   // =========================================================
   // ★在庫（すべて在庫制）
   // =========================================================
@@ -280,6 +265,143 @@
     if(cur <= 0) return false;
     invAdd(inv, invType, id, -1);
     return true;
+  }
+
+  // =========================================================
+  // ✅ オクト（3000〜10000のレベル報酬用）
+  // =========================================================
+  function loadOcto(){
+    const n = Number(localStorage.getItem(LS_OCTO) ?? 0);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
+  function saveOcto(n){
+    localStorage.setItem(LS_OCTO, String(Math.max(0, Math.floor(Number(n) || 0))));
+  }
+  function addOcto(delta){
+    const cur = loadOcto();
+    const next = Math.max(0, cur + Math.floor(Number(delta) || 0));
+    saveOcto(next);
+    return next;
+  }
+  function randInt(min, max){
+    min = Math.floor(min); max = Math.floor(max);
+    if(max < min) [min, max] = [max, min];
+    return min + Math.floor(Math.random() * (max - min + 1));
+  }
+
+  // ★「うまく振り分け」：レベルが上がるほど上振れしやすいが、必ず3000〜10000
+  function octoRewardForLevel(level){
+    const lv = Math.max(1, Math.floor(level));
+    const t = Math.min(1, (lv - 1) / 18);                 // Lv1→0 / Lv19以降→1 くらい
+    const min = Math.round(3000 + 2500 * t);              // 3000 → 5500
+    const max = Math.round(6500 + 3500 * t);              // 6500 → 10000
+    return clamp(randInt(min, max), 3000, 10000);
+  }
+
+  // ★追加アイテム報酬（必ず何か1個は付く）
+  //  - seed_colabo はシリアル枠なので配らない
+  //  - 数は Lvに応じて 1〜3 個
+  function pickWeighted(list){
+    const total = list.reduce((a, x)=> a + (x.w || 0), 0);
+    if(total <= 0) return list[0]?.v;
+    let r = Math.random() * total;
+    for(const x of list){
+      r -= (x.w || 0);
+      if(r <= 0) return x.v;
+    }
+    return list[list.length-1]?.v;
+  }
+
+  function itemRewardForLevel(level){
+    const lv = Math.max(1, Math.floor(level));
+
+    // 個数：Lvが上がるほど増えやすい（最大3）
+    const count =
+      (lv >= 15) ? pickWeighted([{v:2,w:55},{v:3,w:45}]) :
+      (lv >= 8)  ? pickWeighted([{v:1,w:30},{v:2,w:70}]) :
+                   1;
+
+    // カテゴリ：序盤は種寄り → 中盤から水/肥料も増やす
+    const cat =
+      (lv >= 12) ? pickWeighted([{v:"seed",w:45},{v:"water",w:30},{v:"fert",w:25}]) :
+      (lv >= 6)  ? pickWeighted([{v:"seed",w:55},{v:"water",w:25},{v:"fert",w:20}]) :
+                   pickWeighted([{v:"seed",w:70},{v:"water",w:20},{v:"fert",w:10}]);
+
+    // 対象アイテム候補
+    const seedChoices = SEEDS.filter(x => x.id !== "seed_colabo"); // コラボは配らない
+    const waterChoices = WATERS.slice();
+    const fertChoices = FERTS.slice();
+
+    const rewards = [];
+    for(let k=0;k<count;k++){
+      let picked = null;
+      if(cat === "seed")  picked = pick(seedChoices);
+      if(cat === "water") picked = pick(waterChoices);
+      if(cat === "fert")  picked = pick(fertChoices);
+      if(!picked) picked = pick(seedChoices);
+
+      rewards.push({
+        kind: cat,
+        id: picked.id,
+        name: picked.name,
+        img: picked.img,
+        qty: 1
+      });
+    }
+
+    // 同じものが複数当たったら合算
+    const map = new Map();
+    for(const r of rewards){
+      const key = `${r.kind}:${r.id}`;
+      const prev = map.get(key);
+      if(prev) prev.qty += r.qty;
+      else map.set(key, { ...r });
+    }
+    return Array.from(map.values());
+  }
+
+  // ★レベルアップ報酬を実際に付与（オクト必ず + アイテム必ず）
+  function grantLevelRewards(level){
+    // オクト
+    const octo = octoRewardForLevel(level);
+    addOcto(octo);
+
+    // アイテム
+    const items = itemRewardForLevel(level);
+    const inv = loadInv();
+    for(const it of items){
+      if(it.kind === "seed")  invAdd(inv, "seed",  it.id, it.qty);
+      if(it.kind === "water") invAdd(inv, "water", it.id, it.qty);
+      if(it.kind === "fert")  invAdd(inv, "fert",  it.id, it.qty);
+    }
+    saveInv(inv);
+
+    return { octo, items };
+  }
+
+  function addXP(amount){
+    if(!Number.isFinite(amount) || amount <= 0) return { leveled:false, unlockedDelta:0, rewards:[] };
+    let leveled = false, unlockedDelta = 0;
+    const rewards = [];
+
+    player.xp += Math.floor(amount);
+
+    while(player.xp >= xpNeedForLevel(player.level)){
+      player.xp -= xpNeedForLevel(player.level);
+      player.level += 1;
+      leveled = true;
+
+      // ✅ 1レベルごとに報酬付与（オクト必ず＋アイテム）
+      const r = grantLevelRewards(player.level);
+      rewards.push({ level: player.level, ...r });
+
+      if(player.unlocked < MAX_PLOTS){
+        player.unlocked += 1;
+        unlockedDelta += 1;
+      }
+    }
+    savePlayer(player);
+    return { leveled, unlockedDelta, rewards };
   }
 
   // =========================================================
@@ -576,11 +698,10 @@
     return !!(target && (target === mBody || mBody.contains(target)));
   }
 
-  // ✅ ここが重要：モーダル内は触っても止めない（＝スクロール殺さない）
   function preventTouchMove(e){
     if(modal.getAttribute("aria-hidden") !== "false") return;
-    if(isInsideModalContent(e.target)) return; // ← モーダル内は全部許可
-    e.preventDefault(); // 背景だけ止める
+    if(isInsideModalContent(e.target)) return;
+    e.preventDefault();
   }
 
   function preventWheel(e){
@@ -602,7 +723,6 @@
     document.body.style.width = "100%";
     document.body.style.overflow = "hidden";
 
-    // ✅ モーダル本文は必ずスクロール可能に（スマホ対策）
     mBody.style.maxHeight = "72vh";
     mBody.style.overflowY = "auto";
     mBody.style.webkitOverflowScrolling = "touch";
@@ -835,9 +955,8 @@
           if (progress < 0.5) {
             img = PLOT_IMG.GROW1;
           } else {
-            // ✅ SR確定時だけこの画像が出る
-            if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100; // UR以上確定
-            else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65; // SR以上確定
+            if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100;
+            else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65;
             else img = PLOT_IMG.GROW2;
           }
         }
@@ -953,18 +1072,16 @@
     invDec(inv, "fert",  fertId);
     saveInv(inv);
 
-    // ✅ SR/UR確定演出は「通常抽選ルート」だけ（固定タネ/コラボは除外）
     const isFixedSeed =
       (seedId === "seed_colabo") ||
       (seedId === "seed_special") ||
       (seedId === "seed_bussasari") ||
       (seedId === "seed_namara_kawasar");
 
-    // ✅ あなたの指定：SR100の画像はUR以上確定の時だけ
     const srHint =
       (isFixedSeed) ? "NONE" :
-      (waterId === "water_overdo" && fertId === "fert_timeno") ? "SR100" : // UR以上確定
-      (waterId === "water_overdo") ? "SR65" :                               // SR以上確定
+      (waterId === "water_overdo" && fertId === "fert_timeno") ? "SR100" :
+      (waterId === "water_overdo") ? "SR65" :
       "NONE";
 
     state.plots[index] = {
@@ -1052,12 +1169,57 @@
         addToBook(reward);
 
         const gain = XP_BY_RARITY[reward.rarity] ?? 4;
-        addXP(gain);
+        const xpRes = addXP(gain);
 
         state.plots[i] = { state:"EMPTY" };
         saveState(state);
 
+        // ✅ Lvアップしたら「オクト＋アイテム」を表示してから図鑑へ
+        if(xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length){
+          const blocks = xpRes.rewards.map(r => {
+            const itemsHtml = (r.items || []).map(it => {
+              return `
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.05);margin-top:8px;">
+                  <img src="${it.img}" alt="${it.name}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18)">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:1000;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name}</div>
+                    <div style="font-size:12px;opacity:.8;margin-top:2px;">×${it.qty}</div>
+                  </div>
+                </div>
+              `;
+            }).join("");
+
+            return `
+              <div style="border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.06);padding:12px;margin-top:10px;">
+                <div style="font-weight:1000;font-size:14px;">Lv ${r.level} 報酬</div>
+                <div style="margin-top:8px;font-size:13px;">
+                  ✅ オクト：<b>+${r.octo}</b>
+                </div>
+                ${itemsHtml}
+              </div>
+            `;
+          }).join("");
+
+          openModal("Lvアップ！", `
+            <div class="step">
+              レベルが上がった。<b>オクトは必ず</b>もらえる。<br>
+              ついでにアイテムも勝手に増えた。
+            </div>
+            ${blocks}
+            <div class="row">
+              <button type="button" id="btnGoZukan" class="primary">図鑑へ</button>
+            </div>
+          `);
+          document.getElementById("btnGoZukan").addEventListener("click", () => {
+            closeModal();
+            location.href = "./zukan.html";
+          });
+          render(); // 数字更新
+          return;
+        }
+
         closeModal();
+        render();
         location.href = "./zukan.html";
       });
       return;
@@ -1145,6 +1307,8 @@
       localStorage.removeItem(LS_PLAYER);
       localStorage.removeItem(LS_INV);
       localStorage.removeItem(LS_LOADOUT);
+      // ※オクトは露店共通なので、通常は消さない（消すなら↓を有効化）
+      // localStorage.removeItem(LS_OCTO);
 
       state = loadState();
       book = loadBook();
