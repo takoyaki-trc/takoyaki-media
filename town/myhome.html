@@ -1,0 +1,1205 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>マイホーム</title>
+
+  <style>
+    :root{
+      --bg:#0b0f1a;
+      --panel: rgba(255,255,255,.08);
+      --panel2: rgba(255,255,255,.06);
+      --line: rgba(255,255,255,.14);
+      --text:#fff;
+      --muted: rgba(255,255,255,.74);
+      --good:#9fffa8;
+      --warn:#ffd38a;
+      --bad:#ff9aa5;
+      --accent:#7fd4ff;
+      --shadow: 0 12px 32px rgba(0,0,0,.45);
+      --radius: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    html,body{ height:100%; background:var(--bg); color:var(--text); margin:0; }
+    body{ font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; overflow-x:hidden; }
+
+    /* ほんのりレトロな空気（ビネット） */
+    body::before{
+      content:"";
+      position: fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:-1;
+      background:
+        radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.26) 100%),
+        radial-gradient(ellipse at 20% 10%, rgba(127,212,255,.18) 0%, rgba(0,0,0,0) 55%),
+        radial-gradient(ellipse at 80% 15%, rgba(159,255,168,.12) 0%, rgba(0,0,0,0) 55%);
+    }
+
+    /* ヘッダー */
+    .topbar{
+      position: sticky;
+      top:0;
+      z-index:50;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,.25));
+      border-bottom:1px solid var(--line);
+    }
+    .topbar-inner{
+      max-width: 1100px;
+      margin:0 auto;
+      padding: 10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      min-width: 0;
+    }
+    .back{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      font-weight:900;
+      touch-action:manipulation;
+    }
+    .titlebox{ min-width:0; }
+    .title{
+      font-weight:900;
+      letter-spacing:.02em;
+      line-height:1.1;
+      font-size: 18px;
+      margin:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .subtitle{
+      font-size:12px;
+      opacity:.8;
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .stats{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      font-size:12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.22);
+    }
+    .pill b{ font-weight:900; }
+    .pill .dot{
+      width:10px; height:10px; border-radius:3px;
+      background: var(--accent);
+      box-shadow: 0 0 0 2px rgba(127,212,255,.18);
+    }
+
+    /* レイアウト */
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding: 12px;
+      display:grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap:12px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+
+    /* 部屋（ステージ） */
+    .stage-card{
+      border-radius: var(--radius);
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.05));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position: relative;
+    }
+    .stage-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 10px 10px 8px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    .hint{
+      font-size:12px;
+      opacity:.85;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .hint kbd{
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+    }
+
+    .stage{
+      position: relative;
+      width:100%;
+      aspect-ratio: 16 / 10;
+      min-height: 320px;
+      background:
+        /* 壁 */
+        linear-gradient(#13203a 0%, #0e1630 50%, #0b0f1a 100%),
+        /* 床格子 */
+        linear-gradient(transparent 0 60%, rgba(255,255,255,.06) 60% 61%, transparent 61% 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 1px, transparent 1px 32px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0 1px, transparent 1px 32px);
+      background-blend-mode: normal, normal, overlay, overlay;
+      overflow:hidden;
+      touch-action: none; /* 重要：ドラッグ中のスクロール阻止 */
+    }
+
+    /* スポットライト風 */
+    .stage::before{
+      content:"";
+      position:absolute;
+      inset:-30%;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(127,212,255,.18), rgba(0,0,0,0) 40%),
+        radial-gradient(circle at 70% 30%, rgba(159,255,168,.14), rgba(0,0,0,0) 40%),
+        radial-gradient(circle at 50% 75%, rgba(255,211,138,.10), rgba(0,0,0,0) 45%);
+      pointer-events:none;
+      filter: blur(2px);
+    }
+
+    /* グリッド表示（ON時） */
+    .grid-on .stage{
+      background:
+        linear-gradient(#13203a 0%, #0e1630 50%, #0b0f1a 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 1px, transparent 1px 24px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.07) 0 1px, transparent 1px 24px);
+      background-blend-mode: normal, overlay, overlay;
+    }
+
+    /* 置くアイテム */
+    .item{
+      position:absolute;
+      left:50%;
+      top:70%;
+      transform: translate(-50%,-50%) rotate(0deg) scale(1);
+      image-rendering: pixelated;
+      user-select:none;
+      -webkit-user-drag:none;
+      touch-action:none;
+      pointer-events:auto;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,.45));
+      /* タップしやすく */
+      padding: 10px;
+      margin:-10px;
+    }
+    .item img{
+      display:block;
+      width: var(--w, 96px);
+      height:auto;
+    }
+    .item.selected{
+      outline: 2px solid rgba(127,212,255,.65);
+      outline-offset: 2px;
+      border-radius: 14px;
+      background: rgba(127,212,255,.08);
+    }
+
+    /* 右パネル */
+    .side{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .card{
+      border-radius: var(--radius);
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-h{
+      padding: 10px 10px 8px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    .card-h b{ font-weight:900; }
+    .card-b{ padding:10px; }
+
+    .btnrow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      font-weight:800;
+      touch-action:manipulation;
+      cursor:pointer;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.good{ background: rgba(159,255,168,.10); border-color: rgba(159,255,168,.22); }
+    .btn.warn{ background: rgba(255,211,138,.10); border-color: rgba(255,211,138,.22); }
+    .btn.bad{  background: rgba(255,154,165,.10); border-color: rgba(255,154,165,.22); }
+    .btn.small{ padding:8px 10px; font-size:12px; border-radius: 12px; }
+
+    .toggle{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      padding:10px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      font-size:12px;
+      margin-bottom:10px;
+    }
+    .switch{
+      width: 44px; height: 26px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.18);
+      position:relative;
+      flex: none;
+      cursor:pointer;
+    }
+    .switch::after{
+      content:"";
+      position:absolute;
+      top:50%; left: 3px;
+      width:20px; height:20px;
+      transform: translateY(-50%);
+      border-radius: 999px;
+      background: rgba(255,255,255,.75);
+      transition: left .15s ease;
+    }
+    .switch.on{ background: rgba(127,212,255,.22); border-color: rgba(127,212,255,.35); }
+    .switch.on::after{ left: 20px; background: rgba(127,212,255,.92); }
+
+    .inv{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:8px;
+    }
+    @media (max-width: 520px){
+      .inv{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    }
+    .inv-item{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      padding:10px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      cursor:pointer;
+      touch-action:manipulation;
+      min-height: 92px;
+      justify-content:space-between;
+    }
+    .inv-item:hover{ background: rgba(255,255,255,.07); }
+    .inv-item .name{
+      font-size:12px;
+      font-weight:900;
+      line-height:1.15;
+      opacity:.95;
+    }
+    .inv-item .meta{
+      display:flex; align-items:center; justify-content:space-between;
+      font-size:11px; opacity:.85;
+    }
+    .tag{
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      opacity:.9;
+      white-space:nowrap;
+    }
+
+    .mini{
+      font-size:12px;
+      opacity:.85;
+      line-height:1.45;
+    }
+
+    /* 下の操作パネル */
+    .edit-tools{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:8px;
+      margin-top:10px;
+    }
+    .edit-tools .btn{ font-size:12px; }
+
+    /* トースト */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 100;
+      background: rgba(0,0,0,.72);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius: 14px;
+      padding:10px 12px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.45);
+      font-size: 12px;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      max-width: min(680px, calc(100% - 24px));
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    /* モーダル（エクスポート/インポート） */
+    .modal{
+      position: fixed;
+      inset:0;
+      z-index:200;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.55);
+      padding: 14px;
+    }
+    .modal.on{ display:flex; }
+    .modal-card{
+      width: min(920px, 100%);
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(20,24,40,.92);
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modal-h{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 12px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.25);
+    }
+    .modal-b{ padding: 12px; }
+    textarea{
+      width:100%;
+      min-height: 220px;
+      resize: vertical;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      padding: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.4;
+      outline:none;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <button class="back" id="backBtn" type="button" aria-label="戻る">←</button>
+        <div class="titlebox">
+          <p class="title">マイホーム</p>
+          <div class="subtitle">集めたオブジェを自由に飾れるたこ。</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="pill" title="所持オブジェ（tf_v1_deco）">
+          <span class="dot"></span>
+          <span>所持</span>
+          <b id="ownedCount">0</b>
+        </div>
+        <div class="pill" title="家に飾っている数（tf_v1_myhome）">
+          <span class="dot" style="background:var(--good)"></span>
+          <span>飾り</span>
+          <b id="placedCount">0</b>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" id="pageRoot">
+    <!-- 左：部屋 -->
+    <section class="stage-card" id="stageCard">
+      <div class="stage-top">
+        <div class="hint">
+          <span>🖐️ タップで選択 → ドラッグで移動</span>
+          <span><kbd>回転</kbd> <kbd>前へ</kbd> <kbd>削除</kbd></span>
+        </div>
+        <div class="hint">
+          <span id="saveState" style="opacity:.85;">保存済み</span>
+        </div>
+      </div>
+
+      <div class="stage" id="stage" aria-label="マイホーム部屋">
+        <!-- アイテムはJSでここに追加 -->
+      </div>
+    </section>
+
+    <!-- 右：インベントリ＆操作 -->
+    <aside class="side">
+      <section class="card">
+        <div class="card-h">
+          <b>設定</b>
+          <span class="tag" id="modeTag">編集：ON</span>
+        </div>
+        <div class="card-b">
+          <div class="toggle">
+            <span>編集モード（ドラッグ可）</span>
+            <div class="switch on" id="editSwitch" role="switch" aria-checked="true"></div>
+          </div>
+
+          <div class="toggle">
+            <span>グリッド表示</span>
+            <div class="switch" id="gridSwitch" role="switch" aria-checked="false"></div>
+          </div>
+
+          <div class="toggle" style="margin-bottom:0;">
+            <span>スナップ（24px刻み）</span>
+            <div class="switch on" id="snapSwitch" role="switch" aria-checked="true"></div>
+          </div>
+
+          <div class="edit-tools">
+            <button class="btn small" id="btnExport" type="button">書き出し</button>
+            <button class="btn small" id="btnImport" type="button">読み込み</button>
+            <button class="btn small bad" id="btnClear" type="button">全消去</button>
+          </div>
+
+          <p class="mini" style="margin:10px 2px 0;">
+            ※ GitHub Pagesなので保存は端末ごと（localStorage）たこ。<br>
+            端末移行したい時は「書き出し→読み込み」で引っ越しできるたこ。
+          </p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-h">
+          <b>所持オブジェ</b>
+          <span class="tag">タップで配置</span>
+        </div>
+        <div class="card-b">
+          <div class="mini" id="ownedHint" style="margin:0 0 10px;">
+            まだ所持オブジェがないたこ。先に「たこぴのお店」で合成するとここに出るたこ。
+          </div>
+          <div class="inv" id="invGrid"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-h">
+          <b>選択中</b>
+          <span class="tag" id="selTag">なし</span>
+        </div>
+        <div class="card-b">
+          <div class="btnrow">
+            <button class="btn warn" id="btnRotate" type="button">↻ 回転</button>
+            <button class="btn" id="btnFront" type="button">⬆ 前へ</button>
+            <button class="btn" id="btnBack" type="button">⬇ 後ろへ</button>
+            <button class="btn bad" id="btnDelete" type="button">🗑 削除</button>
+          </div>
+          <p class="mini" style="margin:10px 2px 0;">
+            コツ：小物が掴みにくい時は、いったん選択してから動かすと安定するたこ。
+          </p>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <!-- Export/Import Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-card">
+      <div class="modal-h">
+        <b id="modalTitle">書き出し</b>
+        <button class="btn small" id="modalClose" type="button">閉じる</button>
+      </div>
+      <div class="modal-b">
+        <textarea id="modalText" spellcheck="false"></textarea>
+        <div class="btnrow" style="margin-top:10px;">
+          <button class="btn good" id="modalCopy" type="button">コピー</button>
+          <button class="btn warn" id="modalApply" type="button">適用</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  // =========================
+  // Storage Keys
+  // =========================
+  const LS = {
+    deco:   "tf_v1_deco",     // 所持オブジェ（あなたの焦げクラフトがここに追加する想定）
+    myhome: "tf_v1_myhome"    // 家の配置
+  };
+
+  // =========================
+  // 所持オブジェの「表示名/画像/デフォサイズ」
+  // ※ 画像が無くてもOK。後から差し替え可能。
+  // =========================
+  const CATALOG = {
+    koge_small: { name:"焦げの山",   img:"assets/img/koge_small.png", w:72  },
+    koge_mid:   { name:"焦げの祭壇", img:"assets/img/koge_mid.png",   w:110 },
+    koge_big:   { name:"焦げタワー", img:"assets/img/koge_big.png",   w:150 },
+
+    // 追加したくなったらここに増やせる
+    // koge_lantern:{ name:"焦げランタン", img:"assets/img/koge_lantern.png", w:80 },
+  };
+
+  // =========================
+  // DOM
+  // =========================
+  const backBtn     = document.getElementById("backBtn");
+  const stage       = document.getElementById("stage");
+  const stageCard   = document.getElementById("stageCard");
+  const invGrid     = document.getElementById("invGrid");
+  const ownedCount  = document.getElementById("ownedCount");
+  const placedCount = document.getElementById("placedCount");
+  const ownedHint   = document.getElementById("ownedHint");
+
+  const editSwitch  = document.getElementById("editSwitch");
+  const gridSwitch  = document.getElementById("gridSwitch");
+  const snapSwitch  = document.getElementById("snapSwitch");
+  const modeTag     = document.getElementById("modeTag");
+
+  const selTag      = document.getElementById("selTag");
+  const btnRotate   = document.getElementById("btnRotate");
+  const btnFront    = document.getElementById("btnFront");
+  const btnBack     = document.getElementById("btnBack");
+  const btnDelete   = document.getElementById("btnDelete");
+
+  const btnExport   = document.getElementById("btnExport");
+  const btnImport   = document.getElementById("btnImport");
+  const btnClear    = document.getElementById("btnClear");
+
+  const saveState   = document.getElementById("saveState");
+
+  const toastEl     = document.getElementById("toast");
+  const modal       = document.getElementById("modal");
+  const modalTitle  = document.getElementById("modalTitle");
+  const modalText   = document.getElementById("modalText");
+  const modalClose  = document.getElementById("modalClose");
+  const modalCopy   = document.getElementById("modalCopy");
+  const modalApply  = document.getElementById("modalApply");
+
+  // =========================
+  // State
+  // =========================
+  let editMode = true;
+  let gridOn   = false;
+  let snapOn   = true;
+
+  let owned = []; // {type,count}
+  let home  = loadHome(); // {ver, items:[{id,type,x,y,z,rot,scale}]}
+
+  let selectedId = null;
+  let drag = null; // {id, offsetX, offsetY}
+
+  // =========================
+  // Utils
+  // =========================
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const rid = () => "mh_" + Date.now().toString(16) + "_" + Math.random().toString(16).slice(2);
+
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 1600);
+  }
+
+  function setDirty(){
+    saveState.textContent = "保存中…";
+    saveState.style.opacity = "1";
+    clearTimeout(setDirty._t);
+    setDirty._t = setTimeout(() => {
+      saveState.textContent = "保存済み";
+      saveState.style.opacity = ".85";
+    }, 400);
+  }
+
+  function loadJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      if(!raw) return fallback;
+      return JSON.parse(raw);
+    }catch(_){
+      return fallback;
+    }
+  }
+  function saveJSON(key, obj){
+    localStorage.setItem(key, JSON.stringify(obj));
+  }
+
+  function loadOwned(){
+    // tf_v1_deco の想定： { ver:1, items:[ {id,type,x,y,z} ... ] }
+    // 所持数としては「type集計」で表示する（所持＝未設置含む、という世界観）
+    const d = loadJSON(LS.deco, { ver:1, items:[] });
+    const items = Array.isArray(d.items) ? d.items : [];
+    const map = new Map();
+    for(const it of items){
+      const t = String(it?.type || "");
+      if(!t) continue;
+      map.set(t, (map.get(t) || 0) + 1);
+    }
+    const arr = [...map.entries()].map(([type,count]) => ({ type, count }));
+    arr.sort((a,b) => a.type.localeCompare(b.type));
+    return arr;
+  }
+
+  function loadHome(){
+    const h = loadJSON(LS.myhome, { ver:1, items:[] });
+    h.ver = h.ver || 1;
+    h.items = Array.isArray(h.items) ? h.items : [];
+    h.items = h.items
+      .filter(x => x && typeof x === "object")
+      .map(x => ({
+        id: String(x.id || rid()),
+        type: String(x.type || "koge_small"),
+        x: clamp(Number(x.x ?? 50), 0, 100),
+        y: clamp(Number(x.y ?? 70), 0, 100),
+        z: clamp(Number(x.z ?? 1), 1, 999),
+        rot: (Number(x.rot ?? 0) % 360 + 360) % 360,
+        scale: clamp(Number(x.scale ?? 1), 0.5, 2)
+      }));
+    return h;
+  }
+
+  function saveHome(){
+    saveJSON(LS.myhome, home);
+    setDirty();
+    updateCounts();
+  }
+
+  function getTypeMeta(type){
+    return CATALOG[type] || { name:type, img:"", w:96 };
+  }
+
+  function updateCounts(){
+    const ownedTotal = owned.reduce((s,x)=>s + (x.count|0), 0);
+    ownedCount.textContent = String(ownedTotal);
+    placedCount.textContent = String(home.items.length);
+  }
+
+  function setSwitch(el, on){
+    el.classList.toggle("on", !!on);
+    el.setAttribute("aria-checked", on ? "true" : "false");
+  }
+
+  // スナップ（px単位）
+  function snapPx(v, step){
+    return Math.round(v / step) * step;
+  }
+
+  function stageRect(){
+    return stage.getBoundingClientRect();
+  }
+
+  function pxToPercent(px, total){
+    return (px / total) * 100;
+  }
+  function percentToPx(p, total){
+    return (p / 100) * total;
+  }
+
+  function findItem(id){
+    const idx = home.items.findIndex(x => x.id === id);
+    if(idx < 0) return null;
+    return { idx, item: home.items[idx] };
+  }
+
+  function clearSelection(){
+    selectedId = null;
+    selTag.textContent = "なし";
+    stage.querySelectorAll(".item.selected").forEach(el => el.classList.remove("selected"));
+  }
+
+  function select(id){
+    selectedId = id;
+    stage.querySelectorAll(".item").forEach(el => {
+      el.classList.toggle("selected", el.dataset.id === id);
+    });
+    const f = findItem(id);
+    if(f){
+      selTag.textContent = getTypeMeta(f.item.type).name;
+    }else{
+      selTag.textContent = "なし";
+    }
+  }
+
+  // =========================
+  // Render
+  // =========================
+  function renderInventory(){
+    invGrid.innerHTML = "";
+
+    owned = loadOwned();
+    updateCounts();
+
+    if(owned.length === 0){
+      ownedHint.style.display = "block";
+      return;
+    }
+    ownedHint.style.display = "none";
+
+    for(const entry of owned){
+      const meta = getTypeMeta(entry.type);
+      const card = document.createElement("div");
+      card.className = "inv-item";
+      card.dataset.type = entry.type;
+
+      const safeName = meta.name || entry.type;
+      const imgInfo = meta.img ? `<span class="tag">img</span>` : `<span class="tag">noimg</span>`;
+
+      card.innerHTML = `
+        <div class="name">${safeName}</div>
+        <div class="meta">
+          <span class="tag">×${entry.count}</span>
+          ${imgInfo}
+        </div>
+      `;
+
+      card.addEventListener("click", () => {
+        placeNew(entry.type);
+      }, { passive:true });
+
+      invGrid.appendChild(card);
+    }
+  }
+
+  function renderStage(){
+    stage.innerHTML = "";
+
+    // zで描画順
+    const items = [...home.items].sort((a,b)=> (a.z|0) - (b.z|0));
+
+    for(const it of items){
+      const meta = getTypeMeta(it.type);
+
+      const wrap = document.createElement("div");
+      wrap.className = "item";
+      wrap.dataset.id = it.id;
+
+      // transformはwrap側で持つ
+      wrap.style.left = it.x + "%";
+      wrap.style.top  = it.y + "%";
+      wrap.style.zIndex = String(it.z);
+      wrap.style.setProperty("--w", (meta.w || 96) + "px");
+      wrap.style.transform = `translate(-50%,-50%) rotate(${it.rot}deg) scale(${it.scale})`;
+
+      // img
+      const img = document.createElement("img");
+      img.alt = meta.name || it.type;
+      if(meta.img){
+        img.src = meta.img;
+      }else{
+        // 画像が無い時のダミー（黒いブロック）
+        img.src = "data:image/svg+xml;utf8," + encodeURIComponent(
+          `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'>
+             <rect width='96' height='96' rx='12' ry='12' fill='rgba(0,0,0,0.35)' stroke='rgba(255,255,255,0.25)'/>
+             <text x='50%' y='54%' text-anchor='middle' font-family='monospace' font-size='12' fill='rgba(255,255,255,0.7)'>NO IMG</text>
+           </svg>`
+        );
+      }
+
+      wrap.appendChild(img);
+
+      // 選択状態
+      if(it.id === selectedId) wrap.classList.add("selected");
+
+      // pointer
+      wrap.addEventListener("pointerdown", (ev) => onPointerDown(ev, it.id), { passive:false });
+      wrap.addEventListener("click", (ev) => {
+        // ドラッグ直後のclick誤爆を避けたいので、小さな条件
+        ev.stopPropagation();
+        select(it.id);
+      }, { passive:true });
+
+      stage.appendChild(wrap);
+    }
+
+    updateCounts();
+  }
+
+  function placeNew(type){
+    // 所持が0でも置けちゃうと世界観が崩れるので、所持チェック（ゆるく）
+    const own = loadOwned().find(x => x.type === type);
+    if(!own || (own.count|0) <= 0){
+      toast("所持が足りないたこ…");
+      return;
+    }
+
+    const meta = getTypeMeta(type);
+    const item = {
+      id: rid(),
+      type,
+      x: 50,
+      y: 70,
+      z: nextZ(),
+      rot: 0,
+      scale: 1
+    };
+    home.items.push(item);
+    saveHome();
+    renderStage();
+    select(item.id);
+    toast(`配置：${meta.name}`);
+  }
+
+  function nextZ(){
+    let z = 1;
+    for(const it of home.items) z = Math.max(z, it.z|0);
+    return clamp(z + 1, 1, 999);
+  }
+
+  // =========================
+  // Drag
+  // =========================
+  function onPointerDown(ev, id){
+    if(!editMode) return;
+
+    // 右クリック等無視
+    if(ev.button != null && ev.button !== 0) return;
+
+    ev.preventDefault();
+
+    select(id);
+
+    const r = stageRect();
+    const f = findItem(id);
+    if(!f) return;
+
+    // 現在位置（px）
+    const curX = percentToPx(f.item.x, r.width);
+    const curY = percentToPx(f.item.y, r.height);
+
+    drag = {
+      id,
+      startClientX: ev.clientX,
+      startClientY: ev.clientY,
+      startXpx: curX,
+      startYpx: curY
+    };
+
+    // 前面へ（触ってるものが埋もれるストレス防止）
+    f.item.z = nextZ();
+    saveHome();
+
+    renderStage();
+
+    stage.setPointerCapture?.(ev.pointerId);
+  }
+
+  function onPointerMove(ev){
+    if(!drag) return;
+    ev.preventDefault();
+
+    const r = stageRect();
+    const dx = ev.clientX - drag.startClientX;
+    const dy = ev.clientY - drag.startClientY;
+
+    let xpx = drag.startXpx + dx;
+    let ypx = drag.startYpx + dy;
+
+    // スナップ
+    if(snapOn){
+      xpx = snapPx(xpx, 24);
+      ypx = snapPx(ypx, 24);
+    }
+
+    xpx = clamp(xpx, 0, r.width);
+    ypx = clamp(ypx, 0, r.height);
+
+    const f = findItem(drag.id);
+    if(!f) return;
+
+    f.item.x = clamp(pxToPercent(xpx, r.width), 0, 100);
+    f.item.y = clamp(pxToPercent(ypx, r.height), 0, 100);
+
+    // 見た目だけ先に更新（保存はupで）
+    const el = stage.querySelector(`.item[data-id="${drag.id}"]`);
+    if(el){
+      el.style.left = f.item.x + "%";
+      el.style.top  = f.item.y + "%";
+    }
+  }
+
+  function onPointerUp(ev){
+    if(!drag) return;
+    ev.preventDefault();
+    drag = null;
+    saveHome();
+  }
+
+  // =========================
+  // Edit Actions
+  // =========================
+  function withSelected(fn){
+    if(!selectedId){
+      toast("先にオブジェを選ぶたこ。");
+      return;
+    }
+    const f = findItem(selectedId);
+    if(!f){
+      toast("選択が見つからないたこ…");
+      clearSelection();
+      return;
+    }
+    fn(f.item);
+    saveHome();
+    renderStage();
+    select(f.item.id);
+  }
+
+  btnRotate.addEventListener("click", () => {
+    withSelected(it => { it.rot = (it.rot + 90) % 360; });
+    toast("回転したたこ。");
+  }, { passive:true });
+
+  btnFront.addEventListener("click", () => {
+    withSelected(it => { it.z = nextZ(); });
+    toast("前へ出したたこ。");
+  }, { passive:true });
+
+  btnBack.addEventListener("click", () => {
+    // 最背面はz=1に寄せる（他も詰める）
+    withSelected(it => {
+      it.z = 1;
+      // 他を1つ上げて衝突回避（簡易）
+      home.items.forEach(o => { if(o.id !== it.id) o.z = clamp((o.z|0) + 1, 1, 999); });
+    });
+    toast("後ろへ下げたたこ。");
+  }, { passive:true });
+
+  btnDelete.addEventListener("click", () => {
+    if(!selectedId){ toast("先に選ぶたこ。"); return; }
+    const f = findItem(selectedId);
+    if(!f){ toast("見つからないたこ…"); clearSelection(); return; }
+
+    const meta = getTypeMeta(f.item.type);
+    home.items.splice(f.idx, 1);
+    saveHome();
+    renderStage();
+    clearSelection();
+    toast(`削除：${meta.name}`);
+  }, { passive:true });
+
+  // =========================
+  // Switches
+  // =========================
+  function applyModes(){
+    setSwitch(editSwitch, editMode);
+    setSwitch(gridSwitch, gridOn);
+    setSwitch(snapSwitch, snapOn);
+
+    modeTag.textContent = editMode ? "編集：ON" : "編集：OFF";
+
+    stageCard.classList.toggle("grid-on", gridOn);
+  }
+
+  editSwitch.addEventListener("click", () => {
+    editMode = !editMode;
+    applyModes();
+    toast(editMode ? "編集ON：動かせるたこ。" : "編集OFF：触っても動かないたこ。");
+  }, { passive:true });
+
+  gridSwitch.addEventListener("click", () => {
+    gridOn = !gridOn;
+    applyModes();
+    toast(gridOn ? "グリッドON" : "グリッドOFF");
+  }, { passive:true });
+
+  snapSwitch.addEventListener("click", () => {
+    snapOn = !snapOn;
+    applyModes();
+    toast(snapOn ? "スナップON" : "スナップOFF");
+  }, { passive:true });
+
+  // =========================
+  // Export / Import
+  // =========================
+  function openModal(mode){
+    modal.classList.add("on");
+    modalText.value = "";
+    modalText.focus();
+
+    if(mode === "export"){
+      modalTitle.textContent = "書き出し（コピーして保存）";
+      modalApply.style.display = "none";
+      modalCopy.style.display  = "inline-flex";
+      modalText.value = JSON.stringify({
+        note:"tf_v1_myhome export",
+        savedAt: new Date().toISOString(),
+        data: home
+      }, null, 2);
+    }else{
+      modalTitle.textContent = "読み込み（貼り付けて適用）";
+      modalApply.style.display = "inline-flex";
+      modalCopy.style.display  = "none";
+      modalText.value = "";
+    }
+    modal.dataset.mode = mode;
+  }
+
+  function closeModal(){
+    modal.classList.remove("on");
+    modalText.value = "";
+    modal.dataset.mode = "";
+  }
+
+  modalClose.addEventListener("click", closeModal, { passive:true });
+  modal.addEventListener("click", (e) => {
+    if(e.target === modal) closeModal();
+  }, { passive:true });
+
+  modalCopy.addEventListener("click", async () => {
+    try{
+      await navigator.clipboard.writeText(modalText.value);
+      toast("コピーしたたこ。");
+    }catch(_){
+      // フォールバック：選択
+      modalText.select();
+      toast("選択したたこ（手動コピーしてね）。");
+    }
+  }, { passive:true });
+
+  modalApply.addEventListener("click", () => {
+    const raw = modalText.value.trim();
+    if(!raw){ toast("空っぽたこ。"); return; }
+    try{
+      const obj = JSON.parse(raw);
+      const data = obj?.data || obj; // dataラップでも直でも受ける
+      if(!data || !Array.isArray(data.items)){
+        toast("形式が違うたこ…");
+        return;
+      }
+      home = {
+        ver: 1,
+        items: data.items.map(x => ({
+          id: String(x.id || rid()),
+          type: String(x.type || "koge_small"),
+          x: clamp(Number(x.x ?? 50), 0, 100),
+          y: clamp(Number(x.y ?? 70), 0, 100),
+          z: clamp(Number(x.z ?? 1), 1, 999),
+          rot: (Number(x.rot ?? 0) % 360 + 360) % 360,
+          scale: clamp(Number(x.scale ?? 1), 0.5, 2)
+        }))
+      };
+      saveHome();
+      renderStage();
+      clearSelection();
+      closeModal();
+      toast("読み込み完了たこ。");
+    }catch(_){
+      toast("JSONが壊れてるたこ…");
+    }
+  }, { passive:true });
+
+  btnExport.addEventListener("click", () => openModal("export"), { passive:true });
+  btnImport.addEventListener("click", () => openModal("import"), { passive:true });
+
+  btnClear.addEventListener("click", () => {
+    if(!confirm("マイホームの配置を全消去する？（戻せないたこ）")) return;
+    home.items = [];
+    saveHome();
+    renderStage();
+    clearSelection();
+    toast("全消去したたこ。");
+  }, { passive:true });
+
+  // =========================
+  // Stage background click = clear selection
+  // =========================
+  stage.addEventListener("click", (ev) => {
+    // 何もないところタップで解除
+    if(ev.target === stage) clearSelection();
+  }, { passive:true });
+
+  // =========================
+  // Pointer events
+  // =========================
+  stage.addEventListener("pointermove", onPointerMove, { passive:false });
+  stage.addEventListener("pointerup", onPointerUp, { passive:false });
+  stage.addEventListener("pointercancel", onPointerUp, { passive:false });
+
+  // =========================
+  // Back
+  // =========================
+  backBtn.addEventListener("click", () => history.back(), { passive:true });
+
+  // =========================
+  // Boot
+  // =========================
+  function boot(){
+    applyModes();
+    renderInventory();
+    renderStage();
+
+    // 他タブで合成したら反映（tf_v1_deco更新）
+    window.addEventListener("storage", (e) => {
+      if(e.key === LS.deco){
+        renderInventory();
+        toast("所持オブジェ更新たこ。");
+      }
+      if(e.key === LS.myhome){
+        home = loadHome();
+        renderStage();
+        toast("配置更新たこ。");
+      }
+    });
+  }
+
+  boot();
+
+})();
+</script>
+</body>
+</html>
