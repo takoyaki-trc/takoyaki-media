@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ja">
 <head>
@@ -466,6 +465,7 @@
       color:rgba(255,255,255,.9);
     }
     .stat b{display:block; font-size:11px; color:var(--muted); margin-bottom:2px; font-weight:700}
+
     .rcBot{
       padding:10px 14px 14px;
       border-top:1px solid rgba(255,255,255,.10);
@@ -494,6 +494,32 @@
       font-size:12px;
     }
     .sbtn:active{transform:translateY(1px)}
+
+    .backupBox{
+      margin-top:10px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:16px;
+      background:rgba(0,0,0,.18);
+      padding:10px 12px;
+    }
+    .backupBox .cap{
+      font-size:12px;
+      color:rgba(255,255,255,.86);
+      font-weight:900;
+      margin:0 0 6px;
+    }
+    .backupBox .desc{
+      font-size:12px;
+      color:var(--muted);
+      margin:0 0 10px;
+      line-height:1.45;
+    }
+    .backupRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
   </style>
 </head>
 <body>
@@ -577,7 +603,7 @@
 
         <div style="margin-top:10px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.5">
           ※ データは端末の <b>localStorage</b> に保存されます（サーバ送信なし）。<br>
-          ※ ブラウザのデータ削除で消えるので、のちほど「達成の記録」などにバックアップ導線を足してもOK。
+          ※ ブラウザのデータ削除で消えるので、<b>住民票の「全バックアップ」</b>を推奨。
         </div>
       </div>
     </div>
@@ -606,10 +632,25 @@
               <div class="stats">
                 <div class="stat"><b>総EXP</b><span id="stExp">0</span></div>
                 <div class="stat"><b>総ログイン</b><span id="stDays">0</span>日</div>
+
                 <div class="stat"><b>畑（収穫数）</b><span id="stHarvest">0</span></div>
                 <div class="stat"><b>露店（売上）</b><span id="stSales">0</span> オクト</div>
+
                 <div class="stat"><b>露店（販売回数）</b><span id="stSellCount">0</span></div>
                 <div class="stat"><b>最高スコア</b><span id="stBest">0</span></div>
+
+                <!-- ▼追加：所持オクト・資材・図鑑・焦げ合成・タワー・釣り -->
+                <div class="stat"><b>所持オクト</b><span id="stOcto">0</span></div>
+                <div class="stat"><b>資材（種/水/肥料）</b><span id="stInvAll">0</span></div>
+
+                <div class="stat"><b>図鑑保存件数</b><span id="stZukan">0</span></div>
+                <div class="stat"><b>焦げ合成アイテム数</b><span id="stBurnt">0</span></div>
+
+                <div class="stat"><b>タワー最高階</b><span id="stTowerFloor">0</span></div>
+                <div class="stat"><b>タワー最高スコア</b><span id="stTowerScore">0</span></div>
+
+                <div class="stat"><b>釣り総釣果</b><span id="stFishTotal">0</span></div>
+                <div class="stat"><b>釣り最大サイズ</b><span id="stFishBest">0</span></div>
               </div>
             </div>
           </div>
@@ -621,8 +662,22 @@
             </div>
             <div class="rcBtns">
               <button class="sbtn" id="editBtn" type="button">名前/アバター変更</button>
-              <button class="sbtn" id="exportBtn" type="button">データをコピー</button>
+              <button class="sbtn" id="exportBtn" type="button">住民票をコピー</button>
             </div>
+          </div>
+        </div>
+
+        <!-- ▼追加：統合バックアップ -->
+        <div class="backupBox">
+          <div class="cap">全データ（統合バックアップ）</div>
+          <p class="desc">
+            入口で <b>ファーム/図鑑/露店/タワー/釣り/焦げ合成</b> をまとめて保存できます。<br>
+            ※ 復元は <b>上書き</b> です（元に戻せません）。
+          </p>
+          <div class="backupRow">
+            <button class="sbtn" id="btnBackupAll" type="button">全バックアップ</button>
+            <button class="sbtn" id="btnRestoreAll" type="button">復元</button>
+            <input id="restoreFile" type="file" accept="application/json" style="display:none;">
           </div>
         </div>
 
@@ -636,33 +691,54 @@
   <script>
   (() => {
     /* =========================================================
-       gate.html / 入口 + 住民票 完全版
+       gate.html / 入口 + 住民票 完全版（統合バックアップ付き）
        - localStorageのみ
        - 初回ニックネーム登録（変更OK）
        - タコ民アバター選択（変更OK）
        - 住民票（トレカ風）表示
-       - 既存キー(tf_v1_book / roten_v1_octo等)があれば軽く拾う
-       - 他ページから呼べるAPI(window.TRCResident.*)
+       - 図鑑保存件数 / 焦げ合成 / タワー / 釣り / 所持オクト / 資材合計 を表示
+       - 入口から「全バックアップ」「復元」可能
        ========================================================= */
 
     // ★ あなたの「町ページ」URLに合わせてここだけ変更してOK
-    const TOWN_URL = "town/index.html"; // 例: "town/index.html" or "/takoyaki-media/town/index.html"
+    const TOWN_URL = "town/index.html";
 
     // ===== localStorage keys（新規：住民票）=====
     const KEY = {
-      resident: "trc_v1_resident", // 住民票（名前/アバター/exp/統計）
-      lastLogin: "trc_v1_last_login", // 入口を開いた日
+      resident: "trc_v1_resident",
+      lastLogin: "trc_v1_last_login",
     };
 
-    // ===== 既存プロジェクトのキー（あれば拾う）=====
+    // ===== 既存プロジェクトのキー（あなたの現状に合わせて調整OK）=====
     const EXIST = {
+      // 基本
       farmBook: "tf_v1_book",
-      rotenOcto: "roten_v1_octo",
-      rotenLog:  "roten_v1_log"
+      farmInv:  "tf_v1_inv",
+      rotenOcto:"roten_v1_octo",
+      rotenLog: "roten_v1_log",
+
+      // ▼ここ重要：タワー / 釣り / 焦げ合成 の保存キー（未実装なら今後このキーで統一すると入口が楽）
+      tower: "tower_v1_state",
+      fish:  "fish_v1_state",
+      burnt: "burnt_v1_craft",
     };
 
-    // ===== アバター候補（差し替え自由）=====
-    // 画像URLをあなたのタコ民PNGに変えると最高になる（今はダミー絵文字/色）
+    // ===== 統合バックアップ対象（ここに並べたキーを丸ごと保存/復元）=====
+    const BACKUP_TARGETS = [
+      KEY.resident,
+      KEY.lastLogin,
+
+      EXIST.farmBook,
+      EXIST.farmInv,
+      EXIST.rotenOcto,
+      EXIST.rotenLog,
+
+      EXIST.tower,
+      EXIST.fish,
+      EXIST.burnt,
+    ];
+
+    // ===== アバター候補 =====
     const AVATARS = [
       { id:"av_guard", name:"門番", emoji:"🛡️", img:"https://ul.h3z.jp/uhjnnv4y.png" },
       { id:"av_farmer", name:"農家", emoji:"🌱", img:"https://ul.h3z.jp/FZ0fXidR.png" },
@@ -700,6 +776,10 @@
     const editBtn = $("#editBtn");
     const exportBtn = $("#exportBtn");
 
+    const btnBackupAll = $("#btnBackupAll");
+    const btnRestoreAll = $("#btnRestoreAll");
+    const restoreFile = $("#restoreFile");
+
     const rcName = $("#rcName");
     const rcAvatar = $("#rcAvatar");
     const rcTitle = $("#rcTitle");
@@ -715,11 +795,19 @@
     const stSellCount = $("#stSellCount");
     const stBest = $("#stBest");
 
+    const stOcto = $("#stOcto");
+    const stInvAll = $("#stInvAll");
+    const stZukan = $("#stZukan");
+    const stBurnt = $("#stBurnt");
+    const stTowerFloor = $("#stTowerFloor");
+    const stTowerScore = $("#stTowerScore");
+    const stFishTotal = $("#stFishTotal");
+    const stFishBest = $("#stFishBest");
+
     const guardImg = $("#guardImg");
     const guardBadge = $("#guardBadge");
 
     // ====== util ======
-    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
     const todayKey = () => {
       const d = new Date();
       const y = d.getFullYear();
@@ -760,10 +848,9 @@
       return AVATARS.find(a=>a.id===id) || AVATARS[0];
     }
 
-    // レベル計算：expに基づく（簡単で気持ちいい曲線）
+    // レベル計算：expに基づく
     function calcLevel(exp){
       exp = Math.max(0, Math.floor(Number(exp)||0));
-      // Lv1=0、Lv2=40、Lv3=100、Lv4=180...（だんだん重く）
       let lv = 1;
       let need = 40;
       let cur = exp;
@@ -776,7 +863,6 @@
       return { lv, nextNeed: need, curToNext: cur };
     }
 
-    // 称号：レベル帯＋行動で決める（世界観ギャグ系）
     function calcTitle(r, lv){
       const h = r.farmHarvest||0;
       const s = r.rotenSellCount||0;
@@ -791,7 +877,6 @@
       return "称号：はじまりの焼き手";
     }
 
-    // レアリティ表示（気持ちよさ優先）
     function calcRarity(lv){
       if(lv>=30) return "LR CITIZEN";
       if(lv>=20) return "UR CITIZEN";
@@ -800,7 +885,7 @@
       return "N  CITIZEN";
     }
 
-    function pickQuote(r, lv){
+    function pickQuote(){
       const list = [
         "「扉は開いている。問題は、お前の腹だ。」",
         "「今日も焼かれに来たのか。…いい顔だ。」",
@@ -808,71 +893,13 @@
         "「焦げても価値は残る。…たぶん。」",
         "「半熟は未完成じゃない。“余白”だ。」"
       ];
-      // 日付で固定（毎日ちょっと違う感じ）
       const key = todayKey();
       let hash = 0;
       for(let i=0;i<key.length;i++) hash = (hash*31 + key.charCodeAt(i)) >>> 0;
-      const idx = hash % list.length;
-      return list[idx];
+      return list[hash % list.length];
     }
 
-    // ===== 既存データから「それっぽい」統計を拾う（無ければ0）=====
-    function syncFromExisting(r){
-      // 1) 畑：tf_v1_book の got を数える
-      const bookRaw = localStorage.getItem(EXIST.farmBook);
-      if(bookRaw){
-        const book = safeJSONParse(bookRaw, null);
-        const got = book && book.got ? book.got : null;
-        if(got && typeof got === "object"){
-          let total = 0;
-          for(const k in got){
-            const v = got[k];
-            // count を持っていれば使う、無ければ1扱い
-            const c = (v && typeof v.count === "number") ? v.count : 1;
-            total += Math.max(0, c|0);
-          }
-          // 既に住民票側が多ければ減らさない（上書き事故回避）
-          r.farmHarvest = Math.max(r.farmHarvest||0, total);
-        }
-      }
-
-      // 2) 露店：オクト残高はあるが「売上」は別なので、ログがあれば拾う
-      const logRaw = localStorage.getItem(EXIST.rotenLog);
-      if(logRaw){
-        const log = safeJSONParse(logRaw, null);
-        // 想定：配列ログ or {items:[...]} 等、形が違っても落ちない
-        const arr = Array.isArray(log) ? log : (log && Array.isArray(log.items) ? log.items : null);
-        if(arr){
-          // ざっくり：文字列に「売れた」「販売」「購入」っぽいのがあれば回数+1
-          let sellCount = r.rotenSellCount||0;
-          for(const it of arr){
-            const t = String(it && (it.text||it.msg||it) || "");
-            if(/売れ|販売|購入/.test(t)) sellCount++;
-          }
-          r.rotenSellCount = Math.max(r.rotenSellCount||0, sellCount);
-        }
-      }
-
-      return r;
-    }
-
-    // ===== ログイン日数管理（入口を開いたら1日1回カウント）=====
-    function touchLoginDay(r){
-      const t = todayKey();
-      const last = localStorage.getItem(KEY.lastLogin) || "";
-      if(last !== t){
-        localStorage.setItem(KEY.lastLogin, t);
-        r.days = (r.days||0) + 1;
-        // 入口に来たEXP（少量だけ）＝習慣化の火種
-        r.exp = (r.exp||0) + 5;
-      }
-      r.lastSeenDay = t;
-      return r;
-    }
-
-    // ===== UI更新 =====
     function setAvatarNode(node, av){
-      // nodeがdivの場合：imgか絵文字
       node.innerHTML = "";
       if(av.img){
         const img = document.createElement("img");
@@ -885,13 +912,136 @@
       }
     }
 
+    // ===== 既存データから統計 =====
+    function calcZukanSavedCount(){
+      const raw = localStorage.getItem(EXIST.farmBook);
+      if(!raw) return 0;
+      const book = safeJSONParse(raw, null);
+      if(!book) return 0;
+
+      const got = book.got || book.cards || book.book || {};
+      let sum = 0;
+      for(const id in got){
+        const v = got[id];
+        if(v && typeof v.count === "number") sum += Math.max(0, v.count|0);
+        else if(typeof v === "number") sum += Math.max(0, v|0);
+        else sum += 1;
+      }
+      return sum;
+    }
+
+    function calcInvTotals(){
+      const raw = localStorage.getItem(EXIST.farmInv);
+      if(!raw) return { seed:0, water:0, fert:0, all:0 };
+      const inv = safeJSONParse(raw, null);
+      if(!inv) return { seed:0, water:0, fert:0, all:0 };
+
+      const sumObj = (o) => {
+        if(!o || typeof o !== "object") return 0;
+        let s = 0;
+        for(const k in o){
+          const v = o[k];
+          if(typeof v === "number" && isFinite(v)) s += Math.max(0, v|0);
+        }
+        return s;
+      };
+
+      const seed = sumObj(inv.seed);
+      const water= sumObj(inv.water);
+      const fert = sumObj(inv.fert);
+      return { seed, water, fert, all: seed + water + fert };
+    }
+
+    function readOcto(){
+      const raw = localStorage.getItem(EXIST.rotenOcto);
+      if(raw == null) return 0;
+      const n = Number(raw);
+      return Number.isFinite(n) ? Math.floor(n) : 0;
+    }
+
+    function readBurntCraftCount(){
+      const raw = localStorage.getItem(EXIST.burnt);
+      if(!raw) return 0;
+      const data = safeJSONParse(raw, null);
+
+      if(Array.isArray(data)) return data.length;
+      if(data && Array.isArray(data.items)) return data.items.length;
+      if(data && typeof data.count === "number") return Math.max(0, data.count|0);
+
+      if(data && typeof data === "object"){
+        let sum = 0;
+        for(const k in data){
+          const v = data[k];
+          if(typeof v === "number" && isFinite(v)) sum += Math.max(0, v|0);
+        }
+        return sum;
+      }
+      return 0;
+    }
+
+    function readTowerStats(){
+      const raw = localStorage.getItem(EXIST.tower);
+      if(!raw) return { floor:0, score:0 };
+      const st = safeJSONParse(raw, {});
+      return {
+        floor: Number(st.bestFloor || st.maxFloor || st.floor || 0) || 0,
+        score: Number(st.bestScore || st.maxScore || st.score || 0) || 0,
+      };
+    }
+
+    function readFishStats(){
+      const raw = localStorage.getItem(EXIST.fish);
+      if(!raw) return { total:0, best:0 };
+      const st = safeJSONParse(raw, {});
+      return {
+        total: Number(st.total || st.totalCatch || st.catches || 0) || 0,
+        best:  Number(st.best || st.bestSize || st.maxSize || 0) || 0,
+      };
+    }
+
+    // ===== 既存データから「それっぽい」住民票項目も拾う（今までの挙動は維持）=====
+    function syncFromExisting(r){
+      // 1) 畑：tf_v1_book の got 合計
+      const zukan = calcZukanSavedCount();
+      r.farmHarvest = Math.max(r.farmHarvest||0, zukan);
+
+      // 2) 露店：ログがあれば販売回数を雑に拾う（形が違っても落ちない）
+      const logRaw = localStorage.getItem(EXIST.rotenLog);
+      if(logRaw){
+        const log = safeJSONParse(logRaw, null);
+        const arr = Array.isArray(log) ? log : (log && Array.isArray(log.items) ? log.items : null);
+        if(arr){
+          let sellCount = r.rotenSellCount||0;
+          for(const it of arr){
+            const t = String(it && (it.text||it.msg||it) || "");
+            if(/売れ|販売|購入/.test(t)) sellCount++;
+          }
+          r.rotenSellCount = Math.max(r.rotenSellCount||0, sellCount);
+        }
+      }
+      return r;
+    }
+
+    // ===== ログイン日数 =====
+    function touchLoginDay(r){
+      const t = todayKey();
+      const last = localStorage.getItem(KEY.lastLogin) || "";
+      if(last !== t){
+        localStorage.setItem(KEY.lastLogin, t);
+        r.days = (r.days||0) + 1;
+        r.exp = (r.exp||0) + 5;
+      }
+      r.lastSeenDay = t;
+      return r;
+    }
+
+    // ===== UI =====
     function renderTop(r){
       const nick = r.nick && r.nick.trim() ? r.nick.trim() : "名無しのタコ民";
       const av = getAvatarById(r.avatarId);
       pillName.textContent = nick;
       setAvatarNode(pillAvatar, av);
 
-      // 門番も同じアバターで統一（世界観）
       setAvatarNode(guardImg, getAvatarById("av_guard"));
       guardBadge.textContent = "門番タコ民";
 
@@ -946,7 +1096,6 @@
         b.appendChild(nm);
 
         b.addEventListener("click", ()=>{
-          // 単純に選択状態を更新
           [...avatarGrid.querySelectorAll(".avOpt")].forEach(x=>x.classList.remove("on"));
           b.classList.add("on");
         });
@@ -969,8 +1118,8 @@
     }
 
     function openResidentCard(r){
-      // 最新同期（あれば）
       r = syncFromExisting(r);
+
       const lvInfo = calcLevel(r.exp||0);
       const lv = lvInfo.lv;
 
@@ -984,6 +1133,7 @@
 
       setAvatarNode(rcAvatar, av);
 
+      // 既存表示
       stExp.textContent = String(Math.floor(r.exp||0));
       stDays.textContent = String(Math.floor(r.days||0));
       stHarvest.textContent = String(Math.floor(r.farmHarvest||0));
@@ -991,7 +1141,24 @@
       stSellCount.textContent = String(Math.floor(r.rotenSellCount||0));
       stBest.textContent = String(Math.floor(r.best||0));
 
-      rcQuote.textContent = pickQuote(r, lv);
+      // ▼追加表示（入口で拾う）
+      const octo = readOcto();
+      const invT = calcInvTotals();
+      const zukan = calcZukanSavedCount();
+      const burnt = readBurntCraftCount();
+      const tower = readTowerStats();
+      const fish  = readFishStats();
+
+      stOcto.textContent = String(Math.floor(octo));
+      stInvAll.textContent = `${invT.all}（${invT.seed}/${invT.water}/${invT.fert}）`;
+      stZukan.textContent = String(Math.floor(zukan));
+      stBurnt.textContent = String(Math.floor(burnt));
+      stTowerFloor.textContent = String(Math.floor(tower.floor));
+      stTowerScore.textContent = String(Math.floor(tower.score));
+      stFishTotal.textContent = String(Math.floor(fish.total));
+      stFishBest.textContent = String(Math.floor(fish.best));
+
+      rcQuote.textContent = pickQuote();
       rcQuoteSub.textContent = "門番より";
 
       saveResident(r);
@@ -1001,11 +1168,8 @@
       openModal(rcModal);
     }
 
-    // ===== 他ページからの加算API（必要になったら使う）=====
-    // 例：畑で収穫したら window.TRCResident.addHarvest(1); window.TRCResident.addExp(10);
-    function apiGet(){
-      return loadResident();
-    }
+    // ===== 他ページからの加算API（将来用）=====
+    function apiGet(){ return loadResident(); }
     function apiSave(patch){
       const r = loadResident();
       Object.assign(r, patch || {});
@@ -1021,7 +1185,6 @@
     function apiAddHarvest(n){
       const r = loadResident();
       r.farmHarvest = (r.farmHarvest||0) + (Number(n)||0);
-      // 収穫EXP（軽く）
       r.exp = (r.exp||0) + Math.max(0, (Number(n)||0))*2;
       saveResident(r);
       return r;
@@ -1038,7 +1201,7 @@
       const r = loadResident();
       const s = Math.floor(Number(score)||0);
       r.best = Math.max(r.best||0, s);
-      r.exp = (r.exp||0) + Math.min(30, Math.floor(s/50)); // ちょいボーナス
+      r.exp = (r.exp||0) + Math.min(30, Math.floor(s/50));
       saveResident(r);
       return r;
     }
@@ -1052,6 +1215,73 @@
       setBestScore: apiSetBestScore,
     };
 
+    // ===== 統合バックアップ / 復元 =====
+    const safeGetRaw = (k) => {
+      const v = localStorage.getItem(k);
+      return (v === null || v === undefined) ? null : String(v);
+    };
+
+    function buildBackupPayload(){
+      const payload = {
+        app: "takoyaki-trc",
+        ver: 1,
+        exportedAt: new Date().toISOString(),
+        keys: {}
+      };
+      for(const k of BACKUP_TARGETS){
+        payload.keys[k] = safeGetRaw(k); // rawで保存（JSONでも数字でもOK）
+      }
+      return payload;
+    }
+
+    function downloadJson(obj, filename){
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type:"application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function backupAll(){
+      const payload = buildBackupPayload();
+      const stamp = new Date().toISOString().replace(/[:.]/g,"-");
+      downloadJson(payload, `takoyaki-trc-backup_${stamp}.json`);
+    }
+
+    async function restoreFromFile(file){
+      const text = await file.text();
+      const data = safeJSONParse(text, null);
+      if(!data || !data.keys || typeof data.keys !== "object"){
+        alert("このファイルはバックアップ形式ではありません。");
+        return;
+      }
+      const keys = Object.keys(data.keys);
+
+      const ok = confirm(
+        "バックアップから復元します。\n" +
+        "現在のデータは上書きされます（元に戻せません）。\n\n" +
+        `復元キー数: ${keys.length}\n\n` +
+        "続行しますか？"
+      );
+      if(!ok) return;
+
+      for(const k of keys){
+        const v = data.keys[k];
+        if(v === null || v === undefined){
+          localStorage.removeItem(k);
+        }else{
+          localStorage.setItem(k, String(v));
+        }
+      }
+
+      alert("復元しました。ページを再読み込みします。");
+      location.reload();
+    }
+
     // ===== イベント =====
     enterBtn.addEventListener("click", ()=>{
       const r = loadResident();
@@ -1060,7 +1290,6 @@
         openRegister(r, "register");
         return;
       }
-      // 入場：軽い演出→遷移
       enterBtn.disabled = true;
       enterBtn.textContent = "扉が開いている…";
       setTimeout(()=>{ location.href = TOWN_URL; }, 350);
@@ -1096,7 +1325,6 @@
       renderTop(r);
       renderGateText(r);
 
-      // 登録後は住民票を見せると気持ちいい
       setTimeout(()=> openResidentCard(loadResident()), 120);
     });
 
@@ -1113,12 +1341,30 @@
       try{
         await navigator.clipboard.writeText(text);
         exportBtn.textContent = "コピーした！";
-        setTimeout(()=> exportBtn.textContent = "データをコピー", 1200);
+        setTimeout(()=> exportBtn.textContent = "住民票をコピー", 1200);
       }catch(e){
-        // クリップボード不可端末用：prompt fallback
-        prompt("コピーして保存してね（バックアップ用）", text);
+        prompt("コピーして保存してね（住民票バックアップ用）", text);
       }
     });
+
+    if(btnBackupAll){
+      btnBackupAll.addEventListener("click", ()=>{
+        btnBackupAll.textContent = "作成中…";
+        setTimeout(()=>{
+          backupAll();
+          btnBackupAll.textContent = "全バックアップ";
+        }, 60);
+      });
+    }
+
+    if(btnRestoreAll && restoreFile){
+      btnRestoreAll.addEventListener("click", ()=> restoreFile.click());
+      restoreFile.addEventListener("change", ()=>{
+        const f = restoreFile.files && restoreFile.files[0];
+        restoreFile.value = "";
+        if(f) restoreFromFile(f);
+      });
+    }
 
     // モーダル背景クリックで閉じる
     [regModal, rcModal].forEach(m=>{
@@ -1137,7 +1383,6 @@
       renderTop(r);
       renderGateText(r);
 
-      // 初回なら登録を促す（押し付けず、やさしく）
       if(!(r.nick && r.nick.trim())){
         setTimeout(()=> openRegister(r, "register"), 180);
       }
@@ -1148,3 +1393,4 @@
   </script>
 </body>
 </html>
+
