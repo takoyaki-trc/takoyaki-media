@@ -31,6 +31,7 @@
   const LS_PLAYER = "tf_v1_player";
   const LS_INV    = "tf_v1_inv";
   const LS_CODES_USED = "tf_v1_codes_used";
+  const LS_OCTO   = "tf_v1_octo"; // ★レベル報酬（オクト）
 
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
@@ -135,12 +136,23 @@
 
   // ★肥料は「時短のみ」：レア上げはしない（ただしSPカード抽選は別枠として残す）
   const FERTS = [
-    { id:"fert_agedama", name:"①ただの揚げ玉", desc:"時短0。\n《焼きすぎたカード》率UP", factor:1.00, fx:"時短 0%", img:"https://ul.h3z.jp/9p5fx53n.png", burnCardUp:0.12, rawCardChance:0.00, mantra:false, skipGrowAnim:false },
+    { id:"fert_agedama", name:"①ただの揚げ玉", desc:"無料・時短0。\n《焼きすぎたカード》率UP", factor:1.00, fx:"時短 0%", img:"https://ul.h3z.jp/9p5fx53n.png", burnCardUp:0.12, rawCardChance:0.00, mantra:false, skipGrowAnim:false },
     { id:"fert_feel", name:"②《気のせい肥料》", desc:"早くなった気がする。\n気のせいかもしれない。", factor:0.95, fx:"時短 5%", img:"https://ul.h3z.jp/XqFTb7sw.png", burnCardUp:0.00, rawCardChance:0.00, mantra:false, skipGrowAnim:false },
     { id:"fert_guts", name:"③《根性論ぶち込み肥料》", desc:"理由はない。\n気合いだ。", factor:0.80, fx:"時短 20%", img:"https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp:0.00, rawCardChance:0.00, mantra:true, skipGrowAnim:false },
     { id:"fert_skip", name:"④《工程すっ飛ばし肥料》", desc:"途中は、\n見なかったことにした。", factor:0.60, fx:"時短 40%", img:"https://ul.h3z.jp/FqPzx12Q.png", burnCardUp:0.00, rawCardChance:0.01, mantra:false, skipGrowAnim:true },
     { id:"fert_timeno", name:"⑤《時間を信じない肥料》", desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》", factor:0.10, fx:"時短 90〜100%", img:"https://ul.h3z.jp/l2njWY57.png", burnCardUp:0.00, rawCardChance:0.03, mantra:false, skipGrowAnim:true },
   ];
+
+  // =========================
+  // ✅「無料（無限）」設定
+  //  - ただの水 / ただの揚げ玉 は在庫チェックしない＆減らさない＆表示は∞
+  // =========================
+  const FREE = {
+    seed:  new Set([]),
+    water: new Set(["water_plain_free"]),
+    fert:  new Set(["fert_agedama"])
+  };
+  const isFree = (invType, id) => !!(FREE[invType] && FREE[invType].has(id));
 
   // =========================
   // ★たこぴのタネ専用（8枚）
@@ -223,26 +235,92 @@
   function savePlayer(p){ localStorage.setItem(LS_PLAYER, JSON.stringify(p)); }
   let player = loadPlayer();
 
+  // =========================================================
+  // ★オクト（レベル報酬）
+  //  - Lv25 は 8000
+  //  - 報酬は「レベルアップした瞬間」に加算
+  // =========================================================
+  function loadOcto(){
+    const n = Number(localStorage.getItem(LS_OCTO) || 0);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
+  function saveOcto(v){
+    localStorage.setItem(LS_OCTO, String(Math.max(0, Math.floor(v||0))));
+  }
+  function addOcto(delta){
+    const cur = loadOcto();
+    const next = Math.max(0, cur + Math.floor(delta||0));
+    saveOcto(next);
+    return next;
+  }
+
+  // ★レベルアップ報酬（Lv2〜Lv25）
+  //  - Lv25 = 8000（指定）
+  const LEVEL_OCTO_REWARD = {
+    2: 3000,
+    3: 3200,
+    4: 3400,
+    5: 3600,
+    6: 3800,
+    7: 4000,
+    8: 4200,
+    9: 4400,
+    10: 4600,
+    11: 4800,
+    12: 5000,
+    13: 5200,
+    14: 5400,
+    15: 5600,
+    16: 5800,
+    17: 6000,
+    18: 6200,
+    19: 6400,
+    20: 6600,
+    21: 6800,
+    22: 7000,
+    23: 7300,
+    24: 7600,
+    25: 8000
+  };
+  function octoRewardForLevel(level){
+    return Number(LEVEL_OCTO_REWARD[level] || 0);
+  }
+
   function addXP(amount){
-    if(!Number.isFinite(amount) || amount <= 0) return { leveled:false, unlockedDelta:0 };
+    if(!Number.isFinite(amount) || amount <= 0) return { leveled:false, unlockedDelta:0, gainedOcto:0, reached:[] };
     let leveled = false, unlockedDelta = 0;
+    let gainedOcto = 0;
+    const reached = [];
+
     player.xp += Math.floor(amount);
 
     while(player.xp >= xpNeedForLevel(player.level)){
       player.xp -= xpNeedForLevel(player.level);
       player.level += 1;
       leveled = true;
+
+      // 解放
       if(player.unlocked < MAX_PLOTS){
         player.unlocked += 1;
         unlockedDelta += 1;
       }
+
+      // ★オクト報酬
+      const r = octoRewardForLevel(player.level);
+      if(r > 0){
+        gainedOcto += r;
+        reached.push({ level: player.level, octo: r });
+      }
     }
+
+    if(gainedOcto > 0) addOcto(gainedOcto);
+
     savePlayer(player);
-    return { leveled, unlockedDelta };
+    return { leveled, unlockedDelta, gainedOcto, reached };
   }
 
   // =========================================================
-  // ★在庫（すべて在庫制）
+  // ★在庫（種は在庫制 / 水と肥料は基本在庫制だが、FREEは無限）
   // =========================================================
   function defaultInv(){
     const inv = { ver:1, seed:{}, water:{}, fert:{} };
@@ -268,16 +346,25 @@
   }
   function saveInv(inv){ localStorage.setItem(LS_INV, JSON.stringify(inv)); }
   function invGet(inv, invType, id){
+    // ★無料は無限扱い
+    if(isFree(invType, id)) return Infinity;
+
     const box = inv[invType] || {};
     const n = Number(box[id] ?? 0);
     return Number.isFinite(n) ? n : 0;
   }
   function invAdd(inv, invType, id, delta){
+    // ★無料は増減させない（無限）
+    if(isFree(invType, id)) return;
+
     if(!inv[invType]) inv[invType] = {};
     const cur = Number(inv[invType][id] ?? 0);
     inv[invType][id] = Math.max(0, cur + delta);
   }
   function invDec(inv, invType, id){
+    // ★無料は減らさない（常にOK）
+    if(isFree(invType, id)) return true;
+
     const cur = invGet(inv, invType, id);
     if(cur <= 0) return false;
     invAdd(inv, invType, id, -1);
@@ -495,6 +582,9 @@
   const stXpBar  = document.getElementById("stXpBar");
   const stUnlock = document.getElementById("stUnlock");
 
+  // ※HTMLに stOcto があれば表示する（無くてもエラーにならない）
+  const stOcto   = document.getElementById("stOcto");
+
   const modal  = document.getElementById("modal");
   const mTitle = document.getElementById("mTitle");
   const mBody  = document.getElementById("mBody");
@@ -650,7 +740,7 @@
           }
         }
 
-        // ✅下のラベルだけ残す（GROWバッジは出さない）
+        // ✅下のラベルだけ（READY/BURNバッジは出さない）
         label = `育成中 ${fmtRemain(remain)}`;
 
       } else if (p.state === "READY") {
@@ -685,6 +775,8 @@
     stLevel.textContent  = String(player.level);
     stXP.textContent     = String(player.xp);
     stUnlock.textContent = String(player.unlocked);
+
+    if(stOcto) stOcto.textContent = String(loadOcto());
 
     const need = xpNeedForLevel(player.level);
     const now  = player.xp;
@@ -768,7 +860,29 @@
         addToBook(reward);
 
         const gain = XP_BY_RARITY[reward.rarity] ?? 4; // SPや未定義は4
-        addXP(gain);
+        const lv = addXP(gain);
+
+        // ★レベルアップしたらオクト報酬を見せる（気持ちよさ優先）
+        if(lv && lv.gainedOcto > 0){
+          const lines = (lv.reached || []).map(x => `Lv${x.level}：+${x.octo}オクト`).join("<br>");
+          openModal("レベルアップ報酬！", `
+            <div class="step">成長した。財布も焼けた。</div>
+            <div class="reward">
+              <div class="big">獲得オクト：<b>+${lv.gainedOcto}</b></div>
+              <div class="mini">${lines}</div>
+            </div>
+            <div class="row">
+              <button type="button" id="btnGoZukan" class="primary">図鑑へ</button>
+            </div>
+          `);
+          document.getElementById("btnGoZukan").addEventListener("click", () => {
+            state.plots[i] = defaultPlot();
+            saveState(state);
+            closeModal();
+            location.href = "./zukan.html";
+          });
+          return;
+        }
 
         state.plots[i] = defaultPlot();
         saveState(state);
@@ -829,17 +943,19 @@
     inv = loadInv();
 
     const list = items.map(x => {
-      const cnt = invGet(inv, invType, x.id);
-      const disabled = (cnt <= 0);
+      const free = isFree(invType, x.id);
+      const cnt = free ? Infinity : invGet(inv, invType, x.id);
+      const disabled = (!free && cnt <= 0);
       const isColaboSeed = (invType === "seed" && x.id === "seed_colabo");
+      const cntText = free ? "∞" : String(cnt);
 
       return `
         <div class="c">
           <div class="imgbox" style="position:relative;">
             <img src="${x.img}" alt="${x.name}">
-            <div class="cntBadge">×${String(cnt)}</div>
+            <div class="cntBadge">×${cntText}</div>
           </div>
-          <div class="name">${x.name}</div>
+          <div class="name">${x.name}${free ? "（無料）" : ""}</div>
           <div class="desc">${(x.desc || "").replace(/\n/g,"<br>")}</div>
           <div class="fx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
 
@@ -853,7 +969,10 @@
     }).join("");
 
     openModal("選択", `
-      <div class="step">※すべて在庫制。露店で買って増やす。</div>
+      <div class="step">
+        ※種は在庫制。水/肥料も基本在庫制。<br>
+        ただし <b>《ただの水》《ただの揚げ玉》は無料（∞）</b>。
+      </div>
       <div class="cards">${list}</div>
       <div class="row">
         <button type="button" id="btnBackStep">戻る</button>
@@ -916,8 +1035,8 @@
         <div class="big">選択</div>
         <div class="mini">
           種：${seed?.name || "-"}<br>
-          水：${water?.name || "-"}<br>
-          肥料：${fert?.name || "-"}<br><br>
+          水：${water?.name || "-"} ${isFree("water", draft.waterId) ? "（無料）" : ""}<br>
+          肥料：${fert?.name || "-"} ${isFree("fert", draft.fertId) ? "（無料）" : ""}<br><br>
           時短係数：<b>${factor.toFixed(2)}</b>
         </div>
       </div>
@@ -932,9 +1051,10 @@
     document.getElementById("btnPlant").addEventListener("click", () => {
       inv = loadInv();
 
+      // ★無料は在庫不要
       const okSeed  = invGet(inv, "seed",  draft.seedId)  > 0;
-      const okWater = invGet(inv, "water", draft.waterId) > 0;
-      const okFert  = invGet(inv, "fert",  draft.fertId)  > 0;
+      const okWater = isFree("water", draft.waterId) || (invGet(inv, "water", draft.waterId) > 0);
+      const okFert  = isFree("fert",  draft.fertId)  || (invGet(inv, "fert",  draft.fertId)  > 0);
 
       if(!okSeed || !okWater || !okFert){
         openModal("在庫が足りない", `
@@ -948,6 +1068,7 @@
         return;
       }
 
+      // ★無料は減らさない
       invDec(inv, "seed",  draft.seedId);
       invDec(inv, "water", draft.waterId);
       invDec(inv, "fert",  draft.fertId);
@@ -958,7 +1079,7 @@
         if (draft.seedId === "seed_bussasari") return "N";
         if (draft.seedId === "seed_special")   return "N";
         if (draft.seedId === "seed_colabo")    return (Math.random() < GRATIN_LR_CHANCE) ? "LR" : "N";
-        if (draft.seedId === "seed_namara_kawasar") return "N"; // 固定プールなので実質不要（演出用にN固定）
+        if (draft.seedId === "seed_namara_kawasar") return "N"; // 固定プールなので演出用
         return pickRarityWithWater(draft.waterId);
       })();
 
@@ -1007,13 +1128,14 @@
   }
 
   document.getElementById("btnReset").addEventListener("click", () => {
-    if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済みを全消去します。OK？")) return;
+    if(!confirm("畑・図鑑・レベル(XP)・在庫・シリアル使用済み・オクトを全消去します。OK？")) return;
 
     localStorage.removeItem(LS_STATE);
     localStorage.removeItem(LS_BOOK);
     localStorage.removeItem(LS_PLAYER);
     localStorage.removeItem(LS_INV);
     localStorage.removeItem(LS_CODES_USED);
+    localStorage.removeItem(LS_OCTO);
 
     state = loadState();
     book = loadBook();
