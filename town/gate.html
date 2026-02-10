@@ -387,22 +387,26 @@
       border-radius:999px;
       background:rgba(255,255,255,.06);
     }
+
+    /* ✅ 住民票のアイコンを小さく（ここが変更点） */
     .rcMid{
       padding:12px 14px;
       display:grid;
-      grid-template-columns: 96px 1fr;
+      grid-template-columns: 78px 1fr; /* 96px → 78px */
       gap:12px;
       align-items:start;
     }
     .rcAv{
-      width:96px;height:96px;
-      border-radius:18px;
+      width:78px;height:78px;          /* 96px → 78px */
+      border-radius:16px;             /* 少し締める */
       border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.06);
       overflow:hidden;
       display:grid;place-items:center;
     }
     .rcAv img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+    /* ✅ ここまで */
+
     .rcInfo .big{
       font-weight:900;
       font-size:16px;
@@ -637,9 +641,11 @@
   <script>
   (() => {
     /* =========================================================
-       gate.html / 入口 + 住民票 完全版（復元強化）
+       gate.html / 入口 + 住民票 完全版（復元強化 + BEST読取強化）
        ✅ 畑のレベル等：tf_v1_* の進行系キーをバックアップ/復元に含める
        ✅ 図鑑の画像：tf_v1_book を slim 化する時に count + img を保持（あれば）
+       ✅ タワー/釣りBEST：数値だけ保存 / 二重JSON / キー名ブレ も拾う
+       ✅ 住民票アイコン：小さく表示（CSS変更）
        ========================================================= */
 
     const TOWN_URL = "town/index.html";
@@ -830,9 +836,7 @@
         const c = Number(node.count || 0);
         if(c > 0){
           const out = { count: c };
-          // img は図鑑ページ側が参照している可能性があるので残す
           if(typeof node.img === "string" && node.img.trim()) out.img = node.img.trim();
-          // name なども持ってたら復元に役立つ場合がある（あれば残す）
           if(typeof node.name === "string" && node.name.trim()) out.name = node.name.trim();
           outGot[id] = out;
         }
@@ -883,6 +887,9 @@
       return Number.isFinite(n) ? Math.floor(n) : 0;
     }
 
+    // =========================
+    // ✅ タワー/釣り BEST 読取（強化版）
+    // =========================
     function listKeysByRegex(re){
       const out = [];
       for(let i=0;i<localStorage.length;i++){
@@ -893,9 +900,43 @@
       return out;
     }
 
+    // 二重JSON + "123" のような数値文字列にも対応
+    function parseMaybeDeep(raw, depth=2){
+      let cur = raw;
+      for(let i=0;i<depth;i++){
+        if(cur == null) break;
+        if(typeof cur === "number") return cur;
+        if(typeof cur === "object") return cur;
+
+        if(typeof cur === "string"){
+          const s = cur.trim();
+          if(!s) return cur;
+
+          if(/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
+
+          if((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))){
+            try{
+              cur = JSON.parse(s);
+              continue;
+            }catch(_){
+              return cur;
+            }
+          }
+          return cur;
+        }
+      }
+      return cur;
+    }
+
     function extractBestNumber(obj, candidates){
+      // 数値そのもの
+      if(typeof obj === "number" && Number.isFinite(obj)) return Math.floor(obj);
+
       if(!obj || typeof obj !== "object") return 0;
+
       let best = 0;
+
+      // パス指定
       for(const path of candidates){
         const parts = path.split(".");
         let cur = obj;
@@ -903,84 +944,137 @@
           if(cur && typeof cur === "object" && p in cur) cur = cur[p];
           else { cur = undefined; break; }
         }
-        const n = clampNum(cur);
-        if(n > best) best = n;
+        const n = Number(cur);
+        if(Number.isFinite(n)) best = Math.max(best, n);
       }
+
+      // 直下総当たり
       for(const k in obj){
-        if(typeof obj[k] === "number" && isFinite(obj[k]) && obj[k] > best) best = obj[k];
+        const v = obj[k];
+        if(typeof v === "number" && Number.isFinite(v)) best = Math.max(best, v);
+        else if(typeof v === "string" && v.trim() && /^-?\d+(\.\d+)?$/.test(v.trim())) best = Math.max(best, Number(v));
       }
+
       return Math.floor(best);
     }
 
     function readTowerStats(){
-      const best = { floor:0, score:0 };
+      let bestFloor = 0;
+      let bestScore = 0;
 
-      const parseTower = (raw) => {
-        const st = safeJSONParse(raw, null);
-        if(!st) return null;
-        const floor = extractBestNumber(st, ["bestFloor","maxFloor","floor","best.floor","tower.bestFloor"]);
-        const score = extractBestNumber(st, ["bestScore","maxScore","score","best.score","tower.bestScore"]);
-        return { floor, score };
+      const consider = (key, raw)=>{
+        const parsed = parseMaybeDeep(raw, 3);
+
+        if(typeof parsed === "number" && Number.isFinite(parsed)){
+          const n = Math.floor(parsed);
+          if(/floor|maxfloor|bestfloor/i.test(key)) bestFloor = Math.max(bestFloor, n);
+          else bestScore = Math.max(bestScore, n);
+          return;
+        }
+
+        if(Array.isArray(parsed)){
+          for(const it of parsed){
+            const p = parseMaybeDeep(it, 2);
+            if(typeof p === "number" && Number.isFinite(p)){
+              bestScore = Math.max(bestScore, Math.floor(p));
+            }else if(p && typeof p === "object"){
+              bestFloor = Math.max(bestFloor, extractBestNumber(p, ["bestFloor","maxFloor","floor","best.floor","stats.bestFloor","tower.bestFloor"]));
+              bestScore = Math.max(bestScore, extractBestNumber(p, ["bestScore","maxScore","score","best.score","stats.bestScore","tower.bestScore"]));
+            }
+          }
+          return;
+        }
+
+        if(parsed && typeof parsed === "object"){
+          bestFloor = Math.max(bestFloor, extractBestNumber(parsed, [
+            "bestFloor","maxFloor","floor","best.floor",
+            "stats.bestFloor","stats.maxFloor","tower.bestFloor"
+          ]));
+          bestScore = Math.max(bestScore, extractBestNumber(parsed, [
+            "bestScore","maxScore","score","best.score",
+            "stats.bestScore","stats.maxScore","tower.bestScore"
+          ]));
+          return;
+        }
+
+        if(typeof parsed === "string"){
+          const s = parsed.trim();
+          if(/^-?\d+(\.\d+)?$/.test(s)) bestScore = Math.max(bestScore, Math.floor(Number(s)));
+        }
       };
 
       const raw0 = localStorage.getItem(EXIST.tower);
-      if(raw0){
-        const p = parseTower(raw0);
-        if(p){ best.floor = Math.max(best.floor, p.floor); best.score = Math.max(best.score, p.score); }
-      }
+      if(raw0 != null) consider(EXIST.tower, raw0);
 
-      const keys = listKeysByRegex(/tower/i);
-      for(const k of keys){
+      for(const k of listKeysByRegex(/tower/i)){
         const raw = localStorage.getItem(k);
-        if(!raw) continue;
-        const p = parseTower(raw);
-        if(!p) continue;
-        best.floor = Math.max(best.floor, p.floor);
-        best.score = Math.max(best.score, p.score);
+        if(raw != null) consider(k, raw);
       }
 
-      return best;
+      return { floor: bestFloor, score: bestScore };
     }
 
     function readFishBest(){
-      const best = { best:0 };
+      let best = 0;
 
-      const parseFish = (raw) => {
-        const st = safeJSONParse(raw, null);
-        if(!st) return null;
-        const b = extractBestNumber(st, [
-          "best","bestScore","maxScore","highScore","record",
-          "bestSize","maxSize","max",
-          "stats.best","stats.bestScore",
-          "result.best","result.score"
-        ]);
-        return { best: b };
+      const consider = (key, raw)=>{
+        const parsed = parseMaybeDeep(raw, 3);
+
+        if(typeof parsed === "number" && Number.isFinite(parsed)){
+          best = Math.max(best, Math.floor(parsed));
+          return;
+        }
+
+        if(Array.isArray(parsed)){
+          for(const it of parsed){
+            const p = parseMaybeDeep(it, 2);
+            if(typeof p === "number" && Number.isFinite(p)){
+              best = Math.max(best, Math.floor(p));
+            }else if(p && typeof p === "object"){
+              best = Math.max(best, extractBestNumber(p, [
+                "best","bestScore","maxScore","highScore","record",
+                "bestSize","maxSize","max",
+                "stats.best","stats.bestScore",
+                "result.best","result.score"
+              ]));
+            }
+          }
+          return;
+        }
+
+        if(parsed && typeof parsed === "object"){
+          best = Math.max(best, extractBestNumber(parsed, [
+            "best","bestScore","maxScore","highScore","record",
+            "bestSize","maxSize","max",
+            "stats.best","stats.bestScore",
+            "result.best","result.score"
+          ]));
+          return;
+        }
+
+        if(typeof parsed === "string"){
+          const s = parsed.trim();
+          if(/^-?\d+(\.\d+)?$/.test(s)) best = Math.max(best, Math.floor(Number(s)));
+        }
       };
 
       const raw0 = localStorage.getItem(EXIST.fish);
-      if(raw0){
-        const p = parseFish(raw0);
-        if(p) best.best = Math.max(best.best, p.best);
-      }
+      if(raw0 != null) consider(EXIST.fish, raw0);
 
-      const keys = listKeysByRegex(/fish|takofish|tako_fish|tfish/i);
-      for(const k of keys){
+      for(const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)){
         const raw = localStorage.getItem(k);
-        if(!raw) continue;
-        const p = parseFish(raw);
-        if(!p) continue;
-        best.best = Math.max(best.best, p.best);
+        if(raw != null) consider(k, raw);
       }
 
-      const numKeys = listKeysByRegex(/fish.*best|best.*fish|takofish.*best/i);
-      for(const k of numKeys){
+      // fish_best=123 みたいな単体数値キーも拾う
+      for(const k of listKeysByRegex(/fish.*best|best.*fish|takofish.*best/i)){
         const raw = localStorage.getItem(k);
         if(raw == null) continue;
-        const n = Math.floor(Number(raw)||0);
-        if(Number.isFinite(n)) best.best = Math.max(best.best, n);
+        const n = Number(String(raw).trim());
+        if(Number.isFinite(n)) best = Math.max(best, Math.floor(n));
       }
 
-      return best;
+      return { best };
     }
 
     function touchLoginDay(r){
@@ -1133,16 +1227,13 @@
         if(!k) continue;
         if(!/^tf_v1_/i.test(k)) continue;
 
-        // ログ/一時/巨大履歴を避ける（必要ならここは調整OK）
         if(/log|history|debug/i.test(k)) continue;
 
-        // 図鑑と在庫は別枠で入れるので重複回避
         if(k === EXIST.farmBook || k === EXIST.farmInv) continue;
 
         out.push(k);
       }
 
-      // よくある候補を優先（存在すれば）
       const prefer = [
         "tf_v1_state",
         "tf_v1_level",
