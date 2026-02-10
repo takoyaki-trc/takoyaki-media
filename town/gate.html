@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>入口｜たこ焼きトレカの街</title>
   <style>
     :root{
@@ -603,7 +603,7 @@
 
         <div style="margin-top:10px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.5">
           ※ データは端末の <b>localStorage</b> に保存されます（サーバ送信なし）。<br>
-          ※ ブラウザのデータ削除で消えるので、<b>住民票の「全バックアップ」</b>を推奨。
+          ※ ブラウザのデータ削除で消えるので、<b>住民票の「統合バックアップ」</b>を推奨。
         </div>
       </div>
     </div>
@@ -643,7 +643,7 @@
                 <div class="stat"><b>所持オクト</b><span id="stOcto">0</span></div>
                 <div class="stat"><b>資材（種/水/肥料）</b><span id="stInvAll">0</span></div>
 
-                <div class="stat"><b>図鑑保存件数</b><span id="stZukan">0</span></div>
+                <div class="stat"><b>図鑑（所持枚数合計）</b><span id="stZukan">0</span></div>
                 <div class="stat"><b>焦げ合成アイテム数</b><span id="stBurnt">0</span></div>
 
                 <div class="stat"><b>タワー最高階</b><span id="stTowerFloor">0</span></div>
@@ -667,22 +667,23 @@
           </div>
         </div>
 
-        <!-- ▼追加：統合バックアップ -->
+        <!-- ▼統合バックアップ（軽量版） -->
         <div class="backupBox">
-          <div class="cap">全データ（統合バックアップ）</div>
+          <div class="cap">必要なものだけ（軽量バックアップ）</div>
           <p class="desc">
-            入口で <b>ファーム/図鑑/露店/タワー/釣り/焦げ合成</b> をまとめて保存できます。<br>
-            ※ 復元は <b>上書き</b> です（元に戻せません）。
+            保存するのはこれだけ：<br>
+            <b>オクト /（露店の集計）/ 図鑑（所持）/ ファーム資材 / 焦げ合成 / タワーベスト / 釣りスコア</b><br>
+            ※ 露店ログ（誰に売った等）は<b>保存しません</b>。
           </p>
           <div class="backupRow">
-            <button class="sbtn" id="btnBackupAll" type="button">全バックアップ</button>
+            <button class="sbtn" id="btnBackupAll" type="button">軽量バックアップ</button>
             <button class="sbtn" id="btnRestoreAll" type="button">復元</button>
             <input id="restoreFile" type="file" accept="application/json" style="display:none;">
           </div>
         </div>
 
         <div style="margin-top:12px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.5">
-          ※ 住民票は「町の外」に置くことで、町マップの密度を上げずに拡張できます。
+          ※ 復元は<b>上書き</b>です（元に戻せません）。不安なら先に別名でバックアップを2本作るのが安全です。
         </div>
       </div>
     </div>
@@ -691,64 +692,45 @@
   <script>
   (() => {
     /* =========================================================
-       gate.html / 入口 + 住民票 完全版（統合バックアップ付き）
-       - localStorageのみ
-       - 初回ニックネーム登録（変更OK）
-       - タコ民アバター選択（変更OK）
-       - 住民票（トレカ風）表示
-       - 図鑑保存件数 / 焦げ合成 / タワー / 釣り / 所持オクト / 資材合計 を表示
-       - 入口から「全バックアップ」「復元」可能
+       gate.html / 入口 + 住民票 完全版（軽量バックアップ）
+       ✅ “必要なものだけ”を保存：オクト/露店集計/図鑑(所持)/資材/焦げ合成/タワー/釣り
+       ✅ 露店ログ（roten_v1_log）は保存しない
+       ✅ tower/fish/burnt は「指定キー」＋「自動検出」で拾う
        ========================================================= */
 
     // ★ あなたの「町ページ」URLに合わせてここだけ変更してOK
     const TOWN_URL = "town/index.html";
 
-    // ===== localStorage keys（新規：住民票）=====
+    // ===== 住民票 keys =====
     const KEY = {
       resident: "trc_v1_resident",
       lastLogin: "trc_v1_last_login",
     };
 
-    // ===== 既存プロジェクトのキー（あなたの現状に合わせて調整OK）=====
+    // ===== 既存プロジェクトのキー（あなたの現状に合わせて）=====
     const EXIST = {
-      // 基本
+      // 図鑑/資材/オクト（確定）
       farmBook: "tf_v1_book",
       farmInv:  "tf_v1_inv",
       rotenOcto:"roten_v1_octo",
-      rotenLog: "roten_v1_log",
 
-      // ▼ここ重要：タワー / 釣り / 焦げ合成 の保存キー（未実装なら今後このキーで統一すると入口が楽）
+      // 焦げ合成 / タワー / 釣り（あなたが例で使っているキー）
       tower: "tower_v1_state",
       fish:  "fish_v1_state",
       burnt: "burnt_v1_craft",
+
+      // 露店の「現在出品」や「評判/rep」などが別キーの場合に備えて “存在したら拾う”
+      // （※保存対象は軽量なので、見つかったものだけ入る）
+      optCandidates: [
+        "roten_v1_myshop",
+        "roten_v1_inventory",
+        "roten_v1_market",
+        "roten_v1_rep",
+        "roten_v1_level",
+        "roten_v1_stats",
+        "roten_v1_state"
+      ],
     };
-
-    // ===== 統合バックアップ対象（ここに並べたキーを丸ごと保存/復元）=====
-    const BACKUP_TARGETS = [
-      KEY.resident,
-      KEY.lastLogin,
-
-      EXIST.farmBook,
-      EXIST.farmInv,
-      EXIST.rotenOcto,
-      EXIST.rotenLog,
-
-      EXIST.tower,
-      EXIST.fish,
-      EXIST.burnt,
-    ];
-
-    // ===== アバター候補 =====
-    const AVATARS = [
-      { id:"av_guard", name:"門番", emoji:"🛡️", img:"https://ul.h3z.jp/uhjnnv4y.png" },
-      { id:"av_farmer", name:"農家", emoji:"🌱", img:"https://ul.h3z.jp/FZ0fXidR.png" },
-      { id:"av_shop", name:"露店", emoji:"🏮", img:"https://ul.h3z.jp/LTVIOUJ6.png" },
-      { id:"av_hero", name:"勇者", emoji:"⚔️", img:"https://ul.h3z.jp/UprqJlis.png" },
-      { id:"av_sage", name:"賢者", emoji:"📜", img:"https://ul.h3z.jp/LVrnv9RL.png" },
-      { id:"av_ninja", name:"忍者", emoji:"🥷", img:"https://ul.h3z.jp/6B74Di8u.png" },
-      { id:"av_ghost", name:"GHOST", emoji:"👻", img:"https://ul.h3z.jp/vGChF0k6.png" },
-      { id:"av_takopi", name:"たこぴ", emoji:"🐙", img:"https://ul.h3z.jp/wZLLf3SY.png" },
-    ];
 
     // ====== DOM ======
     const $ = (sel, root=document) => root.querySelector(sel);
@@ -807,6 +789,18 @@
     const guardImg = $("#guardImg");
     const guardBadge = $("#guardBadge");
 
+    // ===== アバター候補 =====
+    const AVATARS = [
+      { id:"av_guard", name:"門番", emoji:"🛡️", img:"https://ul.h3z.jp/uhjnnv4y.png" },
+      { id:"av_farmer", name:"農家", emoji:"🌱", img:"https://ul.h3z.jp/FZ0fXidR.png" },
+      { id:"av_shop", name:"露店", emoji:"🏮", img:"https://ul.h3z.jp/LTVIOUJ6.png" },
+      { id:"av_hero", name:"勇者", emoji:"⚔️", img:"https://ul.h3z.jp/UprqJlis.png" },
+      { id:"av_sage", name:"賢者", emoji:"📜", img:"https://ul.h3z.jp/LVrnv9RL.png" },
+      { id:"av_ninja", name:"忍者", emoji:"🥷", img:"https://ul.h3z.jp/6B74Di8u.png" },
+      { id:"av_ghost", name:"GHOST", emoji:"👻", img:"https://ul.h3z.jp/vGChF0k6.png" },
+      { id:"av_takopi", name:"たこぴ", emoji:"🐙", img:"https://ul.h3z.jp/wZLLf3SY.png" },
+    ];
+
     // ====== util ======
     const todayKey = () => {
       const d = new Date();
@@ -818,6 +812,9 @@
 
     function safeJSONParse(raw, fallback){
       try{ return JSON.parse(raw); }catch(_){ return fallback; }
+    }
+    function safeStringify(obj){
+      try{ return JSON.stringify(obj); }catch(_){ return "null"; }
     }
 
     function loadResident(){
@@ -839,7 +836,6 @@
       const r = safeJSONParse(raw, base);
       return Object.assign(base, r);
     }
-
     function saveResident(r){
       localStorage.setItem(KEY.resident, JSON.stringify(r));
     }
@@ -912,20 +908,18 @@
       }
     }
 
-    // ===== 既存データから統計 =====
-    function calcZukanSavedCount(){
+    // ===== 既存データの統計（表示用）=====
+    function calcZukanOwnedTotal(){
       const raw = localStorage.getItem(EXIST.farmBook);
       if(!raw) return 0;
       const book = safeJSONParse(raw, null);
       if(!book) return 0;
 
-      const got = book.got || book.cards || book.book || {};
+      const got = (book.got && typeof book.got==="object") ? book.got : {};
       let sum = 0;
       for(const id in got){
-        const v = got[id];
-        if(v && typeof v.count === "number") sum += Math.max(0, v.count|0);
-        else if(typeof v === "number") sum += Math.max(0, v|0);
-        else sum += 1;
+        const c = Number(got[id]?.count || 0);
+        if(c > 0) sum += c;
       }
       return sum;
     }
@@ -999,26 +993,11 @@
       };
     }
 
-    // ===== 既存データから「それっぽい」住民票項目も拾う（今までの挙動は維持）=====
+    // ===== 住民票に「最低限」同期（ログから拾う等はやめる：軽量運用）=====
     function syncFromExisting(r){
-      // 1) 畑：tf_v1_book の got 合計
-      const zukan = calcZukanSavedCount();
+      // 図鑑所持を畑収穫数として最大反映（既存挙動を維持）
+      const zukan = calcZukanOwnedTotal();
       r.farmHarvest = Math.max(r.farmHarvest||0, zukan);
-
-      // 2) 露店：ログがあれば販売回数を雑に拾う（形が違っても落ちない）
-      const logRaw = localStorage.getItem(EXIST.rotenLog);
-      if(logRaw){
-        const log = safeJSONParse(logRaw, null);
-        const arr = Array.isArray(log) ? log : (log && Array.isArray(log.items) ? log.items : null);
-        if(arr){
-          let sellCount = r.rotenSellCount||0;
-          for(const it of arr){
-            const t = String(it && (it.text||it.msg||it) || "");
-            if(/売れ|販売|購入/.test(t)) sellCount++;
-          }
-          r.rotenSellCount = Math.max(r.rotenSellCount||0, sellCount);
-        }
-      }
       return r;
     }
 
@@ -1061,7 +1040,7 @@
         const title = calcTitle(r, lv).replace("称号：","");
         gateDialog.innerHTML = `……<b>${nick}</b>か。<br><span class="small">称号「${title}」── 入場を許可する。</span>`;
         hintTitle.textContent = "門番メモ";
-        hintText.textContent  = "住民票はいつでも変更できる。";
+        hintText.textContent  = "軽量バックアップ、しておけ。";
       }
     }
 
@@ -1133,7 +1112,6 @@
 
       setAvatarNode(rcAvatar, av);
 
-      // 既存表示
       stExp.textContent = String(Math.floor(r.exp||0));
       stDays.textContent = String(Math.floor(r.days||0));
       stHarvest.textContent = String(Math.floor(r.farmHarvest||0));
@@ -1141,10 +1119,9 @@
       stSellCount.textContent = String(Math.floor(r.rotenSellCount||0));
       stBest.textContent = String(Math.floor(r.best||0));
 
-      // ▼追加表示（入口で拾う）
       const octo = readOcto();
       const invT = calcInvTotals();
-      const zukan = calcZukanSavedCount();
+      const zukan = calcZukanOwnedTotal();
       const burnt = readBurntCraftCount();
       const tower = readTowerStats();
       const fish  = readFishStats();
@@ -1169,69 +1146,149 @@
     }
 
     // ===== 他ページからの加算API（将来用）=====
-    function apiGet(){ return loadResident(); }
-    function apiSave(patch){
-      const r = loadResident();
-      Object.assign(r, patch || {});
-      saveResident(r);
-      return r;
-    }
-    function apiAddExp(n){
-      const r = loadResident();
-      r.exp = (r.exp||0) + (Number(n)||0);
-      saveResident(r);
-      return r;
-    }
-    function apiAddHarvest(n){
-      const r = loadResident();
-      r.farmHarvest = (r.farmHarvest||0) + (Number(n)||0);
-      r.exp = (r.exp||0) + Math.max(0, (Number(n)||0))*2;
-      saveResident(r);
-      return r;
-    }
-    function apiAddSale(octo, count=1){
-      const r = loadResident();
-      r.rotenSales = (r.rotenSales||0) + (Number(octo)||0);
-      r.rotenSellCount = (r.rotenSellCount||0) + (Number(count)||0);
-      r.exp = (r.exp||0) + Math.max(0, (Number(count)||0))*3;
-      saveResident(r);
-      return r;
-    }
-    function apiSetBestScore(score){
-      const r = loadResident();
-      const s = Math.floor(Number(score)||0);
-      r.best = Math.max(r.best||0, s);
-      r.exp = (r.exp||0) + Math.min(30, Math.floor(s/50));
-      saveResident(r);
-      return r;
-    }
-
     window.TRCResident = {
-      get: apiGet,
-      save: apiSave,
-      addExp: apiAddExp,
-      addHarvest: apiAddHarvest,
-      addSale: apiAddSale,
-      setBestScore: apiSetBestScore,
+      get: () => loadResident(),
+      save: (patch) => { const r = loadResident(); Object.assign(r, patch||{}); saveResident(r); return r; },
+      addSale: (octo, count=1) => {
+        const r = loadResident();
+        r.rotenSales = (r.rotenSales||0) + (Number(octo)||0);
+        r.rotenSellCount = (r.rotenSellCount||0) + (Number(count)||0);
+        r.exp = (r.exp||0) + Math.max(0, (Number(count)||0))*3;
+        saveResident(r);
+        return r;
+      },
+      setBestScore: (score) => {
+        const r = loadResident();
+        const s = Math.floor(Number(score)||0);
+        r.best = Math.max(r.best||0, s);
+        r.exp = (r.exp||0) + Math.min(30, Math.floor(s/50));
+        saveResident(r);
+        return r;
+      }
     };
 
-    // ===== 統合バックアップ / 復元 =====
-    const safeGetRaw = (k) => {
+    // =========================================================
+    // ✅ 軽量バックアップ：必要なキーだけ（ログは除外）
+    // =========================================================
+    const getRaw = (k) => {
       const v = localStorage.getItem(k);
       return (v === null || v === undefined) ? null : String(v);
     };
 
-    function buildBackupPayload(){
-      const payload = {
-        app: "takoyaki-trc",
-        ver: 1,
-        exportedAt: new Date().toISOString(),
-        keys: {}
-      };
-      for(const k of BACKUP_TARGETS){
-        payload.keys[k] = safeGetRaw(k); // rawで保存（JSONでも数字でもOK）
+    // 図鑑を “所持だけ” に圧縮（got[id].count だけ）
+    function slimBookRaw(){
+      const raw = getRaw(EXIST.farmBook);
+      if(!raw) return null;
+      const book = safeJSONParse(raw, null);
+      if(!book || typeof book !== "object") return raw; // 壊れててもそのまま
+
+      const got = (book.got && typeof book.got==="object") ? book.got : {};
+      const outGot = {};
+      for(const id of Object.keys(got)){
+        const c = Number(got[id]?.count || 0);
+        if(c > 0) outGot[id] = { count: c };
       }
-      return payload;
+      const slim = { ver: book.ver ?? 1, got: outGot };
+      return safeStringify(slim);
+    }
+
+    // tower/fish/burnt の “それっぽいキー” を自動検出（指定キーが無い時の保険）
+    function findScoreKeys(){
+      const all = [];
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(k) all.push(k);
+      }
+
+      const pickOne = (arr) => arr.length ? arr.slice().sort((a,b)=>a.length-b.length)[0] : null;
+
+      const towerLike = all.filter(k =>
+        (/tower|タワー/i.test(k)) &&
+        (/best|high|score|record|max|state/i.test(k))
+      );
+      const fishLike = all.filter(k =>
+        (/fish|fishing|釣り/i.test(k)) &&
+        (/best|high|score|record|max|state|total/i.test(k))
+      );
+      const burntLike = all.filter(k =>
+        (/burnt|焦げ|koge|craft|合成/i.test(k)) &&
+        (/v1|state|data|items|inv|craft/i.test(k))
+      );
+
+      return {
+        towerKey: pickOne(towerLike),
+        fishKey: pickOne(fishLike),
+        burntKey: pickOne(burntLike),
+      };
+    }
+
+    // 露店の「rep/現在出品」系キー：存在したら拾う（無いなら何もしない）
+    function findOptionalRotenKeys(){
+      const found = [];
+      for(const k of EXIST.optCandidates){
+        if(localStorage.getItem(k) != null) found.push(k);
+      }
+
+      // さらに “roten & rep/listing/slot/myshop” っぽい未知キーも拾う（あれば）
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(!k) continue;
+        if(!/^roten_/i.test(k) && !/^roten/i.test(k)) continue;
+        if(/log/i.test(k)) continue; // ログは除外
+        if(/rep|rating|reputation|myshop|slot|listing|state|stats|inventory|market/i.test(k)){
+          if(!found.includes(k) && localStorage.getItem(k)!=null) found.push(k);
+        }
+      }
+      return found.slice(0, 10); // 念のため上限
+    }
+
+    // ✅ “これだけ保存” を組み立て
+    function buildSlimBackupPayload(){
+      const auto = findScoreKeys();
+      const optRotenKeys = findOptionalRotenKeys();
+
+      const towerKey = (getRaw(EXIST.tower) != null) ? EXIST.tower : auto.towerKey;
+      const fishKey  = (getRaw(EXIST.fish)  != null) ? EXIST.fish  : auto.fishKey;
+      const burntKey = (getRaw(EXIST.burnt) != null) ? EXIST.burnt : auto.burntKey;
+
+      const keys = {};
+
+      // 住民票（露店の集計/レベルはここに入ってる前提）
+      keys[KEY.resident] = getRaw(KEY.resident);
+      keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
+
+      // オクト
+      keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
+
+      // 図鑑（所持だけに圧縮）
+      keys[EXIST.farmBook] = slimBookRaw();
+
+      // 資材
+      keys[EXIST.farmInv] = getRaw(EXIST.farmInv);
+
+      // 焦げ/タワー/釣り（あれば）
+      if(burntKey && getRaw(burntKey) != null) keys[burntKey] = getRaw(burntKey);
+      if(towerKey && getRaw(towerKey) != null) keys[towerKey] = getRaw(towerKey);
+      if(fishKey  && getRaw(fishKey)  != null) keys[fishKey]  = getRaw(fishKey);
+
+      // 露店のrep/出品状態など（存在したものだけ）
+      for(const k of optRotenKeys){
+        keys[k] = getRaw(k);
+      }
+
+      // 空は消す
+      for(const k of Object.keys(keys)){
+        if(keys[k] === null || keys[k] === undefined) delete keys[k];
+      }
+
+      return {
+        app: "takoyaki-trc",
+        ver: 2,
+        kind: "slim",
+        exportedAt: new Date().toISOString(),
+        note: "ログは保存しない。図鑑は所持(count)だけ。",
+        keys
+      };
     }
 
     function downloadJson(obj, filename){
@@ -1246,10 +1303,10 @@
       URL.revokeObjectURL(url);
     }
 
-    function backupAll(){
-      const payload = buildBackupPayload();
+    function backupSlim(){
+      const payload = buildSlimBackupPayload();
       const stamp = new Date().toISOString().replace(/[:.]/g,"-");
-      downloadJson(payload, `takoyaki-trc-backup_${stamp}.json`);
+      downloadJson(payload, `takoyaki-trc-backup_slim_${stamp}.json`);
     }
 
     async function restoreFromFile(file){
@@ -1259,8 +1316,8 @@
         alert("このファイルはバックアップ形式ではありません。");
         return;
       }
-      const keys = Object.keys(data.keys);
 
+      const keys = Object.keys(data.keys);
       const ok = confirm(
         "バックアップから復元します。\n" +
         "現在のデータは上書きされます（元に戻せません）。\n\n" +
@@ -1351,8 +1408,8 @@
       btnBackupAll.addEventListener("click", ()=>{
         btnBackupAll.textContent = "作成中…";
         setTimeout(()=>{
-          backupAll();
-          btnBackupAll.textContent = "全バックアップ";
+          backupSlim();
+          btnBackupAll.textContent = "軽量バックアップ";
         }, 60);
       });
     }
@@ -1393,4 +1450,5 @@
   </script>
 </body>
 </html>
+
 
