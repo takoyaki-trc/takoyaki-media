@@ -387,22 +387,26 @@
       border-radius:999px;
       background:rgba(255,255,255,.06);
     }
+
+    /* ✅ 住民票のアイコンを小さく（ここが変更点） */
     .rcMid{
       padding:12px 14px;
       display:grid;
-      grid-template-columns: 96px 1fr;
+      grid-template-columns: 78px 1fr; /* 96px → 78px */
       gap:12px;
       align-items:start;
     }
     .rcAv{
-      width:96px;height:96px;
-      border-radius:18px;
+      width:78px;height:78px;          /* 96px → 78px */
+      border-radius:16px;             /* 少し締める */
       border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.06);
       overflow:hidden;
       display:grid;place-items:center;
     }
     .rcAv img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+    /* ✅ ここまで */
+
     .rcInfo .big{
       font-weight:900;
       font-size:16px;
@@ -475,13 +479,6 @@
       line-height:1.45;
     }
     .backupRow{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
-
-    /* =========================================================
-       ★ここが今回の「小さくならない」を確実に潰す上書きCSS
-       ========================================================= */
-    .rcAv{ width:72px !important; height:72px !important; border-radius:16px !important; }
-    .rcMid{ grid-template-columns:72px 1fr !important; }
-    .pill .avatar{ width:18px !important; height:18px !important; flex:0 0 18px !important; border-radius:7px !important; }
   </style>
 </head>
 <body>
@@ -593,13 +590,13 @@
                 <div class="stat"><b>総EXP（住民票）</b><span id="stExp">0</span></div>
                 <div class="stat"><b>総ログイン（住民票）</b><span id="stDays">0</span>日</div>
 
-                <div class="stat"><b>所持オクト（キー保存）</b><span id="stOcto">0</span></div>
-                <div class="stat"><b>資材 合計（キー保存）</b><span id="stInvAll">0</span></div>
+                <div class="stat"><b>所持オクト</b><span id="stOcto">0</span></div>
+                <div class="stat"><b>資材 合計</b><span id="stInvAll">0</span></div>
 
-                <div class="stat"><b>図鑑 所持合計（キー保存）</b><span id="stZukan">0</span></div>
-                <div class="stat"><b>タワー BEST（キー保存）</b><span id="stTower">0</span></div>
+                <div class="stat"><b>図鑑 所持合計</b><span id="stZukan">0</span></div>
+                <div class="stat"><b>タワー最高記録</b><span id="stTower">0</span></div>
 
-                <div class="stat"><b>釣り BEST（キー保存）</b><span id="stFishBest">0</span></div>
+                <div class="stat"><b>釣り最高記録</b><span id="stFishBest">0</span></div>
                 <div class="stat"><b>メモ</b><span style="opacity:.85">記録は自動読取</span></div>
               </div>
             </div>
@@ -644,10 +641,11 @@
   <script>
   (() => {
     /* =========================================================
-       gate.html / 入口 + 住民票 完全版（釣りBEST対応 + 画像縮小確定）
+       gate.html / 入口 + 住民票 完全版（復元強化 + BEST読取強化）
        ✅ 畑のレベル等：tf_v1_* の進行系キーをバックアップ/復元に含める
        ✅ 図鑑の画像：tf_v1_book を slim 化する時に count + img を保持（あれば）
-       ✅ 釣りBEST：fish_v1_state だけでなく takoyakiFishing_best_points も読む
+       ✅ タワー/釣りBEST：数値だけ保存 / 二重JSON / キー名ブレ も拾う
+       ✅ 住民票アイコン：小さく表示（CSS変更）
        ========================================================= */
 
     const TOWN_URL = "town/index.html";
@@ -663,10 +661,6 @@
       rotenOcto:"roten_v1_octo",
       tower: "tower_v1_state",
       fish:  "fish_v1_state",
-      // ★あなたの takofish11.js の最高記録キー
-      fishBestAlt: "takoyakiFishing_best_points",
-      fishLastAlt: "takoyakiFishing_last_points",
-      fishPlayedAlt: "takoyakiFishing_last_played",
     };
 
     const $ = (sel, root=document) => root.querySelector(sel);
@@ -893,6 +887,9 @@
       return Number.isFinite(n) ? Math.floor(n) : 0;
     }
 
+    // =========================
+    // ✅ タワー/釣り BEST 読取（強化版）
+    // =========================
     function listKeysByRegex(re){
       const out = [];
       for(let i=0;i<localStorage.length;i++){
@@ -903,9 +900,43 @@
       return out;
     }
 
+    // 二重JSON + "123" のような数値文字列にも対応
+    function parseMaybeDeep(raw, depth=2){
+      let cur = raw;
+      for(let i=0;i<depth;i++){
+        if(cur == null) break;
+        if(typeof cur === "number") return cur;
+        if(typeof cur === "object") return cur;
+
+        if(typeof cur === "string"){
+          const s = cur.trim();
+          if(!s) return cur;
+
+          if(/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
+
+          if((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))){
+            try{
+              cur = JSON.parse(s);
+              continue;
+            }catch(_){
+              return cur;
+            }
+          }
+          return cur;
+        }
+      }
+      return cur;
+    }
+
     function extractBestNumber(obj, candidates){
+      // 数値そのもの
+      if(typeof obj === "number" && Number.isFinite(obj)) return Math.floor(obj);
+
       if(!obj || typeof obj !== "object") return 0;
+
       let best = 0;
+
+      // パス指定
       for(const path of candidates){
         const parts = path.split(".");
         let cur = obj;
@@ -913,92 +944,137 @@
           if(cur && typeof cur === "object" && p in cur) cur = cur[p];
           else { cur = undefined; break; }
         }
-        const n = clampNum(cur);
-        if(n > best) best = n;
+        const n = Number(cur);
+        if(Number.isFinite(n)) best = Math.max(best, n);
       }
+
+      // 直下総当たり
       for(const k in obj){
-        if(typeof obj[k] === "number" && isFinite(obj[k]) && obj[k] > best) best = obj[k];
+        const v = obj[k];
+        if(typeof v === "number" && Number.isFinite(v)) best = Math.max(best, v);
+        else if(typeof v === "string" && v.trim() && /^-?\d+(\.\d+)?$/.test(v.trim())) best = Math.max(best, Number(v));
       }
+
       return Math.floor(best);
     }
 
     function readTowerStats(){
-      const best = { floor:0, score:0 };
+      let bestFloor = 0;
+      let bestScore = 0;
 
-      const parseTower = (raw) => {
-        const st = safeJSONParse(raw, null);
-        if(!st) return null;
-        const floor = extractBestNumber(st, ["bestFloor","maxFloor","floor","best.floor","tower.bestFloor"]);
-        const score = extractBestNumber(st, ["bestScore","maxScore","score","best.score","tower.bestScore"]);
-        return { floor, score };
+      const consider = (key, raw)=>{
+        const parsed = parseMaybeDeep(raw, 3);
+
+        if(typeof parsed === "number" && Number.isFinite(parsed)){
+          const n = Math.floor(parsed);
+          if(/floor|maxfloor|bestfloor/i.test(key)) bestFloor = Math.max(bestFloor, n);
+          else bestScore = Math.max(bestScore, n);
+          return;
+        }
+
+        if(Array.isArray(parsed)){
+          for(const it of parsed){
+            const p = parseMaybeDeep(it, 2);
+            if(typeof p === "number" && Number.isFinite(p)){
+              bestScore = Math.max(bestScore, Math.floor(p));
+            }else if(p && typeof p === "object"){
+              bestFloor = Math.max(bestFloor, extractBestNumber(p, ["bestFloor","maxFloor","floor","best.floor","stats.bestFloor","tower.bestFloor"]));
+              bestScore = Math.max(bestScore, extractBestNumber(p, ["bestScore","maxScore","score","best.score","stats.bestScore","tower.bestScore"]));
+            }
+          }
+          return;
+        }
+
+        if(parsed && typeof parsed === "object"){
+          bestFloor = Math.max(bestFloor, extractBestNumber(parsed, [
+            "bestFloor","maxFloor","floor","best.floor",
+            "stats.bestFloor","stats.maxFloor","tower.bestFloor"
+          ]));
+          bestScore = Math.max(bestScore, extractBestNumber(parsed, [
+            "bestScore","maxScore","score","best.score",
+            "stats.bestScore","stats.maxScore","tower.bestScore"
+          ]));
+          return;
+        }
+
+        if(typeof parsed === "string"){
+          const s = parsed.trim();
+          if(/^-?\d+(\.\d+)?$/.test(s)) bestScore = Math.max(bestScore, Math.floor(Number(s)));
+        }
       };
 
       const raw0 = localStorage.getItem(EXIST.tower);
-      if(raw0){
-        const p = parseTower(raw0);
-        if(p){ best.floor = Math.max(best.floor, p.floor); best.score = Math.max(best.score, p.score); }
-      }
+      if(raw0 != null) consider(EXIST.tower, raw0);
 
-      const keys = listKeysByRegex(/tower/i);
-      for(const k of keys){
+      for(const k of listKeysByRegex(/tower/i)){
         const raw = localStorage.getItem(k);
-        if(!raw) continue;
-        const p = parseTower(raw);
-        if(!p) continue;
-        best.floor = Math.max(best.floor, p.floor);
-        best.score = Math.max(best.score, p.score);
+        if(raw != null) consider(k, raw);
       }
 
-      return best;
+      return { floor: bestFloor, score: bestScore };
     }
 
-    /* =========================================================
-       ★釣りBEST：fish_v1_state + takoyakiFishing_best_points を両方読む
-       ========================================================= */
     function readFishBest(){
-      const best = { best:0 };
+      let best = 0;
 
-      const parseFish = (raw) => {
-        const st = safeJSONParse(raw, null);
-        if(!st) return null;
-        const b = extractBestNumber(st, [
-          "best","bestScore","maxScore","highScore","record",
-          "bestSize","maxSize","max",
-          "stats.best","stats.bestScore",
-          "result.best","result.score"
-        ]);
-        return { best: b };
-      };
+      const consider = (key, raw)=>{
+        const parsed = parseMaybeDeep(raw, 3);
 
-      // 1) 標準キー fish_v1_state
-      const raw0 = localStorage.getItem(EXIST.fish);
-      if(raw0){
-        const p = parseFish(raw0);
-        if(p) best.best = Math.max(best.best, p.best);
-      }
-
-      // 2) fish系のJSONっぽいキーも探索
-      const keys = listKeysByRegex(/fish|takofish|tako_fish|tfish|takoyakiFishing/i);
-      for(const k of keys){
-        const raw = localStorage.getItem(k);
-        if(!raw) continue;
-
-        // 数値直置きの可能性
-        if(/takoyakiFishing_best_points/i.test(k)){
-          const n = Math.floor(Number(raw)||0);
-          if(Number.isFinite(n)) best.best = Math.max(best.best, n);
-          continue;
+        if(typeof parsed === "number" && Number.isFinite(parsed)){
+          best = Math.max(best, Math.floor(parsed));
+          return;
         }
 
-        const p = parseFish(raw);
-        if(p) best.best = Math.max(best.best, p.best);
+        if(Array.isArray(parsed)){
+          for(const it of parsed){
+            const p = parseMaybeDeep(it, 2);
+            if(typeof p === "number" && Number.isFinite(p)){
+              best = Math.max(best, Math.floor(p));
+            }else if(p && typeof p === "object"){
+              best = Math.max(best, extractBestNumber(p, [
+                "best","bestScore","maxScore","highScore","record",
+                "bestSize","maxSize","max",
+                "stats.best","stats.bestScore",
+                "result.best","result.score"
+              ]));
+            }
+          }
+          return;
+        }
+
+        if(parsed && typeof parsed === "object"){
+          best = Math.max(best, extractBestNumber(parsed, [
+            "best","bestScore","maxScore","highScore","record",
+            "bestSize","maxSize","max",
+            "stats.best","stats.bestScore",
+            "result.best","result.score"
+          ]));
+          return;
+        }
+
+        if(typeof parsed === "string"){
+          const s = parsed.trim();
+          if(/^-?\d+(\.\d+)?$/.test(s)) best = Math.max(best, Math.floor(Number(s)));
+        }
+      };
+
+      const raw0 = localStorage.getItem(EXIST.fish);
+      if(raw0 != null) consider(EXIST.fish, raw0);
+
+      for(const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)){
+        const raw = localStorage.getItem(k);
+        if(raw != null) consider(k, raw);
       }
 
-      // 3) あなたの保存キー（最重要）を直読み（保険）
-      const direct = Math.floor(Number(localStorage.getItem(EXIST.fishBestAlt) || 0));
-      if(Number.isFinite(direct)) best.best = Math.max(best.best, direct);
+      // fish_best=123 みたいな単体数値キーも拾う
+      for(const k of listKeysByRegex(/fish.*best|best.*fish|takofish.*best/i)){
+        const raw = localStorage.getItem(k);
+        if(raw == null) continue;
+        const n = Number(String(raw).trim());
+        if(Number.isFinite(n)) best = Math.max(best, Math.floor(n));
+      }
 
-      return best;
+      return { best };
     }
 
     function touchLoginDay(r){
@@ -1150,10 +1226,14 @@
         const k = localStorage.key(i);
         if(!k) continue;
         if(!/^tf_v1_/i.test(k)) continue;
+
         if(/log|history|debug/i.test(k)) continue;
+
         if(k === EXIST.farmBook || k === EXIST.farmInv) continue;
+
         out.push(k);
       }
+
       const prefer = [
         "tf_v1_state",
         "tf_v1_level",
@@ -1191,20 +1271,15 @@
         if(v != null) keys[k] = v;
       }
 
-      // タワー（関連キー全部）
+      // タワー/釣り（存在するもの全部）
       if(getRaw(EXIST.tower) != null) keys[EXIST.tower] = getRaw(EXIST.tower);
       for(const k of listKeysByRegex(/tower/i)){
         const v = getRaw(k);
         if(v != null) keys[k] = v;
       }
 
-      // ✅ 釣り（fish_v1_state + あなたの保存キー全部）
       if(getRaw(EXIST.fish) != null) keys[EXIST.fish] = getRaw(EXIST.fish);
-      if(getRaw(EXIST.fishBestAlt) != null) keys[EXIST.fishBestAlt] = getRaw(EXIST.fishBestAlt);
-      if(getRaw(EXIST.fishLastAlt) != null) keys[EXIST.fishLastAlt] = getRaw(EXIST.fishLastAlt);
-      if(getRaw(EXIST.fishPlayedAlt) != null) keys[EXIST.fishPlayedAlt] = getRaw(EXIST.fishPlayedAlt);
-
-      for(const k of listKeysByRegex(/fish|takofish|tako_fish|tfish|takoyakiFishing/i)){
+      for(const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)){
         const v = getRaw(k);
         if(v != null) keys[k] = v;
       }
@@ -1215,10 +1290,10 @@
 
       return {
         app: "takoyaki-trc",
-        ver: 5,
+        ver: 4,
         kind: "slim",
         exportedAt: new Date().toISOString(),
-        note: "住民票/オクト/資材/図鑑(count+img)/畑進行(tf_v1_*)/タワー/釣り(fish_v1_state + takoyakiFishing_best_points等) を保存。ログは保存しない。",
+        note: "住民票/オクト/資材/図鑑(count+img)/畑進行(tf_v1_*)/タワー/釣り を保存。ログは保存しない。",
         keys
       };
     }
