@@ -582,7 +582,6 @@
               <div class="big" id="rcName">名無しのタコ民</div>
               <div class="sub" id="rcTitle">称号：はじまりの焼き手</div>
 
-              <!-- ✅ 必要な項目だけ -->
               <div class="stats">
                 <div class="stat"><b>総EXP（住民票）</b><span id="stExp">0</span></div>
                 <div class="stat"><b>総ログイン（住民票）</b><span id="stDays">0</span>日</div>
@@ -616,8 +615,9 @@
           <div class="cap">軽量バックアップ（必要範囲だけ保存）</div>
           <p class="desc">
             保存するもの：<br>
-            <b>住民票（exp/days/名前/アバター）</b> / <b>所持オクト</b> / <b>図鑑（所持countのみ）</b> /
-            <b>資材</b> / <b>タワー</b> / <b>釣り</b><br>
+            <b>住民票（exp/days/名前/アバター）</b> / <b>所持オクト</b> /
+            <b>図鑑（所持count + 画像imgがあれば）</b> / <b>資材</b> /
+            <b>畑のレベル等（tf_v1_* の進行キー）</b> / <b>タワー</b> / <b>釣り</b><br>
             ※ ログ系・履歴系は保存しません。
           </p>
           <div class="backupRow">
@@ -637,25 +637,18 @@
   <script>
   (() => {
     /* =========================================================
-       gate.html / 入口 + 住民票 完全版（整理版）
-       ✅ タワー/釣りの記録：キー名違いでも拾えるように “候補スキャン” 対応
-       ✅ 不要項目削除：
-         - 最高スコア（住民票）
-         - 露店売上（住民票）
-         - 焦げ合成数（キー保存）
-         - 釣り総釣果（キー保存）
+       gate.html / 入口 + 住民票 完全版（復元強化）
+       ✅ 畑のレベル等：tf_v1_* の進行系キーをバックアップ/復元に含める
+       ✅ 図鑑の画像：tf_v1_book を slim 化する時に count + img を保持（あれば）
        ========================================================= */
 
-    // ★ 町ページURL
     const TOWN_URL = "town/index.html";
 
-    // ===== 住民票 keys =====
     const KEY = {
       resident: "trc_v1_resident",
       lastLogin: "trc_v1_last_login",
     };
 
-    // ===== 既存キー（まずは固定で見に行く）=====
     const EXIST = {
       farmBook: "tf_v1_book",
       farmInv:  "tf_v1_inv",
@@ -664,7 +657,6 @@
       fish:  "fish_v1_state",
     };
 
-    // ====== DOM ======
     const $ = (sel, root=document) => root.querySelector(sel);
 
     const pillName = $("#pillName");
@@ -713,7 +705,6 @@
     const guardImg = $("#guardImg");
     const guardBadge = $("#guardBadge");
 
-    // ===== アバター候補 =====
     const AVATARS = [
       { id:"av_guard", name:"門番", emoji:"🛡️", img:"https://ul.h3z.jp/uhjnnv4y.png" },
       { id:"av_farmer", name:"農家", emoji:"🌱", img:"https://ul.h3z.jp/FZ0fXidR.png" },
@@ -725,7 +716,6 @@
       { id:"av_takopi", name:"たこぴ", emoji:"🐙", img:"https://ul.h3z.jp/wZLLf3SY.png" },
     ];
 
-    // ====== util ======
     const todayKey = () => {
       const d = new Date();
       const y = d.getFullYear();
@@ -748,7 +738,7 @@
     function loadResident(){
       const raw = localStorage.getItem(KEY.resident);
       const base = {
-        ver:2,
+        ver:3,
         nick:"",
         avatarId:"av_guard",
         exp:0,
@@ -761,7 +751,6 @@
       return Object.assign(base, r);
     }
     function saveResident(r){ localStorage.setItem(KEY.resident, JSON.stringify(r)); }
-
     function getAvatarById(id){ return AVATARS.find(a=>a.id===id) || AVATARS[0]; }
 
     function calcLevel(exp){
@@ -822,13 +811,13 @@
       }
     }
 
-    // ===== 表示＆バックアップ対象の読み取り =====
     const getRaw = (k) => {
       const v = localStorage.getItem(k);
       return (v === null || v === undefined) ? null : String(v);
     };
 
-    function slimBookRaw(){
+    // ✅ 図鑑：count + img（あれば）を保持して復元可能に
+    function slimBookRawKeepImg(){
       const raw = getRaw(EXIST.farmBook);
       if(!raw) return null;
       const book = safeJSONParse(raw, null);
@@ -837,8 +826,16 @@
       const got = (book.got && typeof book.got==="object") ? book.got : {};
       const outGot = {};
       for(const id of Object.keys(got)){
-        const c = Number(got[id]?.count || 0);
-        if(c > 0) outGot[id] = { count: c };
+        const node = got[id] || {};
+        const c = Number(node.count || 0);
+        if(c > 0){
+          const out = { count: c };
+          // img は図鑑ページ側が参照している可能性があるので残す
+          if(typeof node.img === "string" && node.img.trim()) out.img = node.img.trim();
+          // name なども持ってたら復元に役立つ場合がある（あれば残す）
+          if(typeof node.name === "string" && node.name.trim()) out.name = node.name.trim();
+          outGot[id] = out;
+        }
       }
       const slim = { ver: book.ver ?? 1, got: outGot };
       return safeStringify(slim);
@@ -886,7 +883,6 @@
       return Number.isFinite(n) ? Math.floor(n) : 0;
     }
 
-    // ===== 記録 “拾い上げ” ユーティリティ（キー名揺れ対応）=====
     function listKeysByRegex(re){
       const out = [];
       for(let i=0;i<localStorage.length;i++){
@@ -901,7 +897,6 @@
       if(!obj || typeof obj !== "object") return 0;
       let best = 0;
       for(const path of candidates){
-        // path can be "a.b.c"
         const parts = path.split(".");
         let cur = obj;
         for(const p of parts){
@@ -911,17 +906,13 @@
         const n = clampNum(cur);
         if(n > best) best = n;
       }
-      // try also direct numeric fields
       for(const k in obj){
         if(typeof obj[k] === "number" && isFinite(obj[k]) && obj[k] > best) best = obj[k];
       }
       return Math.floor(best);
     }
 
-    // ===== タワー：bestFloor / bestScore を “どれでも” 拾う =====
     function readTowerStats(){
-      // 1) まず既定キー
-      const raw0 = localStorage.getItem(EXIST.tower);
       const best = { floor:0, score:0 };
 
       const parseTower = (raw) => {
@@ -932,12 +923,12 @@
         return { floor, score };
       };
 
+      const raw0 = localStorage.getItem(EXIST.tower);
       if(raw0){
         const p = parseTower(raw0);
         if(p){ best.floor = Math.max(best.floor, p.floor); best.score = Math.max(best.score, p.score); }
       }
 
-      // 2) tower系キーをスキャン（例：takotower_v1_state 等）
       const keys = listKeysByRegex(/tower/i);
       for(const k of keys){
         const raw = localStorage.getItem(k);
@@ -951,39 +942,27 @@
       return best;
     }
 
-    // ===== 釣り：best（最大）だけを “どれでも” 拾う =====
     function readFishBest(){
       const best = { best:0 };
 
       const parseFish = (raw) => {
         const st = safeJSONParse(raw, null);
         if(!st) return null;
-        // いろんな実装にありがちな候補を総当たりで拾う
         const b = extractBestNumber(st, [
-          "best",
-          "bestScore",
-          "maxScore",
-          "highScore",
-          "record",
-          "bestSize",
-          "maxSize",
-          "max",
-          "stats.best",
-          "stats.bestScore",
-          "result.best",
-          "result.score"
+          "best","bestScore","maxScore","highScore","record",
+          "bestSize","maxSize","max",
+          "stats.best","stats.bestScore",
+          "result.best","result.score"
         ]);
         return { best: b };
       };
 
-      // 1) 既定キー
       const raw0 = localStorage.getItem(EXIST.fish);
       if(raw0){
         const p = parseFish(raw0);
         if(p) best.best = Math.max(best.best, p.best);
       }
 
-      // 2) fish/takofish 系をスキャン（例：takofish_v1_state, tf_fish_state など）
       const keys = listKeysByRegex(/fish|takofish|tako_fish|tfish/i);
       for(const k of keys){
         const raw = localStorage.getItem(k);
@@ -993,7 +972,6 @@
         best.best = Math.max(best.best, p.best);
       }
 
-      // 3) 単発キー（数値）っぽいものも拾う（例：takofish_best）
       const numKeys = listKeysByRegex(/fish.*best|best.*fish|takofish.*best/i);
       for(const k of numKeys){
         const raw = localStorage.getItem(k);
@@ -1017,7 +995,6 @@
       return r;
     }
 
-    // ===== UI =====
     function renderTop(r){
       const nick = r.nick && r.nick.trim() ? r.nick.trim() : "名無しのタコ民";
       const av = getAvatarById(r.avatarId);
@@ -1112,11 +1089,9 @@
       rcRarity.textContent = calcRarity(lv);
       setAvatarNode(rcAvatar, av);
 
-      // 住民票（必要分）
       stExp.textContent = String(Math.floor(r.exp||0));
       stDays.textContent = String(Math.floor(r.days||0));
 
-      // 各キー（必要分）
       const octo = readOcto();
       const invT = calcInvTotals();
       const zukan = calcZukanOwnedTotal();
@@ -1139,7 +1114,6 @@
       openModal(rcModal);
     }
 
-    // ===== API（他ページから住民票を触る用：最小限）=====
     window.TRCResident = {
       get: () => loadResident(),
       save: (patch) => { const r = loadResident(); Object.assign(r, patch||{}); saveResident(r); return r; },
@@ -1151,26 +1125,72 @@
       }
     };
 
-    // ===== 軽量バックアップ（必要範囲のみ）=====
+    // ✅ 畑レベル等：tf_v1_* の “進行” を拾う（ログっぽいのは除外）
+    function findFarmProgressKeys(){
+      const out = [];
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(!k) continue;
+        if(!/^tf_v1_/i.test(k)) continue;
+
+        // ログ/一時/巨大履歴を避ける（必要ならここは調整OK）
+        if(/log|history|debug/i.test(k)) continue;
+
+        // 図鑑と在庫は別枠で入れるので重複回避
+        if(k === EXIST.farmBook || k === EXIST.farmInv) continue;
+
+        out.push(k);
+      }
+
+      // よくある候補を優先（存在すれば）
+      const prefer = [
+        "tf_v1_state",
+        "tf_v1_level",
+        "tf_v1_xp",
+        "tf_v1_farm",
+        "tf_v1_progress"
+      ];
+      const ordered = [];
+      for(const p of prefer){
+        if(localStorage.getItem(p)!=null && !ordered.includes(p)) ordered.push(p);
+      }
+      for(const k of out){
+        if(!ordered.includes(k)) ordered.push(k);
+      }
+      return ordered.slice(0, 30);
+    }
+
     function buildSlimBackupPayload(){
       const keys = {};
+
+      // 住民票系
       keys[KEY.resident] = getRaw(KEY.resident);
       keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
+
+      // オクト/資材
       keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
-      keys[EXIST.farmBook] = slimBookRaw();
-      keys[EXIST.farmInv] = getRaw(EXIST.farmInv);
+      keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
 
-      // タワー/釣りは “存在するもの全部” を拾って入れる（復元で確実に戻す）
-      const towerKeys = listKeysByRegex(/tower/i);
-      const fishKeys  = listKeysByRegex(/fish|takofish|tako_fish|tfish/i);
+      // 図鑑（count + img等）
+      keys[EXIST.farmBook]  = slimBookRawKeepImg();
 
-      if(getRaw(EXIST.tower) != null) keys[EXIST.tower] = getRaw(EXIST.tower);
-      for(const k of towerKeys){
-        if(getRaw(k) != null) keys[k] = getRaw(k);
+      // ✅ 畑レベル等（tf_v1_* 進行）
+      for(const k of findFarmProgressKeys()){
+        const v = getRaw(k);
+        if(v != null) keys[k] = v;
       }
+
+      // タワー/釣り（存在するもの全部）
+      if(getRaw(EXIST.tower) != null) keys[EXIST.tower] = getRaw(EXIST.tower);
+      for(const k of listKeysByRegex(/tower/i)){
+        const v = getRaw(k);
+        if(v != null) keys[k] = v;
+      }
+
       if(getRaw(EXIST.fish) != null) keys[EXIST.fish] = getRaw(EXIST.fish);
-      for(const k of fishKeys){
-        if(getRaw(k) != null) keys[k] = getRaw(k);
+      for(const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)){
+        const v = getRaw(k);
+        if(v != null) keys[k] = v;
       }
 
       for(const k of Object.keys(keys)){
@@ -1179,10 +1199,10 @@
 
       return {
         app: "takoyaki-trc",
-        ver: 3,
+        ver: 4,
         kind: "slim",
         exportedAt: new Date().toISOString(),
-        note: "必要範囲のみ保存（住民票/オクト/図鑑count/資材/タワー/釣り）。ログは保存しない。",
+        note: "住民票/オクト/資材/図鑑(count+img)/畑進行(tf_v1_*)/タワー/釣り を保存。ログは保存しない。",
         keys
       };
     }
@@ -1233,7 +1253,6 @@
       location.reload();
     }
 
-    // ===== イベント =====
     enterBtn.addEventListener("click", ()=>{
       const r = loadResident();
       const nick = r.nick && r.nick.trim();
@@ -1323,7 +1342,6 @@
       });
     });
 
-    // ===== 初期化 =====
     function init(){
       let r = loadResident();
       r = touchLoginDay(r);
@@ -1342,4 +1360,5 @@
   </script>
 </body>
 </html>
+
 
