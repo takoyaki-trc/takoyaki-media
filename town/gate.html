@@ -621,7 +621,8 @@
             保存するもの：<br>
             <b>住民票（exp/days/名前/アバター）</b> / <b>所持オクト</b> /
             <b>図鑑（所持count + 画像imgがあれば）</b> / <b>資材</b> /
-            <b>畑のレベル等（tf_v1_* の進行キー）</b> / <b>タワー</b> / <b>釣り</b><br>
+            <b>畑のレベル等（tf_v1_* の進行キー）</b> / <b>露店レベル等（roten_v1_*）</b> /
+            <b>タワー</b> / <b>釣り</b><br>
             ※ ログ系・履歴系は保存しません。
           </p>
           <div class="backupRow">
@@ -646,6 +647,7 @@
        ✅ 図鑑の画像：tf_v1_book を slim 化する時に count + img を保持（あれば）
        ✅ タワー/釣りBEST：数値だけ保存 / 二重JSON / キー名ブレ も拾う
        ✅ 住民票アイコン：小さく表示（CSS変更）
+       ✅ 露店レベル等：roten_v1_* をバックアップ/復元に含める（今回追加）
        ========================================================= */
 
     const TOWN_URL = "town/index.html";
@@ -929,14 +931,11 @@
     }
 
     function extractBestNumber(obj, candidates){
-      // 数値そのもの
       if(typeof obj === "number" && Number.isFinite(obj)) return Math.floor(obj);
-
       if(!obj || typeof obj !== "object") return 0;
 
       let best = 0;
 
-      // パス指定
       for(const path of candidates){
         const parts = path.split(".");
         let cur = obj;
@@ -948,7 +947,6 @@
         if(Number.isFinite(n)) best = Math.max(best, n);
       }
 
-      // 直下総当たり
       for(const k in obj){
         const v = obj[k];
         if(typeof v === "number" && Number.isFinite(v)) best = Math.max(best, v);
@@ -1066,7 +1064,6 @@
         if(raw != null) consider(k, raw);
       }
 
-      // fish_best=123 みたいな単体数値キーも拾う
       for(const k of listKeysByRegex(/fish.*best|best.*fish|takofish.*best/i)){
         const raw = localStorage.getItem(k);
         if(raw == null) continue;
@@ -1251,6 +1248,42 @@
       return ordered.slice(0, 30);
     }
 
+    // ✅ 露店：roten_v1_* を拾う（ログ系っぽいのは除外）
+    function findRotenProgressKeys(){
+      const out = [];
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(!k) continue;
+        if(!/^roten_v1_/i.test(k)) continue;
+
+        // 念のため：巨大ログ/履歴が入っても除外できるように
+        if(/log|history|debug/i.test(k)) continue;
+
+        out.push(k);
+      }
+
+      // よく使うキーを先頭優先（存在すれば）
+      const prefer = [
+        "roten_v1_level",
+        "roten_v1_rep",
+        "roten_v1_myshop",
+        "roten_v1_inventory",
+        "roten_v1_market",
+        "roten_v1_state",
+        "roten_v1_shelves",
+        "roten_v1_octo"
+      ];
+      const ordered = [];
+      for(const p of prefer){
+        if(localStorage.getItem(p)!=null && !ordered.includes(p)) ordered.push(p);
+      }
+      for(const k of out){
+        if(!ordered.includes(k)) ordered.push(k);
+      }
+      // 数が増えすぎても困るので上限
+      return ordered.slice(0, 60);
+    }
+
     function buildSlimBackupPayload(){
       const keys = {};
 
@@ -1267,6 +1300,12 @@
 
       // ✅ 畑レベル等（tf_v1_* 進行）
       for(const k of findFarmProgressKeys()){
+        const v = getRaw(k);
+        if(v != null) keys[k] = v;
+      }
+
+      // ✅ 露店レベル等（roten_v1_* 進行）←追加
+      for(const k of findRotenProgressKeys()){
         const v = getRaw(k);
         if(v != null) keys[k] = v;
       }
@@ -1290,10 +1329,10 @@
 
       return {
         app: "takoyaki-trc",
-        ver: 4,
-        kind: "slim",
+        ver: 5,
+        kind: "slim+roten",
         exportedAt: new Date().toISOString(),
-        note: "住民票/オクト/資材/図鑑(count+img)/畑進行(tf_v1_*)/タワー/釣り を保存。ログは保存しない。",
+        note: "住民票/オクト/資材/図鑑(count+img)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り を保存。ログは保存しない。",
         keys
       };
     }
@@ -1451,3 +1490,4 @@
   </script>
 </body>
 </html>
+
