@@ -814,6 +814,7 @@
        gate.html / 入口 + 住民票 完全版（復元強化 + BEST読取強化）
        ✅ 畑のレベル等：tf_v1_* の進行系キーをバックアップ/復元に含める
        ✅ 図鑑の画像：tf_v1_book を slim 化する時に count + img を保持（あれば）
+       ✅ ★重要：slim図鑑でも「id」を中に入れる（図鑑ページがObject.valuesでも壊れない）
        ✅ タワー/釣りBEST：数値だけ保存 / 二重JSON / キー名ブレ も拾う
        ✅ 住民票アイコン：小さく表示（CSS変更）
        ✅ 露店レベル等：roten_v1_* をバックアップ/復元に含める（今回追加）
@@ -989,9 +990,12 @@
       return (v === null || v === undefined) ? null : String(v);
     };
 
+    // ✅ 図鑑をslim化：count + img/name(+おまけ) を保持
+    // ★重要：id をノード内にも入れる（図鑑側がObject.valuesでも壊れない）
     function slimBookRawKeepImg(){
       const raw = getRaw(EXIST.farmBook);
       if(!raw) return null;
+
       const book = safeJSONParse(raw, null);
       if(!book || typeof book !== "object") return raw;
 
@@ -1001,13 +1005,23 @@
         const node = got[id] || {};
         const c = Number(node.count || 0);
         if(c > 0){
-          const out = { count: c };
+          const out = { id, count: c }; // ★ id を必ず入れる
           if(typeof node.img === "string" && node.img.trim()) out.img = node.img.trim();
           if(typeof node.name === "string" && node.name.trim()) out.name = node.name.trim();
+
+          // あるなら保持（軽量だけど復元・表示が安定する）
+          if(typeof node.rarity === "string" && node.rarity.trim()) out.rarity = node.rarity.trim();
+          if(node.at != null && String(node.at).trim()) out.at = node.at;
+          if(node.lastAt != null && String(node.lastAt).trim()) out.lastAt = node.lastAt;
+
           outGot[id] = out;
         }
       }
-      const slim = { ver: book.ver ?? 1, got: outGot };
+
+      const slim = {
+        ver: book.ver ?? 1,
+        got: outGot
+      };
       return safeStringify(slim);
     }
 
@@ -1448,6 +1462,7 @@
       keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
       keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
 
+      // ✅ 図鑑は slim（count + img/name + id）
       keys[EXIST.farmBook]  = slimBookRawKeepImg();
 
       for(const k of findFarmProgressKeys()){
@@ -1481,7 +1496,7 @@
         ver: 5,
         kind: "slim+roten",
         exportedAt: new Date().toISOString(),
-        note: "住民票/オクト/資材/図鑑(count+img)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り を保存。ログは保存しない。",
+        note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り を保存。ログは保存しない。",
         keys
       };
     }
@@ -1639,4 +1654,5 @@
   </script>
 </body>
 </html>
+
 
