@@ -39,7 +39,7 @@
 
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
-  const READY_TO_BURN_MS = 24 * 60 * 60 * 1000;  // READYから8時間で焦げ
+  const READY_TO_BURN_MS = 24 * 60 * 60 * 1000;  // READYから8時間で焦げ（※コメントと違うなら値を調整してOK）
   const TICK_MS = 1000;
 
   // ベース（使わないなら水ratesが優先）
@@ -718,8 +718,8 @@
     window.scrollTo(0, __scrollY);
   }
 
-  function onBackdrop(e){ if(e.target === modal) closeModal(); }
-  function onEsc(e){ if(e.key === "Escape") closeModal(); }
+  function onBackdrop(e){ if(e.target === modal) closeModalOrCommit(); } // ★収穫中は確定させたいので OrCommit に
+  function onEsc(e){ if(e.key === "Escape") closeModalOrCommit(); }      // ★同上
 
   function openModal(title, html){
     modal.removeEventListener("click", onBackdrop);
@@ -740,29 +740,24 @@
     modal.removeEventListener("click", onBackdrop);
     document.removeEventListener("keydown", onEsc);
     mBody.innerHTML = "";
-
     unlockScroll();
   }
 
   // =========================================================
-  // ✅ 【修正】mClose(×/閉じる) の挙動：
-  // 収穫モーダル中だけは「閉じる」でも確定（図鑑へ収納）させる
+  // ✅【最重要】収穫モーダル中だけ「閉じる＝確定」できる仕組み
   // =========================================================
-  let __harvestCommitFn = null; // 収穫モーダルを開いた時だけセットする
+  let __harvestCommitFn = null;
 
   function setHarvestCommit(fn){
     __harvestCommitFn = (typeof fn === "function") ? fn : null;
   }
-
   function clearHarvestCommit(){
     __harvestCommitFn = null;
   }
 
-  // closeModal をラップして、閉じる時に harvestCommit があれば実行
   function closeModalOrCommit(){
     if(__harvestCommitFn){
-      // 二重実行防止
-      const fn = __harvestCommitFn;
+      const fn = __harvestCommitFn; // 二重実行防止
       __harvestCommitFn = null;
       fn();
       return;
@@ -1111,7 +1106,7 @@
     state.plots[i] = { state:"EMPTY" };
     saveState(state);
 
-    // レベルアップ報酬があれば演出、なければ閉じて図鑑へ
+    // レベルアップ報酬があれば演出
     if(xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length){
       const blocks = xpRes.rewards.map(r => {
         const itemsHtml = (r.items || []).map(it => {
@@ -1148,18 +1143,23 @@
         </div>
       `);
       clearHarvestCommit();
+
       document.getElementById("btnGoZukan").addEventListener("click", () => {
         closeModal();
+        render();
         location.href = "./zukan.html";
       });
+
       render();
       return;
     }
 
-    // 通常：そのまま図鑑へ
-    closeModal(); // lock解除
-    render();
-    location.href = "./zukan.html";
+    // 通常：閉じて畑に戻る（★要望どおり）
+    // ※「閉じる」で確定 → 図鑑に入った状態で畑へ戻る
+    closeModal();     // ロック解除
+    render();         // 畑表示更新
+    // ここで図鑑へ飛ばしたい場合は↓を有効化
+    // location.href = "./zukan.html";
   }
 
   // =========================================================
@@ -1211,7 +1211,7 @@
     }
 
     // =========================================================
-    // ✅【修正】READY：閉じるでも確定するように
+    // ✅ READY：閉じるでも確定→図鑑に収録→畑へ戻る
     // =========================================================
     if (p.state === "READY") {
       if (!p.reward) {
@@ -1221,7 +1221,6 @@
       const reward = p.reward;
 
       openModal("収穫！", `
-        
         <div class="reward">
           <div class="big">${reward.name}（${reward.id}）</div>
           <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>この画面を閉じると自動で図鑑に登録されます。</div>
@@ -1236,15 +1235,16 @@
       // ★ここが重要：収穫モーダル中は「閉じる＝確定」にする
       setHarvestCommit(() => commitHarvest(i, reward));
 
-      // 「閉じる」ボタンも確定に変更
+      // 「閉じる」ボタンも確定に
       document.getElementById("btnCancel").addEventListener("click", closeModalOrCommit);
 
-      // 「確認して図鑑へ」も確定
+      // 「図鑑を確認する」＝確定して図鑑へ遷移
       document.getElementById("btnConfirm").addEventListener("click", () => {
-        // 二重実行防止（mClose等からも呼べるため）
         const fn = __harvestCommitFn;
         __harvestCommitFn = null;
         if(fn) fn();
+        // commitHarvest は通常畑に戻るので、ここだけ図鑑へ行く
+        location.href = "./zukan.html";
       });
 
       return;
@@ -1270,6 +1270,9 @@
     }
   }
 
+  // =========================================================
+  // ✅ 図鑑に追加（countで枚数管理）
+  // =========================================================
   function addToBook(card){
     const b = loadBook();
     if(!b.got) b.got = {};
@@ -1297,6 +1300,9 @@
     saveBook(b);
   }
 
+  // =========================================================
+  // ✅ tick（GROW→READY / READY→BURN）
+  // =========================================================
   function tick(){
     const now = Date.now();
     let changed = false;
@@ -1323,6 +1329,9 @@
     render();
   }
 
+  // =========================================================
+  // ✅ リセット
+  // =========================================================
   const btnReset = document.getElementById("btnReset");
   if(btnReset){
     btnReset.addEventListener("click", () => {
@@ -1349,5 +1358,10 @@
   renderLoadout();
   render();
   setInterval(tick, TICK_MS);
+
+  // =========================================================
+  // ✅ イベントをグローバルに生やさないため：必要ならここで onPlotTap を呼ぶ
+  // （あなたのHTML側で plotボタンを作っているので onPlotTap は render() 内で紐付いてます）
+  // =========================================================
 })();
 
