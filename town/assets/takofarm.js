@@ -39,7 +39,7 @@
 
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
-  const READY_TO_BURN_MS = 8 * 60 * 60 * 1000;  // READYから8時間で焦げ
+  const READY_TO_BURN_MS = 24 * 60 * 60 * 1000;  // READYから8時間で焦げ
   const TICK_MS = 1000;
 
   // ベース（使わないなら水ratesが優先）
@@ -201,7 +201,7 @@
   // =========================================================
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
-  const XP_BY_RARITY = { N:4, R:7, SR:30, UR:80, LR:120 };
+  const XP_BY_RARITY = { N:20, R:40, SR:80, UR:160, LR:300 };
 
   function xpNeedForLevel(level){
     return 120 + (level - 1) * 50 + Math.floor(Math.pow(level - 1, 1.6) * 20);
