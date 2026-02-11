@@ -1,14 +1,15 @@
 /* =========================================================
-   roten.js（たこぴのお店 / 複数購入＆Chromeでもtoast確実版）
+   roten.js（たこぴのお店 / 複数購入＆Chrome/Safari安定版）
    ✅ 資材在庫: tf_v1_inv（seed/water/fert）= ファームと完全共通
    ✅ 図鑑: tf_v1_book（got[id].count 合計を “所持” として表示）
    ✅ オクト: roten_v1_octo
    ✅ たこ焼きみくじ: 1日1回
    ✅ 公開記念プレゼント: 1回だけ
    ✅ コラボのタネ（seed_colabo）は「シリアルで増える」ので購入不可
-   ✅ Chromeでも必ず出るToast（env()を使わず bottom固定 / inline important）
-   ✅ 購入UI：数量の隣に「買う」配置（2段にしない）
+   ✅ Toast：Chromeでも確実に表示（bottom固定 / inline important）
+   ✅ 購入UI：数量の隣に「買う」（2段にしない）
    ✅ 値段表示：控えめに1行表示（レイアウト崩さない）
+   ✅ Modal：Chromeでも確実に前面表示（inline important）
 ========================================================= */
 (() => {
   "use strict";
@@ -24,9 +25,7 @@
     deviceId: "tf_v1_device_id"
   };
 
-  // ✅=========================
   // ✅ シリアル（GAS Webアプリ）
-  // ✅=========================
   const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbxZXt06RbQ0kdnkUamZtbrtD6f1MMZ30nmOoPYvMSoZenlz1hT940N2hBUxmtgNYxcA/exec";
   const REDEEM_API_KEY  = "takopi-gratan-2026";
 
@@ -96,16 +95,14 @@
     saveJSON(LS.log, a.slice(0, 80));
   }
 
-  // ---------- FARM MASTER（露店に反映） ----------
+  // ---------- MASTER DATA ----------
   const SEEDS = [
     { id:"seed_random",  name:"なに出るタネ", desc:"何が育つかは完全ランダム。\n店主も知らない。", img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
     { id:"seed_shop",    name:"店頭タネ", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
     { id:"seed_line",    name:"回線タネ", desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
     { id:"seed_special", name:"たこぴのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/29OsEvjf.png", fx:"待て" },
-
     { id:"seed_bussasari",      name:"ブッ刺さりタネ", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり補正" },
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり圧" },
-
     { id:"seed_colabo",  name:"【コラボ】グラタンのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" },
   ];
 
@@ -125,7 +122,6 @@
     { id:"fert_timeno",  name:"時間を信じない肥料", desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》", img:"https://ul.h3z.jp/l2njWY57.png", fx:"時短 90〜100%" },
   ];
 
-  // ✅ 値段テーブル
   const PRICE = {
     seed_random: 100,
     seed_shop: 200,
@@ -207,25 +203,54 @@
   const modalTitle = $("#modalTitle");
   const modalBody  = $("#modalBody");
 
+  function forceModalStyle(){
+    if(!modal) return;
+    modal.style.setProperty("position","fixed","important");
+    modal.style.setProperty("inset","0","important");
+    modal.style.setProperty("z-index","2147483646","important");
+    modal.style.setProperty("display","block","important");
+    modal.style.setProperty("pointer-events","auto","important");
+  }
+
   function openModal(title, html){
     if(!modal || !modalTitle || !modalBody) return;
     modalTitle.textContent = title || "メニュー";
     modalBody.innerHTML = html || "";
+
+    forceModalStyle();
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden","false");
+
+    requestAnimationFrame(() => {
+      forceModalStyle();
+      modal.classList.add("is-open");
+    });
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
   }
+
   function closeModal(){
     if(!modal) return;
     modal.classList.remove("is-open");
     modal.setAttribute("aria-hidden","true");
     if(modalBody) modalBody.innerHTML = "";
+
+    modal.style.removeProperty("display");
+    modal.style.removeProperty("position");
+    modal.style.removeProperty("inset");
+    modal.style.removeProperty("z-index");
+    modal.style.removeProperty("pointer-events");
+
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
   }
 
   modalBg?.addEventListener("click", closeModal);
   modalX?.addEventListener("click", closeModal);
   document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeModal(); });
 
-  // ---------- inventory ----------
+  // ---------- inventory helpers ----------
   function ownedCount(inv, kind, id){
     return Number((inv[kind]||{})[id] || 0);
   }
@@ -258,7 +283,7 @@
     const inv = ensureInvKeys();
 
     $("#octoNow") && ($("#octoNow").textContent = String(getOcto()));
-    $("#chipSeed")  && ($("#chipSeed")..textContent  = String(totalKind(inv, "seed")));
+    $("#chipSeed")  && ($("#chipSeed").textContent  = String(totalKind(inv, "seed"))); // ✅ .. 修正
     $("#chipWater") && ($("#chipWater").textContent = String(totalKind(inv, "water")));
     $("#chipFert")  && ($("#chipFert").textContent  = String(totalKind(inv, "fert")));
     $("#chipBookOwned") && ($("#chipBookOwned").textContent = String(calcBookOwned()));
@@ -279,9 +304,7 @@
     }
   }
 
-  // =========================
-  // ✅ toast：Chromeでも確実に表示（bottomは固定値、env()使わない）
-  // =========================
+  // ---------- toast ----------
   function ensureToast(){
     let el = $("#toast");
     if(!el){
@@ -297,7 +320,7 @@
     el.style.setProperty("position","fixed","important");
     el.style.setProperty("left","12px","important");
     el.style.setProperty("right","12px","important");
-    el.style.setProperty("bottom","14px","important"); // ✅ Chrome対策（envを使わない）
+    el.style.setProperty("bottom","14px","important");
     el.style.setProperty("z-index","2147483647","important");
     el.style.setProperty("pointer-events","none","important");
 
@@ -322,7 +345,6 @@
     const kind = opt.kind || "info";
     el.textContent = text || "";
 
-    // 色味
     if(kind === "good"){
       el.style.setProperty("border","1px solid rgba(159,255,168,.35)","important");
       el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(159,255,168,.18)","important");
@@ -334,7 +356,6 @@
       el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55)","important");
     }
 
-    // show（連打でも確実）
     clearTimeout(toastHype._t);
     el.style.setProperty("transition","none","important");
     el.style.setProperty("opacity","0","important");
@@ -353,15 +374,12 @@
     }, 1900);
   }
 
-  // =========================
-  // ✅ UI：2段禁止（数量の隣に買う） + 値段表示 追加CSSを注入
-  // =========================
+  // ---------- injected CSS (Safari安全版) ----------
   function injectBuyRowCSS(){
     if($("#_roten_buyrow_css")) return;
     const style = document.createElement("style");
     style.id = "_roten_buyrow_css";
     style.textContent = `
-      /* miniTag が未定義でも崩れない */
       .miniTag{
         display:inline-flex;
         align-items:center;
@@ -375,14 +393,8 @@
         white-space: nowrap;
       }
 
-      /* ✅ 右側：数量 + 買う を横並び固定（2段禁止） */
-      .good .good-buy{
-        display:flex !important;
-        flex-direction:column !important;
-        gap:8px !important;
-        align-items:stretch !important;
-      }
-
+      /* ✅ Safariで崩れた原因：good-buy自体をcolumn固定しない */
+      /* buybarだけ横並び固定にする */
       .good .buybar{
         display:flex !important;
         flex-direction:row !important;
@@ -391,21 +403,18 @@
         gap:10px !important;
         flex-wrap:nowrap !important;
       }
-
       .good .qty{
         display:flex !important;
         align-items:center !important;
         gap:8px !important;
         flex: 0 0 auto !important;
       }
-
       .good .qty .qtybtn{
         min-width:44px !important;
         height:44px !important;
         padding:0 12px !important;
         border-radius:14px !important;
       }
-
       .good .qty .qtyin{
         width:64px !important;
         height:44px !important;
@@ -416,7 +425,6 @@
         color:#fff !important;
         font-weight:900 !important;
       }
-
       .good .buybar .buybtn{
         height:44px !important;
         min-width:110px !important;
@@ -425,23 +433,22 @@
         white-space:nowrap !important;
       }
 
-      /* ✅ 値段表示：崩さない・1行 */
       .good .priceline{
+        margin-top: 6px;
         font-size: 12px;
         color: rgba(255,255,255,.72);
         text-align:right;
         white-space: nowrap;
       }
       .good .priceline b{ color: rgba(255,255,255,.92); }
-
       .good .buyhint{
+        margin-top: 4px;
         opacity:.78;
         font-size:12px;
         text-align:right;
         min-height:14px;
       }
 
-      /* スマホでも横並びを維持（極端に狭い時だけボタン縮む） */
       @media (max-width: 420px){
         .good .buybar{ gap:8px !important; }
         .good .buybar .buybtn{ min-width: 92px !important; }
@@ -451,9 +458,7 @@
     document.head.appendChild(style);
   }
 
-  // =========================
-  // ✅ 複数購入ロジック
-  // =========================
+  // ---------- purchase logic ----------
   function clamp(n, min, max){
     n = Math.floor(Number(n)||0);
     if(n < min) return min;
@@ -486,7 +491,7 @@
     return { ok:true, total, qty, price };
   }
 
-  // ---------- 商品描画 ----------
+  // ---------- render goods ----------
   let currentKind = "seed";
 
   function renderGoods(){
@@ -501,7 +506,6 @@
       const canBuy = !!g.buyable;
       const badge = g.tag ? `<span class="miniTag">${g.tag}</span>` : "";
 
-      // ✅ 値段行（購入可能なものだけ）
       const priceLine = canBuy
         ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>`
         : `<div class="priceline">単価 <b>—</b>（シリアル）</div>`;
@@ -547,7 +551,6 @@
       `;
     }).join("");
 
-    // wiring
     $$(".good", grid).forEach(card => {
       const kind = card.getAttribute("data-kind");
       const id   = card.getAttribute("data-id");
@@ -674,9 +677,7 @@
     $("#okInv", root)?.addEventListener("click", closeModal);
   }
 
-  // =========================================================
-  // ✅ serial（コラボのタネ）— GAS 連携版
-  // =========================================================
+  // ---------- serial ----------
   function loadUsedCodes(){
     const obj = loadJSON(LS.codesUsed, {});
     return (obj && typeof obj === "object") ? obj : {};
@@ -834,7 +835,7 @@
     input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") run(); });
   }
 
-  // ---------- rates modal ----------
+  // ---------- rates ----------
   function openRatesModal(){
     openModal("💧 水のレア率メモ", `
       <div class="mikuji-wrap">
@@ -861,7 +862,7 @@
       return;
     }
 
-    const ballImg = "https://ul.h3z.jp/7moREJnl.png";
+    const ballImg = "https://ul.h3z.jp/PHREbelx.png";
 
     openModal("🎲 たこ焼きみくじ（1日1回）", `
       <div class="mikuji-wrap">
@@ -886,7 +887,7 @@
     const root = modalBody || document;
     const grill = $("#grill", root);
     $$(".ball", grill).forEach(b => {
-      b.addEventListener("click", () => doMikuji(Number(b.getAttribute("data-i")||0)), { once:true });
+      b.addEventListener("click", () => doMikuji(), { once:true });
     });
   }
 
@@ -1070,12 +1071,12 @@
     refreshHUD();
     renderGoods();
 
-    // 起動確認（Chromeで出るか）
     toastHype("✨ 露店 起動！…たこ。", {kind:"info"});
   }
 
   boot();
 })();
+
 
 
 
