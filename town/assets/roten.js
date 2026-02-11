@@ -1175,13 +1175,13 @@
   }
 
   function wireButtons(){
-    $("#btnDebugPlus1000")?.addEventListener("click", () => {
-      addOcto(1000);
-      pushLog("デバッグ：オクト +1000");
-      refreshHUD();
-      setTakopiSayRandom();
-      toastHype("🧪 オクト +1000！", {kind:"good"});
-    });
+    $("#btnDebugPlus100000")?.addEventListener("click", () => {
+  addOcto(100000);
+  pushLog("デバッグ：オクト +100000");
+  refreshHUD();
+  setTakopiSayRandom();
+  toastHype("🧪 オクト +100000！", {kind:"good"});
+});
 
     // ✅ 所持資材ボタンは削除（クリックしても何もしない）
     $("#btnOpenInv")?.addEventListener("click", (e) => {
