@@ -1,7 +1,7 @@
 /* =========================================================
    roten.js（たこぴのお店 / 複数購入＆Chrome/Safari安定版）
    ✅ 資材在庫: tf_v1_inv（seed/water/fert）= ファームと完全共通
-   ✅ 図鑑: tf_v1_book（got[id].count 合計を “所持” として表示）
+   ✅ 図鑑: tf_v1_book（got[id].count 合計を “所持” として表示）※今回はUIから非表示化
    ✅ オクト: roten_v1_octo
    ✅ たこ焼きみくじ: 1日1回（おみくじ演出：大吉/中吉/末吉/凶/大凶 + 報酬テーブル）
    ✅ 公開記念プレゼント: 1回だけ
@@ -14,6 +14,14 @@
    ✅ ボタン：＋/−/買う を少し小さく
    ✅ オクト不足の常時ヒント表示を削除（押下時Toastのみ）
    ✅ おみくじオクト：大凶1 / 凶500 / 末吉1000 / 中吉3000 / 大吉7777
+
+   ✅ 変更点（今回）
+   ・「水のレア率メモ」ボタン → 《タネ、ミズ、ヒリョウについて》 に変更
+     - 可能な範囲で “購入（タップで買う）” の右横・右端寄せに移動（HTML変更なしでDOM移動）
+   ・「所持資材」ボタン削除（#btnOpenInv を無効化/非表示）
+   ・所持チップの絵文字（🌱/💧/🧪）をタップすると内訳モーダル表示
+     - #chipSeed / #chipWater / #chipFert をクリック可能化
+   ・本絵文字/リサイクル（図鑑系UI）を削除：#chipBookOwned / #chipBookDup を非表示化
 ========================================================= */
 (() => {
   "use strict";
@@ -105,11 +113,7 @@
     { id:"seed_shop",    name:"店頭タネ", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
     { id:"seed_line",    name:"回線タネ", desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
     { id:"seed_special", name:"たこぴのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/29OsEvjf.png", fx:"待て" },
-
-    // ※ここ、あなたの貼りコードだと seed_bussasari が seed_namara と同じ画像になってたので注意。
-    // もし意図通りならこのままでOK。違うなら img を正しいURLに差し替えてね。
     { id:"seed_bussasari",      name:"ブッ刺さりタネ", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり補正" },
-
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり圧" },
     { id:"seed_colabo",  name:"【コラボ】グラタンのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" },
   ];
@@ -290,6 +294,8 @@
     $("#chipSeed")  && ($("#chipSeed").textContent  = String(totalKind(inv, "seed")));
     $("#chipWater") && ($("#chipWater").textContent = String(totalKind(inv, "water")));
     $("#chipFert")  && ($("#chipFert").textContent  = String(totalKind(inv, "fert")));
+
+    // 図鑑UIは今回「本/リサイクル削除」指定なので値更新は残しつつ、表示はCSSで潰す
     $("#chipBookOwned") && ($("#chipBookOwned").textContent = String(calcBookOwned()));
     $("#chipBookDup")   && ($("#chipBookDup").textContent   = "0");
 
@@ -381,7 +387,7 @@
   }
 
   // =========================================================
-  // ✅ CSS注入：所持バッジ + ボタン小型化
+  // ✅ CSS注入：所持バッジ + ボタン小型化 + 今回のUI調整
   // =========================================================
   function injectBuyRowCSS(){
     if($("#_roten_buyrow_css")) return;
@@ -479,10 +485,45 @@
 
       .good .buyhint{ display:none !important; }
 
+      /* ✅ 所持資材ボタン削除（HTML触らないのでJS側で非表示化） */
+      #btnOpenInv{ display:none !important; }
+
+      /* ✅ 図鑑（本/リサイクル）UI削除 */
+      #chipBookOwned, #chipBookDup{ display:none !important; }
+
+      /* ✅ チップをタップ可能に（カーソル/押し込み感） */
+      #chipSeed, #chipWater, #chipFert{
+        cursor:pointer;
+        user-select:none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #chipSeed:active, #chipWater:active, #chipFert:active{
+        transform: translateY(1px);
+      }
+
+      /* ✅ 右端寄せの説明ボタン（移動先の器が取れた場合） */
+      .roten-about-wrap{
+        display:flex;
+        justify-content:flex-end;
+        align-items:center;
+        gap:10px;
+        width:100%;
+        margin: 10px 0 2px;
+      }
+      .roten-about-btn{
+        height: 36px !important;
+        padding: 0 12px !important;
+        border-radius: 12px !important;
+        font-weight: 900 !important;
+        font-size: 12px !important;
+        white-space: nowrap !important;
+      }
+
       @media (max-width: 420px){
         .good .buybar{ gap:7px !important; }
         .good .buybar .buybtn{ min-width: 86px !important; }
         .good .qty .qtyin{ width: 52px !important; }
+        .roten-about-btn{ font-size: 12px !important; }
       }
     `;
     document.head.appendChild(style);
@@ -630,48 +671,59 @@
     });
   }
 
-  // ---------- inventory modal ----------
-  function openInvModal(){
+  // =========================================================
+  // ✅ 所持チップ（🌱/💧/🧪）タップ → 内訳モーダル
+  // =========================================================
+  function openBreakdownModal(kindKey){
     const inv = ensureInvKeys();
-    function list(kindLabel, kindKey){
-      const items = GOODS.filter(g => g.kind === kindKey);
-      const lines = items.map(g => {
-        const c = String(ownedCount(inv, g.kind, g.id));
-        const memo = (!g.buyable && g.id==="seed_colabo") ? "（シリアル限定）" : "";
-        return `<div class="inv-row">
+    const titleMap = { seed:"🌱 種の内訳", water:"💧 水の内訳", fert:"🧪 肥料の内訳" };
+    const items = GOODS.filter(g => g.kind === kindKey);
+
+    const rows = items.map(g => {
+      const c = String(ownedCount(inv, g.kind, g.id));
+      const memo = (!g.buyable && g.id==="seed_colabo") ? "（シリアル限定）" : "";
+      return `
+        <div class="inv-row">
           <div class="inv-left">
             <span class="inv-name">${g.name}</span>
             <span class="inv-memo">${memo}</span>
           </div>
           <div class="inv-right">×<b>${c}</b></div>
-        </div>`;
-      }).join("");
-
-      return `
-        <div class="inv-box">
-          <div class="inv-title">${kindLabel}</div>
-          ${lines || `<div class="note">まだ何もない…たこ。</div>`}
         </div>
       `;
-    }
+    }).join("");
 
-    openModal("📦 所持資材", `
+    openModal(titleMap[kindKey] || "📦 内訳", `
       <div class="mikuji-wrap">
         <div class="note">※所持数は <b>tf_v1_inv</b>（ファーム在庫）と完全連動。</div>
-        ${list("🌱 種", "seed")}
-        ${list("💧 水", "water")}
-        ${list("🧪 肥料", "fert")}
+        <div class="inv-box">
+          <div class="inv-title">${titleMap[kindKey] || "内訳"}</div>
+          ${rows || `<div class="note">まだ何もない…たこ。</div>`}
+        </div>
         <div class="row">
-          <button class="btn btn-ghost" id="okInv" type="button">閉じる</button>
+          <button class="btn btn-ghost" id="okBreakdown" type="button">閉じる</button>
         </div>
       </div>
     `);
 
     const root = document.getElementById("modalBody") || document;
-    $("#okInv", root)?.addEventListener("click", closeModal);
+    $("#okBreakdown", root)?.addEventListener("click", closeModal);
   }
 
-  // ---------- serial ----------
+  function wireChipBreakdowns(){
+    const seed = $("#chipSeed");
+    const water = $("#chipWater");
+    const fert = $("#chipFert");
+
+    // 既存の“表示用”のままでもクリックできるように（HTML変更なし）
+    seed?.addEventListener("click", () => { openBreakdownModal("seed"); setTakopiSayRandom(); });
+    water?.addEventListener("click", () => { openBreakdownModal("water"); setTakopiSayRandom(); });
+    fert?.addEventListener("click", () => { openBreakdownModal("fert"); setTakopiSayRandom(); });
+  }
+
+  // =========================================================
+  // ✅ シリアル
+  // =========================================================
   function loadUsedCodes(){
     const obj = loadJSON(LS.codesUsed, {});
     return (obj && typeof obj === "object") ? obj : {};
@@ -817,47 +869,129 @@
     input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") run(); });
   }
 
-  // ---------- rates ----------
-  function openRatesModal(){
-    openModal("💧 水のレア率メモ", `
+  // =========================================================
+  // ✅ 《タネ、ミズ、ヒリョウについて》モーダル（丁寧説明）
+  // =========================================================
+  function openAboutModal(){
+    openModal("📘 タネ、ミズ、ヒリョウについて", `
       <div class="mikuji-wrap">
         <div class="note">
-          ここは“説明”じゃなく“ワクワク”用のメモ。<br>
-          ・ただの水：基準（ただし有料）<br>
-          ・なんか良さそう：ちょい上振れ<br>
-          ・怪しい水：現実準拠の空気<br>
-          ・やりすぎ：勝負<br>
-          ・押さなきゃよかった：事件
+          ここは「説明書」じゃなく、<b>当たりを引くための作戦メモ</b>…たこ。<br>
+          ※最終的な抽選は “ファーム側の収穫ロジック” に従う…たこ。
         </div>
-        <button class="btn btn-ghost" id="okRates" type="button">閉じる</button>
+
+        <div class="inv-box">
+          <div class="inv-title">🌱 タネ（何を育てるか）</div>
+          <div class="note">
+            <b>タネは「カードの候補（出るプール）」</b>を決める入口…たこ。<br>
+            ・<b>なに出るタネ</b>：候補が広い（完全ランダム）<br>
+            ・<b>店頭/回線タネ</b>：候補が“それっぽく”寄る（店頭/回線の気配）<br>
+            ・<b>たこぴのタネ</b>：今は静か…でも未来で化ける枠（演出用・特別枠）<br>
+            ・<b>ブッ刺さり/なまら買わさる</b>：高額＝強い体験枠（期待値というより“物語”）<br>
+            ・<b>【コラボ】</b>：購入不可。<b>シリアルでのみ増える</b>…たこ。
+          </div>
+        </div>
+
+        <div class="inv-box">
+          <div class="inv-title">💧 ミズ（レア度の押し上げ）</div>
+          <div class="note">
+            <b>ミズは「レア抽選の上振れ」を起こす</b>役…たこ。<br>
+            下ほど“期待が上がる”代わりに、財布が乾く…たこ。<br><br>
+
+            ・<b>ただの水</b>：基準。<b>UR/LRは出ない</b>（安全だが夢は少なめ）<br>
+            ・<b>なんか良さそう</b>：少しだけ上振れ（初心者向け）<br>
+            ・<b>怪しい水</b>：現実準拠の標準（普段の空気）<br>
+            ・<b>やりすぎな水</b>：勝負。上振れを狙う水<br>
+            ・<b>押さなきゃよかった水</b>：事件枠。<b>“強い結果”が出やすい</b>（SNS向け）
+          </div>
+        </div>
+
+        <div class="inv-box">
+          <div class="inv-title">🧪 ヒリョウ（時間/事故率の調整）</div>
+          <div class="note">
+            <b>ヒリョウは「時短」と「事故（焼きすぎ/生焼け）」</b>を触る…たこ。<br><br>
+
+            ・<b>ただの揚げ玉</b>：時短0。<b>焼きすぎたカード</b>が起きやすい（交換素材向け）<br>
+            ・<b>気のせい肥料</b>：時短少し（体感レベル）<br>
+            ・<b>根性論ぶち込み</b>：時短20%（急ぎたい人）<br>
+            ・<b>工程すっ飛ばし</b>：時短40%（焦げリスクも“それなり”）<br>
+            ・<b>時間を信じない</b>：時短90〜100%。<b>稀にドロドロ生焼け</b>（禁忌。面白さ最優先）
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn btn-ghost" id="okAbout" type="button">閉じる</button>
+        </div>
       </div>
     `);
+
     const root = document.getElementById("modalBody") || document;
-    $("#okRates", root)?.addEventListener("click", closeModal);
+    $("#okAbout", root)?.addEventListener("click", closeModal);
+  }
+
+  // ✅ ボタンを「購入（タップで買う）」の右横へ（HTML変更なしで探して寄せる）
+  function placeAboutButton(){
+    let btn = $("#btnOpenRates");
+    if(!btn){
+      // 無ければ作る（壊れにくい）
+      btn = document.createElement("button");
+      btn.id = "btnOpenRates";
+      btn.className = "btn roten-about-btn";
+      btn.type = "button";
+      btn.textContent = "《タネ、ミズ、ヒリョウについて》";
+      document.body.appendChild(btn);
+    }
+
+    // 表示名を更新
+    btn.textContent = "《タネ、ミズ、ヒリョウについて》";
+    btn.classList.add("roten-about-btn");
+
+    // 置き場を探す：ボタン/見出しの文言に「購入」「タップで買う」が含まれる要素の近くへ
+    const candidates = $$("h1,h2,h3,h4,div,section,p,span,button,a").filter(el => {
+      const t = (el.textContent || "").replace(/\s+/g,"");
+      return t.includes("購入") || t.includes("タップで買う");
+    });
+
+    // なるべく“下のUI帯”っぽい場所へ（最後の候補）
+    const anchor = candidates.length ? candidates[candidates.length - 1] : null;
+
+    // 右寄せの器（wrap）を用意
+    const wrap = document.createElement("div");
+    wrap.className = "roten-about-wrap";
+    wrap.appendChild(btn);
+
+    // 既に wrap が置かれてたら更新だけ
+    const existingWrap = $("#_roten_about_wrap");
+    if(existingWrap){
+      existingWrap.innerHTML = "";
+      existingWrap.appendChild(btn);
+      return;
+    }
+    wrap.id = "_roten_about_wrap";
+
+    if(anchor && anchor.parentElement){
+      // “購入”の行の直後に差し込む
+      anchor.parentElement.insertBefore(wrap, anchor.nextSibling);
+    }else{
+      // 無理ならトップ付近（壊れない）
+      const app = $("#rotenApp") || document.body;
+      app.insertBefore(wrap, app.firstChild);
+    }
   }
 
   // =========================================================
   // ✅ たこ焼きみくじ（おみくじ版：オクト指定反映）
   // =========================================================
   const OMKUJI = [
-    // 大吉 7777
-    { w: 8,  luck:"大吉", kind:"seed",  id:"seed_special", qty:1,    octo:7777, label:"たこぴのタネ×1 + オクト+7777",
+    { w: 8,  luck:"大吉", kind:"seed",  id:"seed_special", qty:1, octo:7777, label:"たこぴのタネ×1 + オクト+7777",
       msg:"焼き台が歌ってる…たこ。今日は“伝説”が出る…たこ。" },
-
-    // 中吉 3000
-    { w: 18, luck:"中吉", kind:"water", id:"water_regret", qty:1,    octo:3000, label:"押さなきゃよかった水×1 + オクト+3000",
+    { w: 18, luck:"中吉", kind:"water", id:"water_regret", qty:1, octo:3000, label:"押さなきゃよかった水×1 + オクト+3000",
       msg:"事件の匂い…たこ。SNS向けの運…たこ。" },
-
-    // 末吉 1000
-    { w: 28, luck:"末吉", kind:"water", id:"water_overdo", qty:1,    octo:1000, label:"やりすぎな水×1 + オクト+1000",
+    { w: 28, luck:"末吉", kind:"water", id:"water_overdo", qty:1, octo:1000, label:"やりすぎな水×1 + オクト+1000",
       msg:"勝負の一滴…たこ。うまく焼けるといいね…たこ。" },
-
-    // 凶 500
-    { w: 28, luck:"凶",   kind:"fert",  id:"fert_skip",    qty:1,    octo: 500, label:"工程すっ飛ばし肥料×1 + オクト+500",
+    { w: 28, luck:"凶",   kind:"fert",  id:"fert_skip",    qty:1, octo: 500, label:"工程すっ飛ばし肥料×1 + オクト+500",
       msg:"焦ると…焼ける…たこ。近道はだいたい罠…たこ。" },
-
-    // 大凶 1（※あなた指定に合わせて 1 に修正）
-    { w: 18, luck:"大凶", kind:"octo",  id:"octo",         qty:1,    octo:   1, label:"オクト+1",
+    { w: 18, luck:"大凶", kind:"octo",  id:"octo",         qty:1, octo:   1, label:"オクト+1",
       msg:"……大凶でも、1オクトは“希望”…たこ。明日がある…たこ。" },
   ];
 
@@ -872,12 +1006,7 @@
   }
 
   function applyReward(reward){
-    // ✅ まずオクト付与（常に）
-    if(Number(reward.octo) > 0){
-      addOcto(Number(reward.octo));
-    }
-
-    // ✅ アイテム付与（octo-only の場合はスキップ）
+    if(Number(reward.octo) > 0) addOcto(Number(reward.octo));
     if(reward.kind === "octo") return;
 
     const inv = ensureInvKeys();
@@ -1054,13 +1183,16 @@
       toastHype("🧪 オクト +1000！", {kind:"good"});
     });
 
-    $("#btnOpenInv")?.addEventListener("click", () => {
-      openInvModal();
-      setTakopiSayRandom();
+    // ✅ 所持資材ボタンは削除（クリックしても何もしない）
+    $("#btnOpenInv")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toastHype("📦 所持内訳は、上の 🌱/💧/🧪 をタップ…たこ。", {kind:"info"});
     });
 
+    // ✅ 新：説明ボタン
     $("#btnOpenRates")?.addEventListener("click", () => {
-      openRatesModal();
+      openAboutModal();
       setTakopiSayRandom();
     });
 
@@ -1084,11 +1216,17 @@
     ensureToast();
     injectBuyRowCSS();
     ensureInvKeys();
+
+    // ✅ ボタン移動＆名称変更（HTML触らない）
+    placeAboutButton();
+
     setTakopiSayRandom();
     wireModalClose();
     wireTabs();
     wireButtons();
     wireSerialInline();
+    wireChipBreakdowns();
+
     refreshHUD();
     renderGoods();
     toastHype("✨ 露店 起動！…たこ。", {kind:"info"});
