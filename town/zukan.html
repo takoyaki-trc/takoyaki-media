@@ -244,8 +244,15 @@
       <div class="field">
         <div class="label">並び替え</div>
         <select id="sort">
-          <option value="new">新しい順（at 降順）</option>
-          <option value="num">番号順（id の数値）</option>
+          <option value="new">入手順（新しい順 / lastAt優先）</option>
+          <option value="dup">ダブり枚数順（所持枚数）</option>
+          <option value="tn_shop">店頭ナンバー（TN-001〜025）</option>
+          <option value="tn_net">通販ナンバー（TN-026〜050）</option>
+          <option value="tp">たこぴプロモ（TP）</option>
+          <option value="nk">限定ショップ（NK）</option>
+          <option value="bs">ダーツプロ（BS）</option>
+          <option value="sp">スペシャル（SP）</option>
+          <option value="all_serial">全カード品番順（おすすめ）</option>
         </select>
       </div>
 
@@ -385,13 +392,19 @@
   function safeJSONParse(str){ try { return JSON.parse(str); } catch(e){ return null; } }
   function normalizeText(s){ return (s ?? "").toString().trim().toLowerCase(); }
 
+  // ========= 品番解析（TN/TP/NK/BS/SP など） =========
+  function parseCardId(id){
+    const s = (id ?? "").toString().trim().toUpperCase();
+    // TN-026 / TN026 / BS-002 / TP-001 / SP-1 など対応
+    const m = s.match(/^([A-Z]+)[-_]?(\d+)?$/);
+    if(!m) return { prefix:"ZZ", num:9999 };
+    return { prefix: m[1], num: Number(m[2] || 0) };
+  }
+
+  // “番号だけ”取りたい時（旧 num互換）
   function idToNumber(id){
-    const s = (id ?? "").toString();
-    const m = s.match(/(\d+)/g);
-    if(!m) return Number.POSITIVE_INFINITY;
-    const last = m[m.length - 1];
-    const n = parseInt(last, 10);
-    return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+    const p = parseCardId(id);
+    return Number.isFinite(p.num) ? p.num : Number.POSITIVE_INFINITY;
   }
 
   function isSRPlus(rarity){
@@ -536,23 +549,84 @@
       return hay.includes(q);
     });
 
-    // sort
+    // ========= sort =========
     if(sort === "new"){
-      // ★ 最終入手(lastAt)があれば優先。なければ at。
+      // 入手順（最終入手 lastAt 優先）
       view.sort((a,b) => {
         const ta = toTime(a.lastAt || a.at);
         const tb = toTime(b.lastAt || b.at);
         return tb - ta;
       });
-    } else if(sort === "num"){
+
+    }else if(sort === "dup"){
+      // ダブり枚数順（多い→少ない） 同数なら品番→新しい順
       view.sort((a,b) => {
-        const na = idToNumber(a.id);
-        const nb = idToNumber(b.id);
-        if(na !== nb) return na - nb;
+        const ca = getCount(a.id);
+        const cb = getCount(b.id);
+        if(cb !== ca) return cb - ca;
+
+        const A = parseCardId(a.id);
+        const B = parseCardId(b.id);
+        if(A.prefix !== B.prefix) return A.prefix.localeCompare(B.prefix);
+        if(A.num !== B.num) return A.num - B.num;
+
         const ta = toTime(a.lastAt || a.at);
         const tb = toTime(b.lastAt || b.at);
         return tb - ta;
       });
+
+    }else if(sort === "tn_shop"){
+      // 店頭 TN-001〜025
+      view = view.filter(c=>{
+        const p = parseCardId(c.id);
+        return p.prefix === "TN" && p.num >= 1 && p.num <= 25;
+      }).sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+
+    }else if(sort === "tn_net"){
+      // 通販 TN-026〜050
+      view = view.filter(c=>{
+        const p = parseCardId(c.id);
+        return p.prefix === "TN" && p.num >= 26 && p.num <= 50;
+      }).sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+
+    }else if(sort === "tp"){
+      view = view.filter(c=> parseCardId(c.id).prefix === "TP")
+                 .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+
+    }else if(sort === "nk"){
+      view = view.filter(c=> parseCardId(c.id).prefix === "NK")
+                 .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+
+    }else if(sort === "bs"){
+      view = view.filter(c=> parseCardId(c.id).prefix === "BS")
+                 .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+
+    }else if(sort === "sp"){
+      view = view.filter(c=> parseCardId(c.id).prefix === "SP")
+                 .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+
+    }else if(sort === "all_serial"){
+      // 全カード品番順（シリーズ優先順→番号）
+      const prefixOrder = { TN:1, TP:2, NK:3, BS:4, SP:5 };
+      view.sort((a,b)=>{
+        const A = parseCardId(a.id);
+        const B = parseCardId(b.id);
+
+        const pa = prefixOrder[A.prefix] ?? 99;
+        const pb = prefixOrder[B.prefix] ?? 99;
+        if(pa !== pb) return pa - pb;
+
+        if(A.num !== B.num) return A.num - B.num;
+
+        // 同じID/番号なら新しい順（見た目安定）
+        const ta = toTime(a.lastAt || a.at);
+        const tb = toTime(b.lastAt || b.at);
+        return tb - ta;
+      });
+
+    }else{
+      // フォールバック（旧 num互換）
+      view.sort((a,b) => idToNumber(a.id) - idToNumber(b.id));
     }
 
     // ピル：表示枚数 / 図鑑種類数（all）
@@ -683,249 +757,249 @@
   // ★ 全角スペースが混じると事故るので、ここは半角のみで書き直し
   mClose.addEventListener("click", closeModal);
 
-  // init
-  load();
-
-  
-
-    // =========================================================
-    // ★ 復元コード（ユーザーごとに自分で作る）
-    // =========================================================
-    function b64uEncodeBytes(bytes){
-      let bin = "";
-      const chunk = 0x8000;
-      for(let i=0;i<bytes.length;i+=chunk){
-        bin += String.fromCharCode(...bytes.subarray(i, i+chunk));
-      }
-      const b64 = btoa(bin);
-      return b64.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  // =========================================================
+  // ★ 復元コード（ユーザーごとに自分で作る）
+  // =========================================================
+  function b64uEncodeBytes(bytes){
+    let bin = "";
+    const chunk = 0x8000;
+    for(let i=0;i<bytes.length;i+=chunk){
+      bin += String.fromCharCode(...bytes.subarray(i, i+chunk));
     }
-    function b64uDecodeToBytes(b64u){
-      const b64 = b64u.replace(/-/g,"+").replace(/_/g,"/") + "===".slice((b64u.length + 3) % 4);
-      const bin = atob(b64);
-      const bytes = new Uint8Array(bin.length);
-      for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
-      return bytes;
+    const b64 = btoa(bin);
+    return b64.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }
+  function b64uDecodeToBytes(b64u){
+    const b64 = b64u.replace(/-/g,"+").replace(/_/g,"/") + "===".slice((b64u.length + 3) % 4);
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  function b64uEncodeText(str){ return b64uEncodeBytes(te.encode(str)); }
+  function b64uDecodeText(b64u){ return td.decode(b64uDecodeToBytes(b64u)); }
+
+  function randBytes(n){
+    const a = new Uint8Array(n);
+    crypto.getRandomValues(a);
+    return a;
+  }
+
+  async function deriveKeyFromPIN(pinStr, saltBytes, iterations){
+    const baseKey = await crypto.subtle.importKey(
+      "raw", te.encode(pinStr), { name:"PBKDF2" }, false, ["deriveKey"]
+    );
+    return crypto.subtle.deriveKey(
+      { name:"PBKDF2", salt:saltBytes, iterations, hash:"SHA-256" },
+      baseKey,
+      { name:"AES-GCM", length:256 },
+      false,
+      ["encrypt","decrypt"]
+    );
+  }
+
+  async function makeRestoreCode(){
+    bMsg.className = "bm-mini bm-ng";
+    bMsg.textContent = "";
+
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw){
+      bMsg.textContent = "図鑑データがありません（tf_v1_book が空）。";
+      return;
     }
-    function b64uEncodeText(str){ return b64uEncodeBytes(te.encode(str)); }
-    function b64uDecodeText(b64u){ return td.decode(b64uDecodeToBytes(b64u)); }
 
-    function randBytes(n){
-      const a = new Uint8Array(n);
-      crypto.getRandomValues(a);
-      return a;
-    }
+    const pinStr = (pin.value ?? "").trim();
 
-    async function deriveKeyFromPIN(pinStr, saltBytes, iterations){
-      const baseKey = await crypto.subtle.importKey(
-        "raw", te.encode(pinStr), { name:"PBKDF2" }, false, ["deriveKey"]
-      );
-      return crypto.subtle.deriveKey(
-        { name:"PBKDF2", salt:saltBytes, iterations, hash:"SHA-256" },
-        baseKey,
-        { name:"AES-GCM", length:256 },
-        false,
-        ["encrypt","decrypt"]
-      );
-    }
-
-    async function makeRestoreCode(){
-      bMsg.className = "bm-mini bm-ng";
-      bMsg.textContent = "";
-
-      const raw = localStorage.getItem(LS_KEY);
-      if(!raw){
-        bMsg.textContent = "図鑑データがありません（tf_v1_book が空）。";
-        return;
-      }
-
-      const pinStr = (pin.value ?? "").trim();
-
-      // PINなし（平文base64）
-      if(!pinStr){
-        const payload = { v:1, alg:"PLAIN", key:LS_KEY, data_b64:b64uEncodeText(raw) };
-        codeBox.value = b64uEncodeText(JSON.stringify(payload));
-        localStorage.setItem(LS_BACKUP_AT, String(Date.now()));
-        updateBackupLine();
-        bMsg.className = "bm-mini bm-ok";
-        bMsg.textContent = "発行しました（PINなし / 暗号化なし）。コピー or .txt保存してね。";
-        return;
-      }
-
-      // PINあり（暗号化）
-      const salt = randBytes(16);
-      const iv = randBytes(12);
-      const iterations = 120000;
-
-      const key = await deriveKeyFromPIN(pinStr, salt, iterations);
-      const plainBytes = te.encode(raw);
-      const ct = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, key, plainBytes);
-
-      const payload = {
-        v:1,
-        alg:"A256GCM",
-        kdf:"PBKDF2-SHA256",
-        iter:iterations,
-        key:LS_KEY,
-        salt_b64:b64uEncodeBytes(salt),
-        iv_b64:b64uEncodeBytes(iv),
-        ct_b64:b64uEncodeBytes(new Uint8Array(ct))
-      };
-
+    // PINなし（平文base64）
+    if(!pinStr){
+      const payload = { v:1, alg:"PLAIN", key:LS_KEY, data_b64:b64uEncodeText(raw) };
       codeBox.value = b64uEncodeText(JSON.stringify(payload));
       localStorage.setItem(LS_BACKUP_AT, String(Date.now()));
       updateBackupLine();
       bMsg.className = "bm-mini bm-ok";
-      bMsg.textContent = "発行しました（PINあり / 暗号化）。PINも忘れずに保管してね。";
+      bMsg.textContent = "発行しました（PINなし / 暗号化なし）。コピー or .txt保存してね。";
+      return;
     }
 
-    async function restoreFromCode(){
-      bMsg.className = "bm-mini bm-ng";
-      bMsg.textContent = "";
+    // PINあり（暗号化）
+    const salt = randBytes(16);
+    const iv = randBytes(12);
+    const iterations = 120000;
 
-      const code = (codeBox.value ?? "").trim();
-      if(!code){ bMsg.textContent = "復元コードが空です。"; return; }
+    const key = await deriveKeyFromPIN(pinStr, salt, iterations);
+    const plainBytes = te.encode(raw);
+    const ct = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, key, plainBytes);
 
-      let payload = null;
+    const payload = {
+      v:1,
+      alg:"A256GCM",
+      kdf:"PBKDF2-SHA256",
+      iter:iterations,
+      key:LS_KEY,
+      salt_b64:b64uEncodeBytes(salt),
+      iv_b64:b64uEncodeBytes(iv),
+      ct_b64:b64uEncodeBytes(new Uint8Array(ct))
+    };
+
+    codeBox.value = b64uEncodeText(JSON.stringify(payload));
+    localStorage.setItem(LS_BACKUP_AT, String(Date.now()));
+    updateBackupLine();
+    bMsg.className = "bm-mini bm-ok";
+    bMsg.textContent = "発行しました（PINあり / 暗号化）。PINも忘れずに保管してね。";
+  }
+
+  async function restoreFromCode(){
+    bMsg.className = "bm-mini bm-ng";
+    bMsg.textContent = "";
+
+    const code = (codeBox.value ?? "").trim();
+    if(!code){ bMsg.textContent = "復元コードが空です。"; return; }
+
+    let payload = null;
+    try{
+      payload = JSON.parse(b64uDecodeText(code));
+    }catch(e){
+      bMsg.textContent = "復元コードの形式が正しくありません（デコード失敗）。";
+      return;
+    }
+
+    if(!payload || payload.v !== 1 || !payload.alg){
+      bMsg.textContent = "復元コードの形式が正しくありません（payload不正）。";
+      return;
+    }
+
+    const targetKey = payload.key || LS_KEY;
+
+    if(payload.alg === "PLAIN"){
       try{
-        payload = JSON.parse(b64uDecodeText(code));
+        const raw = b64uDecodeText(payload.data_b64);
+        localStorage.setItem(targetKey, raw);
+        load();
+        bMsg.className = "bm-mini bm-ok";
+        bMsg.textContent = "復元しました！";
+        return;
       }catch(e){
-        bMsg.textContent = "復元コードの形式が正しくありません（デコード失敗）。";
+        bMsg.textContent = "復元に失敗しました（平文データの復号失敗）。";
         return;
       }
+    }
 
-      if(!payload || payload.v !== 1 || !payload.alg){
-        bMsg.textContent = "復元コードの形式が正しくありません（payload不正）。";
+    if(payload.alg === "A256GCM"){
+      const pinStr = (pin.value ?? "").trim();
+      if(!pinStr){
+        bMsg.textContent = "この復元コードは暗号化されています。PINを入力してください。";
         return;
       }
+      try{
+        const salt = b64uDecodeToBytes(payload.salt_b64);
+        const iv = b64uDecodeToBytes(payload.iv_b64);
+        const ct = b64uDecodeToBytes(payload.ct_b64);
+        const iter = payload.iter || 120000;
 
-      const targetKey = payload.key || LS_KEY;
+        const key = await deriveKeyFromPIN(pinStr, salt, iter);
+        const pt = await crypto.subtle.decrypt({ name:"AES-GCM", iv }, key, ct);
+        const raw = td.decode(new Uint8Array(pt));
 
-      if(payload.alg === "PLAIN"){
-        try{
-          const raw = b64uDecodeText(payload.data_b64);
-          localStorage.setItem(targetKey, raw);
-          load();
-          bMsg.className = "bm-mini bm-ok";
-          bMsg.textContent = "復元しました！";
-          return;
-        }catch(e){
-          bMsg.textContent = "復元に失敗しました（平文データの復号失敗）。";
-          return;
-        }
+        localStorage.setItem(targetKey, raw);
+        load();
+        bMsg.className = "bm-mini bm-ok";
+        bMsg.textContent = "復元しました！";
+        return;
+      }catch(e){
+        bMsg.textContent = "復元に失敗しました。PINが違うか、コードが壊れています。";
+        return;
       }
-
-      if(payload.alg === "A256GCM"){
-        const pinStr = (pin.value ?? "").trim();
-        if(!pinStr){
-          bMsg.textContent = "この復元コードは暗号化されています。PINを入力してください。";
-          return;
-        }
-        try{
-          const salt = b64uDecodeToBytes(payload.salt_b64);
-          const iv = b64uDecodeToBytes(payload.iv_b64);
-          const ct = b64uDecodeToBytes(payload.ct_b64);
-          const iter = payload.iter || 120000;
-
-          const key = await deriveKeyFromPIN(pinStr, salt, iter);
-          const pt = await crypto.subtle.decrypt({ name:"AES-GCM", iv }, key, ct);
-          const raw = td.decode(new Uint8Array(pt));
-
-          localStorage.setItem(targetKey, raw);
-          load();
-          bMsg.className = "bm-mini bm-ok";
-          bMsg.textContent = "復元しました！";
-          return;
-        }catch(e){
-          bMsg.textContent = "復元に失敗しました。PINが違うか、コードが壊れています。";
-          return;
-        }
-      }
-
-      bMsg.textContent = "未対応の復元コードです。";
     }
 
-    function copyCode(){
-      const t = (codeBox.value ?? "").trim();
-      if(!t){ bMsg.className="bm-mini bm-ng"; bMsg.textContent = "コピーするコードがありません。"; return; }
-      navigator.clipboard?.writeText(t).then(()=>{
-        bMsg.className="bm-mini bm-ok"; bMsg.textContent = "コピーしました！";
-      }).catch(()=>{
-        codeBox.focus(); codeBox.select();
-        document.execCommand("copy");
-        bMsg.className="bm-mini bm-ok"; bMsg.textContent = "コピーしました！";
-      });
-    }
+    bMsg.textContent = "未対応の復元コードです。";
+  }
 
-    function saveTxt(){
-      const t = (codeBox.value ?? "").trim();
-      if(!t){ bMsg.className="bm-mini bm-ng"; bMsg.textContent = "保存するコードがありません。"; return; }
-      const blob = new Blob([t], { type:"text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      const ts = new Date();
-      a.href = url;
-      a.download = `takoyaki_zukan_restore_code_${ts.getFullYear()}${String(ts.getMonth()+1).padStart(2,"0")}${String(ts.getDate()).padStart(2,"0")}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      bMsg.className="bm-mini bm-ok"; bMsg.textContent = ".txtで保存しました！";
-    }
-
-    filePick.addEventListener("change", async (e)=>{
-      const f = e.target.files?.[0];
-      if(!f) return;
-      const text = await f.text();
-      codeBox.value = text.trim();
-      bMsg.className="bm-mini bm-ok";
-      bMsg.textContent = "読み込みました。復元ボタンを押してね。";
-      filePick.value = "";
+  function copyCode(){
+    const t = (codeBox.value ?? "").trim();
+    if(!t){ bMsg.className="bm-mini bm-ng"; bMsg.textContent = "コピーするコードがありません。"; return; }
+    navigator.clipboard?.writeText(t).then(()=>{
+      bMsg.className="bm-mini bm-ok"; bMsg.textContent = "コピーしました！";
+    }).catch(()=>{
+      codeBox.focus(); codeBox.select();
+      document.execCommand("copy");
+      bMsg.className="bm-mini bm-ok"; bMsg.textContent = "コピーしました！";
     });
+  }
 
-    function openBackupModal(){
-      bMsg.className="bm-mini bm-ng";
-      bMsg.textContent = "";
-      bModal.setAttribute("aria-hidden","false");
-      document.addEventListener("keydown", onEscBackup, { once:false });
-    }
-    function closeBackupModal(){
-      bModal.setAttribute("aria-hidden","true");
-      document.removeEventListener("keydown", onEscBackup);
-    }
-    function onEscBackup(e){
-      if(e.key === "Escape") closeBackupModal();
-    }
-    bModal.addEventListener("click", (e)=>{ if(e.target===bModal) closeBackupModal(); });
+  function saveTxt(){
+    const t = (codeBox.value ?? "").trim();
+    if(!t){ bMsg.className="bm-mini bm-ng"; bMsg.textContent = "保存するコードがありません。"; return; }
+    const blob = new Blob([t], { type:"text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const ts = new Date();
+    a.href = url;
+    a.download = `takoyaki_zukan_restore_code_${ts.getFullYear()}${String(ts.getMonth()+1).padStart(2,"0")}${String(ts.getDate()).padStart(2,"0")}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    bMsg.className="bm-mini bm-ok"; bMsg.textContent = ".txtで保存しました！";
+  }
 
-    // controls
-    elQ.addEventListener("input", () => render());
-    elSort.addEventListener("change", () => render());
-    btnReload.addEventListener("click", () => load());
+  filePick.addEventListener("change", async (e)=>{
+    const f = e.target.files?.[0];
+    if(!f) return;
+    const text = await f.text();
+    codeBox.value = text.trim();
+    bMsg.className="bm-mini bm-ok";
+    bMsg.textContent = "読み込みました。復元ボタンを押してね。";
+    filePick.value = "";
+  });
 
-    btnClear.addEventListener("click", () => {
-      const ok = confirm("図鑑（tf_v1_book）を消去する？\n※この端末の図鑑が消えます");
-      if(!ok) return;
-      localStorage.removeItem(LS_KEY);
-      load();
-    });
+  function openBackupModal(){
+    bMsg.className="bm-mini bm-ng";
+    bMsg.textContent = "";
+    bModal.setAttribute("aria-hidden","false");
+    document.addEventListener("keydown", onEscBackup, { once:false });
+  }
+  function closeBackupModal(){
+    bModal.setAttribute("aria-hidden","true");
+    document.removeEventListener("keydown", onEscBackup);
+  }
+  function onEscBackup(e){
+    if(e.key === "Escape") closeBackupModal();
+  }
+  bModal.addEventListener("click", (e)=>{ if(e.target===bModal) closeBackupModal(); });
 
-    btnBack.addEventListener("click", () => {
-      if(history.length > 1) history.back();
-      else location.href = "./index.html";
-    });
+  // controls
+  elQ.addEventListener("input", () => render());
+  elSort.addEventListener("change", () => render());
+  btnReload.addEventListener("click", () => load());
 
-    btnBackup.addEventListener("click", openBackupModal);
-    bClose.addEventListener("click", closeBackupModal);
-    btnMakeCode.addEventListener("click", () => makeRestoreCode());
-    btnCopyCode.addEventListener("click", copyCode);
-    btnSaveTxt.addEventListener("click", saveTxt);
-    btnRestore.addEventListener("click", () => restoreFromCode());
-
-    // init
+  btnClear.addEventListener("click", () => {
+    const ok = confirm("図鑑（tf_v1_book）を消去する？\n※この端末の図鑑が消えます");
+    if(!ok) return;
+    localStorage.removeItem(LS_KEY);
     load();
-  </script>
+  });
+
+  btnBack.addEventListener("click", () => {
+    if(history.length > 1) history.back();
+    else location.href = "./index.html";
+  });
+
+  btnBackup.addEventListener("click", openBackupModal);
+  bClose.addEventListener("click", closeBackupModal);
+  btnMakeCode.addEventListener("click", () => makeRestoreCode());
+  btnCopyCode.addEventListener("click", copyCode);
+  btnSaveTxt.addEventListener("click", saveTxt);
+  btnRestore.addEventListener("click", () => restoreFromCode());
+
+  // modal close
+  mClose.addEventListener("click", closeModal);
+
+  // init（★二重load防止：1回だけ）
+  load();
+  updateBackupLine();
+</script>
 </body>
 </html>
+
 
 
