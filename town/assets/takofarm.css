@@ -479,18 +479,15 @@ h1{
 }
 
 /* =========================
-   ✅ 選択グリッド（モーダル内スクロール＋サイズ統一）
-   ★変更はこのブロック内だけ
+   ✅ 選択グリッド（モーダル内スクロール＋サイズ統一＋画像見た目統一）
 ========================= */
 
-/* グリッド自体を縦スクロール可能にする（ここが本体） */
 .gridWrap{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-top: 10px;
 
-  /* ★確実にスクロール */
   max-height: 56vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -499,12 +496,10 @@ h1{
   overscroll-behavior: contain;
   touch-action: pan-y;
 
-  /* ✅ 追加：カードの高さを揃える */
   align-items: stretch;
   grid-auto-rows: 1fr;
 }
 
-/* カード */
 .gridCard{
   border-radius: 16px;
   border: 1px solid var(--line, rgba(255,255,255,.14));
@@ -514,20 +509,18 @@ h1{
   text-align: left;
   box-shadow: 0 10px 20px rgba(0,0,0,.22);
 
-  /* ✅ 追加：中身の縦配置を安定させる */
   height: 100%;
   display:flex;
   flex-direction:column;
-  gap: 0;
 }
 .gridCard:disabled{ opacity: .55; }
 .gridCard.isSelected{ outline: 2px solid rgba(255,255,255,.35); }
 
-/* 画像枠：ここで“見た目の統一”を作る */
+/* 画像枠 */
 .gridImg{
   position: relative;
   width: 100%;
-  height: 92px;                 /* ★固定（バラつき防止） */
+  height: 92px;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.10);
@@ -535,14 +528,21 @@ h1{
 
   display:grid;
   place-items:center;
-  padding: 8px;                 /* ★余白を統一 */
+
+  /* ✅ 統一：余白も一定に */
+  padding: 8px;
 }
 
-/* 画像は必ず枠内に収める（右だけデカい問題を止める） */
+/* ✅ ここが本命：画像を「最大サイズ統一」で揃える */
 .gridImg img{
-  width: 100%;
-  height: 100%;
-  object-fit: contain;          /* ★ここが重要 */
+  width: auto;
+  height: auto;
+
+  /* ★見た目の大きさが揃う */
+  max-width: 86%;
+  max-height: 86%;
+
+  /* ピクセルの輪郭を保つ */
   image-rendering: pixelated;
   display:block;
 }
@@ -582,14 +582,12 @@ h1{
   border: 1px solid rgba(255,80,90,.35);
 }
 
-/* テキスト */
 .gridName{
   margin-top: 8px;
   font-weight: 900;
   font-size: 13px;
 }
 
-/* ✅ 追加：説明の行数を揃えてカード高さがズレないようにする */
 .gridDesc{
   margin-top: 4px;
   font-size: 12px;
@@ -598,12 +596,11 @@ h1{
 
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;   /* ★3行で固定（必要なら2/4に） */
+  -webkit-line-clamp: 3;
   overflow: hidden;
-  min-height: calc(1.35em * 3); /* ★高さを固定してズレを止める */
+  min-height: calc(1.35em * 3);
 }
 
-/* ✅ 追加：効果欄を下に寄せて揃える */
 .gridFx{
   margin-top: auto;
   padding-top: 6px;
@@ -622,7 +619,6 @@ h1{
   font-weight: 900;
 }
 
-/* ✅ スマホ：小さすぎる場合は 3列→2列 */
 @media (max-width: 380px){
   .gridWrap{ grid-template-columns: repeat(2, 1fr); }
   .gridDesc{ display:none; }
