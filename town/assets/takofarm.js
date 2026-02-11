@@ -19,15 +19,9 @@
     BURN:  "https://ul.h3z.jp/q9hxngx6.png",
 
     // ✅ SR保証系（※コラボ/固定タネでは出さない）
-    //  - SR65  : SR以上確定の時だけ表示
-    //  - SR100 : UR以上確定の時だけ表示（あなたの指定）
-    GROW2_SR65:  "https://ul.h3z.jp/W086w3xd.png",
-    GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w3xd.png".replace("tBVUoc8w3xd.png","tBVUoc8w.png") // 念のため（元URL維持したい場合は下行に差し替えてOK）
-    // ↑もし上が気になるなら、これにしてください：
-    // GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
+    GROW2_SR65:  "https://ul.h3z.jp/HfpFoeBk.png",
+    GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
   };
-  // ★上の“念のため”が嫌なら、次の1行だけ有効にしてください（元URLそのまま）
-  PLOT_IMG.GROW2_SR100 = "https://ul.h3z.jp/tBVUoc8w.png";
 
   // =========================
   // LocalStorage Keys
@@ -141,7 +135,7 @@
     { id:"water_regret", name:"押さなきゃよかった水", desc:"確定枠・狂気。\n事件製造機（SNS向け）", factor:1.00, fx:"事件", img:"https://ul.h3z.jp/L0nafMOp.png", rates:{ N:99.97, R:0, SR:0, UR:0, LR:0.03 } },
   ];
 
-  // ✅ 修正点：肥料は “時短だけ”（レア・SP抽選には一切影響しない）
+  // ✅ 肥料は “時短だけ”
   const FERTS = [
     { id:"fert_agedama", name:"ただの揚げ玉", desc:"時短0。\n（今は見た目だけ）", factor:1.00, fx:"時短 0%", img:"https://ul.h3z.jp/9p5fx53n.png", burnCardUp:0.12, rawCardChance:0.00, mantra:false, skipGrowAnim:false },
     { id:"fert_feel", name:"気のせい肥料", desc:"早くなった気がする。\n気のせいかもしれない。", factor:0.95, fx:"時短 5%", img:"https://ul.h3z.jp/XqFTb7sw.png", burnCardUp:0.00, rawCardChance:0.00, mantra:false, skipGrowAnim:false },
@@ -273,7 +267,7 @@
   }
 
   // =========================================================
-  // ✅ オクト（3000〜10000のレベル報酬用）
+  // ✅ オクト
   // =========================================================
   function loadOcto(){
     const n = Number(localStorage.getItem(LS_OCTO) ?? 0);
@@ -293,15 +287,13 @@
     if(max < min) [min, max] = [max, min];
     return min + Math.floor(Math.random() * (max - min + 1));
   }
-
   function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
 
-  // ★「うまく振り分け」：レベルが上がるほど上振れしやすいが、必ず3000〜10000
   function octoRewardForLevel(level){
     const lv = Math.max(1, Math.floor(level));
-    const t = Math.min(1, (lv - 1) / 18);                 // Lv1→0 / Lv19以降→1 くらい
-    const min = Math.round(3000 + 2500 * t);              // 3000 → 5500
-    const max = Math.round(6500 + 3500 * t);              // 6500 → 10000
+    const t = Math.min(1, (lv - 1) / 18);
+    const min = Math.round(3000 + 2500 * t);
+    const max = Math.round(6500 + 3500 * t);
     return clamp(randInt(min, max), 3000, 10000);
   }
 
@@ -316,8 +308,6 @@
     return list[list.length-1]?.v;
   }
 
-  // ★追加アイテム報酬（必ず何か1個は付く）
-  //  - seed_colabo はシリアル枠なので配らない
   function itemRewardForLevel(level){
     const lv = Math.max(1, Math.floor(level));
 
@@ -564,8 +554,6 @@
       return pickNamaraReward();
     }
 
-    // ✅ 修正点：肥料は時短だけ → SP抽選（焼きすぎ/生焼け）も肥料からは発生させない
-    // ✅ 修正点：レアは “水だけで決まり”、植えた時点で確定した fixedRarity を使う
     const rarity = (p && p.fixedRarity) ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
 
     const seedId = p ? p.seedId : null;
@@ -755,7 +743,35 @@
 
     unlockScroll();
   }
-  mClose.addEventListener("click", closeModal);
+
+  // =========================================================
+  // ✅ 【修正】mClose(×/閉じる) の挙動：
+  // 収穫モーダル中だけは「閉じる」でも確定（図鑑へ収納）させる
+  // =========================================================
+  let __harvestCommitFn = null; // 収穫モーダルを開いた時だけセットする
+
+  function setHarvestCommit(fn){
+    __harvestCommitFn = (typeof fn === "function") ? fn : null;
+  }
+
+  function clearHarvestCommit(){
+    __harvestCommitFn = null;
+  }
+
+  // closeModal をラップして、閉じる時に harvestCommit があれば実行
+  function closeModalOrCommit(){
+    if(__harvestCommitFn){
+      // 二重実行防止
+      const fn = __harvestCommitFn;
+      __harvestCommitFn = null;
+      fn();
+      return;
+    }
+    closeModal();
+  }
+
+  // 既存：mClose は closeModal だった → 修正：closeModalOrCommit
+  mClose.addEventListener("click", closeModalOrCommit);
 
   // =========================================================
   // ✅ 装備表示更新
@@ -800,7 +816,7 @@
   }
 
   // =========================================================
-  // ✅ グリッド選択UI（シリアル入力は完全削除）
+  // ✅ グリッド選択UI
   // =========================================================
   function openPickGrid(kind){
     inv = loadInv();
@@ -845,6 +861,9 @@
         <button type="button" id="gridClose">閉じる</button>
       </div>
     `);
+
+    // グリッド系モーダルでは harvestCommit は無効
+    clearHarvestCommit();
 
     mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
       btn.addEventListener("click", () => {
@@ -929,8 +948,6 @@
           if (progress < 0.5) {
             img = PLOT_IMG.GROW1;
           } else {
-            // ✅ 修正点：育成後半で “確定してるマスだけ” SR65 / SR100 を出す
-            // ＝植えた時に決まった fixedRarity から srHint を保存してある前提
             if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100;
             else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65;
             else img = PLOT_IMG.GROW2;
@@ -1023,6 +1040,8 @@
           <button type="button" class="primary" id="btnOk">OK</button>
         </div>
       `);
+      clearHarvestCommit();
+
       document.getElementById("btnChange").addEventListener("click", ()=>{
         closeModal();
         openPickGrid(goKind);
@@ -1035,7 +1054,6 @@
     const water = WATERS.find(x=>x.id===waterId);
     const fert  = FERTS.find(x=>x.id===fertId);
 
-    // ✅ 肥料は時短だけ（= grow時間の factor には使うが、レアには影響しない）
     const factor = clamp(
       (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
       0.35, 1.0
@@ -1055,11 +1073,8 @@
       (seedId === "seed_bussasari") ||
       (seedId === "seed_namara_kawasar");
 
-    // ✅ 修正点：レアは “水だけ” で決定し、植えた時点で確定して保存
     const fixedRarity = isFixedSeed ? null : pickRarityWithWater(waterId);
 
-    // ✅ 修正点：育成後半のSR画像は「SR以上確定のマスだけ」
-    // SR65 = SR以上確定 / SR100 = UR以上確定
     const srHint =
       (isFixedSeed) ? "NONE" :
       (fixedRarity === "LR" || fixedRarity === "UR") ? "SR100" :
@@ -1073,12 +1088,78 @@
       fertId,
       startAt: now,
       readyAt: now + growMs,
-      fixedRarity, // ★追加：このマスの最終レア（植えた瞬間に確定）
+      fixedRarity,
       srHint
     };
 
     saveState(state);
     render();
+  }
+
+  // =========================================================
+  // ✅【追加】収穫確定処理を関数化（閉じるでも呼べる）
+  // =========================================================
+  function commitHarvest(i, reward){
+    // 図鑑加算
+    addToBook(reward);
+
+    // XP
+    const gain = XP_BY_RARITY[reward.rarity] ?? 4;
+    const xpRes = addXP(gain);
+
+    // マスを空に
+    state.plots[i] = { state:"EMPTY" };
+    saveState(state);
+
+    // レベルアップ報酬があれば演出、なければ閉じて図鑑へ
+    if(xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length){
+      const blocks = xpRes.rewards.map(r => {
+        const itemsHtml = (r.items || []).map(it => {
+          return `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.05);margin-top:8px;">
+              <img src="${it.img}" alt="${it.name}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18)">
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:1000;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name}</div>
+                <div style="font-size:12px;opacity:.8;margin-top:2px;">×${it.qty}</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div style="border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.06);padding:12px;margin-top:10px;">
+            <div style="font-weight:1000;font-size:14px;">Lv ${r.level} 報酬</div>
+            <div style="margin-top:8px;font-size:13px;">
+              ✅ オクト：<b>+${r.octo}</b>
+            </div>
+            ${itemsHtml}
+          </div>
+        `;
+      }).join("");
+
+      openModal("Lvアップ！", `
+        <div class="step">
+          レベルが上がった。<b>オクトは必ず</b>もらえる。<br>
+          ついでにアイテムも勝手に増えた。
+        </div>
+        ${blocks}
+        <div class="row">
+          <button type="button" id="btnGoZukan" class="primary">図鑑へ</button>
+        </div>
+      `);
+      clearHarvestCommit();
+      document.getElementById("btnGoZukan").addEventListener("click", () => {
+        closeModal();
+        location.href = "./zukan.html";
+      });
+      render();
+      return;
+    }
+
+    // 通常：そのまま図鑑へ
+    closeModal(); // lock解除
+    render();
+    location.href = "./zukan.html";
   }
 
   // =========================================================
@@ -1092,6 +1173,7 @@
         <div class="step">このマスはまだ使えない。<br>収穫でXPを稼いで <b>Lvアップ</b> すると解放される。</div>
         <div class="row"><button type="button" id="btnOk">OK</button></div>
       `);
+      clearHarvestCommit();
       document.getElementById("btnOk").addEventListener("click", closeModal);
       return;
     }
@@ -1123,10 +1205,14 @@
         </div>
         <div class="row"><button type="button" id="btnOk">OK</button></div>
       `);
+      clearHarvestCommit();
       document.getElementById("btnOk").addEventListener("click", closeModal);
       return;
     }
 
+    // =========================================================
+    // ✅【修正】READY：閉じるでも確定するように
+    // =========================================================
     if (p.state === "READY") {
       if (!p.reward) {
         p.reward = drawRewardForPlot(p);
@@ -1135,76 +1221,32 @@
       const reward = p.reward;
 
       openModal("収穫！", `
-        <div class="step">収穫したカードを確認してから図鑑に登録する。</div>
+        
         <div class="reward">
           <div class="big">${reward.name}（${reward.id}）</div>
-          <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>確認ボタンを押すと図鑑に追加され、このマスは空になる。</div>
+          <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>この画面を閉じると自動で図鑑に登録されます。</div>
           <img class="img" src="${reward.img}" alt="${reward.name}">
         </div>
         <div class="row">
           <button type="button" id="btnCancel">閉じる</button>
-          <button type="button" class="primary" id="btnConfirm">確認して図鑑へ</button>
+          <button type="button" class="primary" id="btnConfirm">図鑑を確認する</button>
         </div>
       `);
 
-      document.getElementById("btnCancel").addEventListener("click", closeModal);
+      // ★ここが重要：収穫モーダル中は「閉じる＝確定」にする
+      setHarvestCommit(() => commitHarvest(i, reward));
 
+      // 「閉じる」ボタンも確定に変更
+      document.getElementById("btnCancel").addEventListener("click", closeModalOrCommit);
+
+      // 「確認して図鑑へ」も確定
       document.getElementById("btnConfirm").addEventListener("click", () => {
-        addToBook(reward);
-
-        const gain = XP_BY_RARITY[reward.rarity] ?? 4;
-        const xpRes = addXP(gain);
-
-        state.plots[i] = { state:"EMPTY" };
-        saveState(state);
-
-        if(xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length){
-          const blocks = xpRes.rewards.map(r => {
-            const itemsHtml = (r.items || []).map(it => {
-              return `
-                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.05);margin-top:8px;">
-                  <img src="${it.img}" alt="${it.name}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18)">
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-weight:1000;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name}</div>
-                    <div style="font-size:12px;opacity:.8;margin-top:2px;">×${it.qty}</div>
-                  </div>
-                </div>
-              `;
-            }).join("");
-
-            return `
-              <div style="border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.06);padding:12px;margin-top:10px;">
-                <div style="font-weight:1000;font-size:14px;">Lv ${r.level} 報酬</div>
-                <div style="margin-top:8px;font-size:13px;">
-                  ✅ オクト：<b>+${r.octo}</b>
-                </div>
-                ${itemsHtml}
-              </div>
-            `;
-          }).join("");
-
-          openModal("Lvアップ！", `
-            <div class="step">
-              レベルが上がった。<b>オクトは必ず</b>もらえる。<br>
-              ついでにアイテムも勝手に増えた。
-            </div>
-            ${blocks}
-            <div class="row">
-              <button type="button" id="btnGoZukan" class="primary">図鑑へ</button>
-            </div>
-          `);
-          document.getElementById("btnGoZukan").addEventListener("click", () => {
-            closeModal();
-            location.href = "./zukan.html";
-          });
-          render();
-          return;
-        }
-
-        closeModal();
-        render();
-        location.href = "./zukan.html";
+        // 二重実行防止（mClose等からも呼べるため）
+        const fn = __harvestCommitFn;
+        __harvestCommitFn = null;
+        if(fn) fn();
       });
+
       return;
     }
 
@@ -1216,6 +1258,7 @@
           <button type="button" class="primary" id="btnClear">回収して空にする</button>
         </div>
       `);
+      clearHarvestCommit();
       document.getElementById("btnBack").addEventListener("click", closeModal);
       document.getElementById("btnClear").addEventListener("click", () => {
         state.plots[i] = { state:"EMPTY" };
