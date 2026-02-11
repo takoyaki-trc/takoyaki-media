@@ -10,6 +10,8 @@
    ✅ 購入UI：数量の隣に「買う」（2段にしない）
    ✅ 値段表示：控えめに1行表示（レイアウト崩さない）
    ✅ Modal：Chromeでも確実に前面表示（inline important）
+   ✅ 所持数：画像右上にバッジ表示（購入欄の所持テキストは廃止）
+   ✅ ボタン：＋/−/買う を少し小さく
 ========================================================= */
 (() => {
   "use strict";
@@ -196,14 +198,20 @@
     "「買うボタンは“契約”…押した瞬間、世界が少し変わる…たこ。」"
   ];
 
-  // ---------- modal ----------
-  const modal = $("#modal");
-  const modalBg = $("#modalBg");
-  const modalX  = $("#modalX");
-  const modalTitle = $("#modalTitle");
-  const modalBody  = $("#modalBody");
+  // =========================================================
+  // ✅ modal：Chrome/Safariで null 固定を回避（都度取得）
+  // =========================================================
+  function getModalEls(){
+    return {
+      modal: document.getElementById("modal"),
+      bg:    document.getElementById("modalBg"),
+      x:     document.getElementById("modalX"),
+      title: document.getElementById("modalTitle"),
+      body:  document.getElementById("modalBody"),
+    };
+  }
 
-  function forceModalStyle(){
+  function forceModalStyle(modal){
     if(!modal) return;
     modal.style.setProperty("position","fixed","important");
     modal.style.setProperty("inset","0","important");
@@ -213,16 +221,21 @@
   }
 
   function openModal(title, html){
-    if(!modal || !modalTitle || !modalBody) return;
-    modalTitle.textContent = title || "メニュー";
-    modalBody.innerHTML = html || "";
+    const { modal, title:ttl, body } = getModalEls();
+    if(!modal || !ttl || !body){
+      toastHype("⚠️ modal要素が見つからない…たこ。", {kind:"bad"});
+      return;
+    }
 
-    forceModalStyle();
+    ttl.textContent = title || "メニュー";
+    body.innerHTML = html || "";
+
+    forceModalStyle(modal);
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden","false");
 
     requestAnimationFrame(() => {
-      forceModalStyle();
+      forceModalStyle(modal);
       modal.classList.add("is-open");
     });
 
@@ -231,10 +244,12 @@
   }
 
   function closeModal(){
+    const { modal, body } = getModalEls();
     if(!modal) return;
+
     modal.classList.remove("is-open");
     modal.setAttribute("aria-hidden","true");
-    if(modalBody) modalBody.innerHTML = "";
+    if(body) body.innerHTML = "";
 
     modal.style.removeProperty("display");
     modal.style.removeProperty("position");
@@ -246,9 +261,12 @@
     document.body.style.overflow = "";
   }
 
-  modalBg?.addEventListener("click", closeModal);
-  modalX?.addEventListener("click", closeModal);
-  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeModal(); });
+  function wireModalClose(){
+    const { bg, x } = getModalEls();
+    bg?.addEventListener("click", closeModal);
+    x?.addEventListener("click", closeModal);
+    document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeModal(); });
+  }
 
   // ---------- inventory helpers ----------
   function ownedCount(inv, kind, id){
@@ -283,7 +301,7 @@
     const inv = ensureInvKeys();
 
     $("#octoNow") && ($("#octoNow").textContent = String(getOcto()));
-    $("#chipSeed")  && ($("#chipSeed").textContent  = String(totalKind(inv, "seed"))); // ✅ .. 修正
+    $("#chipSeed")  && ($("#chipSeed").textContent  = String(totalKind(inv, "seed")));
     $("#chipWater") && ($("#chipWater").textContent = String(totalKind(inv, "water")));
     $("#chipFert")  && ($("#chipFert").textContent  = String(totalKind(inv, "fert")));
     $("#chipBookOwned") && ($("#chipBookOwned").textContent = String(calcBookOwned()));
@@ -304,7 +322,9 @@
     }
   }
 
-  // ---------- toast ----------
+  // =========================================================
+  // ✅ toast
+  // =========================================================
   function ensureToast(){
     let el = $("#toast");
     if(!el){
@@ -374,7 +394,9 @@
     }, 1900);
   }
 
-  // ---------- injected CSS (Safari安全版) ----------
+  // =========================================================
+  // ✅ CSS注入：所持バッジ + ボタン小型化（Safari/Chrome安定）
+  // =========================================================
   function injectBuyRowCSS(){
     if($("#_roten_buyrow_css")) return;
     const style = document.createElement("style");
@@ -393,44 +415,74 @@
         white-space: nowrap;
       }
 
-      /* ✅ Safariで崩れた原因：good-buy自体をcolumn固定しない */
-      /* buybarだけ横並び固定にする */
+      /* ✅ 画像枠を相対にして右上バッジを乗せる */
+      .good .good-img{ position: relative !important; }
+      .good .ownBadge{
+        position:absolute;
+        top: 6px;
+        right: 6px;
+        z-index: 2;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .02em;
+        color: rgba(255,255,255,.95);
+        background: rgba(0,0,0,.55);
+        border: 1px solid rgba(255,255,255,.18);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        pointer-events: none;
+        user-select: none;
+        white-space: nowrap;
+      }
+      .good .ownBadge b{ color:#fff; }
+
+      /* buybar 横並び固定 */
       .good .buybar{
         display:flex !important;
         flex-direction:row !important;
         align-items:center !important;
         justify-content:flex-end !important;
-        gap:10px !important;
+        gap:8px !important;
         flex-wrap:nowrap !important;
       }
       .good .qty{
         display:flex !important;
         align-items:center !important;
-        gap:8px !important;
+        gap:6px !important;
         flex: 0 0 auto !important;
       }
+
+      /* ✅ ここが「少し小さく」 */
       .good .qty .qtybtn{
-        min-width:44px !important;
-        height:44px !important;
-        padding:0 12px !important;
-        border-radius:14px !important;
+        min-width: 38px !important;
+        height: 38px !important;
+        padding: 0 10px !important;
+        border-radius: 12px !important;
+        font-weight: 900 !important;
+        font-size: 14px !important;
       }
       .good .qty .qtyin{
-        width:64px !important;
-        height:44px !important;
+        width: 56px !important;
+        height: 38px !important;
         text-align:center !important;
-        border-radius:14px !important;
+        border-radius: 12px !important;
         border:1px solid rgba(255,255,255,.18) !important;
         background:rgba(0,0,0,.22) !important;
         color:#fff !important;
         font-weight:900 !important;
+        font-size: 14px !important;
       }
       .good .buybar .buybtn{
-        height:44px !important;
-        min-width:110px !important;
-        border-radius:14px !important;
+        height: 38px !important;
+        min-width: 92px !important;
+        border-radius: 12px !important;
         flex: 0 0 auto !important;
         white-space:nowrap !important;
+        font-weight: 900 !important;
+        font-size: 13px !important;
+        padding: 0 12px !important;
       }
 
       .good .priceline{
@@ -450,9 +502,9 @@
       }
 
       @media (max-width: 420px){
-        .good .buybar{ gap:8px !important; }
-        .good .buybar .buybtn{ min-width: 92px !important; }
-        .good .qty .qtyin{ width: 56px !important; }
+        .good .buybar{ gap:7px !important; }
+        .good .buybar .buybtn{ min-width: 86px !important; }
+        .good .qty .qtyin{ width: 52px !important; }
       }
     `;
     document.head.appendChild(style);
@@ -535,16 +587,18 @@
       return `
         <article class="good" data-kind="${g.kind}" data-id="${g.id}">
           <div class="good-top">
-            <div class="good-img"><img src="${g.img}" alt="${g.name}" loading="lazy"></div>
+            <div class="good-img">
+              <span class="ownBadge">×<b>${own}</b></span>
+              <img src="${g.img}" alt="${g.name}" loading="lazy">
+            </div>
             <div class="good-meta">
               <div class="good-name">${g.name} ${badge}</div>
-              <div class="good-desc">${(g.desc||"").replace(/\n/g,"<br>")}</div>
+              <div class="good-desc">${(g.desc||"").replace(/\\n/g,"<br>")}</div>
               <div class="good-fx">${g.fx ? `効果：<b>${g.fx}</b>` : ""}</div>
             </div>
           </div>
 
           <div class="good-row">
-            <div class="good-owned">所持×<b>${own}</b></div>
             <div class="good-buy">${buyBar}</div>
           </div>
         </article>
@@ -673,7 +727,7 @@
       </div>
     `);
 
-    const root = modalBody || document;
+    const root = document.getElementById("modalBody") || document;
     $("#okInv", root)?.addEventListener("click", closeModal);
   }
 
@@ -723,13 +777,6 @@
     }
     return { addedSeedColabo: add };
   }
-  function setInlineMsg(text, isError=false){
-    const el = $("#serialInlineMsg");
-    if(!el) return;
-    el.textContent = text || "";
-    el.style.opacity = text ? "1" : "0";
-    el.style.color = isError ? "#ff9aa5" : "#9fffa8";
-  }
 
   function openSerialModal(){
     openModal("🔑 シリアル入力（コラボのタネ）", `
@@ -750,7 +797,7 @@
       </div>
     `);
 
-    const root = modalBody || document;
+    const root = document.getElementById("modalBody") || document;
     $("#serialClose", root)?.addEventListener("click", closeModal);
 
     $("#redeemBtn", root)?.addEventListener("click", async () => {
@@ -796,20 +843,16 @@
 
     const run = async () => {
       const code = (input.value || "").trim().toUpperCase();
-      if(!code){ setInlineMsg("コードを入力してね", true); return; }
+      if(!code){ return; }
 
       const used = loadUsedCodes();
-      if(used[code]){ setInlineMsg("このコードは（この端末では）使用済み…たこ。", true); return; }
+      if(used[code]){ return; }
 
       btn.disabled = true;
-      setInlineMsg("照合中…たこ。");
 
       try{
         const data = await redeemOnServer(code);
-        if(!data.ok){
-          setInlineMsg(data.message || data.error || "無効なコードです。", true);
-          return;
-        }
+        if(!data.ok) return;
 
         const reward = data.reward || data.grant || {};
         const applied = applyRedeemReward(reward);
@@ -818,14 +861,13 @@
         saveUsedCodes(used);
 
         input.value = "";
-        setInlineMsg(`成功！コラボのタネ +${applied.addedSeedColabo}`);
         pushLog(`シリアル：${code}（コラボのタネ +${applied.addedSeedColabo}）`);
 
         refreshHUD();
         renderGoods();
         toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, {kind:"good"});
-      }catch(err){
-        setInlineMsg(err?.message || "通信に失敗…たこ。時間を置いて再試行。", true);
+      }catch(e){
+        // noop
       }finally{
         btn.disabled = false;
       }
@@ -850,7 +892,7 @@
         <button class="btn btn-ghost" id="okRates" type="button">閉じる</button>
       </div>
     `);
-    const root = modalBody || document;
+    const root = document.getElementById("modalBody") || document;
     $("#okRates", root)?.addEventListener("click", closeModal);
   }
 
@@ -884,7 +926,7 @@
       </div>
     `);
 
-    const root = modalBody || document;
+    const root = document.getElementById("modalBody") || document;
     const grill = $("#grill", root);
     $$(".ball", grill).forEach(b => {
       b.addEventListener("click", () => doMikuji(), { once:true });
@@ -937,7 +979,7 @@
       </div>
     `);
 
-    const root = modalBody || document;
+    const root = document.getElementById("modalBody") || document;
     $("#okMikuji", root)?.addEventListener("click", () => {
       closeModal();
       refreshHUD();
@@ -980,7 +1022,7 @@
       </div>
     `);
 
-    const root = modalBody || document;
+    const root = document.getElementById("modalBody") || document;
     $("#cancelGift", root)?.addEventListener("click", closeModal);
     $("#claimGift", root)?.addEventListener("click", () => {
       claimLaunchGift();
@@ -1065,16 +1107,21 @@
     injectBuyRowCSS();
     ensureInvKeys();
     setTakopiSayRandom();
+    wireModalClose();     // ✅ closeボタン等の配線
     wireTabs();
     wireButtons();
     wireSerialInline();
     refreshHUD();
     renderGoods();
-
     toastHype("✨ 露店 起動！…たこ。", {kind:"info"});
   }
 
-  boot();
+  // ✅ Chrome/SafariでDOM順ズレても死なない
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", boot, { once:true });
+  }else{
+    boot();
+  }
 })();
 
 
