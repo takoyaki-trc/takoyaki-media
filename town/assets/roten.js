@@ -22,6 +22,7 @@
    ・所持チップの絵文字（🌱/💧/🧪）をタップすると内訳モーダル表示
      - #chipSeed / #chipWater / #chipFert をクリック可能化
    ・本絵文字/リサイクル（図鑑系UI）を削除：#chipBookOwned / #chipBookDup を非表示化
+   ・「買った資材はファームに入る」などのサブ文言が残っていても、JS側は依存しない
 ========================================================= */
 (() => {
   "use strict";
@@ -295,7 +296,7 @@
     $("#chipWater") && ($("#chipWater").textContent = String(totalKind(inv, "water")));
     $("#chipFert")  && ($("#chipFert").textContent  = String(totalKind(inv, "fert")));
 
-    // 図鑑UIは今回「本/リサイクル削除」指定なので値更新は残しつつ、表示はCSSで潰す
+    // 図鑑UIは非表示化（値更新は残す）
     $("#chipBookOwned") && ($("#chipBookOwned").textContent = String(calcBookOwned()));
     $("#chipBookDup")   && ($("#chipBookDup").textContent   = "0");
 
@@ -485,13 +486,13 @@
 
       .good .buyhint{ display:none !important; }
 
-      /* ✅ 所持資材ボタン削除（HTML触らないのでJS側で非表示化） */
+      /* ✅ 所持資材ボタン削除 */
       #btnOpenInv{ display:none !important; }
 
       /* ✅ 図鑑（本/リサイクル）UI削除 */
       #chipBookOwned, #chipBookDup{ display:none !important; }
 
-      /* ✅ チップをタップ可能に（カーソル/押し込み感） */
+      /* ✅ チップをタップ可能に（押し込み感） */
       #chipSeed, #chipWater, #chipFert{
         cursor:pointer;
         user-select:none;
@@ -501,14 +502,14 @@
         transform: translateY(1px);
       }
 
-      /* ✅ 右端寄せの説明ボタン（移動先の器が取れた場合） */
+      /* ✅ 右端寄せの説明ボタン（器） */
       .roten-about-wrap{
         display:flex;
         justify-content:flex-end;
         align-items:center;
         gap:10px;
         width:100%;
-        margin: 10px 0 2px;
+        margin: 6px 0 2px;
       }
       .roten-about-btn{
         height: 36px !important;
@@ -695,7 +696,6 @@
 
     openModal(titleMap[kindKey] || "📦 内訳", `
       <div class="mikuji-wrap">
-        <div class="note">※所持数は <b>tf_v1_inv</b>（ファーム在庫）と完全連動。</div>
         <div class="inv-box">
           <div class="inv-title">${titleMap[kindKey] || "内訳"}</div>
           ${rows || `<div class="note">まだ何もない…たこ。</div>`}
@@ -711,14 +711,9 @@
   }
 
   function wireChipBreakdowns(){
-    const seed = $("#chipSeed");
-    const water = $("#chipWater");
-    const fert = $("#chipFert");
-
-    // 既存の“表示用”のままでもクリックできるように（HTML変更なし）
-    seed?.addEventListener("click", () => { openBreakdownModal("seed"); setTakopiSayRandom(); });
-    water?.addEventListener("click", () => { openBreakdownModal("water"); setTakopiSayRandom(); });
-    fert?.addEventListener("click", () => { openBreakdownModal("fert"); setTakopiSayRandom(); });
+    $("#chipSeed")?.addEventListener("click", () => { openBreakdownModal("seed"); setTakopiSayRandom(); });
+    $("#chipWater")?.addEventListener("click", () => { openBreakdownModal("water"); setTakopiSayRandom(); });
+    $("#chipFert")?.addEventListener("click", () => { openBreakdownModal("fert"); setTakopiSayRandom(); });
   }
 
   // =========================================================
@@ -876,17 +871,17 @@
     openModal("📘 タネ/ミズ/ヒリョウについて", `
       <div class="mikuji-wrap">
         <div class="note">
-          ここは「説明書」じゃなく、<b>当たりを引くための作戦メモ</b>…たこ。<br>
+          ここは「仕様書」じゃなく、<b>引きを良くするための作戦メモ</b>…たこ。<br>
           ※最終的な抽選は “ファーム側の収穫ロジック” に従う…たこ。
         </div>
 
         <div class="inv-box">
           <div class="inv-title">🌱 タネ（何を育てるか）</div>
           <div class="note">
-            <b>タネは「カードの候補（出るプール）」</b>を決める入口…たこ。<br>
+            <b>タネは「出るカードの候補（プール）」</b>を決める入口…たこ。<br>
             ・<b>なに出るタネ</b>：候補が広い（完全ランダム）<br>
             ・<b>店頭/回線タネ</b>：候補が“それっぽく”寄る（店頭/回線の気配）<br>
-            ・<b>たこぴのタネ</b>：今は静か…でも未来で化ける枠（演出用・特別枠）<br>
+            ・<b>たこぴのタネ</b>：今は静か。でも未来で化ける枠（演出用・特別枠）<br>
             ・<b>ブッ刺さり/なまら買わさる</b>：高額＝強い体験枠（期待値というより“物語”）<br>
             ・<b>【コラボ】</b>：購入不可。<b>シリアルでのみ増える</b>…たこ。
           </div>
@@ -898,7 +893,7 @@
             <b>ミズは「レア抽選の上振れ」を起こす</b>役…たこ。<br>
             下ほど“期待が上がる”代わりに、財布が乾く…たこ。<br><br>
 
-            ・<b>ただの水</b>：基準。<b>UR/LRは出ない</b>（安全だが夢は少なめ）<br>
+            ・<b>ただの水</b>：基準。<b>UR/LRは出ない</b>（安全）<br>
             ・<b>なんか良さそう</b>：少しだけ上振れ（初心者向け）<br>
             ・<b>怪しい水</b>：現実準拠の標準（普段の空気）<br>
             ・<b>やりすぎな水</b>：勝負。上振れを狙う水<br>
@@ -911,11 +906,11 @@
           <div class="note">
             <b>ヒリョウは「時短」と「事故（焼きすぎ/生焼け）」</b>を触る…たこ。<br><br>
 
-            ・<b>ただの揚げ玉</b>：時短0。<b>焼きすぎたカード</b>が起きやすい（交換素材向け）<br>
-            ・<b>気のせい肥料</b>：時短少し（体感レベル）<br>
+            ・<b>ただの揚げ玉</b>：時短0。<b>焼きすぎたカード</b>が起きやすい<br>
+            ・<b>気のせい肥料</b>：時短5%（体感）<br>
             ・<b>根性論ぶち込み</b>：時短20%（急ぎたい人）<br>
-            ・<b>工程すっ飛ばし</b>：時短40%（焦げリスクも“それなり”）<br>
-            ・<b>時間を信じない</b>：時短90〜100%。<b>稀にドロドロ生焼け</b>（禁忌。面白さ最優先）
+            ・<b>工程すっ飛ばし</b>：時短40%（近道はだいたい罠）<br>
+            ・<b>時間を信じない</b>：時短90〜100%。<b>稀にドロドロ生焼け</b>（禁忌）
           </div>
         </div>
 
@@ -929,7 +924,7 @@
     $("#okAbout", root)?.addEventListener("click", closeModal);
   }
 
-  // ✅ ボタンを「購入（タップで買う）」の右横へ（HTML変更なしで探して寄せる）
+  // ✅ ボタンを「購入（タップで買う）」の右横へ（HTML変更なしで寄せる）
   function placeAboutButton(){
     let btn = $("#btnOpenRates");
     if(!btn){
@@ -946,41 +941,39 @@
     btn.textContent = "タネ/ミズ/ヒリョウについて";
     btn.classList.add("roten-about-btn");
 
-    // 置き場を探す：ボタン/見出しの文言に「購入」「タップで買う」が含まれる要素の近くへ
-    const candidates = $$("h1,h2,h3,h4,div,section,p,span,button,a").filter(el => {
+    // 置き場候補：「購入（タップで買う）」を含む要素の近く（最後の候補へ）
+    const candidates = $$("h1,h2,h3,h4,div,section,p,span").filter(el => {
       const t = (el.textContent || "").replace(/\s+/g,"");
       return t.includes("購入") || t.includes("タップで買う");
     });
 
-    // なるべく“下のUI帯”っぽい場所へ（最後の候補）
     const anchor = candidates.length ? candidates[candidates.length - 1] : null;
 
-    // 右寄せの器（wrap）を用意
-    const wrap = document.createElement("div");
-    wrap.className = "roten-about-wrap";
+    // 右寄せの器
+    let wrap = $("#_roten_about_wrap");
+    if(!wrap){
+      wrap = document.createElement("div");
+      wrap.id = "_roten_about_wrap";
+      wrap.className = "roten-about-wrap";
+    }
+    wrap.innerHTML = "";
     wrap.appendChild(btn);
 
-    // 既に wrap が置かれてたら更新だけ
-    const existingWrap = $("#_roten_about_wrap");
-    if(existingWrap){
-      existingWrap.innerHTML = "";
-      existingWrap.appendChild(btn);
-      return;
-    }
-    wrap.id = "_roten_about_wrap";
-
     if(anchor && anchor.parentElement){
-      // “購入”の行の直後に差し込む
+      // なるべく“購入見出しの直後”へ
       anchor.parentElement.insertBefore(wrap, anchor.nextSibling);
     }else{
-      // 無理ならトップ付近（壊れない）
+      // 無理ならアプリ先頭へ
       const app = $("#rotenApp") || document.body;
       app.insertBefore(wrap, app.firstChild);
     }
+
+    // ✅ もし wrap が「余白の原因」になりそうなら、余計な margin がある親を潰す
+    wrap.style.setProperty("margin-top","0","important");
   }
 
   // =========================================================
-  // ✅ たこ焼きみくじ（おみくじ版：オクト指定反映）
+  // ✅ たこ焼きみくじ
   // =========================================================
   const OMKUJI = [
     { w: 8,  luck:"大吉", kind:"seed",  id:"seed_special", qty:1, octo:7777, label:"たこぴのタネ×1 + オクト+7777",
@@ -1094,7 +1087,9 @@
     });
   }
 
-  // ---------- launch present ----------
+  // =========================================================
+  // ✅ 公開記念プレゼント
+  // =========================================================
   function openLaunchPresent(){
     const claimed = localStorage.getItem(LS.launchGift) === "1";
     if(claimed){
@@ -1162,7 +1157,9 @@
     toastHype("🎁 プレゼント受取！", {kind:"good"});
   }
 
-  // ---------- wiring ----------
+  // =========================================================
+  // ✅ 右上説明ボタン / 戻るボタン（あれば） / 配線
+  // =========================================================
   function wireTabs(){
     $$(".goods-tab").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -1175,15 +1172,16 @@
   }
 
   function wireButtons(){
+    // ✅ デバッグ：+100000
     $("#btnDebugPlus100000")?.addEventListener("click", () => {
-  addOcto(100000);
-  pushLog("デバッグ：オクト +100000");
-  refreshHUD();
-  setTakopiSayRandom();
-  toastHype("🧪 オクト +100000！", {kind:"good"});
-});
+      addOcto(100000);
+      pushLog("デバッグ：オクト +100000");
+      refreshHUD();
+      setTakopiSayRandom();
+      toastHype("🧪 オクト +100000！", {kind:"good"});
+    });
 
-    // ✅ 所持資材ボタンは削除（クリックしても何もしない）
+    // ✅ 所持資材ボタンは削除（存在しても無効化）
     $("#btnOpenInv")?.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -1209,6 +1207,15 @@
     $("#btnOpenSell")?.addEventListener("click", () => {
       toastHype("🏮 売却ページを開いた！", {kind:"info"});
       setTakopiSayRandom();
+    });
+
+    // ✅ 戻るボタン（HTMLに #rotenBackBtn があれば動く）
+    $("#rotenBackBtn")?.addEventListener("click", () => {
+      if(history.length > 1){
+        history.back();
+      }else{
+        location.href = "./index.html";
+      }
     });
   }
 
@@ -1238,6 +1245,3 @@
     boot();
   }
 })();
-
-
-
