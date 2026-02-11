@@ -873,7 +873,7 @@
   // ✅ 《タネ、ミズ、ヒリョウについて》モーダル（丁寧説明）
   // =========================================================
   function openAboutModal(){
-    openModal("📘 タネ、ミズ、ヒリョウについて", `
+    openModal("📘 タネ/ミズ/ヒリョウについて", `
       <div class="mikuji-wrap">
         <div class="note">
           ここは「説明書」じゃなく、<b>当たりを引くための作戦メモ</b>…たこ。<br>
@@ -938,12 +938,12 @@
       btn.id = "btnOpenRates";
       btn.className = "btn roten-about-btn";
       btn.type = "button";
-      btn.textContent = "《タネ、ミズ、ヒリョウについて》";
+      btn.textContent = "タネ/ミズ/ヒリョウについて";
       document.body.appendChild(btn);
     }
 
     // 表示名を更新
-    btn.textContent = "《タネ、ミズ、ヒリョウについて》";
+    btn.textContent = "タネ/ミズ/ヒリョウについて";
     btn.classList.add("roten-about-btn");
 
     // 置き場を探す：ボタン/見出しの文言に「購入」「タップで買う」が含まれる要素の近くへ
