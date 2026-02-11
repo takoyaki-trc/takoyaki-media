@@ -2,10 +2,44 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- ✅ iPhone/Androidのセーフエリアも考慮 -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>露店（たこぴのお店）</title>
 
   <link rel="stylesheet" href="assets/roten.css">
+
+  <!-- ✅ toastがCSSで潰されても勝つ保険（最強） -->
+  <style>
+    #toast{
+      position:fixed !important;
+      left:12px !important;
+      right:12px !important;
+      bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+      z-index: 2147483647 !important;
+      pointer-events:none !important;
+
+      opacity:0 !important;
+      transform: translateY(10px) scale(.98) !important;
+      transition: opacity .16s ease, transform .18s ease !important;
+
+      padding: 14px 14px !important;
+      border-radius: 14px !important;
+      font-weight: 900 !important;
+      letter-spacing: .02em !important;
+      text-align:center !important;
+
+      color:#fff !important;
+      background: rgba(15,18,32,.92) !important;
+      border:1px solid rgba(255,255,255,.16) !important;
+      box-shadow: 0 18px 44px rgba(0,0,0,.55) !important;
+      backdrop-filter: blur(6px) !important;
+      -webkit-backdrop-filter: blur(6px) !important;
+    }
+    #toast.is-show{
+      opacity:1 !important;
+      transform: translateY(0) scale(1) !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -45,12 +79,10 @@
         <button class="btn btn-ghost" id="btnOpenInv" type="button">所持資材</button>
         <button class="btn btn-ghost" id="btnOpenRates" type="button">水のレア率メモ</button>
 
-        <!-- ★ デバッグ用：オクト+1000 -->
         <button class="btn btn-ghost" id="btnDebugPlus1000" type="button" aria-label="デバッグ：オクトを1000増やす">
           🧪 オクト＋1000
         </button>
 
-        <!-- ★ 売却ページ：新規タブ -->
         <a class="btn btn-gold" id="btnOpenSell" href="sell.html" target="_blank" rel="noopener">
           🪙 カード売却
         </a>
@@ -90,13 +122,12 @@
             <button class="btn" id="btnLaunchPresent" type="button">🎁 公開記念プレゼント</button>
           </div>
 
-          <!-- ✅ ここを修正：∞表記をやめる（無料廃止） -->
           <div class="hero-note" id="heroNote">
             ※無料資材は廃止。<b>全部オクトで買う</b>…たこ。<br>
             ※コラボのタネは<b>シリアル限定</b>…たこ。
           </div>
 
-          <!-- ✅ 追加：常設シリアル入力（ここだけ足す） -->
+          <!-- ✅ 常設シリアル入力 -->
           <div class="hero-serial" style="margin-top:10px;">
             <div style="font-weight:800; margin-bottom:6px;">🔑 シリアル入力（コラボのタネ）</div>
             <div style="display:flex; gap:8px; align-items:center;">
@@ -121,13 +152,8 @@
                 使う
               </button>
             </div>
-            <div
-              id="serialInlineMsg"
-              style="margin-top:6px; font-size:12px; opacity:.85;"
-              aria-live="polite"
-            ></div>
+            <div id="serialInlineMsg" style="margin-top:6px; font-size:12px; opacity:.85;" aria-live="polite"></div>
           </div>
-          <!-- ✅ 追加ここまで -->
 
         </div>
       </div>
@@ -140,18 +166,19 @@
         <div class="block-sub">買った資材は <b>ファーム(tf_v1_inv)</b> に入る。</div>
       </div>
 
-      <!-- 種/水/肥料タブ -->
       <div class="goods-tabs" aria-label="資材タブ">
         <button class="goods-tab is-active" data-kind="seed" type="button">種</button>
         <button class="goods-tab" data-kind="water" type="button">水</button>
         <button class="goods-tab" data-kind="fert" type="button">肥料</button>
       </div>
 
-      <!-- 商品棚（2列タイル） -->
       <div class="goods-grid" id="goodsGrid"></div>
     </section>
 
   </main>
+
+  <!-- ✅ toast（必ず存在させる：これが無いとCSSで潰されやすい） -->
+  <div id="toast" aria-live="polite"></div>
 
   <!-- ====== MODAL ====== -->
   <div class="modal" id="modal" aria-hidden="true">
