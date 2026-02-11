@@ -17,7 +17,7 @@
 *{ box-sizing:border-box; }
 html,body{ height:100%; }
 html{
-  -webkit-text-size-adjust: 100%; /* iOSの文字勝手拡大を抑制 */
+  -webkit-text-size-adjust: 100%;
 }
 body{
   margin:0;
@@ -48,7 +48,6 @@ body{
 .help-btn{
   position:absolute;
   top: 10px;
-  right: 10px;
   right: calc(10px + var(--safeRight));
   width: 38px;
   height: 38px;
@@ -129,7 +128,7 @@ body{
   color: var(--text);
   padding: 12px 12px;
   outline:none;
-  font-size: 16px; /* ←超重要 */
+  font-size: 16px;
   line-height: 1.2;
 }
 .search::placeholder{ color: rgba(255,255,255,.5); }
@@ -139,12 +138,28 @@ body{
   .sell-tools{ grid-template-columns: 1fr; }
 }
 
-/* ✅ 端末幅に応じて自動で列数調整（iPhoneでも崩れにくい） */
+/* =========================
+   ✅ ここが本命：2列表示に戻す
+   - スマホ：2列
+   - タブレット：3列
+   - PC：4列
+========================= */
 .sell-grid{
   margin-top: 12px;
   display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* ✅ スマホでも2列固定 */
   gap:10px;
+}
+
+@media (min-width: 860px){
+  .sell-grid{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1100px){
+  .sell-grid{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .card{
@@ -155,7 +170,7 @@ body{
   display:grid;
 }
 
-/* ✅ Grid内のmin-width:autoで崩れるのを防止 */
+/* ✅ Safariのはみ出し対策 */
 .card-top{
   display:grid;
   grid-template-columns: 88px minmax(0, 1fr);
@@ -187,12 +202,12 @@ body{
 .meta{
   display:grid;
   gap:6px;
-  min-width: 0; /* ✅ これがないとiPhoneで横はみ出しやすい */
+  min-width: 0;
 }
 .name{
   font-weight:900;
   line-height:1.2;
-  overflow-wrap:anywhere; /* ✅ 長いカード名で崩れない */
+  overflow-wrap:anywhere;
 }
 .desc{
   font-size: 12px;
@@ -232,7 +247,7 @@ body{
   position:absolute;
   left:50%;
   transform: translateX(-50%);
-  bottom: calc(10px + var(--safeBottom)); /* ✅ iPhone下部のsafe-area */
+  bottom: calc(10px + var(--safeBottom));
   width: min(720px, 96vw);
   max-height: calc(86vh - var(--safeTop));
   overflow:hidden;
@@ -258,7 +273,7 @@ body{
   padding: 12px;
   overflow:auto;
   max-height: calc(86vh - 54px);
-  -webkit-overflow-scrolling: touch; /* iOSスクロール滑らか */
+  -webkit-overflow-scrolling: touch;
 }
 
 .fx{
@@ -277,6 +292,5 @@ body{
   background: rgba(0,0,0,.18);
   color: var(--text);
   padding: 12px 12px;
-  font-size: 16px; /* ✅ iOSズーム防止 */
+  font-size: 16px;
 }
-
