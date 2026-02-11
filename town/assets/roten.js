@@ -13,7 +13,7 @@
       - なまら買わさるタネ（seed_namara_kawasar）
    ✅ ポップアップ無反応対策：
       - DOM要素が無いと落ちない（nullガード）
-      - クリックイベントが最終的に必ず openModal へ到達
+      - クリックイベントが最終的に必ず openModal へ到達（※今回は購入モーダルは出さない）
       - モーダル内ボタンも "modalBody内で検索" して確実に拾う
    ✅ ファーム側SEEDS/WATERS/FERTSの画像・説明を露店へ反映（同じURL/文言）
    ✅ 【変更点】シリアルはGAS+スプレッドシートで検証＆1回だけ使用に変更
@@ -21,6 +21,11 @@
       - REDEEM_ENDPOINT / REDEEM_API_KEY を設定してfetchでredeem
       - 端末側の「使用済みメモ(tf_v1_codes_used)」は残す（二重送信抑止）
       - 常設シリアル欄（#serialInlineInput/#serialInlineBtn/#serialInlineMsg）も対応（HTMLにあれば有効）
+   ✅ 【今回の変更】
+      - 「価格：●●オクト」表示を削除
+      - 複数個購入（数量ステッパー＋まとめ買い）
+      - 購入確認モーダルは出さず、即購入
+      - 購入完了ポップアップ（ワクワク演出トースト強化）
 ========================================================= */
 (() => {
   "use strict";
@@ -208,8 +213,8 @@
   const SAY = [
     "「いらっしゃい…たこ。オクトで“未来”を買うの、すき…たこ？」",
     "「種は物語…水は運…肥料は代償…たこ。」",
-    "「ボタン押しても無反応に見えた？…今は喋れるようにした…たこ。」",
-    "「買う？…買わない？…どっちでもいいけど、見ていきな…たこ。」"
+    "「まとめ買い？……いいね。焼き台が“鳴く”たこ…」",
+    "「買うボタンは“契約”…押した瞬間、世界が少し変わる…たこ。」"
   ];
 
   // ---------- modal ----------
@@ -299,6 +304,43 @@
     }
   }
 
+  // =========================
+  // ✅ 複数購入：数量UI
+  // =========================
+  function clamp(n, min, max){
+    n = Math.floor(Number(n)||0);
+    if(n < min) return min;
+    if(n > max) return max;
+    return n;
+  }
+
+  function calcMaxAffordable(item){
+    const price = Math.max(0, Number(item.price||0));
+    if(price <= 0) return 99; // 念のため（基本は>0）
+    return Math.max(0, Math.floor(getOcto() / price));
+  }
+
+  function buyMany(item, qty){
+    qty = clamp(qty, 1, 99);
+    const price = Math.max(0, Number(item.price||0));
+    const total = price * qty;
+    const octo = getOcto();
+    if(octo < total) return { ok:false, reason:"short" };
+
+    const inv = ensureInvKeys();
+    inv[item.kind] = inv[item.kind] || {};
+    inv[item.kind][item.id] = Number(inv[item.kind][item.id] || 0) + qty;
+    saveInv(inv);
+
+    setOcto(octo - total);
+    pushLog(`購入：${item.name} ×${qty} -${total}オクト`);
+
+    refreshHUD();
+    renderGoods();
+    setTakopiSayRandom();
+    return { ok:true, total, qty };
+  }
+
   function renderGoods(){
     const inv = ensureInvKeys();
     const grid = $("#goodsGrid");
@@ -309,10 +351,27 @@
     grid.innerHTML = list.map(g => {
       const own = String(ownedCount(inv, g.kind, g.id));
       const canBuy = !!g.buyable;
-      const priceLabel = canBuy ? `価格：${g.price}オクト` : "価格：—（購入不可）";
-      const btnLabel   = canBuy ? `買う（${g.price}オクト）` : "シリアルで入手";
+
+      // ✅ 価格表示は“カード内から削除”
+      // ✅ ボタン文言も価格を含めない
       const dis = canBuy ? "" : "disabled";
       const badge = g.tag ? `<span class="miniTag">${g.tag}</span>` : "";
+
+      // ✅ まとめ買いUI（buyableのみ）
+      const qtyUI = canBuy ? `
+        <div class="qty" style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+          <button class="btn qtybtn qtyminus" type="button" aria-label="減らす" style="min-width:44px;">−</button>
+          <input class="qtyin" type="number" inputmode="numeric" min="1" max="99" value="1"
+                 style="width:70px; text-align:center; padding:10px 10px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.22); color:#fff;">
+          <button class="btn qtybtn qtyplus" type="button" aria-label="増やす" style="min-width:44px;">＋</button>
+        </div>
+      ` : `
+        <div class="qty" style="display:flex; align-items:center; justify-content:flex-end;">
+          <div style="opacity:.72; font-size:12px;">シリアルで増える…たこ。</div>
+        </div>
+      `;
+
+      const btnLabel   = canBuy ? "買う" : "シリアルで入手";
 
       return `
         <article class="good" data-kind="${g.kind}" data-id="${g.id}">
@@ -324,17 +383,21 @@
               <div class="good-fx">${g.fx ? `効果：<b>${g.fx}</b>` : ""}</div>
             </div>
           </div>
+
           <div class="good-row">
             <div class="good-owned">所持×<b>${own}</b></div>
-            <div class="good-buy">
-              <div class="price">${priceLabel}</div>
+
+            <div class="good-buy" style="display:flex; flex-direction:column; gap:10px; align-items:stretch;">
+              ${qtyUI}
               <button class="btn buybtn" ${dis}>${btnLabel}</button>
+              <div class="buyhint" style="opacity:.75; font-size:12px; text-align:right; min-height:14px;"></div>
             </div>
           </div>
         </article>
       `;
     }).join("");
 
+    // wiring
     $$(".good", grid).forEach(card => {
       const kind = card.getAttribute("data-kind");
       const id   = card.getAttribute("data-id");
@@ -342,89 +405,121 @@
       if(!item) return;
 
       const btn = $(".buybtn", card);
+      const minus = $(".qtyminus", card);
+      const plus  = $(".qtyplus", card);
+      const qtyIn = $(".qtyin", card);
+      const hint  = $(".buyhint", card);
+
+      function setHint(msg, isBad=false){
+        if(!hint) return;
+        hint.textContent = msg || "";
+        hint.style.color = isBad ? "#ff9aa5" : "rgba(255,255,255,.75)";
+      }
+
+      function getQty(){
+        const v = qtyIn ? Number(qtyIn.value || 1) : 1;
+        return clamp(v, 1, 99);
+      }
+      function setQty(v){
+        if(!qtyIn) return;
+        qtyIn.value = String(clamp(v, 1, 99));
+      }
+
+      function syncAffordability(){
+        if(!item.buyable){
+          if(btn) btn.disabled = true;
+          return;
+        }
+        const max = calcMaxAffordable(item);
+        const q = getQty();
+        const ok = (q <= max) && (max > 0);
+        if(btn) btn.disabled = !ok;
+        if(max <= 0){
+          setHint("オクトが足りない…たこ。", true);
+        }else if(q > max){
+          setHint(`いま買える最大は ×${max} …たこ。`, true);
+        }else{
+          setHint(""); // 余計な情報を消す（ワクワク優先）
+        }
+      }
+
+      // 数量操作
+      minus?.addEventListener("click", (e)=>{
+        e.preventDefault(); e.stopPropagation();
+        setQty(getQty() - 1);
+        syncAffordability();
+      });
+      plus?.addEventListener("click", (e)=>{
+        e.preventDefault(); e.stopPropagation();
+        setQty(getQty() + 1);
+        syncAffordability();
+      });
+      qtyIn?.addEventListener("input", ()=>{
+        setQty(getQty());
+        syncAffordability();
+      });
+
+      // 購入ボタン
       btn?.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if(item.buyable) confirmBuy(item);
-        else openSerialModal();
+
+        if(!item.buyable){
+          openSerialModal();
+          setTakopiSayRandom();
+          return;
+        }
+
+        // ✅ 確認画面は出さない：即購入
+        const qty = getQty();
+        const r = buyMany(item, qty);
+        if(!r.ok){
+          toastHype("💥 オクトが足りない…たこ。", { kind:"bad" });
+          syncAffordability();
+          return;
+        }
+
+        // ✅ ワクワク購入完了ポップアップ
+        toastHype(`✨ 購入完了！「${item.name}」×${r.qty} ✨`, { kind:"good" });
       });
+
+      syncAffordability();
     });
   }
 
-  // ---------- BUY FLOW ----------
-  function confirmBuy(item){
-    const inv = ensureInvKeys();
-    const octo = getOcto();
-    const own = ownedCount(inv, item.kind, item.id);
-    const can = octo >= Number(item.price||0);
-
-    openModal("🛒 購入する", `
-      <div class="pop-wrap">
-        <div class="pop-head">
-          <div class="pop-img"><img src="${item.img}" alt="${item.name}"></div>
-          <div class="pop-info">
-            <div class="pop-name">${item.name}</div>
-            <div class="pop-desc">${(item.desc||"").replace(/\n/g,"<br>")}</div>
-            <div class="pop-meta">
-              <span>所持：<b>${own}</b></span>
-              <span>価格：<b>${item.price}</b>オクト</span>
-            </div>
-            <div class="pop-fx">${item.fx ? `効果：<b>${item.fx}</b>` : ""}</div>
-          </div>
-        </div>
-
-        <div class="pop-say">
-          <div class="spark">✨</div>
-          <div class="note">
-            たこぴ：<br>
-            「それを買うの…？ いいね…たこ。<br>
-            でもね、買うってことは、“焼く”ってこと…たこ。」
-          </div>
-        </div>
-
-        <div class="pop-actions">
-          <button class="btn big" id="doBuy" ${can ? "" : "disabled"}>購入する</button>
-          <button class="btn btn-ghost" id="cancelBuy">やめる</button>
-          <div class="warnline">${can ? "" : "オクトが足りない…たこ。"}</div>
-        </div>
-      </div>
-    `);
-
-    const root = modalBody || document;
-    $("#cancelBuy", root)?.addEventListener("click", closeModal);
-    $("#doBuy", root)?.addEventListener("click", () => {
-      doBuy(item);
-      closeModal();
-    });
-  }
-
-  function doBuy(item){
-    const price = Number(item.price||0);
-    const octo = getOcto();
-    if(octo < price) return;
-
-    const inv = ensureInvKeys();
-    inv[item.kind] = inv[item.kind] || {};
-    inv[item.kind][item.id] = Number(inv[item.kind][item.id] || 0) + 1;
-
-    setOcto(octo - price);
-    saveInv(inv);
-
-    pushLog(`購入：${item.name} -${price}オクト`);
-    setTakopiSayRandom();
-    refreshHUD();
-    renderGoods();
-    toast(`購入！ ${item.name}（+1）`);
-  }
-
-  // ---------- toast ----------
-  function toast(text){
+  // ---------- toast（強化版） ----------
+  function toastHype(text, opt={}){
     const el = $("#toast");
     if(!el) return;
+
+    // kind: good / bad / info
+    const kind = opt.kind || "info";
     el.textContent = text;
-    el.classList.add("is-show");
-    clearTimeout(toast._t);
-    toast._t = setTimeout(()=> el.classList.remove("is-show"), 1600);
+
+    el.classList.remove("is-show");
+    // classがあれば使う（CSS側で演出できる）
+    el.classList.remove("t-good","t-bad","t-info");
+    el.classList.add(kind==="good" ? "t-good" : kind==="bad" ? "t-bad" : "t-info");
+
+    // ちょい“ドンッ”と出す
+    requestAnimationFrame(()=>{
+      el.classList.add("is-show");
+    });
+
+    clearTimeout(toastHype._t);
+    toastHype._t = setTimeout(()=> el.classList.remove("is-show"), 1800);
+
+    // 追加で画面を少し震わせたいなら（好み分かれるので弱め）
+    if(kind === "good"){
+      document.body.classList.add("hype-pop");
+      clearTimeout(toastHype._s);
+      toastHype._s = setTimeout(()=> document.body.classList.remove("hype-pop"), 220);
+    }
+  }
+
+  // 旧toast互換（他の箇所から呼ばれてもOK）
+  function toast(text){
+    toastHype(text, { kind:"info" });
   }
 
   // ---------- inventory modal ----------
@@ -583,7 +678,7 @@
         saveUsedCodes(used);
 
         pushLog(`シリアル：${code}（コラボのタネ +${applied.addedSeedColabo}）`);
-        toast(`成功！コラボのタネ +${applied.addedSeedColabo}`);
+        toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, { kind:"good" });
         refreshHUD();
         renderGoods();
         closeModal();
@@ -630,7 +725,7 @@
 
         refreshHUD();
         renderGoods();
-        toast(`成功！コラボのタネ +${applied.addedSeedColabo}`);
+        toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, { kind:"good" });
       }catch(err){
         setInlineMsg(err?.message || "通信に失敗…たこ。時間を置いて再試行。", true);
       }finally{
@@ -822,7 +917,7 @@
     setTakopiSayRandom();
     refreshHUD();
     renderGoods();
-    toast("プレゼント受取！");
+    toastHype("🎁 プレゼント受取！", { kind:"good" });
   }
 
   // ---------- wiring ----------
@@ -849,7 +944,7 @@
       pushLog("デバッグ：オクト +1000");
       refreshHUD();
       setTakopiSayRandom();
-      toast("🧪 デバッグ：オクト +1000");
+      toastHype("🧪 デバッグ：オクト +1000", { kind:"info" });
     });
 
     $("#btnOpenInv")?.addEventListener("click", () => {
@@ -872,26 +967,39 @@
       setTakopiSayRandom();
     });
 
-    // ✅ HTML側は <a id="btnOpenSell" ... target="_blank">
-    // JS側で何もしなくてもOK（無反応対策ならtoastだけ出す）
     $("#btnOpenSell")?.addEventListener("click", () => {
-      toast("売却ページを開いた！");
+      toastHype("🏮 売却ページを開いた！", { kind:"info" });
       setTakopiSayRandom();
     });
 
-    // 任意：どこかに #btnSerial があるならモーダルを開く
     $("#btnSerial")?.addEventListener("click", () => {
       openSerialModal();
       setTakopiSayRandom();
     });
   }
 
+  // ちょい演出（CSSが無い場合は何もしない）
+  function injectTinyHypeCSS(){
+    if($("#_hype_css")) return;
+    const style = document.createElement("style");
+    style.id = "_hype_css";
+    style.textContent = `
+      body.hype-pop { animation: hypePop .22s ease-out; }
+      @keyframes hypePop { 0%{transform:translateY(0)} 40%{transform:translateY(-2px)} 100%{transform:translateY(0)} }
+      #toast.t-good{ box-shadow:0 18px 40px rgba(0,0,0,.55); }
+      #toast.t-bad{ box-shadow:0 18px 40px rgba(0,0,0,.55); }
+      #toast.t-info{ box-shadow:0 18px 40px rgba(0,0,0,.55); }
+    `;
+    document.head.appendChild(style);
+  }
+
   function boot(){
+    injectTinyHypeCSS();
     ensureInvKeys();
     setTakopiSayRandom();
     wireTabs();
     wireButtons();
-    wireSerialInline(); // ✅ 常設欄があれば有効
+    wireSerialInline();
     refreshHUD();
     renderGoods();
   }
