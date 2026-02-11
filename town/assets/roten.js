@@ -1,24 +1,3 @@
-/* =========================================================
-   roten.js（RPG武器屋風：たこぴのお店 / 完全版）
-   ✅ 資材在庫: tf_v1_inv（seed/water/fert）= ファームと完全共通
-   ✅ 図鑑: tf_v1_book（got[id].count 合計を “所持” として表示）
-   ✅ オクト: roten_v1_octo
-   ✅ たこ焼きみくじ: 1日1回
-   ✅ 公開記念プレゼント: 1回だけ
-   ✅ 無料∞を廃止：無料タネ/無料水/無料肥料も「有料で購入 → 在庫+1」
-   ✅ コラボのタネ（seed_colabo）は「シリアルで増える」ので購入不可
-   ✅ デバッグ：オクト＋1000ボタン（#btnDebugPlus1000）
-   ✅ 新規販売タネ追加：
-      - ブッ刺さりタネ（seed_bussasari）
-      - なまら買わさるタネ（seed_namara_kawasar）
-   ✅ ポップアップ無反応対策：
-      - toast要素が無くても自動生成（スマホでも必ず出る）
-      - fixed / z-index / safe-area 対応
-   ✅ 購入UI修正：
-      - 2段にしない（数量UIの隣に「買う」ボタンを横並び固定）
-      - 価格表示は削除（カード内・ボタン文言にも入れない）
-      - 確認画面なしで即購入 → ワクワクトースト
-========================================================= */
 (() => {
   "use strict";
 
@@ -71,8 +50,7 @@
     localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v)||0))));
   }
   function addOcto(delta){
-    const now = getOcto();
-    setOcto(now + Number(delta || 0));
+    setOcto(getOcto() + Number(delta || 0));
   }
 
   function invDefault(){
@@ -234,19 +212,14 @@
   modalX?.addEventListener("click", closeModal);
   document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeModal(); });
 
-  // ---------- render ----------
-  let currentKind = "seed";
-
+  // ---------- inventory ----------
   function ownedCount(inv, kind, id){
-    const bucket = inv[kind] || {};
-    return Number(bucket[id] || 0);
+    return Number((inv[kind]||{})[id] || 0);
   }
   function totalKind(inv, kind){
     const bucket = inv[kind] || {};
     let total = 0;
-    for(const k of Object.keys(bucket)){
-      total += Number(bucket[k] || 0);
-    }
+    for(const k of Object.keys(bucket)) total += Number(bucket[k] || 0);
     return total;
   }
 
@@ -270,14 +243,11 @@
 
   function refreshHUD(){
     const inv = ensureInvKeys();
-    const octo = getOcto();
 
-    $("#octoNow") && ($("#octoNow").textContent = String(octo));
-
+    $("#octoNow") && ($("#octoNow").textContent = String(getOcto()));
     $("#chipSeed")  && ($("#chipSeed").textContent  = String(totalKind(inv, "seed")));
     $("#chipWater") && ($("#chipWater").textContent = String(totalKind(inv, "water")));
     $("#chipFert")  && ($("#chipFert").textContent  = String(totalKind(inv, "fert")));
-
     $("#chipBookOwned") && ($("#chipBookOwned").textContent = String(calcBookOwned()));
     $("#chipBookDup")   && ($("#chipBookDup").textContent   = "0");
 
@@ -297,134 +267,83 @@
   }
 
   // =========================
-  // ✅ toast（必ず出る版）
+  // ✅ toast：CSSに潰されても絶対出す（styleを毎回importantで上書き）
   // =========================
   function ensureToast(){
     let el = $("#toast");
-    if(el) return el;
-
-    el = document.createElement("div");
-    el.id = "toast";
-    el.setAttribute("aria-live","polite");
-    document.body.appendChild(el);
+    if(!el){
+      el = document.createElement("div");
+      el.id = "toast";
+      el.setAttribute("aria-live","polite");
+      document.body.appendChild(el);
+    }
     return el;
   }
 
-  function injectToastCSS(){
-    if($("#_roten_toast_css")) return;
-    const style = document.createElement("style");
-    style.id = "_roten_toast_css";
-    style.textContent = `
-      #toast{
-        position:fixed;
-        left:12px;
-        right:12px;
-        bottom: calc(14px + env(safe-area-inset-bottom));
-        z-index: 999999;
-        pointer-events:none;
+  function forceToastStyle(el){
+    // CSSに何が書かれてても勝つ
+    el.style.setProperty("position","fixed","important");
+    el.style.setProperty("left","12px","important");
+    el.style.setProperty("right","12px","important");
+    el.style.setProperty("bottom","calc(14px + env(safe-area-inset-bottom))","important");
+    el.style.setProperty("z-index","2147483647","important");
+    el.style.setProperty("pointer-events","none","important");
 
-        opacity:0;
-        transform: translateY(10px) scale(.98);
-        transition: opacity .16s ease, transform .18s ease;
+    el.style.setProperty("padding","14px 14px","important");
+    el.style.setProperty("border-radius","14px","important");
+    el.style.setProperty("font-weight","900","important");
+    el.style.setProperty("letter-spacing",".02em","important");
+    el.style.setProperty("text-align","center","important");
 
-        padding: 14px 14px;
-        border-radius: 14px;
-        font-weight: 900;
-        letter-spacing: .02em;
-        text-align:center;
+    el.style.setProperty("color","#fff","important");
+    el.style.setProperty("background","rgba(15,18,32,.92)","important");
+    el.style.setProperty("border","1px solid rgba(255,255,255,.16)","important");
+    el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55)","important");
+    el.style.setProperty("backdrop-filter","blur(6px)","important");
+    el.style.setProperty("-webkit-backdrop-filter","blur(6px)","important");
 
-        color:#fff;
-        background: rgba(15,18,32,.92);
-        border:1px solid rgba(255,255,255,.16);
-        box-shadow: 0 18px 44px rgba(0,0,0,.55);
-        backdrop-filter: blur(6px);
-      }
-      #toast.is-show{
-        opacity:1;
-        transform: translateY(0) scale(1);
-      }
-      #toast.t-good{
-        border-color: rgba(159,255,168,.35);
-        box-shadow: 0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(159,255,168,.18);
-      }
-      #toast.t-bad{
-        border-color: rgba(255,154,165,.38);
-        box-shadow: 0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(255,154,165,.16);
-      }
-      #toast.t-info{
-        border-color: rgba(255,255,255,.16);
-      }
-      body.hype-pop{
-        animation: hypePop .22s ease-out;
-      }
-      @keyframes hypePop{
-        0%{transform:translateY(0)}
-        40%{transform:translateY(-2px)}
-        100%{transform:translateY(0)}
-      }
-    `;
-    document.head.appendChild(style);
+    el.style.setProperty("transition","opacity .16s ease, transform .18s ease","important");
   }
 
   function toastHype(text, opt={}){
     const el = ensureToast();
+    forceToastStyle(el);
+
     const kind = opt.kind || "info";
-
     el.textContent = text || "";
-    el.classList.remove("t-good","t-bad","t-info");
-    el.classList.add(kind==="good" ? "t-good" : kind==="bad" ? "t-bad" : "t-info");
 
-    // 一旦消してから出す（連打でも必ずアニメ）
+    // 連打でも確実に出る
     el.classList.remove("is-show");
-    void el.offsetHeight; // reflow
+    void el.offsetHeight;
+
+    // 色味（CSS上書きされても inline important が勝つので最低限）
+    if(kind === "good"){
+      el.style.setProperty("border","1px solid rgba(159,255,168,.35)","important");
+      el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(159,255,168,.18)","important");
+    }else if(kind === "bad"){
+      el.style.setProperty("border","1px solid rgba(255,154,165,.38)","important");
+      el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(255,154,165,.16)","important");
+    }else{
+      el.style.setProperty("border","1px solid rgba(255,255,255,.16)","important");
+      el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55)","important");
+    }
+
+    // show
+    el.style.setProperty("opacity","1","important");
+    el.style.setProperty("transform","translateY(0) scale(1)","important");
     el.classList.add("is-show");
 
     clearTimeout(toastHype._t);
-    toastHype._t = setTimeout(()=> el.classList.remove("is-show"), 1900);
-
-    if(kind === "good"){
-      document.body.classList.add("hype-pop");
-      clearTimeout(toastHype._s);
-      toastHype._s = setTimeout(()=> document.body.classList.remove("hype-pop"), 230);
-    }
+    toastHype._t = setTimeout(()=>{
+      el.style.setProperty("opacity","0","important");
+      el.style.setProperty("transform","translateY(10px) scale(.98)","important");
+      el.classList.remove("is-show");
+    }, 1900);
   }
-  function toast(text){ toastHype(text, {kind:"info"}); }
 
   // =========================
-  // ✅ 複数購入：数量UI（横並び固定）
+  // ✅ UI：2段禁止（数量の隣に買う）用CSSをJSで注入
   // =========================
-  function clamp(n, min, max){
-    n = Math.floor(Number(n)||0);
-    if(n < min) return min;
-    if(n > max) return max;
-    return n;
-  }
-  function calcMaxAffordable(item){
-    const price = Math.max(0, Number(item.price||0));
-    if(price <= 0) return 99;
-    return Math.max(0, Math.floor(getOcto() / price));
-  }
-  function buyMany(item, qty){
-    qty = clamp(qty, 1, 99);
-    const price = Math.max(0, Number(item.price||0));
-    const total = price * qty;
-    const octo = getOcto();
-    if(octo < total) return { ok:false, reason:"short" };
-
-    const inv = ensureInvKeys();
-    inv[item.kind] = inv[item.kind] || {};
-    inv[item.kind][item.id] = Number(inv[item.kind][item.id] || 0) + qty;
-    saveInv(inv);
-
-    setOcto(octo - total);
-    pushLog(`購入：${item.name} ×${qty} -${total}オクト`);
-
-    refreshHUD();
-    renderGoods();
-    setTakopiSayRandom();
-    return { ok:true, total, qty };
-  }
-
   function injectBuyRowCSS(){
     if($("#_roten_buyrow_css")) return;
     const style = document.createElement("style");
@@ -483,6 +402,44 @@
     document.head.appendChild(style);
   }
 
+  // =========================
+  // ✅ 複数購入ロジック
+  // =========================
+  function clamp(n, min, max){
+    n = Math.floor(Number(n)||0);
+    if(n < min) return min;
+    if(n > max) return max;
+    return n;
+  }
+  function calcMaxAffordable(item){
+    const price = Math.max(0, Number(item.price||0));
+    if(price <= 0) return 99;
+    return Math.max(0, Math.floor(getOcto() / price));
+  }
+  function buyMany(item, qty){
+    qty = clamp(qty, 1, 99);
+    const price = Math.max(0, Number(item.price||0));
+    const total = price * qty;
+    const octo = getOcto();
+    if(octo < total) return { ok:false };
+
+    const inv = ensureInvKeys();
+    inv[item.kind] = inv[item.kind] || {};
+    inv[item.kind][item.id] = Number(inv[item.kind][item.id] || 0) + qty;
+    saveInv(inv);
+
+    setOcto(octo - total);
+    pushLog(`購入：${item.name} ×${qty} -${total}オクト`);
+
+    refreshHUD();
+    renderGoods();
+    setTakopiSayRandom();
+    return { ok:true, total, qty };
+  }
+
+  // ---------- 商品描画 ----------
+  let currentKind = "seed";
+
   function renderGoods(){
     const inv = ensureInvKeys();
     const grid = $("#goodsGrid");
@@ -496,8 +453,7 @@
       const dis = canBuy ? "" : "disabled";
       const badge = g.tag ? `<span class="miniTag">${g.tag}</span>` : "";
 
-      // ✅ 価格表示は削除（ここでは一切出さない）
-      // ✅ 2段にしない：qtyの隣に買うボタンを横並び固定
+      // ✅ 価格表示は一切しない
       const buyBar = canBuy ? `
         <div class="buybar">
           <div class="qty">
@@ -531,9 +487,7 @@
 
           <div class="good-row">
             <div class="good-owned">所持×<b>${own}</b></div>
-            <div class="good-buy">
-              ${buyBar}
-            </div>
+            <div class="good-buy">${buyBar}</div>
           </div>
         </article>
       `;
@@ -568,7 +522,7 @@
 
       function syncAffordability(){
         if(!item.buyable){
-          if(btn) btn.disabled = false; // シリアルボタンとして押せる
+          if(btn) btn.disabled = false;
           setHint("");
           return;
         }
@@ -628,7 +582,6 @@
   // ---------- inventory modal ----------
   function openInvModal(){
     const inv = ensureInvKeys();
-
     function list(kindLabel, kindKey){
       const items = GOODS.filter(g => g.kind === kindKey);
       const lines = items.map(g => {
@@ -677,7 +630,6 @@
   function saveUsedCodes(obj){
     saveJSON(LS.codesUsed, obj);
   }
-
   function getDeviceId(){
     let id = localStorage.getItem(LS.deviceId);
     if(!id){
@@ -686,11 +638,7 @@
     }
     return id;
   }
-
   async function redeemOnServer(code){
-    if(!REDEEM_ENDPOINT){
-      throw new Error("REDEEM_ENDPOINT 未設定");
-    }
     const body = {
       apiKey: REDEEM_API_KEY,
       code,
@@ -711,7 +659,6 @@
     }
     return data;
   }
-
   function applyRedeemReward(reward){
     const inv = ensureInvKeys();
     const add = Math.max(0, Math.floor(Number(reward?.seed_colabo || 0) || 0));
@@ -721,7 +668,6 @@
     }
     return { addedSeedColabo: add };
   }
-
   function setInlineMsg(text, isError=false){
     const el = $("#serialInlineMsg");
     if(!el) return;
@@ -739,11 +685,9 @@
         </div>
 
         <div class="serial-row">
-          <input id="redeemCode" class="serial-in" type="text" placeholder="例：GRATAN-0001-1234" autocomplete="off">
+          <input id="redeemCode" class="serial-in" type="text" placeholder="例：TC-XXXX-XXXX" autocomplete="off">
           <button id="redeemBtn" class="btn big">使う</button>
         </div>
-
-        <div class="note">※同じコードは<b>1回だけ</b>。使ったら戻れない…たこ。</div>
 
         <div class="row">
           <button class="btn btn-ghost" id="serialClose" type="button">閉じる</button>
@@ -766,7 +710,6 @@
 
       try{
         const data = await redeemOnServer(code);
-
         if(!data.ok){
           alert(data.message || data.error || "無効なコードです。");
           return;
@@ -889,10 +832,7 @@
     const root = modalBody || document;
     const grill = $("#grill", root);
     $$(".ball", grill).forEach(b => {
-      b.addEventListener("click", () => {
-        const idx = Number(b.getAttribute("data-i")||0);
-        doMikuji(idx);
-      }, { once:true });
+      b.addEventListener("click", () => doMikuji(Number(b.getAttribute("data-i")||0)), { once:true });
     });
   }
 
@@ -915,7 +855,7 @@
     return table[0];
   }
 
-  function doMikuji(_idx){
+  function doMikuji(){
     const reward = rollMikujiReward();
 
     if(reward.type === "octo"){
@@ -930,11 +870,9 @@
     localStorage.setItem(LS.mikujiDate, todayKey());
     pushLog(`みくじ：${reward.label}`);
 
-    const ballImg = "https://ul.h3z.jp/7moREJnl.png";
     openModal("✨ みくじ結果 ✨", `
       <div class="mikuji-wrap">
         <div class="reveal">
-          <img class="glow" src="${ballImg}" alt="たこ焼き（当たり）">
           <div style="font-weight:900; font-size:16px;">✨ ${reward.label} ✨</div>
           <div class="note">たこぴ：<br>「……ねぇ、知ってるたこ？<br>“当たり”は、焼ける前に受け取るもの…たこ。」</div>
         </div>
@@ -1033,18 +971,12 @@
   }
 
   function wireButtons(){
-    const give = $("#btnGiveOcto");
-    if(give){
-      give.style.display = "none";
-      give.disabled = true;
-    }
-
     $("#btnDebugPlus1000")?.addEventListener("click", () => {
       addOcto(1000);
       pushLog("デバッグ：オクト +1000");
       refreshHUD();
       setTakopiSayRandom();
-      toastHype("🧪 デバッグ：オクト +1000", {kind:"info"});
+      toastHype("🧪 オクト +1000！", {kind:"good"});
     });
 
     $("#btnOpenInv")?.addEventListener("click", () => {
@@ -1071,28 +1003,24 @@
       toastHype("🏮 売却ページを開いた！", {kind:"info"});
       setTakopiSayRandom();
     });
-
-    $("#btnSerial")?.addEventListener("click", () => {
-      openSerialModal();
-      setTakopiSayRandom();
-    });
   }
 
   function boot(){
-    injectToastCSS();     // ✅ ポップアップ必ず出す
-    injectBuyRowCSS();    // ✅ 2段禁止 + 横並び固定
-    ensureToast();        // ✅ toast要素が無ければ作る
-
+    ensureToast();        // ✅ HTMLにあっても必ず拾う
+    injectBuyRowCSS();    // ✅ 横並び固定
     ensureInvKeys();
     setTakopiSayRandom();
     wireTabs();
     wireButtons();
     wireSerialInline();
-
     refreshHUD();
     renderGoods();
+
+    // ✅ 起動時に1回出す（これで「そもそも出るか」を即確認できる）
+    toastHype("✨ 露店 起動！…たこ。", {kind:"info"});
   }
 
   boot();
 })();
+
 
