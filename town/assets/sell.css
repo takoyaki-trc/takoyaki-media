@@ -1,318 +1,282 @@
-/* =========================================================
-   sell.js（図鑑のダブり売却）
-   - 対象: tf_v1_book.got[id].count > 1 のものだけ
-   - 売却: count から指定枚数を減らし、roten_v1_octo に加算
-   - 探しやすさ: 検索 + ソート
-   - 画像/名前: book側に無い場合は id 表示（拡張できるように設計）
-========================================================= */
-(() => {
-  "use strict";
+:root{
+  --bg:#0f1220;
+  --line:rgba(255,255,255,.14);
+  --text:#fff;
+  --muted:rgba(255,255,255,.72);
+  --gold: rgba(255,210,124,.75);
+  --shadow: 0 16px 45px rgba(0,0,0,.45);
+  --radius:16px;
 
-  const LS = {
-    octo: "roten_v1_octo",
-    book: "tf_v1_book"
-  };
+  /* iPhone safe-area */
+  --safeTop: env(safe-area-inset-top, 0px);
+  --safeRight: env(safe-area-inset-right, 0px);
+  --safeBottom: env(safe-area-inset-bottom, 0px);
+  --safeLeft: env(safe-area-inset-left, 0px);
+}
 
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+html{
+  -webkit-text-size-adjust: 100%; /* iOSの文字勝手拡大を抑制 */
+}
+body{
+  margin:0;
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding-left: var(--safeLeft);
+  padding-right: var(--safeRight);
+}
 
-  function loadJSON(key, fallback){
-    try{
-      const raw = localStorage.getItem(key);
-      if(!raw) return fallback;
-      return JSON.parse(raw);
-    }catch(e){
-      return fallback;
-    }
-  }
-  function saveJSON(key, obj){
-    localStorage.setItem(key, JSON.stringify(obj));
-  }
+.sell-header{
+  position:sticky;
+  top:0;
+  z-index:50;
+  padding-top: var(--safeTop);
+  background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.sell-head-inner{
+  position:relative;
+  padding: 16px 14px 10px;
+}
+.sell-title{ font-size: 20px; font-weight: 900; }
+.sell-sub{ margin-top:4px; color: var(--muted); font-size: 12px; line-height:1.35; }
 
-  function getOcto(){
-    return Number(localStorage.getItem(LS.octo) || 0);
-  }
-  function setOcto(v){
-    localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v)||0))));
-  }
+/* ✅ 右上ヘルプ */
+.help-btn{
+  position:absolute;
+  top: 10px;
+  right: 10px;
+  right: calc(10px + var(--safeRight));
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border:1px solid rgba(255,255,255,.18);
+  background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(0,0,0,.35));
+  color:#fff;
+  font-weight:900;
+  font-size:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,.45);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.help-btn:active{ transform: translateY(1px) scale(.96); }
 
-  function loadBook(){
-    const book = loadJSON(LS.book, { ver:1, got:{} });
-    book.got = book.got || {};
-    return book;
-  }
-  function saveBook(book){
-    saveJSON(LS.book, book);
-  }
+.sell-app{
+  padding: 10px 12px calc(26px + var(--safeBottom));
+  max-width: 980px;
+  margin: 0 auto;
+}
 
-  function priceFor(meta){
-    const base = 150;
-    const r = (meta.rarity || "").toUpperCase();
-    if(r.includes("LR")) return 3000;
-    if(r.includes("UR")) return 1500;
-    if(r.includes("SR")) return 500;
-    if(r.includes("R"))  return 300;
-    return base;
-  }
+.btn{
+  appearance:none;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-weight: 900;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn:active{ transform: translateY(1px); }
+.btn-ghost{ background: rgba(0,0,0,.18); }
 
-  function resolveMeta(id, entry){
-    const name = entry?.name || entry?.title || id;
-    const img  = entry?.img  || entry?.image || entry?.url || null;
-    const rarity = entry?.rarity || entry?.rank || "";
-    const fallbackImg = "https://ul.h3z.jp/7moREJnl.png";
-    return { id, name, img: img || fallbackImg, rarity };
-  }
+.sell-top{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  padding: 12px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  box-shadow: var(--shadow);
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.18);
+}
+.pill .tag{ color: var(--muted); font-weight: 900; }
+.pill .num{ font-size: 18px; font-weight: 900; }
 
-  const modal = $("#modal");
-  const modalBg = $("#modalBg");
-  const modalX  = $("#modalX");
-  const modalTitle = $("#modalTitle");
-  const modalBody  = $("#modalBody");
+.sell-tools{
+  margin-top: 12px;
+  display:grid;
+  grid-template-columns: 1fr 170px;
+  gap:10px;
+}
 
-  function openModal(title, html){
-    if(!modal) return;
-    modalTitle.textContent = title || "メニュー";
-    modalBody.innerHTML = html || "";
-    modal.classList.add("is-open");
-    modal.setAttribute("aria-hidden","false");
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-  }
-  function closeModal(){
-    if(!modal) return;
-    modal.classList.remove("is-open");
-    modal.setAttribute("aria-hidden","true");
-    document.documentElement.style.overflow = "";
-    document.body.style.overflow = "";
-  }
-  modalBg?.addEventListener("click", closeModal);
-  modalX?.addEventListener("click", closeModal);
+/* ✅ iOSズーム防止：input/selectは必ず16px */
+.search, .select{
+  width:100%;
+  border-radius: 14px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.18);
+  color: var(--text);
+  padding: 12px 12px;
+  outline:none;
+  font-size: 16px; /* ←超重要 */
+  line-height: 1.2;
+}
+.search::placeholder{ color: rgba(255,255,255,.5); }
+.select{ cursor:pointer; }
 
-  function collectDupCards(){
-    const book = loadBook();
-    const out = [];
-    for(const id of Object.keys(book.got)){
-      const entry = book.got[id];
-      const count = Number(entry?.count || 0);
-      if(count > 1){
-        const meta = resolveMeta(id, entry);
-        const dup = count - 1;
-        const unit = priceFor(meta);
-        out.push({ id, meta, count, dup, unit });
-      }
-    }
-    return out;
-  }
+@media (max-width: 640px){
+  .sell-tools{ grid-template-columns: 1fr; }
+}
 
-  function refreshTop(){
-    $("#sellOcto") && ($("#sellOcto").textContent = String(getOcto()));
-    const list = collectDupCards();
-    const totalDup = list.reduce((a,c)=>a+c.dup, 0);
-    $("#sellDupTotal") && ($("#sellDupTotal").textContent = String(totalDup));
-  }
+/* ✅ 端末幅に応じて自動で列数調整（iPhoneでも崩れにくい） */
+.sell-grid{
+  margin-top: 12px;
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap:10px;
+}
 
-  function applyFilterSort(list){
-    const q = ($("#q")?.value || "").trim().toLowerCase();
-    const sort = $("#sort")?.value || "dupdesc";
+.card{
+  border:1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  background: rgba(0,0,0,.18);
+  overflow:hidden;
+  display:grid;
+}
 
-    let a = list;
+/* ✅ Grid内のmin-width:autoで崩れるのを防止 */
+.card-top{
+  display:grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap:10px;
+  padding: 10px;
+  align-items:center;
+}
 
-    if(q){
-      a = a.filter(x => {
-        const n = (x.meta.name || "").toLowerCase();
-        const id = (x.id || "").toLowerCase();
-        return n.includes(q) || id.includes(q);
-      });
-    }
+.imgbox{
+  width:88px;
+  height:88px;
+  border-radius: 14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  padding: 5px;
+}
+.imgbox img{
+  width:100%;
+  height:100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  display:block;
+}
 
-    a = a.slice();
-    a.sort((p, q2) => {
-      if(sort === "dupdesc") return (q2.dup - p.dup) || (q2.unit - p.unit) || (p.meta.name.localeCompare(q2.meta.name));
-      if(sort === "named")   return p.meta.name.localeCompare(q2.meta.name);
-      if(sort === "namea")   return q2.meta.name.localeCompare(p.meta.name);
-      if(sort === "pricedesc") return (q2.unit - p.unit) || (q2.dup - p.dup);
-      if(sort === "priceasc")  return (p.unit - q2.unit) || (q2.dup - p.dup);
-      return 0;
-    });
+.meta{
+  display:grid;
+  gap:6px;
+  min-width: 0; /* ✅ これがないとiPhoneで横はみ出しやすい */
+}
+.name{
+  font-weight:900;
+  line-height:1.2;
+  overflow-wrap:anywhere; /* ✅ 長いカード名で崩れない */
+}
+.desc{
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.35;
+  overflow-wrap:anywhere;
+}
 
-    return a;
-  }
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding: 0 10px 10px;
+  min-width:0;
+}
+.badge{
+  font-size: 12px;
+  color: rgba(255,255,255,.88);
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.badge b{ font-size: 14px; }
+.sellbtn{
+  flex: 0 0 auto;
+  border-color: rgba(255,210,124,.40);
+  background: linear-gradient(180deg, rgba(255,210,124,.22), rgba(0,0,0,.18));
+  box-shadow: 0 0 0 2px rgba(255,210,124,.08) inset, 0 10px 24px rgba(0,0,0,.35);
+}
 
-  function render(){
-    refreshTop();
+/* ===== Modal ===== */
+.modal{ position:fixed; inset:0; display:none; z-index:1000; }
+.modal.is-open{ display:block; }
+.modal__backdrop{ position:absolute; inset:0; background: rgba(0,0,0,.72); }
 
-    const grid = $("#sellGrid");
-    if(!grid) return;
+.modal__sheet{
+  position:absolute;
+  left:50%;
+  transform: translateX(-50%);
+  bottom: calc(10px + var(--safeBottom)); /* ✅ iPhone下部のsafe-area */
+  width: min(720px, 96vw);
+  max-height: calc(86vh - var(--safeTop));
+  overflow:hidden;
+  border-radius: 18px;
+  border:1px solid rgba(255,255,255,.14);
+  background: linear-gradient(180deg, rgba(20,28,40,.96), rgba(10,14,20,.96));
+  box-shadow: var(--shadow);
+}
 
-    const list = applyFilterSort(collectDupCards());
+.modal__grab{
+  width: 46px; height: 5px; border-radius:999px;
+  background: rgba(255,255,255,.22);
+  margin: 10px auto 0;
+}
+.modal__head{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding: 10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.modal__title{ font-weight: 900; min-width:0; overflow-wrap:anywhere; }
+.modal__x{ padding: 8px 10px; }
+.modal__body{
+  padding: 12px;
+  overflow:auto;
+  max-height: calc(86vh - 54px);
+  -webkit-overflow-scrolling: touch; /* iOSスクロール滑らか */
+}
 
-    if(list.length === 0){
-      grid.innerHTML = `
-        <div style="grid-column:1/-1; padding:14px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:rgba(0,0,0,.18);">
-          <div style="font-weight:900;">ダブりカードがない…</div>
-          <div style="color:rgba(255,255,255,.72); font-size:12px; margin-top:6px;">
-            たこぴ：<br>「売れるほど集めたってこと…すごい…たこ。<br>でも今は、売るものが無い…たこ。」
-          </div>
-        </div>
-      `;
-      return;
-    }
+.fx{
+  border-radius: 16px;
+  border:1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
+  padding: 12px;
+}
+.fx .note{ color: var(--muted); font-size: 12px; line-height: 1.4; overflow-wrap:anywhere; }
+.fx .line{ border-top:1px solid rgba(255,255,255,.08); margin: 10px 0; }
 
-    grid.innerHTML = list.map(x => {
-      const maxSell = x.dup;
-      const label = x.meta.rarity ? ` / ${x.meta.rarity}` : "";
-      return `
-        <article class="card" data-id="${x.id}">
-          <div class="card-top">
-            <div class="imgbox"><img src="${x.meta.img}" alt="${x.meta.name}" loading="lazy"></div>
-            <div class="meta">
-              <div class="name">${x.meta.name}</div>
-              <div class="desc">ID: ${x.id}${label}</div>
-              <div class="desc">売値：<b>${x.unit}</b> オクト / 1枚</div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="badge">所持 <b>${x.count}</b> / 売れる <b>${maxSell}</b></div>
-            <button class="btn sellbtn" data-sell="1">売る</button>
-          </div>
-        </article>
-      `;
-    }).join("");
-
-    $$(".card", grid).forEach(card => {
-      card.querySelector('[data-sell="1"]')?.addEventListener("click", () => {
-        const id = card.getAttribute("data-id");
-        const target = list.find(x => x.id === id);
-        if(!target) return;
-        openSellModal(target);
-      });
-    });
-  }
-
-  function openSellModal(item){
-    const maxSell = item.dup;
-    const unit = item.unit;
-
-    const options = Array.from({length:maxSell}).map((_,i)=>{
-      const n = i+1;
-      return `<option value="${n}">${n} 枚</option>`;
-    }).join("");
-
-    openModal("♻️ 売却（ダブりのみ）", `
-      <div class="fx">
-        <div style="font-weight:900; font-size:14px;">🎰 売却イベント発生</div>
-        <div class="note" style="margin-top:6px;">
-          たこぴ：<br>
-          「売るってことは…“手放す”ってこと…たこ。<br>
-          でもね、手放した分だけ…オクトは増える…たこ。」
-        </div>
-
-        <div class="line"></div>
-
-        <div style="display:grid; grid-template-columns: 96px 1fr; gap:12px; align-items:center;">
-          <div style="width:96px;height:96px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;overflow:hidden;">
-            <img src="${item.meta.img}" alt="${item.meta.name}" style="width:84px;height:auto;image-rendering:pixelated;display:block;">
-          </div>
-          <div style="display:grid;gap:6px;">
-            <div style="font-weight:900;">${item.meta.name}</div>
-            <div class="note">ID: ${item.id}</div>
-            <div class="note">所持：${item.count} / 売れる：${maxSell}</div>
-            <div class="note">売値：<b>${unit}</b> オクト / 1枚</div>
-          </div>
-        </div>
-
-        <div class="line"></div>
-
-        <div style="display:grid; gap:8px;">
-          <div class="note">何枚売る？（※必ず1枚は残る）</div>
-          <select class="qty" id="sellQty">${options}</select>
-          <div class="note">合計：<b id="sellTotal">${unit}</b> オクト</div>
-        </div>
-
-        <div class="line"></div>
-
-        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-          <button class="btn" id="doSell" style="border-color:rgba(255,210,124,.40);background:linear-gradient(180deg, rgba(255,210,124,.22), rgba(0,0,0,.18));font-weight:900;">
-            🪙 売却する
-          </button>
-          <button class="btn btn-ghost" id="cancelSell">やめる</button>
-        </div>
-      </div>
-    `);
-
-    const qtyEl = $("#sellQty");
-    const totalEl = $("#sellTotal");
-
-    const recalc = () => {
-      const n = Number(qtyEl?.value || 1);
-      totalEl && (totalEl.textContent = String(n * unit));
-    };
-    qtyEl?.addEventListener("change", recalc);
-    recalc();
-
-    $("#cancelSell")?.addEventListener("click", closeModal);
-    $("#doSell")?.addEventListener("click", () => {
-      const n = Number(qtyEl?.value || 1);
-      doSell(item.id, n);
-      closeModal();
-      render();
-    });
-  }
-
-  function doSell(id, qty){
-    const book = loadBook();
-    const entry = book.got?.[id];
-    if(!entry) return;
-
-    const count = Number(entry.count || 0);
-    const dup = count - 1;
-    const canSell = Math.max(0, Math.min(dup, qty));
-    if(canSell <= 0) return;
-
-    const meta = resolveMeta(id, entry);
-    const unit = priceFor(meta);
-    const gain = unit * canSell;
-
-    entry.count = count - canSell;
-    book.got[id] = entry;
-    saveBook(book);
-
-    setOcto(getOcto() + gain);
-  }
-
-  function wire(){
-    $("#q")?.addEventListener("input", render);
-    $("#sort")?.addEventListener("change", render);
-
-    // ✅ 更新ボタン削除したのでここも削除
-    // $("#btnRefresh")?.addEventListener("click", render);
-
-    $("#btnSellHelp")?.addEventListener("click", () => {
-      openModal("売り方", `
-        <div class="fx">
-          <div style="font-weight:900;">やることは2つだけ</div>
-          <div class="note" style="margin-top:8px;">
-            1) ダブりカード（所持2枚以上）から選ぶ<br>
-            2) 売る枚数を選んで「売却する」<br><br>
-            ※必ず1枚は残る（図鑑コンプが崩れない）
-          </div>
-          <div class="note" style="margin-top:10px;">
-            たこぴ：<br>「売るのは怖い…でもね、<br>そのオクトで“次の運命”を買える…たこ。」
-          </div>
-          <div style="margin-top:12px;">
-            <button class="btn" id="okHelp">OK</button>
-          </div>
-        </div>
-      `);
-      $("#okHelp")?.addEventListener("click", closeModal);
-    });
-  }
-
-  function boot(){
-    wire();
-    render();
-  }
-
-  boot();
-})();
+.qty{
+  width:100%;
+  border-radius: 14px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.18);
+  color: var(--text);
+  padding: 12px 12px;
+  font-size: 16px; /* ✅ iOSズーム防止 */
+}
 
