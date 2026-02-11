@@ -401,6 +401,27 @@
     return { prefix: m[1], num: Number(m[2] || 0) };
   }
 
+  // ★ SP判定（焦げ/生焼け を SP に含める保険）
+  function isSpecialSPCard(item){
+    const id = (item?.id ?? "").toString().trim().toUpperCase();
+    const name = (item?.name ?? "").toString().trim();
+    const rarity = (item?.rarity ?? "").toString().trim().toUpperCase();
+
+    // 1) IDがSPで始まる
+    if(id.startsWith("SP")) return true;
+
+    // 2) レアリティがSPならSP扱い
+    if(rarity === "SP") return true;
+
+    // 3) 名前に「焦げ」「生焼け」が含まれる
+    if(name.includes("焦げ") || name.includes("生焼け")) return true;
+
+    // 4) IDに burn / raw / nama / koge などが含まれる（英語/ローマ字保険）
+    if(id.includes("BURN") || id.includes("RAW") || id.includes("NAMA") || id.includes("KOGE")) return true;
+
+    return false;
+  }
+
   // “番号だけ”取りたい時（旧 num互換）
   function idToNumber(id){
     const p = parseCardId(id);
@@ -602,15 +623,33 @@
                  .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
     }else if(sort === "sp"){
-      view = view.filter(c=> parseCardId(c.id).prefix === "SP")
-                 .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+      // ★ SP：SP-xxx だけでなく、焦げ/生焼けカードも含める
+      view = view.filter(c=> isSpecialSPCard(c))
+                 .sort((a,b)=>{
+                   const A0 = parseCardId(a.id);
+                   const B0 = parseCardId(b.id);
+
+                   // SP-番号が取れるもの同士は番号順
+                   if(A0.prefix === "SP" && B0.prefix === "SP" && A0.num !== B0.num){
+                     return A0.num - B0.num;
+                   }
+
+                   // それ以外は「新しい順」で安定
+                   const ta = toTime(a.lastAt || a.at);
+                   const tb = toTime(b.lastAt || b.at);
+                   return tb - ta;
+                 });
 
     }else if(sort === "all_serial"){
       // 全カード品番順（シリーズ優先順→番号）
       const prefixOrder = { TN:1, TP:2, NK:3, BS:4, SP:5 };
       view.sort((a,b)=>{
-        const A = parseCardId(a.id);
-        const B = parseCardId(b.id);
+        // ★ 焦げ/生焼けは SP として扱う（IDがSPじゃなくても）
+        const A0 = parseCardId(a.id);
+        const B0 = parseCardId(b.id);
+
+        const A = isSpecialSPCard(a) ? { prefix:"SP", num:A0.num } : A0;
+        const B = isSpecialSPCard(b) ? { prefix:"SP", num:B0.num } : B0;
 
         const pa = prefixOrder[A.prefix] ?? 99;
         const pb = prefixOrder[B.prefix] ?? 99;
@@ -754,8 +793,12 @@
   }
   modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
 
-  // ★ 全角スペースが混じると事故るので、ここは半角のみで書き直し
-  mClose.addEventListener("click", closeModal);
+  // =========================================================
+  // バックアップ行表示
+  // =========================================================
+  function initHeader(){
+    updateBackupLine();
+  }
 
   // =========================================================
   // ★ 復元コード（ユーザーごとに自分で作る）
@@ -994,12 +1037,22 @@
   // modal close
   mClose.addEventListener("click", closeModal);
 
+  // backup modal close
+  bClose.addEventListener("click", closeBackupModal);
+
+  // backup make/copy/save/restore
+  btnMakeCode.addEventListener("click", () => makeRestoreCode());
+  btnCopyCode.addEventListener("click", copyCode);
+  btnSaveTxt.addEventListener("click", saveTxt);
+  btnRestore.addEventListener("click", () => restoreFromCode());
+
   // init（★二重load防止：1回だけ）
   load();
-  updateBackupLine();
+  initHeader();
 </script>
 </body>
 </html>
+
 
 
 
