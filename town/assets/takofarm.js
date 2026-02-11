@@ -191,8 +191,8 @@
   // ✅ グラタン：2種固定（①LR / ②N）
   // =========================
   const GRATIN_POOL = [
-    { id:"GTN-001", name:"グラタン①（LR）", img:"https://ul.h3z.jp/zJubnlOw.png", rarity:"LR" },
-    { id:"GTN-002", name:"グラタン②（N）",  img:"https://ul.h3z.jp/1VQvIP7v.png", rarity:"N"  },
+    { id:"col-001", name:"グラタン①（LR）", img:"https://ul.h3z.jp/zJubnlOw.png", rarity:"LR" },
+    { id:"col-002", name:"グラタン②（N）",  img:"https://ul.h3z.jp/1VQvIP7v.png", rarity:"N"  },
   ];
   const GRATIN_LR_CHANCE = 0.03;
 
