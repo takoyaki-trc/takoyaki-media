@@ -32,19 +32,15 @@
     mikujiDate: "roten_v1_mikuji_date",
     launchGift: "roten_v1_launch_gift_claimed",
     log: "roten_v1_log",
-    // シリアル使用済み（ファームと同じキーに揃える）
     codesUsed: "tf_v1_codes_used",
-    // 端末ID（redeemの補助）
     deviceId: "tf_v1_device_id"
   };
 
   // ✅=========================
   // ✅ シリアル（GAS Webアプリ）
   // ✅=========================
-  // GASの「ウェブアプリURL」を貼る（後で差し替え）
-  const REDEEM_ENDPOINT = "https://YOUR_GAS_WEBAPP_URL";
-  // GAS側のAPI_KEYと同じ文字列にする（後で差し替え）
-  const REDEEM_API_KEY  = "CHANGE_ME_TO_RANDOM_LONG_STRING";
+  const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbxZXt06RbQ0kdnkUamZtbrtD6f1MMZ30nmOoPYvMSoZenlz1hT940N2hBUxmtgNYxcA/exec";
+  const REDEEM_API_KEY  = "takopi-gratan-2026";
 
   // ---------- utils ----------
   const $  = (sel, root=document) => root.querySelector(sel);
@@ -83,7 +79,6 @@
   }
 
   function invDefault(){
-    // ファームと共通の形
     return { ver:1, seed:{}, water:{}, fert:{} };
   }
   function loadInv(){
@@ -97,7 +92,6 @@
     saveJSON(LS.inv, inv);
   }
 
-  // 図鑑（所持数合計）
   function calcBookOwned(){
     const book = loadJSON(LS.book, null);
     if(!book || !book.got) return 0;
@@ -109,7 +103,6 @@
     return total;
   }
 
-  // ログ（任意）
   function pushLog(msg){
     const a = loadJSON(LS.log, []);
     a.unshift({ t: Date.now(), msg });
@@ -123,7 +116,6 @@
     { id:"seed_line",    name:"回線タネ", desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
     { id:"seed_special", name:"たこぴのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/29OsEvjf.png", fx:"待て" },
 
-    // ✅ 追加：販売タネ
     { id:"seed_bussasari",      name:"ブッ刺さりタネ", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり補正" },
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり圧" },
 
@@ -146,17 +138,13 @@
     { id:"fert_timeno",  name:"時間を信じない肥料", desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》", img:"https://ul.h3z.jp/l2njWY57.png", fx:"時短 90〜100%" },
   ];
 
-  // 露店販売価格（オクト）
   const PRICE = {
     seed_random: 100,
     seed_shop: 200,
     seed_line: 200,
     seed_special: 10000,
-
     seed_bussasari: 50000,
     seed_namara_kawasar: 30000,
-
-    // seed_colabo は購入不可
 
     water_plain_free: 50,
     water_nice: 100,
@@ -171,19 +159,17 @@
     fert_timeno: 300,
   };
 
-  // ---------- GOODS（マスター統合） ----------
   function buildGoods(){
     const goods = [];
-
     for(const s of SEEDS){
       const isColabo = (s.id === "seed_colabo");
       goods.push({
-        kind: "seed",
-        id: s.id,
-        name: s.name,
-        desc: s.desc,
-        fx: s.fx,
-        img: s.img,
+        kind:"seed",
+        id:s.id,
+        name:s.name,
+        desc:s.desc,
+        fx:s.fx,
+        img:s.img,
         price: isColabo ? null : (PRICE[s.id] ?? 18),
         buyable: !isColabo,
         tag: isColabo ? "シリアル限定" : "販売"
@@ -191,33 +177,32 @@
     }
     for(const w of WATERS){
       goods.push({
-        kind: "water",
-        id: w.id,
-        name: w.name,
-        desc: w.desc,
-        fx: w.fx,
-        img: w.img,
-        price: (PRICE[w.id] ?? 18),
-        buyable: true,
-        tag: "販売"
+        kind:"water",
+        id:w.id,
+        name:w.name,
+        desc:w.desc,
+        fx:w.fx,
+        img:w.img,
+        price:(PRICE[w.id] ?? 18),
+        buyable:true,
+        tag:"販売"
       });
     }
     for(const f of FERTS){
       goods.push({
-        kind: "fert",
-        id: f.id,
-        name: f.name,
-        desc: f.desc,
-        fx: f.fx,
-        img: f.img,
-        price: (PRICE[f.id] ?? 18),
-        buyable: true,
-        tag: "販売"
+        kind:"fert",
+        id:f.id,
+        name:f.name,
+        desc:f.desc,
+        fx:f.fx,
+        img:f.img,
+        price:(PRICE[f.id] ?? 18),
+        buyable:true,
+        tag:"販売"
       });
     }
     return goods;
   }
-
   const GOODS = buildGoods();
 
   const SAY = [
@@ -227,7 +212,7 @@
     "「買う？…買わない？…どっちでもいいけど、見ていきな…たこ。」"
   ];
 
-  // ---------- modal（必ず動く） ----------
+  // ---------- modal ----------
   const modal = $("#modal");
   const modalBg = $("#modalBg");
   const modalX  = $("#modalX");
@@ -290,20 +275,14 @@
     const inv = ensureInvKeys();
     const octo = getOcto();
 
-    const octoNow = $("#octoNow");
-    if(octoNow) octoNow.textContent = String(octo);
+    $("#octoNow") && ($("#octoNow").textContent = String(octo));
 
-    const chipSeed  = $("#chipSeed");
-    const chipWater = $("#chipWater");
-    const chipFert  = $("#chipFert");
-    const chipBookOwned = $("#chipBookOwned");
-    const chipBookDup = $("#chipBookDup");
+    $("#chipSeed")  && ($("#chipSeed").textContent  = String(totalKind(inv, "seed")));
+    $("#chipWater") && ($("#chipWater").textContent = String(totalKind(inv, "water")));
+    $("#chipFert")  && ($("#chipFert").textContent  = String(totalKind(inv, "fert")));
 
-    if(chipSeed)  chipSeed.textContent  = String(totalKind(inv, "seed"));
-    if(chipWater) chipWater.textContent = String(totalKind(inv, "water"));
-    if(chipFert)  chipFert.textContent  = String(totalKind(inv, "fert"));
-    if(chipBookOwned) chipBookOwned.textContent = String(calcBookOwned());
-    if(chipBookDup) chipBookDup.textContent = "0";
+    $("#chipBookOwned") && ($("#chipBookOwned").textContent = String(calcBookOwned()));
+    $("#chipBookDup")   && ($("#chipBookDup").textContent   = "0");
 
     const done = localStorage.getItem(LS.mikujiDate) === todayKey();
     const btnM = $("#btnMikuji");
@@ -349,7 +328,7 @@
             <div class="good-owned">所持×<b>${own}</b></div>
             <div class="good-buy">
               <div class="price">${priceLabel}</div>
-              <button class="btn buybtn" ${dis} data-act="${canBuy ? "buy" : "serial"}">${btnLabel}</button>
+              <button class="btn buybtn" ${dis}>${btnLabel}</button>
             </div>
           </div>
         </article>
@@ -366,12 +345,8 @@
       btn?.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-
-        if(item.buyable){
-          confirmBuy(item);
-        }else{
-          openSerialModal();
-        }
+        if(item.buyable) confirmBuy(item);
+        else openSerialModal();
       });
     });
   }
@@ -469,6 +444,7 @@
           <div class="inv-right">×<b>${c}</b></div>
         </div>`;
       }).join("");
+
       return `
         <div class="inv-box">
           <div class="inv-title">${kindLabel}</div>
@@ -494,10 +470,7 @@
   }
 
   // =========================================================
-  // ✅ serial（コラボのタネ）— GAS 連携版（必要箇所だけ書き換え）
-  //   - ローカルREDEEM_TABLE廃止
-  //   - redeemOnServer()で検証→使用済み化→reward返却
-  //   - 端末内 used は補助（サーバーが本命）
+  // ✅ serial（コラボのタネ）— GAS 連携版
   // =========================================================
   function loadUsedCodes(){
     const obj = loadJSON(LS.codesUsed, {});
@@ -517,7 +490,7 @@
   }
 
   async function redeemOnServer(code){
-    if(!REDEEM_ENDPOINT || REDEEM_ENDPOINT.includes("YOUR_GAS_WEBAPP_URL")){
+    if(!REDEEM_ENDPOINT){
       throw new Error("REDEEM_ENDPOINT 未設定");
     }
     const body = {
@@ -568,7 +541,7 @@
         </div>
 
         <div class="serial-row">
-          <input id="redeemCode" class="serial-in" type="text" placeholder="例：TC-XXXX-XXXX" autocomplete="off">
+          <input id="redeemCode" class="serial-in" type="text" placeholder="例：GRATAN-0001-1234" autocomplete="off">
           <button id="redeemBtn" class="btn big">使う</button>
         </div>
 
@@ -584,26 +557,29 @@
     $("#serialClose", root)?.addEventListener("click", closeModal);
 
     $("#redeemBtn", root)?.addEventListener("click", async () => {
-      const code = ( $("#redeemCode", root)?.value || "" ).trim().toUpperCase();
+      const code = ($("#redeemCode", root)?.value || "").trim().toUpperCase();
       if(!code){ alert("コードを入力してね"); return; }
 
-      // 端末内の二重使用（補助）
+      // 端末内二重使用（補助）
       const used = loadUsedCodes();
       if(used[code]){ alert("このコードは（この端末では）使用済み。"); return; }
 
       const btn = $("#redeemBtn", root);
-      if(btn) btn.disabled = true;
+      if(btn){ btn.disabled = true; btn.textContent = "確認中…"; }
 
       try{
         const data = await redeemOnServer(code);
+
         if(!data.ok){
-          alert(data.message || "無効なコードです。");
-          if(btn) btn.disabled = false;
+          alert(data.message || data.error || "無効なコードです。");
           return;
         }
 
-        const applied = applyRedeemReward(data.reward || {});
-        used[code] = { at: Date.now(), payload: data.reward || {} };
+        // ✅ reward / grant どっちでも吸収
+        const reward = data.reward || data.grant || {};
+        const applied = applyRedeemReward(reward);
+
+        used[code] = { at: Date.now(), payload: reward };
         saveUsedCodes(used);
 
         pushLog(`シリアル：${code}（コラボのタネ +${applied.addedSeedColabo}）`);
@@ -612,14 +588,14 @@
         renderGoods();
         closeModal();
       }catch(err){
-        alert("通信に失敗した…たこ。時間を置いてもう一度。");
-        if(btn) btn.disabled = false;
+        alert(err?.message || "通信に失敗した…たこ。時間を置いてもう一度。");
+      }finally{
+        if(btn){ btn.disabled = false; btn.textContent = "使う"; }
       }
     });
   }
 
   // ✅ 常設欄（HTMLにあれば動く）
-  // 必要なID: #serialInlineInput, #serialInlineBtn, #serialInlineMsg（msgは任意）
   function wireSerialInline(){
     const input = $("#serialInlineInput");
     const btn   = $("#serialInlineBtn");
@@ -638,13 +614,14 @@
       try{
         const data = await redeemOnServer(code);
         if(!data.ok){
-          setInlineMsg(data.message || "無効なコードです。", true);
-          btn.disabled = false;
+          setInlineMsg(data.message || data.error || "無効なコードです。", true);
           return;
         }
 
-        const applied = applyRedeemReward(data.reward || {});
-        used[code] = { at: Date.now(), payload: data.reward || {} };
+        const reward = data.reward || data.grant || {};
+        const applied = applyRedeemReward(reward);
+
+        used[code] = { at: Date.now(), payload: reward };
         saveUsedCodes(used);
 
         input.value = "";
@@ -655,7 +632,7 @@
         renderGoods();
         toast(`成功！コラボのタネ +${applied.addedSeedColabo}`);
       }catch(err){
-        setInlineMsg("通信に失敗…たこ。時間を置いて再試行。", true);
+        setInlineMsg(err?.message || "通信に失敗…たこ。時間を置いて再試行。", true);
       }finally{
         btn.disabled = false;
       }
@@ -780,7 +757,7 @@
     });
   }
 
-  // ---------- launch present (one time) ----------
+  // ---------- launch present ----------
   function openLaunchPresent(){
     const claimed = localStorage.getItem(LS.launchGift) === "1";
     if(claimed){
@@ -895,13 +872,14 @@
       setTakopiSayRandom();
     });
 
-    $("#btnSellCards")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      window.open("./sell.html", "_blank", "noopener");
+    // ✅ HTML側は <a id="btnOpenSell" ... target="_blank">
+    // JS側で何もしなくてもOK（無反応対策ならtoastだけ出す）
+    $("#btnOpenSell")?.addEventListener("click", () => {
       toast("売却ページを開いた！");
       setTakopiSayRandom();
     });
 
+    // 任意：どこかに #btnSerial があるならモーダルを開く
     $("#btnSerial")?.addEventListener("click", () => {
       openSerialModal();
       setTakopiSayRandom();
@@ -910,7 +888,6 @@
 
   function boot(){
     ensureInvKeys();
-
     setTakopiSayRandom();
     wireTabs();
     wireButtons();
