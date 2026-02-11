@@ -50,12 +50,12 @@
   // ・基本：1枚 = 5オクト
   // ・rarity が入っていれば上げる（あれば、の話）
   function priceFor(meta){
-    const base = 5;
+    const base = 150;
     const r = (meta.rarity || "").toUpperCase();
-    if(r.includes("LR")) return 80;
-    if(r.includes("UR")) return 40;
-    if(r.includes("SR")) return 20;
-    if(r.includes("R"))  return 10;
+    if(r.includes("LR")) return 3000;
+    if(r.includes("UR")) return 1500;
+    if(r.includes("SR")) return 500;
+    if(r.includes("R"))  return 300;
     return base;
   }
 
