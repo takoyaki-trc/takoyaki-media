@@ -12,8 +12,8 @@
   --lock:rgba(255,255,255,.06);
 }
 
-/* ✅ 追加：ズレ事故予防（padding/borderの計算を安定させる） */
-*{ box-sizing:border-box; }
+/* ✅ これ入れとくと「padding/widthズレ」系が一気に安定する */
+*, *::before, *::after{ box-sizing:border-box; }
 
 /* ===== 背景 ===== */
 body{
@@ -264,7 +264,6 @@ h1{
   width:100%;
   height:100%;
   object-fit:contain;
-  object-position:center;
   image-rendering:auto;
   display:block;
 }
@@ -320,7 +319,6 @@ h1{
   height:auto;
   max-height:62vh;
   object-fit:contain;
-  object-position:center;
   display:block;
   margin:10px auto 0;
   border-radius:14px;
@@ -465,7 +463,6 @@ h1{
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position:center;
   image-rendering: pixelated;
 }
 
@@ -485,7 +482,7 @@ h1{
 }
 
 /* =========================
-   ✅ 選択グリッド（モーダル内スクロール＋サイズ統一＋中心ズレ錯視対策）
+   ✅ 選択グリッド（モーダル内スクロール＋サイズ統一＋画像見た目統一）
 ========================= */
 
 .gridWrap{
@@ -504,6 +501,9 @@ h1{
 
   align-items: stretch;
   grid-auto-rows: 1fr;
+
+  /* ✅ スクロールバーが出ても幅がブレにくい（対応ブラウザのみ） */
+  scrollbar-gutter: stable;
 }
 
 .gridCard{
@@ -512,44 +512,49 @@ h1{
   background: rgba(255,255,255,.06);
   color: #fff;
   padding: 10px;
-  text-align: left; /* 文章は左寄せのまま */
+  text-align: left;
   box-shadow: 0 10px 20px rgba(0,0,0,.22);
 
   height: 100%;
   display:flex;
   flex-direction:column;
+
+  /* ✅ 選択ハイライトを「内側」に入れる前提 */
+  outline: none;
 }
 .gridCard:disabled{ opacity: .55; }
-.gridCard.isSelected{ outline: 2px solid rgba(255,255,255,.35); }
 
-/* ✅ 画像枠：ここを「中央固定」にして外枠との中心ズレ感を消す */
+/* ✅ ここが重要：outlineをやめて “inset” で同サイズのまま光らせる */
+.gridCard.isSelected{
+  outline: none;
+  box-shadow:
+    0 10px 20px rgba(0,0,0,.22),
+    inset 0 0 0 2px rgba(255,255,255,.35);
+}
+
+/* 画像枠 */
 .gridImg{
   position: relative;
-
-  /* ★中央固定（これが効く） */
   width: 100%;
-  max-width: 180px;   /* ←中心基準を固定して錯視を潰す（必要なら170〜200で調整） */
-  margin: 0 auto;
-
   height: 92px;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.18);
 
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  display:grid;
+  place-items:center;
 
+  /* ✅ 統一：余白も一定に */
   padding: 8px;
 }
 
-/* ✅ 画像：確実に中央・端切れ防止 */
+/* ✅ 画像を「最大サイズ統一」で揃える */
 .gridImg img{
-  width: 86%;
-  height: 86%;
-  object-fit: contain;
-  object-position: center;
+  width: auto;
+  height: auto;
+  max-width: 86%;
+  max-height: 86%;
   image-rendering: pixelated;
   display:block;
 }
@@ -629,8 +634,5 @@ h1{
 @media (max-width: 380px){
   .gridWrap{ grid-template-columns: repeat(2, 1fr); }
   .gridDesc{ display:none; }
-
-  /* ✅ 2列時は少しだけ幅制限を緩める（見た目のバランス） */
-  .gridImg{ max-width: 200px; }
 }
 
