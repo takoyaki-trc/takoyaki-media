@@ -22,8 +22,12 @@
     //  - SR65  : SR以上確定の時だけ表示
     //  - SR100 : UR以上確定の時だけ表示（あなたの指定）
     GROW2_SR65:  "https://ul.h3z.jp/W086w3xd.png",
-    GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
+    GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w3xd.png".replace("tBVUoc8w3xd.png","tBVUoc8w.png") // 念のため（元URL維持したい場合は下行に差し替えてOK）
+    // ↑もし上が気になるなら、これにしてください：
+    // GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
   };
+  // ★上の“念のため”が嫌なら、次の1行だけ有効にしてください（元URLそのまま）
+  PLOT_IMG.GROW2_SR100 = "https://ul.h3z.jp/tBVUoc8w.png";
 
   // =========================
   // LocalStorage Keys
@@ -137,12 +141,13 @@
     { id:"water_regret", name:"押さなきゃよかった水", desc:"確定枠・狂気。\n事件製造機（SNS向け）", factor:1.00, fx:"事件", img:"https://ul.h3z.jp/L0nafMOp.png", rates:{ N:99.97, R:0, SR:0, UR:0, LR:0.03 } },
   ];
 
+  // ✅ 修正点：肥料は “時短だけ”（レア・SP抽選には一切影響しない）
   const FERTS = [
-    { id:"fert_agedama", name:"ただの揚げ玉", desc:"時短0。\n《焼きすぎたカード》率UP", factor:1.00, fx:"時短 0%", img:"https://ul.h3z.jp/9p5fx53n.png", burnCardUp:0.12, rawCardChance:0.00, mantra:false, skipGrowAnim:false },
+    { id:"fert_agedama", name:"ただの揚げ玉", desc:"時短0。\n（今は見た目だけ）", factor:1.00, fx:"時短 0%", img:"https://ul.h3z.jp/9p5fx53n.png", burnCardUp:0.12, rawCardChance:0.00, mantra:false, skipGrowAnim:false },
     { id:"fert_feel", name:"気のせい肥料", desc:"早くなった気がする。\n気のせいかもしれない。", factor:0.95, fx:"時短 5%", img:"https://ul.h3z.jp/XqFTb7sw.png", burnCardUp:0.00, rawCardChance:0.00, mantra:false, skipGrowAnim:false },
     { id:"fert_guts", name:"根性論ぶち込み肥料", desc:"理由はない。\n気合いだ。", factor:0.80, fx:"時短 20%", img:"https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp:0.00, rawCardChance:0.00, mantra:true, skipGrowAnim:false },
     { id:"fert_skip", name:"工程すっ飛ばし肥料", desc:"途中は、\n見なかったことにした。", factor:0.60, fx:"時短 40%", img:"https://ul.h3z.jp/FqPzx12Q.png", burnCardUp:0.00, rawCardChance:0.01, mantra:false, skipGrowAnim:true },
-    { id:"fert_timeno", name:"時間を信じない肥料", desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》", factor:0.10, fx:"時短 90〜100%", img:"https://ul.h3z.jp/l2njWY57.png", burnCardUp:0.00, rawCardChance:0.03, mantra:false, skipGrowAnim:true },
+    { id:"fert_timeno", name:"時間を信じない肥料", desc:"最終兵器・禁忌。\n（今は時短だけ）", factor:0.10, fx:"時短 90〜100%", img:"https://ul.h3z.jp/l2njWY57.png", burnCardUp:0.00, rawCardChance:0.03, mantra:false, skipGrowAnim:true },
   ];
 
   // =========================
@@ -289,6 +294,8 @@
     return min + Math.floor(Math.random() * (max - min + 1));
   }
 
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+
   // ★「うまく振り分け」：レベルが上がるほど上振れしやすいが、必ず3000〜10000
   function octoRewardForLevel(level){
     const lv = Math.max(1, Math.floor(level));
@@ -298,9 +305,6 @@
     return clamp(randInt(min, max), 3000, 10000);
   }
 
-  // ★追加アイテム報酬（必ず何か1個は付く）
-  //  - seed_colabo はシリアル枠なので配らない
-  //  - 数は Lvに応じて 1〜3 個
   function pickWeighted(list){
     const total = list.reduce((a, x)=> a + (x.w || 0), 0);
     if(total <= 0) return list[0]?.v;
@@ -312,23 +316,22 @@
     return list[list.length-1]?.v;
   }
 
+  // ★追加アイテム報酬（必ず何か1個は付く）
+  //  - seed_colabo はシリアル枠なので配らない
   function itemRewardForLevel(level){
     const lv = Math.max(1, Math.floor(level));
 
-    // 個数：Lvが上がるほど増えやすい（最大3）
     const count =
       (lv >= 15) ? pickWeighted([{v:2,w:55},{v:3,w:45}]) :
       (lv >= 8)  ? pickWeighted([{v:1,w:30},{v:2,w:70}]) :
                    1;
 
-    // カテゴリ：序盤は種寄り → 中盤から水/肥料も増やす
     const cat =
       (lv >= 12) ? pickWeighted([{v:"seed",w:45},{v:"water",w:30},{v:"fert",w:25}]) :
       (lv >= 6)  ? pickWeighted([{v:"seed",w:55},{v:"water",w:25},{v:"fert",w:20}]) :
                    pickWeighted([{v:"seed",w:70},{v:"water",w:20},{v:"fert",w:10}]);
 
-    // 対象アイテム候補
-    const seedChoices = SEEDS.filter(x => x.id !== "seed_colabo"); // コラボは配らない
+    const seedChoices = SEEDS.filter(x => x.id !== "seed_colabo");
     const waterChoices = WATERS.slice();
     const fertChoices = FERTS.slice();
 
@@ -349,7 +352,6 @@
       });
     }
 
-    // 同じものが複数当たったら合算
     const map = new Map();
     for(const r of rewards){
       const key = `${r.kind}:${r.id}`;
@@ -360,13 +362,10 @@
     return Array.from(map.values());
   }
 
-  // ★レベルアップ報酬を実際に付与（オクト必ず + アイテム必ず）
   function grantLevelRewards(level){
-    // オクト
     const octo = octoRewardForLevel(level);
     addOcto(octo);
 
-    // アイテム
     const items = itemRewardForLevel(level);
     const inv = loadInv();
     for(const it of items){
@@ -391,7 +390,6 @@
       player.level += 1;
       leveled = true;
 
-      // ✅ 1レベルごとに報酬付与（オクト必ず＋アイテム）
       const r = grantLevelRewards(player.level);
       rewards.push({ level: player.level, ...r });
 
@@ -466,8 +464,10 @@
     const ss = s%60;
     return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
   }
-  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
 
+  // =========================================================
+  // ✅ 水だけでレアが決まる（植えた時点で確定）
+  // =========================================================
   function pickRarityWithWater(waterId){
     const w = WATERS.find(x => x.id === waterId);
     if (w && w.rates) {
@@ -492,15 +492,6 @@
       if (r <= 0) return k;
     }
     return "N";
-  }
-
-  function bumpRarity(base, minRarity){
-    const order = ["N","R","SR","UR","LR"];
-    const bi = order.indexOf(base);
-    const mi = order.indexOf(minRarity);
-    if(bi < 0) return minRarity;
-    if(mi < 0) return base;
-    return order[Math.max(bi, mi)];
   }
 
   // =========================================================
@@ -573,26 +564,9 @@
       return pickNamaraReward();
     }
 
-    // ✅ SR/UR確定の見た目が出るときは“確定”を壊さない（SP抽選しない）
-    const isGuaranteed = (p && (p.srHint === "SR65" || p.srHint === "SR100"));
-
-    const fert = FERTS.find(x => x.id === (p ? p.fertId : null));
-    if (fert && !isGuaranteed) {
-      const burnP = Number(fert.burnCardUp ?? 0);
-      if (burnP > 0 && Math.random() < burnP) {
-        return { id:"SP-BURN", name:"焼きすぎたカード", img:"https://ul.h3z.jp/VSQupsYH.png", rarity:"SP" };
-      }
-      const rawP = Number(fert.rawCardChance ?? 0);
-      if (rawP > 0 && Math.random() < rawP) {
-        return { id:"SP-RAW", name:"ドロドロ生焼けカード", img:"https://ul.h3z.jp/5E5NpGKP.png", rarity:"SP" };
-      }
-    }
-
-    let rarity = pickRarityWithWater(p ? p.waterId : null);
-
-    // ✅ 演出と中身を一致（SR65=SR以上 / SR100=UR以上）
-    if(p && p.srHint === "SR65")  rarity = bumpRarity(rarity, "SR");
-    if(p && p.srHint === "SR100") rarity = bumpRarity(rarity, "UR"); // ← UR以上確定（指定通り）
+    // ✅ 修正点：肥料は時短だけ → SP抽選（焼きすぎ/生焼け）も肥料からは発生させない
+    // ✅ 修正点：レアは “水だけで決まり”、植えた時点で確定した fixedRarity を使う
+    const rarity = (p && p.fixedRarity) ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
 
     const seedId = p ? p.seedId : null;
     const filtered = filterPoolBySeed(seedId, getPoolByRarity(rarity));
@@ -955,6 +929,8 @@
           if (progress < 0.5) {
             img = PLOT_IMG.GROW1;
           } else {
+            // ✅ 修正点：育成後半で “確定してるマスだけ” SR65 / SR100 を出す
+            // ＝植えた時に決まった fixedRarity から srHint を保存してある前提
             if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100;
             else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65;
             else img = PLOT_IMG.GROW2;
@@ -1059,6 +1035,7 @@
     const water = WATERS.find(x=>x.id===waterId);
     const fert  = FERTS.find(x=>x.id===fertId);
 
+    // ✅ 肥料は時短だけ（= grow時間の factor には使うが、レアには影響しない）
     const factor = clamp(
       (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
       0.35, 1.0
@@ -1078,10 +1055,15 @@
       (seedId === "seed_bussasari") ||
       (seedId === "seed_namara_kawasar");
 
+    // ✅ 修正点：レアは “水だけ” で決定し、植えた時点で確定して保存
+    const fixedRarity = isFixedSeed ? null : pickRarityWithWater(waterId);
+
+    // ✅ 修正点：育成後半のSR画像は「SR以上確定のマスだけ」
+    // SR65 = SR以上確定 / SR100 = UR以上確定
     const srHint =
       (isFixedSeed) ? "NONE" :
-      (waterId === "water_overdo" && fertId === "fert_timeno") ? "SR100" :
-      (waterId === "water_overdo") ? "SR65" :
+      (fixedRarity === "LR" || fixedRarity === "UR") ? "SR100" :
+      (fixedRarity === "SR") ? "SR65" :
       "NONE";
 
     state.plots[index] = {
@@ -1091,6 +1073,7 @@
       fertId,
       startAt: now,
       readyAt: now + growMs,
+      fixedRarity, // ★追加：このマスの最終レア（植えた瞬間に確定）
       srHint
     };
 
@@ -1134,7 +1117,8 @@
           <div class="mini">
             種：${seed?seed.name:"-"}<br>
             水：${water?water.name:"-"}<br>
-            肥料：${fert?fert.name:"-"}
+            肥料：${fert?fert.name:"-"}<br>
+            ${(!p.fixedRarity || p.fixedRarity === "N") ? `` : `確定レア：<b>${p.fixedRarity}</b>`}
           </div>
         </div>
         <div class="row"><button type="button" id="btnOk">OK</button></div>
@@ -1174,7 +1158,6 @@
         state.plots[i] = { state:"EMPTY" };
         saveState(state);
 
-        // ✅ Lvアップしたら「オクト＋アイテム」を表示してから図鑑へ
         if(xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length){
           const blocks = xpRes.rewards.map(r => {
             const itemsHtml = (r.items || []).map(it => {
@@ -1214,7 +1197,7 @@
             closeModal();
             location.href = "./zukan.html";
           });
-          render(); // 数字更新
+          render();
           return;
         }
 
@@ -1307,7 +1290,6 @@
       localStorage.removeItem(LS_PLAYER);
       localStorage.removeItem(LS_INV);
       localStorage.removeItem(LS_LOADOUT);
-      // ※オクトは露店共通なので、通常は消さない（消すなら↓を有効化）
       // localStorage.removeItem(LS_OCTO);
 
       state = loadState();
@@ -1325,4 +1307,3 @@
   render();
   setInterval(tick, TICK_MS);
 })();
-
