@@ -1,3 +1,405 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>たこ焼きファーム</title>
+  <style>
+    :root{
+      --bg:#0f1220;
+      --panel:rgba(255,255,255,.08);
+      --line:rgba(255,255,255,.14);
+      --text:#fff;
+      --muted:rgba(255,255,255,.72);
+      --good:#9fffa8;
+      --warn:#ffd38a;
+      --bad:#ff9aa5;
+      --btn:rgba(255,255,255,.12);
+      --btn2:rgba(255,255,255,.18);
+      --shadow:0 14px 40px rgba(0,0,0,.55);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
+      background: radial-gradient(1200px 700px at 20% -10%, rgba(120,160,255,.15), transparent 60%),
+                  radial-gradient(900px 600px at 110% 20%, rgba(255,160,120,.10), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 70px}
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:10px 12px;border:1px solid var(--line);border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      box-shadow: var(--shadow);
+      position:sticky;top:10px;z-index:5;
+      backdrop-filter: blur(10px);
+    }
+    .title{font-weight:1000;letter-spacing:.02em}
+    .sub{font-size:12px;color:var(--muted);margin-top:2px}
+    .headL{min-width:0}
+    .headR{display:flex;gap:8px;align-items:center}
+    .btn{
+      appearance:none;border:1px solid var(--line);background:var(--btn);
+      color:var(--text);border-radius:12px;padding:10px 12px;font-weight:900;
+      cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.35);
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{background:rgba(255,255,255,.18)}
+    .btn.ghost{background:transparent}
+    .btn.small{padding:8px 10px;font-size:12px;border-radius:10px}
+
+    .grid{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media(min-width:860px){
+      .grid{grid-template-columns: 360px 1fr}
+    }
+
+    .card{
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 12px;border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .card .hd .h{
+      font-weight:1000;
+    }
+    .card .bd{padding:12px}
+
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+    .stat{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      background:rgba(0,0,0,.18);
+      padding:10px;
+    }
+    .stat .k{font-size:12px;color:var(--muted)}
+    .stat .v{font-weight:1000;font-size:18px;margin-top:4px}
+    .stat.good .v{color:var(--good)}
+    .stat.warn .v{color:var(--warn)}
+    .stat.bad .v{color:var(--bad)}
+
+    .xp{
+      margin-top:10px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:10px;
+      background:rgba(0,0,0,.18);
+    }
+    .xpTop{display:flex;gap:10px;align-items:baseline;justify-content:space-between}
+    .xpTop .left{font-weight:1000}
+    .xpTop .right{font-size:12px;color:var(--muted)}
+    .bar{
+      margin-top:8px;height:10px;border-radius:999px;
+      background:rgba(255,255,255,.10);overflow:hidden;
+    }
+    .bar > i{
+      display:block;height:100%;width:0%;
+      background:rgba(255,255,255,.45);
+    }
+    .xpMeta{margin-top:8px;font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+
+    /* 装備 */
+    .equipRow{display:grid;gap:10px}
+    .equipItem{
+      display:flex;gap:10px;align-items:center;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:16px;
+      background:rgba(0,0,0,.18);
+      padding:10px;
+    }
+    .equipItem img{
+      width:56px;height:56px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.2);
+      object-fit:cover;
+      flex:0 0 auto;
+    }
+    .equipInfo{min-width:0;flex:1}
+    .equipName{font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .equipCnt{font-size:12px;color:var(--muted);margin-top:2px}
+    .equipActions{display:flex;gap:8px;flex:0 0 auto}
+
+    /* 畑 */
+    .farmGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    @media(min-width:520px){
+      .farmGrid{grid-template-columns: repeat(5, 1fr);}
+    }
+    .plot{
+      position:relative;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      overflow:hidden;
+      box-shadow:0 10px 24px rgba(0,0,0,.28);
+    }
+    .plot button{
+      appearance:none;border:none;background:transparent;cursor:pointer;
+      width:100%;height:100%;
+      padding:0;display:block;position:relative;
+    }
+    .tag{
+      display:inline-block;
+      padding:4px 10px;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;
+    }
+    .lockOverlay{
+      pointer-events:none;
+      position:absolute;inset:0;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:6px;
+      background:linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.40));
+    }
+    .lk1{font-size:22px}
+    .lk2{font-size:12px;font-weight:900}
+
+    .plot-fx{
+      pointer-events:none;
+      position:absolute;inset:-40%;
+      background: conic-gradient(from 0deg, rgba(255,255,255,.0), rgba(255,255,255,.16), rgba(255,255,255,.0));
+      filter: blur(10px);
+      animation: spin 2.5s linear infinite;
+      opacity:.55;
+      mix-blend-mode: screen;
+    }
+    .plot-fx--mild{opacity:.35}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* モーダル */
+    #modal{
+      position:fixed;inset:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.55);
+      z-index:50;
+      padding:18px 12px;
+    }
+    #modal[aria-hidden="true"]{display:none}
+    .modalBox{
+      width:min(680px, 100%);
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.18);
+      background:linear-gradient(180deg, rgba(20,24,40,.98), rgba(12,14,26,.98));
+      box-shadow: 0 22px 70px rgba(0,0,0,.62);
+      overflow:hidden;
+    }
+    .modalHd{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 12px;border-bottom:1px solid rgba(255,255,255,.10);
+      gap:10px;
+    }
+    .modalHd .ttl{font-weight:1000}
+    .xbtn{
+      width:40px;height:40px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.10);
+      color:#fff;font-weight:1000;cursor:pointer;
+    }
+    .modalBd{padding:12px}
+    .step{
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.88);
+      line-height:1.5;
+    }
+    .reward{margin-top:10px;padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.20)}
+    .reward .big{font-weight:1000}
+    .reward .mini{margin-top:6px;font-size:12px;color:var(--muted);line-height:1.45}
+    .reward .img{
+      width:100%;
+      margin-top:10px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      object-fit:contain;
+      max-height:55vh;
+      display:block;
+    }
+    .row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
+    .row button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.10);
+      color:#fff;
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:1000;
+      cursor:pointer;
+      min-width:120px;
+    }
+    .row button.primary{background:rgba(255,255,255,.18)}
+    .row button:active{transform:translateY(1px)}
+
+    /* グリッド選択 */
+    .gridWrap{
+      margin-top:10px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media(min-width:560px){
+      .gridWrap{grid-template-columns: repeat(2, 1fr);}
+    }
+    .gridCard{
+      text-align:left;
+      width:100%;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+      border-radius:16px;
+      padding:10px;
+      cursor:pointer;
+      color:#fff;
+      position:relative;
+    }
+    .gridCard[disabled]{opacity:.55;cursor:not-allowed}
+    .gridCard.isSelected{outline:2px solid rgba(255,255,255,.35)}
+    .gridImg{position:relative}
+    .gridImg img{
+      width:100%;height:140px;object-fit:contain;
+      border-radius:14px;border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      display:block;
+    }
+    .gridCnt, .gridSel, .gridEmpty{
+      position:absolute;left:10px;top:10px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.35);
+      font-weight:1000;font-size:12px;
+    }
+    .gridSel{left:auto;right:10px}
+    .gridEmpty{top:auto;bottom:10px}
+    .gridName{margin-top:10px;font-weight:1000}
+    .gridDesc{margin-top:6px;font-size:12px;color:var(--muted);line-height:1.45}
+    .gridFx{margin-top:6px;font-size:12px;color:rgba(255,255,255,.85)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="headL" style="min-width:0">
+        <div class="title">たこ焼きファーム</div>
+        <div class="sub">植える → 育つ → 収穫 → 図鑑登録（図鑑は任意で確認）</div>
+      </div>
+      <div class="headR">
+        <button id="btnReset" class="btn ghost small" type="button">全リセット</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="hd">
+          <div class="h">ステータス</div>
+          <div class="tag" style="font-size:12px;color:var(--muted)">v1</div>
+        </div>
+        <div class="bd">
+          <div class="stats">
+            <div class="stat"><div class="k">図鑑</div><div class="v" id="stBook">0</div></div>
+            <div class="stat"><div class="k">育成中</div><div class="v" id="stGrow">0</div></div>
+            <div class="stat good"><div class="k">収穫</div><div class="v" id="stReady">0</div></div>
+            <div class="stat bad"><div class="k">焦げ</div><div class="v" id="stBurn">0</div></div>
+          </div>
+
+          <div class="xp">
+            <div class="xpTop">
+              <div class="left">Lv <span id="stLevel">1</span></div>
+              <div class="right">解放マス <b id="stUnlock">3</b> / 25</div>
+            </div>
+            <div class="bar"><i id="stXpBar"></i></div>
+            <div class="xpMeta">
+              <span>XP: <b id="stXP">0</b></span>
+              <span>必要: <b id="stXpNeed">0</b></span>
+              <span>残り: <b id="stXpLeft">0</b></span>
+              <span>現在: <b id="stXpNow">0</b></span>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;font-weight:1000">装備</div>
+          <div class="equipRow" style="margin-top:10px">
+            <div class="equipItem">
+              <img id="equipSeedImg" alt="seed" />
+              <div class="equipInfo">
+                <div class="equipName" id="equipSeedName">未装備</div>
+                <div class="equipCnt" id="equipSeedCnt">×0</div>
+              </div>
+              <div class="equipActions">
+                <button id="equipSeed" class="btn small primary" type="button">種</button>
+              </div>
+            </div>
+
+            <div class="equipItem">
+              <img id="equipWaterImg" alt="water" />
+              <div class="equipInfo">
+                <div class="equipName" id="equipWaterName">未装備</div>
+                <div class="equipCnt" id="equipWaterCnt">×0</div>
+              </div>
+              <div class="equipActions">
+                <button id="equipWater" class="btn small primary" type="button">水</button>
+              </div>
+            </div>
+
+            <div class="equipItem">
+              <img id="equipFertImg" alt="fert" />
+              <div class="equipInfo">
+                <div class="equipName" id="equipFertName">未装備</div>
+                <div class="equipCnt" id="equipFertCnt">×0</div>
+              </div>
+              <div class="equipActions">
+                <button id="equipFert" class="btn small primary" type="button">肥料</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd">
+          <div class="h">畑</div>
+          <div class="tag" style="font-size:12px;color:var(--muted)">タップで操作</div>
+        </div>
+        <div class="bd">
+          <div id="farm" class="farmGrid"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" aria-hidden="true">
+    <div class="modalBox" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+      <div class="modalHd">
+        <div class="ttl" id="mTitle">TITLE</div>
+        <button id="mClose" class="xbtn" type="button" aria-label="閉じる">×</button>
+      </div>
+      <div class="modalBd" id="mBody"></div>
+    </div>
+  </div>
+
+  <script>
 (() => {
   "use strict";
 
@@ -46,7 +448,7 @@
   const BASE_RARITY_RATE = { N:70, R:20, SR:8, UR:1.8, LR:0.2 };
 
   // =========================================================
-  // カードプール（あなたの現行のまま）
+  // カードプール
   // =========================================================
   const CARD_POOLS = {
     N: [
@@ -112,7 +514,7 @@
   };
 
   // =========================================================
-  // ★タネ一覧（完全版 2026最新版）
+  // ★タネ一覧
   // =========================================================
   const SEEDS = [
     { id:"seed_random", name:"なに出るタネ", desc:"何が育つかは完全ランダム。\n店主も知らない。", factor:1.00, img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
@@ -308,6 +710,8 @@
     return list[list.length-1]?.v;
   }
 
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
   function itemRewardForLevel(level){
     const lv = Math.max(1, Math.floor(level));
 
@@ -444,7 +848,6 @@
   }
   function saveBook(b){ localStorage.setItem(LS_BOOK, JSON.stringify(b)); }
 
-  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function pad2(n){ return String(n).padStart(2,"0"); }
   function fmtRemain(ms){
     if(ms <= 0) return "00:00:00";
@@ -544,15 +947,9 @@
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
     }
-    if (p && p.seedId === "seed_colabo") {
-      return pickGratinReward();
-    }
-    if (p && p.seedId === "seed_bussasari") {
-      return pickBussasariReward();
-    }
-    if (p && p.seedId === "seed_namara_kawasar") {
-      return pickNamaraReward();
-    }
+    if (p && p.seedId === "seed_colabo") return pickGratinReward();
+    if (p && p.seedId === "seed_bussasari") return pickBussasariReward();
+    if (p && p.seedId === "seed_namara_kawasar") return pickNamaraReward();
 
     const rarity = (p && p.fixedRarity) ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
 
@@ -718,8 +1115,37 @@
     window.scrollTo(0, __scrollY);
   }
 
-  function onBackdrop(e){ if(e.target === modal) closeModal(); }
-  function onEsc(e){ if(e.key === "Escape") closeModal(); }
+  // =========================================================
+  // ✅ 【収穫モーダルの自動確定】ハンドラ
+  // =========================================================
+  let __harvestCommitFn = null;
+
+  function setHarvestCommit(fn){
+    __harvestCommitFn = (typeof fn === "function") ? fn : null;
+  }
+  function clearHarvestCommit(){
+    __harvestCommitFn = null;
+  }
+  function closeModal(){
+    modal.setAttribute("aria-hidden","true");
+    modal.removeEventListener("click", onBackdrop);
+    document.removeEventListener("keydown", onEsc);
+    mBody.innerHTML = "";
+    unlockScroll();
+  }
+  function closeModalOrCommit(){
+    if(__harvestCommitFn){
+      const fn = __harvestCommitFn;
+      __harvestCommitFn = null; // 二重実行防止
+      fn();
+      return;
+    }
+    closeModal();
+  }
+
+  // ★背景タップ/ESC でも「収穫なら確定」させる（ここが重要）
+  function onBackdrop(e){ if(e.target === modal) closeModalOrCommit(); }
+  function onEsc(e){ if(e.key === "Escape") closeModalOrCommit(); }
 
   function openModal(title, html){
     modal.removeEventListener("click", onBackdrop);
@@ -735,42 +1161,7 @@
     document.addEventListener("keydown", onEsc);
   }
 
-  function closeModal(){
-    modal.setAttribute("aria-hidden","true");
-    modal.removeEventListener("click", onBackdrop);
-    document.removeEventListener("keydown", onEsc);
-    mBody.innerHTML = "";
-
-    unlockScroll();
-  }
-
-  // =========================================================
-  // ✅ 【修正】mClose(×/閉じる) の挙動：
-  // 収穫モーダル中だけは「閉じる」でも確定（図鑑へ収納）させる
-  // =========================================================
-  let __harvestCommitFn = null; // 収穫モーダルを開いた時だけセットする
-
-  function setHarvestCommit(fn){
-    __harvestCommitFn = (typeof fn === "function") ? fn : null;
-  }
-
-  function clearHarvestCommit(){
-    __harvestCommitFn = null;
-  }
-
-  // closeModal をラップして、閉じる時に harvestCommit があれば実行
-  function closeModalOrCommit(){
-    if(__harvestCommitFn){
-      // 二重実行防止
-      const fn = __harvestCommitFn;
-      __harvestCommitFn = null;
-      fn();
-      return;
-    }
-    closeModal();
-  }
-
-  // 既存：mClose は closeModal だった → 修正：closeModalOrCommit
+  // ×ボタン：収穫中なら確定、通常なら閉じる
   mClose.addEventListener("click", closeModalOrCommit);
 
   // =========================================================
@@ -848,7 +1239,7 @@
             ${disabled ? `<div class="gridEmpty">在庫なし</div>` : ``}
           </div>
           <div class="gridName">${x.name}</div>
-          <div class="gridDesc">${(x.desc || "").replace(/\n/g,"<br>")}</div>
+          <div class="gridDesc">${(x.desc || "").replace(/\\n/g,"<br>")}</div>
           <div class="gridFx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
         </button>
       `;
@@ -909,16 +1300,10 @@
       btn.type = "button";
 
       if(locked){
-        const b = document.createElement("div");
-        b.className = "badge lock";
-        b.textContent = "LOCK";
-        d.appendChild(b);
-
         btn.innerHTML = `
           <img src="${PLOT_IMG.EMPTY}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:14px;display:block;opacity:.55;">
           <div class="tag" style="position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;">ロック</div>
         `;
-
         const overlay = document.createElement("div");
         overlay.className = "lockOverlay";
         overlay.innerHTML = `<div class="lk1">🔒</div><div class="lk2">Lvアップで解放</div>`;
@@ -945,22 +1330,19 @@
         if (p.seedId === "seed_colabo") {
           img = (progress < 0.5) ? PLOT_IMG.COLABO_GROW1 : PLOT_IMG.COLABO_GROW2;
         } else {
-          if (progress < 0.5) {
-            img = PLOT_IMG.GROW1;
-          } else {
+          if (progress < 0.5) img = PLOT_IMG.GROW1;
+          else {
             if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100;
             else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65;
             else img = PLOT_IMG.GROW2;
           }
         }
-
         label = `育成中 ${fmtRemain(remain)}`;
 
       } else if (p.state === "READY") {
         ready++;
         img = PLOT_IMG.READY;
         label = "収穫";
-
         const fx = document.createElement("div");
         fx.className = "plot-fx plot-fx--mild";
         d.appendChild(fx);
@@ -1097,9 +1479,9 @@
   }
 
   // =========================================================
-  // ✅【追加】収穫確定処理を関数化（閉じるでも呼べる）
+  // ✅ 収穫確定（図鑑登録はする／ページ遷移はしない）
   // =========================================================
-  function commitHarvest(i, reward){
+  function commitHarvest(i, reward, goZukan){
     // 図鑑加算
     addToBook(reward);
 
@@ -1111,7 +1493,10 @@
     state.plots[i] = { state:"EMPTY" };
     saveState(state);
 
-    // レベルアップ報酬があれば演出、なければ閉じて図鑑へ
+    // 収穫コミット解除
+    clearHarvestCommit();
+
+    // レベルアップ報酬があれば演出（畑に戻る / 図鑑へ）
     if(xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length){
       const blocks = xpRes.rewards.map(r => {
         const itemsHtml = (r.items || []).map(it => {
@@ -1144,22 +1529,32 @@
         </div>
         ${blocks}
         <div class="row">
+          <button type="button" id="btnBackFarm">畑に戻る</button>
           <button type="button" id="btnGoZukan" class="primary">図鑑へ</button>
         </div>
       `);
-      clearHarvestCommit();
+
+      document.getElementById("btnBackFarm").addEventListener("click", () => {
+        closeModal();
+        render();
+      });
       document.getElementById("btnGoZukan").addEventListener("click", () => {
         closeModal();
         location.href = "./zukan.html";
       });
+
       render();
       return;
     }
 
-    // 通常：そのまま図鑑へ
-    closeModal(); // lock解除
+    // 通常：畑に戻る（図鑑は登録済み）
+    closeModal();
     render();
-    location.href = "./zukan.html";
+
+    // 任意で図鑑へ
+    if(goZukan){
+      location.href = "./zukan.html";
+    }
   }
 
   // =========================================================
@@ -1211,7 +1606,7 @@
     }
 
     // =========================================================
-    // ✅【修正】READY：閉じるでも確定するように
+    // ✅ READY：閉じるでも確定（図鑑登録）／畑に戻る
     // =========================================================
     if (p.state === "READY") {
       if (!p.reward) {
@@ -1221,10 +1616,12 @@
       const reward = p.reward;
 
       openModal("収穫！", `
-        
         <div class="reward">
           <div class="big">${reward.name}（${reward.id}）</div>
-          <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>この画面を閉じると自動で図鑑に登録されます。</div>
+          <div class="mini">
+            レア：<b>${rarityLabel(reward.rarity)}</b><br>
+            この画面を閉じると <b>自動で図鑑に登録</b> され、畑に戻ります。
+          </div>
           <img class="img" src="${reward.img}" alt="${reward.name}">
         </div>
         <div class="row">
@@ -1233,18 +1630,37 @@
         </div>
       `);
 
-      // ★ここが重要：収穫モーダル中は「閉じる＝確定」にする
-      setHarvestCommit(() => commitHarvest(i, reward));
+      // 収穫モーダル中は「閉じる＝確定」にする
+      setHarvestCommit(() => commitHarvest(i, reward, false));
 
-      // 「閉じる」ボタンも確定に変更
+      // 「閉じる」ボタン
       document.getElementById("btnCancel").addEventListener("click", closeModalOrCommit);
 
-      // 「確認して図鑑へ」も確定
+      // 「図鑑を確認する」＝確定して図鑑へ
       document.getElementById("btnConfirm").addEventListener("click", () => {
-        // 二重実行防止（mClose等からも呼べるため）
         const fn = __harvestCommitFn;
         __harvestCommitFn = null;
-        if(fn) fn();
+        if(fn){
+          // 先に確定→その後図鑑へ
+          addToBook(reward);
+          const gain = XP_BY_RARITY[reward.rarity] ?? 4;
+          const xpRes = addXP(gain);
+          state.plots[i] = { state:"EMPTY" };
+          saveState(state);
+          clearHarvestCommit();
+
+          // Lvアップがある場合はLvアップ演出を挟む（そこから図鑑へ行ける）
+          if(xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length){
+            // いったん commitHarvest を使って演出統一（goZukan=true）
+            closeModal();
+            render();
+            commitHarvest(i, reward, true); // ※この呼び方だと二重になるので避ける
+          }
+
+          closeModal();
+          render();
+          location.href = "./zukan.html";
+        }
       });
 
       return;
@@ -1350,3 +1766,7 @@
   render();
   setInterval(tick, TICK_MS);
 })();
+  </script>
+</body>
+</html>
+
