@@ -3,7 +3,7 @@
    ✅ 資材在庫: tf_v1_inv（seed/water/fert）= ファームと完全共通
    ✅ 図鑑: tf_v1_book（got[id].count 合計を “所持” として表示）
    ✅ オクト: roten_v1_octo
-   ✅ たこ焼きみくじ: 1日1回
+   ✅ たこ焼きみくじ: 1日1回（おみくじ演出：大吉/中吉/末吉/凶/大凶 + 報酬テーブル）
    ✅ 公開記念プレゼント: 1回だけ
    ✅ コラボのタネ（seed_colabo）は「シリアルで増える」ので購入不可
    ✅ Toast：Chromeでも確実に表示（bottom固定 / inline important）
@@ -12,6 +12,7 @@
    ✅ Modal：Chromeでも確実に前面表示（inline important）
    ✅ 所持数：画像右上にバッジ表示（購入欄の所持テキストは廃止）
    ✅ ボタン：＋/−/買う を少し小さく
+   ✅ オクト不足の常時ヒント表示を削除（押下時Toastのみ）
 ========================================================= */
 (() => {
   "use strict";
@@ -103,8 +104,8 @@
     { id:"seed_shop",    name:"店頭タネ", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
     { id:"seed_line",    name:"回線タネ", desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
     { id:"seed_special", name:"たこぴのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/29OsEvjf.png", fx:"待て" },
-    { id:"seed_bussasari",      name:"ブッ刺さりタネ", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり補正" },
-    { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり圧" },
+    { id:"seed_bussasari",      name:"ブッ刺さりタネ", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"刺さり補正" },
+    { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"買わさり圧" },
     { id:"seed_colabo",  name:"【コラボ】グラタンのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" },
   ];
 
@@ -162,30 +163,10 @@
       });
     }
     for(const w of WATERS){
-      goods.push({
-        kind:"water",
-        id:w.id,
-        name:w.name,
-        desc:w.desc,
-        fx:w.fx,
-        img:w.img,
-        price:(PRICE[w.id] ?? 18),
-        buyable:true,
-        tag:"販売"
-      });
+      goods.push({ kind:"water", id:w.id, name:w.name, desc:w.desc, fx:w.fx, img:w.img, price:(PRICE[w.id] ?? 18), buyable:true, tag:"販売" });
     }
     for(const f of FERTS){
-      goods.push({
-        kind:"fert",
-        id:f.id,
-        name:f.name,
-        desc:f.desc,
-        fx:f.fx,
-        img:f.img,
-        price:(PRICE[f.id] ?? 18),
-        buyable:true,
-        tag:"販売"
-      });
+      goods.push({ kind:"fert", id:f.id, name:f.name, desc:f.desc, fx:f.fx, img:f.img, price:(PRICE[f.id] ?? 18), buyable:true, tag:"販売" });
     }
     return goods;
   }
@@ -395,7 +376,7 @@
   }
 
   // =========================================================
-  // ✅ CSS注入：所持バッジ + ボタン小型化（Safari/Chrome安定）
+  // ✅ CSS注入：所持バッジ + ボタン小型化
   // =========================================================
   function injectBuyRowCSS(){
     if($("#_roten_buyrow_css")) return;
@@ -415,7 +396,6 @@
         white-space: nowrap;
       }
 
-      /* ✅ 画像枠を相対にして右上バッジを乗せる */
       .good .good-img{ position: relative !important; }
       .good .ownBadge{
         position:absolute;
@@ -438,7 +418,6 @@
       }
       .good .ownBadge b{ color:#fff; }
 
-      /* buybar 横並び固定 */
       .good .buybar{
         display:flex !important;
         flex-direction:row !important;
@@ -454,7 +433,6 @@
         flex: 0 0 auto !important;
       }
 
-      /* ✅ ここが「少し小さく」 */
       .good .qty .qtybtn{
         min-width: 38px !important;
         height: 38px !important;
@@ -493,13 +471,9 @@
         white-space: nowrap;
       }
       .good .priceline b{ color: rgba(255,255,255,.92); }
-      .good .buyhint{
-        margin-top: 4px;
-        opacity:.78;
-        font-size:12px;
-        text-align:right;
-        min-height:14px;
-      }
+
+      /* ✅ buyhint は今回「表示しない」前提（中身を入れない） */
+      .good .buyhint{ display:none !important; }
 
       @media (max-width: 420px){
         .good .buybar{ gap:7px !important; }
@@ -516,11 +490,6 @@
     if(n < min) return min;
     if(n > max) return max;
     return n;
-  }
-  function calcMaxAffordable(item){
-    const price = Math.max(0, Number(item.price||0));
-    if(price <= 0) return 99;
-    return Math.max(0, Math.floor(getOcto() / price));
   }
   function buyMany(item, qty){
     qty = clamp(qty, 1, 99);
@@ -572,7 +541,6 @@
           <button class="btn buybtn" type="button">買う</button>
         </div>
         ${priceLine}
-        <div class="buyhint"></div>
       ` : `
         <div class="buybar">
           <div style="opacity:.78; font-size:12px; text-align:right; flex:1; white-space:nowrap;">
@@ -581,7 +549,6 @@
           <button class="btn buybtn" type="button">シリアル</button>
         </div>
         ${priceLine}
-        <div class="buyhint"></div>
       `;
 
       return `
@@ -615,13 +582,7 @@
       const minus = $(".qtyminus", card);
       const plus  = $(".qtyplus", card);
       const qtyIn = $(".qtyin", card);
-      const hint  = $(".buyhint", card);
 
-      function setHint(msg, isBad=false){
-        if(!hint) return;
-        hint.textContent = msg || "";
-        hint.style.color = isBad ? "#ff9aa5" : "rgba(255,255,255,.75)";
-      }
       function getQty(){
         const v = qtyIn ? Number(qtyIn.value || 1) : 1;
         return clamp(v, 1, 99);
@@ -631,39 +592,16 @@
         qtyIn.value = String(clamp(v, 1, 99));
       }
 
-      function syncAffordability(){
-        if(!item.buyable){
-          if(btn) btn.disabled = false;
-          setHint("");
-          return;
-        }
-        const max = calcMaxAffordable(item);
-        const q = getQty();
-        const ok = (q <= max) && (max > 0);
-        if(btn) btn.disabled = !ok;
-
-        if(max <= 0){
-          setHint("オクトが足りない…たこ。", true);
-        }else if(q > max){
-          setHint(`いま買える最大は ×${max} …たこ。`, true);
-        }else{
-          setHint("");
-        }
-      }
-
       minus?.addEventListener("click", (e)=>{
         e.preventDefault(); e.stopPropagation();
         setQty(getQty() - 1);
-        syncAffordability();
       });
       plus?.addEventListener("click", (e)=>{
         e.preventDefault(); e.stopPropagation();
         setQty(getQty() + 1);
-        syncAffordability();
       });
       qtyIn?.addEventListener("input", ()=>{
         setQty(getQty());
-        syncAffordability();
       });
 
       btn?.addEventListener("click", (e)=>{
@@ -679,14 +617,11 @@
         const r = buyMany(item, qty);
         if(!r.ok){
           toastHype("💥 オクトが足りない…たこ。", {kind:"bad"});
-          syncAffordability();
           return;
         }
 
         toastHype(`✨ 購入完了！「${item.name}」×${r.qty}（-${r.total}オクト）✨`, {kind:"good"});
       });
-
-      syncAffordability();
     });
   }
 
@@ -843,10 +778,10 @@
 
     const run = async () => {
       const code = (input.value || "").trim().toUpperCase();
-      if(!code){ return; }
+      if(!code) return;
 
       const used = loadUsedCodes();
-      if(used[code]){ return; }
+      if(used[code]) return;
 
       btn.disabled = true;
 
@@ -896,7 +831,38 @@
     $("#okRates", root)?.addEventListener("click", closeModal);
   }
 
-  // ---------- daily mikuji ----------
+  // =========================================================
+  // ✅ たこ焼きみくじ（おみくじ版）
+  // =========================================================
+  const OMKUJI = [
+    { w: 8,  luck:"大吉", kind:"seed",  id:"seed_special", qty:1,  label:"たこぴのタネ×1",   msg:"焼き台が歌ってる…たこ。今日は“伝説”が出る…たこ。" },
+    { w: 18, luck:"中吉", kind:"water", id:"water_regret", qty:1,  label:"押さなきゃよかった水×1", msg:"事件の匂い…たこ。SNS向けの運…たこ。" },
+    { w: 28, luck:"末吉", kind:"water", id:"water_overdo", qty:1,  label:"やりすぎな水×1", msg:"勝負の一滴…たこ。うまく焼けるといいね…たこ。" },
+    { w: 28, luck:"凶",   kind:"fert",  id:"fert_skip",    qty:1,  label:"工程すっ飛ばし肥料×1", msg:"焦ると…焼ける…たこ。近道はだいたい罠…たこ。" },
+    { w: 18, luck:"大凶", kind:"octo",  id:"octo",        qty:30, label:"オクト+30", msg:"……大凶でも、現金は正義…たこ。次に賭ける…たこ。" },
+  ];
+
+  function pickWeighted(list){
+    const sum = list.reduce((a,b)=>a + (Number(b.w)||0), 0);
+    let r = Math.random() * sum;
+    for(const it of list){
+      r -= (Number(it.w)||0);
+      if(r <= 0) return it;
+    }
+    return list[0];
+  }
+
+  function applyReward(reward){
+    if(reward.kind === "octo"){
+      addOcto(reward.qty);
+      return;
+    }
+    const inv = ensureInvKeys();
+    inv[reward.kind] = inv[reward.kind] || {};
+    inv[reward.kind][reward.id] = Number(inv[reward.kind][reward.id] || 0) + reward.qty;
+    saveInv(inv);
+  }
+
   function openMikuji(){
     const done = localStorage.getItem(LS.mikujiDate) === todayKey();
     if(done){
@@ -911,7 +877,7 @@
         <div class="note">
           たこぴ：<br>
           「焼き台から1つ選んで…たこ。<br>
-          当たったたこ焼きの中から、何か出る…たこ。」
+          運勢が出る…たこ。」
         </div>
 
         <div class="grill" id="grill">
@@ -933,46 +899,36 @@
     });
   }
 
-  function rollMikujiReward(){
-    const table = [
-      { w:24, type:"seed",  id:"seed_shop",   qty:1, label:"店頭タネ×1" },
-      { w:24, type:"seed",  id:"seed_line",   qty:1, label:"回線タネ×1" },
-      { w:8,  type:"seed",  id:"seed_special",qty:1, label:"たこぴのタネ×1" },
-      { w:18, type:"water", id:"water_nice",  qty:1, label:"なんか良さそうな水×1" },
-      { w:12, type:"water", id:"water_overdo",qty:1, label:"やりすぎな水×1" },
-      { w:10, type:"fert",  id:"fert_guts",   qty:1, label:"根性論ぶち込み肥料×1" },
-      { w:4,  type:"octo",  id:"octo",        qty:50,label:"オクト+50" },
-    ];
-    const r = Math.random()*100;
-    let acc=0;
-    for(const t of table){
-      acc += t.w;
-      if(r <= acc) return t;
-    }
-    return table[0];
-  }
-
   function doMikuji(){
-    const reward = rollMikujiReward();
+    const r = pickWeighted(OMKUJI);
 
-    if(reward.type === "octo"){
-      addOcto(reward.qty);
-    }else{
-      const inv = ensureInvKeys();
-      inv[reward.type] = inv[reward.type] || {};
-      inv[reward.type][reward.id] = Number(inv[reward.type][reward.id] || 0) + reward.qty;
-      saveInv(inv);
-    }
-
+    applyReward(r);
     localStorage.setItem(LS.mikujiDate, todayKey());
-    pushLog(`みくじ：${reward.label}`);
+    pushLog(`みくじ：${r.luck} / ${r.label}`);
 
-    openModal("✨ みくじ結果 ✨", `
+    // ✅ おみくじっぽく「運勢」をドーン
+    openModal("🎴 おみくじ結果", `
       <div class="mikuji-wrap">
-        <div class="reveal">
-          <div style="font-weight:900; font-size:16px;">✨ ${reward.label} ✨</div>
-          <div class="note">たこぴ：<br>「……ねぇ、知ってるたこ？<br>“当たり”は、焼ける前に受け取るもの…たこ。」</div>
+        <div style="
+          text-align:center;
+          font-weight:1000;
+          font-size:44px;
+          letter-spacing:.08em;
+          line-height:1;
+          margin: 8px 0 10px;
+        ">${r.luck}</div>
+
+        <div style="
+          text-align:center;
+          font-weight:900;
+          font-size:16px;
+          margin-bottom: 10px;
+        ">${r.label}</div>
+
+        <div class="note" style="text-align:center;">
+          たこぴ：<br>「${r.msg}」
         </div>
+
         <div class="row">
           <button class="btn big" id="okMikuji" type="button">OK</button>
         </div>
@@ -1107,7 +1063,7 @@
     injectBuyRowCSS();
     ensureInvKeys();
     setTakopiSayRandom();
-    wireModalClose();     // ✅ closeボタン等の配線
+    wireModalClose();
     wireTabs();
     wireButtons();
     wireSerialInline();
@@ -1116,14 +1072,12 @@
     toastHype("✨ 露店 起動！…たこ。", {kind:"info"});
   }
 
-  // ✅ Chrome/SafariでDOM順ズレても死なない
   if(document.readyState === "loading"){
     document.addEventListener("DOMContentLoaded", boot, { once:true });
   }else{
     boot();
   }
 })();
-
 
 
 
