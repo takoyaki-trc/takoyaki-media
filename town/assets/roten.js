@@ -12,20 +12,12 @@
       - ブッ刺さりタネ（seed_bussasari）
       - なまら買わさるタネ（seed_namara_kawasar）
    ✅ ポップアップ無反応対策：
-      - DOM要素が無いと落ちない（nullガード）
-      - クリックイベントが最終的に必ず openModal へ到達（※今回は購入モーダルは出さない）
-      - モーダル内ボタンも "modalBody内で検索" して確実に拾う
-   ✅ ファーム側SEEDS/WATERS/FERTSの画像・説明を露店へ反映（同じURL/文言）
-   ✅ 【変更点】シリアルはGAS+スプレッドシートで検証＆1回だけ使用に変更
-      - ローカルREDEEM_TABLEを廃止
-      - REDEEM_ENDPOINT / REDEEM_API_KEY を設定してfetchでredeem
-      - 端末側の「使用済みメモ(tf_v1_codes_used)」は残す（二重送信抑止）
-      - 常設シリアル欄（#serialInlineInput/#serialInlineBtn/#serialInlineMsg）も対応（HTMLにあれば有効）
-   ✅ 【今回の変更】
-      - 「価格：●●オクト」表示を削除
-      - 複数個購入（数量ステッパー＋まとめ買い）
-      - 購入確認モーダルは出さず、即購入
-      - 購入完了ポップアップ（ワクワク演出トースト強化）
+      - toast要素が無くても自動生成（スマホでも必ず出る）
+      - fixed / z-index / safe-area 対応
+   ✅ 購入UI修正：
+      - 2段にしない（数量UIの隣に「買う」ボタンを横並び固定）
+      - 価格表示は削除（カード内・ボタン文言にも入れない）
+      - 確認画面なしで即購入 → ワクワクトースト
 ========================================================= */
 (() => {
   "use strict";
@@ -305,7 +297,101 @@
   }
 
   // =========================
-  // ✅ 複数購入：数量UI
+  // ✅ toast（必ず出る版）
+  // =========================
+  function ensureToast(){
+    let el = $("#toast");
+    if(el) return el;
+
+    el = document.createElement("div");
+    el.id = "toast";
+    el.setAttribute("aria-live","polite");
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function injectToastCSS(){
+    if($("#_roten_toast_css")) return;
+    const style = document.createElement("style");
+    style.id = "_roten_toast_css";
+    style.textContent = `
+      #toast{
+        position:fixed;
+        left:12px;
+        right:12px;
+        bottom: calc(14px + env(safe-area-inset-bottom));
+        z-index: 999999;
+        pointer-events:none;
+
+        opacity:0;
+        transform: translateY(10px) scale(.98);
+        transition: opacity .16s ease, transform .18s ease;
+
+        padding: 14px 14px;
+        border-radius: 14px;
+        font-weight: 900;
+        letter-spacing: .02em;
+        text-align:center;
+
+        color:#fff;
+        background: rgba(15,18,32,.92);
+        border:1px solid rgba(255,255,255,.16);
+        box-shadow: 0 18px 44px rgba(0,0,0,.55);
+        backdrop-filter: blur(6px);
+      }
+      #toast.is-show{
+        opacity:1;
+        transform: translateY(0) scale(1);
+      }
+      #toast.t-good{
+        border-color: rgba(159,255,168,.35);
+        box-shadow: 0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(159,255,168,.18);
+      }
+      #toast.t-bad{
+        border-color: rgba(255,154,165,.38);
+        box-shadow: 0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(255,154,165,.16);
+      }
+      #toast.t-info{
+        border-color: rgba(255,255,255,.16);
+      }
+      body.hype-pop{
+        animation: hypePop .22s ease-out;
+      }
+      @keyframes hypePop{
+        0%{transform:translateY(0)}
+        40%{transform:translateY(-2px)}
+        100%{transform:translateY(0)}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function toastHype(text, opt={}){
+    const el = ensureToast();
+    const kind = opt.kind || "info";
+
+    el.textContent = text || "";
+    el.classList.remove("t-good","t-bad","t-info");
+    el.classList.add(kind==="good" ? "t-good" : kind==="bad" ? "t-bad" : "t-info");
+
+    // 一旦消してから出す（連打でも必ずアニメ）
+    el.classList.remove("is-show");
+    void el.offsetHeight; // reflow
+    el.classList.add("is-show");
+
+    clearTimeout(toastHype._t);
+    toastHype._t = setTimeout(()=> el.classList.remove("is-show"), 1900);
+
+    if(kind === "good"){
+      document.body.classList.add("hype-pop");
+      clearTimeout(toastHype._s);
+      toastHype._s = setTimeout(()=> document.body.classList.remove("hype-pop"), 230);
+    }
+  }
+  function toast(text){ toastHype(text, {kind:"info"}); }
+
+  // =========================
+  // ✅ 複数購入：数量UI（横並び固定）
   // =========================
   function clamp(n, min, max){
     n = Math.floor(Number(n)||0);
@@ -313,13 +399,11 @@
     if(n > max) return max;
     return n;
   }
-
   function calcMaxAffordable(item){
     const price = Math.max(0, Number(item.price||0));
-    if(price <= 0) return 99; // 念のため（基本は>0）
+    if(price <= 0) return 99;
     return Math.max(0, Math.floor(getOcto() / price));
   }
-
   function buyMany(item, qty){
     qty = clamp(qty, 1, 99);
     const price = Math.max(0, Number(item.price||0));
@@ -341,6 +425,64 @@
     return { ok:true, total, qty };
   }
 
+  function injectBuyRowCSS(){
+    if($("#_roten_buyrow_css")) return;
+    const style = document.createElement("style");
+    style.id = "_roten_buyrow_css";
+    style.textContent = `
+      .good .good-buy{
+        display:flex !important;
+        flex-direction:column !important;
+        gap:10px !important;
+        align-items:stretch !important;
+      }
+      .good .buybar{
+        display:flex !important;
+        flex-direction:row !important;
+        align-items:center !important;
+        justify-content:flex-end !important;
+        gap:10px !important;
+        flex-wrap:nowrap !important;
+      }
+      .good .qty{
+        display:flex !important;
+        align-items:center !important;
+        gap:8px !important;
+        flex: 0 0 auto !important;
+      }
+      .good .qty .qtybtn{
+        min-width:44px !important;
+        height:44px !important;
+        padding:0 12px !important;
+        border-radius:14px !important;
+      }
+      .good .qty .qtyin{
+        width:64px !important;
+        height:44px !important;
+        text-align:center !important;
+        border-radius:14px !important;
+        border:1px solid rgba(255,255,255,.18) !important;
+        background:rgba(0,0,0,.22) !important;
+        color:#fff !important;
+        font-weight:900 !important;
+      }
+      .good .buybar .buybtn{
+        height:44px !important;
+        min-width:110px !important;
+        border-radius:14px !important;
+        flex: 0 0 auto !important;
+        white-space:nowrap !important;
+      }
+      .good .buyhint{
+        opacity:.78;
+        font-size:12px;
+        text-align:right;
+        min-height:14px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function renderGoods(){
     const inv = ensureInvKeys();
     const grid = $("#goodsGrid");
@@ -351,27 +493,30 @@
     grid.innerHTML = list.map(g => {
       const own = String(ownedCount(inv, g.kind, g.id));
       const canBuy = !!g.buyable;
-
-      // ✅ 価格表示は“カード内から削除”
-      // ✅ ボタン文言も価格を含めない
       const dis = canBuy ? "" : "disabled";
       const badge = g.tag ? `<span class="miniTag">${g.tag}</span>` : "";
 
-      // ✅ まとめ買いUI（buyableのみ）
-      const qtyUI = canBuy ? `
-        <div class="qty" style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
-          <button class="btn qtybtn qtyminus" type="button" aria-label="減らす" style="min-width:44px;">−</button>
-          <input class="qtyin" type="number" inputmode="numeric" min="1" max="99" value="1"
-                 style="width:70px; text-align:center; padding:10px 10px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.22); color:#fff;">
-          <button class="btn qtybtn qtyplus" type="button" aria-label="増やす" style="min-width:44px;">＋</button>
+      // ✅ 価格表示は削除（ここでは一切出さない）
+      // ✅ 2段にしない：qtyの隣に買うボタンを横並び固定
+      const buyBar = canBuy ? `
+        <div class="buybar">
+          <div class="qty">
+            <button class="btn qtybtn qtyminus" type="button" aria-label="減らす">−</button>
+            <input class="qtyin" type="number" inputmode="numeric" min="1" max="99" value="1">
+            <button class="btn qtybtn qtyplus" type="button" aria-label="増やす">＋</button>
+          </div>
+          <button class="btn buybtn" ${dis}>買う</button>
         </div>
+        <div class="buyhint"></div>
       ` : `
-        <div class="qty" style="display:flex; align-items:center; justify-content:flex-end;">
-          <div style="opacity:.72; font-size:12px;">シリアルで増える…たこ。</div>
+        <div class="buybar">
+          <div style="opacity:.72; font-size:12px; text-align:right; flex:1;">
+            シリアルで増える…たこ。
+          </div>
+          <button class="btn buybtn" ${dis}>シリアル</button>
         </div>
+        <div class="buyhint"></div>
       `;
-
-      const btnLabel   = canBuy ? "買う" : "シリアルで入手";
 
       return `
         <article class="good" data-kind="${g.kind}" data-id="${g.id}">
@@ -386,11 +531,8 @@
 
           <div class="good-row">
             <div class="good-owned">所持×<b>${own}</b></div>
-
-            <div class="good-buy" style="display:flex; flex-direction:column; gap:10px; align-items:stretch;">
-              ${qtyUI}
-              <button class="btn buybtn" ${dis}>${btnLabel}</button>
-              <div class="buyhint" style="opacity:.75; font-size:12px; text-align:right; min-height:14px;"></div>
+            <div class="good-buy">
+              ${buyBar}
             </div>
           </div>
         </article>
@@ -404,7 +546,7 @@
       const item = GOODS.find(x => x.kind===kind && x.id===id);
       if(!item) return;
 
-      const btn = $(".buybtn", card);
+      const btn   = $(".buybtn", card);
       const minus = $(".qtyminus", card);
       const plus  = $(".qtyplus", card);
       const qtyIn = $(".qtyin", card);
@@ -415,7 +557,6 @@
         hint.textContent = msg || "";
         hint.style.color = isBad ? "#ff9aa5" : "rgba(255,255,255,.75)";
       }
-
       function getQty(){
         const v = qtyIn ? Number(qtyIn.value || 1) : 1;
         return clamp(v, 1, 99);
@@ -427,23 +568,24 @@
 
       function syncAffordability(){
         if(!item.buyable){
-          if(btn) btn.disabled = true;
+          if(btn) btn.disabled = false; // シリアルボタンとして押せる
+          setHint("");
           return;
         }
         const max = calcMaxAffordable(item);
         const q = getQty();
         const ok = (q <= max) && (max > 0);
         if(btn) btn.disabled = !ok;
+
         if(max <= 0){
           setHint("オクトが足りない…たこ。", true);
         }else if(q > max){
           setHint(`いま買える最大は ×${max} …たこ。`, true);
         }else{
-          setHint(""); // 余計な情報を消す（ワクワク優先）
+          setHint("");
         }
       }
 
-      // 数量操作
       minus?.addEventListener("click", (e)=>{
         e.preventDefault(); e.stopPropagation();
         setQty(getQty() - 1);
@@ -459,10 +601,8 @@
         syncAffordability();
       });
 
-      // 購入ボタン
-      btn?.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      btn?.addEventListener("click", (e)=>{
+        e.preventDefault(); e.stopPropagation();
 
         if(!item.buyable){
           openSerialModal();
@@ -470,56 +610,19 @@
           return;
         }
 
-        // ✅ 確認画面は出さない：即購入
         const qty = getQty();
         const r = buyMany(item, qty);
         if(!r.ok){
-          toastHype("💥 オクトが足りない…たこ。", { kind:"bad" });
+          toastHype("💥 オクトが足りない…たこ。", {kind:"bad"});
           syncAffordability();
           return;
         }
 
-        // ✅ ワクワク購入完了ポップアップ
-        toastHype(`✨ 購入完了！「${item.name}」×${r.qty} ✨`, { kind:"good" });
+        toastHype(`✨ 購入完了！「${item.name}」×${r.qty} ✨`, {kind:"good"});
       });
 
       syncAffordability();
     });
-  }
-
-  // ---------- toast（強化版） ----------
-  function toastHype(text, opt={}){
-    const el = $("#toast");
-    if(!el) return;
-
-    // kind: good / bad / info
-    const kind = opt.kind || "info";
-    el.textContent = text;
-
-    el.classList.remove("is-show");
-    // classがあれば使う（CSS側で演出できる）
-    el.classList.remove("t-good","t-bad","t-info");
-    el.classList.add(kind==="good" ? "t-good" : kind==="bad" ? "t-bad" : "t-info");
-
-    // ちょい“ドンッ”と出す
-    requestAnimationFrame(()=>{
-      el.classList.add("is-show");
-    });
-
-    clearTimeout(toastHype._t);
-    toastHype._t = setTimeout(()=> el.classList.remove("is-show"), 1800);
-
-    // 追加で画面を少し震わせたいなら（好み分かれるので弱め）
-    if(kind === "good"){
-      document.body.classList.add("hype-pop");
-      clearTimeout(toastHype._s);
-      toastHype._s = setTimeout(()=> document.body.classList.remove("hype-pop"), 220);
-    }
-  }
-
-  // 旧toast互換（他の箇所から呼ばれてもOK）
-  function toast(text){
-    toastHype(text, { kind:"info" });
   }
 
   // ---------- inventory modal ----------
@@ -655,7 +758,6 @@
       const code = ($("#redeemCode", root)?.value || "").trim().toUpperCase();
       if(!code){ alert("コードを入力してね"); return; }
 
-      // 端末内二重使用（補助）
       const used = loadUsedCodes();
       if(used[code]){ alert("このコードは（この端末では）使用済み。"); return; }
 
@@ -670,7 +772,6 @@
           return;
         }
 
-        // ✅ reward / grant どっちでも吸収
         const reward = data.reward || data.grant || {};
         const applied = applyRedeemReward(reward);
 
@@ -678,7 +779,7 @@
         saveUsedCodes(used);
 
         pushLog(`シリアル：${code}（コラボのタネ +${applied.addedSeedColabo}）`);
-        toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, { kind:"good" });
+        toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, {kind:"good"});
         refreshHUD();
         renderGoods();
         closeModal();
@@ -690,7 +791,6 @@
     });
   }
 
-  // ✅ 常設欄（HTMLにあれば動く）
   function wireSerialInline(){
     const input = $("#serialInlineInput");
     const btn   = $("#serialInlineBtn");
@@ -725,7 +825,7 @@
 
         refreshHUD();
         renderGoods();
-        toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, { kind:"good" });
+        toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, {kind:"good"});
       }catch(err){
         setInlineMsg(err?.message || "通信に失敗…たこ。時間を置いて再試行。", true);
       }finally{
@@ -917,7 +1017,7 @@
     setTakopiSayRandom();
     refreshHUD();
     renderGoods();
-    toastHype("🎁 プレゼント受取！", { kind:"good" });
+    toastHype("🎁 プレゼント受取！", {kind:"good"});
   }
 
   // ---------- wiring ----------
@@ -944,7 +1044,7 @@
       pushLog("デバッグ：オクト +1000");
       refreshHUD();
       setTakopiSayRandom();
-      toastHype("🧪 デバッグ：オクト +1000", { kind:"info" });
+      toastHype("🧪 デバッグ：オクト +1000", {kind:"info"});
     });
 
     $("#btnOpenInv")?.addEventListener("click", () => {
@@ -968,7 +1068,7 @@
     });
 
     $("#btnOpenSell")?.addEventListener("click", () => {
-      toastHype("🏮 売却ページを開いた！", { kind:"info" });
+      toastHype("🏮 売却ページを開いた！", {kind:"info"});
       setTakopiSayRandom();
     });
 
@@ -978,28 +1078,17 @@
     });
   }
 
-  // ちょい演出（CSSが無い場合は何もしない）
-  function injectTinyHypeCSS(){
-    if($("#_hype_css")) return;
-    const style = document.createElement("style");
-    style.id = "_hype_css";
-    style.textContent = `
-      body.hype-pop { animation: hypePop .22s ease-out; }
-      @keyframes hypePop { 0%{transform:translateY(0)} 40%{transform:translateY(-2px)} 100%{transform:translateY(0)} }
-      #toast.t-good{ box-shadow:0 18px 40px rgba(0,0,0,.55); }
-      #toast.t-bad{ box-shadow:0 18px 40px rgba(0,0,0,.55); }
-      #toast.t-info{ box-shadow:0 18px 40px rgba(0,0,0,.55); }
-    `;
-    document.head.appendChild(style);
-  }
-
   function boot(){
-    injectTinyHypeCSS();
+    injectToastCSS();     // ✅ ポップアップ必ず出す
+    injectBuyRowCSS();    // ✅ 2段禁止 + 横並び固定
+    ensureToast();        // ✅ toast要素が無ければ作る
+
     ensureInvKeys();
     setTakopiSayRandom();
     wireTabs();
     wireButtons();
     wireSerialInline();
+
     refreshHUD();
     renderGoods();
   }
