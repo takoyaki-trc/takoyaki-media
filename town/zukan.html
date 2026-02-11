@@ -160,7 +160,6 @@
     }
     .modal[aria-hidden="false"]{display:flex}
 
-    /* ★ パネルは透けない（読みやすさ優先） */
     .modal__panel{
       width:min(92vw, 560px);
       border-radius:18px;border:1px solid var(--border);
@@ -188,7 +187,6 @@
       color:#ffe9b8;background:rgba(255,220,120,.08);
     }
 
-    /* 復元モーダル内の入力も濃くして読みやすく */
     #bModal textarea, #bModal input[type="password"]{
       background:rgba(0,0,0,.35);
     }
@@ -244,7 +242,7 @@
       <div class="field">
         <div class="label">並び替え</div>
         <select id="sort">
-          <option value="new">入手順（新しい順 / lastAt優先）</option>
+          <option value="new">入手順（新しい順）</option>
           <option value="dup">ダブり枚数順（所持枚数）</option>
           <option value="tn_shop">店頭ナンバー（TN-001〜025）</option>
           <option value="tn_net">通販ナンバー（TN-026〜050）</option>
@@ -252,6 +250,7 @@
           <option value="nk">限定ショップ（NK）</option>
           <option value="bs">ダーツプロ（BS）</option>
           <option value="sp">スペシャル（SP）</option>
+          <option value="col">コラボ（COL）</option>
           <option value="all_serial">全カード品番順（おすすめ）</option>
         </select>
       </div>
@@ -344,7 +343,6 @@
 <script>
   // =========================================================
   // 図鑑 + ダブり集計（count方式 / IDごとに1枚表示） + バックアップ（復元コード）
-  // ※ファーム側：book.got[id] に {count, at, lastAt} が入る前提
   // =========================================================
 
   const LS_KEY = "tf_v1_book";
@@ -384,45 +382,35 @@
   const filePick = document.getElementById("filePick");
   const bMsg = document.getElementById("bMsg");
 
-  // ★ ファーム方式：gotは「IDごとに1件」。all = そのまま表示対象（uniq化不要）
-  let all = [];        // 表示対象（1件=1種類）
-  let view = [];       // フィルタ＆ソート後
-  let countMap = {};   // id -> count
+  let all = [];
+  let view = [];
+  let countMap = {};
 
   function safeJSONParse(str){ try { return JSON.parse(str); } catch(e){ return null; } }
   function normalizeText(s){ return (s ?? "").toString().trim().toLowerCase(); }
 
-  // ========= 品番解析（TN/TP/NK/BS/SP など） =========
+  // ========= 品番解析（TN/TP/NK/BS/SP/COL など） =========
   function parseCardId(id){
     const s = (id ?? "").toString().trim().toUpperCase();
-    // TN-026 / TN026 / BS-002 / TP-001 / SP-1 など対応
     const m = s.match(/^([A-Z]+)[-_]?(\d+)?$/);
     if(!m) return { prefix:"ZZ", num:9999 };
     return { prefix: m[1], num: Number(m[2] || 0) };
   }
 
-  // ★ SP判定（焦げ/生焼け を SP に含める保険）
+  // ★ SP判定（焦げ/生焼けをSPに含める保険）
   function isSpecialSPCard(item){
     const id = (item?.id ?? "").toString().trim().toUpperCase();
     const name = (item?.name ?? "").toString().trim();
     const rarity = (item?.rarity ?? "").toString().trim().toUpperCase();
 
-    // 1) IDがSPで始まる
     if(id.startsWith("SP")) return true;
-
-    // 2) レアリティがSPならSP扱い
     if(rarity === "SP") return true;
-
-    // 3) 名前に「焦げ」「生焼け」が含まれる
     if(name.includes("焦げ") || name.includes("生焼け")) return true;
-
-    // 4) IDに burn / raw / nama / koge などが含まれる（英語/ローマ字保険）
     if(id.includes("BURN") || id.includes("RAW") || id.includes("NAMA") || id.includes("KOGE")) return true;
 
     return false;
   }
 
-  // “番号だけ”取りたい時（旧 num互換）
   function idToNumber(id){
     const p = parseCardId(id);
     return Number.isFinite(p.num) ? p.num : Number.POSITIVE_INFINITY;
@@ -493,7 +481,7 @@
     return d ? d.getTime() : 0;
   }
 
-  // ★ count方式（ファームのbook.got[id].countをそのまま採用）
+  // count方式
   function buildCountMap(){
     countMap = {};
     for(const item of all){
@@ -533,7 +521,6 @@
 
     const obj = safeJSONParse(raw);
 
-    // got: 配列 or オブジェクト両対応（ファームは基本オブジェクト）
     let gotArr = [];
     if(obj && Array.isArray(obj.got)){
       gotArr = obj.got;
@@ -543,7 +530,6 @@
       gotArr = [];
     }
 
-    // ★ count / lastAt を取り込む
     all = gotArr.map(x => ({
       id: x?.id ?? "",
       name: x?.name ?? "",
@@ -563,16 +549,13 @@
     const q = normalizeText(elQ.value);
     const sort = elSort.value;
 
-    // filter（allはすでにIDごと）
     view = all.filter(item => {
       if(!q) return true;
       const hay = [ item.id, item.name, item.rarity ].map(normalizeText).join(" ");
       return hay.includes(q);
     });
 
-    // ========= sort =========
     if(sort === "new"){
-      // 入手順（最終入手 lastAt 優先）
       view.sort((a,b) => {
         const ta = toTime(a.lastAt || a.at);
         const tb = toTime(b.lastAt || b.at);
@@ -580,7 +563,6 @@
       });
 
     }else if(sort === "dup"){
-      // ダブり枚数順（多い→少ない） 同数なら品番→新しい順
       view.sort((a,b) => {
         const ca = getCount(a.id);
         const cb = getCount(b.id);
@@ -597,14 +579,12 @@
       });
 
     }else if(sort === "tn_shop"){
-      // 店頭 TN-001〜025
       view = view.filter(c=>{
         const p = parseCardId(c.id);
         return p.prefix === "TN" && p.num >= 1 && p.num <= 25;
       }).sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
     }else if(sort === "tn_net"){
-      // 通販 TN-026〜050
       view = view.filter(c=>{
         const p = parseCardId(c.id);
         return p.prefix === "TN" && p.num >= 26 && p.num <= 50;
@@ -623,31 +603,36 @@
                  .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
     }else if(sort === "sp"){
-      // ★ SP：SP-xxx だけでなく、焦げ/生焼けカードも含める
+      // SP：SP-xxx だけでなく、焦げ/生焼けカードも含める
       view = view.filter(c=> isSpecialSPCard(c))
                  .sort((a,b)=>{
                    const A0 = parseCardId(a.id);
                    const B0 = parseCardId(b.id);
 
-                   // SP-番号が取れるもの同士は番号順
+                   // SP-番号が取れるなら番号順
                    if(A0.prefix === "SP" && B0.prefix === "SP" && A0.num !== B0.num){
                      return A0.num - B0.num;
                    }
-
-                   // それ以外は「新しい順」で安定
+                   // それ以外は新しい順
                    const ta = toTime(a.lastAt || a.at);
                    const tb = toTime(b.lastAt || b.at);
                    return tb - ta;
                  });
 
+    }else if(sort === "col"){
+      // ★ 追加：コラボ（COL）
+      // もし旧ID（GTNなど）もCOL扱いしたいなら OR 条件で足してOK
+      view = view.filter(c=> parseCardId(c.id).prefix === "COL")
+                 .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+
     }else if(sort === "all_serial"){
-      // 全カード品番順（シリーズ優先順→番号）
-      const prefixOrder = { TN:1, TP:2, NK:3, BS:4, SP:5 };
+      const prefixOrder = { TN:1, TP:2, NK:3, BS:4, COL:5, SP:6 };
+
       view.sort((a,b)=>{
-        // ★ 焦げ/生焼けは SP として扱う（IDがSPじゃなくても）
         const A0 = parseCardId(a.id);
         const B0 = parseCardId(b.id);
 
+        // 焦げ/生焼けは SP として扱う（IDがSPじゃなくても）
         const A = isSpecialSPCard(a) ? { prefix:"SP", num:A0.num } : A0;
         const B = isSpecialSPCard(b) ? { prefix:"SP", num:B0.num } : B0;
 
@@ -657,18 +642,15 @@
 
         if(A.num !== B.num) return A.num - B.num;
 
-        // 同じID/番号なら新しい順（見た目安定）
         const ta = toTime(a.lastAt || a.at);
         const tb = toTime(b.lastAt || b.at);
         return tb - ta;
       });
 
     }else{
-      // フォールバック（旧 num互換）
       view.sort((a,b) => idToNumber(a.id) - idToNumber(b.id));
     }
 
-    // ピル：表示枚数 / 図鑑種類数（all）
     elPill.textContent = `${view.length} / ${all.length}`;
   }
 
@@ -773,10 +755,7 @@
     mTitle.textContent = item.name || "(no name)";
     mId.textContent = item.id || "-";
     mRarity.textContent = item.rarity || "-";
-
-    // ★ モーダルの取得表示も lastAt 優先（ダブり引いたら更新される）
     mAt.textContent = formatAt(item.lastAt || item.at);
-
     mGlow.style.display = isSRPlus(item.rarity) ? "inline-flex" : "none";
     mCount.textContent = `${getCount(item.id)} 枚`;
 
@@ -792,13 +771,6 @@
     if(e.key === "Escape") closeModal();
   }
   modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
-
-  // =========================================================
-  // バックアップ行表示
-  // =========================================================
-  function initHeader(){
-    updateBackupLine();
-  }
 
   // =========================================================
   // ★ 復元コード（ユーザーごとに自分で作る）
@@ -853,7 +825,6 @@
 
     const pinStr = (pin.value ?? "").trim();
 
-    // PINなし（平文base64）
     if(!pinStr){
       const payload = { v:1, alg:"PLAIN", key:LS_KEY, data_b64:b64uEncodeText(raw) };
       codeBox.value = b64uEncodeText(JSON.stringify(payload));
@@ -864,7 +835,6 @@
       return;
     }
 
-    // PINあり（暗号化）
     const salt = randBytes(16);
     const iv = randBytes(12);
     const iterations = 120000;
@@ -1027,6 +997,7 @@
     else location.href = "./index.html";
   });
 
+  // backup modal buttons（★二重登録しない）
   btnBackup.addEventListener("click", openBackupModal);
   bClose.addEventListener("click", closeBackupModal);
   btnMakeCode.addEventListener("click", () => makeRestoreCode());
@@ -1037,18 +1008,9 @@
   // modal close
   mClose.addEventListener("click", closeModal);
 
-  // backup modal close
-  bClose.addEventListener("click", closeBackupModal);
-
-  // backup make/copy/save/restore
-  btnMakeCode.addEventListener("click", () => makeRestoreCode());
-  btnCopyCode.addEventListener("click", copyCode);
-  btnSaveTxt.addEventListener("click", saveTxt);
-  btnRestore.addEventListener("click", () => restoreFromCode());
-
-  // init（★二重load防止：1回だけ）
+  // init
   load();
-  initHeader();
+  updateBackupLine();
 </script>
 </body>
 </html>
