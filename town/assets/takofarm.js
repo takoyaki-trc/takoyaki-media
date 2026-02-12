@@ -124,7 +124,7 @@
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor:1.08, img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり固定12枚" },
 
     // ★コラボ（グラタン）：シリアル付与は露店側
-    { id:"seed_colabo", name:"コラボ【ぐらたんのタネ】", desc:"2種類だけ。\稀にLR / 基本はN", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"露店で入手" }
+    { id:"seed_colabo", name:"コラボ【ぐらたんのタネ】", desc:"2種類だけ。\n稀にLR / 基本はN", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"露店で入手" }
   ];
 
   const WATERS = [
