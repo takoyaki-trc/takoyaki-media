@@ -19,6 +19,10 @@
    ・コラボのタネの横にあった「シリアル」ボタンを削除
    ・上部のシリアル入力ボックス（#serialInlineInput/#serialInlineBtn）だけで完結
    ・seed_colabo はカード内で「シリアル限定」表示のみ（ボタンなし）
+
+   ✅ 重要（今回の修正）
+   ・GASが返す { ok, code, grants:[{kind,id,qty}] } に対応
+   ・REDEEM_ENDPOINT を「新しいデプロイURL」に更新
 ========================================================= */
 (() => {
   "use strict";
@@ -34,8 +38,8 @@
     deviceId: "tf_v1_device_id"
   };
 
-  // ✅ シリアル（GAS Webアプリ）
-  const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbz9rfif3L4KgGrLg5OZvwLjORwstbeadZbOret2KHsBK1h8fS3JxwnuGGSnBGIfX_Ej/exec";
+  // ✅ シリアル（GAS Webアプリ）※あなたが貼ってくれた最新URL
+  const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbxdujW6wqxgANqvaN7AowgLC23PqyqvCNHEH2kRKWHRn9LD3DehdthYYdGVzGEQizvV/exec";
   const REDEEM_API_KEY  = "takopi-gratan-2026";
 
   // ---------- utils ----------
@@ -112,7 +116,9 @@
     { id:"seed_special", name:"たこぴのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/29OsEvjf.png", fx:"待て" },
     { id:"seed_bussasari",      name:"ブッ刺さりタネ", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり補正" },
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり圧" },
-    { id:"seed_colabo",  name:"【コラボ】グラタンのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" },
+
+    // ✅ 露店内の「コラボタネ表示」(在庫IDは seed_colabo を増やす)
+    { id:"seed_colabo",  name:"【コラボ】グラタンのタネ", desc:"購入不可。\n上のシリアル入力で増える。", img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" },
   ];
 
   const WATERS = [
@@ -293,7 +299,6 @@
     $("#chipWater") && ($("#chipWater").textContent = String(totalKind(inv, "water")));
     $("#chipFert")  && ($("#chipFert").textContent  = String(totalKind(inv, "fert")));
 
-    // 図鑑UIは非表示化（値更新は残す）
     $("#chipBookOwned") && ($("#chipBookOwned").textContent = String(calcBookOwned()));
     $("#chipBookDup")   && ($("#chipBookDup").textContent   = "0");
 
@@ -523,6 +528,23 @@
         .good .qty .qtyin{ width: 52px !important; }
         .roten-about-btn{ font-size: 12px !important; }
       }
+
+      /* ちょい見やすさ */
+      .inv-row{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        padding: 10px 12px;
+        border:1px solid rgba(255,255,255,.12);
+        border-radius: 12px;
+        margin: 8px 0;
+        background: rgba(0,0,0,.12);
+      }
+      .inv-left{ display:flex; flex-direction:column; gap:2px; }
+      .inv-name{ font-weight:900; }
+      .inv-memo{ font-size:12px; opacity:.75; }
+      .inv-right b{ font-size:16px; }
     `;
     document.head.appendChild(style);
   }
@@ -575,7 +597,6 @@
         ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>`
         : `<div class="priceline">単価 <b>—</b>（シリアル）</div>`;
 
-      // ✅ コラボタネは「ボタン無し」＝上部のシリアル入力だけで増やす
       const buyBar = canBuy ? `
         <div class="buybar">
           <div class="qty">
@@ -616,7 +637,6 @@
       `;
     }).join("");
 
-    // ✅ 購入可能なものだけイベントを付ける
     $$(".good", grid).forEach(card => {
       const kind = card.getAttribute("data-kind");
       const id   = card.getAttribute("data-id");
@@ -658,7 +678,6 @@
           toastHype("💥 オクトが足りない…たこ。", {kind:"bad"});
           return;
         }
-
         toastHype(`✨ 購入完了！「${item.name}」×${r.qty}（-${r.total}オクト）✨`, {kind:"good"});
       });
     });
@@ -743,14 +762,11 @@
         mode: "cors",
         redirect: "follow",
         cache: "no-store",
+        headers: { "Content-Type":"application/json" },
         body: JSON.stringify(bodyObj),
       });
     }catch(e){
       throw new Error("通信に失敗した…たこ。回線/URL/GAS公開設定を確認してね。");
-    }
-
-    if(!res.ok){
-      throw new Error(`サーバー応答エラー…たこ。HTTP ${res.status}`);
     }
 
     const txt = await res.text().catch(()=> "");
@@ -761,20 +777,43 @@
       throw new Error("サーバー応答がJSONじゃない…たこ。GASの公開/権限/URLを確認してね。");
     }
 
+    // GAS側が {ok:false,error:"..."} で返すのでここで拾う
     if(!data || typeof data.ok !== "boolean"){
       throw new Error("サーバー応答不正…たこ。");
     }
     return data;
   }
 
-  function applyRedeemReward(reward){
+  // ✅ A方式: grants配列をそのまま在庫へ反映（seed/water/fert/octo）
+  function applyRedeemRewardFromGrants(grants){
     const inv = ensureInvKeys();
-    const add = Math.max(0, Math.floor(Number(reward?.seed_colabo || 0) || 0));
-    if(add > 0){
-      inv.seed["seed_colabo"] = Number(inv.seed["seed_colabo"]||0) + add;
-      saveInv(inv);
+    const added = { seed:{}, water:{}, fert:{}, octo:0 };
+
+    const arr = Array.isArray(grants) ? grants : [];
+    for(const g of arr){
+      const kind = String(g?.kind || "").trim();
+      const id   = String(g?.id   || "").trim();
+      const qty  = Math.max(1, Math.floor(Number(g?.qty || 1) || 1));
+
+      if(!kind) continue;
+
+      if(kind === "octo"){
+        // {kind:"octo", id:"octo", qty:5000} でもOK
+        addOcto(qty);
+        added.octo += qty;
+        continue;
+      }
+
+      if(!id) continue;
+
+      if(kind === "seed" || kind === "water" || kind === "fert"){
+        inv[kind][id] = Number(inv[kind][id] || 0) + qty;
+        added[kind][id] = (added[kind][id] || 0) + qty;
+      }
     }
-    return { addedSeedColabo: add };
+
+    saveInv(inv);
+    return added;
   }
 
   function wireSerialInline(){
@@ -799,28 +838,34 @@
 
       try{
         const data = await redeemOnServer(code);
+
         if(!data.ok){
           toastHype(data.message || data.error || "無効なコード…たこ。", {kind:"bad"});
           return;
         }
 
-        const reward = data.reward || data.grant || {};
-        const applied = applyRedeemReward(reward);
+        const grants = Array.isArray(data.grants) ? data.grants : [];
+        const applied = applyRedeemRewardFromGrants(grants);
 
-        used[code] = { at: Date.now(), payload: reward };
+        used[code] = { at: Date.now(), payload: { grants } };
         saveUsedCodes(used);
 
         input.value = "";
-        pushLog(`シリアル：${code}（コラボのタネ +${applied.addedSeedColabo}）`);
+        pushLog(`シリアル：${code}（${(data.message||"OK")}）`);
 
         refreshHUD();
         renderGoods();
 
-        if(applied.addedSeedColabo > 0){
-          toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, {kind:"good"});
+        const seedAddedTotal = Object.values(applied.seed || {}).reduce((a,b)=>a+Number(b||0),0);
+        const waterAddedTotal = Object.values(applied.water || {}).reduce((a,b)=>a+Number(b||0),0);
+        const fertAddedTotal = Object.values(applied.fert || {}).reduce((a,b)=>a+Number(b||0),0);
+
+        if(seedAddedTotal + waterAddedTotal + fertAddedTotal + applied.octo > 0){
+          toastHype(`✨ 成功！🌱+${seedAddedTotal} 💧+${waterAddedTotal} 🧪+${fertAddedTotal} / オクト+${applied.octo} ✨`, {kind:"good"});
         }else{
           toastHype("✅ 成功…たこ。（付与が0だった）", {kind:"info"});
         }
+
       }catch(e){
         toastHype(e?.message || "通信に失敗…たこ。", {kind:"bad"});
       }finally{
@@ -1142,14 +1187,12 @@
       toastHype("🧪 オクト +100000！", {kind:"good"});
     });
 
-    // ✅ 所持資材ボタンは削除（存在しても無効化）
     $("#btnOpenInv")?.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       toastHype("📦 所持内訳は、上の 🌱/💧/🧪 をタップ…たこ。", {kind:"info"});
     });
 
-    // ✅ 説明ボタン
     $("#btnOpenRates")?.addEventListener("click", () => {
       openAboutModal();
       setTakopiSayRandom();
@@ -1170,7 +1213,6 @@
       setTakopiSayRandom();
     });
 
-    // ✅ 戻るボタン（HTMLに #rotenBackBtn があれば動く）
     $("#rotenBackBtn")?.addEventListener("click", () => {
       if(history.length > 1){
         history.back();
@@ -1185,7 +1227,6 @@
     injectBuyRowCSS();
     ensureInvKeys();
 
-    // ✅ ボタン移動＆名称変更（HTML触らない）
     placeAboutButton();
 
     setTakopiSayRandom();
@@ -1206,4 +1247,3 @@
     boot();
   }
 })();
-
