@@ -144,12 +144,22 @@
     }
     .sellCard:active{ transform: translateY(1px) scale(.99); }
 
-    /* ✅ 画像は“高さを揃えて”横並びでも気持ちいい */
+    /* ✅ スマホ：高さを揃えて気持ちいい（= cover） */
     .sellCard img{
       display:block;
       width: 100%;
       height: clamp(150px, 26vw, 220px);
       object-fit: cover;
+    }
+
+    /* ✅ PC：画像が“切れない”ようにする（= contain） */
+    @media (min-width: 740px){
+      .sellCard img{
+        height: auto !important;          /* 高さ固定をやめる */
+        max-height: 320px !important;     /* 大きくなりすぎ防止（好みで調整） */
+        object-fit: contain !important;   /* 切らない */
+        background: rgba(0,0,0,.18);      /* 余白が出た時の下地 */
+      }
     }
 
     .sellChoice__note{
@@ -283,16 +293,11 @@
   <div class="sellChoice" id="sellChoice" aria-hidden="true">
     <div class="sellChoice__panel" role="dialog" aria-label="売り方をえらぶ">
       <div class="sellChoice__head">
-        <!-- 左上：戻る（閉じる） -->
         <button class="sellChoice__back" id="sellChoiceBack" type="button" aria-label="戻る">←戻る</button>
-
         <div class="sellChoice__title">売り方をえらぶ</div>
-
-        <!-- 右は空けて中央タイトルを保つ -->
         <div class="sellChoice__spacer" aria-hidden="true"></div>
       </div>
 
-      <!-- ✅ 画像の上に軽い説明 -->
       <div class="sellChoice__desc">
         <b>今すぐオクト化</b>する？ それとも <b>マイ露店でコツコツ販売</b>する？
       </div>
@@ -337,7 +342,6 @@
         document.body.style.overflow = "";
       }
 
-      // roten.js側の click toast を殺して、こちらを優先
       openBtn.addEventListener("click", function(e){
         e.preventDefault();
         e.stopPropagation();
@@ -347,10 +351,7 @@
 
       backBtn && backBtn.addEventListener("click", close);
 
-      // 背景タップで閉じる
       modal.addEventListener("click", (e)=>{ if(e.target === modal) close(); });
-
-      // ESCで閉じる
       document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") close(); });
     })();
   </script>
