@@ -746,21 +746,20 @@
     return id;
   }
 
-  async function redeemOnServer(code){
-
-  const formData = new URLSearchParams();
-  formData.append("apiKey", REDEEM_API_KEY);
-  formData.append("code", code);
-  formData.append("deviceId", getDeviceId());
-  formData.append("app", "roten");
-  formData.append("ts", Date.now());
-
+  
+async function redeemOnServer(code){
   let res;
-
   try{
     res = await fetch(REDEEM_ENDPOINT, {
       method: "POST",
-      body: formData
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        apiKey: REDEEM_API_KEY,
+        code,
+        deviceId: getDeviceId(),
+        app: "roten",
+        ts: Date.now()
+      })
     });
   }catch(e){
     throw new Error("通信に失敗…たこ。");
@@ -768,12 +767,8 @@
 
   const text = await res.text();
   let data;
-
-  try{
-    data = JSON.parse(text);
-  }catch(e){
-    throw new Error("サーバー応答がJSONじゃない…たこ。");
-  }
+  try{ data = JSON.parse(text); }
+  catch(e){ throw new Error("サーバー応答がJSONじゃない…たこ。"); }
 
   return data;
 }
@@ -1219,7 +1214,7 @@
   }
 
   function boot(){
-    ensureToast();
+    ensureToast();F
     injectBuyRowCSS();
     ensureInvKeys();
 
