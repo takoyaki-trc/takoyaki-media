@@ -748,18 +748,19 @@
 
   
 async function redeemOnServer(code){
+  const form = new URLSearchParams();
+  form.append("apiKey", REDEEM_API_KEY);
+  form.append("code", code);
+  form.append("deviceId", getDeviceId());
+  form.append("app", "roten");
+  form.append("ts", String(Date.now()));
+
   let res;
   try{
     res = await fetch(REDEEM_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        apiKey: REDEEM_API_KEY,
-        code,
-        deviceId: getDeviceId(),
-        app: "roten",
-        ts: Date.now()
-      })
+      body: form
+      // ✅ headersは付けない（CORS事前リクエストを避ける）
     });
   }catch(e){
     throw new Error("通信に失敗…たこ。");
@@ -772,7 +773,6 @@ async function redeemOnServer(code){
 
   return data;
 }
-
 
 
   // ✅ A方式: grants配列をそのまま在庫へ反映（seed/water/fert/octo）
