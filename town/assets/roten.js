@@ -1,32 +1,26 @@
 /* =========================================================
-   roten.js（たこぴのお店 / 複数購入＆Chrome/Safari安定版）
+   assets/roten.js（たこぴのお店 / 完全版：複数購入 + シリアル(grants)対応 + Chrome/Safari安定）
+   ---------------------------------------------------------
    ✅ 資材在庫: tf_v1_inv（seed/water/fert）= ファームと完全共通
-   ✅ 図鑑: tf_v1_book（got[id].count 合計を “所持” として表示）※今回はUIから非表示化
+   ✅ 図鑑: tf_v1_book（今回はUIから非表示化：更新ロジックは残す）
    ✅ オクト: roten_v1_octo
-   ✅ たこ焼きみくじ: 1日1回（おみくじ演出：大吉/中吉/末吉/凶/大凶 + 報酬テーブル）
+   ✅ たこ焼きみくじ: 1日1回（大吉/中吉/末吉/凶/大凶 + 報酬）
    ✅ 公開記念プレゼント: 1回だけ
    ✅ コラボのタネ（seed_colabo）は「シリアルで増える」ので購入不可
    ✅ Toast：Chromeでも確実に表示（bottom固定 / inline important）
-   ✅ 購入UI：数量の隣に「買う」（2段にしない）
-   ✅ 値段表示：控えめに1行表示（レイアウト崩さない）
    ✅ Modal：Chromeでも確実に前面表示（inline important）
-   ✅ 所持数：画像右上にバッジ表示（購入欄の所持テキストは廃止）
-   ✅ ボタン：＋/−/買う を少し小さく
-   ✅ オクト不足の常時ヒント表示を削除（押下時Toastのみ）
-   ✅ おみくじオクト：大凶1 / 凶500 / 末吉1000 / 中吉3000 / 大吉7777
+   ✅ 購入UI：数量の隣に「買う」（2段にしない）＋所持数バッジ
+   ✅ 所持チップ（🌱/💧/🧪）タップ → 内訳モーダル
+   ✅ GASが返す { ok, code, grants:[{kind,id,qty}], message } に対応（重要）
 
-   ✅ 変更点（今回）
-   ・コラボのタネの横にあった「シリアル」ボタンを削除
-   ・上部のシリアル入力ボックス（#serialInlineInput/#serialInlineBtn）だけで完結
-   ・seed_colabo はカード内で「シリアル限定」表示のみ（ボタンなし）
-
-   ✅ 重要（今回の修正）
-   ・GASが返す { ok, code, grants:[{kind,id,qty}] } に対応
-   ・REDEEM_ENDPOINT を「新しいデプロイURL」に更新
+   ⚠️ あなたのGAS側は “grants配列” を返す仕様で統一してね。
 ========================================================= */
 (() => {
   "use strict";
 
+  /* =========================
+     LocalStorage Keys
+  ========================== */
   const LS = {
     octo: "roten_v1_octo",
     inv: "tf_v1_inv",
@@ -35,14 +29,18 @@
     launchGift: "roten_v1_launch_gift_claimed",
     log: "roten_v1_log",
     codesUsed: "tf_v1_codes_used",
-    deviceId: "tf_v1_device_id"
+    deviceId: "tf_v1_device_id",
   };
 
-  // ✅ シリアル（GAS Webアプリ）※あなたが貼ってくれた最新URL
+  /* =========================
+     GAS Web App（あなたの最新URL）
+  ========================== */
   const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbx2EflvS062QgpAZdBCaqVYQv1VEi1uR6b568U8spjGscvzr_QS-5dXlOgbvFlDw18x/exec";
   const REDEEM_API_KEY  = "takopi-gratan-2026";
 
-  // ---------- utils ----------
+  /* =========================
+     DOM helpers
+  ========================== */
   const $  = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
@@ -59,7 +57,7 @@
       const raw = localStorage.getItem(key);
       if(!raw) return fallback;
       return JSON.parse(raw);
-    }catch(e){
+    }catch(_){
       return fallback;
     }
   }
@@ -67,6 +65,9 @@
     localStorage.setItem(key, JSON.stringify(obj));
   }
 
+  /* =========================
+     Octo
+  ========================== */
   function getOcto(){
     return Number(localStorage.getItem(LS.octo) || 0);
   }
@@ -77,6 +78,9 @@
     setOcto(getOcto() + Number(delta || 0));
   }
 
+  /* =========================
+     Inventory（ファーム共通）
+  ========================== */
   function invDefault(){
     return { ver:1, seed:{}, water:{}, fert:{} };
   }
@@ -108,7 +112,9 @@
     saveJSON(LS.log, a.slice(0, 80));
   }
 
-  // ---------- MASTER DATA ----------
+  /* =========================
+     MASTER DATA
+  ========================== */
   const SEEDS = [
     { id:"seed_random",  name:"なに出るタネ", desc:"何が育つかは完全ランダム。\n店主も知らない。", img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
     { id:"seed_shop",    name:"店頭タネ", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
@@ -116,8 +122,7 @@
     { id:"seed_special", name:"たこぴのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/29OsEvjf.png", fx:"待て" },
     { id:"seed_bussasari",      name:"ブッ刺さりタネ", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり補正" },
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり圧" },
-
-    // ✅ 露店内の「コラボタネ表示」(在庫IDは seed_colabo を増やす)
+    // シリアル限定（在庫IDは seed_colabo を増やす）
     { id:"seed_colabo",  name:"【コラボ】グラタンのタネ", desc:"購入不可。\n上のシリアル入力で増える。", img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" },
   ];
 
@@ -171,7 +176,7 @@
         img:s.img,
         price: isColabo ? null : (PRICE[s.id] ?? 18),
         buyable: !isColabo,
-        tag: isColabo ? "シリアル限定" : "販売"
+        tag: isColabo ? "シリアル限定" : "販売",
       });
     }
     for(const w of WATERS){
@@ -188,12 +193,12 @@
     "「いらっしゃい…たこ。オクトで“未来”を買うの、すき…たこ？」",
     "「種は物語…水は運…肥料は代償…たこ。」",
     "「まとめ買い？……いいね。焼き台が“鳴く”たこ…」",
-    "「買うボタンは“契約”…押した瞬間、世界が少し変わる…たこ。」"
+    "「買うボタンは“契約”…押した瞬間、世界が少し変わる…たこ。」",
   ];
 
-  // =========================================================
-  // ✅ modal：Chrome/Safariで null 固定を回避（都度取得）
-  // =========================================================
+  /* =========================
+     Modal（Chrome/Safari安定）
+  ========================== */
   function getModalEls(){
     return {
       modal: document.getElementById("modal"),
@@ -261,7 +266,9 @@
     document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeModal(); });
   }
 
-  // ---------- inventory helpers ----------
+  /* =========================
+     Inventory helpers
+  ========================== */
   function ownedCount(inv, kind, id){
     return Number((inv[kind]||{})[id] || 0);
   }
@@ -271,13 +278,11 @@
     for(const k of Object.keys(bucket)) total += Number(bucket[k] || 0);
     return total;
   }
-
   function ensureInvKeys(){
     const inv = loadInv();
     inv.seed  = inv.seed  || {};
     inv.water = inv.water || {};
     inv.fert  = inv.fert  || {};
-
     for(const g of GOODS){
       if(!(g.id in inv[g.kind])) inv[g.kind][g.id] = 0;
     }
@@ -299,6 +304,7 @@
     $("#chipWater") && ($("#chipWater").textContent = String(totalKind(inv, "water")));
     $("#chipFert")  && ($("#chipFert").textContent  = String(totalKind(inv, "fert")));
 
+    // 図鑑UIは非表示にしてる前提（値更新だけ残す）
     $("#chipBookOwned") && ($("#chipBookOwned").textContent = String(calcBookOwned()));
     $("#chipBookDup")   && ($("#chipBookDup").textContent   = "0");
 
@@ -317,9 +323,9 @@
     }
   }
 
-  // =========================================================
-  // ✅ toast
-  // =========================================================
+  /* =========================
+     Toast（確実表示）
+  ========================== */
   function ensureToast(){
     let el = $("#toast");
     if(!el){
@@ -389,9 +395,9 @@
     }, 1900);
   }
 
-  // =========================================================
-  // ✅ CSS注入：所持バッジ + ボタン小型化 + 今回のUI調整
-  // =========================================================
+  /* =========================
+     CSS injection（UI安定）
+  ========================== */
   function injectBuyRowCSS(){
     if($("#_roten_buyrow_css")) return;
     const style = document.createElement("style");
@@ -409,7 +415,6 @@
         margin-left: 6px;
         white-space: nowrap;
       }
-
       .good .good-img{ position: relative !important; }
       .good .ownBadge{
         position:absolute;
@@ -446,7 +451,6 @@
         gap:6px !important;
         flex: 0 0 auto !important;
       }
-
       .good .qty .qtybtn{
         min-width: 38px !important;
         height: 38px !important;
@@ -476,7 +480,6 @@
         font-size: 13px !important;
         padding: 0 12px !important;
       }
-
       .good .priceline{
         margin-top: 6px;
         font-size: 12px;
@@ -488,13 +491,13 @@
 
       .good .buyhint{ display:none !important; }
 
-      /* ✅ 所持資材ボタン削除 */
+      /* 所持資材ボタン削除 */
       #btnOpenInv{ display:none !important; }
 
-      /* ✅ 図鑑（本/リサイクル）UI削除 */
+      /* 図鑑UI削除 */
       #chipBookOwned, #chipBookDup{ display:none !important; }
 
-      /* ✅ チップをタップ可能に（押し込み感） */
+      /* チップをタップ可能に */
       #chipSeed, #chipWater, #chipFert{
         cursor:pointer;
         user-select:none;
@@ -504,7 +507,7 @@
         transform: translateY(1px);
       }
 
-      /* ✅ 右端寄せの説明ボタン（器） */
+      /* 説明ボタン右寄せ器 */
       .roten-about-wrap{
         display:flex;
         justify-content:flex-end;
@@ -529,7 +532,7 @@
         .roten-about-btn{ font-size: 12px !important; }
       }
 
-      /* ちょい見やすさ */
+      /* 内訳モーダル行 */
       .inv-row{
         display:flex;
         align-items:center;
@@ -549,7 +552,9 @@
     document.head.appendChild(style);
   }
 
-  // ---------- purchase logic ----------
+  /* =========================
+     Purchase
+  ========================== */
   function clamp(n, min, max){
     n = Math.floor(Number(n)||0);
     if(n < min) return min;
@@ -578,7 +583,9 @@
     return { ok:true, total, qty, price };
   }
 
-  // ---------- render goods ----------
+  /* =========================
+     Render Goods（タブ切替）
+  ========================== */
   let currentKind = "seed";
 
   function renderGoods(){
@@ -637,6 +644,7 @@
       `;
     }).join("");
 
+    // bind buy events
     $$(".good", grid).forEach(card => {
       const kind = card.getAttribute("data-kind");
       const id   = card.getAttribute("data-id");
@@ -683,9 +691,9 @@
     });
   }
 
-  // =========================================================
-  // ✅ 所持チップ（🌱/💧/🧪）タップ → 内訳モーダル
-  // =========================================================
+  /* =========================
+     Breakdown modal（チップタップ）
+  ========================== */
   function openBreakdownModal(kindKey){
     const inv = ensureInvKeys();
     const titleMap = { seed:"🌱 種の内訳", water:"💧 水の内訳", fert:"🧪 肥料の内訳" };
@@ -722,14 +730,14 @@
   }
 
   function wireChipBreakdowns(){
-    $("#chipSeed")?.addEventListener("click", () => { openBreakdownModal("seed"); setTakopiSayRandom(); });
+    $("#chipSeed") ?.addEventListener("click", () => { openBreakdownModal("seed");  setTakopiSayRandom(); });
     $("#chipWater")?.addEventListener("click", () => { openBreakdownModal("water"); setTakopiSayRandom(); });
-    $("#chipFert")?.addEventListener("click", () => { openBreakdownModal("fert"); setTakopiSayRandom(); });
+    $("#chipFert") ?.addEventListener("click", () => { openBreakdownModal("fert");  setTakopiSayRandom(); });
   }
 
-  // =========================================================
-  // ✅ シリアル（上部入力だけで完結）
-  // =========================================================
+  /* =========================
+     Serial（GAS grants 対応）
+  ========================== */
   function loadUsedCodes(){
     const obj = loadJSON(LS.codesUsed, {});
     return (obj && typeof obj === "object") ? obj : {};
@@ -746,36 +754,45 @@
     return id;
   }
 
-  
-async function redeemOnServer(code){
-  const form = new URLSearchParams();
-  form.append("apiKey", REDEEM_API_KEY);
-  form.append("code", code);
-  form.append("deviceId", getDeviceId());
-  form.append("app", "roten");
-  form.append("ts", String(Date.now()));
+  // ✅ GASへ送信（CORS/プリフライトを避けるため Content-Type を付けない）
+  async function redeemOnServer(code){
+    const payload = {
+      apiKey: REDEEM_API_KEY,
+      code,
+      deviceId: getDeviceId(),
+      app: "roten",
+      ts: Date.now(),
+    };
 
-  let res;
-  try{
-    res = await fetch(REDEEM_ENDPOINT, {
-      method: "POST",
-      body: form
-      // ✅ headersは付けない（CORS事前リクエストを避ける）
-    });
-  }catch(e){
-    throw new Error("通信に失敗…たこ。");
+    let res;
+    try{
+      res = await fetch(REDEEM_ENDPOINT, {
+        method: "POST",
+        mode: "cors",
+        redirect: "follow",
+        cache: "no-store",
+        // headers を付けない（重要）
+        body: JSON.stringify(payload),
+      });
+    }catch(_){
+      throw new Error("通信に失敗…たこ。（回線/CORS/URL/公開設定を確認）");
+    }
+
+    // GASが302でログインに飛ばす等もあるので、textで受けてJSON parse
+    const txt = await res.text().catch(()=> "");
+    let data;
+    try{ data = JSON.parse(txt); }
+    catch(_){
+      throw new Error("サーバー応答がJSONじゃない…たこ。（GASの公開/権限/URLを確認）");
+    }
+
+    if(!data || typeof data.ok !== "boolean"){
+      throw new Error("サーバー応答不正…たこ。");
+    }
+    return data;
   }
 
-  const text = await res.text();
-  let data;
-  try{ data = JSON.parse(text); }
-  catch(e){ throw new Error("サーバー応答がJSONじゃない…たこ。"); }
-
-  return data;
-}
-
-
-  // ✅ A方式: grants配列をそのまま在庫へ反映（seed/water/fert/octo）
+  // ✅ grants配列を在庫へ反映（seed/water/fert/octo）
   function applyRedeemRewardFromGrants(grants){
     const inv = ensureInvKeys();
     const added = { seed:{}, water:{}, fert:{}, octo:0 };
@@ -789,7 +806,6 @@ async function redeemOnServer(code){
       if(!kind) continue;
 
       if(kind === "octo"){
-        // {kind:"octo", id:"octo", qty:5000} でもOK
         addOcto(qty);
         added.octo += qty;
         continue;
@@ -807,6 +823,11 @@ async function redeemOnServer(code){
     return added;
   }
 
+  function sumAddedMap(m){
+    return Object.values(m || {}).reduce((a,b)=>a + Number(b||0), 0);
+  }
+
+  // ✅ 上部のシリアル入力（#serialInlineInput / #serialInlineBtn）だけで完結
   function wireSerialInline(){
     const input = $("#serialInlineInput");
     const btn   = $("#serialInlineBtn");
@@ -847,16 +868,16 @@ async function redeemOnServer(code){
         refreshHUD();
         renderGoods();
 
-        const seedAddedTotal = Object.values(applied.seed || {}).reduce((a,b)=>a+Number(b||0),0);
-        const waterAddedTotal = Object.values(applied.water || {}).reduce((a,b)=>a+Number(b||0),0);
-        const fertAddedTotal = Object.values(applied.fert || {}).reduce((a,b)=>a+Number(b||0),0);
+        const seedAdded  = sumAddedMap(applied.seed);
+        const waterAdded = sumAddedMap(applied.water);
+        const fertAdded  = sumAddedMap(applied.fert);
+        const octAdded   = Number(applied.octo || 0);
 
-        if(seedAddedTotal + waterAddedTotal + fertAddedTotal + applied.octo > 0){
-          toastHype(`✨ 成功！🌱+${seedAddedTotal} 💧+${waterAddedTotal} 🧪+${fertAddedTotal} / オクト+${applied.octo} ✨`, {kind:"good"});
+        if(seedAdded + waterAdded + fertAdded + octAdded > 0){
+          toastHype(`✨ 成功！🌱+${seedAdded} 💧+${waterAdded} 🧪+${fertAdded} / オクト+${octAdded} ✨`, {kind:"good"});
         }else{
           toastHype("✅ 成功…たこ。（付与が0だった）", {kind:"info"});
         }
-
       }catch(e){
         toastHype(e?.message || "通信に失敗…たこ。", {kind:"bad"});
       }finally{
@@ -868,9 +889,9 @@ async function redeemOnServer(code){
     input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") run(); });
   }
 
-  // =========================================================
-  // ✅ 《タネ、ミズ、ヒリョウについて》モーダル（丁寧説明）
-  // =========================================================
+  /* =========================
+     About modal（説明）
+  ========================== */
   function openAboutModal(){
     openModal("📘 タネ/ミズ/ヒリョウについて", `
       <div class="mikuji-wrap">
@@ -928,7 +949,7 @@ async function redeemOnServer(code){
     $("#okAbout", root)?.addEventListener("click", closeModal);
   }
 
-  // ✅ ボタンを「購入（タップで買う）」の右横へ（HTML変更なしで寄せる）
+  // ✅ 可能な範囲で “購入（タップで買う）” の右横に移動（HTML変更なし）
   function placeAboutButton(){
     let btn = $("#btnOpenRates");
     if(!btn){
@@ -947,7 +968,6 @@ async function redeemOnServer(code){
       const t = (el.textContent || "").replace(/\s+/g,"");
       return t.includes("購入") || t.includes("タップで買う");
     });
-
     const anchor = candidates.length ? candidates[candidates.length - 1] : null;
 
     let wrap = $("#_roten_about_wrap");
@@ -965,13 +985,12 @@ async function redeemOnServer(code){
       const app = $("#rotenApp") || document.body;
       app.insertBefore(wrap, app.firstChild);
     }
-
     wrap.style.setProperty("margin-top","0","important");
   }
 
-  // =========================================================
-  // ✅ たこ焼きみくじ
-  // =========================================================
+  /* =========================
+     Omikuji（1日1回）
+  ========================== */
   const OMKUJI = [
     { w: 8,  luck:"大吉", kind:"seed",  id:"seed_special", qty:1, octo:7777, label:"たこぴのタネ×1 + オクト+7777",
       msg:"焼き台が歌ってる…たこ。今日は“伝説”が出る…たこ。" },
@@ -1084,9 +1103,9 @@ async function redeemOnServer(code){
     });
   }
 
-  // =========================================================
-  // ✅ 公開記念プレゼント
-  // =========================================================
+  /* =========================
+     Launch Present（1回だけ）
+  ========================== */
   function openLaunchPresent(){
     const claimed = localStorage.getItem(LS.launchGift) === "1";
     if(claimed){
@@ -1154,9 +1173,9 @@ async function redeemOnServer(code){
     toastHype("🎁 プレゼント受取！", {kind:"good"});
   }
 
-  // =========================================================
-  // ✅ タブ / ボタン配線
-  // =========================================================
+  /* =========================
+     Tabs / Buttons
+  ========================== */
   function wireTabs(){
     $$(".goods-tab").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -1169,7 +1188,7 @@ async function redeemOnServer(code){
   }
 
   function wireButtons(){
-    // ✅ デバッグ：+100000
+    // デバッグ：+100000
     $("#btnDebugPlus100000")?.addEventListener("click", () => {
       addOcto(100000);
       pushLog("デバッグ：オクト +100000");
@@ -1178,12 +1197,14 @@ async function redeemOnServer(code){
       toastHype("🧪 オクト +100000！", {kind:"good"});
     });
 
+    // 所持資材ボタンは無効化（あっても押せない前提）
     $("#btnOpenInv")?.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       toastHype("📦 所持内訳は、上の 🌱/💧/🧪 をタップ…たこ。", {kind:"info"});
     });
 
+    // 説明ボタン
     $("#btnOpenRates")?.addEventListener("click", () => {
       openAboutModal();
       setTakopiSayRandom();
@@ -1213,6 +1234,9 @@ async function redeemOnServer(code){
     });
   }
 
+  /* =========================
+     Boot
+  ========================== */
   function boot(){
     ensureToast();
     injectBuyRowCSS();
@@ -1238,3 +1262,4 @@ async function redeemOnServer(code){
     boot();
   }
 })();
+
