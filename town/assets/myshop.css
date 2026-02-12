@@ -1,15 +1,14 @@
 /* =========================
    myshop.css（ワクワク版 / 完全版）
-   ✅ 既存クラス名は維持（HTML/JSを壊さない）
-   ✅ 黒ベタ→夜空ネイビー＋提灯オレンジ＋木札UI
-   ✅ ステージを主役に見せる（枠・光・奥行き）
-   ✅ 重大バグ修正：.citem の min-height calc が壊れてたのを修正
+   ✅ 左下セリフをステージ外へ移動（屋台モード領域へ）
+   ✅ 屋台モード等のチップ行はHTMLに存在しない（＝削除済み）
+   ✅ 呼び込みを右下固定（FAB）
+   ✅ ログ表示エリアを確実に確保
 ========================= */
 
 :root{
-  /* ====== World Palette（夜祭り屋台） ====== */
-  --bg:#0b1022;                 /* 夜空（ベース） */
-  --bg2:#141b36;                /* 夜空（深い層） */
+  --bg:#0b1022;
+  --bg2:#141b36;
   --panel:rgba(255,255,255,.08);
   --panel2:rgba(255,255,255,.06);
   --line:rgba(255,255,255,.14);
@@ -20,43 +19,34 @@
   --warn:#ffd38a;
   --bad:#ff8fa0;
 
-  /* 提灯・たこ焼き系アクセント */
-  --accent:#ffb347;             /* たこ焼きオレンジ */
-  --accent2:#ffe082;            /* 提灯イエロー */
+  --accent:#ffb347;
+  --accent2:#ffe082;
   --hot:#ff884d;
 
-  /* ボタン */
   --btn:rgba(255,255,255,.12);
 
-  /* 影・角丸 */
   --shadow: 0 12px 36px rgba(0,0,0,.45);
   --shadow2: 0 18px 60px rgba(0,0,0,.55);
   --radius:16px;
 
-  /* フォント */
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  /* 図鑑寄せ（カード一覧） */
   --tile:84px;
   --thumbPad:5px;
   --gap:10px;
 
-  /* UI小物 */
   --glass: rgba(10,14,28,.62);
   --glass2: rgba(10,14,28,.78);
-  --wood1: rgba(255,180,70,.10);     /* 木札っぽい暖色 */
+  --wood1: rgba(255,180,70,.10);
   --wood2: rgba(0,0,0,.18);
 }
 
-/* ===== Reset ===== */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0;
   color:var(--text);
   font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
-
-  /* 夜空＋ビネット＋ほんのり暖色の灯り */
   background:
     radial-gradient(1200px 520px at 50% -120px, rgba(255,224,130,.10), rgba(0,0,0,0) 55%),
     radial-gradient(900px 520px at 14% 18%, rgba(124,252,178,.06), rgba(0,0,0,0) 60%),
@@ -66,7 +56,6 @@ body{
 }
 body.noscroll{ overflow:hidden; touch-action:none; }
 
-/* 薄いノイズっぽさ（画像なしで雰囲気だけ） */
 body:before{
   content:"";
   position:fixed;
@@ -85,7 +74,6 @@ body:before{
   mix-blend-mode: overlay;
 }
 
-/* ===== Layout ===== */
 .wrap{
   max-width:980px;
   margin:0 auto;
@@ -93,7 +81,6 @@ body:before{
 }
 .mono{font-family:var(--mono)}
 
-/* ===== Buttons ===== */
 .btn{
   border:1px solid rgba(255,255,255,.16);
   background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(0,0,0,.10));
@@ -119,7 +106,6 @@ body:before{
 }
 .btn[disabled]{opacity:.55;cursor:not-allowed;transform:none}
 
-/* 目立たせたい時用（HTML側で class="btn primary" など付けてもOK） */
 .btn.primary{
   border-color: rgba(255,180,70,.55);
   color:#120c00;
@@ -145,13 +131,10 @@ body:before{
   box-shadow: 0 10px 24px rgba(0,0,0,.28);
 }
 
-/* ===== Header ===== */
 .header{
   position:sticky;
   top:0;
   z-index:20;
-
-  /* ガラス＋暖色の灯り */
   background:
     radial-gradient(520px 240px at 50% 0%, rgba(255,224,130,.14), rgba(0,0,0,0) 60%),
     linear-gradient(to bottom, rgba(10,14,28,.92), rgba(10,14,28,.62));
@@ -187,21 +170,8 @@ body:before{
   font-weight:1000;
   letter-spacing:.02em;
 }
-.top-actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-.head-actions-row{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
 
-/* ===== Cards ===== */
 .card{
   border:1px solid rgba(255,255,255,.14);
   background:
@@ -219,19 +189,10 @@ body:before{
   justify-content:space-between;
   gap:10px;
 }
-.card-title{
-  font-weight:1000;
-  font-size:14px;
-}
-.card-desc{
-  font-size:12px;
-  color:var(--muted);
-  margin-top:3px;
-  line-height:1.35;
-}
-.card-b{padding:12px}
+.card-title{font-weight:1000;font-size:14px;}
+.card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35;}
+.card-b{padding:12px;}
 
-/* ===== Stats ===== */
 .stats{
   display:grid;
   grid-template-columns: repeat(4, 1fr);
@@ -266,7 +227,6 @@ body:before{
 .warn{color:var(--warn)}
 .bad{color:var(--bad)}
 
-/* ===== 来店ステージ ===== */
 .stage-card{margin-bottom:12px}
 .stage{
   position:relative;
@@ -275,21 +235,15 @@ body:before{
   height:204px;
   border-radius:16px;
   overflow:hidden;
-
-  /* 木枠＋光 */
   border:1px solid rgba(255,255,255,.14);
   background: rgba(0,0,0,.18);
   box-shadow:
     0 18px 60px rgba(0,0,0,.55),
     0 0 0 1px rgba(255,180,70,.06) inset;
-
-  /* “屋台の枠”っぽい暖色ライン */
 }
 @media (max-width: 520px){
   .stage{height:190px;}
 }
-
-/* ステージの縁を少し“ゲーム画面”っぽく */
 .stage:before{
   content:"";
   position:absolute;
@@ -300,7 +254,6 @@ body:before{
     0 0 0 2px rgba(255,180,70,.10) inset,
     0 0 40px rgba(255,180,70,.08) inset;
 }
-
 .stage-bg{
   width:100%;
   height:100%;
@@ -309,8 +262,6 @@ body:before{
   display:block;
   filter: saturate(1.10) contrast(1.02);
 }
-
-/* 来客キャラ */
 .stage-visitor{
   position:absolute;
   bottom:28px;
@@ -322,8 +273,6 @@ body:before{
   transform:translateX(-50%) translateY(10px);
   transition: opacity .45s ease, transform .45s ease;
   will-change: opacity, transform;
-
-  /* ほんのり縁取りで立ち上がる */
   filter: drop-shadow(0 10px 18px rgba(0,0,0,.45));
 }
 .stage-visitor.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -340,7 +289,27 @@ body:before{
   pointer-events:none;
 }
 
-/* 吹き出し（提灯色に寄せる） */
+.stage-tags{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.tag{
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(0,0,0,.48);
+  border-radius:999px;
+  padding:6px 8px;
+  font-size:11px;
+  color:rgba(255,255,255,.90);
+  white-space:nowrap;
+  box-shadow: 0 10px 22px rgba(0,0,0,.28);
+}
+
+/* ✅ セリフ移動先（ステージ下） */
+.stage-speechbox{
+  margin-top:10px;
+}
 .bubble{
   max-width:min(520px, 100%);
   border:1px solid rgba(255,224,130,.20);
@@ -362,27 +331,9 @@ body:before{
   margin-top:3px;
 }
 
-.stage-tags{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-.tag{
-  border:1px solid rgba(255,255,255,.16);
-  background: rgba(0,0,0,.48);
-  border-radius:999px;
-  padding:6px 8px;
-  font-size:11px;
-  color:rgba(255,255,255,.90);
-  white-space:nowrap;
-  box-shadow: 0 10px 22px rgba(0,0,0,.28);
-}
-
 /* layout */
 .grid{display:grid;grid-template-columns:1fr;gap:12px}
 
-/* ===== Shelves ===== */
 .shelves{
   display:grid;
   grid-template-columns: repeat(2, minmax(0,1fr));
@@ -476,7 +427,7 @@ body:before{
 .shelf-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .mini{padding:8px 10px;border-radius:14px;font-size:12px;font-weight:1000}
 
-/* ===== Log ===== */
+/* ✅ Log：必ず見えるように高さ確保 */
 .log{
   font-size:12px;
   color:var(--muted);
@@ -500,7 +451,6 @@ body:before{
 .log .m{margin-top:3px}
 .log .s{margin-top:3px;font-family:var(--mono);font-size:11px;opacity:.88}
 
-/* ===== Modal ===== */
 .modal{
   position:fixed;
   inset:0;
@@ -553,7 +503,6 @@ body:before{
 }
 .close{width:42px;height:42px;border-radius:14px}
 
-/* ===== 出品カード選択 ===== */
 .cards{
   display:grid;
   grid-template-columns:repeat(auto-fill, minmax(var(--tile), 1fr));
@@ -572,10 +521,7 @@ body:before{
   cursor:pointer;
   user-select:none;
   -webkit-tap-highlight-color:transparent;
-
-  /* ✅ 重大バグ修正：calcが壊れてた */
   min-height: calc(var(--tile) + 34px);
-
   transition:transform .12s ease, filter .12s ease;
   display:flex;
   flex-direction:column;
@@ -666,7 +612,6 @@ body:before{
 }
 .csub .tagmini b{color:var(--text);font-weight:800}
 
-/* ===== Toast（通常） ===== */
 .toast{
   position:fixed;
   left:12px;
@@ -690,13 +635,11 @@ body:before{
   display:none;
 }
 .toast .box.show{display:block;animation: popIn .18s ease-out;}
-
 @keyframes popIn{
   from{ transform: translateY(8px) scale(.98); opacity: 0; }
   to  { transform: translateY(0)   scale(1);   opacity: 1; }
 }
 
-/* ★売れた：さらに目立たせる（グロー＋拡大＋強い枠） */
 .toast .box.toast--sale{
   border-color: rgba(255,211,138,.90);
   background: linear-gradient(180deg, rgba(255,211,138,.30), rgba(0,0,0,.82));
@@ -725,7 +668,6 @@ body:before{
   color:rgba(255,255,255,.96);
 }
 
-/* ★売れた時のフラッシュ（画面が一瞬光る） */
 .sale-flash{
   position:fixed;
   inset:0;
@@ -741,7 +683,6 @@ body:before{
   100%{ opacity:0; }
 }
 
-/* 呼び込みボタンの小さなタイマー表示 */
 .cd{
   font-size:11px;
   color:var(--muted);
@@ -749,7 +690,7 @@ body:before{
   align-self:center;
 }
 
-/* ★右下固定：バックアップ/復元 */
+/* ✅ 右下固定（呼び込み＋バックアップ＋復元） */
 .fab-wrap{
   position:fixed;
   right:12px;
@@ -770,7 +711,13 @@ body:before{
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* ===== A11y / Motion ===== */
+/* shoutCd をボタン群の中で読みやすく */
+#shoutCd{
+  padding:0 6px;
+  text-align:right;
+  opacity:.9;
+}
+
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important; animation:none !important;}
 }
