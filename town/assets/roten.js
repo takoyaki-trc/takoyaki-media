@@ -123,7 +123,7 @@
     { id:"seed_bussasari",      name:"ブッ刺さりタネ", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり補正" },
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり圧" },
     // シリアル限定（在庫IDは seed_colabo を増やす）
-    { id:"seed_colabo",  name:"【コラボ】グラタンのタネ", desc:"購入不可。\n上のシリアル入力で増える。", img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" },
+    { id:"seed_colabo_gratan",  name:"【コラボ】グラタンのタネ", desc:"購入不可。\n上のシリアル入力で増える。", img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" },
   ];
 
   const WATERS = [
@@ -166,7 +166,7 @@
   function buildGoods(){
     const goods = [];
     for(const s of SEEDS){
-      const isColabo = (s.id === "seed_colabo");
+      const isColabo = (s.id === "seed_colabo_gratan");
       goods.push({
         kind:"seed",
         id:s.id,
@@ -701,7 +701,7 @@
 
     const rows = items.map(g => {
       const c = String(ownedCount(inv, g.kind, g.id));
-      const memo = (!g.buyable && g.id==="seed_colabo") ? "（シリアル限定）" : "";
+      const memo = (!g.buyable && g.id==="seed_colabo_gratan") ? "（シリアル限定）" : "";
       return `
         <div class="inv-row">
           <div class="inv-left">
