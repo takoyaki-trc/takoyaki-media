@@ -121,10 +121,17 @@
       background:rgba(0,0,0,.18);
     }
     @media (max-width: 520px){ .stage{height:180px;} }
-    .stage-bg{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block}
+    .stage-bg{
+      width:100%;height:100%;
+      object-fit:cover;
+      image-rendering:pixelated;
+      display:block
+    }
+
+    /* ✅ 客画像は「下の会話ウィンドウ分」だけ上に逃がす（被らない） */
     .stage-visitor{
       position:absolute;
-      bottom:28px; left:50%;
+      bottom:86px; left:50%;
       height:150px;
       image-rendering: pixelated;
       pointer-events:none;
@@ -133,26 +140,22 @@
       transition: opacity .45s ease, transform .45s ease;
       will-change: opacity, transform;
     }
+    @media (max-width:520px){
+      .stage-visitor{ bottom:82px; height:140px; }
+    }
     .stage-visitor.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    .stage-ui{
-      position:absolute; left:10px; right:10px; bottom:10px;
-      display:flex; align-items:flex-end; justify-content:space-between; gap:10px;
-      pointer-events:none;
-    }
-    .bubble{
-      max-width:min(520px, 100%);
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(0,0,0,.55);
-      border-radius:14px;
-      padding:8px 10px;
-      line-height:1.25;
-    }
-    .bubble .n{font-weight:900;font-size:12px}
-    /* ★追加：マイナスキャラ名は赤文字 */
-    .bubble .n.neg{ color: var(--bad); }
 
-    .bubble .m{color:rgba(255,255,255,.80);font-size:12px;margin-top:3px}
-    .stage-tags{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+    /* ✅ 右上HUD（昼/夜・次） */
+    .hud-top{
+      position:absolute;
+      top:10px; right:10px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      pointer-events:none;
+      z-index:3;
+    }
     .tag{
       border:1px solid rgba(255,255,255,.16);
       background:rgba(0,0,0,.45);
@@ -161,6 +164,45 @@
       font-size:11px;
       color:rgba(255,255,255,.86);
       white-space:nowrap;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    /* ✅ 案①：下固定「会話ウィンドウ」（画像と被らない） */
+    .dialog{
+      position:absolute;
+      left:10px; right:10px; bottom:10px;
+      pointer-events:none;
+      z-index:4;
+    }
+    .bubble{
+      width:100%;
+      border:1px solid rgba(255,255,255,.16);
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.72), rgba(0,0,0,.52));
+      border-radius:14px;
+      padding:10px 12px;
+      line-height:1.25;
+      box-shadow: 0 16px 40px rgba(0,0,0,.45);
+    }
+    .bubble .n{
+      font-weight:900;font-size:12px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .bubble .n::before{
+      content:"▶";
+      opacity:.9;
+      font-size:12px;
+      transform: translateY(-.5px);
+    }
+    /* ★追加：マイナスキャラ名は赤文字 */
+    .bubble .n.neg{ color: var(--bad); }
+
+    .bubble .m{
+      color:rgba(255,255,255,.86);
+      font-size:12px;
+      margin-top:6px;
+      line-height:1.35;
     }
 
     /* layout (右カラム削除 → 1カラム) */
@@ -465,7 +507,7 @@
       <div class="card-h">
         <div>
           <div class="card-title">来店ステージ</div>
-          <div class="card-desc">背景（昼/夜）に、客タコ民（透過）を重ねて表示。誰もいない時は背景だけ。</div>
+          <div class="card-desc">✅ 案①：会話は下固定ウィンドウ。客画像と被らない。</div>
         </div>
 
         <button class="btn ghost" id="fixBtn" type="button">修理</button>
@@ -474,14 +516,18 @@
         <div class="stage" id="stage">
           <img id="stageBg" class="stage-bg" alt="" src="">
           <img id="stageVisitor" class="stage-visitor" alt="" src="">
-          <div class="stage-ui">
+
+          <!-- ✅ 右上HUD -->
+          <div class="hud-top">
+            <div class="tag" id="stageTimeTag">—</div>
+            <div class="tag" id="stageNextTag">次：—</div>
+          </div>
+
+          <!-- ✅ 会話ウィンドウ（下固定） -->
+          <div class="dialog">
             <div class="bubble">
               <div class="n" id="stageName">—</div>
               <div class="m" id="stageMsg">まだ誰も来ていない。</div>
-            </div>
-            <div class="stage-tags">
-              <div class="tag" id="stageTimeTag">—</div>
-              <div class="tag" id="stageNextTag">次：—</div>
             </div>
           </div>
         </div>
@@ -559,8 +605,9 @@
           ・来客だけでも EXP +1（育つ）<br>
           ・売れたら EXP 追加 +4（合計+5）<br>
           ・王様が買うと評判UP / 転売が買うと評判DOWN<br>
-          ・「呼び込み」は60秒に1回、<b>通常スケジュール（次：xxx）は変えずに</b>、呼び込んだ客だけ先に来る<br>
-          ・もし通常の来客タイミングと被ったら、通常の方は<b>待機</b>して、呼び込み客が帰ったら来る<br><br>
+          ・さらに：買わないで帰ると評判 -1（NEW）<br>
+          ・「呼び込み」は60秒に1回、通常スケジュール（次：xxx）は変えずに、呼び込んだ客だけ先に来る<br>
+          ・もし通常の来客タイミングと被ったら、通常の方は待機して、呼び込み客が帰ったら来る<br><br>
           <b>棚解放</b><br>
           Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5
         </div>
@@ -788,7 +835,7 @@
     toastBox.__t = setTimeout(()=>{
       toastBox.classList.remove("show");
       toastBox.classList.remove("toast--sale");
-    }, (type==="sale" ? 4200 : 3000));
+    }, (type==="sale" ? 4200 : 2800));
   }
 
   function pushLog(title, msg, meta){
@@ -797,10 +844,12 @@
     log.items.unshift({ at: now(), title, msg, meta: meta || "" });
     log.items = log.items.slice(0, 60);
     lsSet(LS.log, log);
-    renderLog();
+    renderLog();       // ✅ 常に即描画
+    renderStats();     // ✅ 数値変動を即反映（体感UP）
   }
 
   function renderLog(){
+    if(!logEl) return;
     const log = lsGet(LS.log, { ver:1, items:[] });
     const items = Array.isArray(log.items) ? log.items : [];
     if(items.length === 0){
@@ -819,6 +868,8 @@
         </div>
       `;
     }).join("");
+    // ✅ ログが「動いてない」体感対策：更新時に少しだけ先頭へ
+    logEl.scrollTop = 0;
   }
 
   function isNight(){
@@ -870,7 +921,7 @@
   function renderStage(){
     const s = loadStage();
     stageName.textContent = s.vName || "—";
-    stageName.classList.toggle("neg", isNegativeType(s.vType)); /* ★追加：マイナスは赤 */
+    stageName.classList.toggle("neg", isNegativeType(s.vType));
     stageMsg.textContent  = s.vMsg  || "—";
     if(s.vUrl) stageVisitor.src = s.vUrl;
 
@@ -1184,34 +1235,44 @@
     }
   }
 
-  function basePriceFor(card){
-    const p = Number(card?.raw?.price ?? card?.raw?.basePrice ?? card?.price ?? 0);
-    if(isFinite(p) && p > 0) return Math.floor(p);
+  /* =========================================================
+     ✅ 価格仕様（あなた指定）
+     - 評判50を基準に固定価格
+     - 評判0で0.5倍 / 評判100で2倍
+  ========================================================= */
 
+  // ✅ 基準（評判50）固定
+  function basePriceFor(card){
     const r = String(card?.rarity || "").toUpperCase();
     const map = { "N":500, "R":800, "SR":2000, "UR":5000, "LR":10000 };
-    for(const k of Object.keys(map)){
-      if(r === k || r.includes(k)) return map[k];
-    }
-    return 500;
+    // "SR+", "UR+", みたいな表記にも対応
+    if(r.includes("LR")) return map.LR;
+    if(r.includes("UR")) return map.UR;
+    if(r.includes("SR")) return map.SR;
+    if(r.includes("R"))  return map.R;
+    return map.N;
   }
+
   function tierMult(tier){
     if(tier === "安い") return 0.80;
     if(tier === "高い") return 1.30;
     return 1.00;
   }
+
+  // ✅ あなた指定：評判50で1.0、評判100で2.0、評判0で0.5
   function repFactor(rep){
-    return 0.80 + (rep/100)*0.40;
+    rep = clamp(Number(rep||0), 0, 100);
+    return 0.5 + (rep/100) * 1.5;
   }
 
-  /* ★修正：v01〜v06の性格に合わせ、マイナスキャラを反映 */
+  /* ★修正：性格に合わせた評判変動 */
   const CUSTOMER_TYPES = [
     { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+1, baseBuy:0.42 },
-    { id:"picky",    name:"見えないタコ民",   repDeltaOnBuy:-2, baseBuy:0.30 }, /* ★マイナス */
+    { id:"picky",    name:"見えないタコ民",   repDeltaOnBuy:-2, baseBuy:0.30 },
     { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+3, baseBuy:0.55 },
-    { id:"flipper",  name:"よっぱらいタコ民", repDeltaOnBuy:-3, baseBuy:0.34 }, /* ★マイナス */
+    { id:"flipper",  name:"よっぱらいタコ民", repDeltaOnBuy:-3, baseBuy:0.34 },
     { id:"careful",  name:"つぶやきタコ民",   repDeltaOnBuy:+1, baseBuy:0.38 },
-    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 }, /* ★マイナス */
+    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 },
 
     { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+2, baseBuy:0.50 },
     { id:"climber",  name:"踏破タコ民",        repDeltaOnBuy:+1, baseBuy:0.40 },
@@ -1381,7 +1442,7 @@
       info.innerHTML = `
         <div class="line"><b>${escapeHTML(name)}</b></div>
         <div class="line">レア：<b>${escapeHTML(rar)}</b></div>
-        <div class="line">目安価格：<b>${slot.item ? fmt(price) : "-"}</b></div>
+        <div class="line">買取：<b>${slot.item ? fmt(price) : "-"}</b></div>
         <div class="shelf-actions"></div>
       `;
 
@@ -1592,10 +1653,11 @@
       return;
     }
 
-    const rep = loadRep().rep;
+    const repBefore = loadRep().rep;
     const cust = CUSTOMER_TYPES.find(x=>x.id===st.vType) || CUSTOMER_TYPES[0];
-    const base = basePriceFor(slot.item);
-    const price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
+
+    const base = basePriceFor(slot.item); // ✅ 固定表
+    const price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(repBefore)));
 
     const stayMs = Number(st.stayMs||0);
     const stayFactor = clamp(stayMs/16000, 0.6, 1.25);
@@ -1617,11 +1679,18 @@
     buyP = clamp(buyP, 0.05, 0.92);
 
     const willBuy = Math.random() < buyP;
+
+    // ✅ NEW：買わないで帰る → 評判 -1
     if(!willBuy){
+      const repState = addRep(-1);
+      pushLog("買わずに去った", `評判 -1（現在 ${repState.rep}/100）`, `棚${slotIdx+1}`);
+      toast("……買わなかった", `評判 -1（${repState.rep}/100）`, "");
       beginLeave(pick(LEAVE_LINES));
+      renderAll();
       return;
     }
 
+    // ✅ 売れた
     saveOcto(loadOcto() + price);
 
     const lv = addExp(4);
@@ -1706,10 +1775,14 @@
       saveStage(s);
       renderStage();
 
+      // ✅ 来店EXP：指定どおり「来店ごとに +1」
       const lvup = addExp(1);
       if(lvup.leveled){
         pushLog("レベルアップ", `Lv${lvup.state.lv}になった！`, "");
         toast("レベルアップ！", `Lv${lvup.state.lv}`, "");
+      } else {
+        // 体感UP：来店をログに残す（重くない範囲）
+        pushLog("来店", `${s.vName} が棚${targetSlot+1}を見ている`, `goal:${s.vGoal}`);
       }
 
       clearStageTimers();
@@ -2010,6 +2083,7 @@
     applyDayNight();
     updateNextTag();
     updateShoutUI();
+    renderStage();
   }
 
   function openHelp(){
