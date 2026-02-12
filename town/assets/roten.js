@@ -756,25 +756,31 @@
   };
 
   let res;
-
   try{
     res = await fetch(REDEEM_ENDPOINT, {
       method: "POST",
-      mode: "cors",
-      headers: {                 // ← ★これが超重要追加ポイント
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(bodyObj)
+      // ✅ GASはCORSが不安定なので指定しない（または no-cors だとレス読めない）
+      // mode: "cors",
+      redirect: "follow",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bodyObj),
     });
   }catch(e){
     throw new Error("通信に失敗した…たこ。回線/URL/GAS公開設定を確認してね。");
   }
 
+  // ✅ ここが超重要：no-cors だと res.ok が取れない/本文も読めない
   if(!res.ok){
-    throw new Error(`サーバー応答エラー…たこ。HTTP ${res.status}`);
+    const t = await res.text().catch(()=> "");
+    throw new Error(`サーバー応答エラー…たこ。HTTP ${res.status} ${t}`);
   }
 
-  const data = await res.json();
+  const txt = await res.text().catch(()=> "");
+  let data;
+  try{ data = JSON.parse(txt); }
+  catch(_){ throw new Error("サーバー応答がJSONじゃない…たこ。GAS側の出力を確認してね。"); }
+
   return data;
 }
 
