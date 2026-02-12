@@ -1,11 +1,11 @@
+
 /* =========================
    myshop.css（ワクワク版 / 完全版）
-   ✅ 来店タコ民画像を少し小さく
-   ✅ タコ民名を大きく、名＋コメントを中央寄せ
-   ✅ コメント欄の背景を白に
-   ✅ タコ民が「スウ～ッ」と出て「スゥ～ッ」と消える（show/hideクラス対応）
-   ✅ ステータスをギュッと＆パラメータ感を強める
-   ✅ ログが潰れないように確実に表示領域を確保
+   ✅ 来店ステージ見出し付近に「ステータス」を寄せる（並び替え＆ギュッと圧縮）
+   ✅ レベルはバー表示（.stat.level / .lvbar を用意）
+   ✅ オクトは🪙コイン表示（.stat.octo）
+   ✅ ステータス全体をコンパクト化（余白/最小高さ/文字サイズ調整）
+   ✅ 来店タコ民の位置を「あと1%上」に移動
 ========================= */
 
 :root{
@@ -76,10 +76,20 @@ body:before{
   mix-blend-mode: overlay;
 }
 
+/* =========================
+   ✅ 全体のカード並びを制御（ステータスを“来店ステージ付近”へ）
+   ※ HTMLを触れない前提の最善策：
+      .stage-card と .stats を並び替えし、ステージの直前へ
+========================= */
 .wrap{
   max-width:980px;
   margin:0 auto;
   padding:14px 12px 116px;
+
+  /* 並び替え用 */
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 .mono{font-family:var(--mono)}
 
@@ -184,7 +194,7 @@ body:before{
   overflow:hidden;
 }
 .card-h{
-  padding:12px 12px 10px;
+  padding:10px 12px 8px; /* 少し圧縮 */
   border-bottom:1px solid rgba(255,255,255,.14);
   display:flex;
   align-items:flex-start;
@@ -196,31 +206,43 @@ body:before{
 .card-b{padding:12px;}
 
 /* =========================
-   ✅ Stats（もっとワクワク / パラメータ感＆ギュッと）
+   ✅ Stats（コンパクト版 / レベルはバー / オクトは🪙）
+   使い方（JS/HTML側の想定）：
+   - レベル枠に .stat level を付け、内部に .lvbar を置く
+   - オクト枠に .stat octo を付ける
+   ※ 既存の .stat .k / .v はそのまま使える
 ========================= */
 .stats{
   display:grid;
   grid-template-columns: repeat(4, minmax(0,1fr));
-  gap:8px;
-  margin-bottom:12px;
+  gap:7px;                /* 少し詰め */
+  margin-bottom:10px;     /* 少し詰め */
 }
 @media (max-width: 560px){
   .stats{grid-template-columns: repeat(2, minmax(0,1fr))}
 }
+
+/* ✅ 来店ステージの“ところ”へ寄せる：ステージ直前に置く */
+.stats{ order: 1; }
+.stage-card{ order: 2; }
+
+/* 他セクションの順番（必要なら微調整） */
+.shelves{ order: 3; }
+.log{ order: 4; }
+
 .stat{
   border:1px solid rgba(255,255,255,.14);
   background:
-    radial-gradient(260px 160px at 30% 0%, rgba(255,224,130,.12), rgba(0,0,0,0) 60%),
+    radial-gradient(240px 140px at 30% 0%, rgba(255,224,130,.10), rgba(0,0,0,0) 60%),
     linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.10));
   border-radius:14px;
-  padding:9px 10px;
-  min-height:62px;
-  box-shadow: 0 12px 28px rgba(0,0,0,.28);
+  padding:8px 9px;        /* ✅ 圧縮 */
+  min-height:54px;        /* ✅ 圧縮 */
+  box-shadow: 0 12px 28px rgba(0,0,0,.24);
   position:relative;
   overflow:hidden;
 }
 
-/* キラッとする薄いライン（パラメータUIっぽく） */
 .stat:before{
   content:"";
   position:absolute;
@@ -230,17 +252,17 @@ body:before{
   height:160%;
   background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,224,130,.10), rgba(255,255,255,0));
   transform: rotate(18deg);
-  opacity:.55;
+  opacity:.45;
   pointer-events:none;
 }
 
 .stat .k{
-  font-size:10.5px;
+  font-size:10px;               /* ✅ 小さめ */
   color:rgba(255,255,255,.72);
   letter-spacing:.02em;
 }
 .stat .v{
-  font-size:17px;
+  font-size:15.5px;             /* ✅ 少し小さめ */
   font-weight:1000;
   margin-top:4px;
   display:flex;
@@ -249,7 +271,7 @@ body:before{
   gap:8px;
 }
 .stat .v small{
-  font-size:10.5px;
+  font-size:10px;
   color:rgba(255,255,255,.72);
   font-weight:900;
   white-space:nowrap;
@@ -259,10 +281,44 @@ body:before{
 .warn{color:var(--warn)}
 .bad{color:var(--bad)}
 
+/* ✅ オクト：🪙を先頭に（.stat.octo を付ける想定） */
+.stat.octo .v:before{
+  content:"🪙";
+  margin-right:6px;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
+}
+
+/* ✅ レベル：バー化（.stat.level を付け、下に .lvbar を置く想定） */
+.stat.level .v{
+  justify-content:flex-start;
+  gap:8px;
+}
+.stat.level .v small{
+  margin-left:auto; /* 右端に “Lv xx” を寄せたい時用 */
+}
+.lvbar{
+  margin-top:6px;
+  height:9px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.26);
+  overflow:hidden;
+  position:relative;
+  box-shadow: 0 10px 22px rgba(0,0,0,.20);
+}
+.lvbar > i{
+  display:block;
+  height:100%;
+  width: var(--lv, 40%); /* JSで --lv を 0%〜100% にセット */
+  background: linear-gradient(90deg, rgba(124,252,178,.95), rgba(255,224,130,.95), rgba(255,136,77,.95));
+  border-radius:999px;
+  box-shadow: 0 0 18px rgba(255,224,130,.20);
+}
+
 /* =========================
    Stage
 ========================= */
-.stage-card{margin-bottom:12px}
+.stage-card{margin-bottom:10px} /* 少し詰め */
 .stage{
   position:relative;
   width:100%;
@@ -298,12 +354,12 @@ body:before{
   filter: saturate(1.10) contrast(1.02);
 }
 
-/* ✅ 来店タコ民：少し小さく + スウ～ッと出てスゥ～ッと消える */
+/* ✅ 来店タコ民：少し小さく + 位置を「あと1%上」 */
 .stage-visitor{
   position:absolute;
-  bottom:34px;
+  bottom: calc(34px + 1%);       /* ✅ ここが “1%上” */
   left:50%;
-  height:122px;                 /* ← 150px → 小さめ */
+  height:122px;
   image-rendering: pixelated;
   pointer-events:none;
   opacity:0;
@@ -314,14 +370,10 @@ body:before{
   will-change: opacity, transform;
   filter: drop-shadow(0 10px 18px rgba(0,0,0,.45));
 }
-
-/* 表示（出現） */
 .stage-visitor.show{
   opacity:1;
   transform:translateX(-50%) translateY(0);
 }
-
-/* 非表示（退場）…JSで hide を付ける想定 */
 .stage-visitor.hide{
   opacity:0;
   transform:translateX(-50%) translateY(14px);
@@ -365,29 +417,27 @@ body:before{
    ✅ コメント欄：中央寄せ + 背景を白に */
 .bubble{
   max-width:min(620px, 100%);
-  margin:0 auto;                 /* ← 中央寄せ（箱自体） */
+  margin:0 auto;
   border:1px solid rgba(255,224,130,.26);
-  background:#fff;               /* ← 白背景 */
+  background:#fff;
   border-radius:16px;
   padding:10px 12px;
   line-height:1.25;
   box-shadow: 0 12px 28px rgba(0,0,0,.35);
-  text-align:center;             /* ← 中央寄せ（中身） */
+  text-align:center;
 }
-
 .bubble .n{
   font-weight:1000;
-  font-size:16px;                /* ← 12px → 大きく */
-  color:#111;                    /* 白背景に合わせて黒系 */
+  font-size:16px;
+  color:#111;
   text-shadow:none;
   letter-spacing:.02em;
 }
-
 .bubble .m{
-  color:#222;                    /* 白背景に合わせて黒系 */
+  color:#222;
   font-size:13px;
   margin-top:6px;
-  background:#fff;               /* 念のため */
+  background:#fff;
 }
 
 /* layout */
@@ -494,16 +544,11 @@ body:before{
   display:flex;
   flex-direction:column;
   gap:8px;
-
-  /* 「何も無い時でも潰れない」 */
   min-height:110px;
-
   max-height:260px;
   overflow:auto;
   padding-right:6px;
   -webkit-overflow-scrolling: touch;
-
-  /* 背景が沈みすぎて見えないのを防ぐ */
   border-radius:14px;
 }
 .log:empty{
@@ -797,4 +842,3 @@ body:before{
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important; animation:none !important;}
 }
-
