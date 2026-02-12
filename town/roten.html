@@ -2,14 +2,13 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <!-- ✅ iPhone/Androidのセーフエリアも考慮 -->
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>露店（たこぴのお店）</title>
 
   <link rel="stylesheet" href="assets/roten.css">
 
-  <!-- ✅ toastがCSSで潰されても勝つ保険（最強） -->
   <style>
+    /* ✅ toastがCSSで潰されても勝つ保険（最強） */
     #toast{
       position:fixed !important;
       left:12px !important;
@@ -40,9 +39,7 @@
       transform: translateY(0) scale(1) !important;
     }
 
-    /* =====================================================
-       ✅「購入」が縦になる対策（writing-mode等を強制リセット）
-    ===================================================== */
+    /* ✅「購入」が縦になる対策 */
     .block-title{
       writing-mode: horizontal-tb !important;
       text-orientation: mixed !important;
@@ -51,7 +48,7 @@
     }
 
     /* =====================================================
-       ✅ 売り方をえらぶ：2択モーダル（画像で伝える）
+       ✅ 売り方をえらぶ：2択モーダル（横並び / スマホ最適）
     ===================================================== */
     .sellChoice{
       position: fixed;
@@ -68,26 +65,24 @@
     .sellChoice.is-open{ display:flex; }
 
     .sellChoice__panel{
-      width: min(560px, 100%);
+      width: min(620px, 100%);
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,.14);
-      background: rgba(15,18,32,.85);
+      background: rgba(15,18,32,.88);
       box-shadow: 0 18px 44px rgba(0,0,0,.6);
       overflow: hidden;
     }
+
+    /* ✅ 左上に ←戻る */
     .sellChoice__head{
-      padding: 14px 14px 10px;
+      padding: 12px 12px 10px;
       border-bottom: 1px solid rgba(255,255,255,.10);
       display:flex;
       align-items:center;
       justify-content: space-between;
       gap: 10px;
     }
-    .sellChoice__title{
-      font-weight: 1000;
-      letter-spacing: .04em;
-    }
-    .sellChoice__close{
+    .sellChoice__back{
       height: 36px;
       padding: 0 12px;
       border-radius: 12px;
@@ -95,18 +90,42 @@
       border:1px solid rgba(255,255,255,.16);
       background: rgba(255,255,255,.08);
       color:#fff;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select:none;
+    }
+    .sellChoice__title{
+      font-weight: 1000;
+      letter-spacing: .04em;
+      text-align:center;
+      flex: 1;
+    }
+    .sellChoice__spacer{
+      width: 88px; /* 左右バランス用（戻るボタン幅相当） */
+      flex: 0 0 auto;
     }
 
+    /* ✅ 画像の上に説明文 */
+    .sellChoice__desc{
+      padding: 12px 14px 0;
+      font-size: 13px;
+      line-height: 1.45;
+      opacity: .92;
+    }
+    .sellChoice__desc b{ font-weight: 1000; }
+
+    /* ✅ 横並び（スマホも常に2列に寄せる）
+       - 2列がきつい端末は自動で折り返す
+    */
     .sellChoice__body{
-      padding: 14px;
+      padding: 12px 14px 14px;
       display:grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
-    @media (min-width: 520px){
+    @media (max-width: 360px){
       .sellChoice__body{
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
+        grid-template-columns: 1fr; /* 超小型だけ縦 */
       }
     }
 
@@ -121,14 +140,18 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
+      transform: translateZ(0);
     }
     .sellCard:active{ transform: translateY(1px) scale(.99); }
 
+    /* ✅ 画像は“高さを揃えて”横並びでも気持ちいい */
     .sellCard img{
       display:block;
       width: 100%;
-      height: auto;
+      height: clamp(150px, 26vw, 220px);
+      object-fit: cover;
     }
+
     .sellChoice__note{
       padding: 0 14px 14px;
       opacity: .82;
@@ -141,15 +164,8 @@
 <body>
   <header class="roten-header">
     <div class="roten-head-inner">
-      <!-- 左：戻る -->
-      <button
-        class="btn btn-ghost roten-back"
-        id="rotenBackBtn"
-        type="button"
-        aria-label="戻る"
-      >←戻る</button>
+      <button class="btn btn-ghost roten-back" id="rotenBackBtn" type="button" aria-label="戻る">←戻る</button>
 
-      <!-- 中央：タイトル -->
       <div class="roten-head-center">
         <div class="roten-title">露店</div>
         <div class="roten-sub">マイ露店 / たこぴのお店</div>
@@ -159,7 +175,6 @@
 
   <main id="rotenApp" class="roten-app">
 
-    <!-- ====== HUD（スマホで崩れない） ====== -->
     <section class="hud">
       <div class="hud-left">
         <div class="hud-pill hud-pill--big">
@@ -167,7 +182,6 @@
           <span class="num" id="octoNow">0</span>
         </div>
 
-        <!-- ✅ クリック可能なチップ（JSで内訳モーダルを出す） -->
         <div class="hud-pill">
           <span class="ico">🌱</span><span class="lbl">種</span><b id="chipSeed">0</b>
           <span class="sep">/</span>
@@ -178,43 +192,24 @@
       </div>
 
       <div class="hud-right">
-        <!-- ✅ 所持資材はJS側で非表示化する想定（残してOK） -->
         <button class="btn btn-ghost" id="btnOpenInv" type="button">所持資材</button>
-
-        <!-- ✅ ボタン名はJSで「タネ/ミズ/ヒリョウについて」に差し替え＋DOM移動 -->
         <button class="btn btn-ghost" id="btnOpenRates" type="button">水のレア率メモ</button>
 
         <button class="btn btn-ghost" id="btnDebugPlus100000" type="button" aria-label="デバッグ：オクトを100000増やす">
           🧪 オクト＋100000
         </button>
 
-        <!-- ✅ ここを「2択モーダル起動」に変更（リンクではなくボタン） -->
+        <!-- ✅ 2択モーダル起動 -->
         <button class="btn btn-gold" id="btnOpenSell" type="button">
           🪙 カード売却
         </button>
       </div>
     </section>
 
-    <!-- ====== タブ ====== -->
-    <section class="tabs" role="tablist" aria-label="露店タブ">
-      <a class="tab" href="https://takoyaki-trc.github.io/takoyaki-media/town/myshop.html" role="tab" aria-selected="false">
-        マイ露店へ
-      </a>
-      <button class="tab is-active" type="button" role="tab" aria-selected="true">
-        たこぴのお店
-      </button>
-    </section>
-
-    <!-- ====== たこぴ店主ドーン（そのまま） ====== -->
     <section class="shop-hero">
       <div class="hero-card">
         <div class="hero-imgwrap">
-          <img
-            class="hero-img"
-            id="takopiHeroImg"
-            src="https://ul.h3z.jp/0eBSeUBg.png"
-            alt="たこぴ"
-          />
+          <img class="hero-img" id="takopiHeroImg" src="https://ul.h3z.jp/0eBSeUBg.png" alt="たこぴ" />
         </div>
 
         <div class="hero-dialog">
@@ -232,7 +227,6 @@
             ※コラボのタネは<b>シリアル限定</b>…たこ。
           </div>
 
-          <!-- ✅ 常設シリアル入力 -->
           <div class="hero-serial" style="margin-top:10px;">
             <div style="font-weight:800; margin-bottom:6px;">🔑 シリアル入力（コラボのタネ）</div>
             <div style="display:flex; gap:8px; align-items:center;">
@@ -242,20 +236,9 @@
                 inputmode="text"
                 autocomplete="off"
                 placeholder="例：TC-XXXX-XXXX"
-                style="
-                  flex:1;
-                  min-width:0;
-                  padding:10px 12px;
-                  border-radius:12px;
-                  border:1px solid rgba(255,255,255,.18);
-                  background:rgba(0,0,0,.25);
-                  color:#fff;
-                  outline:none;
-                "
+                style="flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.25); color:#fff; outline:none;"
               />
-              <button class="btn" id="serialInlineBtn" type="button" style="white-space:nowrap;">
-                使う
-              </button>
+              <button class="btn" id="serialInlineBtn" type="button" style="white-space:nowrap;">使う</button>
             </div>
             <div id="serialInlineMsg" style="margin-top:6px; font-size:12px; opacity:.85;" aria-live="polite"></div>
           </div>
@@ -264,12 +247,9 @@
       </div>
     </section>
 
-    <!-- ====== ブロック分け：ショップ ====== -->
     <section class="block">
       <div class="block-head" style="display:flex; align-items:center; gap:10px;">
         <div class="block-title" style="flex:1;">購入</div>
-
-        <!-- ✅ 右寄せで上に配置したいボタンの“受け皿” -->
         <div id="_aboutSlot" style="display:flex; justify-content:flex-end; align-items:center;"></div>
       </div>
 
@@ -284,10 +264,9 @@
 
   </main>
 
-  <!-- ✅ toast（※1つだけ！二重に置くとバグる） -->
   <div id="toast" aria-live="polite"></div>
 
-  <!-- ====== MODAL（既存） ====== -->
+  <!-- ====== 既存MODAL（そのまま） ====== -->
   <div class="modal" id="modal" aria-hidden="true">
     <div class="modal__backdrop" id="modalBg"></div>
     <div class="modal__sheet" role="dialog" aria-label="モーダル">
@@ -300,32 +279,36 @@
     </div>
   </div>
 
-  <!-- =====================================================
-       ✅ 売り方をえらぶ（2択）モーダル（追加）
-       - 即売り画像: https://ul.h3z.jp/OY1i6zTs.png
-       - マイ露店画像: https://ul.h3z.jp/03QxjNxa.png
-  ====================================================== -->
+  <!-- ✅ 売り方をえらぶ（2択）モーダル -->
   <div class="sellChoice" id="sellChoice" aria-hidden="true">
     <div class="sellChoice__panel" role="dialog" aria-label="売り方をえらぶ">
       <div class="sellChoice__head">
+        <!-- 左上：戻る（閉じる） -->
+        <button class="sellChoice__back" id="sellChoiceBack" type="button" aria-label="戻る">←戻る</button>
+
         <div class="sellChoice__title">売り方をえらぶ</div>
-        <button class="sellChoice__close" id="sellChoiceClose" type="button">閉じる</button>
+
+        <!-- 右は空けて中央タイトルを保つ -->
+        <div class="sellChoice__spacer" aria-hidden="true"></div>
+      </div>
+
+      <!-- ✅ 画像の上に軽い説明 -->
+      <div class="sellChoice__desc">
+        <b>今すぐオクト化</b>する？ それとも <b>マイ露店でコツコツ販売</b>する？
       </div>
 
       <div class="sellChoice__body">
-        <!-- ⚡ たこぴに即売り（換金） -->
         <a class="sellCard" id="goInstantSell" href="sell.html" aria-label="たこぴに即売りへ">
           <img src="https://ul.h3z.jp/OY1i6zTs.png" alt="たこぴに即売り（換金）">
         </a>
 
-        <!-- 🏮 マイ露店で売る -->
         <a class="sellCard" id="goMyShopSell" href="https://takoyaki-trc.github.io/takoyaki-media/town/myshop.html" aria-label="マイ露店へ">
           <img src="https://ul.h3z.jp/03QxjNxa.png" alt="マイ露店で売る（たこ民に販売）">
         </a>
       </div>
 
       <div class="sellChoice__note">
-        ※即売り＝すぐ換金 / マイ露店＝たこ民にコツコツ販売（上振れ狙い）…たこ。
+        ※即売り＝すぐ換金（安定） / マイ露店＝たこ民にコツコツ販売（上振れ狙い）…たこ。
       </div>
     </div>
   </div>
@@ -337,7 +320,7 @@
     (function(){
       const openBtn = document.getElementById("btnOpenSell");
       const modal   = document.getElementById("sellChoice");
-      const closeBtn= document.getElementById("sellChoiceClose");
+      const backBtn = document.getElementById("sellChoiceBack");
 
       if(!openBtn || !modal) return;
 
@@ -360,15 +343,20 @@
         e.stopPropagation();
         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
         open();
-      }, true); // captureで先取り
+      }, true);
 
-      closeBtn && closeBtn.addEventListener("click", close);
+      backBtn && backBtn.addEventListener("click", close);
+
+      // 背景タップで閉じる
       modal.addEventListener("click", (e)=>{ if(e.target === modal) close(); });
+
+      // ESCで閉じる
       document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") close(); });
     })();
   </script>
 </body>
 </html>
+
 
 
 
