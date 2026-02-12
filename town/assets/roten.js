@@ -1214,7 +1214,7 @@ async function redeemOnServer(code){
   }
 
   function boot(){
-    ensureToast();F
+    ensureToast();
     injectBuyRowCSS();
     ensureInvKeys();
 
