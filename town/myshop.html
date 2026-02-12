@@ -1243,57 +1243,52 @@ function pickShoutLine(){
     { id:"pilgrim",  name:"覚悟タコ民",        repDeltaOnBuy:+3, baseBuy:0.58 }
   ];
 
-  function chooseCustomer(rep){
+function chooseCustomer(rep){
   const night = isNight();
+  rep = Number(rep||50);
 
   const weights = CUSTOMER_TYPES.map(t=>{
-    // rep想定：0〜100
-    if(t.id==="king") {
-      // 評判が上がるほど王様が来る（昼より夜は少し落とす）
+    if(t.id==="king"){
       if(rep>=70) return night ? 10 : 12;
       if(rep>=55) return night ? 7 : 9;
       return night ? 2 : 3;
     }
-
-    if(t.id==="impulse") {
-      // 即決は常に強い。高評判でさらに増える
+    if(t.id==="impulse"){
       if(rep>=60) return night ? 20 : 24;
       if(rep>=40) return night ? 18 : 22;
       return night ? 14 : 16;
     }
-
-    if(t.id==="careful") {
-      // つぶやきは安定枠（夜にちょい増え）
+    if(t.id==="careful"){
       return night ? 16 : 14;
     }
-
-    if(t.id==="looker") {
-      // 冷やかし：低評判＆夜に増える
+    if(t.id==="looker"){
       if(rep<40) return night ? 18 : 14;
       if(rep<60) return night ? 14 : 10;
       return night ? 11 : 8;
     }
-
-    if(t.id==="picky") {
-      // 見えない：中〜低評判で強い（高評判で減るがゼロにはしない）
+    if(t.id==="picky"){
       if(rep>=70) return night ? 6 : 5;
       if(rep>=55) return night ? 10 : 9;
       if(rep>=40) return night ? 13 : 12;
       return night ? 16 : 15;
     }
-
-    if(t.id==="flipper") {
-      // よっぱらい（転売系）：夜に増える。高評判で少し減る
+    if(t.id==="flipper"){
       if(rep>=70) return night ? 10 : 6;
       if(rep>=55) return night ? 13 : 8;
       if(rep>=40) return night ? 15 : 10;
       return night ? 18 : 12;
     }
-
     return 8;
   });
 
-  // 以降はあなたの既存の「重み付き抽選」処理に任せる想定
+  // 追加ブースト（評判が高いと“良い客”が増える）
+  if(rep>=70){
+    ["picky","gourmet","artisan","king","pilgrim"].forEach(id=>{
+      const idx = CUSTOMER_TYPES.findIndex(x=>x.id===id);
+      if(idx>=0) weights[idx] += 6;
+    });
+  }
+
   return weightedPick(CUSTOMER_TYPES, weights);
 }
 
