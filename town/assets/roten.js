@@ -747,42 +747,37 @@
   }
 
   async function redeemOnServer(code){
-    const bodyObj = {
-      apiKey: REDEEM_API_KEY,
-      code,
-      deviceId: getDeviceId(),
-      app: "roten",
-      ts: Date.now()
-    };
+  const bodyObj = {
+    apiKey: REDEEM_API_KEY,
+    code,
+    deviceId: getDeviceId(),
+    app: "roten",
+    ts: Date.now()
+  };
 
-    let res;
-    try{
-      res = await fetch(REDEEM_ENDPOINT, {
-        method: "POST",
-        mode: "cors",
-        redirect: "follow",
-        cache: "no-store",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify(bodyObj),
-      });
-    }catch(e){
-      throw new Error("通信に失敗した…たこ。回線/URL/GAS公開設定を確認してね。");
-    }
+  let res;
 
-    const txt = await res.text().catch(()=> "");
-    let data = null;
-    try{
-      data = JSON.parse(txt);
-    }catch(e){
-      throw new Error("サーバー応答がJSONじゃない…たこ。GASの公開/権限/URLを確認してね。");
-    }
-
-    // GAS側が {ok:false,error:"..."} で返すのでここで拾う
-    if(!data || typeof data.ok !== "boolean"){
-      throw new Error("サーバー応答不正…たこ。");
-    }
-    return data;
+  try{
+    res = await fetch(REDEEM_ENDPOINT, {
+      method: "POST",
+      mode: "cors",
+      headers: {                 // ← ★これが超重要追加ポイント
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(bodyObj)
+    });
+  }catch(e){
+    throw new Error("通信に失敗した…たこ。回線/URL/GAS公開設定を確認してね。");
   }
+
+  if(!res.ok){
+    throw new Error(`サーバー応答エラー…たこ。HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data;
+}
+
 
   // ✅ A方式: grants配列をそのまま在庫へ反映（seed/water/fert/octo）
   function applyRedeemRewardFromGrants(grants){
