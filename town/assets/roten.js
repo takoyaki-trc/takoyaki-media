@@ -39,7 +39,7 @@
   };
 
   // ✅ シリアル（GAS Webアプリ）
-  const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbwvnn-Y9LtFlWQpYrO-nS7bmALEQ77kkGzTcHj3joUkxFH5rT2vb5rPGravk3hJTaMf/exec";
+  const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbyzqkzkmGYU8oKv_IWy2lVGOYPwhIDrlmPYx14w3aeNLaPds2o2B7e5X3hzINkWaA4K/exec";
   const REDEEM_API_KEY  = "takopi-gratan-2026";
 
   // ---------- utils ----------
@@ -735,26 +735,34 @@
     return id;
   }
   async function redeemOnServer(code){
-    const body = {
-      apiKey: REDEEM_API_KEY,
-      code,
-      deviceId: getDeviceId(),
-      app: "roten",
-      ts: Date.now()
-    };
+  const body = {
+    apiKey: REDEEM_API_KEY,
+    code,
+    deviceId: getDeviceId(),
+    app: "roten",
+    ts: Date.now()
+  };
 
-    const res = await fetch(REDEEM_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(body),
-    });
+  const res = await fetch(REDEEM_ENDPOINT, {
+    method: "POST",
+    // ✅ ここが重要：application/json をやめる（CORSプリフライト回避）
+    // headers: { "Content-Type":"application/json" },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
 
-    const data = await res.json().catch(()=>null);
-    if(!data || typeof data.ok !== "boolean"){
-      throw new Error("サーバー応答不正");
-    }
-    return data;
+  // fetch自体がCORSで落ちるとここに来る前に例外になる（catch側へ）
+  if(!res.ok){
+    throw new Error("通信エラー: HTTP " + res.status);
   }
+
+  const data = await res.json().catch(()=>null);
+  if(!data || typeof data.ok !== "boolean"){
+    throw new Error("サーバー応答不正");
+  }
+  return data;
+}
+
   function applyRedeemReward(reward){
     const inv = ensureInvKeys();
     const add = Math.max(0, Math.floor(Number(reward?.seed_colabo || 0) || 0));
