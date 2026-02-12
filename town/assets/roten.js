@@ -747,42 +747,37 @@
   }
 
   async function redeemOnServer(code){
-  const bodyObj = {
-    apiKey: REDEEM_API_KEY,
-    code,
-    deviceId: getDeviceId(),
-    app: "roten",
-    ts: Date.now()
-  };
+
+  const formData = new URLSearchParams();
+  formData.append("apiKey", REDEEM_API_KEY);
+  formData.append("code", code);
+  formData.append("deviceId", getDeviceId());
+  formData.append("app", "roten");
+  formData.append("ts", Date.now());
 
   let res;
+
   try{
     res = await fetch(REDEEM_ENDPOINT, {
       method: "POST",
-      // ✅ GASはCORSが不安定なので指定しない（または no-cors だとレス読めない）
-      // mode: "cors",
-      redirect: "follow",
-      cache: "no-store",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bodyObj),
+      body: formData
     });
   }catch(e){
-    throw new Error("通信に失敗した…たこ。回線/URL/GAS公開設定を確認してね。");
+    throw new Error("通信に失敗…たこ。");
   }
 
-  // ✅ ここが超重要：no-cors だと res.ok が取れない/本文も読めない
-  if(!res.ok){
-    const t = await res.text().catch(()=> "");
-    throw new Error(`サーバー応答エラー…たこ。HTTP ${res.status} ${t}`);
-  }
-
-  const txt = await res.text().catch(()=> "");
+  const text = await res.text();
   let data;
-  try{ data = JSON.parse(txt); }
-  catch(_){ throw new Error("サーバー応答がJSONじゃない…たこ。GAS側の出力を確認してね。"); }
+
+  try{
+    data = JSON.parse(text);
+  }catch(e){
+    throw new Error("サーバー応答がJSONじゃない…たこ。");
+  }
 
   return data;
 }
+
 
 
   // ✅ A方式: grants配列をそのまま在庫へ反映（seed/water/fert/octo）
