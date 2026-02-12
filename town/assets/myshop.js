@@ -33,7 +33,6 @@
     ]
   };
 
-
   const VISITOR_LINES = {
     careful: ["どうしようかな…","もう少し見てから…","今日は買うべきか…","財布に相談中…（既読スルー）"],
     impulse: ["おっ、いいじゃん","今が買い時かも！","これいっとく？","勢いで買う！…たぶん！"],
@@ -94,12 +93,11 @@
     shout:    "roten_v1_shout_cd",
     farmBook: "tf_v1_book",
     stage:    "roten_v1_stage",
-
-    // ★追加：呼び込み/待機キュー（次表示に影響しない）
     queue:    "roten_v1_queue"
   };
 
   const $ = (q, el=document) => el.querySelector(q);
+  const on = (el, ev, fn) => { if(el) el.addEventListener(ev, fn); };
 
   const statsEl = $("#stats");
   const shelvesEl = $("#shelves");
@@ -143,9 +141,6 @@
   const fmt = (n) => (Number(n||0)).toLocaleString("ja-JP");
   const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
 
-  /* ==========================
-     ★ここに追加（呼び込み専用セリフ）
-  ========================== */
   const SHOUT_LINES = [
     "🔥 焼きの匂いを撒いた！タコ民の足が向く…！",
     "屋台前がざわついてきた…！いまなら釣れる！",
@@ -160,17 +155,12 @@
     "客寄せ成功！タコ民レーダー点滅中！",
     "棚の前だけ空気が違う…いま来る。"
   ];
-
   let lastShoutLine = "";
-
   function pickShoutLine(){
     if(SHOUT_LINES.length === 0) return "呼び込み！";
     if(SHOUT_LINES.length === 1) return SHOUT_LINES[0];
-
     let s = pick(SHOUT_LINES);
-    if(s === lastShoutLine){
-      s = pick(SHOUT_LINES);
-    }
+    if(s === lastShoutLine) s = pick(SHOUT_LINES);
     lastShoutLine = s;
     return s;
   }
@@ -192,12 +182,14 @@
   }
 
   function triggerSaleFlash(){
+    if(!saleFlash) return;
     saleFlash.classList.remove("show");
     void saleFlash.offsetWidth;
     saleFlash.classList.add("show");
   }
 
   function toast(t, s, type){
+    if(!toastBox || !toastTitle || !toastSub) return;
     toastTitle.textContent = t;
     toastSub.textContent = s || "";
     toastBox.classList.remove("toast--sale");
@@ -223,6 +215,7 @@
   }
 
   function renderLog(){
+    if(!logEl) return; // ✅ ログDOMが無いとき落ちない
     const log = lsGet(LS.log, { ver:1, items:[] });
     const items = Array.isArray(log.items) ? log.items : [];
     if(items.length === 0){
@@ -249,13 +242,10 @@
   }
   function applyDayNight(){
     const night = isNight();
-    stageBg.src = night ? ASSETS.bgNight : ASSETS.bgDay;
-    stageTimeTag.textContent = night ? "夜" : "昼";
+    if(stageBg) stageBg.src = night ? ASSETS.bgNight : ASSETS.bgDay;
+    if(stageTimeTag) stageTimeTag.textContent = night ? "夜" : "昼";
   }
 
-  /* ==========================
-     ステージ状態
-  ========================== */
   const STAGE_DEFAULT = {
     ver:1,
     hasVisitor:false,
@@ -268,7 +258,7 @@
     stayMs:0,
     targetSlot:-1,
     updatedAt:0,
-    source:"" // "normal" | "shout"
+    source:""
   };
   function loadStage(){
     const s = lsGet(LS.stage, STAGE_DEFAULT);
@@ -291,27 +281,24 @@
 
   function renderStage(){
     const s = loadStage();
-    stageName.textContent = s.vName || "—";
-    stageMsg.textContent  = s.vMsg  || "—";
-    if(s.vUrl) stageVisitor.src = s.vUrl;
+    if(stageName) stageName.textContent = s.vName || "—";
+    if(stageMsg)  stageMsg.textContent  = s.vMsg  || "—";
+    if(stageVisitor && s.vUrl) stageVisitor.src = s.vUrl;
 
-    if(s.hasVisitor && s.vUrl && !s.leaving){
-      stageVisitor.classList.add("show");
-    }else{
-      stageVisitor.classList.remove("show");
+    if(stageVisitor){
+      if(s.hasVisitor && s.vUrl && !s.leaving){
+        stageVisitor.classList.add("show");
+      }else{
+        stageVisitor.classList.remove("show");
+      }
     }
   }
 
-  /* ==========================
-     ★呼び込み/待機キュー
-     - shoutPending: 呼び込み客の出現予約（通常スケジュールは触らない）
-     - normalPending: 通常スケジュールで「到達済み」になった来客を待機させる
-  ========================== */
   const QUEUE_DEFAULT = {
     ver:1,
     shoutPending:false,
     shoutTargetSlot:null,
-    shoutSpawnAt:0,   // 予約の実行時刻（3秒後など）
+    shoutSpawnAt:0,
     normalPending:false,
     normalTargetSlot:null,
     queuedAt:0
@@ -330,15 +317,9 @@
     saveQueue(q);
   }
 
-  // 「通常スケジュールが到達したのに、今は来れない」時に待機させる
   function checkDueAndQueueNormal(){
-    const st = loadStage();
-    if(st.hasVisitor) {
-      // 客がいる間だけでなく、呼び込み予約中も待機判定に使う
-    }
-
     const q = loadQueue();
-    if(q.normalPending) return; // 既に待機中
+    if(q.normalPending) return;
 
     const lv = loadLevel().lv;
     const shop = loadMyShop();
@@ -354,15 +335,11 @@
     const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
     if(due.length===0) return;
 
-    // どれを待機させるか：従来同様にランダム
     const targetSlot = pick(due);
-
     q.normalPending = true;
     q.normalTargetSlot = targetSlot;
     q.queuedAt = nowMs;
     saveQueue(q);
-
-    // 表示は触らない（次：xxx のカウントはそのまま 0 になるだけ）
     pushLog("待機", `通常来客（棚${targetSlot+1}）が待機になった`, "");
   }
 
@@ -381,8 +358,6 @@
     s.source="";
     saveStage(s);
     renderStage();
-
-    // ★客が帰った瞬間に、待機している通常来客がいれば即来店（ただし呼び込み予約が優先）
     trySpawnQueuedIfPossible();
   }
 
@@ -395,9 +370,6 @@
     setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
   }
 
-  /* ==========================
-     通貨/レベル/評判
-  ========================== */
   function loadOcto(){
     const v = Number(localStorage.getItem(LS.octo) || 0);
     return isFinite(v) ? v : 0;
@@ -449,9 +421,6 @@
     return s;
   }
 
-  /* ==========================
-     図鑑（tf_v1_book）
-  ========================== */
   function loadFarmBook(){
     const book = lsGet(LS.farmBook, { ver:1, got:{} });
     book.got = book.got || {};
@@ -523,9 +492,6 @@
     return arr;
   }
 
-  /* ==========================
-     店（棚）
-  ========================== */
   const SHOP_DEFAULT = {
     ver:1,
     slots: [
@@ -586,6 +552,7 @@
   }
 
   function updateNextTag(){
+    if(!stageNextTag) return;
     const t = loadTick();
     const nowMs = now();
     const list = Object.values(t.nextAtBySlot || {}).map(v=>Number(v||0)).filter(v=>v>0);
@@ -602,6 +569,7 @@
   function saveShout(s){ lsSet(LS.shout, s); }
 
   function updateShoutUI(){
+    if(!shoutBtn || !shoutCdEl) return;
     const cd = loadShout();
     const n = now();
     const remainMs = Math.max(0, Number(cd.nextOkAt||0) - n);
@@ -721,9 +689,6 @@
     return pick(GOALS).id;
   }
 
-  /* ==========================
-     出品可能ダブり算出
-  ========================== */
   function countListedById(){
     const shop = loadMyShop();
     const map = {};
@@ -759,10 +724,8 @@
     return pickable;
   }
 
-  /* ==========================
-     UI：棚
-  ========================== */
   function renderShelves(){
+    if(!shelvesEl) return;
     const shop = loadMyShop();
     const lv = loadLevel().lv;
 
@@ -799,7 +762,7 @@
         slotEl.innerHTML = `<div class="ph">空き<br>（タップで出品）</div>`;
       }
 
-      slotEl.addEventListener("click", ()=>{
+      on(slotEl, "click", ()=>{
         if(locked){
           toast("未解放", `この棚は Lv${SHELF_UNLOCK[idx]} で解放`, "");
           return;
@@ -829,7 +792,7 @@
       tierBtn.className = "btn mini";
       tierBtn.textContent = "値段：切替";
       tierBtn.disabled = locked;
-      tierBtn.addEventListener("click", ()=>{
+      on(tierBtn, "click", ()=>{
         const s = loadMyShop();
         const cur = s.slots[idx].priceTier || "普通";
         const next = (cur==="普通") ? "安い" : (cur==="安い") ? "高い" : "普通";
@@ -842,7 +805,7 @@
       removeBtn.className = "btn mini ghost";
       removeBtn.textContent = "取り下げ";
       removeBtn.disabled = locked || !slot.item;
-      removeBtn.addEventListener("click", ()=>{
+      on(removeBtn, "click", ()=>{
         const s = loadMyShop();
         const it = s.slots[idx].item;
         if(!it) return;
@@ -870,13 +833,10 @@
     updateNextTag();
   }
 
-  /* ==========================
-     UI：ステータス
-  ========================== */
   function renderStats(){
+    if(!statsEl) return;
     const lv = loadLevel();
     const rep = loadRep().rep;
-
     const shop = loadMyShop();
     const listed = shop.slots.filter(s=>!!s.item).length;
 
@@ -888,15 +848,9 @@
     `;
   }
 
-  /* ==========================
-     モーダル（背景スクロール禁止）
-  ========================== */
   function lockBodyScroll(){ document.body.classList.add("noscroll"); }
   function unlockBodyScroll(){ document.body.classList.remove("noscroll"); }
 
-  /* ==========================
-     出品ピッカー
-  ========================== */
   let pickTargetIdx = -1;
 
   function openPickModal(slotIdx){
@@ -911,29 +865,34 @@
     const shop = loadMyShop();
     const current = shop.slots[slotIdx]?.item;
 
-    pickTitleEl.textContent = `棚${slotIdx+1} に出品するカード`;
-    pickHintEl.textContent = current
+    if(pickTitleEl) pickTitleEl.textContent = `棚${slotIdx+1} に出品するカード`;
+    if(pickHintEl) pickHintEl.textContent = current
       ? `現在：${current.name||current.id}（変更できます）`
       : "ダブり（図鑑に1枚残しても余る分）から選べます。";
 
     renderPickCards();
 
-    pickModal.classList.add("show");
-    pickModal.setAttribute("aria-hidden","false");
+    if(pickModal){
+      pickModal.classList.add("show");
+      pickModal.setAttribute("aria-hidden","false");
+    }
     lockBodyScroll();
   }
 
   function closePickModal(){
-    pickModal.classList.remove("show");
-    pickModal.setAttribute("aria-hidden","true");
-    pickCardsEl.innerHTML = "";
-    pickEmptyEl.style.display = "none";
+    if(pickModal){
+      pickModal.classList.remove("show");
+      pickModal.setAttribute("aria-hidden","true");
+    }
+    if(pickCardsEl) pickCardsEl.innerHTML = "";
+    if(pickEmptyEl) pickEmptyEl.style.display = "none";
     pickTargetIdx = -1;
     unlockBodyScroll();
   }
 
   function renderPickCards(){
     const list = listPickableDuplicateCards();
+    if(!pickCardsEl || !pickEmptyEl) return;
 
     pickCardsEl.innerHTML = "";
     if(list.length === 0){
@@ -977,8 +936,8 @@
 
       const onSelect = ()=> selectCardForSlot(pickTargetIdx, c);
 
-      item.addEventListener("click", onSelect);
-      item.addEventListener("keydown", (e)=>{
+      on(item, "click", onSelect);
+      on(item, "keydown", (e)=>{
         if(e.key==="Enter" || e.key===" "){
           e.preventDefault();
           onSelect();
@@ -1027,9 +986,6 @@
     closePickModal();
   }
 
-  /* ==========================
-     売買
-  ========================== */
   function saleProcess(){
     const st = loadStage();
     if(!st.hasVisitor || st.leaving) return;
@@ -1072,7 +1028,6 @@
       return;
     }
 
-    // 売れた
     saveOcto(loadOcto() + price);
 
     const lv = addExp(4);
@@ -1083,7 +1038,6 @@
     shop.slots[slotIdx].createdAt = 0;
     saveMyShop(shop);
 
-    // ★通常来客のスケジュール更新は「来店した瞬間」扱いなので、ここで次回を再設定
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(slotIdx)] = now() + nextVisitDelayMs();
@@ -1101,9 +1055,6 @@
     renderAll();
   }
 
-  /* ==========================
-     スケジュール（表示/再開）
-  ========================== */
   function scheduleStage(){
     applyDayNight();
     renderStage();
@@ -1129,11 +1080,6 @@
 
   let spawnLockUntil = 0;
 
-  /* ==========================
-     ★共通：来客生成（normal / shout / queued normal）
-     - type: "normal" or "shout"
-     - IMPORTANT: shout は tick(nextAtBySlot) を変更しない（次：xxx表示が動かない）
-  ========================== */
   function spawnVisitorSoon(targetSlot, type){
     const typeLabel = (type==="shout") ? "呼び込み" : "通常";
     toast("誰かくる！", `${typeLabel}：棚${targetSlot+1} を見てる気配…`, "");
@@ -1186,20 +1132,16 @@
       stageSellTimer = setTimeout(()=> saleProcess(), Math.max(1000, stayMs - 1000));
       stageLeaveTimer = setTimeout(()=> beginLeave(pick(LEAVE_LINES)), stayMs);
 
-      // ★通常/待機の通常だけ：ここで「来店した」扱いにして次回スケジュールを更新
       if(type !== "shout"){
         const tickObj = loadTick();
         tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
         saveTick(tickObj);
 
-        // 待機だった通常来客を消化したのでクリア
         const q = loadQueue();
         if(q.normalPending && Number(q.normalTargetSlot) === Number(targetSlot)){
           clearNormalPending();
         }
       }else{
-        // ★呼び込みは nextAtBySlot を一切触らない（次：xxx表示は変化させない）
-        // ただし、ログは残す
         pushLog("呼び込み来店", `棚${targetSlot+1} に呼び込み客が来た`, "");
       }
 
@@ -1207,7 +1149,6 @@
     }, 3000);
   }
 
-  // 客がいない瞬間に「待機中の通常来客」を優先的に出す（ただし呼び込み予約があるなら先にそっち）
   function trySpawnQueuedIfPossible(){
     const st = loadStage();
     if(st.hasVisitor) return;
@@ -1216,7 +1157,6 @@
 
     const q = loadQueue();
 
-    // 1) 呼び込み予約があるなら、予約の時刻を待つ/実行する
     if(q.shoutPending){
       if(nowMs >= Number(q.shoutSpawnAt||0)){
         const target = Number(q.shoutTargetSlot);
@@ -1229,7 +1169,6 @@
       return;
     }
 
-    // 2) 待機中の通常来客がいるなら即出す
     if(q.normalPending && q.normalTargetSlot != null){
       const target = Number(q.normalTargetSlot);
       spawnVisitorSoon(target, "normal");
@@ -1244,22 +1183,16 @@
     const st = loadStage();
     const nowMs = now();
 
-    // ★客がいる時：通常スケジュールが到達していたら「待機」に積む（表示はそのまま）
     if(st.hasVisitor){
       checkDueAndQueueNormal();
       return;
     }
 
-    // ★スポーンロック中は何もしない（表示だけ更新）
     if(nowMs < spawnLockUntil) return;
 
-    // ★呼び込み予約がある場合：通常は止めて、被りがあれば待機へ
     const q = loadQueue();
     if(q.shoutPending){
-      // 被り対策：ここで通常がdueになったら待機に積む（次表示は変えない）
       checkDueAndQueueNormal();
-
-      // 予約時刻になったら呼び込みを実行
       if(nowMs >= Number(q.shoutSpawnAt||0)){
         const target = Number(q.shoutTargetSlot);
         q.shoutPending = false;
@@ -1271,13 +1204,11 @@
       return;
     }
 
-    // ★待機中の通常があるなら先に出す（次表示は 0s になっているはず）
     if(q.normalPending && q.normalTargetSlot != null){
       spawnVisitorSoon(Number(q.normalTargetSlot), "normal");
       return;
     }
 
-    // ★通常の来客判定（従来ロジック）
     const lv = loadLevel().lv;
     const shop = loadMyShop();
     const t = ensureNextAtForActiveSlots();
@@ -1295,11 +1226,6 @@
     spawnVisitorSoon(targetSlot, "normal");
   }
 
-  /* ==========================
-     呼び込み（次：xxx表示を変えない）
-     - nextAtBySlot を触らず、呼び込み客だけ予約して出す
-     - 被り（通常のdue）になったら通常を待機させる
-  ========================== */
   function shout(){
     const st = loadStage();
     if(st.hasVisitor){
@@ -1328,12 +1254,10 @@
       return;
     }
 
-    // ★ここで初めてCD消費
     cd.nextOkAt = n + 60000;
     saveShout(cd);
     updateShoutUI();
 
-    // 呼び込み対象：次が一番早い棚（従来の思想）
     const t = ensureNextAtForActiveSlots();
     let target = active[0];
     let best = Infinity;
@@ -1342,14 +1266,12 @@
       if(at < best){ best = at; target = idx; }
     }
 
-    // ★呼び込み予約を積む（3秒後に来る）
     const q = loadQueue();
     q.shoutPending = true;
     q.shoutTargetSlot = target;
     q.shoutSpawnAt = n + 3000;
     saveQueue(q);
 
-    // ★もしこの瞬間に通常のdueがあるなら待機に積む（表示はそのまま）
     checkDueAndQueueNormal();
 
     toast("呼び込み！", `棚${target+1}｜${pickShoutLine()}`, "");
@@ -1357,9 +1279,6 @@
     renderAll();
   }
 
-  /* ==========================
-     ★バックアップ（JSONダウンロード）
-  ========================== */
   function downloadText(filename, text){
     const blob = new Blob([text], { type:"application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -1408,9 +1327,6 @@
     pushLog("バックアップ", "ローカルデータをJSONに書き出した", filename);
   }
 
-  /* ==========================
-     ★復元（JSONアップロード → localStorage書き戻し）
-  ========================== */
   function restoreFromPayload(payload){
     if(!payload || typeof payload !== "object"){
       toast("復元失敗", "JSONの形式が不正です", "");
@@ -1443,11 +1359,12 @@
   }
 
   function openRestoreDialog(){
+    if(!restoreFile) return;
     restoreFile.value = "";
     restoreFile.click();
   }
 
-  restoreFile.addEventListener("change", async ()=>{
+  on(restoreFile, "change", async ()=>{
     const file = restoreFile.files && restoreFile.files[0];
     if(!file) return;
 
@@ -1468,12 +1385,7 @@
     }
   });
 
-  /* ==========================
-     修理ボタン
-     - ステージ状態と tick を修理
-     - ★キューも安全にクリア（変な待機が残らないように）
-  ========================== */
-  fixBtn.addEventListener("click", ()=>{
+  on(fixBtn, "click", ()=>{
     const STAGE_DEFAULT2 = {
       ver:1,
       hasVisitor:false,
@@ -1491,16 +1403,12 @@
 
     localStorage.setItem(LS.stage, JSON.stringify(STAGE_DEFAULT2));
     localStorage.removeItem(LS.tick);
-
     localStorage.setItem(LS.queue, JSON.stringify(QUEUE_DEFAULT));
 
     alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
     location.reload();
   });
 
-  /* ==========================
-     全描画
-  ========================== */
   function renderAll(){
     renderStats();
     renderShelves();
@@ -1508,54 +1416,48 @@
     applyDayNight();
     updateNextTag();
     updateShoutUI();
+    renderStage();
   }
 
-  /* ==========================
-     ヘルプ
-  ========================== */
   function openHelp(){
+    if(!helpModal) return;
     helpModal.classList.add("show");
     helpModal.setAttribute("aria-hidden","false");
     lockBodyScroll();
   }
   function closeHelp(){
+    if(!helpModal) return;
     helpModal.classList.remove("show");
     helpModal.setAttribute("aria-hidden","true");
     unlockBodyScroll();
   }
 
-  pickCloseBtn.addEventListener("click", closePickModal);
-  pickCancelBtn.addEventListener("click", closePickModal);
-  pickModal.addEventListener("click", (e)=>{ if(e.target===pickModal) closePickModal(); });
+  on(pickCloseBtn, "click", closePickModal);
+  on(pickCancelBtn, "click", closePickModal);
+  on(pickModal, "click", (e)=>{ if(e.target===pickModal) closePickModal(); });
 
-  helpBtn.addEventListener("click", openHelp);
-  helpClose.addEventListener("click", closeHelp);
-  helpOk.addEventListener("click", closeHelp);
-  helpModal.addEventListener("click", (e)=>{ if(e.target===helpModal) closeHelp(); });
+  on(helpBtn, "click", openHelp);
+  on(helpClose, "click", closeHelp);
+  on(helpOk, "click", closeHelp);
+  on(helpModal, "click", (e)=>{ if(e.target===helpModal) closeHelp(); });
 
-  backBtn.addEventListener("click", ()=>{
+  on(backBtn, "click", ()=>{
     if(history.length > 1) history.back();
     else location.href = "./index.html";
   });
 
-  shoutBtn.addEventListener("click", shout);
+  on(shoutBtn, "click", shout);
 
-  backupBtn.addEventListener("click", makeBackup);
-  restoreBtn.addEventListener("click", openRestoreDialog);
+  on(backupBtn, "click", makeBackup);
+  on(restoreBtn, "click", openRestoreDialog);
 
-  /* ==========================
-     起動
-  ========================== */
+  /* 起動 */
   applyDayNight();
   renderAll();
   scheduleStage();
 
-  // ★起動直後に、もし待機/呼び込み予約があれば実行条件だけ整える
   trySpawnQueuedIfPossible();
-
   setInterval(tick, 1000);
 
-  // ここから先は、あなたの貼り付けが途切れていて続きが不明
-  // （もし残りがあるなら、その部分も貼ってくれたら100%全量で一体化して返す）
-
 })();
+
