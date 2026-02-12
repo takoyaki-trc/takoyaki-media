@@ -108,30 +108,43 @@
     .stat .v small{font-size:11px;color:var(--muted);font-weight:700}
     .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
 
-    /* 来店ステージ */
+    /* =========================================================
+       ✅ 来店ステージ（修正版：名前/コメントは画像の下）
+    ========================================================= */
     .stage-card{margin-bottom:12px}
+
     .stage{
       position:relative;
       width:100%;
       max-width:980px;
-      height:192px;
+
+      /* ❌高さ固定をやめる（画像＋会話欄で伸びる） */
+      height:auto;
+
       border-radius:14px;
       overflow:hidden;
       border:1px solid rgba(255,255,255,.14);
       background:rgba(0,0,0,.18);
     }
-    @media (max-width: 520px){ .stage{height:180px;} }
+
+    /* 画像エリア（上段） */
     .stage-bg{
-      width:100%;height:100%;
+      width:100%;
+      aspect-ratio: 16 / 9;     /* ✅画像エリアの高さを比率で決定 */
+      height:auto;
       object-fit:cover;
       image-rendering:pixelated;
-      display:block
+      display:block;
+    }
+    @media (max-width: 520px){
+      .stage-bg{ aspect-ratio: 16 / 10; } /* スマホは少し縦長に */
     }
 
-    /* ✅ 客画像は「下の会話ウィンドウ分」だけ上に逃がす（被らない） */
+    /* 客タコ民（画像エリア内） */
     .stage-visitor{
       position:absolute;
-      bottom:86px; left:50%;
+      left:50%;
+      bottom:54px;              /* ✅会話欄に被らない位置 */
       height:150px;
       image-rendering: pixelated;
       pointer-events:none;
@@ -140,21 +153,44 @@
       transition: opacity .45s ease, transform .45s ease;
       will-change: opacity, transform;
     }
-    @media (max-width:520px){
-      .stage-visitor{ bottom:82px; height:140px; }
-    }
     .stage-visitor.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    /* ✅ 右上HUD（昼/夜・次） */
-    .hud-top{
-      position:absolute;
-      top:10px; right:10px;
+    /* ✅会話＆タグ（画像の下に配置） */
+    .stage-ui{
+      position:relative;        /* ✅absolute解除 */
+      left:auto; right:auto; bottom:auto;
+
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+
+      padding:10px;
+      pointer-events:auto;
+
+      border-top:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55));
+    }
+
+    .bubble{
+      flex: 1 1 auto;
+      max-width:none;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.55);
+      border-radius:14px;
+      padding:10px 12px;
+      line-height:1.25;
+    }
+    .bubble .n{font-weight:900;font-size:12px}
+    .bubble .n.neg{ color: var(--bad); } /* マイナスキャラは赤 */
+    .bubble .m{color:rgba(255,255,255,.80);font-size:12px;margin-top:3px}
+
+    .stage-tags{
+      flex: 0 0 auto;
       display:flex;
       gap:8px;
       flex-wrap:wrap;
       justify-content:flex-end;
-      pointer-events:none;
-      z-index:3;
     }
     .tag{
       border:1px solid rgba(255,255,255,.16);
@@ -164,48 +200,9 @@
       font-size:11px;
       color:rgba(255,255,255,.86);
       white-space:nowrap;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
     }
 
-    /* ✅ 案①：下固定「会話ウィンドウ」（画像と被らない） */
-    .dialog{
-      position:absolute;
-      left:10px; right:10px; bottom:10px;
-      pointer-events:none;
-      z-index:4;
-    }
-    .bubble{
-      width:100%;
-      border:1px solid rgba(255,255,255,.16);
-      background:
-        linear-gradient(180deg, rgba(0,0,0,.72), rgba(0,0,0,.52));
-      border-radius:14px;
-      padding:10px 12px;
-      line-height:1.25;
-      box-shadow: 0 16px 40px rgba(0,0,0,.45);
-    }
-    .bubble .n{
-      font-weight:900;font-size:12px;
-      display:flex;align-items:center;gap:8px;
-    }
-    .bubble .n::before{
-      content:"▶";
-      opacity:.9;
-      font-size:12px;
-      transform: translateY(-.5px);
-    }
-    /* ★追加：マイナスキャラ名は赤文字 */
-    .bubble .n.neg{ color: var(--bad); }
-
-    .bubble .m{
-      color:rgba(255,255,255,.86);
-      font-size:12px;
-      margin-top:6px;
-      line-height:1.35;
-    }
-
-    /* layout (右カラム削除 → 1カラム) */
+    /* layout (1カラム) */
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
 
     /* shelves */
@@ -404,7 +401,7 @@
       to  { transform: translateY(0)   scale(1);   opacity: 1; }
     }
 
-    /* ★売れた：さらに目立たせる（グロー＋拡大＋強い枠） */
+    /* 売れた：グロー */
     .toast .box.toast--sale{
       border-color: rgba(255,211,138,.90);
       background: linear-gradient(180deg, rgba(255,211,138,.28), rgba(0,0,0,.80));
@@ -433,7 +430,7 @@
       color:rgba(255,255,255,.96);
     }
 
-    /* ★売れた時のフラッシュ（画面が一瞬光る） */
+    /* 売れた時のフラッシュ */
     .sale-flash{
       position:fixed; inset:0;
       pointer-events:none;
@@ -465,7 +462,7 @@
       justify-content:flex-end;
     }
 
-    /* ★右下固定：バックアップ/復元 */
+    /* 右下固定：バックアップ/復元 */
     .fab-wrap{
       position:fixed;
       right:12px;
@@ -507,7 +504,7 @@
       <div class="card-h">
         <div>
           <div class="card-title">来店ステージ</div>
-          <div class="card-desc">✅ 案①：会話は下固定ウィンドウ。客画像と被らない。</div>
+          <div class="card-desc">✅会話は画像の下に表示（画像に被らない）</div>
         </div>
 
         <button class="btn ghost" id="fixBtn" type="button">修理</button>
@@ -516,18 +513,15 @@
         <div class="stage" id="stage">
           <img id="stageBg" class="stage-bg" alt="" src="">
           <img id="stageVisitor" class="stage-visitor" alt="" src="">
-
-          <!-- ✅ 右上HUD -->
-          <div class="hud-top">
-            <div class="tag" id="stageTimeTag">—</div>
-            <div class="tag" id="stageNextTag">次：—</div>
-          </div>
-
-          <!-- ✅ 会話ウィンドウ（下固定） -->
-          <div class="dialog">
+          <!-- ✅ ここが画像の下に来る -->
+          <div class="stage-ui">
             <div class="bubble">
               <div class="n" id="stageName">—</div>
               <div class="m" id="stageMsg">まだ誰も来ていない。</div>
+            </div>
+            <div class="stage-tags">
+              <div class="tag" id="stageTimeTag">—</div>
+              <div class="tag" id="stageNextTag">次：—</div>
             </div>
           </div>
         </div>
@@ -605,9 +599,8 @@
           ・来客だけでも EXP +1（育つ）<br>
           ・売れたら EXP 追加 +4（合計+5）<br>
           ・王様が買うと評判UP / 転売が買うと評判DOWN<br>
-          ・さらに：買わないで帰ると評判 -1（NEW）<br>
-          ・「呼び込み」は60秒に1回、通常スケジュール（次：xxx）は変えずに、呼び込んだ客だけ先に来る<br>
-          ・もし通常の来客タイミングと被ったら、通常の方は待機して、呼び込み客が帰ったら来る<br><br>
+          ・「呼び込み」は60秒に1回、<b>通常スケジュール（次：xxx）は変えずに</b>、呼び込んだ客だけ先に来る<br>
+          ・もし通常の来客タイミングと被ったら、通常の方は<b>待機</b>して、呼び込み客が帰ったら来る<br><br>
           <b>棚解放</b><br>
           Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5
         </div>
@@ -646,7 +639,6 @@
       { id:"v04", name:"見えないタコ民", type:"picky",   url:"https://ul.h3z.jp/MZYfusKm.png" },
       { id:"v05", name:"王様タコ民",   type:"king",    url:"https://ul.h3z.jp/wMM8PrcP.png" },
       { id:"v06", name:"よっぱらいタコ民",   type:"flipper", url:"https://ul.h3z.jp/GLholN7M.png" },
-
       { id:"v07", name:"札束タコ民",     type:"rich",     url:"https://ul.h3z.jp/pZKu3lSE.png" },
       { id:"v08", name:"踏破タコ民",     type:"climber",  url:"https://ul.h3z.jp/45QUKopT.png" },
       { id:"v09", name:"ナビタコ民",     type:"guide",    url:"https://ul.h3z.jp/1RRwKTMt.png" },
@@ -715,7 +707,7 @@
     return map[goalId] || ["……"];
   }
 
-  /* ★追加：マイナスキャラ定義（赤文字＋評判DOWN系） */
+  /* マイナスキャラ定義（赤文字＋評判DOWN系） */
   const NEG_TYPES = new Set(["looker","picky","flipper"]);
   const isNegativeType = (t) => NEG_TYPES.has(String(t||""));
 
@@ -775,31 +767,6 @@
   const now = () => Date.now();
   const fmt = (n) => (Number(n||0)).toLocaleString("ja-JP");
   const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
-
-  const SHOUT_LINES = [
-    "🔥 焼きの匂いを撒いた！タコ民の足が向く…！",
-    "屋台前がざわついてきた…！いまなら釣れる！",
-    "タコ民ホイホイ発動！……寄ってくる、寄ってくる！",
-    "《客引き》発動！棚に視線が刺さってる…！",
-    "焼きたてオーラ放出！“買う気の気配”が増えた！",
-    "エンカウント率UP！……誰かが近づいている。",
-    "匂いレベルMAX！財布が震える音がする…",
-    "行列の芽が出た！このまま育て…！",
-    "屋台パワー充填完了。あとは客が焼かれるだけ。",
-    "……匂いが風に乗った。焼かれに来る気配。",
-    "客寄せ成功！タコ民レーダー点滅中！",
-    "棚の前だけ空気が違う…いま来る。"
-  ];
-  let lastShoutLine = "";
-  function pickShoutLine(){
-    if(SHOUT_LINES.length === 0) return "呼び込み！";
-    if(SHOUT_LINES.length === 1) return SHOUT_LINES[0];
-    let s = pick(SHOUT_LINES);
-    if(s === lastShoutLine) s = pick(SHOUT_LINES);
-    lastShoutLine = s;
-    return s;
-  }
-
   const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
   function safeJSON(raw, fallback){ try{ return JSON.parse(raw);}catch(e){ return fallback; } }
@@ -835,7 +802,7 @@
     toastBox.__t = setTimeout(()=>{
       toastBox.classList.remove("show");
       toastBox.classList.remove("toast--sale");
-    }, (type==="sale" ? 4200 : 2800));
+    }, (type==="sale" ? 4200 : 3000));
   }
 
   function pushLog(title, msg, meta){
@@ -844,12 +811,10 @@
     log.items.unshift({ at: now(), title, msg, meta: meta || "" });
     log.items = log.items.slice(0, 60);
     lsSet(LS.log, log);
-    renderLog();       // ✅ 常に即描画
-    renderStats();     // ✅ 数値変動を即反映（体感UP）
+    renderLog();
   }
 
   function renderLog(){
-    if(!logEl) return;
     const log = lsGet(LS.log, { ver:1, items:[] });
     const items = Array.isArray(log.items) ? log.items : [];
     if(items.length === 0){
@@ -868,8 +833,6 @@
         </div>
       `;
     }).join("");
-    // ✅ ログが「動いてない」体感対策：更新時に少しだけ先頭へ
-    logEl.scrollTop = 0;
   }
 
   function isNight(){
@@ -882,9 +845,7 @@
     stageTimeTag.textContent = night ? "夜" : "昼";
   }
 
-  /* ==========================
-     ステージ状態
-  ========================== */
+  /* ステージ状態 */
   const STAGE_DEFAULT = {
     ver:1,
     hasVisitor:false,
@@ -932,9 +893,7 @@
     }
   }
 
-  /* ==========================
-     ★呼び込み/待機キュー
-  ========================== */
+  /* 呼び込み/待機キュー */
   const QUEUE_DEFAULT = {
     ver:1,
     shoutPending:false,
@@ -956,34 +915,6 @@
     q.normalTargetSlot = null;
     q.queuedAt = 0;
     saveQueue(q);
-  }
-
-  function checkDueAndQueueNormal(){
-    const q = loadQueue();
-    if(q.normalPending) return;
-
-    const lv = loadLevel().lv;
-    const shop = loadMyShop();
-    const t = ensureNextAtForActiveSlots();
-    const nowMs = now();
-
-    const activeIdx = [];
-    shop.slots.forEach((s, idx)=>{
-      if(s.item && canUseSlot(idx, lv)) activeIdx.push(idx);
-    });
-    if(activeIdx.length===0) return;
-
-    const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
-    if(due.length===0) return;
-
-    const targetSlot = pick(due);
-
-    q.normalPending = true;
-    q.normalTargetSlot = targetSlot;
-    q.queuedAt = nowMs;
-    saveQueue(q);
-
-    pushLog("待機", `通常来客（棚${targetSlot+1}）が待機になった`, "");
   }
 
   function setStageEmpty(msg){
@@ -1013,9 +944,7 @@
     setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
   }
 
-  /* ==========================
-     通貨/レベル/評判
-  ========================== */
+  /* 通貨/レベル/評判 */
   function loadOcto(){
     const v = Number(localStorage.getItem(LS.octo) || 0);
     return isFinite(v) ? v : 0;
@@ -1067,9 +996,7 @@
     return s;
   }
 
-  /* ==========================
-     図鑑（tf_v1_book）
-  ========================== */
+  /* 図鑑（tf_v1_book） */
   function loadFarmBook(){
     const book = lsGet(LS.farmBook, { ver:1, got:{} });
     book.got = book.got || {};
@@ -1141,9 +1068,7 @@
     return arr;
   }
 
-  /* ==========================
-     店（棚）
-  ========================== */
+  /* 店（棚） */
   const SHOP_DEFAULT = {
     ver:1,
     slots: [
@@ -1235,37 +1160,31 @@
     }
   }
 
-  /* =========================================================
-     ✅ 価格仕様（あなた指定）
-     - 評判50を基準に固定価格
-     - 評判0で0.5倍 / 評判100で2倍
-  ========================================================= */
-
-  // ✅ 基準（評判50）固定
+  /* ==========================
+     ✅ 価格（ユーザー指定に変更）
+     - 評判50が基準：N500 / R800 / SR2000 / UR5000 / LR10000
+     - 評判0 → 0.5倍、評判100 → 2.0倍（線形）
+     - 値段Tier（安い/普通/高い）はそのまま加算
+  ========================== */
   function basePriceFor(card){
     const r = String(card?.rarity || "").toUpperCase();
     const map = { "N":500, "R":800, "SR":2000, "UR":5000, "LR":10000 };
-    // "SR+", "UR+", みたいな表記にも対応
-    if(r.includes("LR")) return map.LR;
-    if(r.includes("UR")) return map.UR;
-    if(r.includes("SR")) return map.SR;
-    if(r.includes("R"))  return map.R;
-    return map.N;
+    for(const k of Object.keys(map)){
+      if(r === k || r.includes(k)) return map[k];
+    }
+    return 500;
   }
-
   function tierMult(tier){
     if(tier === "安い") return 0.80;
     if(tier === "高い") return 1.30;
     return 1.00;
   }
-
-  // ✅ あなた指定：評判50で1.0、評判100で2.0、評判0で0.5
   function repFactor(rep){
-    rep = clamp(Number(rep||0), 0, 100);
-    return 0.5 + (rep/100) * 1.5;
+    // rep 50 => 1.0, rep 0 => 0.5, rep 100 => 2.0
+    return 0.5 + (rep/100)*1.5;
   }
 
-  /* ★修正：性格に合わせた評判変動 */
+  /* 客タイプ */
   const CUSTOMER_TYPES = [
     { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+1, baseBuy:0.42 },
     { id:"picky",    name:"見えないタコ民",   repDeltaOnBuy:-2, baseBuy:0.30 },
@@ -1273,7 +1192,6 @@
     { id:"flipper",  name:"よっぱらいタコ民", repDeltaOnBuy:-3, baseBuy:0.34 },
     { id:"careful",  name:"つぶやきタコ民",   repDeltaOnBuy:+1, baseBuy:0.38 },
     { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 },
-
     { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+2, baseBuy:0.50 },
     { id:"climber",  name:"踏破タコ民",        repDeltaOnBuy:+1, baseBuy:0.40 },
     { id:"guide",    name:"ナビタコ民",        repDeltaOnBuy: 0, baseBuy:0.30 },
@@ -1641,6 +1559,7 @@
     closePickModal();
   }
 
+  /* ✅ ここがユーザー指定：買わないで評判 -1 / 来店ごとにEXP +1 */
   function saleProcess(){
     const st = loadStage();
     if(!st.hasVisitor || st.leaving) return;
@@ -1649,15 +1568,16 @@
     const slotIdx = st.targetSlot;
     const slot = shop.slots[slotIdx];
     if(!slot || !slot.item){
+      addRep(-1); /* ★買わない扱い */
       beginLeave("……目当ての棚が空だった。客は黙って帰った。");
+      renderAll();
       return;
     }
 
-    const repBefore = loadRep().rep;
+    const rep = loadRep().rep;
     const cust = CUSTOMER_TYPES.find(x=>x.id===st.vType) || CUSTOMER_TYPES[0];
-
-    const base = basePriceFor(slot.item); // ✅ 固定表
-    const price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(repBefore)));
+    const base = basePriceFor(slot.item);
+    const price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
 
     const stayMs = Number(st.stayMs||0);
     const stayFactor = clamp(stayMs/16000, 0.6, 1.25);
@@ -1679,21 +1599,17 @@
     buyP = clamp(buyP, 0.05, 0.92);
 
     const willBuy = Math.random() < buyP;
-
-    // ✅ NEW：買わないで帰る → 評判 -1
     if(!willBuy){
-      const repState = addRep(-1);
-      pushLog("買わずに去った", `評判 -1（現在 ${repState.rep}/100）`, `棚${slotIdx+1}`);
-      toast("……買わなかった", `評判 -1（${repState.rep}/100）`, "");
+      addRep(-1); /* ✅買わないことで評判 -1 */
+      pushLog("買わない", "……今日は買わなかった。評判 -1", `rep ${loadRep().rep}`);
       beginLeave(pick(LEAVE_LINES));
       renderAll();
       return;
     }
 
-    // ✅ 売れた
     saveOcto(loadOcto() + price);
 
-    const lv = addExp(4);
+    const lv = addExp(4);          /* 売れたら追加 +4（来店+1と合わせて+5） */
     const repState = addRep(cust.repDeltaOnBuy);
 
     const soldItem = slot.item;
@@ -1775,14 +1691,11 @@
       saveStage(s);
       renderStage();
 
-      // ✅ 来店EXP：指定どおり「来店ごとに +1」
+      /* ✅ 来店ごとにEXP +1（ユーザー指定） */
       const lvup = addExp(1);
       if(lvup.leveled){
         pushLog("レベルアップ", `Lv${lvup.state.lv}になった！`, "");
         toast("レベルアップ！", `Lv${lvup.state.lv}`, "");
-      } else {
-        // 体感UP：来店をログに残す（重くない範囲）
-        pushLog("来店", `${s.vName} が棚${targetSlot+1}を見ている`, `goal:${s.vGoal}`);
       }
 
       clearStageTimers();
@@ -1843,6 +1756,34 @@
     }
   }
 
+  function checkDueAndQueueNormal(){
+    const q = loadQueue();
+    if(q.normalPending) return;
+
+    const lv = loadLevel().lv;
+    const shop = loadMyShop();
+    const t = ensureNextAtForActiveSlots();
+    const nowMs = now();
+
+    const activeIdx = [];
+    shop.slots.forEach((s, idx)=>{
+      if(s.item && canUseSlot(idx, lv)) activeIdx.push(idx);
+    });
+    if(activeIdx.length===0) return;
+
+    const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
+    if(due.length===0) return;
+
+    const targetSlot = pick(due);
+
+    q.normalPending = true;
+    q.normalTargetSlot = targetSlot;
+    q.queuedAt = nowMs;
+    saveQueue(q);
+
+    pushLog("待機", `通常来客（棚${targetSlot+1}）が待機になった`, "");
+  }
+
   function tick(){
     updateNextTag();
     updateShoutUI();
@@ -1892,6 +1833,25 @@
 
     const targetSlot = pick(due);
     spawnVisitorSoon(targetSlot, "normal");
+  }
+
+  /* 呼び込み */
+  const SHOUT_LINES = [
+    "🔥 焼きの匂いを撒いた！タコ民の足が向く…！",
+    "屋台前がざわついてきた…！いまなら釣れる！",
+    "タコ民ホイホイ発動！……寄ってくる、寄ってくる！",
+    "《客引き》発動！棚に視線が刺さってる…！",
+    "焼きたてオーラ放出！“買う気の気配”が増えた！",
+    "エンカウント率UP！……誰かが近づいている。"
+  ];
+  let lastShoutLine = "";
+  function pickShoutLine(){
+    if(SHOUT_LINES.length === 0) return "呼び込み！";
+    if(SHOUT_LINES.length === 1) return SHOUT_LINES[0];
+    let s = pick(SHOUT_LINES);
+    if(s === lastShoutLine) s = pick(SHOUT_LINES);
+    lastShoutLine = s;
+    return s;
   }
 
   function shout(){
@@ -2083,7 +2043,6 @@
     applyDayNight();
     updateNextTag();
     updateShoutUI();
-    renderStage();
   }
 
   function openHelp(){
@@ -2126,4 +2085,5 @@
 </script>
 </body>
 </html>
+
 
