@@ -1,9 +1,11 @@
 /* =========================
    myshop.css（ワクワク版 / 完全版）
-   ✅ 左下セリフをステージ外へ移動（屋台モード領域へ）
-   ✅ 屋台モード等のチップ行はHTMLに存在しない（＝削除済み）
-   ✅ 呼び込みを右下固定（FAB）
-   ✅ ログ表示エリアを確実に確保
+   ✅ 来店タコ民画像を少し小さく
+   ✅ タコ民名を大きく、名＋コメントを中央寄せ
+   ✅ コメント欄の背景を白に
+   ✅ タコ民が「スウ～ッ」と出て「スゥ～ッ」と消える（show/hideクラス対応）
+   ✅ ステータスをギュッと＆パラメータ感を強める
+   ✅ ログが潰れないように確実に表示領域を確保
 ========================= */
 
 :root{
@@ -193,40 +195,73 @@ body:before{
 .card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35;}
 .card-b{padding:12px;}
 
+/* =========================
+   ✅ Stats（もっとワクワク / パラメータ感＆ギュッと）
+========================= */
 .stats{
   display:grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0,1fr));
   gap:8px;
   margin-bottom:12px;
 }
 @media (max-width: 560px){
-  .stats{grid-template-columns: repeat(2, 1fr)}
+  .stats{grid-template-columns: repeat(2, minmax(0,1fr))}
 }
 .stat{
   border:1px solid rgba(255,255,255,.14);
   background:
-    radial-gradient(240px 140px at 20% 0%, rgba(255,224,130,.10), rgba(0,0,0,0) 60%),
-    rgba(0,0,0,.16);
+    radial-gradient(260px 160px at 30% 0%, rgba(255,224,130,.12), rgba(0,0,0,0) 60%),
+    linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.10));
   border-radius:14px;
-  padding:10px;
-  min-height:66px;
+  padding:9px 10px;
+  min-height:62px;
   box-shadow: 0 12px 28px rgba(0,0,0,.28);
+  position:relative;
+  overflow:hidden;
 }
-.stat .k{font-size:11px;color:var(--muted)}
+
+/* キラッとする薄いライン（パラメータUIっぽく） */
+.stat:before{
+  content:"";
+  position:absolute;
+  left:-30%;
+  top:-60%;
+  width:160%;
+  height:160%;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,224,130,.10), rgba(255,255,255,0));
+  transform: rotate(18deg);
+  opacity:.55;
+  pointer-events:none;
+}
+
+.stat .k{
+  font-size:10.5px;
+  color:rgba(255,255,255,.72);
+  letter-spacing:.02em;
+}
 .stat .v{
-  font-size:16px;
+  font-size:17px;
   font-weight:1000;
   margin-top:4px;
   display:flex;
   align-items:baseline;
-  gap:6px;
+  justify-content:space-between;
+  gap:8px;
 }
-.stat .v small{font-size:11px;color:var(--muted);font-weight:800}
+.stat .v small{
+  font-size:10.5px;
+  color:rgba(255,255,255,.72);
+  font-weight:900;
+  white-space:nowrap;
+}
 
 .good{color:var(--good)}
 .warn{color:var(--warn)}
 .bad{color:var(--bad)}
 
+/* =========================
+   Stage
+========================= */
 .stage-card{margin-bottom:12px}
 .stage{
   position:relative;
@@ -262,20 +297,35 @@ body:before{
   display:block;
   filter: saturate(1.10) contrast(1.02);
 }
+
+/* ✅ 来店タコ民：少し小さく + スウ～ッと出てスゥ～ッと消える */
 .stage-visitor{
   position:absolute;
-  bottom:28px;
+  bottom:34px;
   left:50%;
-  height:150px;
+  height:122px;                 /* ← 150px → 小さめ */
   image-rendering: pixelated;
   pointer-events:none;
   opacity:0;
-  transform:translateX(-50%) translateY(10px);
-  transition: opacity .45s ease, transform .45s ease;
+  transform:translateX(-50%) translateY(14px);
+  transition:
+    opacity .55s ease,
+    transform .65s cubic-bezier(.18,.9,.2,1);
   will-change: opacity, transform;
   filter: drop-shadow(0 10px 18px rgba(0,0,0,.45));
 }
-.stage-visitor.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* 表示（出現） */
+.stage-visitor.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+/* 非表示（退場）…JSで hide を付ける想定 */
+.stage-visitor.hide{
+  opacity:0;
+  transform:translateX(-50%) translateY(14px);
+}
 
 .stage-ui{
   position:absolute;
@@ -310,25 +360,34 @@ body:before{
 .stage-speechbox{
   margin-top:10px;
 }
+
+/* ✅ タコ民の名前：大きく + 中央寄せ
+   ✅ コメント欄：中央寄せ + 背景を白に */
 .bubble{
-  max-width:min(520px, 100%);
-  border:1px solid rgba(255,224,130,.20);
-  background: rgba(0,0,0,.58);
+  max-width:min(620px, 100%);
+  margin:0 auto;                 /* ← 中央寄せ（箱自体） */
+  border:1px solid rgba(255,224,130,.26);
+  background:#fff;               /* ← 白背景 */
   border-radius:16px;
-  padding:8px 10px;
+  padding:10px 12px;
   line-height:1.25;
   box-shadow: 0 12px 28px rgba(0,0,0,.35);
+  text-align:center;             /* ← 中央寄せ（中身） */
 }
+
 .bubble .n{
   font-weight:1000;
-  font-size:12px;
-  color: rgba(255,224,130,.95);
-  text-shadow: 0 2px 0 rgba(0,0,0,.25);
+  font-size:16px;                /* ← 12px → 大きく */
+  color:#111;                    /* 白背景に合わせて黒系 */
+  text-shadow:none;
+  letter-spacing:.02em;
 }
+
 .bubble .m{
-  color:rgba(255,255,255,.88);
-  font-size:12px;
-  margin-top:3px;
+  color:#222;                    /* 白背景に合わせて黒系 */
+  font-size:13px;
+  margin-top:6px;
+  background:#fff;               /* 念のため */
 }
 
 /* layout */
@@ -427,7 +486,7 @@ body:before{
 .shelf-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .mini{padding:8px 10px;border-radius:14px;font-size:12px;font-weight:1000}
 
-/* ✅ Log：必ず見えるように高さ確保 */
+/* ✅ Log：潰れない・出ないをCSS側で封じる（表示領域を確実に確保） */
 .log{
   font-size:12px;
   color:var(--muted);
@@ -435,10 +494,27 @@ body:before{
   display:flex;
   flex-direction:column;
   gap:8px;
+
+  /* 「何も無い時でも潰れない」 */
+  min-height:110px;
+
   max-height:260px;
   overflow:auto;
   padding-right:6px;
   -webkit-overflow-scrolling: touch;
+
+  /* 背景が沈みすぎて見えないのを防ぐ */
+  border-radius:14px;
+}
+.log:empty{
+  border:1px dashed rgba(255,224,130,.22);
+  background: rgba(0,0,0,.12);
+}
+.log:empty:before{
+  content:"ログがまだない…（売買/呼び込みで増えるよ）";
+  padding:10px 10px;
+  color:rgba(255,255,255,.70);
+  font-size:12px;
 }
 .log .item{
   border:1px solid rgba(255,255,255,.12);
@@ -721,3 +797,4 @@ body:before{
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important; animation:none !important;}
 }
+
