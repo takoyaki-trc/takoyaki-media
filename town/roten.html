@@ -39,29 +39,123 @@
       opacity:1 !important;
       transform: translateY(0) scale(1) !important;
     }
+
+    /* =====================================================
+       ✅「購入」が縦になる対策（writing-mode等を強制リセット）
+    ===================================================== */
+    .block-title{
+      writing-mode: horizontal-tb !important;
+      text-orientation: mixed !important;
+      white-space: nowrap !important;
+      line-height: 1.1 !important;
+    }
+
+    /* =====================================================
+       ✅ 売り方をえらぶ：2択モーダル（画像で伝える）
+    ===================================================== */
+    .sellChoice{
+      position: fixed;
+      inset: 0;
+      z-index: 2147483646;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .sellChoice.is-open{ display:flex; }
+
+    .sellChoice__panel{
+      width: min(560px, 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(15,18,32,.85);
+      box-shadow: 0 18px 44px rgba(0,0,0,.6);
+      overflow: hidden;
+    }
+    .sellChoice__head{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .sellChoice__title{
+      font-weight: 1000;
+      letter-spacing: .04em;
+    }
+    .sellChoice__close{
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 12px;
+      font-weight: 900;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color:#fff;
+    }
+
+    .sellChoice__body{
+      padding: 14px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 520px){
+      .sellChoice__body{
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+    }
+
+    .sellCard{
+      display:block;
+      border-radius: 16px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.15);
+      text-decoration:none;
+      color: inherit;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .sellCard:active{ transform: translateY(1px) scale(.99); }
+
+    .sellCard img{
+      display:block;
+      width: 100%;
+      height: auto;
+    }
+    .sellChoice__note{
+      padding: 0 14px 14px;
+      opacity: .82;
+      font-size: 12px;
+      line-height: 1.4;
+    }
   </style>
 </head>
 
 <body>
   <header class="roten-header">
-  <div class="roten-head-inner">
+    <div class="roten-head-inner">
+      <!-- 左：戻る -->
+      <button
+        class="btn btn-ghost roten-back"
+        id="rotenBackBtn"
+        type="button"
+        aria-label="戻る"
+      >←戻る</button>
 
-    <!-- 左：戻る -->
-    <button
-      class="btn btn-ghost roten-back"
-      id="rotenBackBtn"
-      type="button"
-      aria-label="戻る"
-    >←戻る</button>
-
-    <!-- 中央：タイトル -->
-    <div class="roten-head-center">
-      <div class="roten-title">露店</div>
-      <div class="roten-sub">マイ露店 / たこぴのお店</div>
+      <!-- 中央：タイトル -->
+      <div class="roten-head-center">
+        <div class="roten-title">露店</div>
+        <div class="roten-sub">マイ露店 / たこぴのお店</div>
+      </div>
     </div>
-
-  </div>
-</header>
+  </header>
 
   <main id="rotenApp" class="roten-app">
 
@@ -94,9 +188,10 @@
           🧪 オクト＋100000
         </button>
 
-        <a class="btn btn-gold" id="btnOpenSell" href="sell.html" target="_blank" rel="noopener">
+        <!-- ✅ ここを「2択モーダル起動」に変更（リンクではなくボタン） -->
+        <button class="btn btn-gold" id="btnOpenSell" type="button">
           🪙 カード売却
-        </a>
+        </button>
       </div>
     </section>
 
@@ -134,7 +229,6 @@
           </div>
 
           <div class="hero-note" id="heroNote">
-            ※無料資材は廃止。<b>全部オクトで買う</b>…たこ。<br>
             ※コラボのタネは<b>シリアル限定</b>…たこ。
           </div>
 
@@ -175,10 +269,7 @@
       <div class="block-head" style="display:flex; align-items:center; gap:10px;">
         <div class="block-title" style="flex:1;">購入</div>
 
-        <!-- ✅ 右寄せで上に配置したいボタンの“受け皿”
-             JSが #btnOpenRates をここへ移動してくれる（placeAboutButton）
-             空きスペースを作らないため、受け皿自体に余白は付けない
-        -->
+        <!-- ✅ 右寄せで上に配置したいボタンの“受け皿” -->
         <div id="_aboutSlot" style="display:flex; justify-content:flex-end; align-items:center;"></div>
       </div>
 
@@ -196,7 +287,7 @@
   <!-- ✅ toast（※1つだけ！二重に置くとバグる） -->
   <div id="toast" aria-live="polite"></div>
 
-  <!-- ====== MODAL ====== -->
+  <!-- ====== MODAL（既存） ====== -->
   <div class="modal" id="modal" aria-hidden="true">
     <div class="modal__backdrop" id="modalBg"></div>
     <div class="modal__sheet" role="dialog" aria-label="モーダル">
@@ -209,8 +300,75 @@
     </div>
   </div>
 
+  <!-- =====================================================
+       ✅ 売り方をえらぶ（2択）モーダル（追加）
+       - 即売り画像: https://ul.h3z.jp/OY1i6zTs.png
+       - マイ露店画像: https://ul.h3z.jp/03QxjNxa.png
+  ====================================================== -->
+  <div class="sellChoice" id="sellChoice" aria-hidden="true">
+    <div class="sellChoice__panel" role="dialog" aria-label="売り方をえらぶ">
+      <div class="sellChoice__head">
+        <div class="sellChoice__title">売り方をえらぶ</div>
+        <button class="sellChoice__close" id="sellChoiceClose" type="button">閉じる</button>
+      </div>
+
+      <div class="sellChoice__body">
+        <!-- ⚡ たこぴに即売り（換金） -->
+        <a class="sellCard" id="goInstantSell" href="sell.html" aria-label="たこぴに即売りへ">
+          <img src="https://ul.h3z.jp/OY1i6zTs.png" alt="たこぴに即売り（換金）">
+        </a>
+
+        <!-- 🏮 マイ露店で売る -->
+        <a class="sellCard" id="goMyShopSell" href="https://takoyaki-trc.github.io/takoyaki-media/town/myshop.html" aria-label="マイ露店へ">
+          <img src="https://ul.h3z.jp/03QxjNxa.png" alt="マイ露店で売る（たこ民に販売）">
+        </a>
+      </div>
+
+      <div class="sellChoice__note">
+        ※即売り＝すぐ換金 / マイ露店＝たこ民にコツコツ販売（上振れ狙い）…たこ。
+      </div>
+    </div>
+  </div>
+
   <script src="assets/roten.js"></script>
+
+  <!-- ✅ このページ専用：売却ボタン → 2択モーダル（roten.jsを触らず上書き） -->
+  <script>
+    (function(){
+      const openBtn = document.getElementById("btnOpenSell");
+      const modal   = document.getElementById("sellChoice");
+      const closeBtn= document.getElementById("sellChoiceClose");
+
+      if(!openBtn || !modal) return;
+
+      function open(){
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden","false");
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+      }
+      function close(){
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden","true");
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+      }
+
+      // roten.js側の click toast を殺して、こちらを優先
+      openBtn.addEventListener("click", function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        open();
+      }, true); // captureで先取り
+
+      closeBtn && closeBtn.addEventListener("click", close);
+      modal.addEventListener("click", (e)=>{ if(e.target === modal) close(); });
+      document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") close(); });
+    })();
+  </script>
 </body>
 </html>
+
 
 
