@@ -39,7 +39,7 @@
   };
 
   // ✅ シリアル（GAS Webアプリ）※あなたが貼ってくれた最新URL
-  const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbzuZtFaD7vLNCsVyMVXRY3Nm03tqL3TCz1n1XAZVUAnBrRyC0izR05yDwska2mC7ATq/exec";
+  const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbx2EflvS062QgpAZdBCaqVYQv1VEi1uR6b568U8spjGscvzr_QS-5dXlOgbvFlDw18x/exec";
   const REDEEM_API_KEY  = "takopi-gratan-2026";
 
   // ---------- utils ----------
