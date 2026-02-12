@@ -575,8 +575,7 @@
         ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>`
         : `<div class="priceline">単価 <b>—</b>（シリアル）</div>`;
 
-      // ✅ ここが今回の肝：
-      // コラボタネは「ボタン無し」＝上部のシリアル入力だけで増やす
+      // ✅ コラボタネは「ボタン無し」＝上部のシリアル入力だけで増やす
       const buyBar = canBuy ? `
         <div class="buybar">
           <div class="qty">
