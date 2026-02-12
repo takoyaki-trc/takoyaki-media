@@ -592,12 +592,12 @@
     bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
     bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
     visitors: [
-      { id:"v01", name:"慎重タコ民", type:"careful", url:"https://ul.h3z.jp/6uaLx3AV.png" },
-      { id:"v02", name:"即決タコ民", type:"impulse", url:"https://ul.h3z.jp/W1dFrooC.png" },
-      { id:"v03", name:"冷やかしタコ民", type:"looker",  url:"https://ul.h3z.jp/mD6ZkWGr.png" },
-      { id:"v04", name:"こだわりタコ民", type:"picky",   url:"https://ul.h3z.jp/Qd8XI65E.png" },
-      { id:"v05", name:"王様タコ民",   type:"king",    url:"https://ul.h3z.jp/rb2bib3m.png" },
-      { id:"v06", name:"転売タコ民",   type:"flipper", url:"https://ul.h3z.jp/L2XIaBYd.png" },
+      { id:"v01", name:"つぶやきタコ民", type:"careful", url:"https://ul.h3z.jp/RpLPCRTc.png" },
+      { id:"v02", name:"即決タコ民", type:"impulse", url:"https://ul.h3z.jp/TMXU9ztW.png" },
+      { id:"v03", name:"冷やかしタコ民", type:"looker",  url:https://ul.h3z.jp/7NpD4FDk.png" },
+      { id:"v04", name:"見えないタコ民", type:"picky",   url:"https://ul.h3z.jp/MZYfusKm.png" },
+      { id:"v05", name:"王様タコ民",   type:"king",    url:"https://ul.h3z.jp/wMM8PrcP.png" },
+      { id:"v06", name:"よっぱらいタコ民",   type:"flipper", url:"https://ul.h3z.jp/GLholN7M.png" },
 
       { id:"v07", name:"札束タコ民",     type:"rich",     url:"https://ul.h3z.jp/pZKu3lSE.png" },
       { id:"v08", name:"踏破タコ民",     type:"climber",  url:"https://ul.h3z.jp/45QUKopT.png" },
@@ -1220,13 +1220,12 @@ function pickShoutLine(){
   }
 
   const CUSTOMER_TYPES = [
-    { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+1, baseBuy:0.42 },
-    { id:"picky",    name:"こだわりタコ民",   repDeltaOnBuy:+1, baseBuy:0.45 },
-    { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+3, baseBuy:0.55 },
-    { id:"flipper",  name:"転売タコ民",       repDeltaOnBuy:-4, baseBuy:0.44 },
-    { id:"careful",  name:"慎重タコ民",       repDeltaOnBuy:+1, baseBuy:0.38 },
-    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 },
-
+    { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+2,  baseBuy:0.48 },
+    { id:"careful",  name:"つぶやきタコ民",   repDeltaOnBuy:+1,  baseBuy:0.36 },
+    { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+4,  baseBuy:0.60 },
+    { id:"picky",    name:"見えないタコ民",   repDeltaOnBuy:-2,  baseBuy:0.30 },
+    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-2,  baseBuy:0.18 },
+    { id:"flipper",  name:"よっぱらいタコ民", repDeltaOnBuy:-5,  baseBuy:0.40 },
     { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+2, baseBuy:0.50 },
     { id:"climber",  name:"踏破タコ民",        repDeltaOnBuy:+1, baseBuy:0.40 },
     { id:"guide",    name:"ナビタコ民",        repDeltaOnBuy: 0, baseBuy:0.30 },
@@ -1245,31 +1244,59 @@ function pickShoutLine(){
   ];
 
   function chooseCustomer(rep){
-    const night = isNight();
-    const weights = CUSTOMER_TYPES.map(t=>{
-      if(t.id==="king")     return rep>=55 ? 7 : 3;
-      if(t.id==="flipper")  return rep>=70 ? 4 : 7;
-      if(t.id==="looker")   return night ? 10 : 14;
-      if(t.id==="impulse")  return rep<40 ? 18 : 22;
-      if(t.id==="careful")  return 16;
-      if(t.id==="picky")    return rep>=60 ? 24 : 20;
-      if(t.id==="rich")     return rep>=60 ? 10 : 6;
-      if(t.id==="climber")  return night ? 6 : 9;
-      if(t.id==="guide")    return 8;
-      if(t.id==="relax")    return night ? 10 : 7;
-      if(t.id==="artisan")  return rep>=55 ? 10 : 7;
-      if(t.id==="diet")     return 9;
-      if(t.id==="overflow") return 7;
-      if(t.id==="collector")return rep>=50 ? 10 : 8;
-      if(t.id==="shadow")   return night ? 11 : 6;
-      if(t.id==="ramen")    return 9;
-      if(t.id==="streamer") return rep>=45 ? 9 : 6;
-      if(t.id==="gourmet")  return rep>=65 ? 10 : 6;
-      if(t.id==="opener")   return 10;
-      if(t.id==="party")    return night ? 10 : 6;
-      if(t.id==="pilgrim")  return rep>=45 ? 8 : 5;
-      return 8;
-    });
+  const night = isNight();
+
+  const weights = CUSTOMER_TYPES.map(t=>{
+    // rep想定：0〜100
+    if(t.id==="king") {
+      // 評判が上がるほど王様が来る（昼より夜は少し落とす）
+      if(rep>=70) return night ? 10 : 12;
+      if(rep>=55) return night ? 7 : 9;
+      return night ? 2 : 3;
+    }
+
+    if(t.id==="impulse") {
+      // 即決は常に強い。高評判でさらに増える
+      if(rep>=60) return night ? 20 : 24;
+      if(rep>=40) return night ? 18 : 22;
+      return night ? 14 : 16;
+    }
+
+    if(t.id==="careful") {
+      // つぶやきは安定枠（夜にちょい増え）
+      return night ? 16 : 14;
+    }
+
+    if(t.id==="looker") {
+      // 冷やかし：低評判＆夜に増える
+      if(rep<40) return night ? 18 : 14;
+      if(rep<60) return night ? 14 : 10;
+      return night ? 11 : 8;
+    }
+
+    if(t.id==="picky") {
+      // 見えない：中〜低評判で強い（高評判で減るがゼロにはしない）
+      if(rep>=70) return night ? 6 : 5;
+      if(rep>=55) return night ? 10 : 9;
+      if(rep>=40) return night ? 13 : 12;
+      return night ? 16 : 15;
+    }
+
+    if(t.id==="flipper") {
+      // よっぱらい（転売系）：夜に増える。高評判で少し減る
+      if(rep>=70) return night ? 10 : 6;
+      if(rep>=55) return night ? 13 : 8;
+      if(rep>=40) return night ? 15 : 10;
+      return night ? 18 : 12;
+    }
+
+    return 8;
+  });
+
+  // 以降はあなたの既存の「重み付き抽選」処理に任せる想定
+  return weightedPick(CUSTOMER_TYPES, weights);
+}
+
 
     if(rep>=70){
       ["picky","gourmet","artisan","king","pilgrim"].forEach(id=>{
