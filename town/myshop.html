@@ -588,7 +588,7 @@
   /* =========================================================
      アセット（あなたのまま）
   ========================================================= */
-  const ASSETS = {
+   const ASSETS = {
     bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
     bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
     visitors: [
@@ -616,6 +616,7 @@
       { id:"v21", name:"覚悟タコ民",     type:"pilgrim",  url:"https://ul.h3z.jp/eW2dluw2.png" }
     ]
   };
+
 
   const VISITOR_LINES = {
     careful: ["どうしようかな…","もう少し見てから…","今日は買うべきか…","財布に相談中…（既読スルー）"],
@@ -1220,12 +1221,13 @@ function pickShoutLine(){
   }
 
   const CUSTOMER_TYPES = [
-    { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+2,  baseBuy:0.48 },
-    { id:"careful",  name:"つぶやきタコ民",   repDeltaOnBuy:+1,  baseBuy:0.36 },
-    { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+4,  baseBuy:0.60 },
-    { id:"picky",    name:"見えないタコ民",   repDeltaOnBuy:-2,  baseBuy:0.30 },
-    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-2,  baseBuy:0.18 },
-    { id:"flipper",  name:"よっぱらいタコ民", repDeltaOnBuy:-5,  baseBuy:0.40 },
+    { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+1, baseBuy:0.42 },
+    { id:"picky",    name:"こだわりタコ民",   repDeltaOnBuy:+1, baseBuy:0.45 },
+    { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+3, baseBuy:0.55 },
+    { id:"flipper",  name:"転売タコ民",       repDeltaOnBuy:-4, baseBuy:0.44 },
+    { id:"careful",  name:"慎重タコ民",       repDeltaOnBuy:+1, baseBuy:0.38 },
+    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 },
+
     { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+2, baseBuy:0.50 },
     { id:"climber",  name:"踏破タコ民",        repDeltaOnBuy:+1, baseBuy:0.40 },
     { id:"guide",    name:"ナビタコ民",        repDeltaOnBuy: 0, baseBuy:0.30 },
@@ -1243,55 +1245,32 @@ function pickShoutLine(){
     { id:"pilgrim",  name:"覚悟タコ民",        repDeltaOnBuy:+3, baseBuy:0.58 }
   ];
 
-function chooseCustomer(rep){
-  const night = isNight();
-  rep = Number(rep||50);
-
-  const weights = CUSTOMER_TYPES.map(t=>{
-    if(t.id==="king"){
-      if(rep>=70) return night ? 10 : 12;
-      if(rep>=55) return night ? 7 : 9;
-      return night ? 2 : 3;
-    }
-    if(t.id==="impulse"){
-      if(rep>=60) return night ? 20 : 24;
-      if(rep>=40) return night ? 18 : 22;
-      return night ? 14 : 16;
-    }
-    if(t.id==="careful"){
-      return night ? 16 : 14;
-    }
-    if(t.id==="looker"){
-      if(rep<40) return night ? 18 : 14;
-      if(rep<60) return night ? 14 : 10;
-      return night ? 11 : 8;
-    }
-    if(t.id==="picky"){
-      if(rep>=70) return night ? 6 : 5;
-      if(rep>=55) return night ? 10 : 9;
-      if(rep>=40) return night ? 13 : 12;
-      return night ? 16 : 15;
-    }
-    if(t.id==="flipper"){
-      if(rep>=70) return night ? 10 : 6;
-      if(rep>=55) return night ? 13 : 8;
-      if(rep>=40) return night ? 15 : 10;
-      return night ? 18 : 12;
-    }
-    return 8;
-  });
-
-  // 追加ブースト（評判が高いと“良い客”が増える）
-  if(rep>=70){
-    ["picky","gourmet","artisan","king","pilgrim"].forEach(id=>{
-      const idx = CUSTOMER_TYPES.findIndex(x=>x.id===id);
-      if(idx>=0) weights[idx] += 6;
+  function chooseCustomer(rep){
+    const night = isNight();
+    const weights = CUSTOMER_TYPES.map(t=>{
+      if(t.id==="king")     return rep>=55 ? 7 : 3;
+      if(t.id==="flipper")  return rep>=70 ? 4 : 7;
+      if(t.id==="looker")   return night ? 10 : 14;
+      if(t.id==="impulse")  return rep<40 ? 18 : 22;
+      if(t.id==="careful")  return 16;
+      if(t.id==="picky")    return rep>=60 ? 24 : 20;
+      if(t.id==="rich")     return rep>=60 ? 10 : 6;
+      if(t.id==="climber")  return night ? 6 : 9;
+      if(t.id==="guide")    return 8;
+      if(t.id==="relax")    return night ? 10 : 7;
+      if(t.id==="artisan")  return rep>=55 ? 10 : 7;
+      if(t.id==="diet")     return 9;
+      if(t.id==="overflow") return 7;
+      if(t.id==="collector")return rep>=50 ? 10 : 8;
+      if(t.id==="shadow")   return night ? 11 : 6;
+      if(t.id==="ramen")    return 9;
+      if(t.id==="streamer") return rep>=45 ? 9 : 6;
+      if(t.id==="gourmet")  return rep>=65 ? 10 : 6;
+      if(t.id==="opener")   return 10;
+      if(t.id==="party")    return night ? 10 : 6;
+      if(t.id==="pilgrim")  return rep>=45 ? 8 : 5;
+      return 8;
     });
-  }
-
-  return weightedPick(CUSTOMER_TYPES, weights);
-}
-
 
     if(rep>=70){
       ["picky","gourmet","artisan","king","pilgrim"].forEach(id=>{
@@ -2165,6 +2144,5 @@ function chooseCustomer(rep){
 </script>
 </body>
 </html>
-
 
 
