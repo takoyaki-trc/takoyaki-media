@@ -148,6 +148,9 @@
       line-height:1.25;
     }
     .bubble .n{font-weight:900;font-size:12px}
+    /* ★追加：マイナスキャラ名は赤文字 */
+    .bubble .n.neg{ color: var(--bad); }
+
     .bubble .m{color:rgba(255,255,255,.80);font-size:12px;margin-top:3px}
     .stage-tags{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
     .tag{
@@ -465,7 +468,6 @@
           <div class="card-desc">背景（昼/夜）に、客タコ民（透過）を重ねて表示。誰もいない時は背景だけ。</div>
         </div>
 
-        <!-- ★評判ピルを削除し、ここに修理を移動 -->
         <button class="btn ghost" id="fixBtn" type="button">修理</button>
       </div>
       <div class="card-b">
@@ -518,7 +520,6 @@
     </div>
   </div>
 
-  <!-- ★右下固定：バックアップ/復元 -->
   <div class="fab-wrap" aria-label="バックアップと復元">
     <button class="btn ghost" id="backupBtn" type="button">バックアップ</button>
     <button class="btn ghost" id="restoreBtn" type="button">復元</button>
@@ -586,9 +587,9 @@
   "use strict";
 
   /* =========================================================
-     アセット（あなたのまま）
+     アセット
   ========================================================= */
-   const ASSETS = {
+  const ASSETS = {
     bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
     bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
     visitors: [
@@ -616,7 +617,6 @@
       { id:"v21", name:"覚悟タコ民",     type:"pilgrim",  url:"https://ul.h3z.jp/eW2dluw2.png" }
     ]
   };
-
 
   const VISITOR_LINES = {
     careful: ["どうしようかな…","もう少し見てから…","今日は買うべきか…","財布に相談中…（既読スルー）"],
@@ -668,6 +668,10 @@
     return map[goalId] || ["……"];
   }
 
+  /* ★追加：マイナスキャラ定義（赤文字＋評判DOWN系） */
+  const NEG_TYPES = new Set(["looker","picky","flipper"]);
+  const isNegativeType = (t) => NEG_TYPES.has(String(t||""));
+
   const LS = {
     octo:     "roten_v1_octo",
     myshop:   "roten_v1_myshop",
@@ -678,8 +682,6 @@
     shout:    "roten_v1_shout_cd",
     farmBook: "tf_v1_book",
     stage:    "roten_v1_stage",
-
-    // ★追加：呼び込み/待機キュー（次表示に影響しない）
     queue:    "roten_v1_queue"
   };
 
@@ -726,37 +728,30 @@
   const now = () => Date.now();
   const fmt = (n) => (Number(n||0)).toLocaleString("ja-JP");
   const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
-  /* ==========================
-   ★ここに追加（呼び込み専用セリフ）
-========================== */
-const SHOUT_LINES = [
-  "🔥 焼きの匂いを撒いた！タコ民の足が向く…！",
-  "屋台前がざわついてきた…！いまなら釣れる！",
-  "タコ民ホイホイ発動！……寄ってくる、寄ってくる！",
-  "《客引き》発動！棚に視線が刺さってる…！",
-  "焼きたてオーラ放出！“買う気の気配”が増えた！",
-  "エンカウント率UP！……誰かが近づいている。",
-  "匂いレベルMAX！財布が震える音がする…",
-  "行列の芽が出た！このまま育て…！",
-  "屋台パワー充填完了。あとは客が焼かれるだけ。",
-  "……匂いが風に乗った。焼かれに来る気配。",
-  "客寄せ成功！タコ民レーダー点滅中！",
-  "棚の前だけ空気が違う…いま来る。"
-];
 
-let lastShoutLine = "";
-
-function pickShoutLine(){
-  if(SHOUT_LINES.length === 0) return "呼び込み！";
-  if(SHOUT_LINES.length === 1) return SHOUT_LINES[0];
-
-  let s = pick(SHOUT_LINES);
-  if(s === lastShoutLine){
-    s = pick(SHOUT_LINES);
+  const SHOUT_LINES = [
+    "🔥 焼きの匂いを撒いた！タコ民の足が向く…！",
+    "屋台前がざわついてきた…！いまなら釣れる！",
+    "タコ民ホイホイ発動！……寄ってくる、寄ってくる！",
+    "《客引き》発動！棚に視線が刺さってる…！",
+    "焼きたてオーラ放出！“買う気の気配”が増えた！",
+    "エンカウント率UP！……誰かが近づいている。",
+    "匂いレベルMAX！財布が震える音がする…",
+    "行列の芽が出た！このまま育て…！",
+    "屋台パワー充填完了。あとは客が焼かれるだけ。",
+    "……匂いが風に乗った。焼かれに来る気配。",
+    "客寄せ成功！タコ民レーダー点滅中！",
+    "棚の前だけ空気が違う…いま来る。"
+  ];
+  let lastShoutLine = "";
+  function pickShoutLine(){
+    if(SHOUT_LINES.length === 0) return "呼び込み！";
+    if(SHOUT_LINES.length === 1) return SHOUT_LINES[0];
+    let s = pick(SHOUT_LINES);
+    if(s === lastShoutLine) s = pick(SHOUT_LINES);
+    lastShoutLine = s;
+    return s;
   }
-  lastShoutLine = s;
-  return s;
-}
 
   const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -851,7 +846,7 @@ function pickShoutLine(){
     stayMs:0,
     targetSlot:-1,
     updatedAt:0,
-    source:"" // "normal" | "shout"
+    source:""
   };
   function loadStage(){
     const s = lsGet(LS.stage, STAGE_DEFAULT);
@@ -875,6 +870,7 @@ function pickShoutLine(){
   function renderStage(){
     const s = loadStage();
     stageName.textContent = s.vName || "—";
+    stageName.classList.toggle("neg", isNegativeType(s.vType)); /* ★追加：マイナスは赤 */
     stageMsg.textContent  = s.vMsg  || "—";
     if(s.vUrl) stageVisitor.src = s.vUrl;
 
@@ -887,14 +883,12 @@ function pickShoutLine(){
 
   /* ==========================
      ★呼び込み/待機キュー
-     - shoutPending: 呼び込み客の出現予約（通常スケジュールは触らない）
-     - normalPending: 通常スケジュールで「到達済み」になった来客を待機させる
   ========================== */
   const QUEUE_DEFAULT = {
     ver:1,
     shoutPending:false,
     shoutTargetSlot:null,
-    shoutSpawnAt:0,   // 予約の実行時刻（3秒後など）
+    shoutSpawnAt:0,
     normalPending:false,
     normalTargetSlot:null,
     queuedAt:0
@@ -913,15 +907,9 @@ function pickShoutLine(){
     saveQueue(q);
   }
 
-  // 「通常スケジュールが到達したのに、今は来れない」時に待機させる
   function checkDueAndQueueNormal(){
-    const st = loadStage();
-    if(st.hasVisitor) {
-      // 客がいる間だけでなく、呼び込み予約中も待機判定に使う
-    }
-
     const q = loadQueue();
-    if(q.normalPending) return; // 既に待機中
+    if(q.normalPending) return;
 
     const lv = loadLevel().lv;
     const shop = loadMyShop();
@@ -937,7 +925,6 @@ function pickShoutLine(){
     const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
     if(due.length===0) return;
 
-    // どれを待機させるか：従来同様にランダム
     const targetSlot = pick(due);
 
     q.normalPending = true;
@@ -945,7 +932,6 @@ function pickShoutLine(){
     q.queuedAt = nowMs;
     saveQueue(q);
 
-    // 表示は触らない（次：xxx のカウントはそのまま 0 になるだけ）
     pushLog("待機", `通常来客（棚${targetSlot+1}）が待機になった`, "");
   }
 
@@ -964,8 +950,6 @@ function pickShoutLine(){
     s.source="";
     saveStage(s);
     renderStage();
-
-    // ★客が帰った瞬間に、待機している通常来客がいれば即来店（ただし呼び込み予約が優先）
     trySpawnQueuedIfPossible();
   }
 
@@ -1220,13 +1204,14 @@ function pickShoutLine(){
     return 0.80 + (rep/100)*0.40;
   }
 
+  /* ★修正：v01〜v06の性格に合わせ、マイナスキャラを反映 */
   const CUSTOMER_TYPES = [
     { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+1, baseBuy:0.42 },
-    { id:"picky",    name:"こだわりタコ民",   repDeltaOnBuy:+1, baseBuy:0.45 },
+    { id:"picky",    name:"見えないタコ民",   repDeltaOnBuy:-2, baseBuy:0.30 }, /* ★マイナス */
     { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+3, baseBuy:0.55 },
-    { id:"flipper",  name:"転売タコ民",       repDeltaOnBuy:-4, baseBuy:0.44 },
-    { id:"careful",  name:"慎重タコ民",       repDeltaOnBuy:+1, baseBuy:0.38 },
-    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 },
+    { id:"flipper",  name:"よっぱらいタコ民", repDeltaOnBuy:-3, baseBuy:0.34 }, /* ★マイナス */
+    { id:"careful",  name:"つぶやきタコ民",   repDeltaOnBuy:+1, baseBuy:0.38 },
+    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 }, /* ★マイナス */
 
     { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+2, baseBuy:0.50 },
     { id:"climber",  name:"踏破タコ民",        repDeltaOnBuy:+1, baseBuy:0.40 },
@@ -1304,9 +1289,6 @@ function pickShoutLine(){
     return pick(GOALS).id;
   }
 
-  /* ==========================
-     出品可能ダブり算出
-  ========================== */
   function countListedById(){
     const shop = loadMyShop();
     const map = {};
@@ -1342,9 +1324,6 @@ function pickShoutLine(){
     return pickable;
   }
 
-  /* ==========================
-     UI：棚
-  ========================== */
   function renderShelves(){
     const shop = loadMyShop();
     const lv = loadLevel().lv;
@@ -1453,9 +1432,6 @@ function pickShoutLine(){
     updateNextTag();
   }
 
-  /* ==========================
-     UI：ステータス
-  ========================== */
   function renderStats(){
     const lv = loadLevel();
     const rep = loadRep().rep;
@@ -1471,15 +1447,9 @@ function pickShoutLine(){
     `;
   }
 
-  /* ==========================
-     モーダル（背景スクロール禁止）
-  ========================== */
   function lockBodyScroll(){ document.body.classList.add("noscroll"); }
   function unlockBodyScroll(){ document.body.classList.remove("noscroll"); }
 
-  /* ==========================
-     出品ピッカー
-  ========================== */
   let pickTargetIdx = -1;
 
   function openPickModal(slotIdx){
@@ -1610,9 +1580,6 @@ function pickShoutLine(){
     closePickModal();
   }
 
-  /* ==========================
-     売買
-  ========================== */
   function saleProcess(){
     const st = loadStage();
     if(!st.hasVisitor || st.leaving) return;
@@ -1655,7 +1622,6 @@ function pickShoutLine(){
       return;
     }
 
-    // 売れた
     saveOcto(loadOcto() + price);
 
     const lv = addExp(4);
@@ -1666,7 +1632,6 @@ function pickShoutLine(){
     shop.slots[slotIdx].createdAt = 0;
     saveMyShop(shop);
 
-    // ★通常来客のスケジュール更新は「来店した瞬間」扱いなので、ここで次回を再設定
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(slotIdx)] = now() + nextVisitDelayMs();
@@ -1684,9 +1649,6 @@ function pickShoutLine(){
     renderAll();
   }
 
-  /* ==========================
-     スケジュール（表示/再開）
-  ========================== */
   function scheduleStage(){
     applyDayNight();
     renderStage();
@@ -1712,11 +1674,6 @@ function pickShoutLine(){
 
   let spawnLockUntil = 0;
 
-  /* ==========================
-     ★共通：来客生成（normal / shout / queued normal）
-     - type: "normal" or "shout"
-     - IMPORTANT: shout は tick(nextAtBySlot) を変更しない（次：xxx表示が動かない）
-  ========================== */
   function spawnVisitorSoon(targetSlot, type){
     const typeLabel = (type==="shout") ? "呼び込み" : "通常";
     toast("誰かくる！", `${typeLabel}：棚${targetSlot+1} を見てる気配…`, "");
@@ -1769,20 +1726,16 @@ function pickShoutLine(){
       stageSellTimer = setTimeout(()=> saleProcess(), Math.max(1000, stayMs - 1000));
       stageLeaveTimer = setTimeout(()=> beginLeave(pick(LEAVE_LINES)), stayMs);
 
-      // ★通常/待機の通常だけ：ここで「来店した」扱いにして次回スケジュールを更新
       if(type !== "shout"){
         const tickObj = loadTick();
         tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
         saveTick(tickObj);
 
-        // 待機だった通常来客を消化したのでクリア
         const q = loadQueue();
         if(q.normalPending && Number(q.normalTargetSlot) === Number(targetSlot)){
           clearNormalPending();
         }
       }else{
-        // ★呼び込みは nextAtBySlot を一切触らない（次：xxx表示は変化させない）
-        // ただし、ログは残す
         pushLog("呼び込み来店", `棚${targetSlot+1} に呼び込み客が来た`, "");
       }
 
@@ -1790,7 +1743,6 @@ function pickShoutLine(){
     }, 3000);
   }
 
-  // 客がいない瞬間に「待機中の通常来客」を優先的に出す（ただし呼び込み予約があるなら先にそっち）
   function trySpawnQueuedIfPossible(){
     const st = loadStage();
     if(st.hasVisitor) return;
@@ -1799,7 +1751,6 @@ function pickShoutLine(){
 
     const q = loadQueue();
 
-    // 1) 呼び込み予約があるなら、予約の時刻を待つ/実行する
     if(q.shoutPending){
       if(nowMs >= Number(q.shoutSpawnAt||0)){
         const target = Number(q.shoutTargetSlot);
@@ -1812,7 +1763,6 @@ function pickShoutLine(){
       return;
     }
 
-    // 2) 待機中の通常来客がいるなら即出す
     if(q.normalPending && q.normalTargetSlot != null){
       const target = Number(q.normalTargetSlot);
       spawnVisitorSoon(target, "normal");
@@ -1827,22 +1777,17 @@ function pickShoutLine(){
     const st = loadStage();
     const nowMs = now();
 
-    // ★客がいる時：通常スケジュールが到達していたら「待機」に積む（表示はそのまま）
     if(st.hasVisitor){
       checkDueAndQueueNormal();
       return;
     }
 
-    // ★スポーンロック中は何もしない（表示だけ更新）
     if(nowMs < spawnLockUntil) return;
 
-    // ★呼び込み予約がある場合：通常は止めて、被りがあれば待機へ
     const q = loadQueue();
     if(q.shoutPending){
-      // 被り対策：ここで通常がdueになったら待機に積む（次表示は変えない）
       checkDueAndQueueNormal();
 
-      // 予約時刻になったら呼び込みを実行
       if(nowMs >= Number(q.shoutSpawnAt||0)){
         const target = Number(q.shoutTargetSlot);
         q.shoutPending = false;
@@ -1854,13 +1799,11 @@ function pickShoutLine(){
       return;
     }
 
-    // ★待機中の通常があるなら先に出す（次表示は 0s になっているはず）
     if(q.normalPending && q.normalTargetSlot != null){
       spawnVisitorSoon(Number(q.normalTargetSlot), "normal");
       return;
     }
 
-    // ★通常の来客判定（従来ロジック）
     const lv = loadLevel().lv;
     const shop = loadMyShop();
     const t = ensureNextAtForActiveSlots();
@@ -1878,11 +1821,6 @@ function pickShoutLine(){
     spawnVisitorSoon(targetSlot, "normal");
   }
 
-  /* ==========================
-     呼び込み（次：xxx表示を変えない）
-     - nextAtBySlot を触らず、呼び込み客だけ予約して出す
-     - 被り（通常のdue）になったら通常を待機させる
-  ========================== */
   function shout(){
     const st = loadStage();
     if(st.hasVisitor){
@@ -1911,12 +1849,10 @@ function pickShoutLine(){
       return;
     }
 
-    // ★ここで初めてCD消費
     cd.nextOkAt = n + 60000;
     saveShout(cd);
     updateShoutUI();
 
-    // 呼び込み対象：次が一番早い棚（従来の思想）
     const t = ensureNextAtForActiveSlots();
     let target = active[0];
     let best = Infinity;
@@ -1925,16 +1861,12 @@ function pickShoutLine(){
       if(at < best){ best = at; target = idx; }
     }
 
-    // ★次：xxx（スケジュール表示）を一切変えないので、tickは触らない
-
-    // ★呼び込み予約を積む（3秒後に来る）
     const q = loadQueue();
     q.shoutPending = true;
     q.shoutTargetSlot = target;
     q.shoutSpawnAt = n + 3000;
     saveQueue(q);
 
-    // ★もしこの瞬間に通常のdueがあるなら待機に積む（表示はそのまま）
     checkDueAndQueueNormal();
 
     toast("呼び込み！", `棚${target+1}｜${pickShoutLine()}`, "");
@@ -1942,9 +1874,6 @@ function pickShoutLine(){
     renderAll();
   }
 
-  /* ==========================
-     ★バックアップ（JSONダウンロード）
-  ========================== */
   function downloadText(filename, text){
     const blob = new Blob([text], { type:"application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -1993,9 +1922,6 @@ function pickShoutLine(){
     pushLog("バックアップ", "ローカルデータをJSONに書き出した", filename);
   }
 
-  /* ==========================
-     ★復元（JSONアップロード → localStorage書き戻し）
-  ========================== */
   function restoreFromPayload(payload){
     if(!payload || typeof payload !== "object"){
       toast("復元失敗", "JSONの形式が不正です", "");
@@ -2053,11 +1979,6 @@ function pickShoutLine(){
     }
   });
 
-  /* ==========================
-     修理ボタン
-     - ステージ状態と tick を修理
-     - ★キューも安全にクリア（変な待機が残らないように）
-  ========================== */
   fixBtn.addEventListener("click", ()=>{
     const STAGE_DEFAULT2 = {
       ver:1,
@@ -2076,16 +1997,12 @@ function pickShoutLine(){
 
     localStorage.setItem(LS.stage, JSON.stringify(STAGE_DEFAULT2));
     localStorage.removeItem(LS.tick);
-
     localStorage.setItem(LS.queue, JSON.stringify(QUEUE_DEFAULT));
 
     alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
     location.reload();
   });
 
-  /* ==========================
-     全描画
-  ========================== */
   function renderAll(){
     renderStats();
     renderShelves();
@@ -2095,9 +2012,6 @@ function pickShoutLine(){
     updateShoutUI();
   }
 
-  /* ==========================
-     ヘルプ
-  ========================== */
   function openHelp(){
     helpModal.classList.add("show");
     helpModal.setAttribute("aria-hidden","false");
@@ -2128,21 +2042,14 @@ function pickShoutLine(){
   backupBtn.addEventListener("click", makeBackup);
   restoreBtn.addEventListener("click", openRestoreDialog);
 
-  /* ==========================
-     起動
-  ========================== */
   applyDayNight();
   renderAll();
   scheduleStage();
-
-  // ★起動直後に、もし待機/呼び込み予約があれば実行条件だけ整える
   trySpawnQueuedIfPossible();
-
   setInterval(tick, 1000);
 
 })();
 </script>
 </body>
 </html>
-
 
