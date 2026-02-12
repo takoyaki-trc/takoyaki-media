@@ -1,3 +1,12 @@
+/* =========================
+   assets/myshop.js（完全版）
+   ✅ ログが確実に表示される（renderLogの呼び出し・DOM検出・保険）
+   ✅ 来店タコ民：スウ～ッと現れてスゥ～ッと消える
+      - CSS側：.stage-visitor.show / .stage-visitor.hide
+      - JS側：出現=show付与 / 退場=hide付与 → 0.65s後に空へ
+   ✅ ステージ名・コメント（#stageName/#stageMsg）は中央寄せ想定（CSS側で調整済み）
+========================= */
+
 (() => {
   "use strict";
 
@@ -140,31 +149,6 @@
   const now = () => Date.now();
   const fmt = (n) => (Number(n||0)).toLocaleString("ja-JP");
   const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
-
-  const SHOUT_LINES = [
-    "🔥 焼きの匂いを撒いた！タコ民の足が向く…！",
-    "屋台前がざわついてきた…！いまなら釣れる！",
-    "タコ民ホイホイ発動！……寄ってくる、寄ってくる！",
-    "《客引き》発動！棚に視線が刺さってる…！",
-    "焼きたてオーラ放出！“買う気の気配”が増えた！",
-    "エンカウント率UP！……誰かが近づいている。",
-    "匂いレベルMAX！財布が震える音がする…",
-    "行列の芽が出た！このまま育て…！",
-    "屋台パワー充填完了。あとは客が焼かれるだけ。",
-    "……匂いが風に乗った。焼かれに来る気配。",
-    "客寄せ成功！タコ民レーダー点滅中！",
-    "棚の前だけ空気が違う…いま来る。"
-  ];
-  let lastShoutLine = "";
-  function pickShoutLine(){
-    if(SHOUT_LINES.length === 0) return "呼び込み！";
-    if(SHOUT_LINES.length === 1) return SHOUT_LINES[0];
-    let s = pick(SHOUT_LINES);
-    if(s === lastShoutLine) s = pick(SHOUT_LINES);
-    lastShoutLine = s;
-    return s;
-  }
-
   const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
   function safeJSON(raw, fallback){ try{ return JSON.parse(raw);}catch(e){ return fallback; } }
@@ -179,6 +163,23 @@
     return String(s||"").replace(/[&<>"']/g, m => ({
       "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
     }[m]));
+  }
+
+  /* =========================
+     ✅ ログ：DOMが無い/潰れてる時の保険（超重要）
+     - #log が無い or ID違いで「ログが出ない」事故が多いので、
+       見つからなければ console にも出す
+  ========================= */
+  function ensureLogDom(){
+    // 既にあるならOK
+    if($("#log")) return $("#log");
+
+    // 念のため：よくある別名候補
+    const alt = $("#logArea") || $("#logs") || $("#myLog");
+    if(alt) return alt;
+
+    // DOM自体が無いなら諦め（でも落とさない）
+    return null;
   }
 
   function triggerSaleFlash(){
@@ -215,14 +216,22 @@
   }
 
   function renderLog(){
-    if(!logEl) return; // ✅ ログDOMが無いとき落ちない
+    const el = ensureLogDom();
+    if(!el){
+      // DOMが無いなら最低限、consoleに残す（デバッグ用）
+      const log = lsGet(LS.log, { ver:1, items:[] });
+      console.log("[myshop] log items:", log.items);
+      return;
+    }
+
     const log = lsGet(LS.log, { ver:1, items:[] });
     const items = Array.isArray(log.items) ? log.items : [];
     if(items.length === 0){
-      logEl.innerHTML = `<div class="item"><div class="t">まだ何も起きていない</div><div class="m">棚にダブりカードを出品すると、来客が始まるよ。</div></div>`;
+      el.innerHTML = `<div class="item"><div class="t">まだ何も起きていない</div><div class="m">棚にダブりカードを出品すると、来客が始まるよ。</div></div>`;
       return;
     }
-    logEl.innerHTML = items.map(it => {
+
+    el.innerHTML = items.map(it => {
       const d = new Date(it.at);
       const hh = String(d.getHours()).padStart(2,"0");
       const mm = String(d.getMinutes()).padStart(2,"0");
@@ -279,17 +288,31 @@
     if(stageLeaveTimer){ clearTimeout(stageLeaveTimer); stageLeaveTimer=null; }
   }
 
+  /* =========================
+     ✅ ステージ表示
+     - 出現: show
+     - 退場: hide（beginLeaveで付与）
+  ========================= */
   function renderStage(){
     const s = loadStage();
     if(stageName) stageName.textContent = s.vName || "—";
     if(stageMsg)  stageMsg.textContent  = s.vMsg  || "—";
-    if(stageVisitor && s.vUrl) stageVisitor.src = s.vUrl;
 
     if(stageVisitor){
+      if(s.vUrl){
+        // 画像が一瞬消えないように、先にsrcを入れてからclass制御
+        stageVisitor.src = s.vUrl;
+      }
+
+      // class整理
+      stageVisitor.classList.remove("show", "hide");
+
       if(s.hasVisitor && s.vUrl && !s.leaving){
-        stageVisitor.classList.add("show");
+        stageVisitor.classList.add("show"); // スウ～ッと現れる
+      }else if(s.hasVisitor && s.vUrl && s.leaving){
+        stageVisitor.classList.add("hide"); // スゥ～ッと消える
       }else{
-        stageVisitor.classList.remove("show");
+        // いない状態：何も付けない
       }
     }
   }
@@ -361,12 +384,16 @@
     trySpawnQueuedIfPossible();
   }
 
+  /* ✅ 退場：hideを付けてから 650ms 後に空にする */
   function beginLeave(msg){
     const s = loadStage();
     if(!s.hasVisitor) return;
+
     s.leaving = true;
     saveStage(s);
-    renderStage();
+    renderStage(); // ← ここで .hide が付いて消える
+
+    clearStageTimers();
     setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
   }
 
@@ -1058,9 +1085,11 @@
   function scheduleStage(){
     applyDayNight();
     renderStage();
+
     const st = loadStage();
     if(st.hasVisitor && !st.leaving){
       clearStageTimers();
+
       stageTalkTimer = setInterval(()=>{
         const s2 = loadStage();
         if(!s2.hasVisitor || s2.leaving) return;
@@ -1075,6 +1104,7 @@
       stageLeaveTimer = setTimeout(()=> beginLeave(pick(LEAVE_LINES)), Math.max(5000, Math.floor(st.stayMs||12000)));
       return;
     }
+
     setStageEmpty("まだ誰も来ていない。");
   }
 
@@ -1110,6 +1140,8 @@
       s.targetSlot = targetSlot;
       s.source = (type==="shout") ? "shout" : "normal";
       saveStage(s);
+
+      // ✅ 出現：show付与
       renderStage();
 
       const lvup = addExp(1);
@@ -1224,6 +1256,30 @@
 
     const targetSlot = pick(due);
     spawnVisitorSoon(targetSlot, "normal");
+  }
+
+  const SHOUT_LINES = [
+    "🔥 焼きの匂いを撒いた！タコ民の足が向く…！",
+    "屋台前がざわついてきた…！いまなら釣れる！",
+    "タコ民ホイホイ発動！……寄ってくる、寄ってくる！",
+    "《客引き》発動！棚に視線が刺さってる…！",
+    "焼きたてオーラ放出！“買う気の気配”が増えた！",
+    "エンカウント率UP！……誰かが近づいている。",
+    "匂いレベルMAX！財布が震える音がする…",
+    "行列の芽が出た！このまま育て…！",
+    "屋台パワー充填完了。あとは客が焼かれるだけ。",
+    "……匂いが風に乗った。焼かれに来る気配。",
+    "客寄せ成功！タコ民レーダー点滅中！",
+    "棚の前だけ空気が違う…いま来る。"
+  ];
+  let lastShoutLine = "";
+  function pickShoutLine(){
+    if(SHOUT_LINES.length === 0) return "呼び込み！";
+    if(SHOUT_LINES.length === 1) return SHOUT_LINES[0];
+    let s = pick(SHOUT_LINES);
+    if(s === lastShoutLine) s = pick(SHOUT_LINES);
+    lastShoutLine = s;
+    return s;
   }
 
   function shout(){
@@ -1453,11 +1509,14 @@
 
   /* 起動 */
   applyDayNight();
-  renderAll();
+  renderAll();          // ✅ 初回ログも必ず描画
   scheduleStage();
 
   trySpawnQueuedIfPossible();
   setInterval(tick, 1000);
 
+  // ✅ 「ログが出ない」確認用の保険ログ（最初に1回だけ）
+  // 不要なら消してOK
+  // pushLog("起動", "マイ露店が起動した", "");
 })();
 
