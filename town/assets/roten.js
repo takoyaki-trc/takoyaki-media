@@ -734,8 +734,9 @@
     }
     return id;
   }
-  async function redeemOnServer(code){
-    const body = {
+  
+   async function redeemOnServer(code){
+    const bodyObj = {
       apiKey: REDEEM_API_KEY,
       code,
       deviceId: getDeviceId(),
@@ -743,18 +744,43 @@
       ts: Date.now()
     };
 
-    const res = await fetch(REDEEM_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(body),
-    });
+    // ✅ 重要：Content-Type を明示しない（= text/plain 扱いになりやすくプリフライト回避）
+    // ✅ ついでに no-store / redirect follow / mode cors を明示して安定化
+    let res;
+    try{
+      res = await fetch(REDEEM_ENDPOINT, {
+        method: "POST",
+        mode: "cors",
+        redirect: "follow",
+        cache: "no-store",
+        body: JSON.stringify(bodyObj),
+      });
+    }catch(e){
+      // ここで TypeError: Failed to fetch が来る（通信/CORS/ブロック等）
+      throw new Error("通信に失敗した…たこ。回線/URL/GAS公開設定を確認してね。");
+    }
 
-    const data = await res.json().catch(()=>null);
+    // ✅ HTTP自体がコケてる
+    if(!res.ok){
+      throw new Error(`サーバー応答エラー…たこ。HTTP ${res.status}`);
+    }
+
+    // ✅ GASは JSON じゃなく文字列で返すこともあるので text()→JSON.parse を堅く
+    const txt = await res.text().catch(()=> "");
+    let data = null;
+    try{
+      data = JSON.parse(txt);
+    }catch(e){
+      // txt の中身がHTML(ログイン画面/エラー)の可能性もある
+      throw new Error("サーバー応答がJSONじゃない…たこ。GASの公開/権限/URLを確認してね。");
+    }
+
     if(!data || typeof data.ok !== "boolean"){
-      throw new Error("サーバー応答不正");
+      throw new Error("サーバー応答不正…たこ。");
     }
     return data;
   }
+
   function applyRedeemReward(reward){
     const inv = ensureInvKeys();
     const add = Math.max(0, Math.floor(Number(reward?.seed_colabo || 0) || 0));
