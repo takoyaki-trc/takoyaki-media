@@ -16,13 +16,9 @@
    ✅ おみくじオクト：大凶1 / 凶500 / 末吉1000 / 中吉3000 / 大吉7777
 
    ✅ 変更点（今回）
-   ・「水のレア率メモ」ボタン → 《タネ、ミズ、ヒリョウについて》 に変更
-     - 可能な範囲で “購入（タップで買う）” の右横・右端寄せに移動（HTML変更なしでDOM移動）
-   ・「所持資材」ボタン削除（#btnOpenInv を無効化/非表示）
-   ・所持チップの絵文字（🌱/💧/🧪）をタップすると内訳モーダル表示
-     - #chipSeed / #chipWater / #chipFert をクリック可能化
-   ・本絵文字/リサイクル（図鑑系UI）を削除：#chipBookOwned / #chipBookDup を非表示化
-   ・「買った資材はファームに入る」などのサブ文言が残っていても、JS側は依存しない
+   ・コラボのタネの横にあった「シリアル」ボタンを削除
+   ・上部のシリアル入力ボックス（#serialInlineInput/#serialInlineBtn）だけで完結
+   ・seed_colabo はカード内で「シリアル限定」表示のみ（ボタンなし）
 ========================================================= */
 (() => {
   "use strict";
@@ -275,6 +271,7 @@
     inv.seed  = inv.seed  || {};
     inv.water = inv.water || {};
     inv.fert  = inv.fert  || {};
+
     for(const g of GOODS){
       if(!(g.id in inv[g.kind])) inv[g.kind][g.id] = 0;
     }
@@ -578,6 +575,8 @@
         ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>`
         : `<div class="priceline">単価 <b>—</b>（シリアル）</div>`;
 
+      // ✅ ここが今回の肝：
+      // コラボタネは「ボタン無し」＝上部のシリアル入力だけで増やす
       const buyBar = canBuy ? `
         <div class="buybar">
           <div class="qty">
@@ -591,9 +590,8 @@
       ` : `
         <div class="buybar">
           <div style="opacity:.78; font-size:12px; text-align:right; flex:1; white-space:nowrap;">
-            シリアルで増える…たこ。
+            上のシリアル入力で増える…たこ。
           </div>
-          <button class="btn buybtn" type="button">シリアル</button>
         </div>
         ${priceLine}
       `;
@@ -619,11 +617,12 @@
       `;
     }).join("");
 
+    // ✅ 購入可能なものだけイベントを付ける
     $$(".good", grid).forEach(card => {
       const kind = card.getAttribute("data-kind");
       const id   = card.getAttribute("data-id");
       const item = GOODS.find(x => x.kind===kind && x.id===id);
-      if(!item) return;
+      if(!item || !item.buyable) return;
 
       const btn   = $(".buybtn", card);
       const minus = $(".qtyminus", card);
@@ -653,12 +652,6 @@
 
       btn?.addEventListener("click", (e)=>{
         e.preventDefault(); e.stopPropagation();
-
-        if(!item.buyable){
-          openSerialModal();
-          setTakopiSayRandom();
-          return;
-        }
 
         const qty = getQty();
         const r = buyMany(item, qty);
@@ -717,7 +710,7 @@
   }
 
   // =========================================================
-  // ✅ シリアル
+  // ✅ シリアル（上部入力だけで完結）
   // =========================================================
   function loadUsedCodes(){
     const obj = loadJSON(LS.codesUsed, {});
@@ -734,8 +727,8 @@
     }
     return id;
   }
-  
-   async function redeemOnServer(code){
+
+  async function redeemOnServer(code){
     const bodyObj = {
       apiKey: REDEEM_API_KEY,
       code,
@@ -744,8 +737,6 @@
       ts: Date.now()
     };
 
-    // ✅ 重要：Content-Type を明示しない（= text/plain 扱いになりやすくプリフライト回避）
-    // ✅ ついでに no-store / redirect follow / mode cors を明示して安定化
     let res;
     try{
       res = await fetch(REDEEM_ENDPOINT, {
@@ -756,22 +747,18 @@
         body: JSON.stringify(bodyObj),
       });
     }catch(e){
-      // ここで TypeError: Failed to fetch が来る（通信/CORS/ブロック等）
       throw new Error("通信に失敗した…たこ。回線/URL/GAS公開設定を確認してね。");
     }
 
-    // ✅ HTTP自体がコケてる
     if(!res.ok){
       throw new Error(`サーバー応答エラー…たこ。HTTP ${res.status}`);
     }
 
-    // ✅ GASは JSON じゃなく文字列で返すこともあるので text()→JSON.parse を堅く
     const txt = await res.text().catch(()=> "");
     let data = null;
     try{
       data = JSON.parse(txt);
     }catch(e){
-      // txt の中身がHTML(ログイン画面/エラー)の可能性もある
       throw new Error("サーバー応答がJSONじゃない…たこ。GASの公開/権限/URLを確認してね。");
     }
 
@@ -791,64 +778,6 @@
     return { addedSeedColabo: add };
   }
 
-  function openSerialModal(){
-    openModal("🔑 シリアル入力（コラボのタネ）", `
-      <div class="pop-wrap">
-        <div class="note">
-          「コラボのタネ」は <b>購入できない</b>。<br>
-          シリアルを入力すると在庫が増える…たこ。
-        </div>
-
-        <div class="serial-row">
-          <input id="redeemCode" class="serial-in" type="text" placeholder="例：TC-XXXX-XXXX" autocomplete="off">
-          <button id="redeemBtn" class="btn big" type="button">使う</button>
-        </div>
-
-        <div class="row">
-          <button class="btn btn-ghost" id="serialClose" type="button">閉じる</button>
-        </div>
-      </div>
-    `);
-
-    const root = document.getElementById("modalBody") || document;
-    $("#serialClose", root)?.addEventListener("click", closeModal);
-
-    $("#redeemBtn", root)?.addEventListener("click", async () => {
-      const code = ($("#redeemCode", root)?.value || "").trim().toUpperCase();
-      if(!code){ alert("コードを入力してね"); return; }
-
-      const used = loadUsedCodes();
-      if(used[code]){ alert("このコードは（この端末では）使用済み。"); return; }
-
-      const btn = $("#redeemBtn", root);
-      if(btn){ btn.disabled = true; btn.textContent = "確認中…"; }
-
-      try{
-        const data = await redeemOnServer(code);
-        if(!data.ok){
-          alert(data.message || data.error || "無効なコードです。");
-          return;
-        }
-
-        const reward = data.reward || data.grant || {};
-        const applied = applyRedeemReward(reward);
-
-        used[code] = { at: Date.now(), payload: reward };
-        saveUsedCodes(used);
-
-        pushLog(`シリアル：${code}（コラボのタネ +${applied.addedSeedColabo}）`);
-        toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, {kind:"good"});
-        refreshHUD();
-        renderGoods();
-        closeModal();
-      }catch(err){
-        alert(err?.message || "通信に失敗した…たこ。時間を置いてもう一度。");
-      }finally{
-        if(btn){ btn.disabled = false; btn.textContent = "使う"; }
-      }
-    });
-  }
-
   function wireSerialInline(){
     const input = $("#serialInlineInput");
     const btn   = $("#serialInlineBtn");
@@ -856,16 +785,25 @@
 
     const run = async () => {
       const code = (input.value || "").trim().toUpperCase();
-      if(!code) return;
+      if(!code){
+        toastHype("🔑 シリアルを入力して…たこ。", {kind:"info"});
+        return;
+      }
 
       const used = loadUsedCodes();
-      if(used[code]) return;
+      if(used[code]){
+        toastHype("⚠️ この端末では使用済み…たこ。", {kind:"bad"});
+        return;
+      }
 
       btn.disabled = true;
 
       try{
         const data = await redeemOnServer(code);
-        if(!data.ok) return;
+        if(!data.ok){
+          toastHype(data.message || data.error || "無効なコード…たこ。", {kind:"bad"});
+          return;
+        }
 
         const reward = data.reward || data.grant || {};
         const applied = applyRedeemReward(reward);
@@ -878,9 +816,14 @@
 
         refreshHUD();
         renderGoods();
-        toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, {kind:"good"});
+
+        if(applied.addedSeedColabo > 0){
+          toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, {kind:"good"});
+        }else{
+          toastHype("✅ 成功…たこ。（付与が0だった）", {kind:"info"});
+        }
       }catch(e){
-        // noop
+        toastHype(e?.message || "通信に失敗…たこ。", {kind:"bad"});
       }finally{
         btn.disabled = false;
       }
@@ -909,7 +852,7 @@
             ・<b>店頭/回線タネ</b>：候補が“それっぽく”寄る（店頭/回線の気配）<br>
             ・<b>たこぴのタネ</b>：今は静か。でも未来で化ける枠（演出用・特別枠）<br>
             ・<b>ブッ刺さり/なまら買わさる</b>：高額＝強い体験枠（期待値というより“物語”）<br>
-            ・<b>【コラボ】</b>：購入不可。<b>シリアルでのみ増える</b>…たこ。
+            ・<b>【コラボ】</b>：購入不可。<b>上のシリアル入力でのみ増える</b>…たこ。
           </div>
         </div>
 
@@ -954,7 +897,6 @@
   function placeAboutButton(){
     let btn = $("#btnOpenRates");
     if(!btn){
-      // 無ければ作る（壊れにくい）
       btn = document.createElement("button");
       btn.id = "btnOpenRates";
       btn.className = "btn roten-about-btn";
@@ -963,11 +905,9 @@
       document.body.appendChild(btn);
     }
 
-    // 表示名を更新
     btn.textContent = "タネ/ミズ/ヒリョウについて";
     btn.classList.add("roten-about-btn");
 
-    // 置き場候補：「購入（タップで買う）」を含む要素の近く（最後の候補へ）
     const candidates = $$("h1,h2,h3,h4,div,section,p,span").filter(el => {
       const t = (el.textContent || "").replace(/\s+/g,"");
       return t.includes("購入") || t.includes("タップで買う");
@@ -975,7 +915,6 @@
 
     const anchor = candidates.length ? candidates[candidates.length - 1] : null;
 
-    // 右寄せの器
     let wrap = $("#_roten_about_wrap");
     if(!wrap){
       wrap = document.createElement("div");
@@ -986,15 +925,12 @@
     wrap.appendChild(btn);
 
     if(anchor && anchor.parentElement){
-      // なるべく“購入見出しの直後”へ
       anchor.parentElement.insertBefore(wrap, anchor.nextSibling);
     }else{
-      // 無理ならアプリ先頭へ
       const app = $("#rotenApp") || document.body;
       app.insertBefore(wrap, app.firstChild);
     }
 
-    // ✅ もし wrap が「余白の原因」になりそうなら、余計な margin がある親を潰す
     wrap.style.setProperty("margin-top","0","important");
   }
 
@@ -1184,7 +1120,7 @@
   }
 
   // =========================================================
-  // ✅ 右上説明ボタン / 戻るボタン（あれば） / 配線
+  // ✅ タブ / ボタン配線
   // =========================================================
   function wireTabs(){
     $$(".goods-tab").forEach(btn => {
@@ -1214,7 +1150,7 @@
       toastHype("📦 所持内訳は、上の 🌱/💧/🧪 をタップ…たこ。", {kind:"info"});
     });
 
-    // ✅ 新：説明ボタン
+    // ✅ 説明ボタン
     $("#btnOpenRates")?.addEventListener("click", () => {
       openAboutModal();
       setTakopiSayRandom();
@@ -1257,7 +1193,7 @@
     wireModalClose();
     wireTabs();
     wireButtons();
-    wireSerialInline();
+    wireSerialInline();     // ✅ 上部シリアルのみ
     wireChipBreakdowns();
 
     refreshHUD();
@@ -1271,3 +1207,4 @@
     boot();
   }
 })();
+
