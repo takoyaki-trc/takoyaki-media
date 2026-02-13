@@ -201,7 +201,7 @@
   // =========================================================
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
-  const XP_BY_RARITY = { N:20, R:40, SR:80, UR:160, LR:300 };
+  const XP_BY_RARITY = { N:20, R:40, SR:80, UR:160, LR:300, SP:0 }; // ✅ SPがXP欲しいならここを調整
 
   function xpNeedForLevel(level){
     return 120 + (level - 1) * 50 + Math.floor(Math.pow(level - 1, 1.6) * 20);
@@ -537,9 +537,36 @@
   }
 
   // =========================================================
+  // ✅【追加】肥料SP抽選（B案：植えた瞬間に確定）
+  // ※固定タネ/コラボでも抽選します（スキップ無し）
+  // =========================================================
+  function pickFertSPIfAny(p){
+    if(!p) return null;
+    const fert = FERTS.find(x => x.id === (p.fertId || null));
+    if(!fert) return null;
+
+    const burnP = Number(fert.burnCardUp ?? 0);
+    if (burnP > 0 && Math.random() < burnP) {
+      return { id:"SP-BURN", name:"焼きすぎたカード", img:"https://ul.h3z.jp/VSQupsYH.png", rarity:"SP" };
+    }
+
+    const rawP = Number(fert.rawCardChance ?? 0);
+    if (rawP > 0 && Math.random() < rawP) {
+      return { id:"SP-RAW", name:"ドロドロ生焼けカード", img:"https://ul.h3z.jp/5E5NpGKP.png", rarity:"SP" };
+    }
+
+    return null;
+  }
+
+  // =========================================================
   // ★報酬抽選
   // =========================================================
   function drawRewardForPlot(p){
+    // ✅ まず肥料SP（最優先）
+    const sp = pickFertSPIfAny(p);
+    if(sp) return sp;
+
+    // 固定タネ
     if (p && p.seedId === "seed_special") {
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
@@ -1076,7 +1103,8 @@
       (fixedRarity === "SR") ? "SR65" :
       "NONE";
 
-    state.plots[index] = {
+    // ✅ まず plot を作る（ここまでは現状と同じ情報）
+    const plot = {
       state: "GROW",
       seedId,
       waterId,
@@ -1086,6 +1114,17 @@
       fixedRarity,
       srHint
     };
+
+    // ✅【B案】植えた時点で「SP抽選まで」確定して保存
+    plot.reward = drawRewardForPlot(plot);
+
+    // ✅ SPが当たったら、育成演出のSR hintと矛盾させない
+    if(plot.reward && plot.reward.rarity === "SP"){
+      plot.fixedRarity = null;
+      plot.srHint = "NONE";
+    }
+
+    state.plots[index] = plot;
 
     saveState(state);
     render();
@@ -1154,12 +1193,9 @@
       return;
     }
 
-    // 通常：閉じて畑に戻る（★要望どおり）
-    // ※「閉じる」で確定 → 図鑑に入った状態で畑へ戻る
-    closeModal();     // ロック解除
-    render();         // 畑表示更新
-    // ここで図鑑へ飛ばしたい場合は↓を有効化
-    // location.href = "./zukan.html";
+    // 通常：閉じて畑に戻る
+    closeModal();
+    render();
   }
 
   // =========================================================
@@ -1212,9 +1248,11 @@
 
     // =========================================================
     // ✅ READY：閉じるでも確定→図鑑に収録→畑へ戻る
+    // （B案：基本は植えた時点で p.reward が入っている）
     // =========================================================
     if (p.state === "READY") {
       if (!p.reward) {
+        // データ欠損救済（基本はここ通らない）
         p.reward = drawRewardForPlot(p);
         saveState(state);
       }
@@ -1232,18 +1270,15 @@
         </div>
       `);
 
-      // ★ここが重要：収穫モーダル中は「閉じる＝確定」にする
+      // ★収穫モーダル中は「閉じる＝確定」にする
       setHarvestCommit(() => commitHarvest(i, reward));
 
-      // 「閉じる」ボタンも確定に
       document.getElementById("btnCancel").addEventListener("click", closeModalOrCommit);
 
-      // 「図鑑を確認する」＝確定して図鑑へ遷移
       document.getElementById("btnConfirm").addEventListener("click", () => {
         const fn = __harvestCommitFn;
         __harvestCommitFn = null;
         if(fn) fn();
-        // commitHarvest は通常畑に戻るので、ここだけ図鑑へ行く
         location.href = "./zukan.html";
       });
 
