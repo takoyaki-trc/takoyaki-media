@@ -1,0 +1,1218 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>コラボカード図鑑｜焼かれた伝説</title>
+  <meta name="description" content="コラボカードを図鑑形式で一覧・検索・並び替えできるページです。" />
+
+  <style>
+    :root{
+      --bg:#0b0d17;
+      --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.14);
+      --text:#fff;
+      --muted:rgba(255,255,255,.72);
+      --muted2:rgba(255,255,255,.55);
+      --good:#9fffa8;
+      --warn:#ffd38a;
+      --bad:#ff9aa5;
+      --gold:#f6d37a;
+      --gold2:#c9a24b;
+      --shadow:0 14px 40px rgba(0,0,0,.55);
+      --radius:16px;
+      --radius2:22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    }
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1100px 700px at 30% 10%, rgba(255,255,255,.08), transparent 55%),
+        radial-gradient(900px 600px at 70% 20%, rgba(255,215,120,.06), transparent 55%),
+        linear-gradient(rgba(10,12,24,.88), rgba(10,12,24,.92)),
+        radial-gradient(circle at 25% 15%, rgba(255,255,255,.10), transparent 25%),
+        radial-gradient(circle at 75% 25%, rgba(255,255,255,.08), transparent 25%),
+        radial-gradient(circle at 55% 75%, rgba(255,255,255,.06), transparent 30%),
+        var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* ===== header ===== */
+    .header{
+      position:sticky;
+      top:0;
+      z-index:50;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(to bottom, rgba(8,10,18,.92), rgba(8,10,18,.65));
+      border-bottom:1px solid var(--line);
+    }
+    .head-inner{
+      max-width:1080px;
+      margin:0 auto;
+      padding:14px 14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .back{
+      flex:0 0 auto;
+      appearance:none;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.10);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,.22);
+    }
+    .titlebox{ min-width:0; flex:1 }
+    .title{
+      font-weight:1000;
+      letter-spacing:.02em;
+      font-size:18px;
+      line-height:1.2;
+    }
+    .subtitle{
+      margin-top:4px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.3;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .pill{
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.07);
+      color:var(--muted);
+      border-radius:999px;
+      padding:4px 10px;
+      font-size:11px;
+      font-weight:800;
+    }
+
+    .wrap{
+      max-width:1080px;
+      margin:0 auto;
+      padding:16px 14px 42px;
+    }
+
+    /* ===== hero ===== */
+    .hero{
+      margin-top:14px;
+      border-radius: var(--radius2);
+      border:1px solid rgba(255,255,255,.16);
+      background:
+        radial-gradient(900px 420px at 20% 0%, rgba(246,211,122,.11), transparent 55%),
+        radial-gradient(700px 420px at 80% 30%, rgba(140,200,255,.10), transparent 55%),
+        rgba(255,255,255,.06);
+      box-shadow: var(--shadow);
+      padding:16px 14px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero h1{
+      margin:0;
+      font-size:20px;
+      font-weight:1000;
+      letter-spacing:.02em;
+    }
+    .hero p{
+      margin:10px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+      max-width: 58ch;
+    }
+    .hero .meta{
+      margin-top:12px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .hero .meta .pill{
+      background:rgba(0,0,0,.18);
+      color:rgba(255,255,255,.78);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    /* ===== controls ===== */
+    .controls{
+      margin-top:14px;
+      display:grid;
+      gap:10px;
+    }
+    .ctrl-panel{
+      border-radius: var(--radius2);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 10px 24px rgba(0,0,0,.22);
+      padding:12px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .chips{
+      display:flex;
+      gap:8px;
+      overflow:auto;
+      padding-bottom:2px;
+      -webkit-overflow-scrolling:touch;
+    }
+    .chips::-webkit-scrollbar{ height:6px }
+    .chips::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.18); border-radius:999px }
+
+    .chip{
+      flex:0 0 auto;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.07);
+      color: rgba(255,255,255,.86);
+      border-radius:999px;
+      padding:9px 12px;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+      transition: transform .08s ease, background .12s ease, border-color .12s ease;
+    }
+    .chip:active{ transform: scale(.98) }
+    .chip[aria-pressed="true"]{
+      border-color: rgba(246,211,122,.55);
+      background: rgba(246,211,122,.16);
+      color: #fff;
+    }
+
+    .search{
+      flex:1;
+      min-width: 220px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      border-radius: 14px;
+      padding:10px 12px;
+    }
+    .search input{
+      width:100%;
+      background:transparent;
+      border:0;
+      outline:none;
+      color:var(--text);
+      font-size:13px;
+      font-weight:700;
+    }
+    .search .hint{
+      color:var(--muted2);
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    select{
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:900;
+      font-size:12px;
+      outline:none;
+    }
+    .count{
+      margin-left:auto;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:900;
+      padding:8px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+    }
+
+    /* ===== grid ===== */
+    .section-title{
+      margin:16px 4px 10px;
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .section-title h2{
+      margin:0;
+      font-size:16px;
+      font-weight:1000;
+      letter-spacing:.02em;
+    }
+    .section-title .sub{
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .grid{
+      display:grid;
+      gap:12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    @media (min-width:780px){
+      .grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (min-width:1020px){
+      .grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    .card{
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      overflow:hidden;
+      box-shadow: 0 12px 28px rgba(0,0,0,.28);
+      cursor:pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      position:relative;
+    }
+    .card:hover{
+      transform: translateY(-2px);
+      border-color: rgba(246,211,122,.28);
+      background: rgba(255,255,255,.075);
+    }
+    .thumb{
+      aspect-ratio: 4 / 3;
+      width:100%;
+      display:block;
+      object-fit: cover;
+      background: rgba(0,0,0,.25);
+    }
+    .card-body{
+      padding:10px 10px 12px;
+      display:grid;
+      gap:6px;
+    }
+    .card-name{
+      font-size:13px;
+      font-weight:1000;
+      letter-spacing:.01em;
+      line-height:1.25;
+    }
+    .tags{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    .tag{
+      font-size:11px;
+      font-weight:1000;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.16);
+      color: rgba(255,255,255,.82);
+    }
+    .tag.gold{
+      border-color: rgba(246,211,122,.55);
+      background: rgba(246,211,122,.14);
+      color:#fff;
+    }
+    .skill{
+      margin-top:2px;
+      font-size:11px;
+      color:rgba(255,255,255,.82);
+      font-weight:900;
+    }
+    .skill span{ color: var(--gold); }
+
+    /* ===== legend strip ===== */
+    .legend-area{
+      margin-top:18px;
+      border-radius: var(--radius2);
+      border:1px solid rgba(246,211,122,.34);
+      background:
+        radial-gradient(900px 360px at 25% 0%, rgba(246,211,122,.18), transparent 60%),
+        rgba(255,255,255,.05);
+      box-shadow: 0 18px 50px rgba(0,0,0,.40);
+      padding:12px;
+    }
+    .legend-head{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:4px 4px 10px;
+    }
+    .legend-head h2{
+      margin:0;
+      font-size:16px;
+      font-weight:1000;
+      letter-spacing:.02em;
+    }
+    .legend-head .note{
+      color:rgba(255,255,255,.78);
+      font-size:12px;
+      font-weight:900;
+    }
+    .legend-scroll{
+      display:flex;
+      gap:10px;
+      overflow:auto;
+      padding:6px 2px 2px;
+      -webkit-overflow-scrolling:touch;
+    }
+    .legend-scroll::-webkit-scrollbar{ height:6px }
+    .legend-scroll::-webkit-scrollbar-thumb{ background:rgba(246,211,122,.35); border-radius:999px }
+
+    .legend-card{
+      flex:0 0 auto;
+      width: 240px;
+      border-radius: 18px;
+      border:1px solid rgba(246,211,122,.28);
+      background: rgba(0,0,0,.22);
+      overflow:hidden;
+      cursor:pointer;
+      box-shadow: 0 12px 28px rgba(0,0,0,.30);
+    }
+    .legend-card img{
+      width:100%;
+      height: 160px;
+      object-fit: cover;
+      display:block;
+      background: rgba(0,0,0,.25);
+    }
+    .legend-card .b{
+      padding:10px;
+      display:grid;
+      gap:6px;
+    }
+    .legend-card .n{
+      font-weight:1000;
+      font-size:13px;
+      line-height:1.25;
+    }
+    .legend-card .s{
+      color:rgba(255,255,255,.82);
+      font-size:11px;
+      font-weight:900;
+    }
+
+    /* ===== intro section ===== */
+    .intro{
+      margin-top:18px;
+      border-radius: var(--radius2);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 14px 40px rgba(0,0,0,.35);
+      overflow:hidden;
+    }
+    .intro .inner{
+      padding:14px;
+      display:grid;
+      gap:14px;
+    }
+    .intro h2{
+      margin:0;
+      font-size:16px;
+      font-weight:1000;
+      letter-spacing:.02em;
+    }
+    .intro p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.65;
+    }
+    .feature{
+      display:grid;
+      gap:10px;
+    }
+    @media (min-width:780px){
+      .feature{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .pick{
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.16);
+      padding:12px;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+    .pick img{
+      width:96px;
+      height:72px;
+      object-fit:cover;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      flex:0 0 auto;
+    }
+    .pick .txt{ min-width:0 }
+    .pick .t{
+      font-weight:1000;
+      font-size:13px;
+      line-height:1.25;
+      margin:0;
+    }
+    .pick .d{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.55;
+    }
+    .pick .d b{ color: var(--gold); }
+
+    .faq{
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.16);
+      padding:12px;
+      display:grid;
+      gap:10px;
+    }
+    .qa{
+      padding:10px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .qa .q{
+      font-weight:1000;
+      font-size:12px;
+      color: rgba(255,255,255,.92);
+    }
+    .qa .a{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.6;
+      font-weight:800;
+    }
+
+    /* ===== footer links ===== */
+    .footer{
+      margin-top:18px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px 2px 0;
+      color:var(--muted2);
+      font-size:12px;
+      font-weight:800;
+    }
+    .links{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .btnlink{
+      text-decoration:none;
+      color:var(--text);
+      font-weight:1000;
+      border-radius: 14px;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.07);
+      box-shadow: 0 10px 24px rgba(0,0,0,.22);
+    }
+
+    /* ===== modal ===== */
+    .modal{
+      position:fixed;
+      inset:0;
+      z-index:200;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:14px;
+      background: rgba(0,0,0,.66);
+      backdrop-filter: blur(8px);
+    }
+    .modal[aria-hidden="false"]{ display:flex; }
+    .modal-card{
+      width:min(980px, 100%);
+      border-radius: 22px;
+      border:1px solid rgba(255,255,255,.16);
+      background:
+        radial-gradient(900px 420px at 20% 0%, rgba(246,211,122,.12), transparent 55%),
+        rgba(10,12,24,.92);
+      box-shadow: 0 22px 70px rgba(0,0,0,.70);
+      overflow:hidden;
+    }
+    .modal-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 12px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+    }
+    .modal-top .mn{
+      font-weight:1000;
+      font-size:14px;
+      letter-spacing:.01em;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .modal-top .close{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color:#fff;
+      border-radius: 12px;
+      padding:10px 12px;
+      font-weight:1000;
+      cursor:pointer;
+    }
+    .modal-body{
+      display:grid;
+      gap:0;
+    }
+    @media (min-width:860px){
+      .modal-body{
+        grid-template-columns: 1.35fr .65fr;
+      }
+    }
+    .modal-img{
+      width:100%;
+      max-height: 72vh;
+      object-fit: contain;
+      background: rgba(0,0,0,.22);
+      display:block;
+    }
+    .modal-info{
+      padding:12px;
+      border-top:1px solid rgba(255,255,255,.10);
+    }
+    @media (min-width:860px){
+      .modal-info{
+        border-top:0;
+        border-left:1px solid rgba(255,255,255,.10);
+      }
+    }
+    .modal-info .line{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    .modal-info .desc{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.65;
+      font-weight:800;
+    }
+    .modal-info .desc b{ color:var(--gold); }
+  </style>
+</head>
+
+<body>
+
+<header class="header">
+  <div class="head-inner">
+    <button class="back" id="backBtn" type="button" aria-label="戻る">←</button>
+    <div class="titlebox">
+      <div class="title">コラボカード図鑑</div>
+      <div class="subtitle">
+        <span class="pill" id="updatedPill">更新: --</span>
+        <span class="pill">タップで拡大</span>
+        <span class="pill">検索 / 絞り込み</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <h1>現実で起きた“焼かれた伝説”を記録する。</h1>
+    <p>
+      コラボカードは宣伝じゃない。<br>
+      あの一投、あの一口、あの瞬間が<strong style="color:var(--gold)">カードとして焼き固められた</strong>もの。
+      図鑑として、いつでも見返せるように残すページです。
+    </p>
+    <div class="meta">
+      <span class="pill">図鑑モード</span>
+      <span class="pill">フィルタ</span>
+      <span class="pill">非売品レジェンド</span>
+    </div>
+  </section>
+
+  <!-- Controls -->
+  <section class="controls">
+    <div class="ctrl-panel">
+      <div class="row" style="margin-bottom:10px;">
+        <div class="search" role="search">
+          <span class="hint">🔎</span>
+          <input id="q" type="search" placeholder="カード名 / 必殺技 / タグ で検索…" autocomplete="off" />
+          <span class="hint" id="hintKey">例: ダーツ / レジェンド</span>
+        </div>
+
+        <select id="sort" aria-label="並び替え">
+          <option value="new">新しい順</option>
+          <option value="old">古い順</option>
+          <option value="rare">レア順</option>
+          <option value="name">名前順</option>
+        </select>
+
+        <div class="count" id="countLine">0 / 0</div>
+      </div>
+
+      <div class="row" style="margin-bottom:8px;">
+        <div style="font-weight:1000;font-size:12px;color:var(--muted);">カテゴリ</div>
+        <div class="chips" id="catChips" aria-label="カテゴリフィルタ"></div>
+      </div>
+
+      <div class="row">
+        <div style="font-weight:1000;font-size:12px;color:var(--muted);">レアリティ</div>
+        <div class="chips" id="rarChips" aria-label="レアリティフィルタ"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main grid -->
+  <div class="section-title">
+    <h2>コラボカード一覧</h2>
+    <div class="sub" id="subLine">—</div>
+  </div>
+
+  <section class="grid" id="grid" aria-label="コラボカード一覧"></section>
+
+  <!-- Legend area -->
+  <section class="legend-area" id="legendArea">
+    <div class="legend-head">
+      <h2>非売品：レジェンドカード</h2>
+      <div class="note">購入不可。配布/記録でのみ追加される “別格枠”。</div>
+    </div>
+    <div class="legend-scroll" id="legendScroll" aria-label="レジェンド一覧"></div>
+  </section>
+
+  <!-- Intro / Readable section -->
+  <section class="intro">
+    <div class="inner">
+      <div>
+        <h2>紹介コーナー</h2>
+        <p>
+          このページは、コラボで生まれたカードたちを「図鑑」として残す場所です。<br>
+          下のピックアップは、初見でも世界観が伝わるように<strong style="color:var(--gold)">“推しの3枚”</strong>を短く紹介します。
+        </p>
+      </div>
+
+      <div class="feature">
+        <div>
+          <h2 style="font-size:14px;margin-bottom:10px;">ピックアップ</h2>
+          <div class="pick" id="pick1">
+            <img alt="ピックアップ1" src="" />
+            <div class="txt">
+              <p class="t">（ここにピックアップが入る）</p>
+              <p class="d">カードを選ぶと自動で差し替えもできます。</p>
+            </div>
+          </div>
+
+          <div class="pick" id="pick2" style="margin-top:10px;">
+            <img alt="ピックアップ2" src="" />
+            <div class="txt">
+              <p class="t">（ここにピックアップが入る）</p>
+              <p class="d">必殺技だけでも見せると“図鑑感”が上がる。</p>
+            </div>
+          </div>
+
+          <div class="pick" id="pick3" style="margin-top:10px;">
+            <img alt="ピックアップ3" src="" />
+            <div class="txt">
+              <p class="t">（ここにピックアップが入る）</p>
+              <p class="d">短い一言ストーリーで、読ませにいく。</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 style="font-size:14px;margin-bottom:10px;">入手方法 / ルール</h2>
+          <div class="faq">
+            <div class="qa">
+              <div class="q">Q. コラボカードは買えますか？</div>
+              <div class="a">A. 販売カードは<strong>BOOTH</strong>へ。<strong>非売品レジェンド</strong>は購入不可で、配布・記録のみで追加されます。</div>
+            </div>
+            <div class="qa">
+              <div class="q">Q. レジェンドはどうやって増える？</div>
+              <div class="a">A. イベント/店頭/コラボ発生時に“記録”として追加されます。図鑑に残るのが最大の報酬。</div>
+            </div>
+            <div class="qa">
+              <div class="q">Q. 次のコラボは？</div>
+              <div class="a">A. 次に焼かれるのは、誰だ。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="links">
+          <a class="btnlink" href="./zukan.html">図鑑へ戻る</a>
+          <a class="btnlink" href="./index.html">トップへ戻る</a>
+          <a class="btnlink" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener">BOOTH</a>
+        </div>
+        <div>© 焼かれた伝説</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Modal -->
+<div class="modal" id="modal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-card" role="document">
+    <div class="modal-top">
+      <div class="mn" id="mTitle">—</div>
+      <button class="close" id="mClose" type="button" aria-label="閉じる">閉じる</button>
+    </div>
+    <div class="modal-body">
+      <img class="modal-img" id="mImg" src="" alt="拡大画像" />
+      <div class="modal-info">
+        <div class="line" id="mTags"></div>
+        <p class="desc" id="mDesc">—</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ===========================
+     ✅ ここだけ差し替えでOK
+     - 画像URLは ul.h3z.jp 等の直URLか、同フォルダ/配下の相対パスにしてください
+     - 例: "./img/collab1.png"
+  =========================== */
+
+  const UPDATED = "2026-02-13";
+
+  // ✅ あなたの画像URLに差し替え（今はダミー）
+  const cards = [
+    {
+      id: "dart_01",
+      name: "店主反撃レビュー（ダーツコラボ）",
+      rarity: "N",
+      category: "ダーツ",
+      tags: ["ダーツ","コラボ"],
+      skill: "熱々地獄キャッチボール",
+      desc: "逆に店主がレビューを焼き返す。言葉が熱に変わる。",
+      date: "2026-02-10",
+      img: "./img/collab_01.png",
+      isLegend: false,
+      pick: true
+    },
+    {
+      id: "dart_02",
+      name: "たこ焼きダーツ・インフェルノ",
+      rarity: "R",
+      category: "ダーツ",
+      tags: ["ダーツ","対戦"],
+      skill: "ソース・ブル",
+      desc: "甘ったるい常識が崩れた夜。狙うのはブルか、友情か。",
+      date: "2026-02-11",
+      img: "./img/collab_02.png",
+      isLegend: false,
+      pick: true
+    },
+    {
+      id: "ghost_01",
+      name: "白い契約",
+      rarity: "R",
+      category: "イベント",
+      tags: ["契約","伝説"],
+      skill: "運命の分かれ道",
+      desc: "握手は約束か、それとも分岐点か。白い手形は消えない。",
+      date: "2026-02-12",
+      img: "./img/collab_03.png",
+      isLegend: false,
+      pick: true
+    },
+    {
+      id: "food_01",
+      name: "カロリーゼロ理論",
+      rarity: "N",
+      category: "飲食",
+      tags: ["理論","暴走"],
+      skill: "ヘルシー詐欺",
+      desc: "次の一口からゼロ。自分ルールは300%増量で発動する。",
+      date: "2026-02-12",
+      img: "./img/collab_04.png",
+      isLegend: false,
+      pick: false
+    },
+    {
+      id: "food_02",
+      name: "自己啓発たこ塾",
+      rarity: "N",
+      category: "飲食",
+      tags: ["啓発","講義"],
+      skill: "意識高い系バリア",
+      desc: "焼きは心だ。と言い切ることで全てが整った気になる。",
+      date: "2026-02-13",
+      img: "./img/collab_05.png",
+      isLegend: false,
+      pick: false
+    },
+
+    // ====== レジェンド（図鑑から引っ張る想定の非売品）======
+    {
+      id: "legend_01",
+      name: "非売品レジェンド：焼かれし者決定戦",
+      rarity: "Legend",
+      category: "非売品",
+      tags: ["非売品","レジェンド"],
+      skill: "記録のみ",
+      desc: "購入不可。発生した瞬間だけ“記録”として図鑑に刻まれる。",
+      date: "2026-02-13",
+      img: "./img/legend_01.png",
+      isLegend: true,
+      pick: false
+    },
+    {
+      id: "legend_02",
+      name: "非売品レジェンド：禁断の鉄板",
+      rarity: "Legend",
+      category: "非売品",
+      tags: ["非売品","レジェンド"],
+      skill: "封印解除",
+      desc: "その場にいた者だけが見た。写真より先に噂が焼ける。",
+      date: "2026-02-13",
+      img: "./img/legend_02.png",
+      isLegend: true,
+      pick: false
+    },
+  ];
+
+  /* ===========================
+     ✅ フィルタ定義（必要なら追加）
+  =========================== */
+  const CATS = ["すべて","ダーツ","飲食","店頭","イベント","非売品"];
+  const RARS = ["すべて","N","R","SR","UR","LR","Legend"];
+
+  /* ===========================
+     UI refs
+  =========================== */
+  const $ = (q) => document.querySelector(q);
+  const grid = $("#grid");
+  const legendArea = $("#legendArea");
+  const legendScroll = $("#legendScroll");
+  const countLine = $("#countLine");
+  const subLine = $("#subLine");
+  const updatedPill = $("#updatedPill");
+
+  const q = $("#q");
+  const sortSel = $("#sort");
+
+  const catChips = $("#catChips");
+  const rarChips = $("#rarChips");
+
+  const modal = $("#modal");
+  const mTitle = $("#mTitle");
+  const mImg = $("#mImg");
+  const mTags = $("#mTags");
+  const mDesc = $("#mDesc");
+  const mClose = $("#mClose");
+
+  $("#backBtn").addEventListener("click", () => history.back());
+
+  updatedPill.textContent = `更新: ${UPDATED}`;
+
+  /* ===========================
+     State
+  =========================== */
+  const state = {
+    cat: "すべて",
+    rar: "すべて",
+    query: "",
+    sort: "new",
+  };
+
+  /* ===========================
+     Build chips
+  =========================== */
+  function buildChips(container, items, key){
+    container.innerHTML = "";
+    for(const it of items){
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip";
+      b.textContent = it;
+      b.setAttribute("aria-pressed", String(state[key] === it));
+      b.addEventListener("click", () => {
+        state[key] = it;
+        // update chip pressed states
+        [...container.querySelectorAll(".chip")].forEach(x => x.setAttribute("aria-pressed","false"));
+        b.setAttribute("aria-pressed","true");
+        render();
+      });
+      container.appendChild(b);
+    }
+  }
+
+  buildChips(catChips, CATS, "cat");
+  buildChips(rarChips, RARS, "rar");
+
+  /* ===========================
+     Search / sort listeners
+  =========================== */
+  q.addEventListener("input", () => {
+    state.query = (q.value || "").trim();
+    render();
+  });
+  sortSel.addEventListener("change", () => {
+    state.sort = sortSel.value;
+    render();
+  });
+
+
+
+/* ===========================
+     Helpers
+  =========================== */
+  const rarRank = (r) => {
+    // 大きいほど強い（Legend最強）
+    const map = { "N":1, "R":2, "SR":3, "UR":4, "LR":5, "Legend":6 };
+    return map[r] || 0;
+  };
+
+  function matches(card){
+    if(state.cat !== "すべて"){
+      // 非売品カテゴリは legend も含めたい
+      if(state.cat === "非売品"){
+        if(!card.isLegend && card.category !== "非売品") return false;
+      }else{
+        if(card.category !== state.cat) return false;
+      }
+    }
+    if(state.rar !== "すべて"){
+      if(card.rarity !== state.rar) return false;
+    }
+    if(state.query){
+      const s = state.query.toLowerCase();
+      const hay = [
+        card.name, card.rarity, card.category, card.skill, card.desc,
+        ...(card.tags || [])
+      ].join(" ").toLowerCase();
+      if(!hay.includes(s)) return false;
+    }
+    return true;
+  }
+
+  function sortCards(list){
+    const a = [...list];
+    if(state.sort === "new"){
+      a.sort((x,y) => (y.date||"").localeCompare(x.date||""));
+    }else if(state.sort === "old"){
+      a.sort((x,y) => (x.date||"").localeCompare(y.date||""));
+    }else if(state.sort === "rare"){
+      a.sort((x,y) => rarRank(y.rarity) - rarRank(x.rarity));
+    }else if(state.sort === "name"){
+      a.sort((x,y) => (x.name||"").localeCompare(y.name||"", "ja"));
+    }
+    return a;
+  }
+
+  function makeTag(text, isGold=false){
+    const s = document.createElement("span");
+    s.className = "tag" + (isGold ? " gold" : "");
+    s.textContent = text;
+    return s;
+  }
+
+  function openModal(card){
+    mTitle.textContent = card.name || "—";
+    mImg.src = card.img;
+    mImg.alt = card.name || "拡大画像";
+    mTags.innerHTML = "";
+    mTags.appendChild(makeTag(card.rarity, card.rarity==="Legend"));
+    mTags.appendChild(makeTag(card.category, card.isLegend));
+    (card.tags||[]).slice(0,5).forEach(t => mTags.appendChild(makeTag(t, card.isLegend)));
+
+    const skillLine = card.skill ? `必殺技：<b>${escapeHtml(card.skill)}</b><br>` : "";
+    mDesc.innerHTML =
+      `${skillLine}${escapeHtml(card.desc || "")}<br><br>` +
+      `<span style="color:rgba(255,255,255,.75);font-weight:900;">記録日：</span>` +
+      `<span style="color:rgba(255,255,255,.85);font-weight:1000;">${escapeHtml(card.date || "—")}</span>`;
+
+    modal.setAttribute("aria-hidden","false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal(){
+    modal.setAttribute("aria-hidden","true");
+    document.body.style.overflow = "";
+    // image keeps loaded, ok
+  }
+
+  mClose.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => {
+    if(e.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape" && modal.getAttribute("aria-hidden")==="false") closeModal();
+  });
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, (m) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[m]));
+  }
+
+  /* ===========================
+     Picks (紹介コーナー)
+     - pick:true の中から3つを自動採用
+  =========================== */
+  function renderPicks(){
+    const picks = cards.filter(c => !c.isLegend && c.pick).slice(0,3);
+    const slots = [$("#pick1"), $("#pick2"), $("#pick3")];
+
+    for(let i=0;i<3;i++){
+      const slot = slots[i];
+      const img = slot.querySelector("img");
+      const t = slot.querySelector(".t");
+      const d = slot.querySelector(".d");
+
+      const c = picks[i] || null;
+      if(!c){
+        img.src = "";
+        t.textContent = "（ピックアップ未設定）";
+        d.innerHTML = "cards配列の <b>pick:true</b> を3枚分つけると自動表示されます。";
+        continue;
+      }
+      img.src = c.img;
+      t.textContent = c.name;
+      d.innerHTML = `必殺技：<b>${escapeHtml(c.skill||"—")}</b><br>${escapeHtml(c.desc||"")}`;
+
+      slot.style.cursor = "pointer";
+      slot.onclick = () => openModal(c);
+    }
+  }
+
+  /* ===========================
+     Render
+  =========================== */
+  function render(){
+    const filtered = sortCards(cards.filter(c => !c.isLegend).filter(matches));
+    const totalMain = cards.filter(c => !c.isLegend).length;
+
+    grid.innerHTML = "";
+    for(const c of filtered){
+      const el = document.createElement("article");
+      el.className = "card";
+      el.setAttribute("tabindex","0");
+      el.setAttribute("role","button");
+      el.setAttribute("aria-label", c.name + " を開く");
+
+      const img = document.createElement("img");
+      img.className = "thumb";
+      img.src = c.img;
+      img.alt = c.name;
+
+      const body = document.createElement("div");
+      body.className = "card-body";
+
+      const name = document.createElement("div");
+      name.className = "card-name";
+      name.textContent = c.name;
+
+      const tags = document.createElement("div");
+      tags.className = "tags";
+      tags.appendChild(makeTag(c.rarity));
+      tags.appendChild(makeTag(c.category));
+      (c.tags||[]).slice(0,2).forEach(t => tags.appendChild(makeTag(t)));
+
+      const skill = document.createElement("div");
+      skill.className = "skill";
+      skill.innerHTML = `必殺技：<span>${escapeHtml(c.skill || "—")}</span>`;
+
+      body.appendChild(name);
+      body.appendChild(tags);
+      body.appendChild(skill);
+
+      el.appendChild(img);
+      el.appendChild(body);
+
+      el.addEventListener("click", () => openModal(c));
+      el.addEventListener("keydown", (e) => {
+        if(e.key === "Enter" || e.key === " "){
+          e.preventDefault();
+          openModal(c);
+        }
+      });
+
+      grid.appendChild(el);
+    }
+
+    countLine.textContent = `${filtered.length} / ${totalMain}`;
+
+    const labelParts = [];
+    if(state.cat !== "すべて") labelParts.push(`カテゴリ: ${state.cat}`);
+    if(state.rar !== "すべて") labelParts.push(`レア: ${state.rar}`);
+    if(state.query) labelParts.push(`検索: "${state.query}"`);
+    subLine.textContent = labelParts.length ? labelParts.join(" / ") : "すべてのコラボカード";
+
+    // legend render (フィルタに関係なく別枠で見せる)
+    const legends = sortCards(cards.filter(c => c.isLegend));
+    legendScroll.innerHTML = "";
+    if(legends.length === 0){
+      legendArea.style.display = "none";
+    }else{
+      legendArea.style.display = "";
+      for(const c of legends){
+        const box = document.createElement("div");
+        box.className = "legend-card";
+
+        const img = document.createElement("img");
+        img.src = c.img;
+        img.alt = c.name;
+
+        const b = document.createElement("div");
+        b.className = "b";
+
+        const n = document.createElement("div");
+        n.className = "n";
+        n.textContent = c.name;
+
+        const s = document.createElement("div");
+        s.className = "s";
+        s.textContent = `必殺技：${c.skill || "—"}`;
+
+        b.appendChild(n);
+        b.appendChild(s);
+
+        box.appendChild(img);
+        box.appendChild(b);
+
+        box.addEventListener("click", () => openModal(c));
+        legendScroll.appendChild(box);
+      }
+    }
+  }
+
+  // 初期描画
+  renderPicks();
+  render();
+
+})();
+</script>
+
+</body>
+</html>
