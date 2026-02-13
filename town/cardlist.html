@@ -1,1 +1,567 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>カードリスト入口｜焼かれた伝説 / たこ焼きトレカ</title>
+<meta name="description" content="公式カードリスト入口。魔法書から第1弾などのカード一覧を開きます。" />
+
+<style>
+:root{
+  --bg1:#070815;
+  --bg2:#0b0d17;
+  --bg3:#05060b;
+
+  --panel:rgba(255,255,255,.08);
+  --panel2:rgba(255,255,255,.12);
+  --line:rgba(255,255,255,.14);
+
+  --text:#fff;
+  --muted:rgba(255,255,255,.72);
+
+  --shadow:0 18px 55px rgba(0,0,0,.55);
+  --radius:18px;
+  --radius2:14px;
+
+  --focus: rgba(160,220,255,.40);
+  --glow: 0 10px 35px rgba(80,190,255,.14);
+
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
+  color:var(--text);
+  overflow-x:hidden;
+
+  /* ✅ ダーク神殿（本の金色に最適） */
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,220,120,.16), transparent 42%),
+    radial-gradient(circle at 12% 26%, rgba(255,170,80,.08), transparent 55%),
+    radial-gradient(circle at 88% 40%, rgba(200,120,255,.07), transparent 58%),
+    radial-gradient(circle at 50% 88%, rgba(80,190,255,.10), transparent 55%),
+    linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 60%, var(--bg3) 100%);
+}
+
+/* ✅ 薄い走査線（レトロ感） */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  pointer-events:none;
+  opacity:.06;
+  background-image:
+    repeating-linear-gradient(0deg,
+      rgba(255,255,255,.18),
+      rgba(255,255,255,.18) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  mix-blend-mode: overlay;
+}
+
+/* ===== Header ===== */
+header{
+  position: sticky;
+  top:0;
+  z-index:10;
+  padding: calc(14px + env(safe-area-inset-top)) 14px 12px;
+  background: linear-gradient(180deg, rgba(7,8,21,.92), rgba(7,8,21,.70));
+  border-bottom:1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
+}
+.head-inner{
+  max-width:1100px;
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.back{
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 900;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.back:active{ transform: translateY(1px); }
+.titlebox{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.titlebox .title{
+  font-size:16px;
+  font-weight:1000;
+  letter-spacing:.02em;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.titlebox .sub{
+  font-size:12px;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.right{ display:flex; align-items:center; gap:10px; }
+.btn{
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.12);
+  color:#fff;
+  border-radius:12px;
+  padding:10px 12px;
+  font-weight:900;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active{ transform: translateY(1px); }
+
+/* ===== Layout ===== */
+main{
+  max-width:1100px;
+  margin:0 auto;
+  padding: 14px 14px calc(18px + env(safe-area-inset-bottom));
+}
+
+/* ✅ 入口ページの“舞台”：上がメニュー、下が魔法書 */
+.stage{
+  position:relative;
+  min-height: calc(100vh - 90px);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  justify-content:flex-start;
+}
+
+/* ✅ 本の“発光”を下から当てる（演出） */
+.stage::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom: clamp(96px, 12vh, 160px);
+  transform: translateX(-50%);
+  width: min(760px, 92vw);
+  height: min(340px, 42vh);
+  background:
+    radial-gradient(circle at 50% 70%, rgba(255,220,120,.16), transparent 55%),
+    radial-gradient(circle at 50% 70%, rgba(80,190,255,.12), transparent 62%);
+  filter: blur(2px);
+  opacity:.95;
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ===== Panel ===== */
+.panel{
+  position:relative;
+  z-index:2;
+  background: var(--panel);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+}
+.panel-inner{
+  padding:14px;
+  display:grid;
+  gap:12px;
+}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-weight:1000;
+  font-size:12px;
+  padding:8px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  width: fit-content;
+}
+.pill .dot{
+  width:8px; height:8px; border-radius:999px;
+  background: rgba(255,220,120,.95);
+  box-shadow: 0 0 18px rgba(255,220,120,.55);
+}
+
+.h1{
+  margin:0;
+  font-size:18px;
+  font-weight:1000;
+  letter-spacing:.02em;
+  line-height:1.25;
+}
+.p{
+  margin:0;
+  color: var(--muted);
+  font-size:13px;
+  line-height:1.55;
+}
+
+/* ===== RPG Menu ===== */
+.menu{
+  display:grid;
+  gap:10px;
+  margin-top: 2px;
+}
+.menu a, .menu button{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+
+  width:100%;
+  padding:14px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(0,0,0,.18);
+  color:#fff;
+  text-decoration:none;
+  font-weight:1000;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 14px 40px rgba(0,0,0,.22);
+}
+.menu a:active, .menu button:active{ transform: translateY(1px); }
+.menu .primary{
+  border:1px solid rgba(160,220,255,.35);
+  background: linear-gradient(180deg, rgba(160,220,255,.22), rgba(160,220,255,.12));
+  box-shadow: var(--glow);
+}
+.menu .label{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+}
+.menu .label .t{
+  font-size:14px;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.menu .label .s{
+  font-size:12px;
+  color: rgba(255,255,255,.72);
+  font-weight:900;
+}
+.menu .arrow{
+  font-family: var(--mono);
+  font-size: 12px;
+  opacity:.85;
+  flex:0 0 auto;
+}
+.menu .disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.menu .disabled:active{ transform:none; }
+
+/* ===== Book image zone ===== */
+.book-zone{
+  position: relative;
+  z-index:1;
+  margin-top: auto; /* ✅ 下に寄せる（最重要） */
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  padding-top: 10px;
+  padding-bottom: clamp(10px, 2vh, 18px);
+}
+
+/* ✅ スマホで“画面下にデカく、はみ出さず”置く */
+.book-zone img{
+  width: min(840px, 98vw);
+  max-height: min(58vh, 520px);
+  height:auto;
+  object-fit: contain;
+  display:block;
+
+  /* ✅ ほんの少し立体感 */
+  filter:
+    drop-shadow(0 22px 60px rgba(0,0,0,.65))
+    drop-shadow(0 0 14px rgba(255,220,120,.10));
+}
+
+/* ✅ 本の下に影（机に置いた感） */
+.book-zone::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  width: min(680px, 78vw);
+  height: 28px;
+  background: radial-gradient(circle at 50% 50%, rgba(0,0,0,.55), transparent 70%);
+  filter: blur(6px);
+  opacity:.75;
+  pointer-events:none;
+}
+
+/* ===== Help modal ===== */
+.modal-bg{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  z-index:100;
+  background: rgba(0,0,0,.62);
+  backdrop-filter: blur(8px);
+}
+.modal-bg.open{ display:flex; }
+
+.modal{
+  width:min(560px, 100%);
+  border-radius:18px;
+  border: 1px solid rgba(255,255,255,.16);
+  background:
+    radial-gradient(900px 400px at 50% 0%, rgba(80,190,255,.14), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+  box-shadow: 0 22px 80px rgba(0,0,0,.65);
+  overflow:hidden;
+  transform: translateY(10px) scale(.985);
+  opacity:0;
+  transition: transform .14s ease, opacity .14s ease;
+}
+.modal-bg.open .modal{ transform: translateY(0) scale(1); opacity:1; }
+
+.modal-head{
+  padding:14px 14px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+.modal-title{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+.modal-title .h{
+  font-size:16px;
+  font-weight:1000;
+  letter-spacing:.02em;
+  line-height:1.2;
+}
+.modal-title .p{
+  font-size:12px;
+  color: var(--muted);
+  line-height:1.5;
+}
+.xbtn{
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(0,0,0,.18);
+  color:#fff;
+  border-radius:12px;
+  width:42px;
+  height:42px;
+  font-size:18px;
+  font-weight:1000;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.xbtn:active{ transform: translateY(1px); }
+.modal-body{
+  padding:14px;
+  display:grid;
+  gap:12px;
+}
+.note{
+  font-size:13px;
+  line-height:1.7;
+  color: rgba(255,255,255,.86);
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.modal-actions{
+  display:grid;
+  gap:10px;
+}
+.ghost{
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.08);
+  border-radius:14px;
+  padding:12px 10px;
+  font-weight:1000;
+  color:#fff;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align:center;
+}
+.ghost:active{ transform: translateY(1px); }
+
+button:focus-visible, a:focus-visible{
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="head-inner">
+    <div class="left">
+      <button id="backBtn" class="back" type="button" aria-label="戻る">←</button>
+      <div class="titlebox">
+        <div class="title">カードリスト入口</div>
+        <div class="sub">写本を開いて、公式カード一覧へ</div>
+      </div>
+    </div>
+    <div class="right">
+      <button id="helpBtn" class="btn" type="button" aria-label="ヘルプ">？</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="stage">
+    <!-- ✅ メニュー（上） -->
+    <section class="panel">
+      <div class="panel-inner">
+        <div class="pill"><span class="dot"></span> 公式カードリスト</div>
+        <h1 class="h1">魔法書を開きますか？</h1>
+        <p class="p">
+          ここは「所持図鑑（自分のコレクション）」とは別ページ。<br>
+          “公式カード一覧”を読むための入口です。
+        </p>
+
+        <div class="menu" aria-label="カードリストメニュー">
+          <a class="primary" href="./cards-vol1.html" aria-label="第1弾を見る（TN-001〜TN-050）">
+            <span class="label">
+              <span class="t">第1弾を見る</span>
+              <span class="s">TN-001〜TN-050（店頭＋BOOTH）</span>
+            </span>
+            <span class="arrow">ENTER ▶</span>
+          </a>
+
+          <button class="disabled" type="button" disabled aria-disabled="true">
+            <span class="label">
+              <span class="t">第2弾（準備中）</span>
+              <span class="s">COMING SOON</span>
+            </span>
+            <span class="arrow">LOCK</span>
+          </button>
+
+          <a href="./zukan.html" aria-label="所持図鑑（自分の図鑑）へ">
+            <span class="label">
+              <span class="t">所持図鑑（自分の図鑑）へ</span>
+              <span class="s">収穫・入手したカードのコレクション</span>
+            </span>
+            <span class="arrow">GO ▶</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ✅ 魔法書（下） -->
+    <div class="book-zone" aria-hidden="true">
+      <img
+        src="https://ul.h3z.jp/h8OpyVhP.png"
+        alt=""
+        decoding="async"
+        loading="eager"
+      />
+    </div>
+  </div>
+</main>
+
+<!-- ヘルプモーダル -->
+<div id="helpModalBg" class="modal-bg" role="presentation" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal-head">
+      <div class="modal-title">
+        <div id="helpTitle" class="h">このページについて</div>
+        <div class="p">RPGのメニューみたいに選べる入口です。</div>
+      </div>
+      <button id="helpCloseX" class="xbtn" type="button" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="note">
+        ✅「第1弾を見る」＝公式カード一覧ページへ<br>
+        ✅「所持図鑑」＝自分がゲーム内で入手したカードの図鑑へ<br><br>
+        ※この入口ページは“扉”なので、ここ自体にはカード表示はありません。
+      </div>
+      <div class="modal-actions">
+        <button id="helpClose" class="ghost" type="button">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const CONFIG = {
+    BACK_URL: "./index.html" // ✅ ここを「街マップ」等に合わせて変更OK
+  };
+
+  const backBtn = document.getElementById("backBtn");
+  const helpBtn = document.getElementById("helpBtn");
+
+  const bg = document.getElementById("helpModalBg");
+  const closeX = document.getElementById("helpCloseX");
+  const closeBtn = document.getElementById("helpClose");
+
+  let lastFocus = null;
+
+  function openHelp(){
+    lastFocus = document.activeElement;
+    bg.classList.add("open");
+    bg.setAttribute("aria-hidden","false");
+    setTimeout(() => closeX.focus({preventScroll:true}), 10);
+  }
+  function closeHelp(){
+    bg.classList.remove("open");
+    bg.setAttribute("aria-hidden","true");
+    if(lastFocus && typeof lastFocus.focus === "function"){
+      setTimeout(() => lastFocus.focus({preventScroll:true}), 10);
+    }
+  }
+
+  backBtn.addEventListener("click", () => location.href = CONFIG.BACK_URL);
+  helpBtn.addEventListener("click", openHelp);
+
+  closeX.addEventListener("click", closeHelp);
+  closeBtn.addEventListener("click", closeHelp);
+
+  bg.addEventListener("click", (e) => {
+    if(e.target === bg) closeHelp();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape" && bg.classList.contains("open")){
+      e.preventDefault();
+      closeHelp();
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
 
