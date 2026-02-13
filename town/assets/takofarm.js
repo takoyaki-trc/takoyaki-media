@@ -106,7 +106,7 @@
       { no:"TN-045", name:"ドリームファイト", img:"https://ul.h3z.jp/IzPy6UsO.jpg" },
     ],
     LR: [
-      { no:"TN-025", name:"たこ焼き化石in函館山", img:"https://ul.h3z.jp/YSFRycmY.jpg" },
+      { no:"TN-025", name:"たこ焼き化石in函館山", img:"https://ul.h3z.jp/BR1X7scb.png" },
       { no:"TN-050", name:"焼かれし記憶、ソースに還る", img:"https://ul.h3z.jp/0I6s0icl.jpg" },
     ],
   };
@@ -154,8 +154,8 @@
     { id:"TP-004", name:"クリスマスたこぴ", img:"https://ul.h3z.jp/FGEKvxhK.png", rarity:"N" },
     { id:"TP-005", name:"お年玉たこぴ", img:"https://example.com/takopi5.png", rarity:"N" },
     { id:"TP-006", name:"バレンタインたこぴ", img:"https://ul.h3z.jp/J0kj3CLb.png", rarity:"N" },
-    { id:"TP-007", name:"お年玉たこぴ（差替予定）", img:"https://example.com/takopi7.png", rarity:"N" },
-    { id:"TP-008", name:"バレンタインたこぴ（差替予定）", img:"https://example.com/takopi8.png", rarity:"N" },
+    { id:"TP-007", name:"花見たこぴ", img:"https://ul.h3z.jp/uhVoJcW7.png", rarity:"UR" },
+    { id:"TP-008", name:"入学たこぴ", img:"https://ul.h3z.jp/7ygjl7kv.png.png", rarity:"UR" },
   ];
 
   // =========================
@@ -191,8 +191,8 @@
   // ✅ グラタン：2種固定（①LR / ②N）
   // =========================
   const GRATIN_POOL = [
-    { id:"col-001", name:"グラタン①（LR）", img:"https://ul.h3z.jp/zJubnlOw.png", rarity:"LR" },
-    { id:"col-002", name:"グラタン②（N）",  img:"https://ul.h3z.jp/1VQvIP7v.png", rarity:"N"  },
+    { id:"col-001", name:"伝説のたこ焼きライバー", img:"https://ul.h3z.jp/CmVTkAd2.png", rarity:"LR" },
+    { id:"col-002", name:"たこ焼き実況者ライバー",  img:"https://ul.h3z.jp/1VQvIP7v.png", rarity:"N"  },
   ];
   const GRATIN_LR_CHANCE = 0.03;
 
