@@ -218,13 +218,22 @@ main{
 .chip:active{ transform: translateY(1px); }
 
 .grid-panel{ padding:12px; }
+
+/* ✅ 1列3枚（スマホでも3枚） */
 .grid{
   display:grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap:10px;
 }
-@media (min-width:560px){ .grid{ grid-template-columns: repeat(3, 1fr); } }
-@media (min-width:900px){ .grid{ grid-template-columns: repeat(4, 1fr); } }
+
+/* 画面が狭すぎる端末だけ2枚に戻す（任意：超小型用） */
+@media (max-width:360px){
+  .grid{ grid-template-columns: repeat(2, 1fr); }
+}
+
+/* タブレット以上はそのまま増やしてOK */
+@media (min-width:560px){ .grid{ grid-template-columns: repeat(4, 1fr); } }
+@media (min-width:900px){ .grid{ grid-template-columns: repeat(5, 1fr); } }
 
 .card{
   border:1px solid rgba(255,255,255,.14);
@@ -562,6 +571,20 @@ button:focus-visible, input:focus-visible{
     BACK_URL: "./index.html", // 例：街マップに戻る
   };
 
+  // =========================
+  // ✅ cards-vol1.html 専用：非ホロ差し替え
+  // （このページだけ画像を上書き。ゲーム内は無影響）
+  // =========================
+  const LIST_ONLY_NONHOLO = {
+    "TN-025": "https://ul.h3z.jp/IDZNfaii.png",
+    // まだ非ホロが無いUR/LRは「未登録」でOK（= 元のホロ画像のまま表示）
+    // "TN-001": "https://...",
+    // "TN-007": "https://...",
+    // "TN-033": "https://...",
+    // "TN-045": "https://...",
+    // "TN-050": "https://...",
+  };
+
   // =========================================================
   // カードプール（省略なし・全部）
   // =========================================================
@@ -697,6 +720,11 @@ button:focus-visible, input:focus-visible{
     }[m]));
   }
 
+  // ✅ このページだけ「表示用画像」を返す
+  function imgForList(card){
+    return LIST_ONLY_NONHOLO[card.no] || card.img;
+  }
+
   // =========================
   // Flatten
   // =========================
@@ -775,9 +803,11 @@ button:focus-visible, input:focus-visible{
     mRarity.textContent = `RARITY:${card.rarity}`;
     mPlace.textContent = placeLabel(card.place);
 
-    mImg.src = card.img;
+    // ✅ モーダルも「このページ用の画像」で開く
+    const src = imgForList(card);
+    mImg.src = src;
     mImg.alt = `${card.name}（${card.no}）`;
-    openImg.href = card.img;
+    openImg.href = src;
 
     modalBg.classList.add("open");
     modalBg.setAttribute("aria-hidden","false");
@@ -845,9 +875,12 @@ button:focus-visible, input:focus-visible{
       card.setAttribute("tabindex","0");
       card.setAttribute("aria-label", `${c.no} ${c.name} を開く`);
 
+      // ✅ 一覧も「このページ用の画像」で表示
+      const src = imgForList(c);
+
       card.innerHTML = `
         <div class="thumb">
-          <img loading="lazy" decoding="async" src="${c.img}" alt="${escapeHtml(c.name)}">
+          <img loading="lazy" decoding="async" src="${src}" alt="${escapeHtml(c.name)}">
           <div class="${ribbonClass}"><span class="dot"></span>${ribbonText}</div>
         </div>
         <div class="info">
