@@ -106,7 +106,7 @@
       { no:"TN-045", name:"ドリームファイト", img:"https://ul.h3z.jp/IzPy6UsO.jpg" },
     ],
     LR: [
-      { no:"TN-025", name:"たこ焼き化石in函館山", img:"https://ul.h3z.jp/BR1X7scb.png" },
+      { no:"TN-025", name:"たこ焼き化石in函館山", img:"https://ul.h3z.jp/NEuFQ7PB.png" },
       { no:"TN-050", name:"焼かれし記憶、ソースに還る", img:"https://ul.h3z.jp/0I6s0icl.jpg" },
     ],
   };
