@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>コラボカード図鑑｜焼かれた伝説</title>
-  <meta name="description" content="コラボカード（販売用）と非売品レジェンド（配布終了）を、図鑑形式で閲覧できるページです。" />
+  <meta name="description" content="現物コラボ（販売 / 非売品）と、今後増えていくデジタルコラボ（ゲーム内）を分けて掲載するコラボカード図鑑です。" />
 
   <style>
     :root{
@@ -23,6 +23,10 @@
 
       --gold:#f6d37a;
       --gold2:#d6b056;
+
+      /* デジタル枠の色（紙カードと混ざらないように） */
+      --cy:#7ad7ff;
+      --cy2:#41b7ff;
 
       --radius:18px;
       --radius2:24px;
@@ -111,11 +115,16 @@
       background: rgba(246,211,122,.12);
       color:#fff;
     }
+    .pill.cy{
+      border-color: rgba(122,215,255,.55);
+      background: rgba(122,215,255,.12);
+      color:#fff;
+    }
 
     .wrap{
       max-width:1180px;
       margin:0 auto;
-      padding:16px 14px 50px;
+      padding:16px 14px 56px;
     }
 
     /* ===== Hero ===== */
@@ -157,13 +166,19 @@
     }
     .hero p{
       margin:0;
-      max-width: 70ch;
-      color: rgba(255,255,255,.80);
+      max-width: 76ch;
+      color: rgba(255,255,255,.82);
       font-size:13px;
-      line-height:1.65;
-      font-weight:800;
+      line-height:1.7;
+      font-weight:850;
     }
     .hero b{ color: var(--gold); }
+    .hero .warn{
+      color: rgba(255,255,255,.88);
+      font-weight:1000;
+      margin-top:2px;
+    }
+    .hero .warn b{ color: var(--cy); }
     .hero-meta{
       display:flex;
       gap:8px;
@@ -277,6 +292,7 @@
       margin:18px 4px 10px;
       display:flex;
       align-items:baseline;
+      justify-content:space-between;
       gap:10px;
       flex-wrap:wrap;
     }
@@ -291,16 +307,22 @@
       font-size:12px;
       font-weight:1000;
       letter-spacing:.02em;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .mini-p{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      padding:6px 10px;
+      border-radius: 999px;
     }
 
-    /* =========================================================
-       ✅ “カードサイズが合ってない”を解決するための設計
-       - カードは「縦長」を前提に固定比率（5:7）
-       - 画像は cover ではなく contain（切れない）
-       - 枠（フレーム）で“高級感”
-    ========================================================= */
-
-    /* ===== Grid (カードを大きく見せる) ===== */
+    /* ===== Grid ===== */
     .grid{
       display:grid;
       gap:14px;
@@ -331,12 +353,11 @@
     }
     .tile:active{ transform: translateY(-1px) scale(.99); }
 
-    /* ✅ 画像“だけ”をカード比率に合わせる箱 */
     .art{
       position:relative;
       width:100%;
-      aspect-ratio: var(--card-ratio); /* ←ここが肝 */
-      padding:10px; /* フレーム内余白 */
+      aspect-ratio: var(--card-ratio);
+      padding:10px;
       background:
         radial-gradient(600px 260px at 20% 0%, rgba(246,211,122,.12), transparent 60%),
         radial-gradient(520px 240px at 90% 20%, rgba(140,200,255,.10), transparent 60%),
@@ -344,7 +365,6 @@
       border-bottom:1px solid rgba(255,255,255,.10);
     }
 
-    /* ✅ “高級フレーム” */
     .frame{
       position:absolute;
       inset:10px;
@@ -368,7 +388,6 @@
       pointer-events:none;
     }
 
-    /* ✅ 画像は contain：切らずに収める */
     .art img{
       position:absolute;
       inset:12px;
@@ -381,7 +400,6 @@
       background: rgba(0,0,0,.22);
     }
 
-    /* ===== Info ===== */
     .info{
       padding:10px 10px 12px;
       display:grid;
@@ -399,7 +417,7 @@
       font-weight:1000;
       letter-spacing:.02em;
       line-height:1.25;
-      min-height: 2.5em; /* 2行分確保で段差が出にくい */
+      min-height: 2.5em;
     }
     .tags{ display:flex; gap:6px; flex-wrap:wrap; }
     .tag{
@@ -417,12 +435,17 @@
       background: rgba(246,211,122,.14);
       color:#fff;
     }
+    .tag.cy{
+      border-color: rgba(122,215,255,.55);
+      background: rgba(122,215,255,.12);
+      color:#fff;
+    }
     .tag.dim{
       color: rgba(255,255,255,.72);
       background: rgba(255,255,255,.04);
     }
 
-    /* ===== Legend Area ===== */
+    /* ===== Paper Free (legend area) ===== */
     .legend-area{
       margin-top:18px;
       border-radius: var(--radius2);
@@ -468,7 +491,6 @@
       letter-spacing:.02em;
     }
 
-    /* ✅ レジェンドも「カード比率」で横スクロール */
     .legend-scroll{
       display:flex;
       gap:12px;
@@ -481,7 +503,7 @@
 
     .legend-tile{
       flex:0 0 auto;
-      width: 240px; /* ここで見た目の大きさ調整 */
+      width: 240px;
       border-radius: 22px;
       border:1px solid rgba(246,211,122,.30);
       background: rgba(0,0,0,.20);
@@ -493,77 +515,68 @@
     .legend-tile .frame{ border-color: rgba(246,211,122,.48); }
     .legend-tile .info{ padding:10px; }
 
-    /* ===== Intro / Guide ===== */
-    .intro{
+    /* ===== Digital (future) ===== */
+    .digital{
       margin-top:18px;
       border-radius: var(--radius2);
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      box-shadow: var(--shadow2);
+      border:1px solid rgba(122,215,255,.34);
+      background:
+        radial-gradient(950px 360px at 22% 0%, rgba(122,215,255,.18), transparent 62%),
+        radial-gradient(800px 360px at 85% 15%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+      box-shadow: 0 22px 64px rgba(0,0,0,.46);
+      padding:12px;
+      position:relative;
       overflow:hidden;
     }
-    .intro .inner{
-      padding:14px;
-      display:grid;
-      gap:14px;
+    .digital::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      pointer-events:none;
+      background:
+        radial-gradient(520px 220px at 78% 15%, rgba(255,255,255,.10), transparent 60%),
+        radial-gradient(520px 220px at 25% 10%, rgba(122,215,255,.16), transparent 65%);
+      opacity:.8;
+      mix-blend-mode: screen;
     }
-    .intro h2{
+    .digital > *{ position:relative; }
+
+    .digital-head{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:4px 4px 10px;
+    }
+    .digital-head h2{
       margin:0;
       font-size:16px;
       font-weight:1000;
       letter-spacing:.05em;
     }
-    .intro p{
-      margin:0;
-      color: rgba(255,255,255,.80);
-      font-size:13px;
-      line-height:1.7;
-      font-weight:800;
-    }
-    .intro b{ color: var(--gold); }
-
-    .flow{
-      border-radius: 20px;
-      border:1px solid rgba(246,211,122,.28);
-      background:
-        radial-gradient(950px 320px at 18% 0%, rgba(246,211,122,.18), transparent 62%),
-        rgba(0,0,0,.14);
-      padding:12px;
-      position:relative;
-      overflow:hidden;
-    }
-    .flow::before{
-      content:"";
-      position:absolute;
-      inset:-1px;
-      pointer-events:none;
-      background: radial-gradient(520px 220px at 80% 10%, rgba(255,255,255,.10), transparent 60%);
-      opacity:.7;
-      mix-blend-mode: screen;
-    }
-    .flow > *{ position:relative; }
-
-    .flow-head{
-      display:flex;
-      align-items:baseline;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-    .flow-head .k{
-      font-weight:1000;
-      font-size:14px;
-      letter-spacing:.02em;
-    }
-    .flow-head .s{
-      color: rgba(255,255,255,.76);
+    .digital-head .note{
+      color: rgba(255,255,255,.84);
       font-size:12px;
       font-weight:1000;
       letter-spacing:.02em;
     }
-    .steps{ display:grid; gap:10px; }
+
+    .digital-box{
+      border-radius: 20px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      padding:12px;
+      display:grid;
+      gap:12px;
+    }
+
+    .steps{
+      display:grid;
+      gap:10px;
+    }
     @media (min-width:780px){
-      .steps{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .steps{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
     }
     .step{
       border-radius: 18px;
@@ -579,8 +592,9 @@
       display:grid;
       place-items:center;
       font-weight:1000;
-      border:1px solid rgba(246,211,122,.45);
-      background: rgba(246,211,122,.14);
+      border:1px solid rgba(122,215,255,.55);
+      background: rgba(122,215,255,.12);
+      color:#fff;
     }
     .step .t{
       font-weight:1000;
@@ -588,28 +602,61 @@
       letter-spacing:.02em;
     }
     .step .d{
-      color: rgba(255,255,255,.76);
+      color: rgba(255,255,255,.80);
       font-size:12px;
       line-height:1.65;
       font-weight:900;
     }
-    .step .d b{ color: var(--gold); }
-
-    .flow-note{
-      margin-top:10px;
-      color: rgba(255,255,255,.80);
+    .digital-warn{
+      border-radius: 16px;
+      border:1px solid rgba(122,215,255,.30);
+      background: rgba(122,215,255,.10);
+      padding:10px;
+      color: rgba(255,255,255,.92);
+      font-weight:1000;
       font-size:12px;
       line-height:1.65;
+      letter-spacing:.02em;
+    }
+    .digital-warn b{ color: var(--cy); }
+
+    .cta-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .btnlink{
+      color:#fff;
       font-weight:1000;
-      padding:10px 10px;
       border-radius: 16px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.07);
+      box-shadow: var(--shadow2);
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .btnlink.gold{
+      border-color: rgba(246,211,122,.45);
+      background: rgba(246,211,122,.12);
+    }
+    .btnlink.cy{
+      border-color: rgba(122,215,255,.45);
+      background: rgba(122,215,255,.12);
+    }
+    .small{
+      color: var(--muted2);
+      font-size:12px;
+      font-weight:900;
       letter-spacing:.02em;
     }
 
+    /* ===== Footer ===== */
     .footer{
-      margin-top:14px;
+      margin-top:16px;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
@@ -622,21 +669,8 @@
       letter-spacing:.02em;
     }
     .links{ display:flex; gap:10px; flex-wrap:wrap; }
-    .btnlink{
-      color:#fff;
-      font-weight:1000;
-      border-radius: 16px;
-      padding:10px 12px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.07);
-      box-shadow: var(--shadow2);
-    }
-    .btnlink.gold{
-      border-color: rgba(246,211,122,.45);
-      background: rgba(246,211,122,.12);
-    }
 
-    /* ===== Modal (縦カードが映える) ===== */
+    /* ===== Modal ===== */
     .modal{
       position:fixed;
       inset:0;
@@ -688,7 +722,6 @@
       cursor:pointer;
     }
 
-    /* ✅ 画像は“縦カード”が主役：左に大きく、右に説明 */
     .modal-body{
       display:grid;
       gap:0;
@@ -750,7 +783,7 @@
     .modal-tags{ display:flex; gap:6px; flex-wrap:wrap; }
     .modal-desc{
       margin:0;
-      color: rgba(255,255,255,.82);
+      color: rgba(255,255,255,.84);
       font-size:13px;
       line-height:1.75;
       font-weight:900;
@@ -783,15 +816,19 @@
 
   <section class="hero">
     <div class="hero-inner">
-      <h1>現実で起きた“焼かれた伝説”を、図鑑に封印する。</h1>
+      <h1>現物（紙）と、デジタル（ゲーム内）を“混ぜない”。</h1>
       <p>
-        ここに並ぶのは、宣伝じゃない。<br>
-        その瞬間が <b>カードとして焼き固められた記録</b> だ。
+        このページは <b>現物の紙カード</b>（販売 / 非売品）と、
+        今後増えていく <b>デジタルカード</b>（ゲーム内）を <b>明確に分けて</b> 掲載します。
+      </p>
+      <p class="warn">
+        ※ <b>デジタルコラボ</b>は「シリアル入力 → タネ → 畑で収穫」で入手（<b>紙のカードではありません</b>）。
       </p>
       <div class="hero-meta">
         <span class="pill">図鑑モード</span>
         <span class="pill">検索 / 絞り込み</span>
         <span class="pill gold" id="summaryPill">—</span>
+        <span class="pill cy">デジタルは別枠</span>
       </div>
     </div>
   </section>
@@ -826,71 +863,88 @@
     </div>
   </section>
 
+  <!-- =========================
+       ① 現物（販売）
+  ========================== -->
   <div class="section-title">
-    <h2>販売用（パック収録）</h2>
-    <div class="sub" id="subLine">—</div>
+    <h2>現物コラボ（販売）｜紙のカード</h2>
+    <div class="sub">
+      <span class="mini-p">パック収録（販売中）</span>
+      <span class="mini-p">🎯 = ダーツプロコラボ</span>
+      <span class="mini-p" id="subLine">—</span>
+    </div>
   </div>
 
-  <section class="grid" id="grid" aria-label="販売用コラボカード一覧"></section>
+  <section class="grid" id="grid" aria-label="現物（販売）コラボカード一覧"></section>
 
-  <section class="legend-area" id="legendArea" aria-label="非売品レジェンド枠">
+  <!-- =========================
+       ② 現物（非売品）
+  ========================== -->
+  <section class="legend-area" id="legendArea" aria-label="現物（非売品）コラボ枠">
     <div class="legend-head">
-      <h2>非売品：配布終了（レジェンド枠）</h2>
+      <h2>現物コラボ（非売品）｜紙のカード</h2>
       <div class="note">※期間中「5パック購入ごとに1枚」贈呈。現在は配布終了・入手不可。</div>
     </div>
-    <div class="legend-scroll" id="legendScroll" aria-label="非売品一覧"></div>
+    <div class="legend-scroll" id="legendScroll" aria-label="現物（非売品）一覧"></div>
   </section>
 
-  <section class="intro">
-    <div class="inner">
-      <div>
-        <h2>入手方法（重要）</h2>
-        <p>
-          コラボカードは <b>シリアルコードで直接カードをもらう</b> 仕組みではありません。<br>
-          シリアルで手に入るのは <b>コラボのタネ</b>。畑で育てて収穫した瞬間――カードが焼き上がり、図鑑に記録されます。
-        </p>
+  <!-- =========================
+       ③ デジタル（今後）
+  ========================== -->
+  <section class="digital" id="digitalArea" aria-label="デジタルコラボ（ゲーム内）">
+    <div class="digital-head">
+      <h2>デジタルコラボ（ゲーム内カード）</h2>
+      <div class="note">※ここは <b style="color:var(--cy)">紙のカードではありません</b>（今後この枠に追加されます）</div>
+    </div>
+
+    <div class="digital-box">
+      <div class="digital-warn">
+        <b>重要：</b> シリアルコードで直接カードはもらえません。<br>
+        シリアルで増えるのは <b>コラボのタネ</b>。畑で育てて <b>収穫した瞬間</b>、デジタルカードが図鑑に記録されます。
       </div>
 
-      <div class="flow">
-        <div class="flow-head">
-          <div class="k">シリアル → タネ → 育成 → 収穫</div>
-          <div class="s">“コードはカードじゃない。タネだ。”</div>
+      <div class="steps" aria-label="入手手順">
+        <div class="step">
+          <div class="num">1</div>
+          <div class="t">パックを購入</div>
+          <div class="d">BOOTH / 店頭で対象パックを買い、<b>シリアル</b>を入手。</div>
         </div>
-
-        <div class="steps">
-          <div class="step">
-            <div class="num">1</div>
-            <div class="t">BOOTH / 店頭で対象パック購入</div>
-            <div class="d">入手したパックの <b>シリアルコード</b> を用意。</div>
-          </div>
-          <div class="step">
-            <div class="num">2</div>
-            <div class="t">シリアル入力でタネGET</div>
-            <div class="d">コードで増えるのは <b>コラボのタネ</b>。</div>
-          </div>
-          <div class="step">
-            <div class="num">3</div>
-            <div class="t">畑で育てて収穫</div>
-            <div class="d">収穫の瞬間、 <b>カードが焼き上がる</b>。</div>
-          </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div class="t">たこぴのお店で入力</div>
+          <div class="d">ホームページ内ゲーム「<b>たこぴのお店</b>」で入力。</div>
         </div>
-
-        <div class="flow-note">
-          焼き上がった瞬間、そのカードの運命（枠）が決まる。<br>
-          だからこそ――みんな、伝説（LR）を狙う。
+        <div class="step">
+          <div class="num">3</div>
+          <div class="t">タネを植える</div>
+          <div class="d">増えるのは<b>コラボのタネ</b>（カードではない）。</div>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <div class="t">畑で収穫</div>
+          <div class="d">収穫時にカードが生成され、<b>デジタル図鑑</b>に追加。</div>
         </div>
       </div>
 
-      <div class="footer">
-        <div class="links">
-          <a class="btnlink" href="./index.html">トップへ</a>
-          <a class="btnlink" href="./zukan.html">図鑑へ</a>
-          <a class="btnlink gold" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener">BOOTH</a>
+      <div class="cta-row">
+        <div class="small">この枠は今後のコラボで増えていきます。</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btnlink cy" href="./roten.html">▶ たこぴのお店へ</a>
+          <a class="btnlink" href="./farm.html">▶ たこ焼きファームへ</a>
+          <a class="btnlink gold" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener">▶ BOOTH</a>
         </div>
-        <div>© 焼かれた伝説</div>
       </div>
     </div>
   </section>
+
+  <div class="footer">
+    <div class="links">
+      <a class="btnlink" href="./index.html">トップへ</a>
+      <a class="btnlink" href="./zukan.html">図鑑へ</a>
+    </div>
+    <div>© 焼かれた伝説</div>
+  </div>
+
 </main>
 
 <!-- Modal -->
@@ -923,27 +977,27 @@
 
   const UPDATED = "2026-02-14";
 
-  /* ✅ 販売用（パック収録） */
+  /* ✅ 現物（販売） */
   const SALE_CARDS = [
-    { no:"TN-022", name:"たこ焼きダーツインフェルノ《對馬裕佳子プロ》", img:"assets/images/collabo/darts/TN-022.jpg", category:"ダーツ", kind:"販売用", tags:["🎯","ダーツプロ","コラボ","販売用"] },
-    { no:"TN-028", name:"自己啓発たこ塾《井上諒プロ》",               img:"assets/images/collabo/darts/TN-028.jpg", category:"ダーツ", kind:"販売用", tags:["🎯","ダーツプロ","コラボ","販売用"] },
-    { no:"TN-029", name:"カロリーゼロ理論《仁木治プロ》",               img:"assets/images/collabo/darts/TN-029.jpg", category:"ダーツ", kind:"販売用", tags:["🎯","ダーツプロ","コラボ","販売用"] },
-    { no:"TN-044", name:"白い契約(稲石裕プロ)",                          img:"assets/images/collabo/darts/TN-044.jpg", category:"ダーツ", kind:"販売用", tags:["🎯","ダーツプロ","コラボ","販売用"] },
-    { no:"TN-048", name:"店主反撃レビュー《佐俣雄一郎》",                 img:"assets/images/collabo/darts/TN-048.jpg", category:"ダーツ", kind:"販売用", tags:["🎯","ダーツプロ","コラボ","販売用"] },
+    { no:"TN-022", name:"たこ焼きダーツインフェルノ《對馬裕佳子プロ》", img:"assets/images/collabo/darts/TN-022.jpg", category:"ダーツ", kind:"現物（販売）", tags:["🎯","紙のカード","販売","コラボ"] },
+    { no:"TN-028", name:"自己啓発たこ塾《井上諒プロ》",               img:"assets/images/collabo/darts/TN-028.jpg", category:"ダーツ", kind:"現物（販売）", tags:["🎯","紙のカード","販売","コラボ"] },
+    { no:"TN-029", name:"カロリーゼロ理論《仁木治プロ》",               img:"assets/images/collabo/darts/TN-029.jpg", category:"ダーツ", kind:"現物（販売）", tags:["🎯","紙のカード","販売","コラボ"] },
+    { no:"TN-044", name:"白い契約(稲石裕プロ)",                          img:"assets/images/collabo/darts/TN-044.jpg", category:"ダーツ", kind:"現物（販売）", tags:["🎯","紙のカード","販売","コラボ"] },
+    { no:"TN-048", name:"店主反撃レビュー《佐俣雄一郎》",                 img:"assets/images/collabo/darts/TN-048.jpg", category:"ダーツ", kind:"現物（販売）", tags:["🎯","紙のカード","販売","コラボ"] },
   ];
 
-  /* ✅ 非売品（配布終了） */
+  /* ✅ 現物（非売品 / 配布終了） */
   const LEGEND_CARDS = [
-    { id:"BS-001", name:"對馬裕佳子", img:"assets/images/legend/bussasari/BS-001.png", category:"非売品", kind:"非売品", tags:["非売品","配布終了","5パック特典"] },
-    { id:"BS-002", name:"佐俣雄一郎", img:"assets/images/legend/bussasari/BS-002.png", category:"非売品", kind:"非売品", tags:["非売品","配布終了","5パック特典"] },
-    { id:"BS-003", name:"井上諒",     img:"assets/images/legend/bussasari/BS-003.png", category:"非売品", kind:"非売品", tags:["非売品","配布終了","5パック特典"] },
-    { id:"BS-004", name:"仁木治",     img:"assets/images/legend/bussasari/BS-004.png", category:"非売品", kind:"非売品", tags:["非売品","配布終了","5パック特典"] },
-    { id:"BS-005", name:"稲石裕",     img:"assets/images/legend/bussasari/BS-005.png", category:"非売品", kind:"非売品", tags:["非売品","配布終了","5パック特典"] },
+    { id:"BS-001", name:"對馬裕佳子", img:"assets/images/legend/bussasari/BS-001.png", category:"ダーツ", kind:"現物（非売品）", tags:["紙のカード","非売品","配布終了","5パック特典"] },
+    { id:"BS-002", name:"佐俣雄一郎", img:"assets/images/legend/bussasari/BS-002.png", category:"ダーツ", kind:"現物（非売品）", tags:["紙のカード","非売品","配布終了","5パック特典"] },
+    { id:"BS-003", name:"井上諒",     img:"assets/images/legend/bussasari/BS-003.png", category:"ダーツ", kind:"現物（非売品）", tags:["紙のカード","非売品","配布終了","5パック特典"] },
+    { id:"BS-004", name:"仁木治",     img:"assets/images/legend/bussasari/BS-004.png", category:"ダーツ", kind:"現物（非売品）", tags:["紙のカード","非売品","配布終了","5パック特典"] },
+    { id:"BS-005", name:"稲石裕",     img:"assets/images/legend/bussasari/BS-005.png", category:"ダーツ", kind:"現物（非売品）", tags:["紙のカード","非売品","配布終了","5パック特典"] },
   ];
 
   const ALL = [
-    ...SALE_CARDS.map(c => ({...c, key:c.no, isLegend:false})),
-    ...LEGEND_CARDS.map(c => ({...c, no:c.id, key:c.id, isLegend:true})),
+    ...SALE_CARDS.map(c => ({...c, key:c.no, group:"sale"})),
+    ...LEGEND_CARDS.map(c => ({...c, no:c.id, key:c.id, group:"legend"})),
   ];
 
   const $ = (q) => document.querySelector(q);
@@ -1039,7 +1093,7 @@
   }
 
   const CATS = ["すべて", ...Array.from(new Set(ALL.map(c => c.category))).sort((a,b)=>a.localeCompare(b,"ja"))];
-  const KINDS = ["すべて", "販売用", "非売品"];
+  const KINDS = ["すべて", ...Array.from(new Set(ALL.map(c => c.kind))).sort((a,b)=>a.localeCompare(b,"ja"))];
   buildChips(catChips, CATS, "cat");
   buildChips(kindChips, KINDS, "kind");
 
@@ -1052,29 +1106,30 @@
     mImg.alt = card.name;
 
     mTags.innerHTML = "";
-    mTags.appendChild(makeTag(card.kind, card.kind==="非売品" ? "gold" : "dim"));
-    if((card.tags||[]).includes("🎯")) mTags.appendChild(makeTag("🎯", "gold"));
-    mTags.appendChild(makeTag(card.category, "dim"));
-    (card.tags||[]).filter(t => t !== "🎯").slice(0,4).forEach(t => {
-      const isGold = t.includes("非売品") || t.includes("配布終了");
-      mTags.appendChild(makeTag(t, isGold ? "gold" : "dim"));
-    });
+    if(card.kind.includes("非売品")) mTags.appendChild(makeTag("紙のカード", "gold"));
+    else mTags.appendChild(makeTag("紙のカード", "dim"));
 
-    if(card.kind === "非売品"){
+    if((card.tags||[]).includes("🎯")) mTags.appendChild(makeTag("🎯", "gold"));
+    mTags.appendChild(makeTag(card.kind, card.kind.includes("非売品") ? "gold" : "dim"));
+    mTags.appendChild(makeTag(card.category, "dim"));
+
+    const isLegend = card.kind.includes("非売品");
+    if(isLegend){
       mDesc.innerHTML =
-        `期間中「<b>5パック購入ごとに1枚</b>」贈呈された<b>非売品カード</b>です。<br>` +
+        `期間中「<b>5パック購入ごとに1枚</b>」贈呈された<b>非売品の紙カード</b>です。<br>` +
         `現在は<b>配布終了</b>しており、入手できません。`;
-      mMeta.textContent = "区分：非売品（配布終了）";
+      mMeta.textContent = "区分：現物（非売品）/ 配布終了";
     }else{
       mDesc.innerHTML =
-        `このカードは<b>販売用（パック収録）</b>のダーツプロコラボです。<br>` +
-        `シリアルで入手した<b>コラボのタネ</b>を畑で育て、収穫した瞬間にカードが焼き上がり、図鑑に記録されます。`;
-      mMeta.textContent = "区分：販売用（パック収録）";
+        `このカードは<b>現物（紙）</b>の<b>販売用コラボ</b>（パック収録）です。<br>` +
+        `※「デジタルコラボ」はこの上の枠とは別扱いで、シリアル → タネ → 収穫で入手します。`;
+      mMeta.textContent = "区分：現物（販売）/ パック収録";
     }
 
     modal.setAttribute("aria-hidden","false");
     document.body.style.overflow = "hidden";
   }
+
   function closeModal(){
     modal.setAttribute("aria-hidden","true");
     document.body.style.overflow = "";
@@ -1119,11 +1174,13 @@
     const tags = document.createElement("div");
     tags.className = "tags";
 
-    if(card.kind === "非売品"){
+    if(card.kind.includes("非売品")){
+      tags.appendChild(makeTag("紙のカード", "gold"));
       tags.appendChild(makeTag("非売品", "gold"));
       tags.appendChild(makeTag("配布終了", "gold"));
     }else{
-      tags.appendChild(makeTag("販売用", "dim"));
+      tags.appendChild(makeTag("紙のカード", "dim"));
+      tags.appendChild(makeTag("販売", "dim"));
       if((card.tags||[]).includes("🎯")) tags.appendChild(makeTag("🎯", "gold"));
     }
     tags.appendChild(makeTag(card.category, "dim"));
@@ -1144,25 +1201,24 @@
   }
 
   function render(){
-    const saleAll = ALL.filter(c => !c.isLegend);
-    const legAll  = ALL.filter(c => c.isLegend);
+    const saleAll = ALL.filter(c => c.group === "sale");
+    const legAll  = ALL.filter(c => c.group === "legend");
 
-    summaryPill.textContent = `販売用 ${saleAll.length} / 非売品 ${legAll.length} / 合計 ${saleAll.length + legAll.length}`;
+    summaryPill.textContent = `現物（販売）${saleAll.length} / 現物（非売品）${legAll.length} / 合計 ${saleAll.length + legAll.length}`;
 
-    // 販売用グリッド
-    const filtered = sortCards(saleAll.filter(matches));
+    // 現物（販売）グリッド：検索対象に含める（kind chips で絞れる）
+    const filteredSale = sortCards(saleAll.filter(matches));
     grid.innerHTML = "";
-    filtered.forEach(c => grid.appendChild(makeTile(c,false)));
-
-    countLine.textContent = `${filtered.length} / ${saleAll.length}`;
+    filteredSale.forEach(c => grid.appendChild(makeTile(c,false)));
+    countLine.textContent = `${filteredSale.length} / ${saleAll.length}`;
 
     const labelParts = [];
     if(state.cat !== "すべて") labelParts.push(`カテゴリ: ${state.cat}`);
     if(state.kind !== "すべて") labelParts.push(`区分: ${state.kind}`);
     if(state.query) labelParts.push(`検索: "${state.query}"`);
-    subLine.textContent = labelParts.length ? labelParts.join(" / ") : "ダーツプロ🎯コラボ（販売用）";
+    subLine.textContent = labelParts.length ? labelParts.join(" / ") : "検索・絞り込み";
 
-    // レジェンド（常に表示）
+    // 現物（非売品）も “別枠の展示” として常時表示（検索では消さない）
     legendScroll.innerHTML = "";
     if(legAll.length === 0){
       legendArea.style.display = "none";
@@ -1177,3 +1233,4 @@
 </script>
 </body>
 </html>
+
