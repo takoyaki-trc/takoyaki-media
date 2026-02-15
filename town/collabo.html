@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>コラボ図鑑｜焼かれた伝説</title>
-  <meta name="description" content="年号ごとにコラボをまとめて閲覧。帯UI（サムネ＋バッジ＋期間）をタップして詳細を開きます。" />
+  <meta name="description" content="年号ごとにコラボをまとめて閲覧。帯UIをタップするとモーダルで詳細を表示します。" />
 
   <style>
     :root{
@@ -15,11 +15,11 @@
       --muted: rgba(255,255,255,.78);
       --muted2: rgba(255,255,255,.62);
 
-      /* パネル（軽く・必要最小限） */
-      --panel: rgba(14,12,18,.66);
+      --panel: rgba(14,12,18,.72);
+      --panel2: rgba(0,0,0,.18);
       --line: rgba(255,255,255,.14);
-      --shadow: 0 14px 34px rgba(0,0,0,.32);
-      --shadow2: 0 10px 22px rgba(0,0,0,.22);
+      --shadow: 0 14px 34px rgba(0,0,0,.34);
+      --shadow2: 0 10px 22px rgba(0,0,0,.24);
 
       --gold:#f6d37a;
 
@@ -36,14 +36,13 @@
       --blueHover:#1486cc;
       --blue2Hover:#284ec7;
 
-      /* サイズ（後で調整しやすい） */
+      /* サイズ */
       --avatar: 120px;
-      --seed: 108px; /* プロフより少し小さく */
-      --cardW: 120px;
+      --seed: 110px;   /* ← プロフより少し小さめ */
       --cardRatio: 5 / 7;
 
       /* 帯UI */
-      --stripH: 76px;   /* 1枚目っぽい高さ */
+      --stripH: 76px;
       --stripThumb: 56px;
 
       --pad: 12px;
@@ -130,13 +129,13 @@
     }
 
     /* ===== Group (年の中のカテゴリ折りたたみ) ===== */
-    .group{
+    details.group{
       border:1px solid rgba(255,255,255,.14);
       background: rgba(0,0,0,.10);
       box-shadow: var(--shadow2);
       margin:10px 0 14px;
     }
-    .group > summary{
+    details.group > summary{
       list-style:none;
       cursor:pointer;
       padding:12px 12px;
@@ -146,7 +145,7 @@
       align-items:center;
       user-select:none;
     }
-    .group > summary::-webkit-details-marker{ display:none; }
+    details.group > summary::-webkit-details-marker{ display:none; }
     .gtitle{
       flex:1;
       min-width:0;
@@ -162,38 +161,23 @@
       color: rgba(255,255,255,.9);
       transition: transform .15s ease;
     }
-    details[open] > summary .chev{ transform: rotate(180deg); }
+    details.group[open] > summary .chev{ transform: rotate(180deg); }
     .gbody{ border-top:1px solid rgba(255,255,255,.12); padding:12px; }
 
-    /* =========================================================
-       ✅ ここが今回の主役：帯UI（1枚目みたいなやつ）
-       - 行が“画像付き”でワクワク
-       - 右の▼で開く（details/summary）
-       - 期間を名前の下に小さく入れる
-    ========================================================= */
-
-    .collab{
+    /* ===== Strip (帯UI) ===== */
+    .strip{
       border:1px solid rgba(255,255,255,.14);
       background: var(--panel);
       box-shadow: var(--shadow);
-      margin:0 0 12px;
-    }
-
-    /* 帯UI */
-    .collab > summary{
-      list-style:none;
-      cursor:pointer;
-      user-select:none;
-
+      padding:10px;
+      min-height: var(--stripH);
       display:flex;
       gap:12px;
       align-items:center;
-
-      padding:10px 10px;
-      min-height: var(--stripH);
+      cursor:pointer;
+      user-select:none;
+      margin:0 0 12px;
     }
-    .collab > summary::-webkit-details-marker{ display:none; }
-
     .strip-thumb{
       width: var(--stripThumb);
       height: var(--stripThumb);
@@ -208,7 +192,6 @@
       object-fit:cover;
       display:block;
     }
-
     .strip-mid{
       flex:1;
       min-width:0;
@@ -241,14 +224,12 @@
       letter-spacing:.02em;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
     }
-
     .strip-right{
       display:flex;
       align-items:center;
       gap:10px;
       flex:0 0 auto;
     }
-
     .badge{
       display:inline-block;
       padding:4px 10px;
@@ -260,41 +241,86 @@
       white-space:nowrap;
       line-height:1.2;
     }
-    .badge.paper{
-      background: var(--paper-bg);
-      border-color: var(--paper-br);
-    }
-    .badge.digital{
-      background: var(--digital-bg);
-      border-color: var(--digital-br);
-    }
+    .badge.paper{ background: var(--paper-bg); border-color: var(--paper-br); }
+    .badge.digital{ background: var(--digital-bg); border-color: var(--digital-br); }
+    .tri{ font-weight:1000; opacity:.95; font-size:18px; line-height:1; }
 
-    .tri{
+    /* ===== Modal ===== */
+    .modal{
+      position:fixed;
+      inset:0;
+      z-index:200;
+      display:none;
+      align-items:flex-start;
+      justify-content:center;
+      padding:12px;
+      background: rgba(0,0,0,.72);     /* ✅ 下の帯を完全に隠す */
+      backdrop-filter: blur(6px);
+      overflow:auto;
+    }
+    .modal[aria-hidden="false"]{ display:flex; }
+
+    .modal-card{
+      width: min(980px, 100%);
+      margin: 12px 0 40px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(10,10,14,.92);
+      box-shadow: 0 26px 85px rgba(0,0,0,.75);
+    }
+    .modal-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+    }
+    .mTitle{
       font-weight:1000;
-      opacity:.95;
-      font-size:18px;
-      line-height:1;
-      transform: translateY(-1px);
+      font-size:14px;
+      letter-spacing:.02em;
+      min-width:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-    details[open] > summary .tri{ transform: rotate(180deg); }
+    .close{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color:#fff;
+      padding:10px 12px;
+      font-weight:1000;
+      cursor:pointer;
+      border-radius:0;
+    }
 
-    /* ===== 展開部 ===== */
-    .collab-body{
-      border-top:1px solid rgba(255,255,255,.12);
+    .modal-body{
       padding: var(--pad);
-    }
-
-    .bodygrid{
       display:grid;
       gap: var(--gap);
-      grid-template-columns: 1fr;
-    }
-    @media (min-width:820px){
-      .bodygrid{ grid-template-columns: 170px 1fr; align-items:start; }
     }
 
-    /* 左：プロフィール */
-    .pcol{ display:grid; gap:8px; justify-items:start; }
+    /* ✅ 紹介文を “プロフィール画像の右横” に */
+    .profileRow{
+      display:grid;
+      gap: var(--gap);
+      grid-template-columns: var(--avatar) 1fr;
+      align-items:start;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      padding: 10px;
+    }
+    @media (max-width:520px){
+      .profileRow{ grid-template-columns: 1fr; }
+    }
+
+    .pcol{
+      display:grid;
+      gap:8px;
+      justify-items:start;
+    }
     .avatar{
       width: var(--avatar);
       aspect-ratio: 1/1;
@@ -318,7 +344,7 @@
       font-weight:1000;
       font-size:12px;
       letter-spacing:.02em;
-      border-radius:0; /* 四角 */
+      border-radius:0;
       border:1px solid rgba(255,255,255,.26);
       color:#fff;
       box-shadow: var(--shadow2);
@@ -328,34 +354,51 @@
     .linkbtn.other{ background: var(--blue2); }
     .linkbtn.other:hover{ background: var(--blue2Hover); }
 
-    /* 右：紹介文・タネ・カード */
+    .ptext{
+      min-width:0;
+      display:grid;
+      gap:6px;
+      align-content:start;
+    }
     .hname{
+      margin:0;
       font-weight:1000;
       font-size:16px;
       letter-spacing:.03em;
-      margin:0 0 6px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .periodLine{
+      margin:0;
+      color: rgba(255,255,255,.72);
+      font-weight:1000;
+      font-size:12px;
+      letter-spacing:.02em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
     }
     .desc{
       margin:0;
-      color: rgba(255,255,255,.86);
+      color: rgba(255,255,255,.88);
       font-size:13px;
       line-height:1.75;
       font-weight:800;
       white-space:pre-line;
     }
 
-    .seedrow{
-      margin-top:10px;
+    .seedRow{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      padding:10px;
       display:grid;
-      grid-template-columns: 1fr;
-      gap:10px;
-      padding-top:10px;
-      border-top:1px solid rgba(255,255,255,.10);
+      gap: var(--gap);
+      grid-template-columns: var(--seed) 1fr;
+      align-items:start;
     }
-    @media (min-width:560px){
-      .seedrow{ grid-template-columns: var(--seed) 1fr; align-items:start; }
+    @media (max-width:520px){
+      .seedRow{ grid-template-columns: 1fr; }
     }
-
     .seedbox{
       width: var(--seed);
       aspect-ratio: 1/1;
@@ -371,12 +414,7 @@
       display:block;
       padding:8px;
     }
-
-    .seedtext{
-      display:grid;
-      gap:6px;
-      align-content:start;
-    }
+    .seedtext{ display:grid; gap:8px; }
     .label{
       display:inline-block;
       padding:4px 10px;
@@ -391,7 +429,7 @@
     }
     .seeddesc{
       margin:0;
-      color: rgba(255,255,255,.84);
+      color: rgba(255,255,255,.86);
       font-size:13px;
       line-height:1.7;
       font-weight:800;
@@ -399,11 +437,10 @@
     }
 
     .cards{
-      margin-top:8px;
       display:grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap:10px;
-      max-width: calc(var(--cardW) * 2 + 10px);
+      max-width: 420px;
     }
     .cardtile{
       border:1px solid rgba(255,255,255,.18);
@@ -441,14 +478,14 @@
       color: rgba(255,255,255,.92);
     }
 
-    /* ===== 入手の流れ（折りたたみ） ===== */
-    .flow{
+    /* ===== Flow ===== */
+    details.flow{
       border:1px solid rgba(255,255,255,.14);
       background: rgba(0,0,0,.12);
       box-shadow: var(--shadow2);
       margin-top:14px;
     }
-    .flow > summary{
+    details.flow > summary{
       list-style:none;
       cursor:pointer;
       padding:12px;
@@ -458,11 +495,11 @@
       gap:10px;
       user-select:none;
     }
-    .flow > summary::-webkit-details-marker{ display:none; }
+    details.flow > summary::-webkit-details-marker{ display:none; }
     .flow .body{
       border-top:1px solid rgba(255,255,255,.12);
       padding:12px;
-      color: rgba(255,255,255,.86);
+      color: rgba(255,255,255,.88);
       font-size:12px;
       line-height:1.75;
       font-weight:900;
@@ -472,8 +509,7 @@
     @media (max-width:420px){
       :root{
         --avatar: 116px;
-        --seed: 106px;
-        --cardW: 116px;
+        --seed: 108px;
         --pad: 11px;
         --gap: 9px;
         --stripH: 74px;
@@ -490,7 +526,7 @@
       <button class="back" id="backBtn" type="button" aria-label="戻る">←</button>
       <div class="titlebox">
         <div class="title">コラボ図鑑</div>
-        <div class="sub">帯UI（サムネ＋バッジ＋期間）をタップして詳細を開く</div>
+        <div class="sub">帯UIをタップ → モーダルで詳細（他の人は見えない）</div>
       </div>
     </div>
   </header>
@@ -512,6 +548,21 @@
     </details>
   </section>
 
+  <!-- Modal -->
+  <div class="modal" id="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-card" role="document">
+      <div class="modal-top">
+        <div class="mTitle" id="mTitle">—</div>
+        <button class="close" id="mClose" type="button" aria-label="閉じる">閉じる</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- JSで中身を入れる -->
+        <div id="mBody"></div>
+      </div>
+    </div>
+  </div>
+
 <script>
 (() => {
   "use strict";
@@ -519,12 +570,33 @@
   const $app = document.getElementById("app");
   document.getElementById("backBtn").addEventListener("click", () => history.back());
 
-  /* =========================================================
-     ✅ ここを増やしていけば、コラボが増えてもテンプレで回る
-     - group(配信者 / ダーツ) を折りたたみ
-     - collab(ぐらたん / 各ダーツプロ) を帯UIで折りたたみ
-  ========================================================= */
+  // ===== Modal refs =====
+  const modal = document.getElementById("modal");
+  const mTitle = document.getElementById("mTitle");
+  const mBody  = document.getElementById("mBody");
+  const mClose = document.getElementById("mClose");
 
+  function openModal(item){
+    mTitle.textContent = item.title || item.person?.name || "コラボ詳細";
+    mBody.innerHTML = "";
+    mBody.appendChild(makeModalContent(item));
+
+    modal.setAttribute("aria-hidden","false");
+    document.body.style.overflow = "hidden";
+  }
+  function closeModal(){
+    modal.setAttribute("aria-hidden","true");
+    document.body.style.overflow = "";
+  }
+  mClose.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape" && modal.getAttribute("aria-hidden")==="false") closeModal();
+  });
+
+  /* =========================================================
+     ✅ データ（ここを増やすだけでOK）
+  ========================================================= */
   const DATA = [
     {
       year: "2026",
@@ -574,110 +646,110 @@
             {
               title: "對馬裕佳子プロ🎯",
               period: "",
-              thumb: "https://ul.h3z.jp/l5roYZJ4.png",
+              thumb: "assets/images/legend/bussasari/BS-001.png",
               modes: { paper:true, digital:true },
               person: {
                 name: "對馬裕佳子プロ🎯",
-                profileImg: "https://ul.h3z.jp/l5roYZJ4.png",
+                profileImg: "assets/images/legend/bussasari/BS-001.png",
                 intro: "（ここに紹介文：對馬プロ）",
                 xUrl: "#",
                 otherUrl: "#"
               },
               seed: {
-                img: "https://ul.h3z.jp/l5roYZJ4.png",
+                img: "assets/images/legend/bussasari/BS-001.png",
                 desc: "シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。"
               },
               cards: [
-                { no:"TN-022", img:"https://ul.h3z.jp/Prf7KxRk.jpg", paper:true, digital:true },
-                { no:"BS-001", img:"https://ul.h3z.jp/l5roYZJ4.png",  paper:true, digital:true }
+                { no:"TN-022", img:"assets/images/collabo/darts/TN-022.jpg", paper:true, digital:true },
+                { no:"BS-001", img:"assets/images/legend/bussasari/BS-001.png",  paper:true, digital:true }
               ]
             },
 
             {
               title: "佐俣雄一郎プロ🎯",
               period: "",
-              thumb: "https://ul.h3z.jp/BtOTLlSo.png",
+              thumb: "assets/images/legend/bussasari/BS-002.png",
               modes: { paper:true, digital:true },
               person: {
                 name: "佐俣雄一郎プロ🎯",
-                profileImg: "https://ul.h3z.jp/BtOTLlSo.png",
+                profileImg: "assets/images/legend/bussasari/BS-002.png",
                 intro: "（ここに紹介文：佐俣プロ）",
                 xUrl: "#",
                 otherUrl: "#"
               },
               seed: {
-                img: "https://ul.h3z.jp/BtOTLlSo.png",
+                img: "assets/images/legend/bussasari/BS-002.png",
                 desc: "シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。"
               },
               cards: [
-                { no:"TN-048", img:"https://ul.h3z.jp/ge8b4cQ5.jpg", paper:true, digital:true },
-                { no:"BS-002", img:"https://ul.h3z.jp/BtOTLlSo.png",  paper:true, digital:true }
+                { no:"TN-048", img:"assets/images/collabo/darts/TN-048.jpg", paper:true, digital:true },
+                { no:"BS-002", img:"assets/images/legend/bussasari/BS-002.png",  paper:true, digital:true }
               ]
             },
 
             {
               title: "井上諒プロ🎯",
               period: "",
-              thumb: "https://ul.h3z.jp/P5vsAste.png",
+              thumb: "assets/images/legend/bussasari/BS-003.png",
               modes: { paper:true, digital:true },
               person: {
                 name: "井上諒プロ🎯",
-                profileImg: "https://ul.h3z.jp/P5vsAste.png",
+                profileImg: "assets/images/legend/bussasari/BS-003.png",
                 intro: "（ここに紹介文：井上プロ）",
                 xUrl: "#",
                 otherUrl: "#"
               },
               seed: {
-                img: "https://ul.h3z.jp/P5vsAste.png",
+                img: "assets/images/legend/bussasari/BS-003.png",
                 desc: "シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。"
               },
               cards: [
-                { no:"TN-028", img:"https://ul.h3z.jp/sPChFFlG.jpg", paper:true, digital:true },
-                { no:"BS-003", img:"https://ul.h3z.jp/P5vsAste.png",  paper:true, digital:true }
+                { no:"TN-028", img:"assets/images/collabo/darts/TN-028.jpg", paper:true, digital:true },
+                { no:"BS-003", img:"assets/images/legend/bussasari/BS-003.png",  paper:true, digital:true }
               ]
             },
 
             {
               title: "仁木治プロ🎯",
               period: "",
-              thumb: "https://ul.h3z.jp/ZGBzzH2r.png",
+              thumb: "assets/images/legend/bussasari/BS-004.png",
               modes: { paper:true, digital:true },
               person: {
                 name: "仁木治プロ🎯",
-                profileImg: "https://ul.h3z.jp/ZGBzzH2r.png",
+                profileImg: "assets/images/legend/bussasari/BS-004.png",
                 intro: "（ここに紹介文：仁木プロ）",
                 xUrl: "#",
                 otherUrl: "#"
               },
               seed: {
-                img: "https://ul.h3z.jp/ZGBzzH2r.png",
+                img: "assets/images/legend/bussasari/BS-004.png",
                 desc: "シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。"
               },
               cards: [
-                { no:"TN-029", img:"https://ul.h3z.jp/4HEbt3YP.jpg", paper:true, digital:true },
-                { no:"BS-004", img:"https://ul.h3z.jp/ZGBzzH2r.png",  paper:true, digital:true }
+                { no:"TN-029", img:"assets/images/collabo/darts/TN-029.jpg", paper:true, digital:true },
+                { no:"BS-004", img:"assets/images/legend/bussasari/BS-004.png",  paper:true, digital:true }
               ]
             },
 
             {
               title: "稲石裕プロ🎯",
               period: "",
-              thumb: "https://ul.h3z.jp/nmiaCKae.png",
+              thumb: "assets/images/legend/bussasari/BS-005.png",
               modes: { paper:true, digital:true },
               person: {
                 name: "稲石裕プロ🎯",
-                profileImg: "https://ul.h3z.jp/nmiaCKae.png",
+                profileImg: "assets/images/legend/bussasari/BS-005.png",
                 intro: "（ここに紹介文：稲石プロ）",
                 xUrl: "#",
                 otherUrl: "#"
               },
               seed: {
-                img: "https://ul.h3z.jp/nmiaCKae.png",
+                img: "assets/images/legend/bussasari/BS-005.png",
                 desc: "シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。"
               },
               cards: [
-                { no:"TN-044", img:"https://ul.h3z.jp/bC1B4WkQ.jpg", paper:true, digital:true },
-                { no:"BS-005", img:"https://ul.h3z.jp/nmiaCKae.png",  paper:true, digital:true }
+                { no:"TN-044", img:"assets/images/collabo/darts/TN-044.jpg", paper:true, digital:true },
+                { no:"BS-005", img:"assets/images/legend/bussasari/BS-005.png",  paper:true, digital:true }
               ]
             }
           ]
@@ -700,26 +772,27 @@
     return b;
   }
 
-  function makeStripSummary(item){
-    const sum = document.createElement("summary");
+  function makeStrip(item){
+    const row = el("div","strip");
+    row.setAttribute("role","button");
+    row.setAttribute("tabindex","0");
+    row.setAttribute("aria-label", (item.title||"") + " を開く");
 
-    const thumb = el("div","strip-thumb");
+    const th = el("div","strip-thumb");
     const img = document.createElement("img");
     img.src = item.thumb || item.person?.profileImg || "";
     img.alt = item.title || "";
-    thumb.appendChild(img);
+    th.appendChild(img);
 
     const mid = el("div","strip-mid");
     mid.appendChild(el("div","strip-title", item.title || item.person?.name || "コラボ"));
-    const sub = el("div","strip-sub");
 
-    // ✅ 期間を“名前の下に小さく”表示
+    const sub = el("div","strip-sub");
     if(item.period){
       sub.appendChild(el("div","strip-period", item.period));
     }else{
       sub.appendChild(el("div","strip-period", "期間：—"));
     }
-
     mid.appendChild(sub);
 
     const right = el("div","strip-right");
@@ -727,19 +800,24 @@
     if(item.modes?.digital) right.appendChild(badge("digital"));
     right.appendChild(el("div","tri","▼"));
 
-    sum.appendChild(thumb);
-    sum.appendChild(mid);
-    sum.appendChild(right);
+    row.appendChild(th);
+    row.appendChild(mid);
+    row.appendChild(right);
 
-    return sum;
+    row.addEventListener("click", () => openModal(item));
+    row.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openModal(item); }
+    });
+
+    return row;
   }
 
-  function makeCollabBody(item){
-    const body = el("div","collab-body");
+  function makeModalContent(item){
+    const wrap = document.createElement("div");
 
-    const grid = el("div","bodygrid");
+    // profileRow（左：画像＋ボタン / 右：紹介文）
+    const profileRow = el("div","profileRow");
 
-    // 左：プロフィール
     const pcol = el("div","pcol");
     const avatar = el("div","avatar");
     const ava = document.createElement("img");
@@ -765,13 +843,25 @@
     links.appendChild(other);
     pcol.appendChild(links);
 
-    // 右：紹介文 → タネ（デジタル） → カード2枚
-    const rcol = document.createElement("div");
-    rcol.appendChild(el("div","hname", item.person?.name || ""));
-    rcol.appendChild(el("p","desc", item.person?.intro || ""));
+    const ptext = el("div","ptext");
+    const h = el("p","hname");
+    h.appendChild(document.createTextNode(item.person?.name || item.title || ""));
+    // バッジもここに
+    if(item.modes?.paper) h.appendChild(badge("paper"));
+    if(item.modes?.digital) h.appendChild(badge("digital"));
+    ptext.appendChild(h);
 
-    // タネ
-    const seedrow = el("div","seedrow");
+    // 期間を小さく
+    const per = el("p","periodLine", item.period ? `期間：${item.period}` : "期間：—");
+    ptext.appendChild(per);
+
+    ptext.appendChild(el("p","desc", item.person?.intro || ""));
+
+    profileRow.appendChild(pcol);
+    profileRow.appendChild(ptext);
+
+    // seed + cards
+    const seedRow = el("div","seedRow");
     const seedbox = el("div","seedbox");
     const seedimg = document.createElement("img");
     seedimg.src = item.seed?.img || "";
@@ -782,7 +872,6 @@
     seedtext.appendChild(el("span","label","デジタル"));
     seedtext.appendChild(el("p","seeddesc", item.seed?.desc || ""));
 
-    // カード2枚（小さめ横並び）
     const cards = el("div","cards");
     (item.cards || []).slice(0,2).forEach(cd => {
       const tile = el("div","cardtile");
@@ -801,27 +890,26 @@
       tile.appendChild(meta);
       cards.appendChild(tile);
     });
+
     seedtext.appendChild(cards);
+    seedRow.appendChild(seedbox);
+    seedRow.appendChild(seedtext);
 
-    seedrow.appendChild(seedbox);
-    seedrow.appendChild(seedtext);
-    rcol.appendChild(seedrow);
+    wrap.appendChild(profileRow);
+    wrap.appendChild(seedRow);
 
-    grid.appendChild(pcol);
-    grid.appendChild(rcol);
-
-    body.appendChild(grid);
-    return body;
+    return wrap;
   }
 
-  /* 描画 */
+  // ===== Render =====
   DATA.forEach(y => {
-    $app.appendChild(el("div","yearline", `${y.year}年`));
+    const yl = el("div","yearline", `${y.year}年`);
     if(y.yearNote){
       const note = document.createElement("small");
       note.textContent = y.yearNote;
-      $app.lastChild.appendChild(note);
+      yl.appendChild(note);
     }
+    $app.appendChild(yl);
 
     (y.groups || []).forEach(g => {
       const gd = document.createElement("details");
@@ -836,13 +924,7 @@
       gd.appendChild(s);
 
       const body = el("div","gbody");
-      (g.collabs || []).forEach(item => {
-        const cd = document.createElement("details");
-        cd.className = "collab";
-        cd.appendChild(makeStripSummary(item));
-        cd.appendChild(makeCollabBody(item));
-        body.appendChild(cd);
-      });
+      (g.collabs || []).forEach(item => body.appendChild(makeStrip(item)));
 
       gd.appendChild(body);
       $app.appendChild(gd);
