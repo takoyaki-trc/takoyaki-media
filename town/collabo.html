@@ -4,37 +4,48 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>コラボ図鑑｜焼かれた伝説</title>
-  <meta name="description" content="年号ごとにコラボをまとめて閲覧できるページ。プロフィール／タネ（デジタル）／カード（紙・デジタル）を整理表示します。" />
+  <meta name="description" content="年号ごとにコラボをまとめて閲覧。帯UI（サムネ＋バッジ＋期間）をタップして詳細を開きます。" />
 
   <style>
     :root{
+      /* 背景（そのまま表示） */
       --bg-url: url("https://ul.h3z.jp/G7grA8Dy.png");
 
       --text:#fff;
       --muted: rgba(255,255,255,.78);
       --muted2: rgba(255,255,255,.62);
 
-      --panel: rgba(14,12,18,.64);
-      --panel2: rgba(0,0,0,.22);
+      /* パネル（軽く・必要最小限） */
+      --panel: rgba(14,12,18,.66);
       --line: rgba(255,255,255,.14);
+      --shadow: 0 14px 34px rgba(0,0,0,.32);
+      --shadow2: 0 10px 22px rgba(0,0,0,.22);
 
       --gold:#f6d37a;
 
+      /* バッジ色 */
+      --paper-bg: rgba(246,211,122,.20);
+      --paper-br: rgba(246,211,122,.55);
+
+      --digital-bg: rgba(29,161,242,.22);
+      --digital-br: rgba(29,161,242,.55);
+
+      /* ボタン */
       --blue:#1da1f2;
       --blue2:#2f6df6;
       --blueHover:#1486cc;
       --blue2Hover:#284ec7;
 
-      --shadow: 0 14px 34px rgba(0,0,0,.32);
-      --shadow2: 0 10px 22px rgba(0,0,0,.22);
+      /* サイズ（後で調整しやすい） */
+      --avatar: 120px;
+      --seed: 108px; /* プロフより少し小さく */
+      --cardW: 120px;
+      --cardRatio: 5 / 7;
 
-      /* サイズ */
-      --avatar: 112px;
-      --seed: 104px; /* プロフより少し小さく */
-      --card: 120px;
-      --card-ratio: 5 / 7;
+      /* 帯UI */
+      --stripH: 76px;   /* 1枚目っぽい高さ */
+      --stripThumb: 56px;
 
-      /* 余白（全体を詰める） */
       --pad: 12px;
       --gap: 10px;
     }
@@ -97,11 +108,11 @@
     .wrap{
       max-width:1100px;
       margin:0 auto;
-      padding:14px 14px 80px;
+      padding:14px 14px 90px;
     }
 
-    /* ===== Year ===== */
-    .year{
+    /* ===== Year line ===== */
+    .yearline{
       margin:14px 0 6px;
       font-weight:1000;
       font-size:18px;
@@ -111,14 +122,14 @@
       gap:10px;
       text-shadow: 0 2px 10px rgba(0,0,0,.3);
     }
-    .year small{
+    .yearline small{
       color:var(--muted2);
       font-weight:900;
       font-size:12px;
       letter-spacing:.02em;
     }
 
-    /* ===== Group Accordion (上位) ===== */
+    /* ===== Group (年の中のカテゴリ折りたたみ) ===== */
     .group{
       border:1px solid rgba(255,255,255,.14);
       background: rgba(0,0,0,.10);
@@ -146,12 +157,19 @@
     }
     .gtitle .main{ font-size:15px; letter-spacing:.03em; }
     .gtitle .mini{ font-size:12px; color:var(--muted); font-weight:900; }
-    .chev{ font-weight:1000; color: rgba(255,255,255,.9); transition: transform .15s ease; }
-    details[open] .chev{ transform: rotate(180deg); }
+    .chev{
+      font-weight:1000;
+      color: rgba(255,255,255,.9);
+      transition: transform .15s ease;
+    }
+    details[open] > summary .chev{ transform: rotate(180deg); }
     .gbody{ border-top:1px solid rgba(255,255,255,.12); padding:12px; }
 
     /* =========================================================
-       ✅ コラボ本体：summaryを “カード風サマリー” に
+       ✅ ここが今回の主役：帯UI（1枚目みたいなやつ）
+       - 行が“画像付き”でワクワク
+       - 右の▼で開く（details/summary）
+       - 期間を名前の下に小さく入れる
     ========================================================= */
 
     .collab{
@@ -161,116 +179,121 @@
       margin:0 0 12px;
     }
 
-    /* 1コラボの折りたたみ */
+    /* 帯UI */
     .collab > summary{
       list-style:none;
       cursor:pointer;
-      padding: var(--pad);
-      display:grid;
-      gap:10px;
       user-select:none;
+
+      display:flex;
+      gap:12px;
+      align-items:center;
+
+      padding:10px 10px;
+      min-height: var(--stripH);
     }
     .collab > summary::-webkit-details-marker{ display:none; }
 
-    /* サマリー上段：年月 + タネ名 + 期間 */
-    .sum-top{
-      display:flex;
-      gap:10px;
-      align-items:baseline;
-      flex-wrap:wrap;
-      justify-content:space-between;
-    }
-    .date{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
-      font-weight:1000;
-      font-size:12px;
-      color: rgba(255,255,255,.86);
-    }
-    .seedname{
-      font-weight:1000;
-      color: var(--gold);
-      letter-spacing:.03em;
-      font-size:13px;
-    }
-    .period{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
-      font-weight:1000;
-      font-size:12px;
-      color: rgba(255,255,255,.78);
-    }
-
-    /* サマリー下段：小アイコン＋相手名＋紙/デジタルバッジ */
-    .sum-bottom{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    .mini-ava{
-      width:38px; height:38px;
+    .strip-thumb{
+      width: var(--stripThumb);
+      height: var(--stripThumb);
+      flex:0 0 auto;
       border:1px solid rgba(255,255,255,.22);
       background: rgba(0,0,0,.18);
       overflow:hidden;
-      flex:0 0 auto;
     }
-    .mini-ava img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .strip-thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
 
-    .who{
-      font-weight:1000;
-      font-size:13px;
-      letter-spacing:.02em;
-      color:#fff;
+    .strip-mid{
+      flex:1;
+      min-width:0;
+      display:grid;
+      gap:4px;
     }
-    .hint{
-      margin-left:auto;
+    .strip-title{
+      font-weight:1000;
+      font-size:15px;
+      letter-spacing:.03em;
+      line-height:1.2;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .strip-sub{
       display:flex;
+      gap:10px;
       align-items:center;
-      gap:8px;
-      color: rgba(255,255,255,.82);
+      flex-wrap:wrap;
+      color: rgba(255,255,255,.84);
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .strip-period{
+      color: rgba(255,255,255,.72);
       font-weight:1000;
       font-size:12px;
+      letter-spacing:.02em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
     }
+
+    .strip-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:0 0 auto;
+    }
+
     .badge{
       display:inline-block;
-      padding:2px 8px;
-      font-size:11px;
+      padding:4px 10px;
+      font-size:12px;
       font-weight:1000;
       border:1px solid rgba(255,255,255,.22);
       border-radius:0;
       letter-spacing:.02em;
       white-space:nowrap;
+      line-height:1.2;
     }
     .badge.paper{
-      background: rgba(246,211,122,.20);
-      border-color: rgba(246,211,122,.55);
+      background: var(--paper-bg);
+      border-color: var(--paper-br);
     }
     .badge.digital{
-      background: rgba(29,161,242,.22);
-      border-color: rgba(29,161,242,.55);
+      background: var(--digital-bg);
+      border-color: var(--digital-br);
     }
 
-    .openmark{
-      margin-left:auto;
+    .tri{
       font-weight:1000;
-      opacity:.9;
+      opacity:.95;
+      font-size:18px;
+      line-height:1;
+      transform: translateY(-1px);
     }
+    details[open] > summary .tri{ transform: rotate(180deg); }
 
+    /* ===== 展開部 ===== */
     .collab-body{
       border-top:1px solid rgba(255,255,255,.12);
       padding: var(--pad);
     }
 
-    /* 본문 레イアウト：左プロフィール / 右情報 */
-    .grid{
+    .bodygrid{
       display:grid;
       gap: var(--gap);
       grid-template-columns: 1fr;
     }
     @media (min-width:820px){
-      .grid{ grid-template-columns: 160px 1fr; align-items:start; }
+      .bodygrid{ grid-template-columns: 170px 1fr; align-items:start; }
     }
 
-    /* ===== profile column ===== */
+    /* 左：プロフィール */
     .pcol{ display:grid; gap:8px; justify-items:start; }
     .avatar{
       width: var(--avatar);
@@ -305,7 +328,7 @@
     .linkbtn.other{ background: var(--blue2); }
     .linkbtn.other:hover{ background: var(--blue2Hover); }
 
-    /* ===== right content ===== */
+    /* 右：紹介文・タネ・カード */
     .hname{
       font-weight:1000;
       font-size:16px;
@@ -321,7 +344,6 @@
       white-space:pre-line;
     }
 
-    /* ===== seed section ===== */
     .seedrow{
       margin-top:10px;
       display:grid;
@@ -355,22 +377,18 @@
       gap:6px;
       align-content:start;
     }
-
     .label{
       display:inline-block;
-      padding:3px 8px;
-      font-size:11px;
+      padding:4px 10px;
+      font-size:12px;
       font-weight:1000;
       border:1px solid rgba(255,255,255,.22);
       border-radius:0;
       letter-spacing:.02em;
       width: fit-content;
+      background: var(--digital-bg);
+      border-color: var(--digital-br);
     }
-    .label.digital{
-      background: rgba(29,161,242,.22);
-      border-color: rgba(29,161,242,.55);
-    }
-
     .seeddesc{
       margin:0;
       color: rgba(255,255,255,.84);
@@ -380,13 +398,12 @@
       white-space:pre-line;
     }
 
-    /* ===== cards 2-column ===== */
     .cards{
       margin-top:8px;
       display:grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap:10px;
-      max-width: calc(var(--card) * 2 + 10px);
+      max-width: calc(var(--cardW) * 2 + 10px);
     }
     .cardtile{
       border:1px solid rgba(255,255,255,.18);
@@ -396,7 +413,7 @@
     }
     .cardart{
       width:100%;
-      aspect-ratio: var(--card-ratio);
+      aspect-ratio: var(--cardRatio);
       background: rgba(0,0,0,.18);
       border-bottom:1px solid rgba(255,255,255,.10);
       overflow:hidden;
@@ -454,13 +471,15 @@
 
     @media (max-width:420px){
       :root{
-        --avatar: 108px;
-        --seed: 100px;
-        --card: 116px;
+        --avatar: 116px;
+        --seed: 106px;
+        --cardW: 116px;
         --pad: 11px;
         --gap: 9px;
+        --stripH: 74px;
+        --stripThumb: 56px;
       }
-      .wrap{ padding:12px 12px 70px; }
+      .wrap{ padding:12px 12px 80px; }
     }
   </style>
 </head>
@@ -471,7 +490,7 @@
       <button class="back" id="backBtn" type="button" aria-label="戻る">←</button>
       <div class="titlebox">
         <div class="title">コラボ図鑑</div>
-        <div class="sub">年号で折りたたみ｜1コラボは「プロフィール → タネ（デジタル） → カード2枚」</div>
+        <div class="sub">帯UI（サムネ＋バッジ＋期間）をタップして詳細を開く</div>
       </div>
     </div>
   </header>
@@ -500,7 +519,12 @@
   const $app = document.getElementById("app");
   document.getElementById("backBtn").addEventListener("click", () => history.back());
 
-  /* ===== データ（ここは前回と同じ仕組み） ===== */
+  /* =========================================================
+     ✅ ここを増やしていけば、コラボが増えてもテンプレで回る
+     - group(配信者 / ダーツ) を折りたたみ
+     - collab(ぐらたん / 各ダーツプロ) を帯UIで折りたたみ
+  ========================================================= */
+
   const DATA = [
     {
       year: "2026",
@@ -511,30 +535,33 @@
           groupMini: "デジタル（タネ育成）",
           collabs: [
             {
-              date: "2026.02",
+              title: "配信者《ぐらたん》",
               period: "2026.2.24〜3.24",
-              seedTitleLine: "ぐらたんのタネ",
+              thumb: "https://ul.h3z.jp/zXzQtZGi.png",
+              modes: { paper:false, digital:true },
+
               person: {
                 name: "配信者《ぐらたん》",
                 profileImg: "https://ul.h3z.jp/zXzQtZGi.png",
                 intro:
-`ここに紹介文を全部貼る（確定版）
-・どんな人？
-・どんな配信？
-・なぜコラボ？
-など`,
+`（ここに紹介文を全部）
+深夜の配信回線に住み着いた語り手。
+声は低く、語りは静か。
+だが一度聞けば、なぜか最後まで残ってしまう。`,
                 xUrl: "#",
                 otherUrl: "#"
               },
+
               seed: {
                 img: "https://ul.h3z.jp/rKfsdOZB.png",
                 desc:
-`「シリアルコードで増えるのは“カード”じゃなくて“タネ”」です。
-このタネを畑に植えて育て、収穫した瞬間に “デジタルカード” として焼き上がります。`
+`シリアルコードで増えるのは“カード”ではなく「コラボのタネ」。
+そのタネを畑に植えて育て、収穫した瞬間にデジタルカードが焼き上がります。`
               },
+
               cards: [
                 { no:"GR-001", img:"https://ul.h3z.jp/rKfsdOZB.png", paper:false, digital:true },
-                { no:"GR-002", img:"https://ul.h3z.jp/rKfsdOZB.png", paper:false, digital:true }
+                { no:"GR-002", img:"https://ul.h3z.jp/rKfsdOZB.png", paper:false, digital:true },
               ]
             }
           ]
@@ -545,23 +572,112 @@
           groupMini: "紙（現物）＋ デジタル（タネ育成）",
           collabs: [
             {
-              date: "2026",
+              title: "對馬裕佳子プロ🎯",
               period: "",
-              seedTitleLine: "ブッ刺さりタネ（對馬裕佳子）",
+              thumb: "https://ul.h3z.jp/l5roYZJ4.png",
+              modes: { paper:true, digital:true },
               person: {
-                name: "ダーツプロ《對馬裕佳子🎯》",
-                profileImg: "https://ul.h3z.jp/zXzQtZGi.png",
-                intro: `（ここに對馬プロの紹介文）`,
+                name: "對馬裕佳子プロ🎯",
+                profileImg: "https://ul.h3z.jp/l5roYZJ4.png",
+                intro: "（ここに紹介文：對馬プロ）",
                 xUrl: "#",
                 otherUrl: "#"
               },
               seed: {
                 img: "https://ul.h3z.jp/l5roYZJ4.png",
-                desc: `シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。`
+                desc: "シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。"
               },
               cards: [
                 { no:"TN-022", img:"https://ul.h3z.jp/Prf7KxRk.jpg", paper:true, digital:true },
                 { no:"BS-001", img:"https://ul.h3z.jp/l5roYZJ4.png",  paper:true, digital:true }
+              ]
+            },
+
+            {
+              title: "佐俣雄一郎プロ🎯",
+              period: "",
+              thumb: "https://ul.h3z.jp/BtOTLlSo.png",
+              modes: { paper:true, digital:true },
+              person: {
+                name: "佐俣雄一郎プロ🎯",
+                profileImg: "https://ul.h3z.jp/BtOTLlSo.png",
+                intro: "（ここに紹介文：佐俣プロ）",
+                xUrl: "#",
+                otherUrl: "#"
+              },
+              seed: {
+                img: "https://ul.h3z.jp/BtOTLlSo.png",
+                desc: "シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。"
+              },
+              cards: [
+                { no:"TN-048", img:"https://ul.h3z.jp/ge8b4cQ5.jpg", paper:true, digital:true },
+                { no:"BS-002", img:"https://ul.h3z.jp/BtOTLlSo.png",  paper:true, digital:true }
+              ]
+            },
+
+            {
+              title: "井上諒プロ🎯",
+              period: "",
+              thumb: "https://ul.h3z.jp/P5vsAste.png",
+              modes: { paper:true, digital:true },
+              person: {
+                name: "井上諒プロ🎯",
+                profileImg: "https://ul.h3z.jp/P5vsAste.png",
+                intro: "（ここに紹介文：井上プロ）",
+                xUrl: "#",
+                otherUrl: "#"
+              },
+              seed: {
+                img: "https://ul.h3z.jp/P5vsAste.png",
+                desc: "シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。"
+              },
+              cards: [
+                { no:"TN-028", img:"https://ul.h3z.jp/sPChFFlG.jpg", paper:true, digital:true },
+                { no:"BS-003", img:"https://ul.h3z.jp/P5vsAste.png",  paper:true, digital:true }
+              ]
+            },
+
+            {
+              title: "仁木治プロ🎯",
+              period: "",
+              thumb: "https://ul.h3z.jp/ZGBzzH2r.png",
+              modes: { paper:true, digital:true },
+              person: {
+                name: "仁木治プロ🎯",
+                profileImg: "https://ul.h3z.jp/ZGBzzH2r.png",
+                intro: "（ここに紹介文：仁木プロ）",
+                xUrl: "#",
+                otherUrl: "#"
+              },
+              seed: {
+                img: "https://ul.h3z.jp/ZGBzzH2r.png",
+                desc: "シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。"
+              },
+              cards: [
+                { no:"TN-029", img:"https://ul.h3z.jp/4HEbt3YP.jpg", paper:true, digital:true },
+                { no:"BS-004", img:"https://ul.h3z.jp/ZGBzzH2r.png",  paper:true, digital:true }
+              ]
+            },
+
+            {
+              title: "稲石裕プロ🎯",
+              period: "",
+              thumb: "https://ul.h3z.jp/nmiaCKae.png",
+              modes: { paper:true, digital:true },
+              person: {
+                name: "稲石裕プロ🎯",
+                profileImg: "https://ul.h3z.jp/nmiaCKae.png",
+                intro: "（ここに紹介文：稲石プロ）",
+                xUrl: "#",
+                otherUrl: "#"
+              },
+              seed: {
+                img: "https://ul.h3z.jp/nmiaCKae.png",
+                desc: "シリアルで増えるのはタネ → 畑で育てて収穫 → デジタルカード化。"
+              },
+              cards: [
+                { no:"TN-044", img:"https://ul.h3z.jp/bC1B4WkQ.jpg", paper:true, digital:true },
+                { no:"BS-005", img:"https://ul.h3z.jp/nmiaCKae.png",  paper:true, digital:true }
               ]
             }
           ]
@@ -570,148 +686,169 @@
     }
   ];
 
-  function el(tag, cls, html){
+  function el(tag, cls, txt){
     const n = document.createElement(tag);
     if(cls) n.className = cls;
-    if(html != null) n.innerHTML = html;
+    if(txt != null) n.textContent = txt;
     return n;
   }
-  function safe(s){ return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-  function makeBadge(type){
-    const span = document.createElement("span");
-    span.className = "badge " + type;
-    span.textContent = (type === "paper") ? "紙" : "デジタル";
-    return span;
+  function badge(type){
+    const b = document.createElement("span");
+    b.className = "badge " + type;
+    b.textContent = (type === "paper") ? "紙" : "デジタル";
+    return b;
   }
 
-  DATA.forEach(yearBlock => {
-    $app.appendChild(el("div","year", `${safe(yearBlock.year)}年 <small>${safe(yearBlock.yearNote || "")}</small>`));
+  function makeStripSummary(item){
+    const sum = document.createElement("summary");
 
-    (yearBlock.groups || []).forEach(group => {
-      const g = document.createElement("details");
-      g.className = "group";
+    const thumb = el("div","strip-thumb");
+    const img = document.createElement("img");
+    img.src = item.thumb || item.person?.profileImg || "";
+    img.alt = item.title || "";
+    thumb.appendChild(img);
+
+    const mid = el("div","strip-mid");
+    mid.appendChild(el("div","strip-title", item.title || item.person?.name || "コラボ"));
+    const sub = el("div","strip-sub");
+
+    // ✅ 期間を“名前の下に小さく”表示
+    if(item.period){
+      sub.appendChild(el("div","strip-period", item.period));
+    }else{
+      sub.appendChild(el("div","strip-period", "期間：—"));
+    }
+
+    mid.appendChild(sub);
+
+    const right = el("div","strip-right");
+    if(item.modes?.paper) right.appendChild(badge("paper"));
+    if(item.modes?.digital) right.appendChild(badge("digital"));
+    right.appendChild(el("div","tri","▼"));
+
+    sum.appendChild(thumb);
+    sum.appendChild(mid);
+    sum.appendChild(right);
+
+    return sum;
+  }
+
+  function makeCollabBody(item){
+    const body = el("div","collab-body");
+
+    const grid = el("div","bodygrid");
+
+    // 左：プロフィール
+    const pcol = el("div","pcol");
+    const avatar = el("div","avatar");
+    const ava = document.createElement("img");
+    ava.src = item.person?.profileImg || "";
+    ava.alt = item.person?.name || "プロフィール";
+    avatar.appendChild(ava);
+    pcol.appendChild(avatar);
+
+    const links = el("div","linkstack");
+    const x = document.createElement("a");
+    x.className = "linkbtn x";
+    x.textContent = "X";
+    x.href = item.person?.xUrl || "#";
+    x.target = "_blank";
+    x.rel = "noopener";
+    const other = document.createElement("a");
+    other.className = "linkbtn other";
+    other.textContent = "他リンク";
+    other.href = item.person?.otherUrl || "#";
+    other.target = "_blank";
+    other.rel = "noopener";
+    links.appendChild(x);
+    links.appendChild(other);
+    pcol.appendChild(links);
+
+    // 右：紹介文 → タネ（デジタル） → カード2枚
+    const rcol = document.createElement("div");
+    rcol.appendChild(el("div","hname", item.person?.name || ""));
+    rcol.appendChild(el("p","desc", item.person?.intro || ""));
+
+    // タネ
+    const seedrow = el("div","seedrow");
+    const seedbox = el("div","seedbox");
+    const seedimg = document.createElement("img");
+    seedimg.src = item.seed?.img || "";
+    seedimg.alt = "タネ";
+    seedbox.appendChild(seedimg);
+
+    const seedtext = el("div","seedtext");
+    seedtext.appendChild(el("span","label","デジタル"));
+    seedtext.appendChild(el("p","seeddesc", item.seed?.desc || ""));
+
+    // カード2枚（小さめ横並び）
+    const cards = el("div","cards");
+    (item.cards || []).slice(0,2).forEach(cd => {
+      const tile = el("div","cardtile");
+      const art = el("div","cardart");
+      const im = document.createElement("img");
+      im.src = cd.img || "";
+      im.alt = cd.no || "カード";
+      art.appendChild(im);
+
+      const meta = el("div","cardmeta");
+      meta.appendChild(el("span","no", cd.no || ""));
+      if(cd.paper) meta.appendChild(badge("paper"));
+      if(cd.digital) meta.appendChild(badge("digital"));
+
+      tile.appendChild(art);
+      tile.appendChild(meta);
+      cards.appendChild(tile);
+    });
+    seedtext.appendChild(cards);
+
+    seedrow.appendChild(seedbox);
+    seedrow.appendChild(seedtext);
+    rcol.appendChild(seedrow);
+
+    grid.appendChild(pcol);
+    grid.appendChild(rcol);
+
+    body.appendChild(grid);
+    return body;
+  }
+
+  /* 描画 */
+  DATA.forEach(y => {
+    $app.appendChild(el("div","yearline", `${y.year}年`));
+    if(y.yearNote){
+      const note = document.createElement("small");
+      note.textContent = y.yearNote;
+      $app.lastChild.appendChild(note);
+    }
+
+    (y.groups || []).forEach(g => {
+      const gd = document.createElement("details");
+      gd.className = "group";
 
       const s = document.createElement("summary");
-      const t = el("div","gtitle", `<span class="main">${safe(group.groupTitle)}</span> <span class="mini">${safe(group.groupMini || "")}</span>`);
-      const c = el("div","chev","▼");
-      s.appendChild(t); s.appendChild(c);
+      const left = el("div","gtitle");
+      left.appendChild(el("span","main", g.groupTitle || "グループ"));
+      left.appendChild(el("span","mini", g.groupMini || ""));
+      s.appendChild(left);
+      s.appendChild(el("div","chev","▼"));
+      gd.appendChild(s);
 
-      const body = el("div","gbody","");
-      g.appendChild(s); g.appendChild(body);
-
-      (group.collabs || []).forEach(item => {
-        const d = document.createElement("details");
-        d.className = "collab";
-
-        const sum = document.createElement("summary");
-
-        // summary top
-        const sumTop = el("div","sum-top","");
-        sumTop.appendChild(el("div","date", safe(item.date || "")));
-        sumTop.appendChild(el("div","seedname", safe(item.seedTitleLine || "")));
-        if(item.period) sumTop.appendChild(el("div","period", safe(item.period)));
-        sum.appendChild(sumTop);
-
-        // summary bottom
-        const sumBottom = el("div","sum-bottom","");
-        const miniAva = el("div","mini-ava","");
-        const miniImg = document.createElement("img");
-        miniImg.src = item.person?.profileImg || "";
-        miniImg.alt = item.person?.name || "";
-        miniAva.appendChild(miniImg);
-
-        sumBottom.appendChild(miniAva);
-        sumBottom.appendChild(el("div","who", safe(item.person?.name || "")));
-
-        // paper/digital badges (このコラボが何を含むかをサマリーで見せる)
-        const hasPaper = (item.cards || []).some(x => x.paper);
-        const hasDigital = (item.cards || []).some(x => x.digital);
-        const hint = el("div","hint","");
-        if(hasPaper) hint.appendChild(makeBadge("paper"));
-        if(hasDigital) hint.appendChild(makeBadge("digital"));
-        sumBottom.appendChild(hint);
-
-        sumBottom.appendChild(el("div","openmark","▼"));
-        sum.appendChild(sumBottom);
-
-        const b = el("div","collab-body","");
-
-        // body layout
-        const grid = el("div","grid","");
-
-        const pcol = el("div","pcol","");
-        const avatar = el("div","avatar","");
-        const avaImg = document.createElement("img");
-        avaImg.src = item.person?.profileImg || "";
-        avaImg.alt = item.person?.name || "プロフィール";
-        avatar.appendChild(avaImg);
-        pcol.appendChild(avatar);
-
-        const linkstack = el("div","linkstack","");
-        const x = document.createElement("a");
-        x.className = "linkbtn x"; x.textContent = "X";
-        x.href = item.person?.xUrl || "#"; x.target="_blank"; x.rel="noopener";
-        const other = document.createElement("a");
-        other.className = "linkbtn other"; other.textContent = "他リンク";
-        other.href = item.person?.otherUrl || "#"; other.target="_blank"; other.rel="noopener";
-        linkstack.appendChild(x); linkstack.appendChild(other);
-        pcol.appendChild(linkstack);
-
-        const rcol = document.createElement("div");
-        rcol.appendChild(el("div","hname", safe(item.person?.name || "")));
-        rcol.appendChild(el("p","desc", safe(item.person?.intro || "")));
-
-        const seedrow = el("div","seedrow","");
-        const seedbox = el("div","seedbox","");
-        const seedimg = document.createElement("img");
-        seedimg.src = item.seed?.img || "";
-        seedimg.alt = item.seedTitleLine || "タネ画像";
-        seedbox.appendChild(seedimg);
-
-        const seedtext = el("div","seedtext","");
-        seedtext.appendChild(el("span","label digital","デジタル"));
-        seedtext.appendChild(el("p","seeddesc", safe(item.seed?.desc || "")));
-
-        const cards = el("div","cards","");
-        (item.cards || []).slice(0, 2).forEach(cd => {
-          const tile = el("div","cardtile","");
-          const art = el("div","cardart","");
-          const img = document.createElement("img");
-          img.src = cd.img || "";
-          img.alt = cd.no || "カード";
-          art.appendChild(img);
-
-          const meta = el("div","cardmeta","");
-          meta.appendChild(el("span","no", safe(cd.no || "")));
-          if(cd.paper) meta.appendChild(makeBadge("paper"));
-          if(cd.digital) meta.appendChild(makeBadge("digital"));
-
-          tile.appendChild(art);
-          tile.appendChild(meta);
-          cards.appendChild(tile);
-        });
-        seedtext.appendChild(cards);
-
-        seedrow.appendChild(seedbox);
-        seedrow.appendChild(seedtext);
-
-        rcol.appendChild(seedrow);
-
-        grid.appendChild(pcol);
-        grid.appendChild(rcol);
-
-        b.appendChild(grid);
-
-        d.appendChild(sum);
-        d.appendChild(b);
-
-        body.appendChild(d);
+      const body = el("div","gbody");
+      (g.collabs || []).forEach(item => {
+        const cd = document.createElement("details");
+        cd.className = "collab";
+        cd.appendChild(makeStripSummary(item));
+        cd.appendChild(makeCollabBody(item));
+        body.appendChild(cd);
       });
 
-      $app.appendChild(g);
+      gd.appendChild(body);
+      $app.appendChild(gd);
     });
   });
+
 })();
 </script>
 </body>
