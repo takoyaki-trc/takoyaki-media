@@ -4,22 +4,26 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>コラボカード図鑑｜焼かれた伝説</title>
-  <meta name="description" content="コラボを年月で記録。各コラボごとにプロフィール・タネ（または現物枠）・カード2枚をまとめて閲覧できます。" />
+  <meta name="description" content="コラボを年月で記録。プロフィール・タネ（デジタル）・カード2枚をまとめて閲覧できます。" />
 
   <style>
     :root{
       --text:#fff;
-      --muted:rgba(255,255,255,.76);
+      --muted:rgba(255,255,255,.78);
       --muted2:rgba(255,255,255,.60);
 
-      --panel:rgba(255,255,255,.06);
-      --line:rgba(255,255,255,.14);
+      --panel:rgba(0,0,0,.38); /* 読みやすさ用（背景に被せるのではなくカード内のみ） */
+      --panel2:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.18);
 
-      --shadow: 0 18px 55px rgba(0,0,0,.62);
-      --shadow2: 0 10px 26px rgba(0,0,0,.36);
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+      --shadow2: 0 10px 26px rgba(0,0,0,.34);
 
       --gold:#f6d37a;
-      --blue:#8cc8ff;
+      --goldDeep:#caa24c;
+
+      --blue:#6fb6ff;
+      --blueDeep:#2f78ff;
 
       --radius:18px;
       --radius2:24px;
@@ -28,45 +32,20 @@
 
       --card-ratio: 5 / 7;
 
-      --paper:
-        radial-gradient(900px 520px at 20% 0%, rgba(246,211,122,.12), transparent 62%),
-        radial-gradient(760px 520px at 85% 15%, rgba(140,200,255,.10), transparent 62%),
-        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-
-      /* ✅ 背景画像URL（ここを変えればOK） */
+      /* ✅ 背景画像URL（ここだけ差し替えればOK） */
       --bgimg: url("https://ul.h3z.jp/rKfsdOZB.png");
     }
 
     *{ box-sizing:border-box }
     html,body{ height:100% }
 
-    /* ✅ 背景は body::before で“確実に出す” */
+    /* ✅ 背景：一切被せない（黒幕/グラデーション撤去） */
     body{
       margin:0;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
       color:var(--text);
-      background:#05060b;
+      background: var(--bgimg) center/cover no-repeat fixed;
       overflow-x:hidden;
-    }
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      z-index:-2;
-      background: var(--bgimg) center/cover no-repeat;
-      transform: translateZ(0);
-    }
-    /* ✅ うっすら暗幕＆空気感（画像を“消さない”濃さ） */
-    body::after{
-      content:"";
-      position:fixed;
-      inset:0;
-      z-index:-1;
-      background:
-        radial-gradient(1200px 720px at 20% 5%, rgba(246,211,122,.10), transparent 60%),
-        radial-gradient(900px 680px at 75% 20%, rgba(140,200,255,.08), transparent 60%),
-        linear-gradient(180deg, rgba(5,6,11,.54), rgba(11,13,23,.78));
-      pointer-events:none;
     }
 
     a{ color:inherit; text-decoration:none }
@@ -75,9 +54,9 @@
     /* ===== Header ===== */
     .header{
       position:sticky; top:0; z-index:50;
-      background: linear-gradient(to bottom, rgba(8,10,18,.92), rgba(8,10,18,.55));
-      backdrop-filter: blur(14px);
-      border-bottom:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.42);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid rgba(255,255,255,.16);
     }
     .head-inner{
       max-width:1100px;
@@ -89,7 +68,7 @@
     }
     .back{
       appearance:none;
-      border:1px solid rgba(255,255,255,.16);
+      border:1px solid rgba(255,255,255,.18);
       background: rgba(255,255,255,.08);
       color:#fff;
       padding:10px 12px;
@@ -100,11 +79,11 @@
     }
     .titlebox{ min-width:0; flex:1 }
     .title{
+      margin:0;
       font-weight:1000;
       font-size:16px;
       letter-spacing:.04em;
       line-height:1.2;
-      margin:0;
     }
     .sub{
       margin-top:4px;
@@ -118,8 +97,8 @@
     }
     .pill{
       border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.84);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.90);
       padding:5px 10px;
       border-radius:999px;
       font-size:11px;
@@ -144,8 +123,8 @@
     .intro{
       margin-top:10px;
       border-radius: var(--radius2);
-      border:1px solid rgba(255,255,255,.12);
-      background: var(--paper);
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.38);
       box-shadow: var(--shadow2);
       padding:12px 12px;
     }
@@ -157,7 +136,7 @@
     }
     .intro p{
       margin:8px 0 0;
-      color: rgba(255,255,255,.82);
+      color: rgba(255,255,255,.88);
       font-size:12px;
       line-height:1.65;
       font-weight:900;
@@ -165,12 +144,12 @@
     }
     .intro b{ color: var(--gold); }
 
-    /* ===== Collab ===== */
+    /* ===== Collab section ===== */
     .collab{
       margin-top:14px;
       border-radius: var(--radius2);
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.34);
       box-shadow: var(--shadow);
       overflow:hidden;
     }
@@ -181,24 +160,24 @@
       justify-content:space-between;
       gap:10px;
       flex-wrap:wrap;
-      border-bottom:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
+      border-bottom:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
     }
     .collab-head .ym{
       font-family: var(--mono);
       font-weight:1000;
       letter-spacing:.04em;
-      color: rgba(255,255,255,.86);
+      color: rgba(255,255,255,.90);
       font-size:12px;
     }
     .collab-head .name{
+      margin:2px 0 0;
       font-size:16px;
       font-weight:1000;
       letter-spacing:.04em;
-      margin:0;
     }
     .collab-head .period{
-      color: rgba(255,255,255,.76);
+      color: rgba(255,255,255,.82);
       font-size:12px;
       font-weight:1000;
       letter-spacing:.02em;
@@ -212,21 +191,21 @@
     /* ===== Profile card ===== */
     .profile{
       border-radius: 20px;
-      border:1px solid rgba(255,255,255,.12);
-      background: var(--paper);
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.34);
       box-shadow: var(--shadow2);
       overflow:hidden;
     }
     .profile-inner{
       padding:12px;
       display:grid;
-      gap:10px;
+      gap:12px;
     }
 
     /* ✅ 左：画像 + 縦ボタン / 右：テキスト */
     .profile-top{
       display:grid;
-      grid-template-columns: 104px 1fr;
+      grid-template-columns: 112px 1fr;
       gap:12px;
       align-items:start;
     }
@@ -234,22 +213,22 @@
     .sidecol{
       display:grid;
       gap:8px;
-      width:104px; /* ← avatar と同じ幅に固定 */
+      width:112px; /* ← avatar と同じ幅 */
     }
 
     .avatar{
-      width:104px; height:104px;
+      width:112px; height:112px;
       border-radius: 18px;
-      border:1px solid rgba(246,211,122,.30);
+      border:1px solid rgba(255,255,255,.20);
       background: rgba(0,0,0,.18);
       overflow:hidden;
       box-shadow: 0 12px 24px rgba(0,0,0,.30);
     }
-    .avatar img{ width:100%; height:100%; object-fit: cover; }
+    .avatar img{ width:100%; height:100%; object-fit:cover; }
 
-    /* ✅ 縦ボタン（画像枠と同じ幅・はみ出さない） */
+    /* ✅ X / 他リンク：四角・青系・高さ（縦幅）縮小 */
     .vbtn{
-      width:104px;
+      width:112px;
       display:grid;
       gap:8px;
     }
@@ -258,23 +237,24 @@
       display:flex;
       justify-content:center;
       align-items:center;
-      padding:10px 10px;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      box-shadow: var(--shadow2);
+      padding:6px 8px;              /* ←高さ縮小 */
+      border-radius: 10px;          /* ←丸くしすぎない“四角寄り” */
+      border:1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(111,182,255,.92), rgba(47,120,255,.92));
+      box-shadow: 0 10px 22px rgba(0,0,0,.28);
       font-weight:1000;
       font-size:12px;
       letter-spacing:.02em;
       white-space:nowrap;
+      color:#fff;
+      user-select:none;
     }
-    .vbtn a.gold{
-      border-color: rgba(246,211,122,.45);
-      background: rgba(246,211,122,.12);
-    }
+    .vbtn a:hover{ filter: brightness(1.06); }
+    .vbtn a:active{ transform: translateY(1px); }
     .vbtn .disabled{
-      opacity:.60;
-      cursor:default;
+      opacity:.55;
+      background: rgba(120,160,210,.35);
+      box-shadow:none;
     }
 
     .pblock{ min-width:0; }
@@ -287,44 +267,50 @@
     }
     .pintro{
       margin-top:6px;
-      color: rgba(255,255,255,.84);
+      color: rgba(255,255,255,.92);
       font-size:12px;
-      line-height:1.7;
+      line-height:1.75;
       font-weight:900;
       white-space:pre-line;
     }
 
-    /* ===== Seed (or paper box) ===== */
+    /* ===== Seed box ===== */
     .seedbox{
       border-radius: 18px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.14);
-      padding:10px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      padding:12px;
       display:grid;
-      gap:8px;
+      gap:10px;
     }
     .seedrow{
       display:grid;
-      grid-template-columns: 64px 1fr;
-      gap:10px;
+      grid-template-columns: 150px 1fr;  /* ←タネを大きく */
+      gap:12px;
       align-items:center;
     }
+
+    /* ✅ タネ画像の枠と画像を大きく */
     .seedimg{
-      width:64px; height:64px;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.14);
+      width:150px;
+      height:150px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.20);
       background: rgba(0,0,0,.18);
       overflow:hidden;
+      box-shadow: 0 14px 28px rgba(0,0,0,.30);
     }
     .seedimg img{
-      width:100%; height:100%;
+      width:100%;
+      height:100%;
       object-fit: contain;
-      padding:6px;
+      padding:10px;
     }
+
     .seedmeta{
       min-width:0;
       display:grid;
-      gap:4px;
+      gap:6px;
     }
     .seedmeta .row1{
       display:flex;
@@ -332,37 +318,35 @@
       align-items:center;
       flex-wrap:wrap;
     }
+
+    /* ✅ デジタル表示（青系） */
     .badge{
       font-size:11px;
       font-weight:1000;
-      padding:4px 8px;
+      padding:5px 10px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.86);
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.92);
       white-space:nowrap;
     }
-    .badge.blue{
-      border-color: rgba(140,200,255,.45);
-      background: rgba(140,200,255,.10);
+    .badge.digital{
+      border-color: rgba(111,182,255,.55);
+      background: rgba(47,120,255,.35);
       color:#fff;
     }
-    .badge.gold{
-      border-color: rgba(246,211,122,.55);
-      background: rgba(246,211,122,.12);
-      color:#fff;
-    }
+
     .seedname{
       font-size:12px;
       font-weight:1000;
       letter-spacing:.02em;
-      color: rgba(255,255,255,.92);
+      color: rgba(255,255,255,.95);
     }
     .seeddesc{
-      color: rgba(255,255,255,.78);
-      font-size:11px;
+      color: rgba(255,255,255,.88);
+      font-size:12px;
       font-weight:900;
-      line-height:1.55;
+      line-height:1.65;
       white-space:pre-line;
     }
 
@@ -370,31 +354,29 @@
     .cards2{
       display:grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap:10px;
+      gap:12px;
       margin-top:2px;
     }
 
     .cardmini{
       border-radius: 16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
       overflow:hidden;
       cursor:pointer;
       box-shadow: 0 10px 22px rgba(0,0,0,.30);
-      transition: transform .12s ease, border-color .12s ease;
+      transition: transform .12s ease, border-color .12s ease, filter .12s ease;
     }
-    .cardmini:hover{ transform: translateY(-2px); border-color: rgba(246,211,122,.22); }
+    .cardmini:hover{ transform: translateY(-2px); border-color: rgba(111,182,255,.22); }
     .cardmini:active{ transform: translateY(-1px) scale(.99); }
 
     .cardmini .art{
       position:relative;
       width:100%;
       aspect-ratio: var(--card-ratio);
-      padding:8px;
-      background:
-        radial-gradient(420px 200px at 20% 0%, rgba(246,211,122,.10), transparent 60%),
-        linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.18));
-      border-bottom:1px solid rgba(255,255,255,.10);
+      padding:10px;
+      background: rgba(0,0,0,.18);
+      border-bottom:1px solid rgba(255,255,255,.12);
     }
     .cardmini .art img{
       position:absolute;
@@ -402,7 +384,7 @@
       width:calc(100% - 20px);
       height:calc(100% - 20px);
       object-fit: contain;
-      border-radius: 14px;
+      border-radius: 12px;
       background: rgba(0,0,0,.18);
       filter: drop-shadow(0 10px 16px rgba(0,0,0,.40));
     }
@@ -413,7 +395,7 @@
       gap:6px;
     }
 
-    /* ✅ 品番 + 紙/デジタル を“横並び” */
+    /* ✅ 品番 + 紙/デジタル を横並び */
     .noRow{
       display:flex;
       align-items:center;
@@ -425,7 +407,7 @@
       font-size:11px;
       font-weight:900;
       letter-spacing:.04em;
-      color: rgba(255,255,255,.74);
+      color: rgba(255,255,255,.78);
     }
 
     .format{
@@ -434,26 +416,28 @@
       align-items:center;
       flex-wrap:wrap;
     }
+
+    /* ✅ 紙/デジタルの色を変更 */
     .fbtn{
       font-size:11px;
       font-weight:1000;
-      padding:4px 8px;
+      padding:4px 9px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.86);
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.94);
       line-height:1;
       user-select:none;
       white-space:nowrap;
     }
     .fbtn.paper{
-      border-color: rgba(246,211,122,.50);
-      background: rgba(246,211,122,.10);
+      border-color: rgba(246,211,122,.65);
+      background: rgba(202,162,76,.38);
       color:#fff;
     }
     .fbtn.digital{
-      border-color: rgba(140,200,255,.50);
-      background: rgba(140,200,255,.10);
+      border-color: rgba(111,182,255,.65);
+      background: rgba(47,120,255,.38);
       color:#fff;
     }
 
@@ -474,7 +458,7 @@
       flex-wrap:wrap;
       justify-content:space-between;
       align-items:center;
-      color: var(--muted2);
+      color: rgba(255,255,255,.86);
       font-size:12px;
       font-weight:900;
       letter-spacing:.02em;
@@ -484,19 +468,19 @@
       display:inline-flex;
       justify-content:center;
       align-items:center;
-      padding:10px 12px;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
+      padding:9px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.28);
       box-shadow: var(--shadow2);
       font-weight:1000;
       font-size:12px;
       letter-spacing:.02em;
       white-space:nowrap;
     }
-    .btn.gold{
-      border-color: rgba(246,211,122,.45);
-      background: rgba(246,211,122,.12);
+    .btn.blue{
+      border-color: rgba(111,182,255,.40);
+      background: rgba(47,120,255,.22);
     }
 
     /* ===== Modal ===== */
@@ -507,17 +491,15 @@
       align-items:center;
       justify-content:center;
       padding:14px;
-      background: rgba(0,0,0,.72);
-      backdrop-filter: blur(10px);
+      background: rgba(0,0,0,.78);
+      backdrop-filter: blur(8px);
     }
     .modal[aria-hidden="false"]{ display:flex; }
     .modal-card{
       width:min(980px, 100%);
       border-radius: 26px;
-      border:1px solid rgba(255,255,255,.16);
-      background:
-        radial-gradient(950px 420px at 22% 0%, rgba(246,211,122,.14), transparent 60%),
-        rgba(10,12,24,.96);
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.72);
       box-shadow: 0 26px 85px rgba(0,0,0,.78);
       overflow:hidden;
     }
@@ -527,8 +509,8 @@
       justify-content:space-between;
       gap:10px;
       padding:12px 12px;
-      border-bottom:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
+      border-bottom:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.35);
     }
     .modal-top .mn{
       font-weight:1000;
@@ -541,11 +523,11 @@
     }
     .modal-top .close{
       appearance:none;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
       color:#fff;
-      border-radius: 14px;
-      padding:10px 12px;
+      border-radius: 12px;
+      padding:9px 10px;
       font-weight:1000;
       cursor:pointer;
     }
@@ -558,21 +540,19 @@
     }
     .modal-art{
       padding:14px;
-      background: rgba(0,0,0,.18);
-      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.25);
+      border-bottom:1px solid rgba(255,255,255,.12);
     }
     @media (min-width:900px){
-      .modal-art{ border-bottom:0; border-right:1px solid rgba(255,255,255,.10); }
+      .modal-art{ border-bottom:0; border-right:1px solid rgba(255,255,255,.12); }
     }
     .modal-cardbox{
       width:100%;
       aspect-ratio: var(--card-ratio);
       border-radius: 22px;
       position:relative;
-      background:
-        radial-gradient(700px 300px at 20% 0%, rgba(246,211,122,.12), transparent 60%),
-        linear-gradient(180deg, rgba(0,0,0,.28), rgba(0,0,0,.20));
-      border:1px solid rgba(246,211,122,.26);
+      background: rgba(0,0,0,.20);
+      border:1px solid rgba(255,255,255,.18);
       box-shadow: 0 18px 50px rgba(0,0,0,.50);
       overflow:hidden;
       margin:0 auto;
@@ -603,40 +583,40 @@
       font-weight:1000;
       padding:5px 9px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.84);
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.92);
     }
-    .tag.gold{
-      border-color: rgba(246,211,122,.55);
-      background: rgba(246,211,122,.12);
-      color:#fff;
+    .tag.paper{
+      border-color: rgba(246,211,122,.60);
+      background: rgba(202,162,76,.34);
     }
-    .tag.blue{
-      border-color: rgba(140,200,255,.55);
-      background: rgba(140,200,255,.12);
-      color:#fff;
+    .tag.digital{
+      border-color: rgba(111,182,255,.60);
+      background: rgba(47,120,255,.34);
     }
     .mdesc{
       margin:0;
-      color: rgba(255,255,255,.84);
+      color: rgba(255,255,255,.92);
       font-size:13px;
       line-height:1.75;
       font-weight:900;
       white-space:pre-line;
     }
     .mmeta{
-      color: rgba(255,255,255,.62);
+      color: rgba(255,255,255,.70);
       font-size:12px;
       font-weight:1000;
       letter-spacing:.02em;
     }
 
     @media (max-width:420px){
-      .profile-top{ grid-template-columns: 96px 1fr; }
-      .sidecol, .vbtn, .avatar{ width:96px; }
-      .avatar{ height:96px; }
-      .vbtn a, .vbtn div{ padding:9px 8px; border-radius: 14px; }
+      .profile-top{ grid-template-columns: 104px 1fr; }
+      .sidecol, .vbtn, .avatar{ width:104px; }
+      .avatar{ height:104px; }
+      .seedrow{ grid-template-columns: 132px 1fr; }
+      .seedimg{ width:132px; height:132px; }
+      .vbtn a, .vbtn div{ padding:6px 8px; border-radius:10px; }
     }
   </style>
 </head>
@@ -649,8 +629,8 @@
       <h1 class="title">コラボカード図鑑</h1>
       <div class="sub">
         <span class="pill gold" id="updatedPill">更新: --</span>
-        <span class="pill">プロフィール＋タネ＋カード2枚</span>
-        <span class="pill">品番横に「紙 / デジタル」</span>
+        <span class="pill">X/他リンク：四角・青</span>
+        <span class="pill">タネ大きめ</span>
       </div>
     </div>
   </div>
@@ -658,12 +638,10 @@
 
 <main class="wrap">
   <section class="intro">
-    <h2>シリアル＝カードではない（タネが増える）</h2>
+    <h2>デジタルカードの流れ（超短く）</h2>
     <p>
 シリアルで増えるのは <b>カード</b> ではなく <b>コラボのタネ</b>。
 畑に植えて育てて、<b>収穫した瞬間にデジタルカードとして図鑑に記録</b>されます。
-
-※現物（紙）コラボは「紙のカード」として掲載。コラボによって <b>紙 / デジタル</b> の両方が存在します。
     </p>
   </section>
 
@@ -671,7 +649,7 @@
 
   <div class="foot">
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <a class="btn gold" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener">BOOTH</a>
+      <a class="btn blue" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener">BOOTH</a>
       <a class="btn" href="./index.html">トップへ</a>
       <a class="btn" href="./zukan.html">図鑑へ</a>
     </div>
@@ -709,9 +687,9 @@
 
   const UPDATED = "2026-02-15";
 
-  /* =========================================================
-     ✅ 画像URL（あなたが貼ったダーツ販売用 / BS非売品）
-  ========================================================= */
+  /* =========================
+     画像URL（あなたがくれた分）
+  ========================= */
   const SALE_CARDS = {
     TSUMA:  { no:"TN-022", name:"たこ焼きダーツインフェルノ《對馬裕佳子プロ🎯》", img:"https://ul.h3z.jp/Prf7KxRk.jpg" },
     INOUE:  { no:"TN-028", name:"自己啓発たこ塾《井上諒プロ🎯》",               img:"https://ul.h3z.jp/sPChFFlG.jpg" },
@@ -728,31 +706,35 @@
     "BS-005": { no:"BS-005", name:"稲石裕",     img:"https://ul.h3z.jp/nmiaCKae.png" },
   };
 
-  /* =========================================================
-     ✅ 1人＝1テンプレ
-     - card.formats: ["紙"] or ["デジタル"] or ["紙","デジタル"]
-  ========================================================= */
+  /* =========================
+     コラボ一覧（テンプレで増やす）
+     - ぐらたん：デジタルのみ
+     - ダーツ：紙 + デジタル（品番横に両方）
+  ========================= */
   const COLLABOS = [
     {
       ym: "2026.02",
       title: "ぐらたんのタネ",
-      period: "（期間）",
+      period: "",
       person: {
         name: "配信者《ぐらたん》",
         photo: "https://ul.h3z.jp/zXzQtZGi.png",
         introFull:
 `（ここに紹介文を全部入れる）
 低音配信者。たまに稲川淳二と井上陽水が出てくる。…など
-※この枠は文章を長くしてもOK。改行も反映されます。`
+※改行そのまま反映されます。`
       },
-      links: { x:"", other:"" }, // ←後でURL入れればボタンが有効になる
+      links: {
+        x: "",      // ←後で入れる（空なら無効表示）
+        other: ""   // ←後で入れる
+      },
       seed: {
         label: "デジタル",
         name: "ぐらたんのタネ",
         img: "https://ul.h3z.jp/zXzQtZGi.png",
         desc:
-`シリアルで増えるのは“カード”ではなく“コラボのタネ”。
-畑に植えて育て、収穫した瞬間にデジタルカード化（図鑑に記録）。`
+`シリアルで増えるのは「カード」ではなく「コラボのタネ」。
+畑に植えて育てて、収穫した瞬間にデジタルカードとして図鑑に記録されます。`
       },
       cards2: [
         { no:"DG-001", name:"（デジタル）ぐらたん：カードA", img:"https://ul.h3z.jp/Prf7KxRk.jpg", formats:["デジタル"] },
@@ -760,23 +742,23 @@
       ]
     },
 
-    /* ===== ダーツ（紙＋デジタル） ===== */
+    /* ===== ダーツ5人：紙 + デジタル ===== */
     {
       ym: "2025.00",
       title: "ダーツコラボ（對馬裕佳子）",
-      period: "（記録）",
+      period: "",
       person: {
         name: "ダーツプロ《對馬裕佳子》",
-        photo: BS["BS-001"].img, // ←本人写真URLが来たら差し替え
+        photo: BS["BS-001"].img,
         introFull:
-`ダーツプロコラボの記録。
-販売用（紙）と、非売品（紙：配布終了）を掲載。
-さらに、シリアル→タネ→収穫で入手できるデジタル側も存在します。`
+`（ここにプロフィール紹介文）
+・販売用（紙のカード）と、非売品（紙：配布終了）の記録
+・さらにデジタル（タネ→収穫）側も存在`
       },
       links: { x:"", other:"" },
       seed: {
         label: "デジタル",
-        name: "（デジタル）コラボのタネ",
+        name: "コラボのタネ",
         img: BS["BS-001"].img,
         desc:
 `このコラボは「紙」と「デジタル」両方あります。
@@ -790,23 +772,14 @@
     {
       ym: "2025.00",
       title: "ダーツコラボ（佐俣雄一郎）",
-      period: "（記録）",
+      period: "",
       person: {
         name: "ダーツプロ《佐俣雄一郎》",
         photo: BS["BS-002"].img,
-        introFull:
-`ダーツプロコラボの記録。
-販売用（紙）＋非売品（紙：配布終了）＋デジタル（タネ→収穫）。`
+        introFull:`（ここにプロフィール紹介文）`
       },
       links: { x:"", other:"" },
-      seed: {
-        label: "デジタル",
-        name: "（デジタル）コラボのタネ",
-        img: BS["BS-002"].img,
-        desc:
-`このコラボは「紙」と「デジタル」両方あります。
-デジタルはシリアルでタネを増やし、畑で収穫した瞬間に図鑑へ。`
-      },
+      seed: { label:"デジタル", name:"コラボのタネ", img: BS["BS-002"].img, desc:`このコラボは「紙」と「デジタル」両方あります。` },
       cards2: [
         { ...SALE_CARDS.SAMATA, formats:["紙","デジタル"] },
         { ...BS["BS-002"], formats:["紙","デジタル"] }
@@ -815,23 +788,14 @@
     {
       ym: "2025.00",
       title: "ダーツコラボ（井上諒）",
-      period: "（記録）",
+      period: "",
       person: {
         name: "ダーツプロ《井上諒》",
         photo: BS["BS-003"].img,
-        introFull:
-`ダーツプロコラボの記録。
-販売用（紙）＋非売品（紙：配布終了）＋デジタル（タネ→収穫）。`
+        introFull:`（ここにプロフィール紹介文）`
       },
       links: { x:"", other:"" },
-      seed: {
-        label: "デジタル",
-        name: "（デジタル）コラボのタネ",
-        img: BS["BS-003"].img,
-        desc:
-`このコラボは「紙」と「デジタル」両方あります。
-デジタルはシリアルでタネを増やし、畑で収穫した瞬間に図鑑へ。`
-      },
+      seed: { label:"デジタル", name:"コラボのタネ", img: BS["BS-003"].img, desc:`このコラボは「紙」と「デジタル」両方あります。` },
       cards2: [
         { ...SALE_CARDS.INOUE, formats:["紙","デジタル"] },
         { ...BS["BS-003"], formats:["紙","デジタル"] }
@@ -840,23 +804,14 @@
     {
       ym: "2025.00",
       title: "ダーツコラボ（仁木治）",
-      period: "（記録）",
+      period: "",
       person: {
         name: "ダーツプロ《仁木治》",
         photo: BS["BS-004"].img,
-        introFull:
-`ダーツプロコラボの記録。
-販売用（紙）＋非売品（紙：配布終了）＋デジタル（タネ→収穫）。`
+        introFull:`（ここにプロフィール紹介文）`
       },
       links: { x:"", other:"" },
-      seed: {
-        label: "デジタル",
-        name: "（デジタル）コラボのタネ",
-        img: BS["BS-004"].img,
-        desc:
-`このコラボは「紙」と「デジタル」両方あります。
-デジタルはシリアルでタネを増やし、畑で収穫した瞬間に図鑑へ。`
-      },
+      seed: { label:"デジタル", name:"コラボのタネ", img: BS["BS-004"].img, desc:`このコラボは「紙」と「デジタル」両方あります。` },
       cards2: [
         { ...SALE_CARDS.NIKI, formats:["紙","デジタル"] },
         { ...BS["BS-004"], formats:["紙","デジタル"] }
@@ -865,23 +820,14 @@
     {
       ym: "2025.00",
       title: "ダーツコラボ（稲石裕）",
-      period: "（記録）",
+      period: "",
       person: {
         name: "ダーツプロ《稲石裕》",
         photo: BS["BS-005"].img,
-        introFull:
-`ダーツプロコラボの記録。
-販売用（紙）＋非売品（紙：配布終了）＋デジタル（タネ→収穫）。`
+        introFull:`（ここにプロフィール紹介文）`
       },
       links: { x:"", other:"" },
-      seed: {
-        label: "デジタル",
-        name: "（デジタル）コラボのタネ",
-        img: BS["BS-005"].img,
-        desc:
-`このコラボは「紙」と「デジタル」両方あります。
-デジタルはシリアルでタネを増やし、畑で収穫した瞬間に図鑑へ。`
-      },
+      seed: { label:"デジタル", name:"コラボのタネ", img: BS["BS-005"].img, desc:`このコラボは「紙」と「デジタル」両方あります。` },
       cards2: [
         { ...SALE_CARDS.INAISHI, formats:["紙","デジタル"] },
         { ...BS["BS-005"], formats:["紙","デジタル"] }
@@ -922,8 +868,8 @@
 
     mTags.innerHTML = "";
     (payload.formats || []).forEach(f=>{
-      if(f==="紙") mTags.appendChild(tag("紙", "gold"));
-      if(f==="デジタル") mTags.appendChild(tag("デジタル", "blue"));
+      if(f==="紙") mTags.appendChild(tag("紙", "paper"));
+      if(f==="デジタル") mTags.appendChild(tag("デジタル", "digital"));
     });
 
     mDesc.textContent = payload.desc || "";
@@ -1014,8 +960,8 @@
       name: card.name,
       img: card.img,
       formats: card.formats || [],
-      desc: collab.title + " のカードです。",
-      meta: `年月：${collab.ym} / 期間：${collab.period}`
+      desc: `${collab.title} のカードです。`,
+      meta: `年月：${collab.ym}${collab.period ? " / " + collab.period : ""}`
     };
 
     el.addEventListener("click", () => openModal(payload));
@@ -1056,7 +1002,7 @@
 
       const period = document.createElement("div");
       period.className = "period";
-      period.textContent = c.period;
+      period.textContent = c.period || "";
 
       head.appendChild(left);
       head.appendChild(period);
@@ -1094,7 +1040,6 @@
 
       if(x){
         const b = document.createElement("a");
-        b.className = "gold";
         b.href = x; b.target="_blank"; b.rel="noopener";
         b.textContent = "X";
         vbtn.appendChild(b);
@@ -1159,8 +1104,7 @@
       row1.className = "row1";
 
       const badge = document.createElement("span");
-      const isDigital = (c.seed && c.seed.label === "デジタル");
-      badge.className = "badge " + (isDigital ? "blue" : "gold");
+      badge.className = "badge digital";
       badge.textContent = c.seed.label || "デジタル";
 
       const seedname = document.createElement("span");
