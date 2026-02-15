@@ -3,60 +3,68 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>コラボカード図鑑｜焼かれた伝説</title>
-  <meta name="description" content="コラボを年月で記録。プロフィール・タネ（デジタル）・カード2枚をまとめて閲覧できます。" />
+  <title>コラボ図鑑｜焼かれた伝説</title>
+  <meta name="description" content="年号ごとにコラボをまとめて閲覧できるページ。プロフィール／タネ（デジタル）／カード（紙・デジタル）を並べて表示します。" />
 
   <style>
     :root{
+      /* ✅ 背景（そのまま表示） */
+      --bg-url: url("https://ul.h3z.jp/G7grA8Dy.png"); /* ←背景URLここ */
+
+      /* ブランド感（たこ焼きトレカ寄り：夜×金×青） */
       --text:#fff;
-      --muted:rgba(255,255,255,.78);
-      --muted2:rgba(255,255,255,.60);
+      --muted: rgba(255,255,255,.78);
+      --muted2: rgba(255,255,255,.62);
 
-      --panel:rgba(0,0,0,.38); /* 読みやすさ用（背景に被せるのではなくカード内のみ） */
-      --panel2:rgba(255,255,255,.06);
-      --line:rgba(255,255,255,.18);
+      --panel: rgba(10,12,22,.62);
+      --panel2: rgba(0,0,0,.18);
+      --line: rgba(255,255,255,.14);
 
-      --shadow: 0 18px 55px rgba(0,0,0,.55);
-      --shadow2: 0 10px 26px rgba(0,0,0,.34);
+      --gold: #f6d37a;
 
-      --gold:#f6d37a;
-      --goldDeep:#caa24c;
+      --blue:#1da1f2;   /* X系の青 */
+      --blue2:#2f6df6;  /* その他リンクの青 */
+      --blueHover:#1486cc;
+      --blue2Hover:#284ec7;
 
-      --blue:#6fb6ff;
-      --blueDeep:#2f78ff;
+      --shadow: 0 16px 44px rgba(0,0,0,.35);
+      --shadow2: 0 10px 24px rgba(0,0,0,.25);
 
-      --radius:18px;
-      --radius2:24px;
+      --radius:16px;
 
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      /* ✅ サイズ：プロフィール＞タネ（ユーザー要望） */
+      --avatar: 118px;
+      --seed: 108px; /* ←タネ枠：プロフィールより少し小さく */
 
+      /* カードサムネ（2枚横並び用） */
+      --card: 122px;
+
+      /* カード縦比率（一般的） */
       --card-ratio: 5 / 7;
-
-      /* ✅ 背景画像URL（ここだけ差し替えればOK） */
-      --bgimg: url("https://ul.h3z.jp/rKfsdOZB.png");
     }
 
     *{ box-sizing:border-box }
     html,body{ height:100% }
 
-    /* ✅ 背景：一切被せない（黒幕/グラデーション撤去） */
+    /* ✅ 背景に黒いベールを “全体には” かけない */
     body{
       margin:0;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
       color:var(--text);
-      background: var(--bgimg) center/cover no-repeat fixed;
+      background: var(--bg-url) center/cover fixed no-repeat;
       overflow-x:hidden;
     }
 
     a{ color:inherit; text-decoration:none }
-    img{ max-width:100%; display:block }
 
-    /* ===== Header ===== */
+    /* ===== header ===== */
     .header{
-      position:sticky; top:0; z-index:50;
-      background: rgba(0,0,0,.42);
+      position:sticky;
+      top:0;
+      z-index:50;
+      background: rgba(0,0,0,.18); /* 背景はそのまま見せつつ、読みやすさだけ確保 */
       backdrop-filter: blur(10px);
-      border-bottom:1px solid rgba(255,255,255,.16);
+      border-bottom:1px solid rgba(255,255,255,.12);
     }
     .head-inner{
       max-width:1100px;
@@ -68,1086 +76,732 @@
     }
     .back{
       appearance:none;
-      border:1px solid rgba(255,255,255,.18);
+      border:1px solid rgba(255,255,255,.16);
       background: rgba(255,255,255,.08);
       color:#fff;
       padding:10px 12px;
-      border-radius: 14px;
       font-weight:1000;
       cursor:pointer;
       box-shadow: var(--shadow2);
     }
-    .titlebox{ min-width:0; flex:1 }
+    .titlebox{ flex:1; min-width:0; }
     .title{
-      margin:0;
       font-weight:1000;
-      font-size:16px;
       letter-spacing:.04em;
+      font-size:16px;
       line-height:1.2;
     }
     .sub{
       margin-top:4px;
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
       color:var(--muted);
       font-size:12px;
       font-weight:900;
-    }
-    .pill{
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.08);
-      color: rgba(255,255,255,.90);
-      padding:5px 10px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:1000;
       letter-spacing:.02em;
-      white-space:nowrap;
-    }
-    .pill.gold{
-      border-color: rgba(246,211,122,.55);
-      background: rgba(246,211,122,.12);
-      color:#fff;
+      line-height:1.35;
     }
 
-    /* ===== Wrap ===== */
     .wrap{
       max-width:1100px;
       margin:0 auto;
-      padding:12px 14px 60px;
+      padding:16px 14px 80px;
     }
 
-    /* ===== Intro ===== */
-    .intro{
-      margin-top:10px;
-      border-radius: var(--radius2);
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.38);
-      box-shadow: var(--shadow2);
-      padding:12px 12px;
-    }
-    .intro h2{
-      margin:0;
-      font-size:14px;
+    /* ===== year section ===== */
+    .year{
+      margin:18px 0 8px;
       font-weight:1000;
+      font-size:18px;
       letter-spacing:.04em;
-    }
-    .intro p{
-      margin:8px 0 0;
-      color: rgba(255,255,255,.88);
-      font-size:12px;
-      line-height:1.65;
-      font-weight:900;
-      white-space:pre-line;
-    }
-    .intro b{ color: var(--gold); }
-
-    /* ===== Collab section ===== */
-    .collab{
-      margin-top:14px;
-      border-radius: var(--radius2);
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.34);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .collab-head{
-      padding:12px 12px;
       display:flex;
       align-items:baseline;
-      justify-content:space-between;
       gap:10px;
-      flex-wrap:wrap;
-      border-bottom:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
     }
-    .collab-head .ym{
-      font-family: var(--mono);
-      font-weight:1000;
-      letter-spacing:.04em;
-      color: rgba(255,255,255,.90);
+    .year small{
+      color:var(--muted2);
+      font-weight:900;
       font-size:12px;
-    }
-    .collab-head .name{
-      margin:2px 0 0;
-      font-size:16px;
-      font-weight:1000;
-      letter-spacing:.04em;
-    }
-    .collab-head .period{
-      color: rgba(255,255,255,.82);
-      font-size:12px;
-      font-weight:1000;
       letter-spacing:.02em;
     }
-    .collab-body{
-      padding:12px;
-      display:grid;
-      gap:12px;
-    }
 
-    /* ===== Profile card ===== */
-    .profile{
-      border-radius: 20px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.34);
+    /* ===== accordion ===== */
+    .acc{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.12); /* 背景そのまま見せるため薄め */
       box-shadow: var(--shadow2);
-      overflow:hidden;
+      margin:10px 0 14px;
     }
-    .profile-inner{
-      padding:12px;
-      display:grid;
-      gap:12px;
-    }
-
-    /* ✅ 左：画像 + 縦ボタン / 右：テキスト */
-    .profile-top{
-      display:grid;
-      grid-template-columns: 112px 1fr;
-      gap:12px;
-      align-items:start;
-    }
-
-    .sidecol{
-      display:grid;
-      gap:8px;
-      width:112px; /* ← avatar と同じ幅 */
-    }
-
-    .avatar{
-      width:112px; height:112px;
-      border-radius: 18px;
-      border:1px solid rgba(255,255,255,.20);
-      background: rgba(0,0,0,.18);
-      overflow:hidden;
-      box-shadow: 0 12px 24px rgba(0,0,0,.30);
-    }
-    .avatar img{ width:100%; height:100%; object-fit:cover; }
-
-    /* ✅ X / 他リンク：四角・青系・高さ（縦幅）縮小 */
-    .vbtn{
-      width:112px;
-      display:grid;
-      gap:8px;
-    }
-    .vbtn a, .vbtn div{
-      width:100%;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      padding:6px 8px;              /* ←高さ縮小 */
-      border-radius: 10px;          /* ←丸くしすぎない“四角寄り” */
-      border:1px solid rgba(255,255,255,.18);
-      background: linear-gradient(180deg, rgba(111,182,255,.92), rgba(47,120,255,.92));
-      box-shadow: 0 10px 22px rgba(0,0,0,.28);
+    .acc > summary{
+      list-style:none;
+      cursor:pointer;
+      padding:14px 14px;
       font-weight:1000;
-      font-size:12px;
-      letter-spacing:.02em;
-      white-space:nowrap;
-      color:#fff;
+      display:flex;
+      gap:10px;
+      align-items:center;
       user-select:none;
     }
-    .vbtn a:hover{ filter: brightness(1.06); }
-    .vbtn a:active{ transform: translateY(1px); }
-    .vbtn .disabled{
-      opacity:.55;
-      background: rgba(120,160,210,.35);
-      box-shadow:none;
+    .acc > summary::-webkit-details-marker{ display:none; }
+    .acc-title{
+      flex:1;
+      min-width:0;
+      display:flex;
+      gap:10px;
+      align-items:baseline;
+      flex-wrap:wrap;
     }
-
-    .pblock{ min-width:0; }
-    .pname{
-      font-size:14px;
-      font-weight:1000;
+    .acc-title .main{
+      font-size:15px;
       letter-spacing:.03em;
-      margin:0;
-      line-height:1.25;
     }
-    .pintro{
-      margin-top:6px;
-      color: rgba(255,255,255,.92);
+    .acc-title .mini{
       font-size:12px;
-      line-height:1.75;
+      color:var(--muted);
       font-weight:900;
-      white-space:pre-line;
     }
-
-    /* ===== Seed box ===== */
-    .seedbox{
-      border-radius: 18px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.22);
-      padding:12px;
-      display:grid;
-      gap:10px;
-    }
-    .seedrow{
-      display:grid;
-      grid-template-columns: 150px 1fr;  /* ←タネを大きく */
-      gap:12px;
-      align-items:center;
-    }
-
-    /* ✅ タネ画像の枠と画像を大きく */
-    .seedimg{
-      width:150px;
-      height:150px;
-      border-radius: 18px;
-      border:1px solid rgba(255,255,255,.20);
-      background: rgba(0,0,0,.18);
-      overflow:hidden;
-      box-shadow: 0 14px 28px rgba(0,0,0,.30);
-    }
-    .seedimg img{
-      width:100%;
-      height:100%;
-      object-fit: contain;
-      padding:10px;
-    }
-
-    .seedmeta{
-      min-width:0;
-      display:grid;
-      gap:6px;
-    }
-    .seedmeta .row1{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    /* ✅ デジタル表示（青系） */
-    .badge{
-      font-size:11px;
+    .chev{
       font-weight:1000;
-      padding:5px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.08);
-      color: rgba(255,255,255,.92);
-      white-space:nowrap;
+      color: rgba(255,255,255,.9);
     }
-    .badge.digital{
-      border-color: rgba(111,182,255,.55);
-      background: rgba(47,120,255,.35);
-      color:#fff;
-    }
+    details[open] .chev{ transform: rotate(180deg); }
+    .chev{ transition: transform .15s ease; }
 
-    .seedname{
-      font-size:12px;
-      font-weight:1000;
-      letter-spacing:.02em;
-      color: rgba(255,255,255,.95);
-    }
-    .seeddesc{
-      color: rgba(255,255,255,.88);
-      font-size:12px;
-      font-weight:900;
-      line-height:1.65;
-      white-space:pre-line;
-    }
-
-    /* ===== Cards 2-up ===== */
-    .cards2{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap:12px;
-      margin-top:2px;
-    }
-
-    .cardmini{
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.22);
-      overflow:hidden;
-      cursor:pointer;
-      box-shadow: 0 10px 22px rgba(0,0,0,.30);
-      transition: transform .12s ease, border-color .12s ease, filter .12s ease;
-    }
-    .cardmini:hover{ transform: translateY(-2px); border-color: rgba(111,182,255,.22); }
-    .cardmini:active{ transform: translateY(-1px) scale(.99); }
-
-    .cardmini .art{
-      position:relative;
-      width:100%;
-      aspect-ratio: var(--card-ratio);
-      padding:10px;
-      background: rgba(0,0,0,.18);
-      border-bottom:1px solid rgba(255,255,255,.12);
-    }
-    .cardmini .art img{
-      position:absolute;
-      inset:10px;
-      width:calc(100% - 20px);
-      height:calc(100% - 20px);
-      object-fit: contain;
-      border-radius: 12px;
-      background: rgba(0,0,0,.18);
-      filter: drop-shadow(0 10px 16px rgba(0,0,0,.40));
-    }
-
-    .cardmini .meta{
-      padding:8px 10px 10px;
-      display:grid;
-      gap:6px;
-    }
-
-    /* ✅ 品番 + 紙/デジタル を横並び */
-    .noRow{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    .no{
-      font-family: var(--mono);
-      font-size:11px;
-      font-weight:900;
-      letter-spacing:.04em;
-      color: rgba(255,255,255,.78);
-    }
-
-    .format{
-      display:flex;
-      gap:6px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    /* ✅ 紙/デジタルの色を変更 */
-    .fbtn{
-      font-size:11px;
-      font-weight:1000;
-      padding:4px 9px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.08);
-      color: rgba(255,255,255,.94);
-      line-height:1;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .fbtn.paper{
-      border-color: rgba(246,211,122,.65);
-      background: rgba(202,162,76,.38);
-      color:#fff;
-    }
-    .fbtn.digital{
-      border-color: rgba(111,182,255,.65);
-      background: rgba(47,120,255,.38);
-      color:#fff;
-    }
-
-    .cname{
-      font-size:12px;
-      font-weight:1000;
-      letter-spacing:.02em;
-      line-height:1.25;
-      max-height: 2.5em;
-      overflow:hidden;
-    }
-
-    /* ===== Footer ===== */
-    .foot{
-      margin-top:14px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:space-between;
-      align-items:center;
-      color: rgba(255,255,255,.86);
-      font-size:12px;
-      font-weight:900;
-      letter-spacing:.02em;
-      padding:2px 2px 0;
-    }
-    .btn{
-      display:inline-flex;
-      justify-content:center;
-      align-items:center;
-      padding:9px 12px;
-      border-radius: 14px;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.28);
-      box-shadow: var(--shadow2);
-      font-weight:1000;
-      font-size:12px;
-      letter-spacing:.02em;
-      white-space:nowrap;
-    }
-    .btn.blue{
-      border-color: rgba(111,182,255,.40);
-      background: rgba(47,120,255,.22);
-    }
-
-    /* ===== Modal ===== */
-    .modal{
-      position:fixed; inset:0;
-      z-index:200;
-      display:none;
-      align-items:center;
-      justify-content:center;
+    .acc-body{
+      border-top:1px solid rgba(255,255,255,.12);
       padding:14px;
-      background: rgba(0,0,0,.78);
-      backdrop-filter: blur(8px);
     }
-    .modal[aria-hidden="false"]{ display:flex; }
-    .modal-card{
-      width:min(980px, 100%);
-      border-radius: 26px;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.72);
-      box-shadow: 0 26px 85px rgba(0,0,0,.78);
-      overflow:hidden;
+
+    /* ===== collab block ===== */
+    .collab{
+      border:1px solid rgba(255,255,255,.14);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding:14px;
+      margin:0 0 14px;
     }
-    .modal-top{
+
+    /* 上段：日付＋タネ名（このままでOK、要望通り） */
+    .collab-top{
       display:flex;
-      align-items:center;
-      justify-content:space-between;
       gap:10px;
-      padding:12px 12px;
-      border-bottom:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.35);
+      align-items:baseline;
+      flex-wrap:wrap;
+      margin-bottom:12px;
     }
-    .modal-top .mn{
+    .date{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
       font-weight:1000;
-      font-size:14px;
-      letter-spacing:.02em;
-      min-width:0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
+      font-size:12px;
+      color: rgba(255,255,255,.82);
     }
-    .modal-top .close{
-      appearance:none;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.10);
-      color:#fff;
-      border-radius: 12px;
-      padding:9px 10px;
+    .seedname{
       font-weight:1000;
-      cursor:pointer;
+      color: var(--gold);
+      letter-spacing:.03em;
+      font-size:13px;
     }
-    .modal-body{
+
+    /* 본문 레이아웃：左プロフィール / 右情報 */
+    .grid{
       display:grid;
+      gap:12px;
       grid-template-columns: 1fr;
     }
-    @media (min-width:900px){
-      .modal-body{ grid-template-columns: 1.2fr .8fr; }
+    @media (min-width:820px){
+      .grid{
+        grid-template-columns: 170px 1fr;
+        align-items:start;
+      }
     }
-    .modal-art{
-      padding:14px;
-      background: rgba(0,0,0,.25);
-      border-bottom:1px solid rgba(255,255,255,.12);
-    }
-    @media (min-width:900px){
-      .modal-art{ border-bottom:0; border-right:1px solid rgba(255,255,255,.12); }
-    }
-    .modal-cardbox{
-      width:100%;
-      aspect-ratio: var(--card-ratio);
-      border-radius: 22px;
-      position:relative;
-      background: rgba(0,0,0,.20);
-      border:1px solid rgba(255,255,255,.18);
-      box-shadow: 0 18px 50px rgba(0,0,0,.50);
-      overflow:hidden;
-      margin:0 auto;
-      max-width: 520px;
-    }
-    .modal-cardbox img{
-      position:absolute;
-      inset:16px;
-      width:calc(100% - 32px);
-      height:calc(100% - 32px);
-      object-fit: contain;
-      border-radius: 16px;
-      background: rgba(0,0,0,.18);
-      filter: drop-shadow(0 12px 22px rgba(0,0,0,.55));
-    }
-    .modal-info{
-      padding:14px;
+
+    /* ===== profile column ===== */
+    .pcol{
       display:grid;
-      gap:10px;
+      gap:8px;
+      justify-items:start;
     }
-    .mtags{
-      display:flex;
+    .avatar{
+      width: var(--avatar);
+      aspect-ratio: 1/1;
+      border:1px solid rgba(255,255,255,.20);
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+      box-shadow: var(--shadow2);
+    }
+    .avatar img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    /* ✅ X/他リンク：四角・青・高さ/幅を縮める・枠からはみ出さない */
+    .linkstack{
+      width: var(--avatar);
+      display:grid;
       gap:6px;
-      flex-wrap:wrap;
     }
-    .tag{
+    .linkbtn{
+      display:block;
+      width:100%;
+      padding:7px 8px;           /* ←高さ控えめ */
+      text-align:center;
+      font-weight:1000;
+      font-size:12px;
+      letter-spacing:.02em;
+      border-radius:0;            /* ←四角 */
+      border:1px solid rgba(255,255,255,.26);
+      color:#fff;
+      box-shadow: var(--shadow2);
+    }
+    .linkbtn.x{ background: var(--blue); }
+    .linkbtn.x:hover{ background: var(--blueHover); }
+    .linkbtn.other{ background: var(--blue2); }
+    .linkbtn.other:hover{ background: var(--blue2Hover); }
+
+    /* ===== right content ===== */
+    .hname{
+      font-weight:1000;
+      font-size:16px;
+      letter-spacing:.03em;
+      margin:0 0 8px;
+    }
+    .hname .who{
+      color: var(--gold);
+    }
+    .desc{
+      margin:0;
+      color: rgba(255,255,255,.86);
+      font-size:13px;
+      line-height:1.75;
+      font-weight:800;
+      white-space:pre-line;
+    }
+
+    /* ===== seed section ===== */
+    .seedrow{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      padding-top:12px;
+      border-top:1px solid rgba(255,255,255,.10);
+    }
+    @media (min-width:560px){
+      .seedrow{
+        grid-template-columns: var(--seed) 1fr;
+        align-items:start;
+      }
+    }
+
+    /* ✅ タネ枠：プロフィールより少し小さく */
+    .seedbox{
+      width: var(--seed);
+      aspect-ratio: 1/1;
+      border:1px solid rgba(255,255,255,.20);
+      background: rgba(0,0,0,.18);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    .seedbox img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+      padding:8px; /* 余白調整（詰めたければ 6px とかに） */
+    }
+
+    .seedtext{
+      display:grid;
+      gap:6px;
+      align-content:start;
+    }
+
+    /* ✅ デジタル表示（色を変えて目立たせる） */
+    .label{
+      display:inline-block;
+      padding:3px 8px;
       font-size:11px;
       font-weight:1000;
-      padding:5px 9px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.08);
-      color: rgba(255,255,255,.92);
+      border:1px solid rgba(255,255,255,.22);
+      border-radius:0; /* 四角 */
+      letter-spacing:.02em;
+      width: fit-content;
     }
-    .tag.paper{
-      border-color: rgba(246,211,122,.60);
-      background: rgba(202,162,76,.34);
+    .label.digital{
+      background: rgba(29,161,242,.22);
+      border-color: rgba(29,161,242,.55);
     }
-    .tag.digital{
-      border-color: rgba(111,182,255,.60);
-      background: rgba(47,120,255,.34);
+    .label.paper{
+      background: rgba(246,211,122,.18);
+      border-color: rgba(246,211,122,.55);
+      color:#fff;
     }
-    .mdesc{
+
+    .seeddesc{
       margin:0;
-      color: rgba(255,255,255,.92);
+      color: rgba(255,255,255,.84);
       font-size:13px;
+      line-height:1.7;
+      font-weight:800;
+      white-space:pre-line;
+    }
+
+    /* ===== cards 2-column ===== */
+    .cards{
+      margin-top:10px;
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:10px;
+      max-width: calc(var(--card) * 2 + 10px);
+    }
+
+    .cardtile{
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.14);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    .cardart{
+      width:100%;
+      aspect-ratio: var(--card-ratio);
+      background: rgba(0,0,0,.18);
+      border-bottom:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    .cardart img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+      padding:8px;
+      background: rgba(0,0,0,.12);
+    }
+    .cardmeta{
+      padding:7px 8px 8px;
+      display:flex;
+      gap:6px;
+      align-items:center;
+      flex-wrap:wrap;
+      font-weight:1000;
+      font-size:12px;
+      letter-spacing:.02em;
+    }
+    .no{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      color: rgba(255,255,255,.90);
+    }
+
+    /* ✅ 品番横の「紙/デジタル」：色を変える（要望） */
+    .badge{
+      display:inline-block;
+      padding:2px 7px;
+      font-size:11px;
+      font-weight:1000;
+      border:1px solid rgba(255,255,255,.22);
+      border-radius:0;
+      letter-spacing:.02em;
+    }
+    .badge.paper{
+      background: rgba(246,211,122,.20);
+      border-color: rgba(246,211,122,.55);
+    }
+    .badge.digital{
+      background: rgba(29,161,242,.22);
+      border-color: rgba(29,161,242,.55);
+    }
+
+    /* ===== footer note ===== */
+    .note{
+      margin-top:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.14);
+      padding:12px;
+      box-shadow: var(--shadow2);
+      color: rgba(255,255,255,.85);
+      font-size:12px;
       line-height:1.75;
       font-weight:900;
       white-space:pre-line;
     }
-    .mmeta{
-      color: rgba(255,255,255,.70);
-      font-size:12px;
-      font-weight:1000;
-      letter-spacing:.02em;
-    }
 
+    /* mobile fine tune */
     @media (max-width:420px){
-      .profile-top{ grid-template-columns: 104px 1fr; }
-      .sidecol, .vbtn, .avatar{ width:104px; }
-      .avatar{ height:104px; }
-      .seedrow{ grid-template-columns: 132px 1fr; }
-      .seedimg{ width:132px; height:132px; }
-      .vbtn a, .vbtn div{ padding:6px 8px; border-radius:10px; }
+      :root{
+        --avatar: 110px;
+        --seed: 102px; /* ←モバイルでもプロフィールより少し小さく */
+        --card: 116px;
+      }
+      .wrap{ padding:14px 12px 70px; }
+      .acc > summary{ padding:13px 12px; }
+      .acc-body{ padding:12px; }
+      .collab{ padding:12px; }
     }
   </style>
 </head>
 
 <body>
-<header class="header">
-  <div class="head-inner">
-    <button class="back" id="backBtn" type="button" aria-label="戻る">←</button>
-    <div class="titlebox">
-      <h1 class="title">コラボカード図鑑</h1>
-      <div class="sub">
-        <span class="pill gold" id="updatedPill">更新: --</span>
-        <span class="pill">X/他リンク：四角・青</span>
-        <span class="pill">タネ大きめ</span>
+  <header class="header">
+    <div class="head-inner">
+      <button class="back" id="backBtn" type="button" aria-label="戻る">←</button>
+      <div class="titlebox">
+        <div class="title">コラボ図鑑</div>
+        <div class="sub">年号で折りたたみ｜プロフィール／タネ（デジタル）／カード（紙・デジタル）</div>
       </div>
     </div>
-  </div>
-</header>
+  </header>
 
-<main class="wrap">
-  <section class="intro">
-    <h2>デジタルカードの流れ（超短く）</h2>
-    <p>
-シリアルで増えるのは <b>カード</b> ではなく <b>コラボのタネ</b>。
-畑に植えて育てて、<b>収穫した瞬間にデジタルカードとして図鑑に記録</b>されます。
-    </p>
+  <main class="wrap" id="app"></main>
+
+  <section class="wrap">
+    <div class="note">
+【入手の流れ（超重要）】
+シリアルコードで “カード” が直接もらえるわけではありません。
+シリアルで増えるのは「コラボのタネ」→ そのタネを畑に植えて育て → 収穫した瞬間にカードが焼き上がって図鑑に記録されます。
+
+※紙のカード（現物）と、デジタルカード（ゲーム内）を区別して表示しています。
+    </div>
   </section>
-
-  <div id="list"></div>
-
-  <div class="foot">
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <a class="btn blue" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener">BOOTH</a>
-      <a class="btn" href="./index.html">トップへ</a>
-      <a class="btn" href="./zukan.html">図鑑へ</a>
-    </div>
-    <div>© 焼かれた伝説</div>
-  </div>
-</main>
-
-<!-- Modal -->
-<div class="modal" id="modal" aria-hidden="true" role="dialog" aria-modal="true">
-  <div class="modal-card" role="document">
-    <div class="modal-top">
-      <div class="mn" id="mTitle">—</div>
-      <button class="close" id="mClose" type="button" aria-label="閉じる">閉じる</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="modal-art">
-        <div class="modal-cardbox">
-          <img id="mImg" src="" alt="拡大画像" />
-        </div>
-      </div>
-
-      <div class="modal-info">
-        <div class="mtags" id="mTags"></div>
-        <p class="mdesc" id="mDesc">—</p>
-        <div class="mmeta" id="mMeta">—</div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <script>
 (() => {
   "use strict";
 
-  const UPDATED = "2026-02-15";
+  const $app = document.getElementById("app");
+  document.getElementById("backBtn").addEventListener("click", () => history.back());
 
-  /* =========================
-     画像URL（あなたがくれた分）
-  ========================= */
-  const SALE_CARDS = {
-    TSUMA:  { no:"TN-022", name:"たこ焼きダーツインフェルノ《對馬裕佳子プロ🎯》", img:"https://ul.h3z.jp/Prf7KxRk.jpg" },
-    INOUE:  { no:"TN-028", name:"自己啓発たこ塾《井上諒プロ🎯》",               img:"https://ul.h3z.jp/sPChFFlG.jpg" },
-    NIKI:   { no:"TN-029", name:"カロリーゼロ理論《仁木治プロ🎯》",               img:"https://ul.h3z.jp/4HEbt3YP.jpg" },
-    INAISHI:{ no:"TN-044", name:"白い契約(稲石裕プロ🎯)",                          img:"https://ul.h3z.jp/bC1B4WkQ.jpg" },
-    SAMATA: { no:"TN-048", name:"店主反撃レビュー《佐俣雄一郎🎯》",                 img:"https://ul.h3z.jp/ge8b4cQ5.jpg" },
-  };
+  /* =========================================================
+     ✅ ここだけ編集すれば増える（データ）
+     - year: "2026" など
+     - groupTitle: "ダーツプロコラボ" など
+     - collabs: 1コラボ＝テンプレ1個（複数人もOK）
+     - person:
+        name, profileImg, intro(紹介文), xUrl, otherUrl
+     - seed:
+        name(表示名), img, label("デジタル"固定でOK), desc
+     - cards: 2枚横並び（必要なら2枚以上もOK、2列で下に増える）
+        no, img, paper(true/false), digital(true/false)
+  ========================================================= */
 
-  const BS = {
-    "BS-001": { no:"BS-001", name:"對馬裕佳子", img:"https://ul.h3z.jp/l5roYZJ4.png" },
-    "BS-002": { no:"BS-002", name:"佐俣雄一郎", img:"https://ul.h3z.jp/BtOTLlSo.png" },
-    "BS-003": { no:"BS-003", name:"井上諒",     img:"https://ul.h3z.jp/P5vsAste.png" },
-    "BS-004": { no:"BS-004", name:"仁木治",     img:"https://ul.h3z.jp/ZGBzzH2r.png" },
-    "BS-005": { no:"BS-005", name:"稲石裕",     img:"https://ul.h3z.jp/nmiaCKae.png" },
-  };
+  const DATA = [
+    /* ===== 2026：配信者ぐらたん（デジタル） ===== */
+    {
+      year: "2026",
+      yearNote: "配信者／インフルエンサー",
+      groups: [
+        {
+          groupTitle: "配信者《ぐらたん》",
+          groupMini: "デジタル（タネ育成）",
+          collabs: [
+            {
+              date: "2026",
+              seedTitleLine: "ぐらたんのタネ",
+              person: {
+                name: "配信者《ぐらたん》",
+                profileImg: "https://ul.h3z.jp/zXzQtZGi.png",
+                /* ✅ ここに“紹介文を全部”入れる（要望） */
+                intro:
+`低音配信者。たまに稲川淳二と井上陽水が出てくる。
+――みたいな、説明になってない説明がいちばん似合うやつ。
 
-  /* =========================
-     コラボ一覧（テンプレで増やす）
-     - ぐらたん：デジタルのみ
-     - ダーツ：紙 + デジタル（品番横に両方）
-  ========================= */
-  const COLLABOS = [
-    {
-      ym: "2026.02",
-      title: "ぐらたんのタネ",
-      period: "",
-      person: {
-        name: "配信者《ぐらたん》",
-        photo: "https://ul.h3z.jp/zXzQtZGi.png",
-        introFull:
-`（ここに紹介文を全部入れる）
-低音配信者。たまに稲川淳二と井上陽水が出てくる。…など
-※改行そのまま反映されます。`
-      },
-      links: {
-        x: "",      // ←後で入れる（空なら無効表示）
-        other: ""   // ←後で入れる
-      },
-      seed: {
-        label: "デジタル",
-        name: "ぐらたんのタネ",
-        img: "https://ul.h3z.jp/zXzQtZGi.png",
-        desc:
-`シリアルで増えるのは「カード」ではなく「コラボのタネ」。
-畑に植えて育てて、収穫した瞬間にデジタルカードとして図鑑に記録されます。`
-      },
-      cards2: [
-        { no:"DG-001", name:"（デジタル）ぐらたん：カードA", img:"https://ul.h3z.jp/Prf7KxRk.jpg", formats:["デジタル"] },
-        { no:"DG-002", name:"（デジタル）ぐらたん：カードB", img:"https://ul.h3z.jp/ge8b4cQ5.jpg", formats:["デジタル"] }
-      ]
-    },
+（※ここに確定版の紹介文をそのまま貼ってOK）`,
+                xUrl: "#",       // ←あとでXのURLに差し替え
+                otherUrl: "#"    // ←HP/YouTubeなどのURLに差し替え
+              },
+              seed: {
+                name: "ぐらたんのタネ",
+                /* ✅ ぐらたんのタネ画像URLがまだ未提示なので仮置き（後で差し替え） */
+                img: "https://ul.h3z.jp/rKfsdOZB.png", // ←ここを「ぐらたんタネ画像」に差し替えてください
+                label: "デジタル",
+                /* ✅ デジタル説明を分かりやすく言い換え（要望） */
+                desc:
+`「シリアルコードで増えるのは“カード”じゃなくて“タネ”」です。
+このタネを畑に植えて育て、収穫した瞬間に “デジタルカード” として焼き上がります。`
+              },
+              cards: [
+                /* ✅ ぐらたんのカード画像URLが未提示なので仮（後で差し替え） */
+                { no:"GR-001", img:"https://ul.h3z.jp/rKfsdOZB.png", paper:false, digital:true },
+                { no:"GR-002", img:"https://ul.h3z.jp/rKfsdOZB.png", paper:false, digital:true }
+              ]
+            }
+          ]
+        },
 
-    /* ===== ダーツ5人：紙 + デジタル ===== */
-    {
-      ym: "2025.00",
-      title: "ダーツコラボ（對馬裕佳子）",
-      period: "",
-      person: {
-        name: "ダーツプロ《對馬裕佳子》",
-        photo: BS["BS-001"].img,
-        introFull:
-`（ここにプロフィール紹介文）
-・販売用（紙のカード）と、非売品（紙：配布終了）の記録
-・さらにデジタル（タネ→収穫）側も存在`
-      },
-      links: { x:"", other:"" },
-      seed: {
-        label: "デジタル",
-        name: "コラボのタネ",
-        img: BS["BS-001"].img,
-        desc:
-`このコラボは「紙」と「デジタル」両方あります。
-デジタルはシリアルでタネを増やし、畑で収穫した瞬間に図鑑へ。`
-      },
-      cards2: [
-        { ...SALE_CARDS.TSUMA, formats:["紙","デジタル"] },
-        { ...BS["BS-001"], formats:["紙","デジタル"] }
+        /* ===== 2026：ダーツプロ（紙＋デジタル） ===== */
+        {
+          groupTitle: "ダーツプロコラボ",
+          groupMini: "紙（現物）＋ デジタル（タネ育成）",
+          collabs: [
+            /* 1人ずつ「ぐらたん形式」で並べる（要望） */
+            {
+              date: "2026",
+              seedTitleLine: "ブッ刺さりタネ（對馬裕佳子）",
+              person: {
+                name: "ダーツプロ《對馬裕佳子🎯》",
+                /* ✅ ここは「本人写真」を嵌め込む予定：今は仮で置いておく */
+                profileImg: "https://ul.h3z.jp/zXzQtZGi.png", // ←後で本人写真URLへ
+                intro:
+`（ここに對馬プロの紹介文を貼る）
+例：トッププロとして各地で活躍。初代ダーツコラボの火付け役。`,
+                xUrl: "#",
+                otherUrl: "#"
+              },
+              seed: {
+                name: "ブッ刺さりタネ",
+                img: "https://ul.h3z.jp/l5roYZJ4.png", // BS-001
+                label: "デジタル",
+                desc:
+`ダーツプロコラボのタネ。
+シリアル入力で増えるのはタネ → 畑で育てて収穫 → デジタルカードが焼き上がります。`
+              },
+              cards: [
+                { no:"TN-022", img:"https://ul.h3z.jp/Prf7KxRk.jpg", paper:true,  digital:true }, // 販売用
+                { no:"BS-001", img:"https://ul.h3z.jp/l5roYZJ4.png",  paper:true,  digital:true }  // 非売品（配布終了）だが“紙として存在”
+              ]
+            },
+
+            {
+              date: "2026",
+              seedTitleLine: "ブッ刺さりタネ（佐俣雄一郎）",
+              person: {
+                name: "ダーツプロ《佐俣雄一郎🎯》",
+                profileImg: "https://ul.h3z.jp/zXzQtZGi.png", // ←後で本人写真URLへ
+                intro:
+`（ここに佐俣プロの紹介文を貼る）
+例：勝負所の集中力が武器。店主反撃レビューの張本人。`,
+                xUrl: "#",
+                otherUrl: "#"
+              },
+              seed: {
+                name: "ブッ刺さりタネ",
+                img: "https://ul.h3z.jp/BtOTLlSo.png", // BS-002
+                label: "デジタル",
+                desc:
+`タネを育てて収穫すると、運命の枠（レアリティ）が決まり、デジタルカードとして図鑑に記録されます。`
+              },
+              cards: [
+                { no:"TN-048", img:"https://ul.h3z.jp/ge8b4cQ5.jpg", paper:true,  digital:true },
+                { no:"BS-002", img:"https://ul.h3z.jp/BtOTLlSo.png",  paper:true,  digital:true }
+              ]
+            },
+
+            {
+              date: "2026",
+              seedTitleLine: "ブッ刺さりタネ（井上諒）",
+              person: {
+                name: "ダーツプロ《井上諒🎯》",
+                profileImg: "https://ul.h3z.jp/zXzQtZGi.png", // ←後で本人写真URLへ
+                intro:
+`（ここに井上プロの紹介文を貼る）
+例：刺さる言葉と刺さるダーツ。自己啓発たこ塾の講師（？）。`,
+                xUrl: "#",
+                otherUrl: "#"
+              },
+              seed: {
+                name: "ブッ刺さりタネ",
+                img: "https://ul.h3z.jp/P5vsAste.png", // BS-003
+                label: "デジタル",
+                desc:
+`シリアル＝カードではなくタネ。
+育てて収穫して、初めてデジタルカードになります。`
+              },
+              cards: [
+                { no:"TN-028", img:"https://ul.h3z.jp/sPChFFlG.jpg", paper:true,  digital:true },
+                { no:"BS-003", img:"https://ul.h3z.jp/P5vsAste.png",  paper:true,  digital:true }
+              ]
+            },
+
+            {
+              date: "2026",
+              seedTitleLine: "ブッ刺さりタネ（仁木治）",
+              person: {
+                name: "ダーツプロ《仁木治🎯》",
+                profileImg: "https://ul.h3z.jp/zXzQtZGi.png", // ←後で本人写真URLへ
+                intro:
+`（ここに仁木プロの紹介文を貼る）
+例：理論派。カロリーゼロ理論で胃袋と盤面を制圧。`,
+                xUrl: "#",
+                otherUrl: "#"
+              },
+              seed: {
+                name: "ブッ刺さりタネ",
+                img: "https://ul.h3z.jp/ZGBzzH2r.png", // BS-004
+                label: "デジタル",
+                desc:
+`タネを植える→育てる→収穫する。
+“収穫の瞬間に” カードが決定して図鑑に入ります。`
+              },
+              cards: [
+                { no:"TN-029", img:"https://ul.h3z.jp/4HEbt3YP.jpg", paper:true,  digital:true },
+                { no:"BS-004", img:"https://ul.h3z.jp/ZGBzzH2r.png",  paper:true,  digital:true }
+              ]
+            },
+
+            {
+              date: "2026",
+              seedTitleLine: "ブッ刺さりタネ（稲石裕）",
+              person: {
+                name: "ダーツプロ《稲石裕🎯》",
+                profileImg: "https://ul.h3z.jp/zXzQtZGi.png", // ←後で本人写真URLへ
+                intro:
+`（ここに稲石プロの紹介文を貼る）
+例：静かに燃える職人肌。白い契約の主役。`,
+                xUrl: "#",
+                otherUrl: "#"
+              },
+              seed: {
+                name: "ブッ刺さりタネ",
+                img: "https://ul.h3z.jp/nmiaCKae.png", // BS-005
+                label: "デジタル",
+                desc:
+`シリアルでタネが増える→畑で収穫→デジタルカード化。
+紙のカード（現物）とは別ラインです。`
+              },
+              cards: [
+                { no:"TN-044", img:"https://ul.h3z.jp/bC1B4WkQ.jpg", paper:true,  digital:true },
+                { no:"BS-005", img:"https://ul.h3z.jp/nmiaCKae.png",  paper:true,  digital:true }
+              ]
+            }
+          ]
+        }
       ]
-    },
-    {
-      ym: "2025.00",
-      title: "ダーツコラボ（佐俣雄一郎）",
-      period: "",
-      person: {
-        name: "ダーツプロ《佐俣雄一郎》",
-        photo: BS["BS-002"].img,
-        introFull:`（ここにプロフィール紹介文）`
-      },
-      links: { x:"", other:"" },
-      seed: { label:"デジタル", name:"コラボのタネ", img: BS["BS-002"].img, desc:`このコラボは「紙」と「デジタル」両方あります。` },
-      cards2: [
-        { ...SALE_CARDS.SAMATA, formats:["紙","デジタル"] },
-        { ...BS["BS-002"], formats:["紙","デジタル"] }
-      ]
-    },
-    {
-      ym: "2025.00",
-      title: "ダーツコラボ（井上諒）",
-      period: "",
-      person: {
-        name: "ダーツプロ《井上諒》",
-        photo: BS["BS-003"].img,
-        introFull:`（ここにプロフィール紹介文）`
-      },
-      links: { x:"", other:"" },
-      seed: { label:"デジタル", name:"コラボのタネ", img: BS["BS-003"].img, desc:`このコラボは「紙」と「デジタル」両方あります。` },
-      cards2: [
-        { ...SALE_CARDS.INOUE, formats:["紙","デジタル"] },
-        { ...BS["BS-003"], formats:["紙","デジタル"] }
-      ]
-    },
-    {
-      ym: "2025.00",
-      title: "ダーツコラボ（仁木治）",
-      period: "",
-      person: {
-        name: "ダーツプロ《仁木治》",
-        photo: BS["BS-004"].img,
-        introFull:`（ここにプロフィール紹介文）`
-      },
-      links: { x:"", other:"" },
-      seed: { label:"デジタル", name:"コラボのタネ", img: BS["BS-004"].img, desc:`このコラボは「紙」と「デジタル」両方あります。` },
-      cards2: [
-        { ...SALE_CARDS.NIKI, formats:["紙","デジタル"] },
-        { ...BS["BS-004"], formats:["紙","デジタル"] }
-      ]
-    },
-    {
-      ym: "2025.00",
-      title: "ダーツコラボ（稲石裕）",
-      period: "",
-      person: {
-        name: "ダーツプロ《稲石裕》",
-        photo: BS["BS-005"].img,
-        introFull:`（ここにプロフィール紹介文）`
-      },
-      links: { x:"", other:"" },
-      seed: { label:"デジタル", name:"コラボのタネ", img: BS["BS-005"].img, desc:`このコラボは「紙」と「デジタル」両方あります。` },
-      cards2: [
-        { ...SALE_CARDS.INAISHI, formats:["紙","デジタル"] },
-        { ...BS["BS-005"], formats:["紙","デジタル"] }
-      ]
-    },
+    }
   ];
 
-  /* =========================
-     DOM
-  ========================= */
-  const $ = (q) => document.querySelector(q);
-  $("#updatedPill").textContent = `更新: ${UPDATED}`;
-  $("#backBtn").addEventListener("click", () => history.back());
-  const list = $("#list");
+  /* ===== render ===== */
+  function el(tag, cls, html){
+    const n = document.createElement(tag);
+    if(cls) n.className = cls;
+    if(html != null) n.innerHTML = html;
+    return n;
+  }
+  function safe(s){ return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-  /* =========================
-     Modal
-  ========================= */
-  const modal = $("#modal");
-  const mTitle = $("#mTitle");
-  const mImg = $("#mImg");
-  const mTags = $("#mTags");
-  const mDesc = $("#mDesc");
-  const mMeta = $("#mMeta");
-  const mClose = $("#mClose");
-
-  function tag(text, cls=""){
-    const el = document.createElement("span");
-    el.className = "tag" + (cls ? " " + cls : "");
-    el.textContent = text;
-    return el;
+  function makeBadge(type){
+    const span = document.createElement("span");
+    span.className = "badge " + type;
+    span.textContent = (type === "paper") ? "紙" : "デジタル";
+    return span;
+  }
+  function makeLabelDigital(){
+    const span = document.createElement("span");
+    span.className = "label digital";
+    span.textContent = "デジタル";
+    return span;
   }
 
-  function openModal(payload){
-    mTitle.textContent = `${payload.no}｜${payload.name}`;
-    mImg.src = payload.img;
-    mImg.alt = payload.name;
+  DATA.forEach(yearBlock => {
+    const yearLine = el("div","year", `${safe(yearBlock.year)}年 <small>${safe(yearBlock.yearNote || "")}</small>`);
+    $app.appendChild(yearLine);
 
-    mTags.innerHTML = "";
-    (payload.formats || []).forEach(f=>{
-      if(f==="紙") mTags.appendChild(tag("紙", "paper"));
-      if(f==="デジタル") mTags.appendChild(tag("デジタル", "digital"));
+    (yearBlock.groups || []).forEach(group => {
+      const details = document.createElement("details");
+      details.className = "acc";
+
+      const summary = document.createElement("summary");
+      const title = el("div","acc-title", `<span class="main">${safe(group.groupTitle)}</span> <span class="mini">${safe(group.groupMini || "")}</span>`);
+      const chev = el("div","chev","▼");
+      summary.appendChild(title);
+      summary.appendChild(chev);
+
+      const body = el("div","acc-body","");
+      details.appendChild(summary);
+      details.appendChild(body);
+
+      (group.collabs || []).forEach(item => {
+        const box = el("section","collab","");
+        const top = el("div","collab-top","");
+        top.appendChild(el("div","date", safe(item.date || "")));
+        top.appendChild(el("div","seedname", safe(item.seedTitleLine || "")));
+        box.appendChild(top);
+
+        const grid = el("div","grid","");
+
+        /* left: profile column */
+        const pcol = el("div","pcol","");
+        const avatar = el("div","avatar","");
+        avatar.appendChild(el("img","", null));
+        avatar.querySelector("img").src = item.person?.profileImg || "";
+        avatar.querySelector("img").alt = item.person?.name || "プロフィール";
+        pcol.appendChild(avatar);
+
+        const linkstack = el("div","linkstack","");
+        const x = document.createElement("a");
+        x.className = "linkbtn x";
+        x.textContent = "X";
+        x.href = item.person?.xUrl || "#";
+        x.target = "_blank";
+        x.rel = "noopener";
+
+        const other = document.createElement("a");
+        other.className = "linkbtn other";
+        other.textContent = "他リンク";
+        other.href = item.person?.otherUrl || "#";
+        other.target = "_blank";
+        other.rel = "noopener";
+
+        linkstack.appendChild(x);
+        linkstack.appendChild(other);
+        pcol.appendChild(linkstack);
+
+        /* right: content */
+        const rcol = el("div","", "");
+        const h = el("div","hname", `<span class="who">${safe(item.person?.name || "")}</span>`);
+        const d = el("p","desc", safe(item.person?.intro || ""));
+        rcol.appendChild(h);
+        rcol.appendChild(d);
+
+        /* seed row */
+        const seedrow = el("div","seedrow","");
+        const seedbox = el("div","seedbox","");
+        const seedimg = document.createElement("img");
+        seedimg.src = item.seed?.img || "";
+        seedimg.alt = item.seed?.name || "タネ画像";
+        seedbox.appendChild(seedimg);
+
+        const seedtext = el("div","seedtext","");
+        seedtext.appendChild(makeLabelDigital());
+        seedtext.appendChild(el("p","seeddesc", safe(item.seed?.desc || "")));
+
+        /* cards */
+        const cards = el("div","cards","");
+        (item.cards || []).forEach(cd => {
+          const tile = el("div","cardtile","");
+          const art = el("div","cardart","");
+          const img = document.createElement("img");
+          img.src = cd.img || "";
+          img.alt = cd.no || "カード";
+          art.appendChild(img);
+
+          const meta = el("div","cardmeta","");
+          meta.appendChild(el("span","no", safe(cd.no || "")));
+
+          // ✅ 品番横：紙/デジタル（色付き）
+          if(cd.paper) meta.appendChild(makeBadge("paper"));
+          if(cd.digital) meta.appendChild(makeBadge("digital"));
+
+          tile.appendChild(art);
+          tile.appendChild(meta);
+          cards.appendChild(tile);
+        });
+
+        seedtext.appendChild(cards);
+
+        seedrow.appendChild(seedbox);
+        seedrow.appendChild(seedtext);
+
+        rcol.appendChild(seedrow);
+
+        grid.appendChild(pcol);
+        grid.appendChild(rcol);
+
+        box.appendChild(grid);
+        body.appendChild(box);
+      });
+
+      $app.appendChild(details);
     });
-
-    mDesc.textContent = payload.desc || "";
-    mMeta.textContent = payload.meta || "";
-
-    modal.setAttribute("aria-hidden","false");
-    document.body.style.overflow = "hidden";
-  }
-
-  function closeModal(){
-    modal.setAttribute("aria-hidden","true");
-    document.body.style.overflow = "";
-  }
-
-  mClose.addEventListener("click", closeModal);
-  modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
-  document.addEventListener("keydown", (e) => {
-    if(e.key === "Escape" && modal.getAttribute("aria-hidden")==="false") closeModal();
   });
 
-  /* =========================
-     Helpers
-  ========================= */
-  function safeLink(url){
-    const u = String(url||"").trim();
-    return u && /^https?:\/\//.test(u) ? u : "";
-  }
-
-  function makeFormatBadges(formats){
-    const wrap = document.createElement("div");
-    wrap.className = "format";
-    const fs = Array.isArray(formats) ? formats : [];
-
-    if(fs.includes("紙")){
-      const b = document.createElement("span");
-      b.className = "fbtn paper";
-      b.textContent = "紙";
-      wrap.appendChild(b);
-    }
-    if(fs.includes("デジタル")){
-      const b = document.createElement("span");
-      b.className = "fbtn digital";
-      b.textContent = "デジタル";
-      wrap.appendChild(b);
-    }
-    return wrap;
-  }
-
-  function makeMini(card, collab){
-    const el = document.createElement("article");
-    el.className = "cardmini";
-    el.setAttribute("role","button");
-    el.setAttribute("tabindex","0");
-    el.setAttribute("aria-label", `${card.no} ${card.name} を開く`);
-
-    const art = document.createElement("div");
-    art.className = "art";
-    const img = document.createElement("img");
-    img.src = card.img;
-    img.alt = card.name;
-    art.appendChild(img);
-
-    const meta = document.createElement("div");
-    meta.className = "meta";
-
-    const noRow = document.createElement("div");
-    noRow.className = "noRow";
-
-    const no = document.createElement("div");
-    no.className = "no";
-    no.textContent = card.no;
-
-    noRow.appendChild(no);
-    noRow.appendChild(makeFormatBadges(card.formats));
-
-    const name = document.createElement("div");
-    name.className = "cname";
-    name.textContent = card.name;
-
-    meta.appendChild(noRow);
-    meta.appendChild(name);
-
-    el.appendChild(art);
-    el.appendChild(meta);
-
-    const payload = {
-      no: card.no,
-      name: card.name,
-      img: card.img,
-      formats: card.formats || [],
-      desc: `${collab.title} のカードです。`,
-      meta: `年月：${collab.ym}${collab.period ? " / " + collab.period : ""}`
-    };
-
-    el.addEventListener("click", () => openModal(payload));
-    el.addEventListener("keydown", (e) => {
-      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openModal(payload); }
-    });
-
-    return el;
-  }
-
-  /* =========================
-     Render
-  ========================= */
-  function render(){
-    list.innerHTML = "";
-
-    COLLABOS.forEach(c => {
-      const section = document.createElement("section");
-      section.className = "collab";
-
-      const head = document.createElement("div");
-      head.className = "collab-head";
-
-      const left = document.createElement("div");
-      left.style.display = "grid";
-      left.style.gap = "2px";
-
-      const ym = document.createElement("div");
-      ym.className = "ym";
-      ym.textContent = c.ym;
-
-      const title = document.createElement("h2");
-      title.className = "name";
-      title.textContent = c.title;
-
-      left.appendChild(ym);
-      left.appendChild(title);
-
-      const period = document.createElement("div");
-      period.className = "period";
-      period.textContent = c.period || "";
-
-      head.appendChild(left);
-      head.appendChild(period);
-
-      const body = document.createElement("div");
-      body.className = "collab-body";
-
-      const profile = document.createElement("div");
-      profile.className = "profile";
-
-      const pInner = document.createElement("div");
-      pInner.className = "profile-inner";
-
-      const pTop = document.createElement("div");
-      pTop.className = "profile-top";
-
-      const side = document.createElement("div");
-      side.className = "sidecol";
-
-      const avatar = document.createElement("div");
-      avatar.className = "avatar";
-      if(c.person.photo){
-        const aimg = document.createElement("img");
-        aimg.src = c.person.photo;
-        aimg.alt = c.person.name;
-        avatar.appendChild(aimg);
-      }
-      side.appendChild(avatar);
-
-      const vbtn = document.createElement("div");
-      vbtn.className = "vbtn";
-
-      const x = safeLink(c.links && c.links.x);
-      const other = safeLink(c.links && c.links.other);
-
-      if(x){
-        const b = document.createElement("a");
-        b.href = x; b.target="_blank"; b.rel="noopener";
-        b.textContent = "X";
-        vbtn.appendChild(b);
-      }else{
-        const b = document.createElement("div");
-        b.className = "disabled";
-        b.textContent = "X";
-        vbtn.appendChild(b);
-      }
-
-      if(other){
-        const b = document.createElement("a");
-        b.href = other; b.target="_blank"; b.rel="noopener";
-        b.textContent = "他リンク";
-        vbtn.appendChild(b);
-      }else{
-        const b = document.createElement("div");
-        b.className = "disabled";
-        b.textContent = "他リンク";
-        vbtn.appendChild(b);
-      }
-
-      side.appendChild(vbtn);
-
-      const pblock = document.createElement("div");
-      pblock.className = "pblock";
-
-      const pname = document.createElement("div");
-      pname.className = "pname";
-      pname.textContent = c.person.name;
-
-      const pintro = document.createElement("div");
-      pintro.className = "pintro";
-      pintro.textContent = c.person.introFull || "";
-
-      pblock.appendChild(pname);
-      pblock.appendChild(pintro);
-
-      pTop.appendChild(side);
-      pTop.appendChild(pblock);
-
-      /* seed box */
-      const seedbox = document.createElement("div");
-      seedbox.className = "seedbox";
-
-      const seedrow = document.createElement("div");
-      seedrow.className = "seedrow";
-
-      const seedimg = document.createElement("div");
-      seedimg.className = "seedimg";
-      if(c.seed && c.seed.img){
-        const simg = document.createElement("img");
-        simg.src = c.seed.img;
-        simg.alt = c.seed.name || "タネ";
-        seedimg.appendChild(simg);
-      }
-
-      const seedmeta = document.createElement("div");
-      seedmeta.className = "seedmeta";
-
-      const row1 = document.createElement("div");
-      row1.className = "row1";
-
-      const badge = document.createElement("span");
-      badge.className = "badge digital";
-      badge.textContent = c.seed.label || "デジタル";
-
-      const seedname = document.createElement("span");
-      seedname.className = "seedname";
-      seedname.textContent = c.seed.name || "コラボのタネ";
-
-      row1.appendChild(badge);
-      row1.appendChild(seedname);
-
-      const seeddesc = document.createElement("div");
-      seeddesc.className = "seeddesc";
-      seeddesc.textContent = c.seed.desc || "";
-
-      seedmeta.appendChild(row1);
-      seedmeta.appendChild(seeddesc);
-
-      seedrow.appendChild(seedimg);
-      seedrow.appendChild(seedmeta);
-
-      seedbox.appendChild(seedrow);
-
-      /* cards 2-up */
-      const cards2 = document.createElement("div");
-      cards2.className = "cards2";
-      (c.cards2 || []).slice(0,2).forEach(card => cards2.appendChild(makeMini(card, c)));
-
-      /* assemble */
-      pInner.appendChild(pTop);
-      pInner.appendChild(seedbox);
-      pInner.appendChild(cards2);
-
-      profile.appendChild(pInner);
-
-      body.appendChild(profile);
-
-      section.appendChild(head);
-      section.appendChild(body);
-
-      list.appendChild(section);
-    });
-  }
-
-  render();
 })();
 </script>
 </body>
