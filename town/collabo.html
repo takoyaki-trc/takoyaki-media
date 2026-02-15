@@ -32,27 +32,41 @@
         radial-gradient(900px 520px at 20% 0%, rgba(246,211,122,.12), transparent 62%),
         radial-gradient(760px 520px at 85% 15%, rgba(140,200,255,.10), transparent 62%),
         linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+
+      /* ✅ 背景画像URL（ここを変えればOK） */
+      --bgimg: url("https://ul.h3z.jp/rKfsdOZB.png");
     }
 
     *{ box-sizing:border-box }
     html,body{ height:100% }
 
+    /* ✅ 背景は body::before で“確実に出す” */
     body{
       margin:0;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
       color:var(--text);
-
-      /* ✅ 指定の背景 */
+      background:#05060b;
+      overflow-x:hidden;
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-2;
+      background: var(--bgimg) center/cover no-repeat;
+      transform: translateZ(0);
+    }
+    /* ✅ うっすら暗幕＆空気感（画像を“消さない”濃さ） */
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-1;
       background:
-        linear-gradient(180deg, rgba(5,6,11,.86), rgba(11,13,23,.94)),
         radial-gradient(1200px 720px at 20% 5%, rgba(246,211,122,.10), transparent 60%),
         radial-gradient(900px 680px at 75% 20%, rgba(140,200,255,.08), transparent 60%),
-        url("https://ul.h3z.jp/rKfsdOZB.png");
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-
-      overflow-x:hidden;
+        linear-gradient(180deg, rgba(5,6,11,.54), rgba(11,13,23,.78));
+      pointer-events:none;
     }
 
     a{ color:inherit; text-decoration:none }
@@ -208,14 +222,23 @@
       display:grid;
       gap:10px;
     }
+
+    /* ✅ 左：画像 + 縦ボタン / 右：テキスト */
     .profile-top{
       display:grid;
-      grid-template-columns: 92px 1fr;
-      gap:10px;
+      grid-template-columns: 104px 1fr;
+      gap:12px;
       align-items:start;
     }
+
+    .sidecol{
+      display:grid;
+      gap:8px;
+      width:104px; /* ← avatar と同じ幅に固定 */
+    }
+
     .avatar{
-      width:92px; height:92px;
+      width:104px; height:104px;
       border-radius: 18px;
       border:1px solid rgba(246,211,122,.30);
       background: rgba(0,0,0,.18);
@@ -223,6 +246,37 @@
       box-shadow: 0 12px 24px rgba(0,0,0,.30);
     }
     .avatar img{ width:100%; height:100%; object-fit: cover; }
+
+    /* ✅ 縦ボタン（画像枠と同じ幅・はみ出さない） */
+    .vbtn{
+      width:104px;
+      display:grid;
+      gap:8px;
+    }
+    .vbtn a, .vbtn div{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:10px 10px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      box-shadow: var(--shadow2);
+      font-weight:1000;
+      font-size:12px;
+      letter-spacing:.02em;
+      white-space:nowrap;
+    }
+    .vbtn a.gold{
+      border-color: rgba(246,211,122,.45);
+      background: rgba(246,211,122,.12);
+    }
+    .vbtn .disabled{
+      opacity:.60;
+      cursor:default;
+    }
+
     .pblock{ min-width:0; }
     .pname{
       font-size:14px;
@@ -238,34 +292,6 @@
       line-height:1.7;
       font-weight:900;
       white-space:pre-line;
-    }
-
-    /* ===== Links ===== */
-    .btns{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:2px;
-    }
-    .btn{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      justify-content:center;
-      padding:10px 12px;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      box-shadow: var(--shadow2);
-      font-weight:1000;
-      font-size:12px;
-      letter-spacing:.02em;
-      cursor:pointer;
-      white-space:nowrap;
-    }
-    .btn.gold{
-      border-color: rgba(246,211,122,.45);
-      background: rgba(246,211,122,.12);
     }
 
     /* ===== Seed (or paper box) ===== */
@@ -347,6 +373,7 @@
       gap:10px;
       margin-top:2px;
     }
+
     .cardmini{
       border-radius: 16px;
       border:1px solid rgba(255,255,255,.12);
@@ -358,6 +385,7 @@
     }
     .cardmini:hover{ transform: translateY(-2px); border-color: rgba(246,211,122,.22); }
     .cardmini:active{ transform: translateY(-1px) scale(.99); }
+
     .cardmini .art{
       position:relative;
       width:100%;
@@ -378,10 +406,19 @@
       background: rgba(0,0,0,.18);
       filter: drop-shadow(0 10px 16px rgba(0,0,0,.40));
     }
+
     .cardmini .meta{
       padding:8px 10px 10px;
       display:grid;
-      gap:4px;
+      gap:6px;
+    }
+
+    /* ✅ 品番 + 紙/デジタル を“横並び” */
+    .noRow{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
     }
     .no{
       font-family: var(--mono);
@@ -390,6 +427,36 @@
       letter-spacing:.04em;
       color: rgba(255,255,255,.74);
     }
+
+    .format{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .fbtn{
+      font-size:11px;
+      font-weight:1000;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.86);
+      line-height:1;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .fbtn.paper{
+      border-color: rgba(246,211,122,.50);
+      background: rgba(246,211,122,.10);
+      color:#fff;
+    }
+    .fbtn.digital{
+      border-color: rgba(140,200,255,.50);
+      background: rgba(140,200,255,.10);
+      color:#fff;
+    }
+
     .cname{
       font-size:12px;
       font-weight:1000;
@@ -412,6 +479,24 @@
       font-weight:900;
       letter-spacing:.02em;
       padding:2px 2px 0;
+    }
+    .btn{
+      display:inline-flex;
+      justify-content:center;
+      align-items:center;
+      padding:10px 12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      box-shadow: var(--shadow2);
+      font-weight:1000;
+      font-size:12px;
+      letter-spacing:.02em;
+      white-space:nowrap;
+    }
+    .btn.gold{
+      border-color: rgba(246,211,122,.45);
+      background: rgba(246,211,122,.12);
     }
 
     /* ===== Modal ===== */
@@ -527,9 +612,10 @@
       background: rgba(246,211,122,.12);
       color:#fff;
     }
-    .tag.dim{
-      color: rgba(255,255,255,.72);
-      background: rgba(255,255,255,.04);
+    .tag.blue{
+      border-color: rgba(140,200,255,.55);
+      background: rgba(140,200,255,.12);
+      color:#fff;
     }
     .mdesc{
       margin:0;
@@ -545,6 +631,13 @@
       font-weight:1000;
       letter-spacing:.02em;
     }
+
+    @media (max-width:420px){
+      .profile-top{ grid-template-columns: 96px 1fr; }
+      .sidecol, .vbtn, .avatar{ width:96px; }
+      .avatar{ height:96px; }
+      .vbtn a, .vbtn div{ padding:9px 8px; border-radius: 14px; }
+    }
   </style>
 </head>
 
@@ -556,8 +649,8 @@
       <h1 class="title">コラボカード図鑑</h1>
       <div class="sub">
         <span class="pill gold" id="updatedPill">更新: --</span>
-        <span class="pill">1人＝1テンプレ</span>
-        <span class="pill">カード2枚横並び</span>
+        <span class="pill">プロフィール＋タネ＋カード2枚</span>
+        <span class="pill">品番横に「紙 / デジタル」</span>
       </div>
     </div>
   </div>
@@ -565,12 +658,12 @@
 
 <main class="wrap">
   <section class="intro">
-    <h2>現物（紙）とデジタル（ゲーム内）は別物</h2>
+    <h2>シリアル＝カードではない（タネが増える）</h2>
     <p>
 シリアルで増えるのは <b>カード</b> ではなく <b>コラボのタネ</b>。
 畑に植えて育てて、<b>収穫した瞬間にデジタルカードとして図鑑に記録</b>されます。
 
-このページは「コラボの記録」を年月でまとめます（現物の紙カード／配布終了の非売品／ゲーム内デジタルは、説明で区別）。
+※現物（紙）コラボは「紙のカード」として掲載。コラボによって <b>紙 / デジタル</b> の両方が存在します。
     </p>
   </section>
 
@@ -614,23 +707,19 @@
 (() => {
   "use strict";
 
-  const UPDATED = "2026-02-14";
+  const UPDATED = "2026-02-15";
 
   /* =========================================================
-     ✅ 画像URL（あなたが最初の方で貼ったやつ）
-     - 販売用（紙 / パック収録 / 🎯）
+     ✅ 画像URL（あなたが貼ったダーツ販売用 / BS非売品）
   ========================================================= */
   const SALE_CARDS = {
-    TSUMA: { no:"TN-022", name:"たこ焼きダーツインフェルノ《對馬裕佳子プロ🎯》", img:"https://ul.h3z.jp/Prf7KxRk.jpg" },
-    INOUE:{ no:"TN-028", name:"自己啓発たこ塾《井上諒プロ🎯》",             img:"https://ul.h3z.jp/sPChFFlG.jpg" },
-    NIKI: { no:"TN-029", name:"カロリーゼロ理論《仁木治プロ🎯》",             img:"https://ul.h3z.jp/4HEbt3YP.jpg" },
-    INAISHI:{no:"TN-044", name:"白い契約(稲石裕プロ🎯)",                      img:"https://ul.h3z.jp/bC1B4WkQ.jpg" },
-    SAMATA:{no:"TN-048", name:"店主反撃レビュー《佐俣雄一郎🎯》",             img:"https://ul.h3z.jp/ge8b4cQ5.jpg" },
+    TSUMA:  { no:"TN-022", name:"たこ焼きダーツインフェルノ《對馬裕佳子プロ🎯》", img:"https://ul.h3z.jp/Prf7KxRk.jpg" },
+    INOUE:  { no:"TN-028", name:"自己啓発たこ塾《井上諒プロ🎯》",               img:"https://ul.h3z.jp/sPChFFlG.jpg" },
+    NIKI:   { no:"TN-029", name:"カロリーゼロ理論《仁木治プロ🎯》",               img:"https://ul.h3z.jp/4HEbt3YP.jpg" },
+    INAISHI:{ no:"TN-044", name:"白い契約(稲石裕プロ🎯)",                          img:"https://ul.h3z.jp/bC1B4WkQ.jpg" },
+    SAMATA: { no:"TN-048", name:"店主反撃レビュー《佐俣雄一郎🎯》",                 img:"https://ul.h3z.jp/ge8b4cQ5.jpg" },
   };
 
-  /* =========================================================
-     ✅ 非売品（配布終了 / BS-001〜005）
-  ========================================================= */
   const BS = {
     "BS-001": { no:"BS-001", name:"對馬裕佳子", img:"https://ul.h3z.jp/l5roYZJ4.png" },
     "BS-002": { no:"BS-002", name:"佐俣雄一郎", img:"https://ul.h3z.jp/BtOTLlSo.png" },
@@ -640,70 +729,64 @@
   };
 
   /* =========================================================
-     ✅ 1人＝1テンプレ（ぐらたん形式）
-     - darts勢は “現物コラボの記録” として seedbox を使う（バッジ色で区別）
-     - 本人写真が出てきたら person.photo を差し替え
+     ✅ 1人＝1テンプレ
+     - card.formats: ["紙"] or ["デジタル"] or ["紙","デジタル"]
   ========================================================= */
   const COLLABOS = [
     {
       ym: "2026.02",
       title: "ぐらたんのタネ",
-      period: "2026.2.24〜3.24",
+      period: "（期間）",
       person: {
         name: "配信者《ぐらたん》",
         photo: "https://ul.h3z.jp/zXzQtZGi.png",
         introFull:
-`深夜の配信回線に住み着いた語り手。
-声は低く、語りは静か。
-だが一度聞けば、なぜか最後まで残ってしまう。
-配信者《ぐらたん》。`
+`（ここに紹介文を全部入れる）
+低音配信者。たまに稲川淳二と井上陽水が出てくる。…など
+※この枠は文章を長くしてもOK。改行も反映されます。`
       },
+      links: { x:"", other:"" }, // ←後でURL入れればボタンが有効になる
       seed: {
-        mode: "digital",
         label: "デジタル",
         name: "ぐらたんのタネ",
         img: "https://ul.h3z.jp/zXzQtZGi.png",
         desc:
 `シリアルで増えるのは“カード”ではなく“コラボのタネ”。
-畑に植えて育て、収穫した瞬間にカード化（図鑑に記録）。`
+畑に植えて育て、収穫した瞬間にデジタルカード化（図鑑に記録）。`
       },
-      links: { x:"", hp:"" },
       cards2: [
-        // ※ここはあなたが後で「デジタル側のカード2枚」に差し替えできるように仮
-        { no:"DG-001", name:"（デジタル）ぐらたん：カードA", img:"https://ul.h3z.jp/Prf7KxRk.jpg" },
-        { no:"DG-002", name:"（デジタル）ぐらたん：カードB", img:"https://ul.h3z.jp/ge8b4cQ5.jpg" }
+        { no:"DG-001", name:"（デジタル）ぐらたん：カードA", img:"https://ul.h3z.jp/Prf7KxRk.jpg", formats:["デジタル"] },
+        { no:"DG-002", name:"（デジタル）ぐらたん：カードB", img:"https://ul.h3z.jp/ge8b4cQ5.jpg", formats:["デジタル"] }
       ]
     },
 
-    /* ===== ダーツコラボ（現物） ===== */
+    /* ===== ダーツ（紙＋デジタル） ===== */
     {
       ym: "2025.00",
       title: "ダーツコラボ（對馬裕佳子）",
       period: "（記録）",
       person: {
         name: "ダーツプロ《對馬裕佳子》",
-        photo: BS["BS-001"].img, // ←本人写真が来たら差し替え
+        photo: BS["BS-001"].img, // ←本人写真URLが来たら差し替え
         introFull:
-`ダーツプロコラボ（現物カードの記録）。
-販売用（パック収録）と、非売品（配布終了）の2枚を掲載。`
+`ダーツプロコラボの記録。
+販売用（紙）と、非売品（紙：配布終了）を掲載。
+さらに、シリアル→タネ→収穫で入手できるデジタル側も存在します。`
       },
+      links: { x:"", other:"" },
       seed: {
-        mode: "paper",
-        label: "紙（現物）",
-        name: "對馬裕佳子コラボ枠",
+        label: "デジタル",
+        name: "（デジタル）コラボのタネ",
         img: BS["BS-001"].img,
         desc:
-`これは現物カードのコラボ記録（シリアルで増えるタネとは別枠）。
-・販売用：パック収録の紙カード
-・非売品：5パック購入ごとに1枚の配布（現在は配布終了）`
+`このコラボは「紙」と「デジタル」両方あります。
+デジタルはシリアルでタネを増やし、畑で収穫した瞬間に図鑑へ。`
       },
-      links: { x:"", hp:"" },
       cards2: [
-        SALE_CARDS.TSUMA,
-        BS["BS-001"]
+        { ...SALE_CARDS.TSUMA, formats:["紙","デジタル"] },
+        { ...BS["BS-001"], formats:["紙","デジタル"] }
       ]
     },
-
     {
       ym: "2025.00",
       title: "ダーツコラボ（佐俣雄一郎）",
@@ -712,26 +795,23 @@
         name: "ダーツプロ《佐俣雄一郎》",
         photo: BS["BS-002"].img,
         introFull:
-`ダーツプロコラボ（現物カードの記録）。
-販売用（パック収録）と、非売品（配布終了）の2枚を掲載。`
+`ダーツプロコラボの記録。
+販売用（紙）＋非売品（紙：配布終了）＋デジタル（タネ→収穫）。`
       },
+      links: { x:"", other:"" },
       seed: {
-        mode: "paper",
-        label: "紙（現物）",
-        name: "佐俣雄一郎コラボ枠",
+        label: "デジタル",
+        name: "（デジタル）コラボのタネ",
         img: BS["BS-002"].img,
         desc:
-`これは現物カードのコラボ記録（シリアルで増えるタネとは別枠）。
-・販売用：パック収録の紙カード
-・非売品：5パック購入ごとに1枚の配布（現在は配布終了）`
+`このコラボは「紙」と「デジタル」両方あります。
+デジタルはシリアルでタネを増やし、畑で収穫した瞬間に図鑑へ。`
       },
-      links: { x:"", hp:"" },
       cards2: [
-        SALE_CARDS.SAMATA,
-        BS["BS-002"]
+        { ...SALE_CARDS.SAMATA, formats:["紙","デジタル"] },
+        { ...BS["BS-002"], formats:["紙","デジタル"] }
       ]
     },
-
     {
       ym: "2025.00",
       title: "ダーツコラボ（井上諒）",
@@ -740,26 +820,23 @@
         name: "ダーツプロ《井上諒》",
         photo: BS["BS-003"].img,
         introFull:
-`ダーツプロコラボ（現物カードの記録）。
-販売用（パック収録）と、非売品（配布終了）の2枚を掲載。`
+`ダーツプロコラボの記録。
+販売用（紙）＋非売品（紙：配布終了）＋デジタル（タネ→収穫）。`
       },
+      links: { x:"", other:"" },
       seed: {
-        mode: "paper",
-        label: "紙（現物）",
-        name: "井上諒コラボ枠",
+        label: "デジタル",
+        name: "（デジタル）コラボのタネ",
         img: BS["BS-003"].img,
         desc:
-`これは現物カードのコラボ記録（シリアルで増えるタネとは別枠）。
-・販売用：パック収録の紙カード
-・非売品：5パック購入ごとに1枚の配布（現在は配布終了）`
+`このコラボは「紙」と「デジタル」両方あります。
+デジタルはシリアルでタネを増やし、畑で収穫した瞬間に図鑑へ。`
       },
-      links: { x:"", hp:"" },
       cards2: [
-        SALE_CARDS.INOUE,
-        BS["BS-003"]
+        { ...SALE_CARDS.INOUE, formats:["紙","デジタル"] },
+        { ...BS["BS-003"], formats:["紙","デジタル"] }
       ]
     },
-
     {
       ym: "2025.00",
       title: "ダーツコラボ（仁木治）",
@@ -768,82 +845,23 @@
         name: "ダーツプロ《仁木治》",
         photo: BS["BS-004"].img,
         introFull:
-`ダーツプロコラボ（現物カードの記録）。
-販売用（パック収録）と、非売品（配布終了）の2枚を掲載。`
+`ダーツプロコラボの記録。
+販売用（紙）＋非売品（紙：配布終了）＋デジタル（タネ→収穫）。`
       },
+      links: { x:"", other:"" },
       seed: {
-        mode: "paper",
-        label: "紙（現物）",
-        name: "仁木治コラボ枠",
+        label: "デジタル",
+        name: "（デジタル）コラボのタネ",
         img: BS["BS-004"].img,
         desc:
-`これは現物カードのコラボ記録（シリアルで増えるタネとは別枠）。
-・販売用：パック収録の紙カード
-・非売品：5パック購入ごとに1枚の配布（現在は配布終了）`
+`このコラボは「紙」と「デジタル」両方あります。
+デジタルはシリアルでタネを増やし、畑で収穫した瞬間に図鑑へ。`
       },
-      links: { x:"", hp:"" },
       cards2: [
-        SALE_CARDS.SAMATA,
-        BS["BS-002"]
+        { ...SALE_CARDS.NIKI, formats:["紙","デジタル"] },
+        { ...BS["BS-004"], formats:["紙","デジタル"] }
       ]
     },
-
-    {
-      ym: "2025.00",
-      title: "ダーツコラボ（井上諒）",
-      period: "（記録）",
-      person: {
-        name: "ダーツプロ《井上諒》",
-        photo: BS["BS-003"].img,
-        introFull:
-`ダーツプロコラボ（現物カードの記録）。
-販売用（パック収録）と、非売品（配布終了）の2枚を掲載。`
-      },
-      seed: {
-        mode: "paper",
-        label: "紙（現物）",
-        name: "井上諒コラボ枠",
-        img: BS["BS-003"].img,
-        desc:
-`これは現物カードのコラボ記録（シリアルで増えるタネとは別枠）。
-・販売用：パック収録の紙カード
-・非売品：5パック購入ごとに1枚の配布（現在は配布終了）`
-      },
-      links: { x:"", hp:"" },
-      cards2: [
-        SALE_CARDS.INOUE,
-        BS["BS-003"]
-      ]
-    },
-
-    {
-      ym: "2025.00",
-      title: "ダーツコラボ（仁木治）",
-      period: "（記録）",
-      person: {
-        name: "ダーツプロ《仁木治》",
-        photo: BS["BS-004"].img,
-        introFull:
-`ダーツプロコラボ（現物カードの記録）。
-販売用（パック収録）と、非売品（配布終了）の2枚を掲載。`
-      },
-      seed: {
-        mode: "paper",
-        label: "紙（現物）",
-        name: "仁木治コラボ枠",
-        img: BS["BS-004"].img,
-        desc:
-`これは現物カードのコラボ記録（シリアルで増えるタネとは別枠）。
-・販売用：パック収録の紙カード
-・非売品：5パック購入ごとに1枚の配布（現在は配布終了）`
-      },
-      links: { x:"", hp:"" },
-      cards2: [
-        SALE_CARDS.NIKI,
-        BS["BS-004"]
-      ]
-    },
-
     {
       ym: "2025.00",
       title: "ダーツコラボ（稲石裕）",
@@ -852,23 +870,21 @@
         name: "ダーツプロ《稲石裕》",
         photo: BS["BS-005"].img,
         introFull:
-`ダーツプロコラボ（現物カードの記録）。
-販売用（パック収録）と、非売品（配布終了）の2枚を掲載。`
+`ダーツプロコラボの記録。
+販売用（紙）＋非売品（紙：配布終了）＋デジタル（タネ→収穫）。`
       },
+      links: { x:"", other:"" },
       seed: {
-        mode: "paper",
-        label: "紙（現物）",
-        name: "稲石裕コラボ枠",
+        label: "デジタル",
+        name: "（デジタル）コラボのタネ",
         img: BS["BS-005"].img,
         desc:
-`これは現物カードのコラボ記録（シリアルで増えるタネとは別枠）。
-・販売用：パック収録の紙カード
-・非売品：5パック購入ごとに1枚の配布（現在は配布終了）`
+`このコラボは「紙」と「デジタル」両方あります。
+デジタルはシリアルでタネを増やし、畑で収穫した瞬間に図鑑へ。`
       },
-      links: { x:"", hp:"" },
       cards2: [
-        SALE_CARDS.INAISHI,
-        BS["BS-005"]
+        { ...SALE_CARDS.INAISHI, formats:["紙","デジタル"] },
+        { ...BS["BS-005"], formats:["紙","デジタル"] }
       ]
     },
   ];
@@ -905,8 +921,10 @@
     mImg.alt = payload.name;
 
     mTags.innerHTML = "";
-    if(payload.kind) mTags.appendChild(tag(payload.kind, payload.kind.includes("非売品") ? "gold" : "dim"));
-    if(payload.group) mTags.appendChild(tag(payload.group, "dim"));
+    (payload.formats || []).forEach(f=>{
+      if(f==="紙") mTags.appendChild(tag("紙", "gold"));
+      if(f==="デジタル") mTags.appendChild(tag("デジタル", "blue"));
+    });
 
     mDesc.textContent = payload.desc || "";
     mMeta.textContent = payload.meta || "";
@@ -934,6 +952,26 @@
     return u && /^https?:\/\//.test(u) ? u : "";
   }
 
+  function makeFormatBadges(formats){
+    const wrap = document.createElement("div");
+    wrap.className = "format";
+    const fs = Array.isArray(formats) ? formats : [];
+
+    if(fs.includes("紙")){
+      const b = document.createElement("span");
+      b.className = "fbtn paper";
+      b.textContent = "紙";
+      wrap.appendChild(b);
+    }
+    if(fs.includes("デジタル")){
+      const b = document.createElement("span");
+      b.className = "fbtn digital";
+      b.textContent = "デジタル";
+      wrap.appendChild(b);
+    }
+    return wrap;
+  }
+
   function makeMini(card, collab){
     const el = document.createElement("article");
     el.className = "cardmini";
@@ -951,30 +989,32 @@
     const meta = document.createElement("div");
     meta.className = "meta";
 
+    const noRow = document.createElement("div");
+    noRow.className = "noRow";
+
     const no = document.createElement("div");
     no.className = "no";
     no.textContent = card.no;
+
+    noRow.appendChild(no);
+    noRow.appendChild(makeFormatBadges(card.formats));
 
     const name = document.createElement("div");
     name.className = "cname";
     name.textContent = card.name;
 
-    meta.appendChild(no);
+    meta.appendChild(noRow);
     meta.appendChild(name);
 
     el.appendChild(art);
     el.appendChild(meta);
 
-    const isBS = String(card.no||"").startsWith("BS-");
     const payload = {
       no: card.no,
       name: card.name,
       img: card.img,
-      kind: isBS ? "非売品（配布終了）" : "販売用（パック収録）",
-      group: collab.title,
-      desc: isBS
-        ? `このカードは期間中「5パック購入ごとに1枚」贈呈された非売品です。\n現在は配布終了しており入手できません。`
-        : `このカードは販売用（パック収録）の現物カードです。\n（シリアルで増える“タネ→収穫でカード化”のデジタルとは別枠の記録）`,
+      formats: card.formats || [],
+      desc: collab.title + " のカードです。",
       meta: `年月：${collab.ym} / 期間：${collab.period}`
     };
 
@@ -996,7 +1036,6 @@
       const section = document.createElement("section");
       section.className = "collab";
 
-      // head
       const head = document.createElement("div");
       head.className = "collab-head";
 
@@ -1022,11 +1061,9 @@
       head.appendChild(left);
       head.appendChild(period);
 
-      // body
       const body = document.createElement("div");
       body.className = "collab-body";
 
-      // profile
       const profile = document.createElement("div");
       profile.className = "profile";
 
@@ -1036,6 +1073,9 @@
       const pTop = document.createElement("div");
       pTop.className = "profile-top";
 
+      const side = document.createElement("div");
+      side.className = "sidecol";
+
       const avatar = document.createElement("div");
       avatar.className = "avatar";
       if(c.person.photo){
@@ -1044,6 +1084,40 @@
         aimg.alt = c.person.name;
         avatar.appendChild(aimg);
       }
+      side.appendChild(avatar);
+
+      const vbtn = document.createElement("div");
+      vbtn.className = "vbtn";
+
+      const x = safeLink(c.links && c.links.x);
+      const other = safeLink(c.links && c.links.other);
+
+      if(x){
+        const b = document.createElement("a");
+        b.className = "gold";
+        b.href = x; b.target="_blank"; b.rel="noopener";
+        b.textContent = "X";
+        vbtn.appendChild(b);
+      }else{
+        const b = document.createElement("div");
+        b.className = "disabled";
+        b.textContent = "X";
+        vbtn.appendChild(b);
+      }
+
+      if(other){
+        const b = document.createElement("a");
+        b.href = other; b.target="_blank"; b.rel="noopener";
+        b.textContent = "他リンク";
+        vbtn.appendChild(b);
+      }else{
+        const b = document.createElement("div");
+        b.className = "disabled";
+        b.textContent = "他リンク";
+        vbtn.appendChild(b);
+      }
+
+      side.appendChild(vbtn);
 
       const pblock = document.createElement("div");
       pblock.className = "pblock";
@@ -1059,39 +1133,10 @@
       pblock.appendChild(pname);
       pblock.appendChild(pintro);
 
-      pTop.appendChild(avatar);
+      pTop.appendChild(side);
       pTop.appendChild(pblock);
 
-      // links
-      const btns = document.createElement("div");
-      btns.className = "btns";
-      const x = safeLink(c.links && c.links.x);
-      const hp = safeLink(c.links && c.links.hp);
-
-      if(x){
-        const b = document.createElement("a");
-        b.className = "btn gold";
-        b.href = x; b.target="_blank"; b.rel="noopener";
-        b.textContent = "Xを見る";
-        btns.appendChild(b);
-      }
-      if(hp){
-        const b = document.createElement("a");
-        b.className = "btn";
-        b.href = hp; b.target="_blank"; b.rel="noopener";
-        b.textContent = "公式HP";
-        btns.appendChild(b);
-      }
-      if(!x && !hp){
-        const b = document.createElement("div");
-        b.className = "btn";
-        b.style.opacity = ".65";
-        b.style.cursor = "default";
-        b.textContent = "リンク（準備中）";
-        btns.appendChild(b);
-      }
-
-      // seed box
+      /* seed box */
       const seedbox = document.createElement("div");
       seedbox.className = "seedbox";
 
@@ -1103,7 +1148,7 @@
       if(c.seed && c.seed.img){
         const simg = document.createElement("img");
         simg.src = c.seed.img;
-        simg.alt = c.seed.name || "枠";
+        simg.alt = c.seed.name || "タネ";
         seedimg.appendChild(simg);
       }
 
@@ -1114,20 +1159,20 @@
       row1.className = "row1";
 
       const badge = document.createElement("span");
-      const isDigital = (c.seed && c.seed.mode === "digital");
+      const isDigital = (c.seed && c.seed.label === "デジタル");
       badge.className = "badge " + (isDigital ? "blue" : "gold");
-      badge.textContent = (c.seed && c.seed.label) ? c.seed.label : (isDigital ? "デジタル" : "紙（現物）");
+      badge.textContent = c.seed.label || "デジタル";
 
       const seedname = document.createElement("span");
       seedname.className = "seedname";
-      seedname.textContent = (c.seed && c.seed.name) ? c.seed.name : "コラボ枠";
+      seedname.textContent = c.seed.name || "コラボのタネ";
 
       row1.appendChild(badge);
       row1.appendChild(seedname);
 
       const seeddesc = document.createElement("div");
       seeddesc.className = "seeddesc";
-      seeddesc.textContent = (c.seed && c.seed.desc) ? c.seed.desc : "";
+      seeddesc.textContent = c.seed.desc || "";
 
       seedmeta.appendChild(row1);
       seedmeta.appendChild(seeddesc);
@@ -1137,14 +1182,13 @@
 
       seedbox.appendChild(seedrow);
 
-      // cards 2-up
+      /* cards 2-up */
       const cards2 = document.createElement("div");
       cards2.className = "cards2";
       (c.cards2 || []).slice(0,2).forEach(card => cards2.appendChild(makeMini(card, c)));
 
-      // assemble
+      /* assemble */
       pInner.appendChild(pTop);
-      pInner.appendChild(btns);
       pInner.appendChild(seedbox);
       pInner.appendChild(cards2);
 
