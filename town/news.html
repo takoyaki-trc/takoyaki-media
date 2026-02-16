@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>たこ焼きトレカ｜お知らせ（ギルド掲示板）</title>
+  <title>たこ焼きトレカ｜ギルド掲示板（最新情報）</title>
   <meta name="description" content="焼かれた伝説 / たこ焼きトレカ 最新情報。クエスト・プロモ・イベント・噂話を掲示。" />
   <style>
     :root{
@@ -194,26 +194,95 @@
       font-weight:900;
       white-space:nowrap;
     }
-    .quest .body{
+
+    /* ✅ クエスト中身：画像＋文章 */
+    .questBody{
+      display:grid;
+      gap:12px;
+    }
+    .questGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+      align-items:start;
+    }
+
+    .questCard{
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
       background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:14px;
       padding:12px;
       display:grid;
       gap:8px;
     }
-    .quest h2{
+    .questCard h2{
       margin:0;
       font-size:16px;
       letter-spacing:.02em;
     }
-    .quest p{
+    .questCard p{
       margin:0;
       color:rgba(255,255,255,.82);
       line-height:1.6;
       font-size:13px;
     }
-    .quest .reward{
+
+    /* ✅ 今月のたこぴカード画像枠 */
+    .promoFrame{
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(260px 160px at 30% 0%, rgba(255,211,122,.20), transparent 65%),
+        rgba(0,0,0,.20);
+      padding:10px;
+      display:grid;
+      gap:8px;
+      overflow:hidden;
+    }
+    .promoTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .promoTitle{
+      margin:0;
+      font-size:13px;
+      font-weight:900;
+      color:rgba(255,255,255,.9);
+      letter-spacing:.02em;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .miniChip{
+      font-size:11px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.86);
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .promoImgWrap{
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      box-shadow: 0 10px 22px rgba(0,0,0,.35);
+      aspect-ratio: 16 / 10; /* スマホで見栄えよく */
+    }
+    .promoImg{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit: cover;
+      transform: scale(1.01);
+    }
+
+    .reward{
       display:flex;
       flex-wrap:wrap;
       gap:8px;
@@ -308,19 +377,29 @@
       gap:10px;
       align-items:flex-start;
     }
-    .avatar{
-      width:38px;height:38px;
-      border-radius:12px;
+
+    /* ✅ たこぴアイコン枠（画像） */
+    .avatarFrame{
+      width:44px;
+      height:44px;
+      border-radius:14px;
       border:1px solid rgba(255,255,255,.18);
       background:
         radial-gradient(12px 12px at 30% 30%, rgba(255,211,122,.35), transparent 60%),
         rgba(255,255,255,.08);
+      box-shadow: 0 10px 22px rgba(0,0,0,.35);
+      overflow:hidden;
+      flex:0 0 auto;
       display:grid;
       place-items:center;
-      font-weight:900;
-      color:rgba(255,255,255,.9);
-      flex:0 0 auto;
     }
+    .avatarFrame img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+    }
+
     .bubble{
       flex:1 1 auto;
       border-radius:14px;
@@ -360,12 +439,15 @@
     /* ====== レスポンシブ：横幅があるとき2列 ====== */
     @media (min-width: 760px){
       .inner{ padding:18px; }
+      .questGrid{
+        grid-template-columns: 1.2fr .8fr; /* 左＝文章 右＝画像枠 */
+        align-items:stretch;
+      }
       .grid{
         grid-template-columns: 1fr 1fr;
       }
-      .paper:nth-child(1){ grid-column: 1 / span 1; }
-      .paper:nth-child(2){ grid-column: 2 / span 1; }
       .paper:nth-child(3){ grid-column: 1 / span 2; }
+      .promoImgWrap{ aspect-ratio: 4 / 3; } /* PCでは少し縦寄りにしてカード感 */
     }
   </style>
 </head>
@@ -376,12 +458,12 @@
       <div class="titlebox">
         <div class="kicker">YAKARETA DENSETSU / TAKOYAKI TRADING CARD</div>
         <div class="title">
-          ギルド掲示板（お知らせ）
-          <span class="tag">最新情報</span>
+          ギルド掲示板（最新情報）
+          <span class="tag">更新ログ</span>
         </div>
       </div>
       <div class="actions">
-        <button class="btn" type="button" id="btnScrollQuest" aria-label="今週のクエストへ">クエスト</button>
+        <button class="btn" type="button" id="btnScrollQuest" aria-label="今月の情報へ">今月</button>
         <button class="btn primary" type="button" id="btnTop">↑上へ</button>
       </div>
     </div>
@@ -391,23 +473,41 @@
     <main class="board">
       <div class="inner">
 
-        <!-- 今週のクエスト（目玉） -->
+        <!-- 今月のクエスト（目玉） -->
         <section class="quest" id="quest">
           <div class="head">
-            <div class="label">🧭 今週のクエスト</div>
+            <div class="label">🧭 今月の掲示</div>
             <span class="badge">重要</span>
           </div>
 
-          <div class="body">
-            <h2>🔥 「今月のプロモカード」配布中</h2>
-            <p>
-              店頭・通販で対象条件を満たすと、今月限定のプロモが手に入る…らしい。<br>
-              条件は掲示の内容か、通販ページで確認してね。
-            </p>
-            <div class="reward">
-              <span class="chip warn">🎴 限定プロモ</span>
-              <span class="chip good">✨ コレクション追加</span>
-              <span class="chip">🧩 世界観が深まる</span>
+          <div class="questBody">
+            <div class="questGrid">
+              <!-- 左：文章 -->
+              <div class="questCard">
+                <h2>🔥 今月のたこぴカード（配布中）</h2>
+                <p>
+                  店頭・通販で対象条件を満たすと、今月限定の「たこぴカード」が手に入る…らしい。<br>
+                  条件は店頭の掲示か、通販ページで確認してね。
+                </p>
+                <div class="reward">
+                  <span class="chip warn">🎴 月替わり</span>
+                  <span class="chip good">✨ コレクション追加</span>
+                  <span class="chip">🧩 世界観が深まる</span>
+                </div>
+              </div>
+
+              <!-- 右：画像枠 -->
+              <aside class="promoFrame" aria-label="今月のたこぴカード画像">
+                <div class="promoTop">
+                  <p class="promoTitle">🖼️ 今月のカード画像</p>
+                  <span class="miniChip">MONTHLY</span>
+                </div>
+                <div class="promoImgWrap">
+                  <img class="promoImg"
+                       src="https://ul.h3z.jp/8Tj3Q5wR.JPG"
+                       alt="今月のたこぴカード" loading="lazy" />
+                </div>
+              </aside>
             </div>
           </div>
         </section>
@@ -453,7 +553,11 @@
         <!-- たこぴの噂話（ログ風） -->
         <section class="rumor" aria-label="たこぴの噂話">
           <div class="row">
-            <div class="avatar">🐙</div>
+            <!-- ✅ ここが画像アイコン -->
+            <div class="avatarFrame" aria-hidden="true">
+              <img src="https://ul.h3z.jp/YqCD0im9.png" alt="たこぴ" loading="lazy">
+            </div>
+
             <div class="bubble">
               <div class="name">たこぴの噂話</div>
               <p class="text">
