@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>ビンゴクエスト｜たこ焼きトレカ</title>
+<meta name="description" content="たこ焼きトレカの参加型イベント『ビンゴクエスト』。同一カード3枚でスタンプ、シールパックや限定ホログラム特典が手に入る！" />
+
+<style>
+  :root{
+    --bg0:#070815;
+    --bg1:#0b0d17;
+    --panel:rgba(255,255,255,.08);
+    --panel2:rgba(255,255,255,.12);
+    --line:rgba(255,255,255,.14);
+    --text:#fff;
+    --muted:rgba(255,255,255,.74);
+    --good:#9fffa8;
+    --warn:#ffd38a;
+    --hot:#ffb4d0;
+    --shadow:0 16px 50px rgba(0,0,0,.55);
+    --r:18px;
+    --r2:24px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    color:var(--text);
+    font-family: system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
+    background:
+      radial-gradient(1200px 700px at 20% 10%, rgba(255,180,208,.14), transparent 60%),
+      radial-gradient(900px 600px at 80% 30%, rgba(159,255,168,.12), transparent 55%),
+      linear-gradient(180deg, var(--bg0), var(--bg1));
+  }
+
+  a{color:inherit}
+  .wrap{
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 16px 14px 52px;
+  }
+
+  /* ====== Hero ====== */
+  .hero{
+    position:relative;
+    border:1px solid var(--line);
+    border-radius: var(--r2);
+    overflow:hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+    box-shadow: var(--shadow);
+  }
+  .hero-inner{
+    padding: 18px 16px 16px;
+    display:grid;
+    gap:12px;
+  }
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border:1px solid var(--line);
+    background: rgba(0,0,0,.25);
+    width: fit-content;
+    font-weight: 900;
+    letter-spacing:.02em;
+  }
+  .badge .dot{
+    width:10px;height:10px;border-radius:50%;
+    background: var(--good);
+    box-shadow: 0 0 18px rgba(159,255,168,.55);
+  }
+  h1{
+    margin:0;
+    font-size: 22px;
+    line-height: 1.2;
+    letter-spacing:.02em;
+  }
+  .lead{
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+    font-size: 14px;
+  }
+  .hero-media{
+    border-top:1px solid var(--line);
+    background: rgba(0,0,0,.22);
+  }
+  .hero-media .ph{
+    aspect-ratio: 16/9;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color: rgba(255,255,255,.55);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px;
+    text-align:center;
+  }
+
+  /* ====== Panels ====== */
+  .grid{
+    margin-top: 14px;
+    display:grid;
+    gap: 12px;
+  }
+  .panel{
+    border:1px solid var(--line);
+    border-radius: var(--r);
+    background: rgba(255,255,255,.06);
+    box-shadow: 0 10px 32px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .panel-h{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding: 14px 14px 12px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  }
+  .panel-h h2{
+    margin:0;
+    font-size: 16px;
+    letter-spacing:.02em;
+  }
+  .tag{
+    font-size: 12px;
+    color: rgba(255,255,255,.82);
+    padding: 6px 10px;
+    border-radius: 999px;
+    border:1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.22);
+    white-space: nowrap;
+  }
+  .panel-b{
+    padding: 14px;
+  }
+
+  /* ====== Steps ====== */
+  .steps{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:10px;
+  }
+  .step{
+    display:grid;
+    grid-template-columns: 40px 1fr;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.18);
+  }
+  .num{
+    width:40px;height:40px;border-radius: 14px;
+    display:flex;align-items:center;justify-content:center;
+    font-weight: 1000;
+    letter-spacing:.02em;
+    background: rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.14);
+  }
+  .step p{
+    margin:0;
+    line-height: 1.65;
+    color: rgba(255,255,255,.86);
+  }
+  .sub{
+    margin-top:6px;
+    color: rgba(255,255,255,.66);
+    font-size: 12.5px;
+  }
+
+  /* ====== Reward cards ====== */
+  .cards{
+    display:grid;
+    gap: 10px;
+  }
+  .card{
+    border:1px solid rgba(255,255,255,.12);
+    border-radius: 16px;
+    background: rgba(0,0,0,.18);
+    overflow:hidden;
+  }
+  .card-top{
+    padding: 12px 12px 10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+  }
+  .card-top h3{
+    margin:0;
+    font-size: 14px;
+    letter-spacing:.02em;
+  }
+  .pill{
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border:1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.06);
+    white-space: nowrap;
+  }
+  .card-b{
+    padding: 12px;
+  }
+  .card-b p{margin:0; line-height:1.7; color: rgba(255,255,255,.86)}
+  .note{
+    margin-top:8px;
+    font-size: 12.5px;
+    color: rgba(255,255,255,.65);
+  }
+
+  /* ====== Split (Shop/BOOTH) ====== */
+  .split{
+    display:grid;
+    gap:10px;
+  }
+  .split .box{
+    border:1px solid rgba(255,255,255,.12);
+    border-radius: 16px;
+    background: rgba(0,0,0,.18);
+    padding: 12px;
+  }
+  .box h4{
+    margin:0 0 6px;
+    font-size: 14px;
+  }
+  .box ul{
+    margin:8px 0 0;
+    padding-left: 18px;
+    color: rgba(255,255,255,.82);
+    line-height: 1.65;
+  }
+
+  /* ====== Info list ====== */
+  .info{
+    margin:0;
+    padding:0;
+    list-style:none;
+    display:grid;
+    gap: 10px;
+  }
+  .info li{
+    padding: 12px;
+    border-radius: 14px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.18);
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    align-items: baseline;
+  }
+  .k{
+    color: rgba(255,255,255,.70);
+    font-size: 12.5px;
+    min-width: 7.5em;
+  }
+  .v{
+    font-weight: 800;
+    letter-spacing:.02em;
+  }
+  .limit{
+    margin: 10px 0 0;
+    color: rgba(255,255,255,.62);
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+
+  /* ====== Footer CTA ====== */
+  .cta{
+    margin-top: 12px;
+    border:1px solid rgba(255,255,255,.14);
+    border-radius: var(--r2);
+    background: linear-gradient(180deg, rgba(255,180,208,.16), rgba(0,0,0,.18));
+    padding: 14px;
+    display:grid;
+    gap:8px;
+  }
+  .cta strong{
+    font-size: 14px;
+    letter-spacing:.02em;
+  }
+  .cta p{
+    margin:0;
+    color: rgba(255,255,255,.78);
+    line-height: 1.65;
+    font-size: 13px;
+  }
+
+  /* ====== Responsive ====== */
+  @media (min-width: 820px){
+    .hero-inner{
+      padding: 22px 22px 18px;
+    }
+    h1{font-size: 28px}
+    .lead{font-size: 15px}
+    .grid{
+      grid-template-columns: 1.1fr .9fr;
+      align-items:start;
+    }
+    .span2{grid-column: 1 / -1;}
+    .cards{grid-template-columns: 1fr 1fr;}
+    .split{grid-template-columns: 1fr 1fr;}
+  }
+</style>
+</head>
+
+<body>
+  <main class="wrap">
+
+    <!-- =========================
+         HERO
+         ========================= -->
+    <section class="hero" aria-label="ビンゴクエスト">
+      <div class="hero-inner">
+        <div class="badge"><span class="dot"></span><span>参加型イベント</span></div>
+        <h1>たこ焼きトレカ ビンゴクエスト</h1>
+        <p class="lead">
+          同じカードを3枚そろえたら、スタンプ！<br>
+          スタンプ報酬で“シール収集”が一気に進む。ビンゴ達成で限定ホログラムも！
+        </p>
+      </div>
+
+      <div class="hero-media">
+        <div class="ph">
+          <!-- ここに：ヒーロー画像（おすすめ） -->
+          <!-- おすすめ画像案：
+               ・ビンゴカード＋トレカ＋スタンプ＋シールパックが1枚にまとまった写真/合成
+               ・背景は「夜祭り屋台」「魔法陣」「たこ焼きタワー前」など世界観寄り -->
+          HERO IMAGE (16:9)
+        </div>
+      </div>
+    </section>
+
+
+    <!-- =========================
+         MAIN GRID
+         ========================= -->
+    <section class="grid">
+
+      <!-- 遊び方 -->
+      <article class="panel">
+        <header class="panel-h">
+          <h2>遊び方</h2>
+          <span class="tag">3ステップ</span>
+        </header>
+        <div class="panel-b">
+          <ul class="steps">
+            <li class="step">
+              <div class="num">1</div>
+              <div>
+                <p>専用ビンゴカードを購入（1枚500円）</p>
+                <div class="sub">店頭用 / BOOTH用 の2種類（別枠カウント）</div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="num">2</div>
+              <div>
+                <p>同じカードが<strong>3枚</strong>そろったら提示</p>
+                <div class="sub">ダブりが“参加券”になる。</div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="num">3</div>
+              <div>
+                <p>スタンプを<strong>1個</strong>押印 → 報酬ゲット</p>
+                <div class="sub">スタンプごとに「ランダムシールパック（3枚）」進呈</div>
+              </div>
+            </li>
+          </ul>
+
+          <div style="margin-top:10px" class="note">
+            <!-- ここに：流れ図の画像 -->
+            <!-- おすすめ画像案：
+                 「カード3枚 → スタンプ → シールパック（3枚）」のRPG風フロー画像 -->
+          </div>
+        </div>
+      </article>
+
+      <!-- 報酬 -->
+      <article class="panel">
+        <header class="panel-h">
+          <h2>報酬</h2>
+          <span class="tag">宝箱ゾーン</span>
+        </header>
+
+        <div class="panel-b">
+          <div class="cards">
+
+            <section class="card">
+              <div class="card-top">
+                <h3>スタンプ報酬</h3>
+                <span class="pill">毎回もらえる</span>
+              </div>
+              <div class="card-b">
+                <p>
+                  スタンプ1個ごとに<br>
+                  <strong>ランダムシールパック（3枚入り／全50種）</strong>を進呈。
+                </p>
+                <div class="note">
+                  通常パックには入らない<strong>ホログラム仕様</strong>が出ることも。
+                </div>
+
+                <!-- ここに：シールパック画像（袋・中身どちらでもOK） -->
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-top">
+                <h3>ビンゴ達成報酬</h3>
+                <span class="pill">限定</span>
+              </div>
+              <div class="card-b">
+                <p>
+                  ビンゴ達成で<br>
+                  <strong>イベント限定ホログラムシール</strong>を進呈！
+                </p>
+
+                <!-- ここに：限定ホログラム2種を並べた画像（神器／宝箱） -->
+
+                <div class="note">
+                  ※どのビンゴを達成したかで、もらえるデザインが変わります。
+                </div>
+              </div>
+            </section>
+
+          </div>
+        </div>
+      </article>
+
+      <!-- 種類（店頭/BOOTH） -->
+      <article class="panel span2">
+        <header class="panel-h">
+          <h2>ビンゴカードは2種類</h2>
+          <span class="tag">別枠カウント</span>
+        </header>
+        <div class="panel-b">
+          <div class="split">
+            <div class="box">
+              <h4>店頭ビンゴ</h4>
+              <p class="lead" style="margin:0;color:rgba(255,255,255,.82);font-size:13px">
+                店頭で集めたカードで進めるビンゴ。
+              </p>
+              <ul>
+                <li>ビンゴ達成：<strong>たこ焼き神器</strong>シール（限定ホログラム）</li>
+              </ul>
+
+              <!-- ここに：神器シールのアップ画像 -->
+            </div>
+
+            <div class="box">
+              <h4>BOOTHビンゴ</h4>
+              <p class="lead" style="margin:0;color:rgba(255,255,255,.82);font-size:13px">
+                通販で集めたカードで進めるビンゴ。
+              </p>
+              <ul>
+                <li>ビンゴ達成：<strong>たこ焼き宝箱</strong>シール（限定ホログラム）</li>
+              </ul>
+
+              <!-- ここに：宝箱シールのアップ画像 -->
+            </div>
+          </div>
+
+          <div class="cta">
+            <strong>店頭もオンラインも、どっちも別枠で進む。</strong>
+            <p>つまり…「両方で遊ぶと、世界が広がる」タイプのイベントです。</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- 概要 -->
+      <article class="panel span2">
+        <header class="panel-h">
+          <h2>イベント概要</h2>
+          <span class="tag">まずはここだけ見てもOK</span>
+        </header>
+        <div class="panel-b">
+          <ul class="info">
+            <li><span class="k">イベント名</span><span class="v">たこ焼きトレカ ビンゴクエスト</span></li>
+            <li><span class="k">開始日</span><span class="v">2026年1月12日</span></li>
+            <li><span class="k">ビンゴカード</span><span class="v">500円（税込）</span></li>
+            <li><span class="k">参加方法</span><span class="v">同一カード3枚提示でスタンプ1個</span></li>
+            <li><span class="k">スタンプ特典</span><span class="v">ランダムシールパック（3枚入り／全50種）</span></li>
+            <li><span class="k">ビンゴ特典</span><span class="v">限定ホログラムシール（店頭：神器 / BOOTH：宝箱）</span></li>
+          </ul>
+          <p class="limit">※ビンゴカードおよび各種特典は数量限定。なくなり次第終了。</p>
+        </div>
+      </article>
+
+    </section>
+
+  </main>
+</body>
+</html>
