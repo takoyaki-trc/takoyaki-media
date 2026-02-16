@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>たこ焼きトレカ｜お知らせ（ギルド掲示板）</title>
+  <meta name="description" content="焼かれた伝説 / たこ焼きトレカ 最新情報。クエスト・プロモ・イベント・噂話を掲示。" />
+  <style>
+    :root{
+      --bg:#070815;
+      --ink:#0b0d17;
+
+      --wood1:#6b4a2d;
+      --wood2:#4b2f1a;
+
+      --panel: rgba(255,255,255,.08);
+      --line: rgba(255,255,255,.16);
+      --text:#fff;
+      --muted: rgba(255,255,255,.74);
+
+      --paper:#fff6da;
+      --paper2:#fffdf5;
+
+      --gold:#ffd37a;
+      --good:#9fffa8;
+      --warn:#ffd38a;
+      --bad:#ff9aa5;
+
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(255,211,122,.18), transparent 55%),
+        radial-gradient(820px 520px at 80% 10%, rgba(159,255,168,.12), transparent 58%),
+        linear-gradient(180deg, #05060b, #070815 45%, #05060b);
+      overflow-x:hidden;
+    }
+
+    /* ====== 上部：タイトル帯（RPG看板） ====== */
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:10;
+      padding:12px 12px 10px;
+      background: linear-gradient(180deg, rgba(5,6,11,.92), rgba(5,6,11,.55));
+      backdrop-filter: blur(8px);
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .brand{
+      max-width:980px;
+      margin:0 auto;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .titlebox{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+    }
+    .kicker{
+      font-size:12px;
+      letter-spacing:.12em;
+      color:rgba(255,255,255,.72);
+      text-transform:uppercase;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .title{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.02em;
+      line-height:1.1;
+      display:flex;
+      gap:8px;
+      align-items:baseline;
+      flex-wrap:wrap;
+    }
+    .tag{
+      font-size:12px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);
+      color:rgba(255,255,255,.86);
+    }
+    .actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-shrink:0;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      font-weight:800;
+      border-radius:14px;
+      padding:10px 12px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px) scale(.99); }
+    .btn.primary{
+      border-color: rgba(255,211,122,.35);
+      background: linear-gradient(180deg, rgba(255,211,122,.18), rgba(255,211,122,.08));
+    }
+
+    /* ====== メイン：ギルド掲示板（木板） ====== */
+    .wrap{
+      max-width:980px;
+      margin:0 auto;
+      padding:14px 12px 28px;
+    }
+
+    .board{
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      border:1px solid rgba(255,255,255,.14);
+      overflow:hidden;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0)),
+        linear-gradient(180deg, var(--wood1), var(--wood2));
+      position:relative;
+    }
+
+    /* 角の金具 */
+    .board::before,
+    .board::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(14px 14px at 18px 18px, rgba(0,0,0,.35), transparent 60%),
+        radial-gradient(14px 14px at calc(100% - 18px) 18px, rgba(0,0,0,.35), transparent 60%),
+        radial-gradient(14px 14px at 18px calc(100% - 18px), rgba(0,0,0,.35), transparent 60%),
+        radial-gradient(14px 14px at calc(100% - 18px) calc(100% - 18px), rgba(0,0,0,.35), transparent 60%);
+      opacity:.65;
+    }
+
+    .inner{
+      padding:16px;
+      display:grid;
+      gap:14px;
+    }
+
+    /* ====== 今週のクエスト（目玉） ====== */
+    .quest{
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(380px 220px at 30% 0%, rgba(255,211,122,.22), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.05));
+      padding:14px;
+      display:grid;
+      gap:10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .quest .head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .quest .label{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .badge{
+      font-size:12px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,211,122,.35);
+      color: var(--gold);
+      background: rgba(255,211,122,.10);
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .quest .body{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:12px;
+      display:grid;
+      gap:8px;
+    }
+    .quest h2{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.02em;
+    }
+    .quest p{
+      margin:0;
+      color:rgba(255,255,255,.82);
+      line-height:1.6;
+      font-size:13px;
+    }
+    .quest .reward{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:4px;
+    }
+    .chip{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.90);
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .chip.good{ border-color: rgba(159,255,168,.35); background: rgba(159,255,168,.10); color: var(--good); }
+    .chip.warn{ border-color: rgba(255,211,122,.35); background: rgba(255,211,122,.10); color: var(--warn); }
+
+    /* ====== グリッド：貼り紙（カード風） ====== */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+
+    .paper{
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,253,245,.96));
+      color:#1a1a1a;
+      border:2px solid #231b14;
+      border-radius: 18px;
+      padding:14px 14px 12px;
+      box-shadow: 3px 4px 0 rgba(0,0,0,.35);
+      position:relative;
+      overflow:hidden;
+    }
+    .paper::before{
+      content:"";
+      position:absolute;
+      left:-30px; top:-30px;
+      width:110px; height:110px;
+      background: radial-gradient(circle at 60% 60%, rgba(255,211,122,.6), rgba(255,211,122,0) 65%);
+      transform: rotate(12deg);
+      opacity:.65;
+      pointer-events:none;
+    }
+    .paper .iconline{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:8px;
+    }
+    .paper h3{
+      margin:0;
+      font-size:15px;
+      letter-spacing:.01em;
+    }
+    .paper .stamp{
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.12em;
+      padding:5px 10px;
+      border-radius:999px;
+      border:2px dashed rgba(35,27,20,.55);
+      color:#231b14;
+      background: rgba(255,211,122,.18);
+      white-space:nowrap;
+    }
+    .paper p{
+      margin:0;
+      font-size:13px;
+      line-height:1.65;
+    }
+
+    /* ちょい傾き */
+    .pin-a{ transform: rotate(-0.6deg); }
+    .pin-b{ transform: rotate(0.6deg); }
+    .pin-c{ transform: rotate(-0.3deg); }
+
+    /* ====== たこぴの噂話（ログ） ====== */
+    .rumor{
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.20);
+      padding:12px;
+      display:grid;
+      gap:10px;
+    }
+    .rumor .row{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .avatar{
+      width:38px;height:38px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(12px 12px at 30% 30%, rgba(255,211,122,.35), transparent 60%),
+        rgba(255,255,255,.08);
+      display:grid;
+      place-items:center;
+      font-weight:900;
+      color:rgba(255,255,255,.9);
+      flex:0 0 auto;
+    }
+    .bubble{
+      flex:1 1 auto;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      padding:10px 12px;
+    }
+    .bubble .name{
+      font-size:12px;
+      font-weight:900;
+      color:rgba(255,255,255,.85);
+      margin-bottom:4px;
+    }
+    .bubble .text{
+      margin:0;
+      color:rgba(255,255,255,.78);
+      line-height:1.65;
+      font-size:13px;
+    }
+    .meta{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:2px;
+      color:rgba(255,255,255,.65);
+      font-size:12px;
+    }
+    .update{
+      font-family: var(--mono);
+      font-size:12px;
+      color:rgba(255,255,255,.72);
+      opacity:.95;
+      white-space:nowrap;
+    }
+
+    /* ====== レスポンシブ：横幅があるとき2列 ====== */
+    @media (min-width: 760px){
+      .inner{ padding:18px; }
+      .grid{
+        grid-template-columns: 1fr 1fr;
+      }
+      .paper:nth-child(1){ grid-column: 1 / span 1; }
+      .paper:nth-child(2){ grid-column: 2 / span 1; }
+      .paper:nth-child(3){ grid-column: 1 / span 2; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="titlebox">
+        <div class="kicker">YAKARETA DENSETSU / TAKOYAKI TRADING CARD</div>
+        <div class="title">
+          ギルド掲示板（お知らせ）
+          <span class="tag">最新情報</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" id="btnScrollQuest" aria-label="今週のクエストへ">クエスト</button>
+        <button class="btn primary" type="button" id="btnTop">↑上へ</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <main class="board">
+      <div class="inner">
+
+        <!-- 今週のクエスト（目玉） -->
+        <section class="quest" id="quest">
+          <div class="head">
+            <div class="label">🧭 今週のクエスト</div>
+            <span class="badge">重要</span>
+          </div>
+
+          <div class="body">
+            <h2>🔥 「今月のプロモカード」配布中</h2>
+            <p>
+              店頭・通販で対象条件を満たすと、今月限定のプロモが手に入る…らしい。<br>
+              条件は掲示の内容か、通販ページで確認してね。
+            </p>
+            <div class="reward">
+              <span class="chip warn">🎴 限定プロモ</span>
+              <span class="chip good">✨ コレクション追加</span>
+              <span class="chip">🧩 世界観が深まる</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 貼り紙グリッド -->
+        <section class="grid" aria-label="お知らせ一覧">
+
+          <article class="paper pin-a">
+            <div class="iconline">
+              <h3>🎴 プロモ・配布</h3>
+              <span class="stamp">POSTED</span>
+            </div>
+            <p>
+              今月のプロモカードを配布中。<br>
+              店頭・通販ページで詳細を確認してください。
+            </p>
+          </article>
+
+          <article class="paper pin-b">
+            <div class="iconline">
+              <h3>📅 イベント・予定</h3>
+              <span class="stamp">SCHEDULE</span>
+            </div>
+            <p>
+              月替わり企画を準備中。<br>
+              続報はこの掲示板に貼り出されます。
+            </p>
+          </article>
+
+          <article class="paper pin-c">
+            <div class="iconline">
+              <h3>🛒 通販・更新</h3>
+              <span class="stamp">SHOP</span>
+            </div>
+            <p>
+              通販の在庫・新作の追加は不定期。<br>
+              「気づいた人が勝つ」って、トレカの世界はそういうもんだよね。
+            </p>
+          </article>
+
+        </section>
+
+        <!-- たこぴの噂話（ログ風） -->
+        <section class="rumor" aria-label="たこぴの噂話">
+          <div class="row">
+            <div class="avatar">🐙</div>
+            <div class="bubble">
+              <div class="name">たこぴの噂話</div>
+              <p class="text">
+                ……掲示板ってさ。<br>
+                だいたい“大事なやつ”ほど、端っこに貼られるんだよね。<br>
+                そして、読んだ人から……焼かれる。
+              </p>
+              <div class="meta">
+                <span>ログ：Rumor Channel</span>
+                <small class="update" id="update"></small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // 最終更新
+    const d = new Date();
+    const pad2 = (n) => String(n).padStart(2,"0");
+    document.getElementById("update").textContent =
+      `最終更新：${d.getFullYear()}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())}`;
+
+    // ボタン
+    document.getElementById("btnTop").addEventListener("click", () => {
+      window.scrollTo({ top:0, behavior:"smooth" });
+    });
+    document.getElementById("btnScrollQuest").addEventListener("click", () => {
+      document.getElementById("quest").scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+  </script>
+</body>
+</html>
