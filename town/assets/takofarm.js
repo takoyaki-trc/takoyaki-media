@@ -81,7 +81,7 @@
       { no:"TN-008", name:"明太ギャラクシー焼き", img:"https://ul.h3z.jp/xye1uAfV.jpg" },
       { no:"TN-014", name:"世界たこ焼き釣り選手権大会", img:"https://ul.h3z.jp/cyekwiam.jpg" },
       { no:"TN-017", name:"たこ焼きマニフェスト", img:"https://ul.h3z.jp/zeSwFyjz.jpg" },
-      { no:"TN-022", name:"たこ焼きダ Attach-Inferno《對馬裕佳子プロ🎯》", img:"https://ul.h3z.jp/Prf7KxRk.jpg" },
+      { no:"TN-022", name:"たこ焼きダーツインフェルノ《對馬裕佳子プロ🎯》", img:"https://ul.h3z.jp/Prf7KxRk.jpg" },
       { no:"TN-032", name:"国境超えた恋", img:"https://ul.h3z.jp/9AZcVNmR.jpg" },
       { no:"TN-035", name:"デリバリー長距離便", img:"https://ul.h3z.jp/z0xhODVy.jpg" },
       { no:"TN-038", name:"恋落ちマッチング", img:"https://ul.h3z.jp/BPEoWjuY.jpg" },
@@ -162,11 +162,11 @@
   // ✅ ブッ刺さりタネ：専用5種（全部N固定）
   // =========================
   const BUSSASARI_POOL = [
-    { id:"BS-001", name:"對馬裕佳子", img:"https://ul.h3z.jp/l5roYZJ4.png", rarity:"N" },
-    { id:"BS-002", name:"佐俣雄一郎", img:"https://ul.h3z.jp/BtOTLlSo.png", rarity:"N" },
-    { id:"BS-003", name:"井上諒", img:"https://ul.h3z.jp/P5vsAste.png", rarity:"N" },
-    { id:"BS-004", name:"仁木治", img:"https://ul.h3z.jp/ZGBzzH2r.png", rarity:"N" },
-    { id:"BS-005", name:"稲石裕", img:"https://ul.h3z.jp/nmiaCKae.png", rarity:"N" },
+    { id:"BS-001", name:"たこ焼きダーツインフェルノ《對馬裕佳子》", img:"https://ul.h3z.jp/l5roYZJ4.png", rarity:"N" },
+    { id:"BS-002", name:"店主反撃レビュー《佐俣雄一郎》", img:"https://ul.h3z.jp/BtOTLlSo.png", rarity:"N" },
+    { id:"BS-003", name:"自己啓発タコ塾《井上諒》", img:"https://ul.h3z.jp/P5vsAste.png", rarity:"N" },
+    { id:"BS-004", name:"カロリーゼロ理論《仁木治》", img:"https://ul.h3z.jp/ZGBzzH2r.png", rarity:"N" },
+    { id:"BS-005", name:"白い契約《稲石裕》", img:"https://ul.h3z.jp/nmiaCKae.png", rarity:"N" },
   ];
 
   // =========================
