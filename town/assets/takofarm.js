@@ -194,7 +194,7 @@
     { id:"col-001", name:"伝説のたこ焼きライバー", img:"https://ul.h3z.jp/CmVTkAd2.png", rarity:"LR" },
     { id:"col-002", name:"たこ焼き実況者ライバー",  img:"https://ul.h3z.jp/1VQvIP7v.png", rarity:"N"  },
   ];
-  const GRATIN_LR_CHANCE = 5.03;
+  const GRATIN_LR_CHANCE = 0.05;
 
   // =========================================================
   // レベル・XP
