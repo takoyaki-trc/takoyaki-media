@@ -221,6 +221,7 @@
       background: rgba(255,255,255,.10);
     }
 
+    /* ✅ 右が切れないための基本：min-width:0 と overflow control */
     .row{
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,.14);
@@ -231,13 +232,15 @@
       align-items:center;
       gap: 10px;
       cursor:pointer;
+      min-width: 0;
     }
     .row:active{ transform: translateY(1px); }
 
+    /* ✅ サムネを正方形に（64x64） */
     .thumb{
-      width: 72px;
-      height: 54px;
-      border-radius: 10px;
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
       border: 1px solid rgba(255,255,255,.16);
       background: rgba(0,0,0,.25);
       overflow:hidden;
@@ -248,7 +251,7 @@
     .thumb img{
       width:100%;
       height:100%;
-      object-fit: cover;
+      object-fit: cover; /* 正方形にトリミング */
       display:block;
     }
     .thumb .ph{
@@ -260,7 +263,10 @@
       white-space: pre-line;
     }
 
-    .row-main{ min-width:0; flex: 1; }
+    .row-main{
+      min-width:0;
+      flex: 1 1 auto;
+    }
     .row-title{
       font-weight: 1000;
       font-size: 16px;
@@ -268,6 +274,7 @@
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
+      max-width: 100%;
     }
     .row-meta{
       margin-top: 4px;
@@ -278,16 +285,20 @@
       color: rgba(255,255,255,.78);
       font-weight: 900;
       font-size: 12px;
+      min-width:0;
     }
     .row-meta .k{opacity:.85}
 
+    /* ✅ 右側を“取りすぎない” */
     .badges{
       display:flex;
       align-items:center;
       gap: 8px;
-      margin-left:auto;
       flex: 0 0 auto;
+      min-width: 0;
     }
+
+    /* ✅ min-widthをやめる（これが切れ原因） */
     .badge{
       padding: 8px 10px;
       border-radius: 0px; /* 四角 */
@@ -297,7 +308,6 @@
       letter-spacing:.02em;
       font-size: 13px;
       line-height:1;
-      min-width: 78px;
       text-align:center;
       white-space:nowrap;
     }
@@ -313,15 +323,15 @@
     }
 
     .chev{
-      width: 38px;
-      height: 38px;
+      width: 34px;
+      height: 34px;
       display:grid;
       place-items:center;
       border-radius: 10px;
       border:1px solid rgba(255,255,255,.14);
       background: rgba(0,0,0,.18);
       color:#fff;
-      flex:0 0 auto;
+      flex: 0 0 auto;
       font-weight:1000;
     }
 
@@ -397,6 +407,7 @@
       grid-template-columns: 110px 1fr;
       gap: 12px;
       align-items: start;
+      min-width:0;
     }
     .pimg{
       width: 110px;
@@ -413,6 +424,7 @@
       display:block;
     }
 
+    .ptext{min-width:0}
     .ptext .name{
       margin:0;
       font-weight:1000;
@@ -469,6 +481,7 @@
       grid-template-columns: 100px 1fr;
       gap: 12px;
       align-items: start;
+      min-width:0;
     }
     .seedbox{
       width: 100px;
@@ -495,6 +508,7 @@
       padding: 0 6px;
       white-space: pre-line;
     }
+    .seedtext{min-width:0}
     .seedtext .topline{
       display:flex;
       gap:8px;
@@ -539,6 +553,7 @@
       background: rgba(0,0,0,.18);
       overflow:hidden;
       box-shadow: var(--shadow2);
+      min-width:0;
     }
     .cimg{
       aspect-ratio: 5 / 7;
@@ -568,12 +583,15 @@
       align-items:center;
       justify-content: space-between;
       gap: 10px;
+      min-width:0;
     }
     .cno{
       font-weight:1000;
       letter-spacing:.03em;
       font-size: 14px;
       white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
     }
     .ctags{
       display:flex;
@@ -589,7 +607,6 @@
       font-weight:1000;
       font-size: 12px;
       line-height: 1;
-      min-width: 64px;
       text-align:center;
       white-space:nowrap;
     }
@@ -611,9 +628,16 @@
       white-space: pre-wrap;
     }
 
+    /* ===== さらに狭い端末で“右切れ防止”強化 ===== */
+    @media (max-width:360px){
+      .thumb{ width:56px; height:56px; border-radius: 10px; }
+      .badge{ padding: 7px 8px; font-size: 12px; }
+      .chev{ width:32px; height:32px; }
+      .row{ gap:8px; padding: 9px 9px; }
+      .row-title{ font-size: 15px; }
+    }
+
     @media (max-width:380px){
-      .thumb{ width:64px; height:48px; }
-      .badge{ min-width: 70px; padding: 8px 8px; }
       .profile{ grid-template-columns: 98px 1fr; }
       .pimg{ width:98px; height:98px; }
       .seed{ grid-template-columns: 92px 1fr; }
@@ -673,7 +697,6 @@
     // ✅ データ（画像URL入り）
     // =========================
 
-    // ぐらたん（必須URLは反映済み）
     const GURATAN = {
       id: "guratan",
       title: "配信者《ぐらたん》",
@@ -688,13 +711,13 @@
 `深夜の配信回線に住み着いた語り手。
 声は低く、語りは静か。
 だが一度聞けたなら、なぜか最後まで残ってしまう。`,
-        xUrl: "",     // ←ここにXを入れる
-        otherUrl: ""  // ←ここにHP等を入れる
+        xUrl: "",
+        otherUrl: ""
       },
       seed: {
         label: "デジタル",
         title: "ぐらたんのタネ",
-        img: "", // ←タネ画像URL（入れたら表示）
+        img: "",
         desc:
 `今回、彼の回線の奥から不思議な種が採取された。
 植えれば何かが生まれる。だが何が出るかは保証されない。
@@ -706,7 +729,6 @@
       ]
     };
 
-    // ダーツプロ（5人を最初から並べる）
     const DARTS_PROS = [
       {
         key:"BS-001",
@@ -760,7 +782,6 @@
       }
     ];
 
-    // 入手の流れ（帯）
     const FLOW = {
       id:"flow",
       title:"【入手の流れ（超重要）】",
@@ -850,7 +871,6 @@
 
     function cardTile(card){
       const wrap = el("div","c");
-
       const imgBox = el("div","cimg");
       if(card.img){
         const img = document.createElement("img");
@@ -1009,11 +1029,7 @@
       const main = el("div","row-main");
       main.appendChild(el("div","row-title", title));
       const meta = el("div","row-meta");
-      if(period){
-        meta.appendChild(el("div","k", period));
-      }else{
-        meta.appendChild(el("div","k", "期間：—"));
-      }
+      meta.appendChild(el("div","k", period ? period : "期間：—"));
       main.appendChild(meta);
 
       const bwrap = el("div","badges");
@@ -1030,12 +1046,11 @@
     }
 
     // =========================
-    // Render 2026 (最初から“あの画面”)
+    // Render 2026
     // =========================
     function render2026(){
       list2026.innerHTML = "";
 
-      // 配信者
       list2026.appendChild(sectionCap("配信者 / インフルエンサー"));
       list2026.appendChild(
         makeRow(
@@ -1044,7 +1059,6 @@
         )
       );
 
-      // ダーツ（5人を最初から並べる）
       list2026.appendChild(sectionCap("ダーツプロコラボ"));
       DARTS_PROS.forEach(pro => {
         list2026.appendChild(
@@ -1055,7 +1069,6 @@
         );
       });
 
-      // 入手の流れ
       list2026.appendChild(sectionCap("ガイド"));
       list2026.appendChild(
         makeRow(
