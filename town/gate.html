@@ -4,27 +4,32 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>入口｜たこ焼きトレカの街</title>
+
   <style>
     :root{
       --bg:#05060b;
       --panel:rgba(255,255,255,.08);
+      --panel2:rgba(255,255,255,.12);
       --line:rgba(255,255,255,.14);
       --text:#fff;
       --muted:rgba(255,255,255,.72);
       --good:#9fffa8;
       --warn:#ffd38a;
       --bad:#ff9aa5;
-      --btn:rgba(255,255,255,.12);
-      --btn2:rgba(255,255,255,.18);
-      --shadow:0 14px 40px rgba(0,0,0,.55);
-      --radius:16px;
+      --shadow:0 18px 60px rgba(0,0,0,.62);
+      --shadow2:0 10px 28px rgba(0,0,0,.38);
+      --radius:18px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
 
-      /* ✅ 追加：安全な余白（iPhoneのノッチ/ホームバー対策） */
       --safeT: env(safe-area-inset-top, 0px);
       --safeB: env(safe-area-inset-bottom, 0px);
       --safeL: env(safe-area-inset-left, 0px);
       --safeR: env(safe-area-inset-right, 0px);
+
+      /* ワクワクの主役色 */
+      --a: rgba(120,180,255,.95);
+      --a2: rgba(255,210,130,.90);
+      --a3: rgba(160,255,210,.88);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -32,28 +37,36 @@
       margin:0;
       color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
-      background: radial-gradient(1200px 800px at 50% 35%, rgba(120,140,255,.10), transparent 55%),
-                  radial-gradient(900px 600px at 30% 70%, rgba(140,255,200,.07), transparent 60%),
-                  var(--bg);
       overflow-x:hidden;
-      padding-left: var(--safeL);   /* ✅ 追加 */
-      padding-right: var(--safeR);  /* ✅ 追加 */
+      padding-left:var(--safeL);
+      padding-right:var(--safeR);
+
+      background:
+        radial-gradient(1200px 800px at 50% 20%, rgba(120,180,255,.14), transparent 60%),
+        radial-gradient(900px 700px at 20% 70%, rgba(255,210,130,.10), transparent 62%),
+        radial-gradient(900px 700px at 85% 75%, rgba(160,255,210,.08), transparent 65%),
+        linear-gradient(180deg, rgba(5,6,11,1), rgba(5,6,11,1));
     }
 
-    /* ✅ 追加：スマホでのタップ反応/二重タップ拡大を安定化 */
-    button, .btn, .sbtn, .avOpt{
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
+    /* タップ安定 */
+    button, .btn, .sbtn, .avOpt{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
-    .stars, .stars2{
-      position:fixed; inset:0;
-      pointer-events:none;
+    /* ====== 背景演出：星＋流れ＋グリッド ====== */
+    .bg-stars, .bg-stars2, .bg-grid, .bg-comet{
+      position:fixed; inset:0; pointer-events:none; z-index:0;
+    }
+    .bg-grid{
+      opacity:.16;
+      background:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(closest-side at 50% 40%, rgba(0,0,0,1), rgba(0,0,0,0));
+      -webkit-mask-image: radial-gradient(closest-side at 50% 40%, rgba(0,0,0,1), rgba(0,0,0,0));
+    }
+    .bg-stars{
+      opacity:.9;
       background-repeat:repeat;
-      opacity:.85;
-      z-index:0;
-    }
-    .stars{
       background-image:
         radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,.85), transparent 60%),
         radial-gradient(1px 1px at 80px 120px, rgba(255,255,255,.55), transparent 60%),
@@ -61,21 +74,33 @@
         radial-gradient(1px 1px at 220px 180px, rgba(255,255,255,.45), transparent 60%),
         radial-gradient(1px 1px at 300px 90px, rgba(255,255,255,.65), transparent 60%);
       background-size: 320px 220px;
-      animation: drift 38s linear infinite;
+      animation: drift 42s linear infinite;
     }
-    .stars2{
+    .bg-stars2{
+      opacity:.55;
+      background-repeat:repeat;
       background-image:
-        radial-gradient(2px 2px at 40px 50px, rgba(255,255,255,.20), transparent 60%),
-        radial-gradient(1px 1px at 120px 140px, rgba(255,255,255,.25), transparent 60%),
-        radial-gradient(2px 2px at 260px 160px, rgba(255,255,255,.16), transparent 60%),
-        radial-gradient(1px 1px at 310px 30px, rgba(255,255,255,.22), transparent 60%);
+        radial-gradient(2px 2px at 40px 50px, rgba(255,255,255,.18), transparent 60%),
+        radial-gradient(1px 1px at 120px 140px, rgba(255,255,255,.22), transparent 60%),
+        radial-gradient(2px 2px at 260px 160px, rgba(255,255,255,.14), transparent 60%),
+        radial-gradient(1px 1px at 310px 30px, rgba(255,255,255,.20), transparent 60%);
       background-size: 360px 260px;
-      animation: drift2 64s linear infinite;
-      opacity:.65;
+      animation: drift2 70s linear infinite;
+    }
+    .bg-comet{
+      opacity:.55;
+      background:
+        radial-gradient(220px 120px at 20% 30%, rgba(120,180,255,.22), transparent 70%),
+        radial-gradient(240px 130px at 75% 22%, rgba(255,210,130,.18), transparent 72%),
+        radial-gradient(260px 150px at 70% 80%, rgba(160,255,210,.14), transparent 74%);
+      filter: blur(0px);
+      animation: floaty 10s ease-in-out infinite;
     }
     @keyframes drift{ from{transform:translateY(0)} to{transform:translateY(-220px)} }
     @keyframes drift2{ from{transform:translateY(0)} to{transform:translateY(-260px)} }
+    @keyframes floaty{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
 
+    /* ====== レイアウト ====== */
     .wrap{
       position:relative;
       z-index:1;
@@ -84,214 +109,491 @@
       flex-direction:column;
       align-items:center;
       justify-content:center;
+      padding: calc(18px + var(--safeT)) 14px calc(18px + var(--safeB));
+    }
 
-      /* ✅ 修正：safe-area分だけ上下に余白を足す */
-      padding: calc(28px + var(--safeT)) 14px calc(22px + var(--safeB));
+    .shell{
+      width:min(980px, 100%);
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
       gap:14px;
+      align-items:stretch;
+    }
+    @media (max-width: 860px){
+      .shell{ grid-template-columns: 1fr; }
     }
 
-    .stage{
-      width:min(520px, 100%);
-      border:1px solid var(--line);
-      border-radius:22px;
-      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-      box-shadow:var(--shadow);
+    /* ====== 左：メインヒーロー ====== */
+    .hero{
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 26px;
       overflow:hidden;
+      box-shadow: var(--shadow);
+      background:
+        radial-gradient(520px 300px at 35% 20%, rgba(120,180,255,.22), transparent 60%),
+        radial-gradient(520px 360px at 78% 78%, rgba(255,210,130,.14), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      position:relative;
     }
+    .hero::before{
+      content:"";
+      position:absolute; inset:-40px;
+      background:
+        conic-gradient(from 210deg,
+          rgba(120,180,255,.10),
+          rgba(255,210,130,.08),
+          rgba(160,255,210,.08),
+          rgba(120,180,255,.10)
+        );
+      filter: blur(18px);
+      opacity:.35;
+      animation: spin 18s linear infinite;
+      pointer-events:none;
+    }
+    @keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
 
-    .stage-top{
-      padding:16px 16px 10px;
+    .heroTop{
+      position:relative;
+      padding: 18px 18px 14px;
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
       gap:12px;
+      background: rgba(0,0,0,.20);
       border-bottom:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.20);
     }
-    .brand{display:flex; flex-direction:column; gap:2px;}
-    .brand .title{font-weight:900; letter-spacing:.04em; font-size:15px;}
-    .brand .sub{color:var(--muted); font-size:12px;}
 
-    .pill{
+    .logoBlock{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+    .kicker{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      padding:8px 10px;
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:999px;
-      background:rgba(255,255,255,.06);
-      font-size:12px;
-      max-width:58%;
-      min-width: 0; /* ✅ 追加：名前が長い時の崩れ防止 */
-    }
-    .pill .avatar{
-      width:22px;height:22px;border-radius:8px;
-      background:rgba(255,255,255,.10);
-      border:1px solid rgba(255,255,255,.14);
-      flex:0 0 22px;
-      display:grid;place-items:center;
-      overflow:hidden;
-    }
-    .pill img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
-    .pill .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;}
-
-    .scene{
-      position:relative;
-      padding:18px 14px 10px;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:10px;
-      background:
-        radial-gradient(260px 160px at 50% 30%, rgba(120,140,255,.18), transparent 70%),
-        radial-gradient(240px 140px at 50% 70%, rgba(255,200,120,.10), transparent 75%),
-        rgba(0,0,0,.18);
-    }
-
-    .gateRow{
-      width:100%;
-      display:flex;
-      align-items:flex-end;
-      justify-content:center;
-      gap:14px;
-      padding:6px 0 0;
-      min-height:180px;
-    }
-    .door{
-      width:140px; height:160px;
-      border-radius:18px 18px 22px 22px;
-      border:1px solid rgba(255,255,255,.18);
-      background:
-        radial-gradient(90px 120px at 50% 40%, rgba(120,180,255,.35), rgba(0,0,0,.0) 60%),
-        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
-      position:relative;
-      box-shadow:0 0 22px rgba(140,180,255,.18);
-      overflow:hidden;
-      display:grid;
-      place-items:center;
-      user-select:none;
-    }
-    .door::before{
-      content:"";
-      position:absolute; inset:-30px;
-      background:conic-gradient(from 0deg, transparent 0 40%, rgba(180,220,255,.22) 45% 55%, transparent 60% 100%);
-      animation: shimmer 4.2s linear infinite;
-      opacity:.8;
-      pointer-events:none; /* ✅ 追加：疑似要素がタップを奪わない */
-    }
-    @keyframes shimmer{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
-    .doorCore{
-      position:relative;
-      width:92px;height:120px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.18);
-      background:
-        radial-gradient(80px 90px at 50% 35%, rgba(255,255,255,.10), transparent 70%),
-        linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.10));
-      display:grid;place-items:center;
-      box-shadow: inset 0 0 20px rgba(120,180,255,.18);
-    }
-    .doorCore .sigil{
-      width:42px;height:42px;border-radius:14px;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(120,180,255,.18);
-      display:grid;place-items:center;
+      width:fit-content;
       font-weight:900;
       letter-spacing:.08em;
-      font-family:var(--mono);
-      opacity:.9;
-    }
-
-    .guard{
-      width:120px;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:8px;
-    }
-    .guard .img{
-      width:74px;height:74px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(255,255,255,.08);
-      display:grid;place-items:center;
-      overflow:hidden;
-      box-shadow:0 10px 24px rgba(0,0,0,.35);
-      user-select:none;
-    }
-    .guard .img img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
-    .guard .badge{
       font-size:11px;
-      color:rgba(255,255,255,.85);
-      background:rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.14);
-      padding:6px 8px;
-      border-radius:999px;
-      max-width:120px;
-      text-align:center;
-    }
-
-    .dialog{
-      width:100%;
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:16px;
-      background:rgba(0,0,0,.28);
-      padding:10px 12px;
       color:rgba(255,255,255,.92);
-      font-size:13px;
-      line-height:1.5;
-    }
-    .dialog .small{color:var(--muted); font-size:12px; display:block; margin-top:2px;}
-
-    .actions{
-      width:100%;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-      padding:10px 0 6px;
-    }
-    .btn{
+      padding: 7px 10px;
       border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.10);
-      color:var(--text);
-      padding:12px 12px;
-      border-radius:14px;
-      font-weight:800;
+      border-radius:999px;
+      background:rgba(0,0,0,.18);
+    }
+    .kicker .dot{
+      width:8px;height:8px;border-radius:999px;
+      background: rgba(120,180,255,.9);
+      box-shadow: 0 0 18px rgba(120,180,255,.55);
+    }
+    .heroTitle{
+      margin:0;
+      font-weight:1000;
       letter-spacing:.02em;
-      cursor:pointer;
-      box-shadow:0 10px 24px rgba(0,0,0,.25);
+      line-height:1.05;
+      font-size: 28px;
     }
-    .btn:active{transform:translateY(1px)}
-    .btn.primary{
-      background:linear-gradient(180deg, rgba(120,180,255,.28), rgba(255,255,255,.10));
-      border-color:rgba(140,200,255,.35);
+    .heroSub{
+      margin:0;
+      color:rgba(255,255,255,.78);
+      line-height:1.55;
+      font-size: 13px;
+      max-width: 54ch;
     }
-    .btn.ghost{background:rgba(255,255,255,.06);}
 
-    .footer{
-      padding:10px 16px 14px;
-      border-top:1px solid rgba(255,255,255,.10);
-      color:var(--muted);
-      font-size:12px;
+    .pill{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      box-shadow: var(--shadow2);
+      max-width: 46%;
+      min-width: 0;
+    }
+    .pill .avatar{
+      width:34px;height:34px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+      flex:0 0 34px;
+      display:grid;place-items:center;
+    }
+    .pill .avatar img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+    .pill .txt{display:flex;flex-direction:column; gap:2px; min-width:0;}
+    .pill .name{font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .pill .meta{font-size:11px;color:rgba(255,255,255,.72);white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+    /* ====== 中央：街プレビュー＋ゲート演出 ====== */
+    .heroMid{
+      position:relative;
+      padding: 16px 18px 12px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+
+    .preview{
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 22px;
+      overflow:hidden;
+      background:
+        radial-gradient(420px 240px at 40% 25%, rgba(120,180,255,.18), transparent 65%),
+        rgba(0,0,0,.22);
+      box-shadow: var(--shadow2);
+      position:relative;
+    }
+    .preview::after{
+      content:"";
+      position:absolute; inset:-40px;
+      background: conic-gradient(from 0deg, transparent 0 40%, rgba(255,255,255,.10) 45% 55%, transparent 60% 100%);
+      animation: shimmer 5.2s linear infinite;
+      opacity:.85;
+      pointer-events:none;
+    }
+    @keyframes shimmer{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+    .previewTop{
+      padding: 12px 12px 10px;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      background:rgba(0,0,0,.18);
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
     }
-    .footer .hint{display:flex; flex-direction:column; gap:2px; overflow:hidden;}
-    .footer .hint b{color:rgba(255,255,255,.92); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-    .footer .hint span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-    .footer .mini{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
-    .chip{
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.06);
-      padding:6px 8px;
-      border-radius:999px;
+    .previewTop .ttl{
+      font-weight:1000;
+      letter-spacing:.02em;
+      font-size:14px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .spark{
+      width:10px;height:10px;border-radius:999px;
+      background: rgba(255,210,130,.95);
+      box-shadow: 0 0 18px rgba(255,210,130,.55);
+    }
+    .previewTop .cap{
       font-size:11px;
-      color:rgba(255,255,255,.85);
+      color:rgba(255,255,255,.72);
+      white-space:nowrap;
     }
 
+    .townImg{
+      height: 240px;
+      display:grid;
+      place-items:center;
+      position:relative;
+      padding: 14px;
+    }
+    /* ✅ ここに「街の入口画像」を置く（差し替え用） */
+    .townImg .imgFrame{
+      width:100%;
+      height:100%;
+      border-radius: 18px;
+      border:1px dashed rgba(255,255,255,.18);
+      background:
+        radial-gradient(260px 160px at 50% 35%, rgba(120,180,255,.16), transparent 70%),
+        radial-gradient(240px 140px at 55% 70%, rgba(255,210,130,.12), transparent 75%),
+        rgba(255,255,255,.03);
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      position:relative;
+    }
+    .townImg .imgFrame img{
+      width:100%;
+      height:100%;
+      object-fit:cover; /* 街画像はドーンと見せる */
+      image-rendering: pixelated;
+      opacity:.98;
+      transform: scale(1.02);
+    }
+    .townImg .placeholder{
+      text-align:center;
+      color:rgba(255,255,255,.74);
+      padding: 0 10px;
+      line-height:1.55;
+      font-size:12px;
+    }
+    .townImg .placeholder b{color:rgba(255,255,255,.92)}
+    .tagRow{
+      position:absolute;
+      left: 22px;
+      bottom: 20px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      pointer-events:none;
+    }
+    .tag{
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.02em;
+      padding: 7px 9px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.28);
+      color:rgba(255,255,255,.90);
+      box-shadow: 0 10px 22px rgba(0,0,0,.28);
+    }
+
+    /* ゲートの短いセリフ */
+    .dialog{
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      background: rgba(0,0,0,.26);
+      padding: 12px 12px;
+      color: rgba(255,255,255,.92);
+      font-size: 13px;
+      line-height: 1.55;
+      box-shadow: var(--shadow2);
+    }
+    .dialog .small{display:block;margin-top:4px;color:var(--muted);font-size:12px}
+
+    .actions{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:10px;
+    }
+    @media (max-width: 520px){
+      .actions{ grid-template-columns: 1fr; }
+      .pill{ max-width: 52%; }
+      .townImg{ height: 220px; }
+    }
+
+    .btn{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      padding: 14px 14px;
+      border-radius: 18px;
+      font-weight: 1000;
+      letter-spacing:.02em;
+      cursor:pointer;
+      box-shadow: 0 14px 32px rgba(0,0,0,.35);
+      position:relative;
+      overflow:hidden;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: rgba(120,180,255,.35);
+      background:
+        radial-gradient(220px 160px at 30% 30%, rgba(120,180,255,.35), transparent 60%),
+        radial-gradient(260px 180px at 80% 80%, rgba(255,210,130,.20), transparent 65%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+    }
+    .btn.primary::after{
+      content:"";
+      position:absolute; inset:-60px;
+      background: conic-gradient(from 90deg, transparent 0 40%, rgba(255,255,255,.20) 45% 55%, transparent 60% 100%);
+      animation: shimmer 4.8s linear infinite;
+      opacity:.85;
+      pointer-events:none;
+    }
+    .btn .sub{
+      display:block;
+      margin-top:4px;
+      font-size:11px;
+      color:rgba(255,255,255,.75);
+      font-weight:800;
+      letter-spacing:.02em;
+    }
+
+    /* ====== 下：できることカード ====== */
+    .featureRow{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    @media (max-width: 860px){
+      .featureRow{ grid-template-columns: 1fr; }
+    }
+    .feature{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 20px;
+      background: rgba(0,0,0,.18);
+      box-shadow: var(--shadow2);
+      padding: 12px 12px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      min-height: 74px;
+    }
+    .ico{
+      width:40px;height:40px;border-radius: 16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      display:grid;place-items:center;
+      font-size:18px;
+      flex:0 0 40px;
+      box-shadow: 0 10px 20px rgba(0,0,0,.24);
+    }
+    .ftxt{min-width:0}
+    .ftxt b{display:block;font-size:13px;letter-spacing:.02em}
+    .ftxt span{display:block;margin-top:3px;font-size:12px;color:rgba(255,255,255,.72);line-height:1.45}
+
+    /* ====== 右：サイド（ステータス/ヒント/門番） ====== */
+    .side{
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 26px;
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      background:
+        radial-gradient(360px 240px at 60% 20%, rgba(160,255,210,.10), transparent 62%),
+        radial-gradient(420px 280px at 20% 80%, rgba(120,180,255,.12), transparent 66%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      display:flex;
+      flex-direction:column;
+      position:relative;
+    }
+
+    .sideTop{
+      padding: 16px 16px 12px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .sideTop .t{
+      font-weight:1000;
+      letter-spacing:.02em;
+      font-size:14px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .sideTop .t .miniDot{
+      width:8px;height:8px;border-radius:999px;
+      background: rgba(160,255,210,.92);
+      box-shadow: 0 0 18px rgba(160,255,210,.55);
+    }
+    .chips{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .chip{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      padding: 7px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: rgba(255,255,255,.86);
+      white-space:nowrap;
+    }
+
+    .sideBody{
+      padding: 14px 16px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      flex:1;
+    }
+
+    .guardBox{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 22px;
+      background: rgba(0,0,0,.18);
+      box-shadow: var(--shadow2);
+      padding: 12px 12px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .guardImg{
+      width:64px;height:64px;border-radius: 20px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      overflow:hidden;
+      display:grid;place-items:center;
+      box-shadow: 0 12px 26px rgba(0,0,0,.28);
+      user-select:none;
+      flex:0 0 64px;
+    }
+    .guardImg img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+    .guardTxt{min-width:0}
+    .guardTxt b{
+      display:block;
+      font-size:13px;
+      letter-spacing:.02em;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .guardTxt span{
+      display:block;
+      margin-top:4px;
+      color: rgba(255,255,255,.72);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .statGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .stat{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      background: rgba(255,255,255,.05);
+      box-shadow: var(--shadow2);
+      padding: 12px 12px;
+    }
+    .stat b{
+      display:block;
+      font-size:11px;
+      color: rgba(255,255,255,.72);
+      font-weight:900;
+      margin-bottom: 6px;
+      letter-spacing:.02em;
+    }
+    .stat .v{
+      font-family: var(--mono);
+      font-weight:1000;
+      font-size: 14px;
+      letter-spacing:.02em;
+      color: rgba(255,255,255,.92);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .sideBtns{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:auto;
+    }
+    @media (max-width: 520px){
+      .sideBtns{ grid-template-columns: 1fr; }
+    }
+
+    .sbtn{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color:#fff;
+      border-radius: 18px;
+      padding: 12px 12px;
+      cursor:pointer;
+      font-weight:1000;
+      letter-spacing:.02em;
+      box-shadow: 0 14px 30px rgba(0,0,0,.34);
+    }
+    .sbtn:active{transform:translateY(1px)}
+    .sbtn.primary{
+      border-color: rgba(160,255,210,.30);
+      background:
+        radial-gradient(220px 160px at 30% 30%, rgba(160,255,210,.22), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+    }
+
+    /* ====== モーダル（中身はあなたの住民票そのまま） ====== */
     .modal{
       position:fixed; inset:0;
       display:none;
@@ -300,19 +602,19 @@
       padding:16px;
       background:rgba(0,0,0,.62);
       z-index:50;
-      overscroll-behavior: contain; /* ✅ 追加：モーダル中の引っ張り挙動を安定化 */
+      overscroll-behavior: contain;
     }
     .modal.on{display:flex}
     .modal .card{
       width:min(520px, 100%);
-      border-radius:18px;
+      border-radius: 22px;
       border:1px solid rgba(255,255,255,.14);
-      background:linear-gradient(180deg, rgba(20,22,40,.96), rgba(10,12,20,.92));
-      box-shadow:var(--shadow);
+      background: linear-gradient(180deg, rgba(20,22,40,.96), rgba(10,12,20,.92));
+      box-shadow: var(--shadow);
       overflow:hidden;
     }
     .modal .head{
-      padding:12px 14px;
+      padding: 12px 14px;
       display:flex;
       align-items:center;
       justify-content:space-between;
@@ -320,29 +622,29 @@
       border-bottom:1px solid rgba(255,255,255,.10);
       background:rgba(0,0,0,.22);
     }
-    .modal .head .ttl{font-weight:900}
+    .modal .head .ttl{font-weight:1000}
     .modal .close{
       border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.08);
       color:#fff;
-      border-radius:12px;
+      border-radius:14px;
       padding:8px 10px;
       cursor:pointer;
-      font-weight:900;
+      font-weight:1000;
     }
     .modal .body{padding:14px}
 
     .field{display:flex; flex-direction:column; gap:6px; margin:0 0 12px;}
-    .field label{font-size:12px;color:var(--muted)}
+    .field label{font-size:12px;color:var(--muted); font-weight:800}
     .field input{
       width:100%;
       padding:12px 12px;
-      border-radius:14px;
+      border-radius:16px;
       border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.06);
       color:#fff;
       outline:none;
-      font-weight:700;
+      font-weight:900;
     }
     .row{display:flex; gap:10px; flex-wrap:wrap;}
 
@@ -354,7 +656,7 @@
     .avOpt{
       border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.06);
-      border-radius:14px;
+      border-radius:16px;
       padding:8px;
       display:flex;
       flex-direction:column;
@@ -362,174 +664,24 @@
       gap:6px;
       cursor:pointer;
       user-select:none;
+      box-shadow: 0 12px 22px rgba(0,0,0,.24);
     }
     .avOpt.on{
       border-color:rgba(120,180,255,.45);
-      box-shadow:0 0 0 2px rgba(120,180,255,.18) inset;
+      box-shadow: 0 0 0 2px rgba(120,180,255,.18) inset, 0 12px 22px rgba(0,0,0,.24);
     }
     .avOpt .img{
       width:52px;height:52px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.08);
-      overflow:hidden;
-      display:grid;place-items:center;
-    }
-    .avOpt img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
-    .avOpt .nm{font-size:11px;color:rgba(255,255,255,.88); text-align:center; line-height:1.2}
-
-    .residentCard{
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:18px;
-      overflow:hidden;
-      background:
-        radial-gradient(220px 180px at 30% 25%, rgba(255,220,130,.12), transparent 60%),
-        radial-gradient(260px 200px at 80% 70%, rgba(120,180,255,.14), transparent 65%),
-        rgba(255,255,255,.04);
-      box-shadow:0 16px 40px rgba(0,0,0,.45);
-    }
-    .rcTop{
-      padding:12px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      border-bottom:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.18);
-    }
-    .rar{
-      font-family:var(--mono);
-      font-weight:900;
-      letter-spacing:.08em;
-      font-size:12px;
-      padding:6px 8px;
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:999px;
-      background:rgba(255,255,255,.06);
-    }
-
-    /* ✅ 住民票のアイコンを小さく */
-    .rcMid{
-      padding:12px 14px;
-      display:grid;
-      grid-template-columns: 78px 1fr;
-      gap:12px;
-      align-items:start;
-    }
-    .rcAv{
-      width:78px;height:78px;
       border-radius:16px;
       border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.06);
-      overflow:hidden;
-      display:grid;place-items:center;
-    }
-    .rcAv img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
-
-    .rcInfo .big{
-      font-weight:900;
-      font-size:16px;
-      letter-spacing:.02em;
-      margin:0 0 2px;
-      word-break:break-word;
-    }
-    .rcInfo .sub{
-      color:var(--muted);
-      font-size:12px;
-      margin:0 0 10px;
-    }
-    .stats{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:8px;
-    }
-    .stat{
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:14px;
-      padding:8px 10px;
-      background:rgba(0,0,0,.18);
-      font-size:12px;
-      color:rgba(255,255,255,.9);
-    }
-    .stat b{display:block; font-size:11px; color:var(--muted); margin-bottom:2px; font-weight:700}
-
-    .rcBot{
-      padding:10px 14px 14px;
-      border-top:1px solid rgba(255,255,255,.10);
       background:rgba(0,0,0,.16);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
+      overflow:hidden;
+      display:grid;place-items:center;
     }
-    .quote{font-size:12px;color:rgba(255,255,255,.88);line-height:1.4;}
-    .quote .mut{color:var(--muted)}
-    .rcBtns{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
-    .sbtn{
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.08);
-      color:#fff;
-      border-radius:12px;
-      padding:8px 10px;
-      cursor:pointer;
-      font-weight:800;
-      font-size:12px;
-    }
-    .sbtn:active{transform:translateY(1px)}
+    .avOpt img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+    .avOpt .nm{font-size:11px;color:rgba(255,255,255,.88); text-align:center; line-height:1.2; font-weight:900}
 
-    .backupBox{
-      margin-top:10px;
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:16px;
-      background:rgba(0,0,0,.18);
-      padding:10px 12px;
-    }
-    .backupBox .cap{
-      font-size:12px;
-      color:rgba(255,255,255,.86);
-      font-weight:900;
-      margin:0 0 6px;
-    }
-    .backupBox .desc{
-      font-size:12px;
-      color:var(--muted);
-      margin:0 0 10px;
-      line-height:1.45;
-    }
-    .backupRow{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
-
-    /* =========================
-       ✅ アバター画像を「全身表示」にする（cover → contain）
-       ========================= */
-
-    /* 住民票アイコン */
-    .rcAv img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      image-rendering:pixelated;
-    }
-
-    /* 右上の小アイコン */
-    .pill .avatar img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      image-rendering:pixelated;
-    }
-
-    /* 登録画面のアバター一覧 */
-    .avOpt .img img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      image-rendering:pixelated;
-    }
-
-    /* =========================================
-       住民票：今風ガラスUI（CSSだけ差し替え）
-       ========================================= */
-
+    /* 住民票（あなたのガラスUI維持） */
     .residentCard{
       background: rgba(17, 20, 30, .55);
       border: 1px solid rgba(255,255,255,.12);
@@ -541,12 +693,15 @@
       -webkit-backdrop-filter: blur(14px);
       overflow: hidden;
     }
-
     .rcTop{
       padding: 14px 16px 10px;
       position: relative;
       background: rgba(0,0,0,.18);
       border-bottom: 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
     }
     .rcTop::after{
       content:"";
@@ -559,20 +714,25 @@
         rgba(255,255,255,0)
       );
     }
-
     .rar{
-      background: rgba(255,255,255,.08);
+      font-family:var(--mono);
+      font-weight:1000;
+      letter-spacing:.08em;
+      font-size:12px;
+      padding:6px 8px;
       border: 1px solid rgba(255,255,255,.14);
+      border-radius:999px;
+      background: rgba(255,255,255,.08);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      white-space:nowrap;
     }
-
     .rcMid{
       padding: 12px 16px 10px;
+      display:grid;
       grid-template-columns: 88px 1fr;
       align-items: center;
       gap: 12px;
     }
-
     .rcAv{
       width: 88px;
       height: 88px;
@@ -587,33 +747,26 @@
         0 10px 30px rgba(0,0,0,.35),
         inset 0 1px 0 rgba(255,255,255,.08);
       overflow: hidden;
+      display:grid;place-items:center;
     }
-    .rcAv img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      image-rendering:pixelated;
-      transform: scale(.92);
-    }
-
+    .rcAv img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated; transform:scale(.92)}
     .rcInfo .big{
       font-size: 18px;
-      font-weight: 900;
+      font-weight: 1000;
       letter-spacing: .02em;
       line-height: 1.15;
       margin: 0 0 4px;
+      word-break: break-word;
     }
     .rcInfo .sub{
       margin-top: 6px;
       font-size: 12px;
       color: rgba(255,255,255,.70);
       margin-bottom: 10px;
+      font-weight:900;
     }
-
-    .stats{
-      gap: 10px;
-    }
-    .stat{
+    .stats{display:grid; grid-template-columns: 1fr 1fr; gap: 10px;}
+    .stat2{
       background: rgba(255,255,255,.06);
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 16px;
@@ -621,87 +774,210 @@
       box-shadow:
         0 8px 22px rgba(0,0,0,.30),
         inset 0 1px 0 rgba(255,255,255,.06);
+      font-size:12px;
+      color:rgba(255,255,255,.92);
     }
-
+    .stat2 b{display:block; font-size:11px; color:rgba(255,255,255,.72); margin-bottom:4px; font-weight:900}
     .rcBot{
       padding: 10px 16px 14px;
+      border-top:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
     }
-
     .quote{
       border-radius: 16px;
       background: rgba(0,0,0,.18);
       border: 1px solid rgba(255,255,255,.10);
       padding: 10px 12px;
       line-height: 1.6;
+      font-size:12px;
+      color:rgba(255,255,255,.90);
+      min-width: 220px;
+      flex: 1 1 220px;
     }
-
+    .quote .mut{color:rgba(255,255,255,.72)}
+    .rcBtns{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; flex: 0 0 auto;}
     .rcBtns .sbtn{
       border-radius: 999px;
       padding: 12px 14px;
+      font-size:12px;
+      font-weight:1000;
       box-shadow:
         0 10px 26px rgba(0,0,0,.35),
         inset 0 1px 0 rgba(255,255,255,.06);
     }
 
+    .backupBox{
+      margin-top:10px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      background:rgba(0,0,0,.18);
+      padding:10px 12px;
+    }
+    .backupBox .cap{font-size:12px; color:rgba(255,255,255,.90); font-weight:1000; margin:0 0 6px;}
+    .backupBox .desc{font-size:12px; color:rgba(255,255,255,.72); margin:0 0 10px; line-height:1.45;}
+    .backupRow{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+
+    /* 小さめ */
     @media (max-width: 420px){
+      .heroTitle{font-size:26px}
       .rcMid{ grid-template-columns: 80px 1fr; }
       .rcAv{ width: 80px; height: 80px; border-radius: 18px; }
       .stats{ gap: 9px; }
     }
+
+    /* 右上住民 pill が詰まる時 */
+    @media (max-width: 520px){
+      .pill{ padding:10px 10px; }
+      .pill .meta{ display:none; }
+    }
   </style>
 </head>
+
 <body>
-  <div class="stars"></div>
-  <div class="stars2"></div>
+  <div class="bg-comet"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-stars"></div>
+  <div class="bg-stars2"></div>
 
   <main class="wrap">
-    <section class="stage" aria-label="入口">
-      <div class="stage-top">
-        <div class="brand">
-          <div class="title">たこ焼きトレカの街・入口</div>
-          <div class="sub">— 異空間ゲート —</div>
-        </div>
+    <div class="shell" aria-label="入口">
 
-        <div class="pill" title="住民情報">
-          <div class="avatar" id="pillAvatar">🙂</div>
-          <div class="name" id="pillName">名無しのタコ民</div>
-        </div>
-      </div>
-
-      <div class="scene">
-        <div class="gateRow">
-          <div class="door" aria-label="扉（ゲート）">
-            <div class="doorCore"><div class="sigil">TRC</div></div>
+      <!-- ===== 左：メイン（ワクワク側） ===== -->
+      <section class="hero">
+        <div class="heroTop">
+          <div class="logoBlock">
+            <div class="kicker"><span class="dot"></span> TRC WORLD GATE</div>
+            <h1 class="heroTitle">焼かれた伝説へ、入場せよ。</h1>
+            <p class="heroSub">
+              ここは“たこ焼きトレカの街”。<br>
+              畑で育て、露店で稼ぎ、図鑑を埋め、ゲームで記録を刻む。<br>
+              <b>住民票を持つ者だけが、街の扉を開けられる。</b>
+            </p>
           </div>
 
-          <div class="guard" aria-label="門番">
-            <div class="img" id="guardImg">🛡️</div>
-            <div class="badge" id="guardBadge">門番タコ民</div>
+          <div class="pill" title="住民情報">
+            <div class="avatar" id="pillAvatar">🙂</div>
+            <div class="txt">
+              <div class="name" id="pillName">名無しのタコ民</div>
+              <div class="meta" id="pillMeta">Lv -- / 称号 ---</div>
+            </div>
           </div>
         </div>
 
-        <div class="dialog" id="gateDialog">
-          ……ここは たこ焼きトレカの街。<br>
-          <span class="small">名を名乗れ。住民票を発行してやろう。</span>
+        <div class="heroMid">
+          <!-- 街プレビュー（ここに街の画像をドーンと置く） -->
+          <div class="preview" aria-label="街プレビュー">
+            <div class="previewTop">
+              <div class="ttl"><span class="spark"></span> たこ焼きトレカの街</div>
+              <div class="cap">— 入口プレビュー —</div>
+            </div>
+
+            <div class="townImg">
+              <div class="imgFrame" id="townPreviewFrame">
+                <!-- ✅ ここを差し替え：街の入口画像（例：情報の街/協力店の街/遊戯の街の総合入口） -->
+                <!-- <img src="https://ul.h3z.jp/XXXXXXXX.png" alt="街の入口" /> -->
+                <div class="placeholder">
+                  <b>ここに「街の入口画像」を置くと一気にワクワクする</b><br>
+                  ・横長でOK（スマホに映える）<br>
+                  ・夜の街/ネオン/祭り感 だと最高
+                </div>
+
+                <div class="tagRow">
+                  <span class="tag">畑</span>
+                  <span class="tag">露店</span>
+                  <span class="tag">図鑑</span>
+                  <span class="tag">ゲーム</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dialog" id="gateDialog">
+            ……ここは たこ焼きトレカの街。<br>
+            <span class="small">名を名乗れ。住民票を発行してやろう。</span>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" id="enterBtn" type="button">
+              街へ入る
+              <span class="sub">（扉を開ける）</span>
+            </button>
+            <button class="btn" id="residentBtn" type="button">
+              住民票を見る
+              <span class="sub">（バックアップもここ）</span>
+            </button>
+          </div>
+
+          <div class="featureRow" aria-label="できること">
+            <div class="feature">
+              <div class="ico">🌱</div>
+              <div class="ftxt">
+                <b>畑で育てる</b>
+                <span>タネ・水・肥料でカードを収穫。レアも焦げも、運命。</span>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="ico">🏮</div>
+              <div class="ftxt">
+                <b>露店で稼ぐ</b>
+                <span>評判と相場で売買が変わる。オクトを握れ。</span>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="ico">🎮</div>
+              <div class="ftxt">
+                <b>遊びで刻む</b>
+                <span>タワー・釣り…記録が住民票に刻まれる。</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 右：サイド（ステータス見せて煽る） ===== -->
+      <aside class="side" aria-label="案内">
+        <div class="sideTop">
+          <div class="t"><span class="miniDot"></span> 門番の検問</div>
+          <div class="chips">
+            <span class="chip" id="chipLv">Lv --</span>
+            <span class="chip" id="chipTitle">称号：---</span>
+          </div>
         </div>
 
-        <div class="actions">
-          <button class="btn primary" id="enterBtn" type="button">街へ入る</button>
-          <button class="btn ghost" id="residentBtn" type="button">住民票を見る</button>
-        </div>
-      </div>
+        <div class="sideBody">
+          <div class="guardBox">
+            <div class="guardImg" id="guardImg">🛡️</div>
+            <div class="guardTxt">
+              <b id="guardBadge">門番タコ民</b>
+              <span id="hintText">初回は住民登録が必要だ。</span>
+            </div>
+          </div>
+<div class="statGrid" aria-label="ざっくりステータス">
+            <div class="stat"><b>所持オクト</b><div class="v" id="miniOcto">0</div></div>
+            <div class="stat"><b>図鑑（所持合計）</b><div class="v" id="miniZukan">0</div></div>
+            <div class="stat"><b>資材 合計</b><div class="v" id="miniInv">0</div></div>
+            <div class="stat"><b>タワー最高</b><div class="v" id="miniTower">0</div></div>
+            <div class="stat"><b>釣り最高</b><div class="v" id="miniFish">0</div></div>
+            <div class="stat"><b>今日の言葉</b><div class="v" id="miniQuote">…</div></div>
+          </div>
 
-      <div class="footer">
-        <div class="hint">
-          <b id="hintTitle">門番メモ</b>
-          <span id="hintText">初回は住民登録が必要だ。</span>
+          <div class="sideBtns">
+            <button class="sbtn primary" id="quickResident" type="button">住民票（詳細）</button>
+            <button class="sbtn" id="quickBackup" type="button">軽量バックアップ</button>
+          </div>
+
+          <div style="color:rgba(255,255,255,.70);font-size:12px;line-height:1.55">
+            ※ 住民票と記録は端末の <b>localStorage</b> に保存（サーバ送信なし）。<br>
+            ※ 不安な人は、時々 <b>軽量バックアップ</b> 推奨。
+          </div>
         </div>
-        <div class="mini">
-          <span class="chip" id="chipLv">Lv --</span>
-          <span class="chip" id="chipTitle">称号：---</span>
-        </div>
-      </div>
-    </section>
+      </aside>
+    </div>
   </main>
 
   <!-- ===== 登録/編集モーダル ===== -->
@@ -756,17 +1032,17 @@
               <div class="sub" id="rcTitle">称号：はじまりの焼き手</div>
 
               <div class="stats">
-                <div class="stat"><b>総EXP（住民票）</b><span id="stExp">0</span></div>
-                <div class="stat"><b>総ログイン（住民票）</b><span id="stDays">0</span>日</div>
+                <div class="stat2"><b>総EXP（住民票）</b><span id="stExp">0</span></div>
+                <div class="stat2"><b>総ログイン（住民票）</b><span id="stDays">0</span>日</div>
 
-                <div class="stat"><b>所持オクト</b><span id="stOcto">0</span></div>
-                <div class="stat"><b>資材 合計</b><span id="stInvAll">0</span></div>
+                <div class="stat2"><b>所持オクト</b><span id="stOcto">0</span></div>
+                <div class="stat2"><b>資材 合計</b><span id="stInvAll">0</span></div>
 
-                <div class="stat"><b>図鑑 所持合計</b><span id="stZukan">0</span></div>
-                <div class="stat"><b>タワー最高記録</b><span id="stTower">0</span></div>
+                <div class="stat2"><b>図鑑 所持合計</b><span id="stZukan">0</span></div>
+                <div class="stat2"><b>タワー最高記録</b><span id="stTower">0</span></div>
 
-                <div class="stat"><b>釣り最高記録</b><span id="stFishBest">0</span></div>
-                <div class="stat"><b>メモ</b><span style="opacity:.85">記録は自動読取</span></div>
+                <div class="stat2"><b>釣り最高記録</b><span id="stFishBest">0</span></div>
+                <div class="stat2"><b>メモ</b><span style="opacity:.85">記録は自動読取</span></div>
               </div>
             </div>
           </div>
@@ -811,13 +1087,9 @@
   <script>
   (() => {
     /* =========================================================
-       gate.html / 入口 + 住民票 完全版（復元強化 + BEST読取強化）
-       ✅ 畑のレベル等：tf_v1_* の進行系キーをバックアップ/復元に含める
-       ✅ 図鑑の画像：tf_v1_book を slim 化する時に count + img を保持（あれば）
-       ✅ ★重要：slim図鑑でも「id」を中に入れる（図鑑ページがObject.valuesでも壊れない）
-       ✅ タワー/釣りBEST：数値だけ保存 / 二重JSON / キー名ブレ も拾う
-       ✅ 住民票アイコン：小さく表示（CSS変更）
-       ✅ 露店レベル等：roten_v1_* をバックアップ/復元に含める（今回追加）
+       gate.html / 入口 + 住民票 完全版（デザイン刷新版）
+       ✅ あなたの既存ロジックは維持（住民票/バックアップ/読取/復元）
+       ✅ 見た目だけ「ゲーム開始演出」に寄せてテンションUP
        ========================================================= */
 
     const TOWN_URL = "town/index.html";
@@ -839,12 +1111,12 @@
 
     const pillName = $("#pillName");
     const pillAvatar = $("#pillAvatar");
+    const pillMeta = $("#pillMeta");
 
     const enterBtn = $("#enterBtn");
     const residentBtn = $("#residentBtn");
     const gateDialog = $("#gateDialog");
-    const hintTitle = $("#hintTitle");
-    const hintText  = $("#hintText");
+
     const chipLv = $("#chipLv");
     const chipTitle = $("#chipTitle");
 
@@ -882,6 +1154,17 @@
 
     const guardImg = $("#guardImg");
     const guardBadge = $("#guardBadge");
+    const hintText  = $("#hintText");
+
+    const miniOcto = $("#miniOcto");
+    const miniZukan = $("#miniZukan");
+    const miniInv = $("#miniInv");
+    const miniTower = $("#miniTower");
+    const miniFish = $("#miniFish");
+    const miniQuote = $("#miniQuote");
+
+    const quickResident = $("#quickResident");
+    const quickBackup = $("#quickBackup");
 
     const AVATARS = [
       { id:"av_guard", name:"門番", emoji:"🛡️", img:"https://ul.h3z.jp/uhjnnv4y.png" },
@@ -957,8 +1240,7 @@
       if(lv>=6)  return "R  CITIZEN";
       return "N  CITIZEN";
     }
-
-    function pickQuote(){
+function pickQuote(){
       const list = [
         "「扉は開いている。問題は、お前の腹だ。」",
         "「今日も焼かれに来たのか。…いい顔だ。」",
@@ -1005,23 +1287,16 @@
         const node = got[id] || {};
         const c = Number(node.count || 0);
         if(c > 0){
-          const out = { id, count: c }; // ★ id を必ず入れる
+          const out = { id, count: c };
           if(typeof node.img === "string" && node.img.trim()) out.img = node.img.trim();
           if(typeof node.name === "string" && node.name.trim()) out.name = node.name.trim();
-
-          // あるなら保持（軽量だけど復元・表示が安定する）
           if(typeof node.rarity === "string" && node.rarity.trim()) out.rarity = node.rarity.trim();
           if(node.at != null && String(node.at).trim()) out.at = node.at;
           if(node.lastAt != null && String(node.lastAt).trim()) out.lastAt = node.lastAt;
-
           outGot[id] = out;
         }
       }
-
-      const slim = {
-        ver: book.ver ?? 1,
-        got: outGot
-      };
+      const slim = { ver: book.ver ?? 1, got: outGot };
       return safeStringify(slim);
     }
 
@@ -1087,16 +1362,9 @@
         if(typeof cur === "string"){
           const s = cur.trim();
           if(!s) return cur;
-
           if(/^-?\d+(\.\d+)?$/.test(s)) return Number(s);
-
           if((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))){
-            try{
-              cur = JSON.parse(s);
-              continue;
-            }catch(_){
-              return cur;
-            }
+            try{ cur = JSON.parse(s); continue; }catch(_){ return cur; }
           }
           return cur;
         }
@@ -1272,19 +1540,32 @@
       const {lv} = calcLevel(r.exp||0);
       chipLv.textContent = `Lv ${lv}`;
       chipTitle.textContent = calcTitleByLevel(lv).replace("称号：","");
+      pillMeta.textContent = `Lv ${lv} / ${calcTitleByLevel(lv).replace("称号：","")}`;
+
+      // 右側のミニステ表示も更新
+      const octo = readOcto();
+      const invT = calcInvTotals();
+      const zukan = calcZukanOwnedTotal();
+      const tower = readTowerStats();
+      const fish  = readFishBest();
+
+      miniOcto.textContent = String(Math.floor(octo));
+      miniZukan.textContent = String(Math.floor(zukan));
+      miniInv.textContent = String(invT.all);
+      miniTower.textContent = `${Math.floor(tower.floor)}F`;
+      miniFish.textContent = String(Math.floor(fish.best));
+      miniQuote.textContent = pickQuote().replace(/[「」]/g,"");
     }
 
     function renderGateText(r){
       const nick = r.nick && r.nick.trim() ? r.nick.trim() : "";
       if(!nick){
         gateDialog.innerHTML = `……ここは たこ焼きトレカの街。<br><span class="small">名を名乗れ。住民票を発行してやろう。</span>`;
-        hintTitle.textContent = "門番メモ";
         hintText.textContent  = "初回は住民登録が必要だ。";
       }else{
         const {lv} = calcLevel(r.exp||0);
         const title = calcTitleByLevel(lv).replace("称号：","");
         gateDialog.innerHTML = `……<b>${nick}</b>か。<br><span class="small">称号「${title}」── 入場を許可する。</span>`;
-        hintTitle.textContent = "門番メモ";
         hintText.textContent  = "住民票＝必要項目だけ表示だ。";
       }
     }
@@ -1396,21 +1677,11 @@
         const k = localStorage.key(i);
         if(!k) continue;
         if(!/^tf_v1_/i.test(k)) continue;
-
         if(/log|history|debug/i.test(k)) continue;
-
         if(k === EXIST.farmBook || k === EXIST.farmInv) continue;
-
         out.push(k);
       }
-
-      const prefer = [
-        "tf_v1_state",
-        "tf_v1_level",
-        "tf_v1_xp",
-        "tf_v1_farm",
-        "tf_v1_progress"
-      ];
+      const prefer = ["tf_v1_state","tf_v1_level","tf_v1_xp","tf_v1_farm","tf_v1_progress"];
       const ordered = [];
       for(const p of prefer){
         if(localStorage.getItem(p)!=null && !ordered.includes(p)) ordered.push(p);
@@ -1427,22 +1698,10 @@
         const k = localStorage.key(i);
         if(!k) continue;
         if(!/^roten_v1_/i.test(k)) continue;
-
         if(/log|history|debug/i.test(k)) continue;
-
         out.push(k);
       }
-
-      const prefer = [
-        "roten_v1_level",
-        "roten_v1_rep",
-        "roten_v1_myshop",
-        "roten_v1_inventory",
-        "roten_v1_market",
-        "roten_v1_state",
-        "roten_v1_shelves",
-        "roten_v1_octo"
-      ];
+      const prefer = ["roten_v1_level","roten_v1_rep","roten_v1_myshop","roten_v1_inventory","roten_v1_market","roten_v1_state","roten_v1_shelves","roten_v1_octo"];
       const ordered = [];
       for(const p of prefer){
         if(localStorage.getItem(p)!=null && !ordered.includes(p)) ordered.push(p);
@@ -1462,14 +1721,12 @@
       keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
       keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
 
-      // ✅ 図鑑は slim（count + img/name + id）
       keys[EXIST.farmBook]  = slimBookRawKeepImg();
 
       for(const k of findFarmProgressKeys()){
         const v = getRaw(k);
         if(v != null) keys[k] = v;
       }
-
       for(const k of findRotenProgressKeys()){
         const v = getRaw(k);
         if(v != null) keys[k] = v;
@@ -1547,6 +1804,7 @@
       location.reload();
     }
 
+    // ===== イベント =====
     enterBtn.addEventListener("click", ()=>{
       const r = loadResident();
       const nick = r.nick && r.nick.trim();
@@ -1568,6 +1826,24 @@
       }
       openResidentCard(r);
     });
+
+    if(quickResident){
+      quickResident.addEventListener("click", ()=>{
+        const r = loadResident();
+        const nick = r.nick && r.nick.trim();
+        if(!nick){ openRegister(r,"register"); return; }
+        openResidentCard(r);
+      });
+    }
+    if(quickBackup){
+      quickBackup.addEventListener("click", ()=>{
+        quickBackup.textContent = "作成中…";
+        setTimeout(()=>{
+          backupSlim();
+          quickBackup.textContent = "軽量バックアップ";
+        }, 60);
+      });
+    }
 
     regClose.addEventListener("click", ()=> closeModal(regModal));
     regCancel.addEventListener("click", ()=> closeModal(regModal));
@@ -1644,15 +1920,13 @@
       renderTop(r);
       renderGateText(r);
 
+      // 初回は自動で登録を開く
       if(!(r.nick && r.nick.trim())){
         setTimeout(()=> openRegister(r, "register"), 180);
       }
     }
     init();
-
   })();
   </script>
 </body>
 </html>
-
-
