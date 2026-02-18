@@ -1364,30 +1364,7 @@
     render();
   }
 
-  // =========================================================
-  // ✅ リセット
-  // =========================================================
-  const btnReset = document.getElementById("btnReset");
-  if(btnReset){
-    btnReset.addEventListener("click", () => {
-      if(!confirm("畑・図鑑・レベル(XP)・在庫・装備を全消去します。OK？")) return;
-
-      localStorage.removeItem(LS_STATE);
-      localStorage.removeItem(LS_BOOK);
-      localStorage.removeItem(LS_PLAYER);
-      localStorage.removeItem(LS_INV);
-      localStorage.removeItem(LS_LOADOUT);
-      // localStorage.removeItem(LS_OCTO);
-
-      state = loadState();
-      book = loadBook();
-      player = loadPlayer();
-      inv = loadInv();
-      loadout = loadLoadout();
-
-      render();
-    });
-  }
+ 
 
   // 初期
   renderLoadout();
