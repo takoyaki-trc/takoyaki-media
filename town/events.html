@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>今遊べるイベント｜焼かれた伝説 / たこ焼きトレカ</title>
+  <meta name="description" content="今この瞬間、参加できるイベント一覧。主戦場はX（たこぴ）。" />
+
+  <style>
+    :root{
+      --bg0:#000;          /* 真っ黒ベース */
+      --bg1:#070815;       /* ほんの少し紫 */
+      --panel: rgba(255,255,255,.08);
+      --panel2: rgba(255,255,255,.12);
+      --line: rgba(255,255,255,.16);
+
+      --text:#fff;
+      --muted: rgba(255,255,255,.72);
+
+      --good:#9fffa8;
+      --warn:#ffd38a;
+      --hot:#ff7aa8;
+      --info:#8fd6ff;
+
+      --shadow: 0 18px 60px rgba(0,0,0,.72);
+      --radius: 18px;
+
+      --safeT: env(safe-area-inset-top, 0px);
+      --safeB: env(safe-area-inset-bottom, 0px);
+      --safeL: env(safe-area-inset-left, 0px);
+      --safeR: env(safe-area-inset-right, 0px);
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 520px at 50% -120px, rgba(140,120,255,.20), transparent 62%),
+        radial-gradient(900px 460px at 20% 18%, rgba(80,200,255,.14), transparent 55%),
+        radial-gradient(900px 520px at 80% 28%, rgba(255,120,180,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+      overflow-x:hidden;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    img{ max-width:100%; display:block; }
+
+    /* =========================
+       Header
+    ========================= */
+    header{
+      position:sticky;
+      top:0;
+      z-index:50;
+      padding: calc(10px + var(--safeT)) 14px 10px;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(0,0,0,.78), rgba(0,0,0,.40));
+      border-bottom: 1px solid var(--line);
+    }
+    .head-inner{
+      max-width:1100px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .back{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:44px; height:44px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      user-select:none;
+    }
+    .titlebox{
+      min-width:0;
+      flex:1;
+    }
+    .titlebox .t1{
+      font-weight:900;
+      letter-spacing:.02em;
+      font-size:16px;
+      line-height:1.2;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .badge-live{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,122,168,.55);
+      background: rgba(255,122,168,.12);
+      color: #ffd6e4;
+      font-size:12px;
+      font-weight:900;
+    }
+    .dot{
+      width:8px; height:8px; border-radius:50%;
+      background: #ff5d95;
+      box-shadow: 0 0 0 4px rgba(255,93,149,.20);
+    }
+    .titlebox .t2{
+      margin-top:2px;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .xbtn{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+      box-shadow: var(--shadow);
+      font-weight:900;
+      letter-spacing:.02em;
+      cursor:pointer;
+    }
+    .xicon{
+      width:22px; height:22px;
+      border-radius:6px;
+      display:grid;
+      place-items:center;
+      font-family:var(--mono);
+      font-weight:900;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+    }
+    .xbtn small{
+      display:block;
+      font-size:11px;
+      color:var(--muted);
+      font-weight:700;
+      margin-top:1px;
+    }
+
+    /* =========================
+       Layout
+    ========================= */
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding: 18px 14px calc(22px + var(--safeB));
+    }
+
+    /* Hero / Quest board */
+    .hero{
+      position:relative;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      padding: 18px 16px 16px;
+    }
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background:
+        radial-gradient(520px 220px at 15% 20%, rgba(159,255,168,.10), transparent 60%),
+        radial-gradient(520px 220px at 85% 30%, rgba(143,214,255,.10), transparent 60%),
+        radial-gradient(520px 260px at 55% 0%, rgba(255,122,168,.10), transparent 62%);
+      pointer-events:none;
+    }
+    .hero-inner{
+      position:relative;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:14px;
+      align-items:stretch;
+    }
+    @media (max-width:820px){
+      .hero-inner{ grid-template-columns: 1fr; }
+    }
+
+    .dqbox{
+      border:2px solid rgba(255,255,255,.85);
+      border-radius: 16px;
+      background: rgba(10,10,18,.75);
+      padding: 14px 14px 12px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.55);
+    }
+    .dqbox .line1{
+      font-weight:900;
+      letter-spacing:.02em;
+      margin:0 0 6px;
+      font-size:14px;
+    }
+    .dqbox .line2{
+      margin:0;
+      color: rgba(255,255,255,.85);
+      font-size:13px;
+      line-height:1.65;
+    }
+    .dqbox .line2 b{ color:#fff; }
+    .dqbox .hint{
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px dashed rgba(255,255,255,.22);
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.55;
+    }
+
+    .hero-side{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .panel{
+      border-radius: 16px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      padding: 12px;
+    }
+    .panel .p-title{
+      font-weight:900;
+      font-size:13px;
+      letter-spacing:.02em;
+      margin:0 0 8px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .mini{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.55;
+      margin:0;
+    }
+
+    .btnrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn.primary{
+      border-color: rgba(143,214,255,.45);
+      background: linear-gradient(180deg, rgba(143,214,255,.22), rgba(255,255,255,.06));
+    }
+    .btn.hot{
+      border-color: rgba(255,122,168,.50);
+      background: linear-gradient(180deg, rgba(255,122,168,.22), rgba(255,255,255,.06));
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    /* =========================
+       Sections
+    ========================= */
+    .sec{
+      margin-top:16px;
+    }
+    .sec-title{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin: 0 0 10px;
+    }
+    .sec-title h2{
+      margin:0;
+      font-size:14px;
+      letter-spacing:.02em;
+      font-weight:900;
+    }
+    .sec-title .sub{
+      font-size:12px;
+      color: var(--muted);
+      margin:0;
+      white-space:nowrap;
+    }
+
+    /* Event cards grid */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:12px;
+    }
+    @media (max-width:980px){
+      .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width:640px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      position:relative;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 14px 40px rgba(0,0,0,.50);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: 260px;
+    }
+    .card:before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(360px 140px at 20% 10%, rgba(159,255,168,.10), transparent 60%),
+        radial-gradient(360px 140px at 80% 20%, rgba(255,122,168,.10), transparent 60%);
+      pointer-events:none;
+    }
+
+    .thumb{
+      position:relative;
+      height: 120px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.03));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px;
+    }
+    .thumb .ph{
+      width:100%;
+      height:100%;
+      border-radius: 14px;
+      border:1px dashed rgba(255,255,255,.22);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color: rgba(255,255,255,.60);
+      font-family:var(--mono);
+      font-weight:900;
+      letter-spacing:.06em;
+      font-size:12px;
+      text-align:center;
+      padding:10px;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.16);
+    }
+
+    .content{
+      position:relative;
+      padding: 12px 12px 12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      flex:1;
+    }
+
+    .topline{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .name{
+      font-weight:900;
+      font-size:14px;
+      line-height:1.25;
+      margin:0;
+      letter-spacing:.02em;
+    }
+    .status{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.24);
+      font-size:12px;
+      font-weight:900;
+      color: #fff;
+      white-space:nowrap;
+    }
+    .status.live{ border-color: rgba(159,255,168,.45); background: rgba(159,255,168,.12); color:#dcffe0; }
+    .status.soon{ border-color: rgba(255,211,138,.50); background: rgba(255,211,138,.12); color:#fff0d8; }
+    .status.xonly{ border-color: rgba(143,214,255,.50); background: rgba(143,214,255,.12); color:#dff4ff; }
+
+    .desc{
+      margin:0;
+      color: rgba(255,255,255,.82);
+      font-size:12.5px;
+      line-height:1.65;
+    }
+
+    .tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:2px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.86);
+      white-space:nowrap;
+    }
+    .tag.good{ border-color: rgba(159,255,168,.40); background: rgba(159,255,168,.10); color:#dcffe0; }
+    .tag.warn{ border-color: rgba(255,211,138,.45); background: rgba(255,211,138,.10); color:#fff0d8; }
+    .tag.hot{ border-color: rgba(255,122,168,.45); background: rgba(255,122,168,.10); color:#ffd6e4; }
+    .tag.info{ border-color: rgba(143,214,255,.45); background: rgba(143,214,255,.10); color:#dff4ff; }
+
+    .card .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:auto;
+      padding-top: 6px;
+    }
+    .card .actions .btn{
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size:13px;
+    }
+    .btn.small{
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size:13px;
+    }
+
+    /* FAQ / Notes */
+    .noteBox{
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .noteBox h3{
+      margin:0 0 8px;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .noteBox ul{
+      margin:0;
+      padding-left: 18px;
+      color: rgba(255,255,255,.82);
+      font-size:12.5px;
+      line-height:1.7;
+    }
+    footer{
+      margin-top: 16px;
+      color: var(--muted);
+      font-size:12px;
+      text-align:center;
+      padding: 10px 0 0;
+    }
+    .sep{
+      height:1px;
+      background: rgba(255,255,255,.14);
+      margin: 10px 0 0;
+      opacity:.7;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="head-inner">
+      <!-- 戻る（トップや入口に戻したい場合は href をあなたの入口URLに） -->
+      <button class="back" id="backBtn" type="button" aria-label="戻る">←</button>
+
+      <div class="titlebox">
+        <div class="t1">
+          今遊べるイベント
+          <span class="badge-live"><span class="dot"></span>LIVE</span>
+        </div>
+        <div class="t2">いま参加できる「クエスト」だけをまとめたページ（主戦場はX）</div>
+      </div>
+
+      <!-- ✅ 必須：たこぴXへ -->
+      <!-- TODO: ここに “たこぴXアカウントURL” を入れてください -->
+      <a class="xbtn" id="xTopBtn" href="https://x.com/" target="_blank" rel="noopener">
+        <span class="xicon">X</span>
+        <span>
+          たこぴのXへ
+          <small>イベントはここで動く</small>
+        </span>
+      </a>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- =========================
+         HERO（クエストボード風）
+    ========================= -->
+    <section class="hero" aria-label="クエスト案内">
+      <div class="hero-inner">
+
+        <!-- ドラクエ風セリフBOX -->
+        <div class="dqbox">
+          <p class="line1">▶ よくきたな。いま遊べるイベントを案内する。</p>
+          <p class="line2">
+            この世界のイベントは基本、<b>X（たこぴ）</b>で発生する。<br>
+            参加したら「噂」が広がり、次のカードやクエストが開く…かもしれない。
+          </p>
+          <div class="hint">
+            💡 ヒント：迷ったら上の <b>「たこぴのXへ」</b> を押せ。<br>
+            “いま動いてる告知” と “参加方法” が最速で見つかる。
+          </div>
+
+          <div class="btnrow">
+            <a class="btn primary" href="https://x.com/" target="_blank" rel="noopener">たこぴのXで参加する</a>
+            <!-- 任意：ホーム/入口へ戻す（URL差し替え） -->
+            <a class="btn" href="#" id="homeLink">入口に戻る</a>
+          </div>
+        </div>
+
+        <!-- サイド：遊び方のコツ -->
+        <div class="hero-side">
+          <div class="panel">
+            <p class="p-title">🗺️ いまの遊び方（最短）</p>
+            <p class="mini">
+              ① 気になるイベントを選ぶ<br>
+              ② ボタンでXへ飛ぶ<br>
+              ③ 指示通りに投稿/リプ/参加<br>
+              ④ たこぴが “匂わせ” で反応する
+            </p>
+          </div>
+
+          <div class="panel">
+            <p class="p-title">🎁 参加すると何が起きる？</p>
+            <p class="mini">
+              ・世界観が深まる（噂が増える）<br>
+              ・次回の告知に名前が出る…かも<br>
+              ・イベント限定の“何か”が出る…かも
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================
+         EVENT LIST
+    ========================= -->
+    <section class="sec" aria-label="イベント一覧">
+      <div class="sec-title">
+        <h2>📌 開催中 / 参加できるクエスト</h2>
+        <p class="sub">※内容は随時入れ替えOK</p>
+      </div>
+
+      <div class="grid">
+
+        <!-- ====== EVENT CARD 1 ====== -->
+        <article class="card">
+          <div class="thumb">
+            <!-- 画像を置く場合：
+                 <img src="https://..." alt="イベント画像" />
+                 画像がない間はプレースホルダでOK -->
+            <div class="ph">
+              EVENT IMAGE<br>
+              （ここに画像）
+            </div>
+          </div>
+
+          <div class="content">
+            <div class="topline">
+              <h3 class="name">《今週の匂わせ投稿》</h3>
+              <span class="status xonly">Xメイン</span>
+            </div>
+
+            <p class="desc">
+              たこぴが“何か”を匂わせる投稿をする。<br>
+              リプ・引用・RTで参加して、噂を増やしてくれ…たこ。
+            </p>
+
+            <div class="tags">
+              <span class="tag info">🕒 1分</span>
+              <span class="tag good">👍 参加しやすい</span>
+              <span class="tag warn">🧩 謎あり</span>
+            </div>
+
+            <div class="actions">
+              <a class="btn primary small" href="https://x.com/" target="_blank" rel="noopener">Xで参加</a>
+              <button class="btn small" type="button" data-copy="例：引用で『この匂い…焼かれた伝説の予感。』って書く">参加テンプレをコピー</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- ====== EVENT CARD 2 ====== -->
+        <article class="card">
+          <div class="thumb">
+            <div class="ph">
+              EVENT IMAGE<br>
+              （ここに画像）
+            </div>
+          </div>
+
+          <div class="content">
+            <div class="topline">
+              <h3 class="name">《ビンゴクエスト（進行中）》</h3>
+              <span class="status live">開催中</span>
+            </div>
+
+            <p class="desc">
+              たこ焼きトレカの“ビンゴ”を埋めていく参加型イベント。<br>
+              達成報告はXで。たこぴが見てる。
+            </p>
+
+            <div class="tags">
+              <span class="tag info">🗓️ 期間もの</span>
+              <span class="tag hot">🔥 熱い</span>
+              <span class="tag warn">📣 報告必須</span>
+            </div>
+
+            <div class="actions">
+              <a class="btn hot small" href="https://x.com/" target="_blank" rel="noopener">達成報告する</a>
+              <button class="btn small" type="button" data-copy="例：『ビンゴ進捗：○列達成！ 焼かれた…！ #たこ焼きトレカ』">報告文をコピー</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- ====== EVENT CARD 3 ====== -->
+        <article class="card">
+          <div class="thumb">
+            <div class="ph">
+              EVENT IMAGE<br>
+              （ここに画像）
+            </div>
+          </div>
+
+          <div class="content">
+            <div class="topline">
+              <h3 class="name">《月替わりカード：目撃情報》</h3>
+              <span class="status soon">随時</span>
+            </div>
+
+            <p class="desc">
+              “今月のたこぴカード” を目撃したらXで報告。<br>
+              場所・日時・感じた匂い…好きに残せ。
+            </p>
+
+            <div class="tags">
+              <span class="tag info">🕒 30秒</span>
+              <span class="tag good">📸 写真OK</span>
+              <span class="tag warn">🧠 記憶が混ざる</span>
+            </div>
+
+            <div class="actions">
+              <a class="btn primary small" href="https://x.com/" target="_blank" rel="noopener">目撃を投稿</a>
+              <button class="btn small" type="button" data-copy="例：『今月のたこぴ、見つけた。焼かれた風がした。 #たこ焼きトレカ』">文をコピー</button>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- =========================
+         INFO / NOTES
+    ========================= -->
+    <section class="sec" aria-label="注意と補足">
+      <div class="sec-title">
+        <h2>🧾 補足（はじめての人向け）</h2>
+        <p class="sub">迷子防止</p>
+      </div>
+
+      <div class="noteBox">
+        <h3>イベントの主戦場はX（たこぴ）</h3>
+        <ul>
+          <li>イベント参加は「投稿/引用/リプ」など、X上のアクションが中心です。</li>
+          <li>このページは “いま遊べるものだけ” を並べる掲示板です（増減OK）。</li>
+          <li>各イベントのルールは、基本的にX側の告知が最新版です。</li>
+        </ul>
+        <div class="sep"></div>
+        <div class="btnrow" style="margin-top:12px;">
+          <a class="btn primary" href="https://x.com/" target="_blank" rel="noopener">たこぴのXへ（最新告知）</a>
+          <button class="btn" type="button" id="scrollTopBtn">ページ上へ</button>
+        </div>
+      </div>
+
+      <footer>
+        © 焼かれた伝説 / たこ焼きトレカ
+      </footer>
+    </section>
+
+  </main>
+
+  <script>
+    "use strict";
+
+    // =========================
+    // 設定（ここだけ触ればOK）
+    // =========================
+
+    // ✅ たこぴXアカウントURL（必ず差し替え）
+    const TAKOPI_X_URL = "https://x.com/"; // ←ここをあなたのXアカウントURLに
+
+    // ✅ 入口（ホーム）に戻すリンク（必要なら差し替え）
+    const HOME_URL = "#"; // 例: "https://takoyaki-trc.github.io/takoyaki-media/"
+
+    // =========================
+    // 初期反映
+    // =========================
+    const xTopBtn = document.getElementById("xTopBtn");
+    const homeLink = document.getElementById("homeLink");
+
+    if (xTopBtn) xTopBtn.href = TAKOPI_X_URL;
+    // カード内の「Xで参加」も全部差し替え
+    document.querySelectorAll('a[href="https://x.com/"]').forEach(a => {
+      a.href = TAKOPI_X_URL;
+    });
+
+    if (homeLink) homeLink.href = HOME_URL;
+
+    // 戻るボタン（ブラウザ戻る、無理ならHOME_URLへ）
+    const backBtn = document.getElementById("backBtn");
+    if (backBtn){
+      backBtn.addEventListener("click", () => {
+        if (history.length > 1) history.back();
+        else location.href = HOME_URL || "#";
+      });
+    }
+
+    // スクロール上へ
+    const scrollTopBtn = document.getElementById("scrollTopBtn");
+    if (scrollTopBtn){
+      scrollTopBtn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    // =========================
+    // 「テンプレをコピー」ボタン
+    // =========================
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        toast("コピーした。Xに貼れ…たこ。");
+      }catch(e){
+        // クリップボード不可環境向けフォールバック
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        toast("コピーした（旧式）。Xに貼れ…たこ。");
+      }
+    }
+
+    document.querySelectorAll("[data-copy]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const t = btn.getAttribute("data-copy") || "";
+        copyText(t);
+      });
+    });
+
+    // =========================
+    // ミニtoast
+    // =========================
+    let toastTimer = null;
+    function toast(msg){
+      let el = document.getElementById("toast");
+      if (!el){
+        el = document.createElement("div");
+        el.id = "toast";
+        el.style.position = "fixed";
+        el.style.left = "12px";
+        el.style.right = "12px";
+        el.style.bottom = "calc(14px + env(safe-area-inset-bottom))";
+        el.style.zIndex = "99999";
+        el.style.pointerEvents = "none";
+        el.style.opacity = "0";
+        el.style.transform = "translateY(10px) scale(.98)";
+        el.style.transition = "opacity .16s ease, transform .18s ease";
+        el.style.padding = "14px 14px";
+        el.style.borderRadius = "14px";
+        el.style.fontWeight = "900";
+        el.style.letterSpacing = ".02em";
+        el.style.textAlign = "center";
+        el.style.border = "1px solid rgba(255,255,255,.18)";
+        el.style.background = "rgba(0,0,0,.72)";
+        el.style.color = "#fff";
+        el.style.backdropFilter = "blur(10px)";
+        document.body.appendChild(el);
+      }
+      el.textContent = msg;
+
+      clearTimeout(toastTimer);
+      requestAnimationFrame(() => {
+        el.style.opacity = "1";
+        el.style.transform = "translateY(0) scale(1)";
+      });
+
+      toastTimer = setTimeout(() => {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(10px) scale(.98)";
+      }, 1400);
+    }
+  </script>
+</body>
+</html>
