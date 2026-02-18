@@ -120,14 +120,14 @@
       flex: 1 1 auto;
     }
 
-    /* ✅ タイトルは“手動改行しない”＝1行で書く（自動改行はOK） */
+    /* ✅ タイトルは手動改行しない（自動改行はOK） */
     .sign h1{
       margin:0;
       font-size: 18px;
       letter-spacing:.02em;
       line-height:1.35;
-      white-space: normal;       /* 自動改行OK */
-      word-break: break-word;    /* はみ出し防止 */
+      white-space: normal;
+      word-break: break-word;
     }
 
     .lead{
@@ -164,13 +164,13 @@
     }
     .mini-shot img{
       width:100%;
-      height:220px;         /* ✅ 縦長スクショを枠内に収める */
+      height:220px;         /* ✅ 枠内に収まる */
       object-fit:contain;   /* ✅ 全体が見える（切れない） */
       display:block;
       background: #fff;
     }
 
-    /* ✅ 最終更新：邪魔にならない右下寄りの“薄いラベル” */
+    /* ✅ 最終更新：邪魔にならない位置（右側の下） */
     .updated{
       font-size:12px;
       color:rgba(0,0,0,.55);
@@ -278,13 +278,55 @@
       object-fit:cover;
       display:block;
     }
+
+    /* 暗めグラデ（元のまま） */
     .city-card .img::after{
       content:"";
       position:absolute;
       inset:0;
-      background: linear-gradient(to top, rgba(0,0,0,.45), transparent 60%);
+      background: linear-gradient(to top, rgba(0,0,0,.40), transparent 60%);
       pointer-events:none;
+      z-index:1;
     }
+
+    /* ✅ 「タップで全体表示」ラベル（気づきやすく） */
+    .city-card .img::before{
+      content:"🔍 タップで全体表示";
+      position:absolute;
+      left:10px;
+      bottom:10px;
+      z-index:2;
+
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+
+      padding:8px 10px;
+      border-radius: 999px;
+
+      background: rgba(0,0,0,.72);
+      color:#fff;
+      font-weight: 1000;
+      font-size: 12.5px;
+      letter-spacing:.02em;
+
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow: 0 10px 18px rgba(0,0,0,.18);
+
+      pointer-events:none; /* ラベル自体はクリックを邪魔しない */
+    }
+    @media(max-width:420px){
+      .city-card .img::before{
+        font-size: 12px;
+        padding:7px 9px;
+        left:8px;
+        bottom:8px;
+      }
+    }
+    .city-card .img:hover::before{
+      background: rgba(0,0,0,.82);
+    }
+
     .city-card h3{
       margin:10px 0 6px;
       font-size: 15px;
@@ -686,7 +728,6 @@
            - 3つの街 画像：#city-north / #city-center / #city-south のsrc
            - 街の案内文：#guideInfo / #guidePartners / #guideGame の中身（HTML）を編集
            - よくある質問：#faqList の <details class="faq"> を編集
-           - 「遊技の街」ゲームルール：guideGame の「ゲーム案内」を編集
       ========================================================== -->
 
       <!-- ===== ヒーロー ===== -->
@@ -695,10 +736,8 @@
           <div class="hero-top">
 
             <div class="sign">
-              <!-- ✅ ここは手動改行しない（1行で書く） -->
               <h1>町の案内所（3つの街・遊び方・よくある質問）</h1>
 
-              <!-- ✅ 文章はそのまま -->
               <p class="lead">
                 旅人へ。<br>
                 この町は「情報の街」「協力店の街」「遊技の街」の3つに分かれています。<br>
@@ -715,7 +754,6 @@
               </div>
             </div>
 
-            <!-- ✅ 右側：町全体スクショ＋最終更新（邪魔にならない） -->
             <div class="hero-right" aria-label="町の全体図と最終更新">
               <div class="mini-shot" title="町の全体図（縮小表示）">
                 <img id="townShot" src="https://ul.h3z.jp/EpV3R56f.png" alt="町全体の縦長スクショ">
@@ -734,18 +772,16 @@
           <p class="section-sub">
             画像のサイズがバラバラでも大丈夫。見た目は“同じ枠に統一”されます。<br>
             それぞれの「この街の案内へ」を押すと、街の建物の説明が開きます。<br>
-            ※ 画像はタップすると全体図が開きます。
+            ※ 画像は <b>🔍 タップで全体表示</b> できます。
           </p>
 
           <div class="city-grid">
 
-            <!-- =======================
-                 北の街（＝情報の街）
-                 ======================= -->
+            <!-- 北の街（情報の街） -->
             <section class="city-card" id="cityA">
               <div class="img" role="button" tabindex="0"
                    data-zoom-src="https://ul.h3z.jp/1NHzQTUk.png"
-                   data-zoom-title="北の街（情報の街）｜全体図を表示">
+                   data-zoom-title="北の街（情報の街）｜全体図">
                 <img id="city-north" src="https://ul.h3z.jp/1NHzQTUk.png" alt="北の街（情報の街）">
               </div>
 
@@ -759,7 +795,6 @@
                 <a class="pill dark" href="#faq">？ よくある質問</a>
               </div>
 
-              <!-- 北の街：案内（展開） -->
               <div class="city-guide" id="guideInfo">
                 <div class="guide-box">
                   <div class="guide-head">
@@ -863,13 +898,11 @@
               </div>
             </section>
 
-            <!-- =======================
-                 中央の街（＝協力店の街）
-                 ======================= -->
+            <!-- 中央の街（協力店の街） -->
             <section class="city-card" id="cityB">
               <div class="img" role="button" tabindex="0"
                    data-zoom-src="https://ul.h3z.jp/1W5HduaY.png"
-                   data-zoom-title="中央の街（協力店の街）｜全体図を表示">
+                   data-zoom-title="中央の街（協力店の街）｜全体図">
                 <img id="city-center" src="https://ul.h3z.jp/1W5HduaY.png" alt="中央の街（協力店の街）">
               </div>
 
@@ -884,7 +917,6 @@
                 <a class="pill dark" href="#faq">？ よくある質問</a>
               </div>
 
-              <!-- 中央の街：案内（展開） -->
               <div class="city-guide" id="guidePartners">
                 <div class="guide-box">
                   <div class="guide-head">
@@ -961,13 +993,11 @@
               </div>
             </section>
 
-            <!-- =======================
-                 南の街（＝遊技の街）
-                 ======================= -->
+            <!-- 南の街（遊技の街） -->
             <section class="city-card" id="cityC">
               <div class="img" role="button" tabindex="0"
                    data-zoom-src="https://ul.h3z.jp/a23zkfh5.png"
-                   data-zoom-title="南の街（遊技の街）｜全体図を表示">
+                   data-zoom-title="南の街（遊技の街）｜全体図">
                 <img id="city-south" src="https://ul.h3z.jp/a23zkfh5.png" alt="南の街（遊技の街）">
               </div>
 
@@ -981,7 +1011,6 @@
                 <a class="pill dark" href="#faq">？ よくある質問</a>
               </div>
 
-              <!-- 南の街：案内（展開） -->
               <div class="city-guide" id="guideGame">
                 <div class="guide-box">
                   <div class="guide-head">
@@ -1080,13 +1109,11 @@
         </div>
       </article>
 
-      <!-- ===== よくある質問（固定） ===== -->
+      <!-- ===== よくある質問 ===== -->
       <article class="paper" id="faq" data-anchor>
         <div class="inner">
           <h2 class="section-title">❓ よくある質問</h2>
-          <p class="section-sub">
-            “街ごと”によく聞かれる質問をまとめました。迷ったら、ここが近道です。
-          </p>
+          <p class="section-sub">“街ごと”によく聞かれる質問をまとめました。迷ったら、ここが近道です。</p>
 
           <div class="faq-actions">
             <button class="mini" type="button" id="openAll">全部ひらく</button>
@@ -1095,7 +1122,6 @@
 
           <div class="faq-list" id="faqList">
 
-            <!-- ===== 北の街（情報の街）：よくある質問 ===== -->
             <details class="faq" id="f1">
               <summary>
                 <div class="tag">📌</div>
@@ -1147,7 +1173,6 @@
               </div>
             </details>
 
-            <!-- ===== 中央の街（協力店の街）：よくある質問 ===== -->
             <details class="faq" id="f4">
               <summary>
                 <div class="tag">🏬</div>
@@ -1199,7 +1224,6 @@
               </div>
             </details>
 
-            <!-- ===== 南の街（遊技の街）：よくある質問 ===== -->
             <details class="faq" id="f7">
               <summary>
                 <div class="tag">🎮</div>
@@ -1275,7 +1299,7 @@
     </div>
   </div>
 
-  <!-- ✅ 画像拡大モーダル（3つの街の画像タップで開く） -->
+  <!-- ✅ 画像拡大モーダル -->
   <div class="imgModal" id="imgModal" aria-hidden="true">
     <div class="frame" role="dialog" aria-modal="true" aria-label="画像の全体図">
       <div class="head">
@@ -1312,7 +1336,6 @@
         Object.values(guides).forEach(g => g.classList.remove("active"));
       }
 
-      // 開くボタン
       document.querySelectorAll("[data-open-guide]").forEach(btn => {
         btn.addEventListener("click", () => {
           const key = btn.getAttribute("data-open-guide");
@@ -1322,12 +1345,10 @@
           closeAllGuides();
           guides[key].classList.toggle("active", !isOpen);
 
-          // 開いたらそこへスクロール
           if (!isOpen) guides[key].scrollIntoView({ behavior:"smooth", block:"start" });
         });
       });
 
-      // 閉じるボタン
       document.querySelectorAll("[data-close-guide]").forEach(btn => {
         btn.addEventListener("click", () => {
           const key = btn.getAttribute("data-close-guide");
@@ -1336,10 +1357,10 @@
         });
       });
 
-      // ===== よくある質問：全部開く/閉じる =====
-      const items = Array.from(document.querySelectorAll("details.faq"));
-      document.getElementById("openAll").addEventListener("click", () => items.forEach(d => d.open = true));
-      document.getElementById("closeAll").addEventListener("click", () => items.forEach(d => d.open = false));
+      // ===== FAQ：全部開く/閉じる =====
+      const faqItems = Array.from(document.querySelectorAll("details.faq"));
+      document.getElementById("openAll").addEventListener("click", () => faqItems.forEach(d => d.open = true));
+      document.getElementById("closeAll").addEventListener("click", () => faqItems.forEach(d => d.open = false));
 
       // ===== 画像拡大モーダル =====
       const modal = document.getElementById("imgModal");
@@ -1362,7 +1383,7 @@
         document.body.style.overflow = "";
       }
 
-      // 画像クリックで開く（キーボードEnter/Spaceにも対応）
+      // 画像クリックで開く（Enter/Space対応）
       document.querySelectorAll(".city-card .img[data-zoom-src]").forEach(box => {
         const src = box.getAttribute("data-zoom-src");
         const title = box.getAttribute("data-zoom-title") || "全体図";
@@ -1375,10 +1396,9 @@
         });
       });
 
-      // 閉じる
       modalClose.addEventListener("click", closeModal);
 
-      // 背景クリックで閉じる（中身クリックは無視）
+      // 背景クリックで閉じる
       modal.addEventListener("click", (e) => {
         if (e.target === modal) closeModal();
       });
@@ -1391,3 +1411,4 @@
   </script>
 </body>
 </html>
+
