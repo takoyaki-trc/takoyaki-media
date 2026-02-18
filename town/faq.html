@@ -23,6 +23,7 @@
       --shadow2: 3px 4px 0 rgba(0,0,0,.35);
 
       --radius:18px;
+      --radius2:14px;
       --max: 920px;
 
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
@@ -57,8 +58,12 @@
       animation: drift 18s linear infinite;
       mix-blend-mode: screen;
     }
-    @keyframes drift{ 0%{ transform: translateY(0);} 100%{ transform: translateY(80px);} }
+    @keyframes drift{
+      0%{ transform: translateY(0); }
+      100%{ transform: translateY(80px); }
+    }
 
+    /* ===== レイアウト ===== */
     .wrap{
       min-height:100vh;
       padding: 18px 12px 92px;
@@ -71,6 +76,7 @@
       gap:14px;
     }
 
+    /* ===== 紙パネル ===== */
     .paper{
       background:var(--paper);
       color:var(--ink);
@@ -78,18 +84,14 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow2);
       overflow:hidden;
-      position:relative;
     }
     .paper .inner{
       padding: 16px 14px 16px;
-      position:relative;
-      z-index:2;
     }
 
     /* ===== ヒーロー ===== */
     .hero{
       position:relative;
-      overflow:hidden;
     }
     .hero::before{
       content:"";
@@ -100,42 +102,13 @@
         radial-gradient(700px 240px at 90% 20%, rgba(120,160,255,.22), transparent 55%),
         linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,0));
       pointer-events:none;
-      z-index:1;
     }
 
-    /* ✅ 縦長マップ画像は「背景/飾り」として扱う（レイアウト崩れ防止） */
-    .hero-mapBg{
-      position:absolute;
-      top:10px;
-      right:10px;
-      width: 170px;           /* PC時の見た目サイズ */
-      height: 260px;
-      opacity:.22;            /* 薄くして“文章の邪魔”を消す */
-      pointer-events:none;    /* 背景はクリックさせない */
-      z-index:1;
-      filter: saturate(1.1) contrast(1.05);
-    }
-    .hero-mapBg img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-    }
-
-    /* ✅ スマホはさらに小さく＆右上に置く（本文を絶対に押さない） */
-    @media(max-width:520px){
-      .hero-mapBg{
-        width: 120px;
-        height: 210px;
-        top:8px;
-        right:8px;
-        opacity:.18;
-      }
-    }
-
-    /* ヒーローの中身は「通常の1カラム」で安定させる */
     .hero-top{
-      display:block;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
     }
 
     .sign{
@@ -143,34 +116,49 @@
       flex-direction:column;
       gap:8px;
       min-width:0;
-      padding-right: 120px; /* ✅ 背景画像に文章が被りすぎない保険 */
-    }
-    @media(max-width:520px){
-      .sign{ padding-right: 88px; }
+      flex:1 1 auto;
     }
 
+    /* ✅ 上部タイトル：枠内いっぱい横1列（自動改行はOK） */
     .sign h1{
       margin:0;
       font-size: 18px;
       letter-spacing:.02em;
       line-height:1.35;
-      white-space:normal;
-      word-break:break-word;
+
+      /* “改行しない”= <br>などを入れず、CSSで自然改行 */
+      white-space: normal;
+      word-break: break-word;
+
+      /* なるべく1行に寄せる（収まらない時だけ折り返し） */
+      font-weight: 950;
     }
+
     .lead{
       margin:0;
       font-size: 13.5px;
       line-height:1.75;
-      color:rgba(0,0,0,.70);
+      color:var(--muted);
     }
 
-    /* ✅ 最終更新は右下の“控えめ”に */
+    /* ✅ 最終更新：邪魔にならない控えめ位置 */
     .updated{
-      margin-top:6px;
       font-size:12px;
       color:rgba(0,0,0,.55);
+      white-space:nowrap;
       font-family: var(--mono);
-      text-align:right;
+      padding:8px 10px;
+      border:1px dashed rgba(0,0,0,.18);
+      border-radius: 12px;
+      background: rgba(0,0,0,.02);
+      align-self:flex-start;
+      flex:0 0 auto;
+    }
+
+    /* スマホは更新を下に回して邪魔しない */
+    @media(max-width:560px){
+      .hero-top{ flex-direction:column; }
+      .updated{ order:3; width:fit-content; }
     }
 
     .hero-actions{
@@ -178,7 +166,6 @@
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      align-items:center;
     }
     .btn{
       border:none;
@@ -204,27 +191,6 @@
     }
     .btn small{ opacity:.9; font-weight:800; }
 
-    /* ✅ 「全体表示」ボタン（縦画像の導線） */
-    .map-open{
-      margin-left:auto;
-      border:none;
-      cursor:pointer;
-      border-radius: 14px;
-      padding: 12px 12px;
-      font-weight: 1000;
-      letter-spacing:.02em;
-      background: rgba(0,0,0,.82);
-      color:#fff;
-      box-shadow: 0 10px 20px rgba(0,0,0,.12);
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-    }
-    @media(max-width:520px){
-      .map-open{ width:100%; justify-content:center; }
-      .hero-actions{ align-items:stretch; }
-    }
-
     /* ===== セクション見出し ===== */
     .section-title{
       margin:0 0 10px;
@@ -239,7 +205,7 @@
       margin: -2px 0 10px;
       font-size: 13px;
       line-height:1.7;
-      color: rgba(0,0,0,.70);
+      color: var(--muted);
     }
 
     /* ===== 3つの街（カード） ===== */
@@ -278,7 +244,14 @@
       object-fit:cover;
       display:block;
     }
-    /* ✅ タップ誘導の重ね文字 */
+    .city-card .img::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(to top, rgba(0,0,0,.45), transparent 60%);
+      pointer-events:none;
+    }
+    /* ✅ タップ誘導の重ね文字（誰でも気づく） */
     .city-card .img::after{
       content:"🔍 タップで全体表示";
       position:absolute;
@@ -295,13 +268,6 @@
       box-shadow: 0 10px 18px rgba(0,0,0,.18);
       pointer-events:none;
     }
-    .city-card .img::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background: linear-gradient(to top, rgba(0,0,0,.45), transparent 60%);
-      pointer-events:none;
-    }
 
     .city-card h3{
       margin:10px 0 6px;
@@ -310,6 +276,7 @@
       display:flex;
       align-items:center;
       gap:8px;
+      flex-wrap:wrap;
     }
     .chip{
       font-family: var(--mono);
@@ -453,6 +420,7 @@
     }
     .spot .body p{ margin:0 0 8px; }
     .spot .body p:last-child{ margin-bottom:0; }
+
     .tip{
       margin-top:8px;
       padding: 10px 10px;
@@ -464,7 +432,36 @@
       font-weight: 900;
     }
 
-    /* ===== FAQ ===== */
+    /* ✅ 追加：デジタル/現実の“ダブり”説明ボックス */
+    .dup-box{
+      margin-top: 12px;
+      border:1px dashed rgba(0,0,0,.22);
+      border-radius: 16px;
+      background: rgba(216,179,90,.14);
+      padding: 12px;
+    }
+    .dup-box h3{
+      margin:0 0 6px;
+      font-size:14px;
+      font-weight:1000;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .dup-box p{
+      margin:0;
+      font-size:13px;
+      line-height:1.75;
+      color: rgba(0,0,0,.82);
+    }
+    .dup-box .mini-note{
+      margin-top:8px;
+      font-size:12.5px;
+      color: rgba(0,0,0,.70);
+      font-weight:900;
+    }
+
+    /* ===== よくある質問 ===== */
     .faq-actions{
       display:flex;
       gap:8px;
@@ -503,6 +500,7 @@
       user-select:none;
     }
     details.faq summary::-webkit-details-marker{ display:none; }
+
     .tag{
       width:34px;height:34px;
       border-radius: 12px;
@@ -523,6 +521,7 @@
     .qtext b{ font-size: 14px; line-height:1.5; }
     .qtext span{ font-size: 12.5px; color: rgba(0,0,0,.70); line-height:1.45; }
     .chev2{ margin-left:auto; font-weight:1000; opacity:.65; }
+
     .answer{ padding: 0 12px 12px; }
     .log{
       border:1px solid rgba(0,0,0,.18);
@@ -670,17 +669,14 @@
       <!-- =========================================================
            ✅ 更新メモ（非表示コメント）
            - 最終更新日：#updatedDate の文字だけ変える
-           - 町全体図：MAP_SHOT_URL を変更
            - 3つの街 画像：#city-info / #city-partners / #city-game のsrc
+           - 街の案内文：#guideInfo / #guidePartners / #guideGame の中身（HTML）を編集
            - よくある質問：#faqList の <details class="faq"> を編集
+           - 画像モーダル：クリック対象は .js-zoom （data-zoom-src / data-zoom-title）
       ========================================================== -->
 
+      <!-- ===== ヒーロー ===== -->
       <article class="paper hero" id="top">
-        <!-- ✅ 背景として入れる（レイアウトを押さない） -->
-        <div class="hero-mapBg" aria-hidden="true">
-          <img src="https://ul.h3z.jp/EpV3R56f.png" alt="">
-        </div>
-
         <div class="inner">
           <div class="hero-top">
             <div class="sign">
@@ -691,8 +687,6 @@
                 まずは街の役割をつかんで、気になった建物から覗いてみてください。
               </p>
 
-              <div class="updated" id="updatedDate">最終更新：2026-02-17</div>
-
               <div class="hero-actions">
                 <button class="btn primary" type="button" data-scroll="#three-cities">
                   ▶ 3つの街を見る <small>（全体像）</small>
@@ -700,16 +694,10 @@
                 <button class="btn ghost" type="button" data-scroll="#faq">
                   ？ よくある質問へ
                 </button>
-
-                <!-- ✅ 町全体図を“確実に”開く導線 -->
-                <button class="map-open" type="button"
-                        data-zoom-src="https://ul.h3z.jp/EpV3R56f.png"
-                        data-zoom-title="町全体図（全体表示）"
-                        id="openMapBtn">
-                  🔍 町全体図を全体表示
-                </button>
               </div>
             </div>
+
+            <div class="updated" id="updatedDate">最終更新：2026-02-17</div>
           </div>
         </div>
       </article>
@@ -723,14 +711,25 @@
             それぞれの「この街の案内へ」を押すと、街の建物の説明が開きます。
           </p>
 
+          <!-- ✅ 追加：ダブりカードの扱い（親切ガイド） -->
+          <div class="dup-box" id="dupGuide">
+            <h3>♻ ダブりカードの扱い（デジタル / 現実）</h3>
+            <p>
+              <b>ホームページ内のゲームで入手した「デジタルカード」</b>のダブりは、<b>露店で販売</b>できます。<br>
+              <b>現実の「紙のカード」</b>のダブりは、<b>ビンゴカードを購入 → ビンゴクエストに参加</b>して遊べます。
+            </p>
+            <div class="mini-note">※「デジタル」と「紙」で“ダブりの使い道”が違います。</div>
+          </div>
+
           <div class="city-grid">
 
+            <!-- ===== 北の街（情報の街） ===== -->
             <section class="city-card" id="cityA">
               <div class="img js-zoom" role="button" tabindex="0"
                    data-zoom-src="https://ul.h3z.jp/1NHzQTUk.png"
                    data-zoom-title="北の街（画像の全体表示）"
                    aria-label="北の街 画像を全体表示">
-                <img id="city-info" src="https://ul.h3z.jp/1NHzQTUk.png" alt="北の街">
+                <img id="city-info" src="https://ul.h3z.jp/1NHzQTUk.png" alt="北の街（情報の街）">
               </div>
               <h3><span class="chip">北の街</span> 情報の街</h3>
               <p>
@@ -845,12 +844,13 @@
               </div>
             </section>
 
+            <!-- ===== 中央の街（協力店の街） ===== -->
             <section class="city-card" id="cityB">
               <div class="img js-zoom" role="button" tabindex="0"
                    data-zoom-src="https://ul.h3z.jp/1W5HduaY.png"
                    data-zoom-title="中央の街（画像の全体表示）"
                    aria-label="中央の街 画像を全体表示">
-                <img id="city-partners" src="https://ul.h3z.jp/1W5HduaY.png" alt="中央の街">
+                <img id="city-partners" src="https://ul.h3z.jp/1W5HduaY.png" alt="中央の街（協力店の街）">
               </div>
               <h3><span class="chip">中央の街</span> 協力店の街</h3>
               <p>
@@ -939,12 +939,13 @@
               </div>
             </section>
 
+            <!-- ===== 南の街（遊技の街） ===== -->
             <section class="city-card" id="cityC">
               <div class="img js-zoom" role="button" tabindex="0"
                    data-zoom-src="https://ul.h3z.jp/a23zkfh5.png"
                    data-zoom-title="南の街（画像の全体表示）"
                    aria-label="南の街 画像を全体表示">
-                <img id="city-game" src="https://ul.h3z.jp/a23zkfh5.png" alt="南の街">
+                <img id="city-game" src="https://ul.h3z.jp/a23zkfh5.png" alt="南の街（遊技の街）">
               </div>
               <h3><span class="chip">南の街</span> 遊技の街</h3>
               <p>
@@ -974,12 +975,12 @@
                         <div class="icon">🛒</div>
                         <div class="t">
                           <b>露店（売買の場）</b>
-                          <span>資材を買う／カードを売る</span>
+                          <span>資材を買う／デジタルカードを売る</span>
                         </div>
                         <div class="chev">▼</div>
                       </summary>
                       <div class="body">
-                        <p><b>ここがゲームの財布</b>です。オクトを使って資材（タネ・水・肥料）を揃え、収穫したカードを売ってオクトを増やします。</p>
+                        <p><b>ここがゲームの財布</b>です。オクトを使って資材（タネ・水・肥料）を揃え、収穫したカード（デジタル）を売ってオクトを増やします。</p>
                         <p>つまり、露店は「準備」と「回収」の両方を担当します。</p>
                         <div class="tip">コツ：最初は“買う→育てる→売る”を1回やるだけでOK</div>
                       </div>
@@ -1011,7 +1012,7 @@
                       </summary>
                       <div class="body">
                         <p>育ったカードを収穫します。集める楽しさだけでなく、露店で売ることで次の資金にもなります。</p>
-                        <p>同じカードが出ても“ハズレ”ではありません。イベントやビンゴ、売却などで役割があります。</p>
+                        <p>同じカードが出ても“ハズレ”ではありません。売却したり、イベントやビンゴ（※紙）と混同しないように注意してください。</p>
                       </div>
                     </details>
 
@@ -1054,7 +1055,7 @@
         </div>
       </article>
 
-      <!-- ===== FAQ ===== -->
+      <!-- ===== よくある質問 ===== -->
       <article class="paper" id="faq" data-anchor>
         <div class="inner">
           <h2 class="section-title">❓ よくある質問</h2>
@@ -1066,6 +1067,8 @@
           </div>
 
           <div class="faq-list" id="faqList">
+
+            <!-- ===== 情報の街：FAQ ===== -->
             <details class="faq" id="f1">
               <summary>
                 <div class="tag">📌</div>
@@ -1117,6 +1120,7 @@
               </div>
             </details>
 
+            <!-- ===== 協力店の街：FAQ ===== -->
             <details class="faq" id="f4">
               <summary>
                 <div class="tag">🏬</div>
@@ -1168,6 +1172,7 @@
               </div>
             </details>
 
+            <!-- ===== 遊技の街：FAQ ===== -->
             <details class="faq" id="f7">
               <summary>
                 <div class="tag">🎮</div>
@@ -1185,6 +1190,25 @@
               </div>
             </details>
 
+            <!-- ✅ 追加：ダブりの違い FAQ -->
+            <details class="faq" id="f10">
+              <summary>
+                <div class="tag">♻</div>
+                <div class="qtext">
+                  <b>（重要）ダブりカードの使い道が分かりません</b>
+                  <span>デジタル / 紙 で違います</span>
+                </div>
+                <div class="chev2">▼</div>
+              </summary>
+              <div class="answer">
+                <div class="log">
+                  <p><b>デジタル（ホームページ内ゲーム）</b>のダブり → <b>露店で販売できます</b>（オクトに変換）。</p>
+                  <p><b>紙（現実のカード）</b>のダブり → <b>ビンゴカードを購入</b>して<b>ビンゴクエストに参加</b>できます。</p>
+                  <div class="note">※「露店で売る」は “デジタル” の話です。紙のカードとは別扱いです。</div>
+                </div>
+              </div>
+            </details>
+
             <details class="faq" id="f8">
               <summary>
                 <div class="tag">♻</div>
@@ -1197,7 +1221,8 @@
               <div class="answer">
                 <div class="log">
                   <p>ハズレではありません。</p>
-                  <p>露店で売却して次の資金にしたりできます。</p>
+                  <p>デジタルは露店で売却して次の資金にしたり、集めて眺めたりできます。</p>
+                  <p>紙のカードはビンゴクエストの遊びにも繋がります。</p>
                 </div>
               </div>
             </details>
@@ -1219,6 +1244,7 @@
                 </div>
               </div>
             </details>
+
           </div>
 
           <div class="end">
@@ -1233,6 +1259,7 @@
     </div>
   </main>
 
+  <!-- 固定フッター -->
   <div class="sticky" aria-hidden="false">
     <div class="bar">
       <button class="secondary" type="button" data-scroll="#three-cities">▶ 3つの街へ戻る</button>
@@ -1282,9 +1309,11 @@
         btn.addEventListener("click", () => {
           const key = btn.getAttribute("data-open-guide");
           if (!guides[key]) return;
+
           const isOpen = guides[key].classList.contains("active");
           closeAllGuides();
           guides[key].classList.toggle("active", !isOpen);
+
           if (!isOpen) guides[key].scrollIntoView({ behavior:"smooth", block:"start" });
         });
       });
@@ -1298,9 +1327,11 @@
       });
 
       // ===== FAQ：全部開く/閉じる =====
-      const items = Array.from(document.querySelectorAll("details.faq"));
-      document.getElementById("openAll").addEventListener("click", () => items.forEach(d => d.open = true));
-      document.getElementById("closeAll").addEventListener("click", () => items.forEach(d => d.open = false));
+      const faqItems = Array.from(document.querySelectorAll("details.faq"));
+      const openAllBtn = document.getElementById("openAll");
+      const closeAllBtn = document.getElementById("closeAll");
+      if (openAllBtn) openAllBtn.addEventListener("click", () => faqItems.forEach(d => d.open = true));
+      if (closeAllBtn) closeAllBtn.addEventListener("click", () => faqItems.forEach(d => d.open = false));
 
       // ===== 画像モーダル =====
       const modal = document.getElementById("imgModal");
@@ -1323,7 +1354,7 @@
         document.body.style.overflow = "";
       }
 
-      // クリック対象（街画像）
+      // 街画像：クリック/Enter/Spaceで全体表示
       document.querySelectorAll(".js-zoom").forEach(el => {
         const handler = () => {
           const src = el.getAttribute("data-zoom-src") || (el.querySelector("img") ? el.querySelector("img").src : "");
@@ -1337,19 +1368,16 @@
         });
       });
 
-      // 町全体図ボタン
-      const openMapBtn = document.getElementById("openMapBtn");
-      openMapBtn.addEventListener("click", () => {
-        openModal(openMapBtn.getAttribute("data-zoom-src"), openMapBtn.getAttribute("data-zoom-title"));
+      if (modalClose) modalClose.addEventListener("click", closeModal);
+      if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("active")) closeModal();
       });
-
-      modalClose.addEventListener("click", closeModal);
-      modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-      window.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("active")) closeModal(); });
     })();
   </script>
 </body>
 </html>
+
 
 
 
