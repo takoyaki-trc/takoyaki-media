@@ -3,1146 +3,1394 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>コラボ図鑑｜焼かれた伝説</title>
-  <meta name="description" content="年号でまとめたコラボ図鑑。" />
+  <title>町の案内所｜3つの街・遊び方・よくある質問｜焼かれた伝説 / たこ焼きトレカ</title>
+  <meta name="description" content="たこ焼きトレカのホームページ案内所。3つの街（情報/協力店/遊技）と、ゲームの遊び方、よくある質問をまとめています。" />
 
   <style>
     :root{
-      --text:#fff;
-      --muted:rgba(255,255,255,.76);
-      --line:rgba(255,255,255,.16);
+      --bg0:#05060b;
+      --bg1:#0b1030;
 
-      /* 背景（そのまま反映：黒被せ無し） */
-      --bg-url: url("https://ul.h3z.jp/G7grA8Dy.png");
+      --paper:#fffdf6;
+      --ink:#171717;
+      --muted:rgba(0,0,0,.70);
 
-      /* パネルは“内容部分だけ”暗くして読みやすく（背景そのものには被せない） */
-      --panel: rgba(16, 10, 14, .78);
-      --panel2: rgba(10, 8, 12, .66);
+      --line:rgba(0,0,0,.18);
+      --gold1:#d8b35a;
+      --gold2:#b8892c;
 
-      --gold:#f2d07a;
-      --gold2:#b8943b;
+      --shadow: 0 18px 50px rgba(0,0,0,.55);
+      --shadow2: 3px 4px 0 rgba(0,0,0,.35);
 
-      --blue:#2f8bff;
-      --blue2:#0f5fbf;
+      --radius:18px;
+      --radius2:14px;
+      --max: 920px;
 
-      --shadow: 0 18px 55px rgba(0,0,0,.55);
-      --shadow2: 0 10px 22px rgba(0,0,0,.35);
-
-      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
-      color:var(--text);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
-      background-image: var(--bg-url);
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
+      font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      color:#fff;
+      background:
+        radial-gradient(1200px 520px at 20% 10%, rgba(255,205,120,.14), transparent 55%),
+        radial-gradient(900px 520px at 80% 30%, rgba(120,160,255,.15), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg0) 45%, #070816 100%);
       overflow-x:hidden;
     }
 
-    a{color:inherit;text-decoration:none}
-    button{font:inherit}
-
-    /* ===== Film frame（縁取り） ===== */
-    .frame{
-      position: fixed;
-      inset: 10px;
+    /* ===== 背景の火の粉 ===== */
+    .sparks{
+      position:fixed;
+      inset:0;
       pointer-events:none;
-      z-index: 1;
-      border-radius: 18px;
-      border: 2px solid rgba(242,208,122,.55);
-      box-shadow: inset 0 0 0 2px rgba(0,0,0,.18);
-    }
-    .frame::before,
-    .frame::after{
-      content:"";
-      position:absolute;
-      top:10px; bottom:10px;
-      width:14px;
-      background:
-        linear-gradient(to bottom,
-          rgba(242,208,122,.55) 0 8px,
-          transparent 8px 16px) repeat-y;
-      background-size: 14px 16px;
-      opacity:.65;
-    }
-    .frame::before{ left:10px; }
-    .frame::after { right:10px; }
-
-    /* ===== Header ===== */
-    .header{
-      position: sticky;
-      top:0;
-      z-index: 5;
-      padding: 10px 10px 8px;
-    }
-    .headbar{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:10px 10px;
-      border-radius: 14px;
-      background: rgba(40, 14, 20, .78);
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(6px);
-    }
-    .back{
-      width:46px; height:46px;
-      display:grid; place-items:center;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.22);
-      color:#fff;
-      border-radius: 10px;
-      cursor:pointer;
-    }
-    .titlebox{min-width:0;flex:1}
-    .title{
-      font-weight: 1000;
-      letter-spacing:.04em;
-      font-size: 18px;
-      line-height: 1.15;
-    }
-
-    /* ===== Wrap ===== */
-    .wrap{
-      position: relative;
-      z-index: 2;
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 8px 12px 44px;
-    }
-
-    /* ===== Top banner ===== */
-    .banner{
-      border-radius: 16px;
-      border:1px solid rgba(242,208,122,.40);
-      background: rgba(18, 10, 14, .72);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      position:relative;
-      padding: 14px 14px 12px;
-      margin: 6px 0 10px;
-      backdrop-filter: blur(6px);
-    }
-    .banner::before{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      background:
-        radial-gradient(900px 260px at 18% 0%, rgba(242,208,122,.24), transparent 60%),
-        radial-gradient(700px 220px at 80% 15%, rgba(47,139,255,.16), transparent 60%),
-        radial-gradient(520px 240px at 60% 95%, rgba(255,255,255,.08), transparent 65%);
-      pointer-events:none;
-      opacity:.95;
-    }
-    .banner > *{position:relative}
-    .banner h1{
-      margin:0;
-      font-size: 16px;
-      font-weight:1000;
-      letter-spacing:.05em;
-    }
-    .banner p{
-      margin:8px 0 0;
-      color: rgba(255,255,255,.86);
-      font-size: 12.5px;
-      line-height: 1.65;
-      font-weight: 900;
-    }
-
-    /* ===== Section ===== */
-    .year{
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(10, 8, 12, .58);
-      box-shadow: var(--shadow2);
-      overflow:hidden;
-      backdrop-filter: blur(6px);
-    }
-    .year + .year{ margin-top: 12px; }
-
-    .year-head{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding: 12px 12px;
-      border-bottom: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-    }
-    .year-num{
-      font-size: 22px;
-      font-weight: 1000;
-      letter-spacing:.04em;
-    }
-    .year-sub{
-      color: rgba(255,255,255,.78);
-      font-weight: 900;
-      font-size: 12px;
-      letter-spacing:.02em;
-    }
-
-    /* ===== List rows ===== */
-    .list{
-      padding: 10px;
-      display:grid;
-      gap: 10px;
-    }
-
-    .sectionCap{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin: 6px 2px 0;
-      padding: 6px 2px 0;
-      color: rgba(255,255,255,.78);
-      font-weight:1000;
-      font-size: 12px;
-      letter-spacing:.02em;
-    }
-    .capLine{
-      flex:1;
-      height:1px;
-      background: rgba(255,255,255,.10);
-    }
-
-    .row{
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.22);
-      box-shadow: var(--shadow2);
-      padding: 10px 10px;
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      cursor:pointer;
-      min-width: 0;
-    }
-    .row:active{ transform: translateY(1px); }
-
-    .thumb{
-      width: 64px;
-      height: 64px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.25);
-      overflow:hidden;
-      flex: 0 0 auto;
-      display:grid;
-      place-items:center;
-    }
-    .thumb img{
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      display:block;
-    }
-    .thumb .ph{
-      font-weight:1000;
-      color: rgba(255,255,255,.70);
-      font-size: 12px;
-      padding: 0 6px;
-      text-align:center;
-      white-space: pre-line;
-    }
-
-    .row-main{ min-width:0; flex:1 1 auto; }
-    .row-title{
-      font-weight: 1000;
-      font-size: 16px;
-      letter-spacing:.02em;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-    .row-meta{
-      margin-top: 4px;
-      display:flex;
-      align-items:center;
-      gap: 8px;
-      flex-wrap: wrap;
-      color: rgba(255,255,255,.78);
-      font-weight: 900;
-      font-size: 12px;
-      min-width:0;
-    }
-    .row-meta .k{opacity:.85}
-
-    .badges{
-      display:flex;
-      align-items:center;
-      gap: 8px;
-      flex: 0 0 auto;
-      min-width: 0;
-    }
-    .badge{
-      padding: 8px 10px;
-      border-radius: 0px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.20);
-      font-weight:1000;
-      letter-spacing:.02em;
-      font-size: 13px;
-      line-height:1;
-      text-align:center;
-      white-space:nowrap;
-    }
-    .badge.paper{
-      border-color: rgba(242,208,122,.55);
-      background: rgba(242,208,122,.16);
-      color:#fff;
-    }
-    .badge.digital{
-      border-color: rgba(47,139,255,.65);
-      background: rgba(47,139,255,.18);
-      color:#fff;
-    }
-
-    .chev{
-      width: 34px;
-      height: 34px;
-      display:grid;
-      place-items:center;
-      border-radius: 10px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-      color:#fff;
-      flex: 0 0 auto;
-      font-weight:1000;
-    }
-
-    /* ===== Modal ===== */
-    .modal{
-      position: fixed;
-      inset: 0;
-      z-index: 50;
-      display:none;
-      background: rgba(0,0,0,.70);
-      backdrop-filter: blur(8px);
-      padding: 14px;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal[aria-hidden="false"]{ display:flex; }
-
-    .mcard{
-      width: min(980px, 100%);
-      max-height: min(92vh, 920px);
-      overflow:auto;
-      border-radius: 16px;
-      border: 1px solid rgba(242,208,122,.35);
-      background: rgba(18, 10, 14, .92);
-      box-shadow: 0 28px 90px rgba(0,0,0,.78);
-    }
-    .mtop{
-      position: sticky;
-      top:0;
-      z-index: 2;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding: 12px 12px;
-      border-bottom: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.22);
-      backdrop-filter: blur(6px);
-    }
-    .mtitle{
-      font-weight:1000;
-      letter-spacing:.03em;
-      font-size: 14px;
-      min-width:0;
-      overflow:hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex:1;
-    }
-    .mclose{
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.22);
-      color:#fff;
-      padding: 10px 12px;
-      cursor:pointer;
-      font-weight:1000;
-    }
-
-    .mbody{ padding: 12px; display:grid; gap: 12px; }
-
-    .block{
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.20);
-      box-shadow: var(--shadow2);
-      padding: 12px;
-    }
-
-    /* ===== Profile ===== */
-    .profile{
-      display:grid;
-      grid-template-columns: 110px 1fr;
-      gap: 12px;
-      align-items: start;
-      min-width:0;
-    }
-    .pimg{
-      width: 110px;
-      height: 110px;
-      border-radius: 12px;
-      overflow:hidden;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.22);
-    }
-    .pimg img{
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      display:block;
-    }
-
-    .ptext{min-width:0}
-    .ptext .name{
-      margin:0;
-      font-weight:1000;
-      font-size: 18px;
-      letter-spacing:.02em;
-      line-height:1.2;
-    }
-    .ptext .small{
-      margin-top:6px;
-      color: rgba(255,255,255,.82);
-      font-weight:900;
-      font-size: 12px;
-    }
-    .ptext .desc{
-      margin:10px 0 0;
-      color: rgba(255,255,255,.86);
-      font-weight:900;
-      font-size: 13px;
-      line-height: 1.75;
-      white-space: pre-wrap;
-    }
-
-    .plink{
-      margin-top:10px;
-      display:grid;
-      gap: 8px;
-      max-width: 260px;
-    }
-    .plink a{
-      display:block;
-      text-align:center;
-      padding: 8px 10px;
-      border-radius: 0px;
-      border: 1px solid rgba(47,139,255,.72);
-      background: rgba(47,139,255,.22);
-      color:#fff;
-      font-weight:1000;
-      letter-spacing:.02em;
-    }
-    .plink a.alt{
-      border-color: rgba(242,208,122,.55);
-      background: rgba(242,208,122,.16);
-    }
-    .plink a.disabled{
       opacity:.55;
-      pointer-events:none;
-      filter: grayscale(1);
+      background-image:
+        radial-gradient(circle, rgba(255,230,160,.45) 0 2px, transparent 3px),
+        radial-gradient(circle, rgba(255,160,120,.35) 0 1px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,.25) 0 1px, transparent 2px);
+      background-size: 260px 260px, 220px 220px, 300px 300px;
+      background-position: 0 0, 80px 30px, 40px 100px;
+      filter: blur(.2px);
+      animation: drift 18s linear infinite;
+      mix-blend-mode: screen;
+    }
+    @keyframes drift{
+      0%{ transform: translateY(0); }
+      100%{ transform: translateY(80px); }
     }
 
-    /* ===== Seed ===== */
-    .seed{
-      display:grid;
-      grid-template-columns: 100px 1fr;
-      gap: 12px;
-      align-items: start;
-      min-width:0;
+    /* ===== レイアウト ===== */
+    .wrap{
+      min-height:100vh;
+      padding: 18px 12px 92px;
+      display:flex;
+      justify-content:center;
     }
-    .seedbox{
-      width: 100px;
-      height: 100px;
-      border-radius: 12px;
+    .guild{
+      width:min(var(--max), 100%);
+      display:grid;
+      gap:14px;
+    }
+
+    /* ===== 紙パネル ===== */
+    .paper{
+      background:var(--paper);
+      color:var(--ink);
+      border:2px solid #1b1b1b;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
       overflow:hidden;
-      border: 1px solid rgba(242,208,122,.40);
-      background: rgba(0,0,0,.18);
-      display:grid;
-      place-items:center;
     }
-    .seedbox img{
+    .paper .inner{
+      padding: 16px 14px 16px;
+    }
+
+    /* ===== ヒーロー ===== */
+    .hero{
+      position:relative;
+    }
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(900px 260px at 10% 0%, rgba(216,179,90,.30), transparent 60%),
+        radial-gradient(700px 240px at 90% 20%, rgba(120,160,255,.22), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,0));
+      pointer-events:none;
+    }
+
+    .hero-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    /* 左：タイトル＋文章 */
+    .sign{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+      flex: 1 1 auto;
+    }
+
+    /* ✅ タイトルは“手動改行しない”＝1行で書く（自動改行はOK） */
+    .sign h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.02em;
+      line-height:1.35;
+      white-space: normal;       /* 自動改行OK */
+      word-break: break-word;    /* はみ出し防止 */
+    }
+
+    .lead{
+      margin:0;
+      font-size: 13.5px;
+      line-height:1.75;
+      color:var(--muted);
+    }
+
+    /* 右：縦長スクショ＋最終更新 */
+    .hero-right{
+      flex: 0 0 220px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+    }
+    @media(max-width:640px){
+      .hero-top{ flex-direction:column; }
+      .hero-right{
+        width:100%;
+        flex: 1 1 auto;
+        align-items:stretch;
+      }
+    }
+
+    .mini-shot{
       width:100%;
-      height:100%;
-      object-fit: contain;
-      display:block;
-      background: rgba(0,0,0,.10);
+      border:2px solid rgba(0,0,0,.20);
+      border-radius: 14px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow: 0 10px 18px rgba(0,0,0,.08);
     }
-    .seedtext{min-width:0}
-    .seedtext .topline{
+    .mini-shot img{
+      width:100%;
+      height:220px;         /* ✅ 縦長スクショを枠内に収める */
+      object-fit:contain;   /* ✅ 全体が見える（切れない） */
+      display:block;
+      background: #fff;
+    }
+
+    /* ✅ 最終更新：邪魔にならない右下寄りの“薄いラベル” */
+    .updated{
+      font-size:12px;
+      color:rgba(0,0,0,.55);
+      white-space:nowrap;
+      font-family: var(--mono);
+      padding:7px 10px;
+      border:1px dashed rgba(0,0,0,.22);
+      border-radius: 12px;
+      background: rgba(0,0,0,.03);
+      align-self:flex-end;
+    }
+    @media(max-width:640px){
+      .updated{ align-self:flex-start; }
+    }
+
+    .hero-actions{
+      margin-top:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:none;
+      cursor:pointer;
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-weight:900;
+      letter-spacing:.02em;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .btn.primary{
+      color:#111;
+      background: linear-gradient(180deg, var(--gold1), var(--gold2));
+      box-shadow: 0 10px 20px rgba(0,0,0,.18);
+    }
+    .btn.ghost{
+      background: #111;
+      color:#fff;
+      box-shadow: 0 10px 20px rgba(0,0,0,.12);
+    }
+    .btn small{
+      opacity:.9;
+      font-weight:800;
+    }
+
+    /* ===== セクション見出し ===== */
+    .section-title{
+      margin:0 0 10px;
+      font-size: 15px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      border-left: 5px solid #222;
+      padding-left: 10px;
+    }
+    .section-sub{
+      margin: -2px 0 10px;
+      font-size: 13px;
+      line-height:1.7;
+      color: var(--muted);
+    }
+
+    /* ===== 3つの街（カード） ===== */
+    .city-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    @media(min-width:720px){
+      .city-grid{ grid-template-columns:repeat(3,1fr); }
+    }
+    .city-card{
+      border:1px solid rgba(0,0,0,.18);
+      border-radius:16px;
+      background: rgba(0,0,0,.02);
+      padding:12px;
+      position:relative;
+      overflow:hidden;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .city-card:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(0,0,0,.10);
+    }
+
+    /* ✅ 画像タップで拡大表示できるように：クリック可能に見せる */
+    .city-card .img{
+      position:relative;
+      border:2px solid rgba(0,0,0,.20);
+      border-radius: 14px;
+      overflow:hidden;
+      background:#fff;
+      cursor: zoom-in;
+      user-select:none;
+    }
+    .city-card .img:active{ transform: scale(.995); }
+
+    /* ★画像をもっと大きく（統一表示） */
+    .city-card img{
+      width:100%;
+      height:180px;
+      object-fit:cover;
+      display:block;
+    }
+    .city-card .img::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(to top, rgba(0,0,0,.45), transparent 60%);
+      pointer-events:none;
+    }
+    .city-card h3{
+      margin:10px 0 6px;
+      font-size: 15px;
+      font-weight: 950;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 900;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background:#111;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .city-card p{
+      margin:0;
+      font-size: 13px;
+      line-height:1.7;
+      color: rgba(0,0,0,.74);
+    }
+    .city-card .goto{
+      margin-top:10px;
       display:flex;
       gap:8px;
       flex-wrap:wrap;
+    }
+    .pill{
+      text-decoration:none;
+      font-weight: 950;
+      font-size: 12.5px;
+      color:#111;
+      background: rgba(216,179,90,.35);
+      border:1px solid rgba(0,0,0,.18);
+      border-radius: 999px;
+      padding: 8px 10px;
+      display:inline-flex;
       align-items:center;
+      gap:6px;
+      width: fit-content;
+      cursor:pointer;
     }
-    .label-digital{
-      display:inline-block;
-      padding: 6px 10px;
-      border-radius: 0px;
-      border: 1px solid rgba(47,139,255,.70);
-      background: rgba(47,139,255,.18);
-      font-weight:1000;
-      letter-spacing:.02em;
-      font-size: 12px;
-      line-height: 1;
-      white-space:nowrap;
-    }
-    .label-paper{
-      display:inline-block;
-      padding: 6px 10px;
-      border-radius: 0px;
-      border: 1px solid rgba(242,208,122,.65);
-      background: rgba(242,208,122,.16);
-      font-weight:1000;
-      letter-spacing:.02em;
-      font-size: 12px;
-      line-height: 1;
-      white-space:nowrap;
-    }
-    .seedtext .stitle{
-      font-weight:1000;
-      letter-spacing:.02em;
-      font-size: 14px;
-    }
-    .seedtext .sdesc{
-      margin:8px 0 0;
-      color: rgba(255,255,255,.86);
-      font-weight:900;
-      font-size: 13px;
-      line-height: 1.75;
-      white-space: pre-wrap;
+    .pill.dark{
+      background:#111;
+      color:#fff;
+      border-color: rgba(0,0,0,.25);
     }
 
-    /* ===== Cards ===== */
-    .cards{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+    /* ===== 街の案内（展開セクション） ===== */
+    .city-guide{
+      border-top:1px dashed rgba(0,0,0,.25);
+      margin-top: 12px;
+      padding-top: 12px;
+      display:none;
     }
-    .c{
+    .city-guide.active{ display:block; }
+
+    .guide-box{
+      border:1px solid rgba(0,0,0,.18);
+      border-radius: 16px;
+      background: rgba(0,0,0,.02);
+      padding: 12px;
+    }
+    .guide-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .guide-head h4{
+      margin:0;
+      font-size: 14px;
+      font-weight: 1000;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .guide-close{
+      border:none;
+      cursor:pointer;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-      overflow:hidden;
-      box-shadow: var(--shadow2);
-      min-width:0;
+      padding: 10px 10px;
+      font-weight: 1000;
+      background:#111;
+      color:#fff;
     }
-    .cimg{
-      aspect-ratio: 5 / 7;
-      background: rgba(0,0,0,.22);
+    .guide-intro{
+      margin:0 0 10px;
+      font-size: 13px;
+      line-height:1.75;
+      color: rgba(0,0,0,.78);
+    }
+
+    .spot-grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media(min-width:720px){
+      .spot-grid{ grid-template-columns: repeat(2,1fr); }
+    }
+    .spot{
+      border:1px dashed rgba(0,0,0,.22);
+      border-radius: 16px;
+      background:#fff;
+      overflow:hidden;
+    }
+    .spot summary{
+      list-style:none;
+      cursor:pointer;
+      padding: 12px 12px;
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      user-select:none;
+    }
+    .spot summary::-webkit-details-marker{ display:none; }
+    .spot .icon{
+      width:38px;height:38px;
+      border-radius: 14px;
+      background:#111;
+      color:#fff;
       display:grid;
       place-items:center;
-      border-bottom: 1px solid rgba(255,255,255,.10);
-      padding: 8px;
+      font-weight:1000;
+      flex:0 0 auto;
+      margin-top:1px;
     }
-    .cimg img{
-      width:100%;
-      height:100%;
-      object-fit: contain;
-      display:block;
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,.45));
+    .spot .t{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
     }
-    .cmeta{
+    .spot .t b{
+      font-size: 14px;
+      line-height:1.45;
+    }
+    .spot .t span{
+      font-size: 12.5px;
+      color: rgba(0,0,0,.70);
+      line-height:1.45;
+    }
+    .spot .chev{
+      margin-left:auto;
+      font-weight:1000;
+      opacity:.65;
+    }
+    .spot .body{
+      padding: 0 12px 12px;
+      color: rgba(0,0,0,.85);
+      font-size: 13px;
+      line-height:1.75;
+    }
+    .spot .body p{ margin:0 0 8px; }
+    .spot .body p:last-child{ margin-bottom:0; }
+    .tip{
+      margin-top:8px;
       padding: 10px 10px;
+      border:1px dashed rgba(0,0,0,.22);
+      border-radius: 12px;
+      background: rgba(216,179,90,.18);
+      font-size: 12.5px;
+      color: rgba(0,0,0,.78);
+      font-weight: 900;
+    }
+
+    /* ===== よくある質問（固定名称） ===== */
+    .faq-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin: 6px 0 12px;
+    }
+    .mini{
+      border:1px solid rgba(0,0,0,.18);
+      background: rgba(0,0,0,.02);
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12.5px;
+    }
+
+    .faq-list{
+      display:grid;
+      gap:10px;
+    }
+    details.faq{
+      border:1px dashed rgba(0,0,0,.22);
+      border-radius: 16px;
+      background: rgba(0,0,0,.02);
+      overflow:hidden;
+    }
+    details.faq[open]{
+      border-style: solid;
+      border-color: rgba(0,0,0,.22);
+      box-shadow: 0 12px 22px rgba(0,0,0,.10);
+    }
+    details.faq summary{
+      list-style:none;
+      cursor:pointer;
+      padding: 12px 12px;
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      user-select:none;
+    }
+    details.faq summary::-webkit-details-marker{ display:none; }
+
+    .tag{
+      width:34px;height:34px;
+      border-radius: 12px;
+      background:#111;
+      color:#fff;
+      display:grid;
+      place-items:center;
+      font-weight:1000;
+      flex:0 0 auto;
+      margin-top:1px;
+    }
+    .qtext{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .qtext b{
+      font-size: 14px;
+      line-height:1.5;
+    }
+    .qtext span{
+      font-size: 12.5px;
+      color: rgba(0,0,0,.70);
+      line-height:1.45;
+    }
+    .chev2{
+      margin-left:auto;
+      font-weight:1000;
+      opacity:.65;
+    }
+    .answer{
+      padding: 0 12px 12px;
+    }
+    .log{
+      border:1px solid rgba(0,0,0,.18);
+      border-radius: 14px;
+      background: #111;
+      color:#fff;
+      padding: 12px 12px;
+      font-size: 13.5px;
+      line-height:1.8;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .log p{ margin:0 0 8px; }
+    .log p:last-child{ margin-bottom:0; }
+    .note{
+      margin-top:8px;
+      padding: 10px 10px;
+      border:1px dashed rgba(255,255,255,.25);
+      border-radius: 12px;
+      background: rgba(255,255,255,.06);
+      font-size: 12.5px;
+      color: rgba(255,255,255,.90);
+    }
+
+    /* ===== 終わり ===== */
+    .end{
+      border-top:1px dashed rgba(0,0,0,.25);
+      margin-top: 10px;
+      padding-top: 12px;
+    }
+    .end p{
+      margin:0 0 8px;
+      font-size: 14px;
+      line-height:1.8;
+      color: rgba(0,0,0,.80);
+    }
+    .end .last{
+      font-weight: 950;
+      margin-top: 6px;
+      color:#111;
+    }
+
+    /* ===== 固定フッター ===== */
+    .sticky{
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      display:flex;
+      justify-content:center;
+      pointer-events:none;
+    }
+    .sticky .bar{
+      width:min(var(--max), 100%);
+      display:flex;
+      gap:10px;
+      pointer-events:auto;
+    }
+    .sticky .bar button{
+      flex:1;
+      border:none;
+      cursor:pointer;
+      border-radius: 16px;
+      padding: 12px 12px;
+      font-weight: 1000;
+      letter-spacing:.02em;
+      background: rgba(0,0,0,.82);
+      color:#fff;
+      box-shadow: var(--shadow);
+    }
+    .sticky .bar button.secondary{
+      background: rgba(216,179,90,.92);
+      color:#111;
+    }
+
+    /* ===== アンカー補正 ===== */
+    [data-anchor]{ scroll-margin-top: 14px; }
+
+    /* ===== 画像拡大モーダル ===== */
+    .imgModal{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.70);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px 12px;
+      z-index: 9999;
+    }
+    .imgModal.active{ display:flex; }
+    .imgModal .frame{
+      width:min(980px, 100%);
+      max-height: calc(100vh - 36px);
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius: 16px;
+      overflow:hidden;
+      box-shadow: 0 25px 80px rgba(0,0,0,.55);
+      backdrop-filter: blur(2px);
+    }
+    .imgModal .head{
       display:flex;
       align-items:center;
-      justify-content: space-between;
-      gap: 10px;
-      min-width:0;
+      justify-content:space-between;
+      gap:10px;
+      padding: 10px 10px;
+      background: rgba(0,0,0,.55);
+      color:#fff;
     }
-    .cno{
-      font-weight:1000;
-      letter-spacing:.03em;
-      font-size: 14px;
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
+    .imgModal .head b{
+      font-size: 13px;
+      letter-spacing:.02em;
     }
-    .ctags{
-      display:flex;
-      gap: 8px;
-      flex-wrap:wrap;
-      justify-content: flex-end;
+    .imgModal .close{
+      border:none;
+      cursor:pointer;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 1000;
+      background: rgba(255,255,255,.14);
+      color:#fff;
     }
-    .miniBadge{
-      padding: 6px 10px;
-      border-radius: 0px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.18);
-      font-weight:1000;
-      font-size: 12px;
-      line-height: 1;
-      text-align:center;
-      white-space:nowrap;
+    .imgModal img{
+      width:100%;
+      height:auto;
+      display:block;
+      max-height: calc(100vh - 120px);
+      object-fit: contain;
+      background:#000;
     }
-    .miniBadge.paper{
-      border-color: rgba(242,208,122,.60);
-      background: rgba(242,208,122,.18);
-    }
-    .miniBadge.digital{
-      border-color: rgba(47,139,255,.70);
-      background: rgba(47,139,255,.20);
-    }
-
-    .note{
-      color: rgba(255,255,255,.86);
-      font-weight:900;
+    .imgModal .hint{
+      padding: 10px 12px 12px;
+      color: rgba(255,255,255,.85);
       font-size: 12.5px;
-      line-height: 1.65;
-      margin:0;
-      white-space: pre-wrap;
-    }
-
-    @media (max-width:360px){
-      .thumb{ width:56px; height:56px; border-radius: 10px; }
-      .badge{ padding: 7px 8px; font-size: 12px; }
-      .chev{ width:32px; height:32px; }
-      .row{ gap:8px; padding: 9px 9px; }
-      .row-title{ font-size: 15px; }
-    }
-
-    @media (max-width:380px){
-      .profile{ grid-template-columns: 98px 1fr; }
-      .pimg{ width:98px; height:98px; }
-      .seed{ grid-template-columns: 92px 1fr; }
-      .seedbox{ width:92px; height:92px; }
+      line-height:1.65;
+      background: rgba(0,0,0,.55);
     }
   </style>
 </head>
 
 <body>
-  <div class="frame" aria-hidden="true"></div>
+  <div class="sparks" aria-hidden="true"></div>
 
-  <header class="header">
-    <div class="headbar">
-      <button class="back" id="backBtn" type="button" aria-label="戻る">←</button>
-      <div class="titlebox">
-        <div class="title">コラボ図鑑</div>
-      </div>
+  <main class="wrap" aria-label="町の案内所">
+    <div class="guild">
+
+      <!-- =========================================================
+           ✅ 更新メモ（非表示コメント）
+           - 最終更新日：#updatedDate の文字だけ変える
+           - 右の縦長スクショ：#townShot のsrc
+           - 3つの街 画像：#city-north / #city-center / #city-south のsrc
+           - 街の案内文：#guideInfo / #guidePartners / #guideGame の中身（HTML）を編集
+           - よくある質問：#faqList の <details class="faq"> を編集
+           - 「遊技の街」ゲームルール：guideGame の「ゲーム案内」を編集
+      ========================================================== -->
+
+      <!-- ===== ヒーロー ===== -->
+      <article class="paper hero" id="top">
+        <div class="inner">
+          <div class="hero-top">
+
+            <div class="sign">
+              <!-- ✅ ここは手動改行しない（1行で書く） -->
+              <h1>町の案内所（3つの街・遊び方・よくある質問）</h1>
+
+              <!-- ✅ 文章はそのまま -->
+              <p class="lead">
+                旅人へ。<br>
+                この町は「情報の街」「協力店の街」「遊技の街」の3つに分かれています。<br>
+                まずは街の役割をつかんで、気になった建物から覗いてみてください。
+              </p>
+
+              <div class="hero-actions">
+                <button class="btn primary" type="button" data-scroll="#three-cities">
+                  ▶ 3つの街を見る <small>（全体像）</small>
+                </button>
+                <button class="btn ghost" type="button" data-scroll="#faq">
+                  ？ よくある質問へ
+                </button>
+              </div>
+            </div>
+
+            <!-- ✅ 右側：町全体スクショ＋最終更新（邪魔にならない） -->
+            <div class="hero-right" aria-label="町の全体図と最終更新">
+              <div class="mini-shot" title="町の全体図（縮小表示）">
+                <img id="townShot" src="https://ul.h3z.jp/EpV3R56f.png" alt="町全体の縦長スクショ">
+              </div>
+              <div class="updated" id="updatedDate">最終更新：2026-02-17</div>
+            </div>
+
+          </div>
+        </div>
+      </article>
+
+      <!-- ===== 3つの街 ===== -->
+      <article class="paper" id="three-cities" data-anchor>
+        <div class="inner">
+          <h2 class="section-title">🗺 このホームページは「3つの街」でできています</h2>
+          <p class="section-sub">
+            画像のサイズがバラバラでも大丈夫。見た目は“同じ枠に統一”されます。<br>
+            それぞれの「この街の案内へ」を押すと、街の建物の説明が開きます。<br>
+            ※ 画像はタップすると全体図が開きます。
+          </p>
+
+          <div class="city-grid">
+
+            <!-- =======================
+                 北の街（＝情報の街）
+                 ======================= -->
+            <section class="city-card" id="cityA">
+              <div class="img" role="button" tabindex="0"
+                   data-zoom-src="https://ul.h3z.jp/1NHzQTUk.png"
+                   data-zoom-title="北の街（情報の街）｜全体図を表示">
+                <img id="city-north" src="https://ul.h3z.jp/1NHzQTUk.png" alt="北の街（情報の街）">
+              </div>
+
+              <h3><span class="chip">CITY-01</span> 北の街（情報の街）</h3>
+              <p>
+                実物の<b>たこ焼きトレカ</b>についての情報が集まる街です。<br>
+                お知らせ、開催中のイベント、コンプリートカード、コラボカード、メディア掲載など、<b>「今なにが起きているか」</b>がここにあります。
+              </p>
+              <div class="goto">
+                <button class="pill" type="button" data-open-guide="info">📍 この街の案内へ</button>
+                <a class="pill dark" href="#faq">？ よくある質問</a>
+              </div>
+
+              <!-- 北の街：案内（展開） -->
+              <div class="city-guide" id="guideInfo">
+                <div class="guide-box">
+                  <div class="guide-head">
+                    <h4>📍 北の街（情報の街）：建物案内</h4>
+                    <button class="guide-close" type="button" data-close-guide="info">閉じる</button>
+                  </div>
+
+                  <p class="guide-intro">
+                    この街は「たこ焼きトレカの公式情報」が集まる場所です。<br>
+                    まずは<b>開催中のイベント</b>と<b>最新のお知らせ</b>だけ見てもOK。気になったら、順番は自由です。
+                  </p>
+
+                  <div class="spot-grid">
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">📌</div>
+                        <div class="t">
+                          <b>最新のお知らせ</b>
+                          <span>今月の更新・告知・大事な連絡</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>いま一番大事な告知がまとまっています。イベント開始、配布カード、締切、アップデートなどはここ。</p>
+                        <div class="tip">迷ったら：まずここだけ見ればOK</div>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🎪</div>
+                        <div class="t">
+                          <b>いま遊べるイベント</b>
+                          <span>開催中の企画・限定の遊び</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>期間限定で遊べるイベントの入口です。ビンゴ・職人ステージ・季節イベントなどがここに出ます。</p>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🏆</div>
+                        <div class="t">
+                          <b>コンプリートカード</b>
+                          <span>コンプ達成者だけが見られる称号枠</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>店頭カード・BOOTHカード・限定ショップカードなど、各カテゴリをコンプリートした人へ渡される特別カードの紹介です。</p>
+                        <p>「集める目的地」がはっきりする場所です。</p>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🤝</div>
+                        <div class="t">
+                          <b>コラボカード</b>
+                          <span>協力者・協力店・コラボの紹介</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>コラボカードの一覧や、コラボのタネ（シリアル）などの入口。初見でも「この人は誰？」が分かるようにまとめます。</p>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">📰</div>
+                        <div class="t">
+                          <b>メディア掲載</b>
+                          <span>取材・記事・動画などの記録</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>外の世界（現実）で、たこ焼きトレカがどう語られたかの記録です。初見の人にも“世界観の信用”が伝わります。</p>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🧾</div>
+                        <div class="t">
+                          <b>この案内所（今いるページ）</b>
+                          <span>3つの街・遊び方・質問まとめ</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>迷子救済の場所です。分からなくなったら何度でも戻ってきてください。</p>
+                      </div>
+                    </details>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- =======================
+                 中央の街（＝協力店の街）
+                 ======================= -->
+            <section class="city-card" id="cityB">
+              <div class="img" role="button" tabindex="0"
+                   data-zoom-src="https://ul.h3z.jp/1W5HduaY.png"
+                   data-zoom-title="中央の街（協力店の街）｜全体図を表示">
+                <img id="city-center" src="https://ul.h3z.jp/1W5HduaY.png" alt="中央の街（協力店の街）">
+              </div>
+
+              <h3><span class="chip">CITY-02</span> 中央の街（協力店の街）</h3>
+              <p>
+                パンフレット協力店を<b>一つの街</b>に見立てたリンク広場です。<br>
+                〘旅路の塔〙（ホテル＆空港の限定ショップカード）もここに含まれます。<br>
+                〘北海道 焼きもとの湯〙は《たこ焼き菜々》で、<b>店頭販売カード</b>が購入できます。
+              </p>
+              <div class="goto">
+                <button class="pill" type="button" data-open-guide="partners">🧭 この街の案内へ</button>
+                <a class="pill dark" href="#faq">？ よくある質問</a>
+              </div>
+
+              <!-- 中央の街：案内（展開） -->
+              <div class="city-guide" id="guidePartners">
+                <div class="guide-box">
+                  <div class="guide-head">
+                    <h4>🧭 中央の街（協力店の街）：案内</h4>
+                    <button class="guide-close" type="button" data-close-guide="partners">閉じる</button>
+                  </div>
+
+                  <p class="guide-intro">
+                    この街は「パンフレット協力店」をまとめた“リンクの街”です。<br>
+                    現実の協力者が増えるほど、この街は広がっていきます。気になる建物から押してOK。
+                  </p>
+
+                  <div class="spot-grid">
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🏬</div>
+                        <div class="t">
+                          <b>パンフ協力店の建物</b>
+                          <span>各店舗ページへ移動するリンク</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>建物ごとに、協力店の紹介やリンクが繋がっています。たこ焼きトレカの“旅先”そのものです。</p>
+                        <div class="tip">ポイント：この街は「現実の地図」でもある</div>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🗼</div>
+                        <div class="t">
+                          <b>旅路の塔</b>
+                          <span>ホテル＆空港の“限定ショップカード”</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>この塔は少し特殊です。ホテルと空港に置かせてもらっている「限定ショップカード」へ繋がる入口として、協力店の街に含めています。</p>
+                        <p>旅人が現実に歩いて、カードを見つけるための“目印”です。</p>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">♨</div>
+                        <div class="t">
+                          <b>北海道 焼きもとの湯（たこ焼き菜々）</b>
+                          <span>店頭販売カードが買える場所</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>ここがあなたのお店《たこ焼き菜々》です。店頭販売カードを購入できます。</p>
+                        <p>（このページが“街の世界観”に統一されている理由は、現実の入口も町の一部だからです。）</p>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🧩</div>
+                        <div class="t">
+                          <b>限定ショップカードって？</b>
+                          <span>設置場所でしか手に入らないカード</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>ホテルや空港など、設置先でしか出会えないカードです。旅の“記念”にもなるし、集める理由にもなります。</p>
+                      </div>
+                    </details>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- =======================
+                 南の街（＝遊技の街）
+                 ======================= -->
+            <section class="city-card" id="cityC">
+              <div class="img" role="button" tabindex="0"
+                   data-zoom-src="https://ul.h3z.jp/a23zkfh5.png"
+                   data-zoom-title="南の街（遊技の街）｜全体図を表示">
+                <img id="city-south" src="https://ul.h3z.jp/a23zkfh5.png" alt="南の街（遊技の街）">
+              </div>
+
+              <h3><span class="chip">CITY-03</span> 南の街（遊技の街）</h3>
+              <p>
+                ここはゲームのセクションです。<br>
+                たこ焼き釣り／たこ焼きタワー／畑／露店――この町の<b>遊びと育成</b>は、ここから始まります。
+              </p>
+              <div class="goto">
+                <button class="pill" type="button" data-open-guide="game">🎮 遊び方を見る</button>
+                <a class="pill dark" href="#faq">？ よくある質問</a>
+              </div>
+
+              <!-- 南の街：案内（展開） -->
+              <div class="city-guide" id="guideGame">
+                <div class="guide-box">
+                  <div class="guide-head">
+                    <h4>🎮 南の街（遊技の街）：遊び方＆ゲームルール</h4>
+                    <button class="guide-close" type="button" data-close-guide="game">閉じる</button>
+                  </div>
+
+                  <p class="guide-intro">
+                    遊技の街には4つの遊びがあります。<br>
+                    まずは<b>露店 → 畑 → 収穫 → 露店で売却</b>の基本ループを1周すると、全部がつながって見えてきます。
+                  </p>
+
+                  <div class="spot-grid">
+                    <details class="spot" open>
+                      <summary>
+                        <div class="icon">🛒</div>
+                        <div class="t">
+                          <b>露店（売買の場）</b>
+                          <span>資材を買う／カードを売る</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p><b>ここがゲームの財布</b>です。オクトを使って資材（タネ・水・肥料）を揃え、収穫したカードを売ってオクトを増やします。</p>
+                        <p>つまり、露店は「準備」と「回収」の両方を担当します。</p>
+                        <div class="tip">コツ：最初は“買う→育てる→売る”を1回やるだけでOK</div>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🌱</div>
+                        <div class="t">
+                          <b>畑（育成の場）</b>
+                          <span>資材で育ててカード収穫へ</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>露店で準備した資材を使ってカードを育てます。タネ・水・肥料の組み合わせで結果が変わります。</p>
+                        <p>畑は「運」と「育成」のミックス。遊ぶほど“狙い方”が分かってきます。</p>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🔥</div>
+                        <div class="t">
+                          <b>収穫（カード入手）</b>
+                          <span>育ったカードを受け取る</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>育ったカードを収穫します。集める楽しさだけでなく、露店で売ることで次の資金にもなります。</p>
+                        <p>同じカードが出ても“ハズレ”ではありません。イベントやビンゴ、売却などで役割があります。</p>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🗼</div>
+                        <div class="t">
+                          <b>たこ焼きタワー</b>
+                          <span>挑戦・達成・世界観の塔</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>この町の“挑戦コンテンツ”。遊ぶほど塔の意味が深まります。</p>
+                        <p>実績・称号・イベント導線など、「やり込みの目的地」として置かれています。</p>
+                      </div>
+                    </details>
+
+                    <details class="spot">
+                      <summary>
+                        <div class="icon">🎣</div>
+                        <div class="t">
+                          <b>たこ焼き釣り</b>
+                          <span>気軽な運試し・寄り道</span>
+                        </div>
+                        <div class="chev">▼</div>
+                      </summary>
+                      <div class="body">
+                        <p>短時間で遊べる運試し。畑とは違うテンポで“寄り道できる遊び”として用意されています。</p>
+                        <p>「今日は軽く遊ぶだけ」もアリです。</p>
+                      </div>
+                    </details>
+                  </div>
+
+                </div>
+              </div>
+            </section>
+
+          </div>
+        </div>
+      </article>
+
+      <!-- ===== よくある質問（固定） ===== -->
+      <article class="paper" id="faq" data-anchor>
+        <div class="inner">
+          <h2 class="section-title">❓ よくある質問</h2>
+          <p class="section-sub">
+            “街ごと”によく聞かれる質問をまとめました。迷ったら、ここが近道です。
+          </p>
+
+          <div class="faq-actions">
+            <button class="mini" type="button" id="openAll">全部ひらく</button>
+            <button class="mini" type="button" id="closeAll">全部とじる</button>
+          </div>
+
+          <div class="faq-list" id="faqList">
+
+            <!-- ===== 北の街（情報の街）：よくある質問 ===== -->
+            <details class="faq" id="f1">
+              <summary>
+                <div class="tag">📌</div>
+                <div class="qtext">
+                  <b>（北の街）どこを見れば最新情報が分かりますか？</b>
+                  <span>まずここだけ見ればOKな場所</span>
+                </div>
+                <div class="chev2">▼</div>
+              </summary>
+              <div class="answer">
+                <div class="log">
+                  <p>「最新のお知らせ」を見てください。いま一番大事なこと（更新・開催・締切）がまとまっています。</p>
+                  <p>時間がないときは <b>最新のお知らせ → いま遊べるイベント</b> の順番だけで十分です。</p>
+                </div>
+              </div>
+            </details>
+
+            <details class="faq" id="f2">
+              <summary>
+                <div class="tag">🎪</div>
+                <div class="qtext">
+                  <b>（北の街）イベントは常にやっていますか？</b>
+                  <span>期間限定の遊び方について</span>
+                </div>
+                <div class="chev2">▼</div>
+              </summary>
+              <div class="answer">
+                <div class="log">
+                  <p>イベントは「開催中のときだけ」出現します。何もない時期もあります。</p>
+                  <p>その場合は、南の街（畑・露店・釣り・タワー）を自由に遊んで大丈夫です。</p>
+                </div>
+              </div>
+            </details>
+
+            <details class="faq" id="f3">
+              <summary>
+                <div class="tag">🏆</div>
+                <div class="qtext">
+                  <b>（北の街）コンプリートカードって何ですか？</b>
+                  <span>集めた先にある“目的地”</span>
+                </div>
+                <div class="chev2">▼</div>
+              </summary>
+              <div class="answer">
+                <div class="log">
+                  <p>店頭カード・BOOTHカード・限定ショップカードなど、カテゴリをコンプリートした方へ渡される特別カードです。</p>
+                  <p>「集める理由」を強くするための“称号”のような存在です。</p>
+                </div>
+              </div>
+            </details>
+
+            <!-- ===== 中央の街（協力店の街）：よくある質問 ===== -->
+            <details class="faq" id="f4">
+              <summary>
+                <div class="tag">🏬</div>
+                <div class="qtext">
+                  <b>（中央の街）ここは何の街ですか？</b>
+                  <span>リンクだらけの理由</span>
+                </div>
+                <div class="chev2">▼</div>
+              </summary>
+              <div class="answer">
+                <div class="log">
+                  <p>パンフレット協力店を“街”としてまとめた場所です。建物＝協力店への入口になっています。</p>
+                  <p>この町の世界観を「現実の旅」に繋げるための街です。</p>
+                </div>
+              </div>
+            </details>
+
+            <details class="faq" id="f5">
+              <summary>
+                <div class="tag">🗼</div>
+                <div class="qtext">
+                  <b>（中央の街）旅路の塔は何ですか？</b>
+                  <span>ホテル＆空港の限定カード</span>
+                </div>
+                <div class="chev2">▼</div>
+              </summary>
+              <div class="answer">
+                <div class="log">
+                  <p>ホテルと空港に置かせてもらっている「限定ショップカード」へ繋がる入口です。</p>
+                  <p>旅先で出会えるカードを“町の中で可視化”した目印が、旅路の塔です。</p>
+                </div>
+              </div>
+            </details>
+
+            <details class="faq" id="f6">
+              <summary>
+                <div class="tag">♨</div>
+                <div class="qtext">
+                  <b>（中央の街）焼きもとの湯はどこに繋がりますか？</b>
+                  <span>あなたのお店（たこ焼き菜々）</span>
+                </div>
+                <div class="chev2">▼</div>
+              </summary>
+              <div class="answer">
+                <div class="log">
+                  <p>〘北海道 焼きもとの湯〙は《たこ焼き菜々》です。店頭販売カードが購入できます。</p>
+                  <p>協力店の街の中に“本拠地”として置かれているイメージです。</p>
+                </div>
+              </div>
+            </details>
+
+            <!-- ===== 南の街（遊技の街）：よくある質問 ===== -->
+            <details class="faq" id="f7">
+              <summary>
+                <div class="tag">🎮</div>
+                <div class="qtext">
+                  <b>（南の街）何から始めればいいですか？</b>
+                  <span>迷子の最短ルート</span>
+                </div>
+                <div class="chev2">▼</div>
+              </summary>
+              <div class="answer">
+                <div class="log">
+                  <p>まずは <b>露店 → 畑 → 収穫 → 露店で売却</b> を1回だけやってみてください。</p>
+                  <p>1周すると「資材」「育成」「カード」「オクト」の関係が一気に分かります。</p>
+                </div>
+              </div>
+            </details>
+
+            <details class="faq" id="f8">
+              <summary>
+                <div class="tag">♻</div>
+                <div class="qtext">
+                  <b>（南の街）同じカードが出たらハズレですか？</b>
+                  <span>ダブりの意味</span>
+                </div>
+                <div class="chev2">▼</div>
+              </summary>
+              <div class="answer">
+                <div class="log">
+                  <p>ハズレではありません。</p>
+                  <p>イベントやビンゴで使ったり、露店で売却して次の資金にしたりできます。</p>
+                </div>
+              </div>
+            </details>
+
+            <details class="faq" id="f9">
+              <summary>
+                <div class="tag">🧠</div>
+                <div class="qtext">
+                  <b>（南の街）ここはゲームですか？</b>
+                  <span>ゲームっぽいけど、自由</span>
+                </div>
+                <div class="chev2">▼</div>
+              </summary>
+              <div class="answer">
+                <div class="log">
+                  <p>ゲームのようで、ゲームではありません。</p>
+                  <p>集めたり、眺めたり、参加したり。遊び方は人それぞれです。</p>
+                  <div class="note">※ 分からなくなったら、今日は何もしなくても大丈夫。次に来たとき続きを遊べます。</div>
+                </div>
+              </div>
+            </details>
+
+          </div>
+
+          <div class="end">
+            <h2 class="section-title">📜 おわりに</h2>
+            <p>この町は、一度で全部理解する場所ではありません。</p>
+            <p>少しずつ知って、少しずつ集めて、少しずつ楽しむ場所です。</p>
+            <p class="last">旅は、まだ続きます。</p>
+          </div>
+
+        </div>
+      </article>
+
     </div>
-  </header>
-
-  <main class="wrap">
-    <section class="banner" aria-label="案内">
-      <h1>焼かれた記録 — コラボ年表</h1>
-      <p>
-        ✅ シリアルで増えるのはカードではなく「コラボのタネ」。<br>
-        ✅ 畑で育てて収穫した瞬間、デジタルカードとして図鑑に刻まれます。<br>
-        ✅ ダーツプロのタネは《ブッ刺さりのタネ》：全5種類のレジェンドカードが排出。
-      </p>
-    </section>
-
-    <!-- ✅ 2026：配信者 / インフルエンサー -->
-    <section class="year" aria-label="2026年">
-      <div class="year-head">
-        <div class="year-num">2026年</div>
-        <div class="year-sub">配信者 / インフルエンサー</div>
-      </div>
-      <div class="list" id="list2026"></div>
-    </section>
-
-    <!-- ✅ 2025：ダーツプロ（期限なし） -->
-    <section class="year" aria-label="2025年">
-      <div class="year-head">
-        <div class="year-num">2025年</div>
-        <div class="year-sub">ダーツプロコラボ（期限なし）</div>
-      </div>
-      <div class="list" id="list2025"></div>
-    </section>
-
-    <!-- ✅ ガイド（年表の一番下・共通） -->
-    <section class="year" aria-label="ガイド">
-      <div class="year-head">
-        <div class="year-num">ガイド</div>
-        <div class="year-sub">入手の流れ / 紙の購入案内</div>
-      </div>
-      <div class="list" id="listGuide"></div>
-    </section>
   </main>
 
-  <!-- Modal -->
-  <div class="modal" id="modal" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="mcard" role="document">
-      <div class="mtop">
-        <div class="mtitle" id="mTitle">—</div>
-        <button class="mclose" id="mClose" type="button">閉じる</button>
+  <!-- 固定フッター -->
+  <div class="sticky" aria-hidden="false">
+    <div class="bar">
+      <button class="secondary" type="button" data-scroll="#three-cities">▶ 3つの街へ戻る</button>
+      <button type="button" data-scroll="#faq">❓ よくある質問へ</button>
+    </div>
+  </div>
+
+  <!-- ✅ 画像拡大モーダル（3つの街の画像タップで開く） -->
+  <div class="imgModal" id="imgModal" aria-hidden="true">
+    <div class="frame" role="dialog" aria-modal="true" aria-label="画像の全体図">
+      <div class="head">
+        <b id="imgModalTitle">全体図</b>
+        <button class="close" type="button" id="imgModalClose">閉じる</button>
       </div>
-      <div class="mbody" id="mBody"></div>
+      <img id="imgModalImg" alt="">
+      <div class="hint">※ 画面の暗い部分をタップしても閉じられます。</div>
     </div>
   </div>
 
   <script>
-  (() => {
-    "use strict";
+    (() => {
+      "use strict";
 
-    // =========================
-    // ✅ データ
-    // =========================
-
-    // ✅ 2026：配信者 / インフルエンサー
-    const GURATAN = {
-      id: "guratan",
-      title: "ぐらたん",
-      period: "2026.2.24〜3.24",
-      badges: ["デジタル"],
-      thumb: "https://ul.h3z.jp/zXzQtZGi.png",
-      profile: {
-        name: "配信者《ぐらたん》",
-        period: "2026.2.24〜3.24",
-        img: "https://ul.h3z.jp/zXzQtZGi.png",
-        desc:
-`深夜の配信回線に住み着いた語り手。
-声は低く、語りは静か。
-だが一度聞けたなら、なぜか最後まで残ってしまう。`,
-        xUrl: "https://x.com/guratan_hkn?s=20",
-      },
-      seed: {
-        label: "デジタル",
-        title: "ぐらたんのタネ",
-        img: "https://ul.h3z.jp/A0cSWxi8.png",
-        desc:
-`今回、彼の回線の奥から不思議な種が採取された。
-植えれば何かが生まれる。だが何が出るかは保証されない。
-それでも、植えたくなる種だ。`
-      },
-      cards: [
-        { no: "—", img: "https://ul.h3z.jp/gAECOcHe.png", kind: "デジタル" },
-        { no: "—", img: "https://ul.h3z.jp/gAECOcHe.png", kind: "デジタル" }
-      ]
-    };
-
-    // ✅ 2025：ダーツプロ（期限なし）
-    // ★紙の購入先は「ナンバーで分かれる」ので、カードごとに設定できるようにしてあります。
-    const DARTS_PROS_2025 = [
-      {
-        key:"BS-001",
-        name:"對馬裕佳子",
-        thumb:"https://ul.h3z.jp/17BlYGxb.png",
-        paper:{ no:"TN-022", img:"https://ul.h3z.jp/z0f9hr0X.png" },
-        digital:{ no:"BS-001", img:"https://ul.h3z.jp/9TKXVZZz.png" },
-
-        // ✅ ここをあなたのルール通りに直す（店頭 / BOOTH）
-        paperWhere:"店頭",         // ←「BOOTH」などに変更OK
-        paperBuyUrl:"",            // ←BOOTHの個別URLがあるなら入れる（無ければ空でOK）
-
-        profile:{ img:"https://ul.h3z.jp/17BlYGxb.png", desc:"ダーツプロコラボ（紙＋デジタル）。※期限なし", xUrl:"https://x.com/tsushimayukako?s=20" }
-      },
-      {
-        key:"BS-002",
-        name:"佐俣雄一郎",
-        thumb:"https://ul.h3z.jp/MSfNOomU.png",
-        paper:{ no:"TN-048", img:"https://ul.h3z.jp/ge8b4cQ5.jpg" },
-        digital:{ no:"BS-002", img:"https://ul.h3z.jp/BtOTLlSo.png" },
-
-        paperWhere:"BOOTH",
-        paperBuyUrl:"",            // ←ここにBOOTHの該当ページURLを入れてOK
-
-        profile:{ img:"https://ul.h3z.jp/MSfNOomU.png", desc:"ダーツプロコラボ（紙＋デジタル）。※期限なし", xUrl:"https://x.com/samata0225?s=20" }
-      },
-      {
-        key:"BS-003",
-        name:"井上諒",
-        thumb:"https://ul.h3z.jp/mEXBlSdC.png",
-        paper:{ no:"TN-028", img:"https://ul.h3z.jp/sPChFFlG.jpg" },
-        digital:{ no:"BS-003", img:"https://ul.h3z.jp/P5vsAste.png" },
-
-        paperWhere:"BOOTH",
-        paperBuyUrl:"",
-
-        profile:{ img:"https://ul.h3z.jp/mEXBlSdC.png", desc:"ダーツプロコラボ（紙＋デジタル）。※期限なし", xUrl:"https://x.com/DMmakku?s=20" }
-      },
-      {
-        key:"BS-004",
-        name:"仁木治",
-        thumb:"https://ul.h3z.jp/KvghKU7e.png",
-        paper:{ no:"TN-029", img:"https://ul.h3z.jp/4HEbt3YP.jpg" },
-        digital:{ no:"BS-004", img:"https://ul.h3z.jp/ZGBzzH2r.png" },
-
-        paperWhere:"BOOTH",
-        paperBuyUrl:"",
-
-        profile:{ img:"https://ul.h3z.jp/KvghKU7e.png", desc:"ダーツプロコラボ（紙＋デジタル）。※期限なし", xUrl:"https://x.com/awesome_hnysk?s=20" }
-      },
-      {
-        key:"BS-005",
-        name:"稲石裕",
-        thumb:"https://ul.h3z.jp/E3Oo4QkO.png",
-        paper:{ no:"TN-044", img:"https://ul.h3z.jp/bC1B4WkQ.jpg" },
-        digital:{ no:"BS-005", img:"https://ul.h3z.jp/nmiaCKae.png" },
-
-        paperWhere:"BOOTH",
-        paperBuyUrl:"",
-
-        profile:{ img:"https://ul.h3z.jp/E3Oo4QkO.png", desc:"ダーツプロコラボ（紙＋デジタル）。※期限なし", xUrl:"https://x.com/tawashi1714?s=20" }
-      }
-    ];
-
-    // ✅ ダーツ：ブッ刺さりのタネ（全5種類のレジェンド）
-    const DARTS_SEED = {
-      label:"デジタル",
-      title:"ブッ刺さりのタネ（ダーツ）",
-      img:"https://ul.h3z.jp/DTJQPegs.png",
-      desc:
-`ダーツプロコラボで使うのは《ブッ刺さりのタネ》。
-このタネからは、全5種類のレジェンドカードが排出されます。`
-    };
-
-    // ✅ ガイド（年表共通）
-    const FLOW = {
-      id:"flow",
-      title:"【入手の流れ（超重要）】",
-      period:"",
-      badges:[],
-      thumb:"https://ul.h3z.jp/U5J7OGeO.png",
-      text:
-`【デジタル（ゲーム内）】
-シリアルコードで“カード”が直接もらえるわけではありません。
-シリアルで増えるのは「コラボのタネ」。
-→ 畑に植える → 育てる → 収穫した瞬間に、デジタルカードとして図鑑に記録されます。
-
-【ダーツプロ：ブッ刺さりのタネ】
-ダーツプロのタネは《ブッ刺さりのタネ》。
-このタネからは全5種類のレジェンドカードが排出されます。
-
-【紙（現物）】
-紙のカードは、カードナンバーによって
-「店頭」または「BOOTH」で購入できます。
-（各ダーツプロの詳細ページに、購入先の案内を表示しています）
-
-※紙（現物）とデジタル（ゲーム内）は別物として表示しています。`
-    };
-
-    // =========================
-    // DOM
-    // =========================
-    const $ = (q) => document.querySelector(q);
-    const list2026 = $("#list2026");
-    const list2025 = $("#list2025");
-    const listGuide = $("#listGuide");
-    const modal = $("#modal");
-    const mTitle = $("#mTitle");
-    const mBody  = $("#mBody");
-    const mClose = $("#mClose");
-
-    $("#backBtn").addEventListener("click", () => history.back());
-
-    // =========================
-    // helpers
-    // =========================
-    function el(tag, cls="", txt=""){
-      const e = document.createElement(tag);
-      if(cls) e.className = cls;
-      if(txt !== "") e.textContent = txt;
-      return e;
-    }
-    function makeBadge(label){
-      return el("div", "badge " + (label==="紙" ? "paper" : "digital"), label);
-    }
-    function makeMiniBadge(kind){
-      return el("span", "miniBadge " + (kind==="紙" ? "paper" : "digital"), kind);
-    }
-    function makeThumb(src, fallbackText=""){
-      const box = el("div","thumb");
-      if(src){
-        const img = document.createElement("img");
-        img.src = src;
-        img.alt = "";
-        box.appendChild(img);
-      }else{
-        box.appendChild(el("div","ph", fallbackText || "画像\n準備中"));
-      }
-      return box;
-    }
-
-    function openModal(title, contentNode){
-      mTitle.textContent = title;
-      mBody.innerHTML = "";
-      mBody.appendChild(contentNode);
-      modal.setAttribute("aria-hidden","false");
-      document.body.style.overflow = "hidden";
-    }
-    function closeModal(){
-      modal.setAttribute("aria-hidden","true");
-      document.body.style.overflow = "";
-    }
-    mClose.addEventListener("click", closeModal);
-    modal.addEventListener("click", (e)=>{ if(e.target === modal) closeModal(); });
-    document.addEventListener("keydown", (e)=>{ if(e.key==="Escape" && modal.getAttribute("aria-hidden")==="false") closeModal(); });
-
-    function linkBtn(text, url, cls=""){
-      const a = document.createElement("a");
-      a.textContent = text;
-      a.className = cls || "";
-      if(url){
-        a.href = url;
-        a.target = "_blank";
-        a.rel = "noopener";
-      }else{
-        a.href = "javascript:void(0)";
-        a.classList.add("disabled");
-      }
-      return a;
-    }
-
-    // ✅ periodが空なら行内の期間を出さない（ガイドも消える）
-    function makeRow({thumb, title, period, badges}, onClick){
-      const row = el("div","row");
-      row.appendChild(makeThumb(thumb, "サムネ\n準備中"));
-
-      const main = el("div","row-main");
-      main.appendChild(el("div","row-title", title));
-
-      if(period){
-        const meta = el("div","row-meta");
-        meta.appendChild(el("div","k", period));
-        main.appendChild(meta);
-      }
-
-      const bwrap = el("div","badges");
-      (badges||[]).forEach(b => bwrap.appendChild(makeBadge(b)));
-
-      const chev = el("div","chev","▼");
-
-      row.appendChild(main);
-      row.appendChild(bwrap);
-      row.appendChild(chev);
-
-      row.addEventListener("click", onClick);
-      return row;
-    }
-
-    function sectionCap(text){
-      const cap = el("div","sectionCap");
-      cap.appendChild(el("div","k", text));
-      cap.appendChild(el("div","capLine"));
-      return cap;
-    }
-
-    function cardTile(card){
-      const wrap = el("div","c");
-      const imgBox = el("div","cimg");
-      if(card.img){
-        const img = document.createElement("img");
-        img.src = card.img;
-        img.alt = card.no || "card";
-        imgBox.appendChild(img);
-      }else{
-        imgBox.appendChild(el("div","ph","画像\n準備中"));
-      }
-
-      const meta = el("div","cmeta");
-      const left = el("div","cno", card.no || "—");
-      const right = el("div","ctags");
-      right.appendChild(makeMiniBadge(card.kind || "デジタル"));
-
-      meta.appendChild(left);
-      meta.appendChild(right);
-
-      wrap.appendChild(imgBox);
-      wrap.appendChild(meta);
-      return wrap;
-    }
-
-    function profileBlock(p){
-      const b = el("section","block");
-      const grid = el("div","profile");
-
-      const imgBox = el("div","pimg");
-      if(p.img){
-        const img = document.createElement("img");
-        img.src = p.img;
-        img.alt = p.name || "";
-        imgBox.appendChild(img);
-      }else{
-        imgBox.appendChild(el("div","ph","画像\n準備中"));
-      }
-
-      const tx = el("div","ptext");
-      const name = el("h2","name", p.name || "—");
-      const small = p.period ? el("div","small", `期間：${p.period}`) : null;
-      const desc = el("p","desc", p.desc || "");
-
-      const links = el("div","plink");
-      if(p.xUrl) links.appendChild(linkBtn("X", p.xUrl, ""));
-      if(p.paperBuyUrl){
-        links.appendChild(linkBtn("BOOTHで購入", p.paperBuyUrl, "alt"));
-      }
-
-      tx.appendChild(name);
-      if(small) tx.appendChild(small);
-      tx.appendChild(desc);
-      if(links.childNodes.length) tx.appendChild(links);
-
-      grid.appendChild(imgBox);
-      grid.appendChild(tx);
-      b.appendChild(grid);
-      return b;
-    }
-
-    function seedBlock(s){
-      const b = el("section","block");
-      const grid = el("div","seed");
-
-      const imgBox = el("div","seedbox");
-      if(s.img){
-        const img = document.createElement("img");
-        img.src = s.img;
-        img.alt = s.title || "seed";
-        imgBox.appendChild(img);
-      }else{
-        imgBox.appendChild(el("div","ph","タネ画像\n準備中"));
-      }
-
-      const tx = el("div","seedtext");
-      const top = el("div","topline");
-      top.appendChild(el("span","label-digital", s.label || "デジタル"));
-      top.appendChild(el("div","stitle", s.title || "—"));
-
-      const desc = el("p","sdesc", s.desc || "");
-
-      tx.appendChild(top);
-      tx.appendChild(desc);
-
-      grid.appendChild(imgBox);
-      grid.appendChild(tx);
-      b.appendChild(grid);
-      return b;
-    }
-
-    function infoBlock(title, text){
-      const b = el("section","block");
-      const t = el("div","seedtext");
-      const top = el("div","topline");
-      top.appendChild(el("span","label-paper","案内"));
-      top.appendChild(el("div","stitle", title));
-      t.appendChild(top);
-      t.appendChild(el("p","sdesc", text));
-      b.appendChild(t);
-      return b;
-    }
-
-    function cardsBlock(cards){
-      const b = el("section","block");
-      const grid = el("div","cards");
-      (cards||[]).slice(0,2).forEach(c => grid.appendChild(cardTile(c)));
-      b.appendChild(grid);
-      return b;
-    }
-
-    function flowModalContent(flow){
-      const wrap = document.createElement("div");
-      wrap.style.display = "grid";
-      wrap.style.gap = "12px";
-      const b = el("section","block");
-      b.appendChild(el("p","note", flow.text));
-      wrap.appendChild(b);
-      return wrap;
-    }
-
-    function guratanModalContent(){
-      const wrap = document.createElement("div");
-      wrap.style.display = "grid";
-      wrap.style.gap = "12px";
-
-      wrap.appendChild(profileBlock(GURATAN.profile));
-      wrap.appendChild(seedBlock(GURATAN.seed));
-      wrap.appendChild(cardsBlock(GURATAN.cards));
-
-      return wrap;
-    }
-
-    function proModalContent(pro){
-      const wrap = document.createElement("div");
-      wrap.style.display = "grid";
-      wrap.style.gap = "12px";
-
-      // プロフィール（＋X）
-      wrap.appendChild(profileBlock({
-        name: pro.name,
-        period: "", /* ✅ 期限なし：期間表示しない */
-        img: pro.profile.img,
-        desc: pro.profile.desc,
-        xUrl: pro.profile.xUrl,
-        paperBuyUrl: pro.paperBuyUrl
-      }));
-
-      // ✅ 紙の購入案内（ナンバーで店頭/BOOTHが分かれる）
-      const paperInfo =
-`紙カード：${pro.paper.no}
-入手先：${pro.paperWhere || "店頭 / BOOTH"}
-
-※紙カードは「ナンバー」によって
-店頭またはBOOTHで購入できます。`;
-      wrap.appendChild(infoBlock("紙カードの入手先", paperInfo));
-
-      // ✅ ブッ刺さりのタネ（共通）
-      wrap.appendChild(seedBlock(DARTS_SEED));
-
-      // カード表示（紙＋デジタル）
-      wrap.appendChild(cardsBlock([
-        { no: pro.paper.no, img: pro.paper.img, kind:"紙" },
-        { no: pro.digital.no, img: pro.digital.img, kind:"デジタル" }
-      ]));
-
-      return wrap;
-    }
-
-    // =========================
-    // Render
-    // =========================
-    function render2026(){
-      list2026.innerHTML = "";
-      list2026.appendChild(sectionCap("配信者 / インフルエンサー"));
-      list2026.appendChild(
-        makeRow(
-          { thumb:GURATAN.thumb, title:GURATAN.title, period:GURATAN.period, badges:GURATAN.badges },
-          () => openModal(GURATAN.title, guratanModalContent())
-        )
-      );
-    }
-
-    function render2025(){
-      list2025.innerHTML = "";
-      list2025.appendChild(sectionCap("ダーツプロコラボ（紙＋デジタル）"));
-      DARTS_PROS_2025.forEach(pro => {
-        list2025.appendChild(
-          makeRow(
-            { thumb:pro.thumb, title:pro.name, period:"", badges:["紙","デジタル"] },
-            () => openModal(pro.name, proModalContent(pro))
-          )
-        );
+      // ===== スクロール =====
+      document.querySelectorAll("[data-scroll]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const sel = btn.getAttribute("data-scroll");
+          const el = document.querySelector(sel);
+          if (!el) return;
+          el.scrollIntoView({ behavior:"smooth", block:"start" });
+        });
       });
-    }
 
-    function renderGuide(){
-      listGuide.innerHTML = "";
-      listGuide.appendChild(
-        makeRow(
-          { thumb: FLOW.thumb, title: FLOW.title, period:"", badges:[] },
-          () => openModal(FLOW.title, flowModalContent(FLOW))
-        )
-      );
-    }
+      // ===== 街の案内：開閉 =====
+      const guides = {
+        info: document.getElementById("guideInfo"),
+        partners: document.getElementById("guidePartners"),
+        game: document.getElementById("guideGame"),
+      };
 
-    render2026();
-    render2025();
-    renderGuide();
+      function closeAllGuides(){
+        Object.values(guides).forEach(g => g.classList.remove("active"));
+      }
 
-  })();
+      // 開くボタン
+      document.querySelectorAll("[data-open-guide]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const key = btn.getAttribute("data-open-guide");
+          if (!guides[key]) return;
+
+          const isOpen = guides[key].classList.contains("active");
+          closeAllGuides();
+          guides[key].classList.toggle("active", !isOpen);
+
+          // 開いたらそこへスクロール
+          if (!isOpen) guides[key].scrollIntoView({ behavior:"smooth", block:"start" });
+        });
+      });
+
+      // 閉じるボタン
+      document.querySelectorAll("[data-close-guide]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const key = btn.getAttribute("data-close-guide");
+          if (!guides[key]) return;
+          guides[key].classList.remove("active");
+        });
+      });
+
+      // ===== よくある質問：全部開く/閉じる =====
+      const items = Array.from(document.querySelectorAll("details.faq"));
+      document.getElementById("openAll").addEventListener("click", () => items.forEach(d => d.open = true));
+      document.getElementById("closeAll").addEventListener("click", () => items.forEach(d => d.open = false));
+
+      // ===== 画像拡大モーダル =====
+      const modal = document.getElementById("imgModal");
+      const modalImg = document.getElementById("imgModalImg");
+      const modalTitle = document.getElementById("imgModalTitle");
+      const modalClose = document.getElementById("imgModalClose");
+
+      function openModal(src, title){
+        modalTitle.textContent = title || "全体図";
+        modalImg.src = src;
+        modalImg.alt = title || "全体図";
+        modal.classList.add("active");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+      }
+      function closeModal(){
+        modal.classList.remove("active");
+        modal.setAttribute("aria-hidden", "true");
+        modalImg.src = "";
+        document.body.style.overflow = "";
+      }
+
+      // 画像クリックで開く（キーボードEnter/Spaceにも対応）
+      document.querySelectorAll(".city-card .img[data-zoom-src]").forEach(box => {
+        const src = box.getAttribute("data-zoom-src");
+        const title = box.getAttribute("data-zoom-title") || "全体図";
+        box.addEventListener("click", () => openModal(src, title));
+        box.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openModal(src, title);
+          }
+        });
+      });
+
+      // 閉じる
+      modalClose.addEventListener("click", closeModal);
+
+      // 背景クリックで閉じる（中身クリックは無視）
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      // Escで閉じる
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("active")) closeModal();
+      });
+    })();
   </script>
 </body>
 </html>
+
 
 
