@@ -8,18 +8,22 @@
 
   <style>
     :root{
-      --bg:#000;                         /* ✅ 世界観：真っ黒 */
+      /* ✅ 背景を“黒”から変更（夜空×青紫のRPG世界観） */
+      --bg1:#070a18;
+      --bg2:#0b1240;
+      --bg3:#1a0b2e;
+
       --text:#fff;
-      --muted:rgba(255,255,255,.74);
+      --muted:rgba(255,255,255,.76);
       --line:rgba(255,255,255,.16);
 
       /* DQ風BOX */
       --dqBorder:#fff;
-      --dqFill:#0a0a12;
+      --dqFill: rgba(10,10,18,.88);
 
       --accent:#9fffa8; /* 強調 */
       --warn:#ffd38a;   /* 注意 */
-      --shadow:0 18px 60px rgba(0,0,0,.75);
+      --shadow:0 18px 60px rgba(0,0,0,.55);
       --radius:18px;
 
       --safeT: env(safe-area-inset-top, 0px);
@@ -36,10 +40,16 @@
     body{
       margin:0;
       color:var(--text);
-      background:var(--bg);
       font-family:var(--sans);
       -webkit-font-smoothing:antialiased;
       text-rendering:optimizeLegibility;
+
+      /* ✅ “真っ黒”をやめて、雰囲気のある夜空グラデ */
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(120,160,255,.22), transparent 60%),
+        radial-gradient(900px 600px at 80% 15%, rgba(255,120,210,.18), transparent 55%),
+        radial-gradient(900px 700px at 30% 90%, rgba(90,255,220,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2) 55%, var(--bg3));
     }
 
     /* うっすら星屑（ピクセルっぽいドット感） */
@@ -48,15 +58,28 @@
       position:fixed; inset:0;
       pointer-events:none;
       background-image:
-        radial-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
-        radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
+        radial-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
       background-size: 34px 34px, 58px 58px;
       background-position: 0 0, 10px 16px;
       opacity:.55;
       filter:contrast(120%);
     }
 
+    /* うっすら霧 */
+    body::after{
+      content:"";
+      position:fixed; inset:-20%;
+      pointer-events:none;
+      background:
+        radial-gradient(closest-side, rgba(255,255,255,.06), transparent 70%) 20% 30% / 900px 700px no-repeat,
+        radial-gradient(closest-side, rgba(255,255,255,.05), transparent 70%) 70% 60% / 900px 700px no-repeat;
+      opacity:.6;
+      filter: blur(1px);
+    }
+
     a{ color:inherit; }
+
     .wrap{
       position:relative;
       max-width:980px;
@@ -77,13 +100,13 @@
       min-width:0;
     }
     .seal{
-      width:42px; height:42px;
-      border-radius:12px;
-      border:2px solid rgba(255,255,255,.5);
-      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.03));
-      box-shadow: 0 10px 24px rgba(0,0,0,.55);
+      width:44px; height:44px;
+      border-radius:14px;
+      border:2px solid rgba(255,255,255,.52);
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.04));
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
       display:grid; place-items:center;
-      font-weight:900;
+      font-weight:1000;
       letter-spacing:.04em;
       user-select:none;
     }
@@ -110,32 +133,34 @@
       gap:8px;
       padding:10px 12px;
       border-radius:12px;
-      border:1px solid rgba(255,255,255,.2);
+      border:1px solid rgba(255,255,255,.22);
       text-decoration:none;
-      background: rgba(255,255,255,.06);
-      box-shadow: 0 10px 26px rgba(0,0,0,.45);
-      font-weight:800;
+      background: rgba(255,255,255,.07);
+      box-shadow: 0 10px 26px rgba(0,0,0,.32);
+      font-weight:900;
       font-size:13px;
       transition: transform .12s ease, background .12s ease;
       user-select:none;
       white-space:nowrap;
+      backdrop-filter: blur(6px);
     }
-    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.09); }
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.10); }
     .btn:active{ transform: translateY(0px) scale(.99); }
-    .btn.primary{ border-color: rgba(159,255,168,.35); }
+    .btn.primary{ border-color: rgba(159,255,168,.40); }
     .btn.ghost{ background:transparent; }
 
     /* DQ風BOX */
     .dq{
       border:2px solid var(--dqBorder);
       border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(10,10,18,.95), rgba(10,10,18,.86));
+      background: linear-gradient(180deg, rgba(10,10,18,.90), rgba(10,10,18,.80));
       box-shadow: var(--shadow);
       padding: 14px 14px;
+      backdrop-filter: blur(8px);
     }
     .dq .lead{
       margin:0;
-      font-weight:900;
+      font-weight:1000;
       letter-spacing:.03em;
       font-size:14px;
     }
@@ -151,6 +176,25 @@
       margin:14px 0;
     }
 
+    /* 追加しやすい“編集ガイド” */
+    .editGuide{
+      border:1px dashed rgba(159,255,168,.45);
+      background: rgba(159,255,168,.08);
+      border-radius:14px;
+      padding:12px;
+      margin-top:12px;
+      font-size:12.5px;
+      line-height:1.65;
+      color: rgba(255,255,255,.92);
+    }
+    .editGuide code{
+      font-family: var(--mono);
+      background: rgba(0,0,0,.35);
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.14);
+    }
+
     /* セクション見出し */
     .sectionTitle{
       display:flex; align-items:center; gap:10px;
@@ -163,15 +207,16 @@
       padding:6px 10px;
       border-radius:999px;
       border:1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.06);
-      font-weight:900;
+      background: rgba(255,255,255,.07);
+      font-weight:1000;
       font-size:12px;
       letter-spacing:.03em;
+      backdrop-filter: blur(8px);
     }
     .badge .dot{
       width:10px; height:10px;
       border-radius:3px;
-      background: rgba(159,255,168,.9);
+      background: rgba(159,255,168,.95);
       box-shadow: 0 0 0 2px rgba(159,255,168,.18);
     }
 
@@ -188,9 +233,10 @@
     .card{
       border:1px solid rgba(255,255,255,.16);
       border-radius:16px;
-      background: rgba(255,255,255,.05);
-      box-shadow: 0 14px 38px rgba(0,0,0,.55);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 14px 38px rgba(0,0,0,.35);
       overflow:hidden;
+      backdrop-filter: blur(10px);
     }
     .cardHead{
       padding:12px 12px 10px;
@@ -200,9 +246,7 @@
       justify-content:space-between;
       gap:10px;
     }
-    .meta{
-      min-width:0;
-    }
+    .meta{ min-width:0; }
     .mediaName{
       margin:0;
       font-weight:1000;
@@ -221,12 +265,11 @@
       border-radius:999px;
       border:1px solid rgba(255,255,255,.18);
       font-size:11.5px;
-      font-weight:900;
-      background: rgba(255,255,255,.06);
+      font-weight:1000;
+      background: rgba(255,255,255,.07);
       color: rgba(255,255,255,.92);
       white-space:nowrap;
     }
-
     .cardBody{ padding:12px; }
     .headline{
       margin:0;
@@ -273,37 +316,31 @@
       object-fit:cover;
       display:block;
     }
-    .shot .ph{
-      padding:14px;
-      color: rgba(255,255,255,.75);
-      font-size:12.5px;
-      text-align:center;
-      line-height:1.6;
-    }
-    .note{
-      color: rgba(255,255,255,.7);
-      font-size:12px;
-      line-height:1.6;
-      margin:10px 0 0;
-    }
 
     /* 注意書き（新聞） */
     .caution{
-      border:1px solid rgba(255,211,138,.28);
-      background: rgba(255,211,138,.08);
+      border:1px solid rgba(255,211,138,.30);
+      background: rgba(255,211,138,.10);
       border-radius:14px;
       padding:12px;
-      color: rgba(255,255,255,.86);
+      color: rgba(255,255,255,.90);
       font-size:12.5px;
       line-height:1.65;
+      backdrop-filter: blur(8px);
     }
     .caution b{ color:#fff; }
 
     footer{
       margin-top:18px;
-      color: rgba(255,255,255,.62);
+      color: rgba(255,255,255,.70);
       font-size:12px;
       text-align:center;
+    }
+
+    /* 小さめデバイスでの詰め */
+    @media (max-width:420px){
+      .title h1{ font-size:17px; }
+      .seal{ width:42px; height:42px; }
     }
   </style>
 </head>
@@ -322,7 +359,7 @@
       </div>
 
       <div class="btnrow">
-        <!-- ✅ あなたのトップや案内へ。不要なら消してOK -->
+        <!-- ✅ あなたの導線に合わせて変更OK -->
         <a class="btn ghost" href="./index.html">← 戻る</a>
         <a class="btn primary" href="https://takoyaki-trc.github.io/takoyaki-media/town/cardlist.html" target="_blank" rel="noopener">世界を覗く</a>
       </div>
@@ -340,9 +377,18 @@
       <div class="hr"></div>
 
       <div class="caution">
-        <b>紙面（新聞）について：</b><br />
+        <b>新聞（紙面画像）について：</b><br />
         記事の画像・切り抜きの掲載は著作権の関係で避け、<b>掲載情報（媒体名/日付/タイトル/概要）</b>のみを記載しています。<br />
-        もし紙面画像を載せる場合は、各社のルールに沿って許諾を取ってください。
+        紙面画像を載せる場合は、各社のルールに沿って許諾を取ってください。
+      </div>
+
+      <!-- ✅✅✅ ここが「今後の追加」を迷わないためのガイド -->
+      <div class="editGuide">
+        <b>【更新メモ：掲載が増えたらここだけ編集】</b><br>
+        ① 下の <code>オンライン掲載</code> / <code>地域メディア</code> は、同じ形のカード（<code>&lt;article class="card"&gt;</code>）をコピペして増やすだけ。<br>
+        ② 日付は <code>2026-01-15</code> のように入れると管理しやすい。<br>
+        ③ URLが無い場合はボタン行（<code>&lt;div class="actions"&gt;...&lt;/div&gt;</code>）を丸ごと消してOK。<br>
+        ④ ラジオ写真は下の <code>FMいるか</code> セクションの <code>&lt;img src="..."&gt;</code> を差し替えるだけ。
       </div>
     </section>
 
@@ -352,6 +398,12 @@
     </div>
 
     <section class="grid">
+      <!-- =============================
+           ✅ 追加しやすいテンプレ（コピペ用）
+           1) <article class="card"> ... </article> を丸ごとコピー
+           2) 媒体名 / 日付 / タグ / 見出し / 要約 / URL を入れ替え
+         ============================= -->
+
       <!-- PR TIMES -->
       <article class="card">
         <div class="cardHead">
@@ -385,7 +437,7 @@
         </div>
         <div class="cardBody">
           <p class="headline">（例）地域発：たこ焼き店の新名物「たこ焼きトレカ」</p>
-          <p class="desc">※要約（自分の言葉）を記載。リンクがある場合のみボタンを有効化。</p>
+          <p class="desc">※要約（自分の言葉）を記載。リンクがある場合のみボタンを残す。</p>
           <div class="actions">
             <a class="btn primary" href="https://example.com" target="_blank" rel="noopener">記事を見る</a>
           </div>
@@ -430,10 +482,9 @@
           <p class="headline">（例）「たこ焼き店主、カードを焼く。」</p>
           <p class="desc">
             ※紙面画像は載せず、掲載情報のみ。<br>
-            可能なら「Web版のURL」や「掲載号情報」を記載。
+            Web版URLがあるなら貼る／無ければ要約だけでOK。
           </p>
           <div class="actions">
-            <!-- ✅ Web記事が無いなら、このボタン自体消してOK -->
             <a class="btn primary" href="https://example.com" target="_blank" rel="noopener">関連ページ</a>
           </div>
         </div>
@@ -482,24 +533,17 @@
             </p>
 
             <div class="actions">
-              <!-- ✅ 番組ページや告知投稿があれば差し替え -->
               <a class="btn primary" href="https://example.com" target="_blank" rel="noopener">関連ページ</a>
             </div>
 
-            <p class="note">
-              ※ラジオの画像は<b>自分で撮ったスタジオ写真</b>や、<b>局が配布している告知画像</b>が安全です（ロゴ利用ルールに注意）。
+            <p class="desc" style="margin-top:10px;">
+              ※ラジオ画像は <b>自分で撮った写真</b> を使うのが安全（ロゴ類の使用ルールに注意）。
             </p>
           </div>
 
           <div class="shot">
-            <!-- ✅ 画像がある場合：下のimgを有効化してURLを差し替え -->
-            <!-- <img src="https://ul.h3z.jp/fZqWxGQ2.jpg" alt="FMいるか出演時の写真"> -->
-
-            <!-- ✅ 画像がまだ無い場合：プレースホルダーのままでOK -->
-            <div class="ph">
-              ここに「ラジオ出演時の写真」を置くと強い。<br>
-              （例：マイク前／スタジオ／告知画像）
-            </div>
+            <!-- ✅✅✅ 指定画像に差し替え済み -->
+            <img src="https://ul.h3z.jp/fZqWxGQ2.jpg" alt="FMいるか出演時の写真">
           </div>
         </div>
       </div>
@@ -507,9 +551,10 @@
 
     <footer>
       © 焼かれた伝説 / たこ焼きトレーディングカード<br>
-      ※掲載情報は、内容の正確性維持のため「日付・タイトル・URL」を都度更新してください。
+      ※掲載情報は、正確性維持のため「日付・タイトル・URL」を都度更新してください。
     </footer>
 
   </main>
 </body>
 </html>
+
