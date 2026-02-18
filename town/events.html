@@ -1,236 +1,632 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>今遊べるイベント｜焼かれた伝説 / たこ焼きトレカ</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>今遊べるイベント｜焼かれた伝説 / たこ焼きトレカ</title>
+  <meta name="description" content="今この瞬間、参加できるイベント一覧。主戦場はX（たこぴ）。" />
 
-<style>
-:root{
-  --line: rgba(255,255,255,.16);
-  --text:#fff;
-  --muted: rgba(255,255,255,.72);
-  --shadow:0 18px 60px rgba(0,0,0,.72);
-  --sans: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
-  --a4ratio:1.4142;
-}
+  <style>
+    :root{
+      --text:#fff;
+      --muted:rgba(255,255,255,.72);
+      --line:rgba(255,255,255,.16);
+      --shadow:0 18px 60px rgba(0,0,0,.72);
 
-/* =========================
-   背景：指定画像に変更
-========================= */
-body{
-  margin:0;
-  color:var(--text);
-  font-family:var(--sans);
-  background:
-    linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.75)),
-    url("https://ul.h3z.jp/U4lvcgic.jpg") center/cover fixed no-repeat;
-}
+      --radius:18px;
+      --radius2:22px;
 
-/* =========================
-   Header
-========================= */
-header{
-  position:sticky;
-  top:0;
-  padding:14px;
-  backdrop-filter: blur(8px);
-  background:rgba(0,0,0,.45);
-  border-bottom:1px solid var(--line);
-}
-.head-inner{
-  max-width:1100px;
-  margin:auto;
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.back{
-  padding:10px 14px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.06);
-  font-weight:900;
-  cursor:pointer;
-}
-.titlebox .t1{
-  font-weight:900;
-}
-.titlebox .t2{
-  font-size:12px;
-  color:var(--muted);
-}
+      --safeT: env(safe-area-inset-top, 0px);
+      --safeB: env(safe-area-inset-bottom, 0px);
 
-/* =========================
-   Layout
-========================= */
-.wrap{
-  max-width:1100px;
-  margin:auto;
-  padding:18px 14px 40px;
-}
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+              "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
-/* DQ box */
-.hero{
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:14px;
-  background:rgba(0,0,0,.55);
-  box-shadow:var(--shadow);
-}
-.dqbox{
-  border:2px solid #fff;
-  border-radius:14px;
-  padding:14px;
-  background:rgba(0,0,0,.75);
-}
-.btn{
-  padding:10px 14px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.06);
-  cursor:pointer;
-  font-weight:900;
-}
+      /* ✅ 背景画像 */
+      --bg-url: url("https://ul.h3z.jp/U4lvcgic.jpg");
 
-/* =========================
-   Event card
-========================= */
-.grid{ margin-top:16px; }
+      /* ✅ A4縦比率（1:√2） */
+      --a4ratio: 1.4142;
 
-.card{
-  display:grid;
-  grid-template-columns:340px 1fr;
-  border:1px solid var(--line);
-  border-radius:18px;
-  overflow:hidden;
-  background:rgba(0,0,0,.55);
-  box-shadow:var(--shadow);
-}
-@media(max-width:860px){ .card{grid-template-columns:1fr;} }
+      /* ✅ 背景の暗さ（レイアウト崩れ防止＆文字可読性） */
+      --overlay1: rgba(0,0,0,.40);
+      --overlay2: rgba(0,0,0,.68);
+    }
 
-/* A4 frame */
-.thumb{ padding:12px; border-right:1px solid var(--line); }
-@media(max-width:860px){ .thumb{border-right:none;border-bottom:1px solid var(--line);} }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:var(--sans);
+      background: #000;
+      overflow-x:hidden;
+    }
 
-.a4frame{
-  width:100%;
-  max-width:320px;
-  aspect-ratio:1/var(--a4ratio);
-  border:1px dashed rgba(255,255,255,.3);
-  border-radius:12px;
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.a4frame img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-}
+    /* =========================
+       背景：画像 + 黒グラデ + うっすら粒子
+       ※ fixed はiOSで怪しいので「大きめcover」で安定優先
+    ========================= */
+    .bg{
+      position:fixed;
+      inset:0;
+      z-index:-2;
+      background:
+        linear-gradient(180deg, var(--overlay1), var(--overlay2)),
+        var(--bg-url) center/cover no-repeat;
+      transform: translateZ(0);
+    }
+    .grain{
+      position:fixed;
+      inset:0;
+      z-index:-1;
+      pointer-events:none;
+      background-image:
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 14px 14px;
+      opacity:.18;
+      mix-blend-mode: overlay;
+    }
 
-.content{ padding:16px; display:flex; flex-direction:column; gap:10px; }
-.name{ font-weight:900; font-size:15px; margin:0; }
-.desc{ font-size:13px; line-height:1.7; }
+    a{ color:inherit; text-decoration:none; }
+    img{ max-width:100%; display:block; }
 
-.tags{ display:flex; gap:6px; flex-wrap:wrap; }
-.tag{
-  font-size:12px;
-  padding:4px 10px;
-  border-radius:999px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.08);
-}
+    /* =========================
+       Header（左上：←戻るのみ）
+    ========================= */
+    header{
+      position:sticky;
+      top:0;
+      z-index:50;
+      padding: calc(10px + var(--safeT)) 14px 10px;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(0,0,0,.78), rgba(0,0,0,.40));
+      border-bottom: 1px solid var(--line);
+    }
+    .head-inner{
+      max-width: 980px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .back{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height:44px;
+      padding:0 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      user-select:none;
+      font-weight:900;
+      letter-spacing:.02em;
+      white-space:nowrap;
+    }
+    .titlebox{
+      min-width:0;
+      flex:1;
+    }
+    .titlebox .t1{
+      font-weight:900;
+      letter-spacing:.02em;
+      font-size:16px;
+      line-height:1.2;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      margin:0;
+    }
+    .badge-live{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,122,168,.55);
+      background: rgba(255,122,168,.12);
+      color:#ffd6e4;
+      font-size:12px;
+      font-weight:900;
+    }
+    .dot{
+      width:8px; height:8px; border-radius:50%;
+      background:#ff5d95;
+      box-shadow:0 0 0 4px rgba(255,93,149,.20);
+    }
+    .titlebox .t2{
+      margin-top:2px;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
 
-.actions{ margin-top:auto; display:flex; gap:10px; flex-wrap:wrap; }
+    /* =========================
+       Layout
+    ========================= */
+    main{
+      max-width: 980px;
+      margin:0 auto;
+      padding: 16px 14px calc(22px + var(--safeB));
+    }
 
-footer{
-  margin-top:22px;
-  text-align:center;
-  color:var(--muted);
-  font-size:12px;
-}
-</style>
+    /* =========================
+       DQ風セリフBOX（ワクワクの入口）
+    ========================= */
+    .hero{
+      border-radius: var(--radius2);
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.35);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      overflow:hidden;
+    }
+    .dqbox{
+      border: 2px solid rgba(255,255,255,.90);
+      border-radius: 16px;
+      background: rgba(10,10,18,.78);
+      padding: 14px 14px 12px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.55);
+    }
+    .dqbox .line1{
+      margin:0 0 6px;
+      font-weight:900;
+      font-size:14px;
+      letter-spacing:.02em;
+    }
+    .dqbox .line2{
+      margin:0;
+      color: rgba(255,255,255,.86);
+      font-size:13px;
+      line-height:1.7;
+    }
+    .dqbox .hint{
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px dashed rgba(255,255,255,.22);
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.6;
+    }
+
+    .btnrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      height:42px;
+      padding: 0 14px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: rgba(143,214,255,.45);
+      background: linear-gradient(180deg, rgba(143,214,255,.22), rgba(255,255,255,.06));
+    }
+
+    /* =========================
+       Section title
+    ========================= */
+    .sec{
+      margin-top:16px;
+    }
+    .sec-head{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin: 0 0 10px;
+    }
+    .sec-head h2{
+      margin:0;
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .sec-head .sub{
+      margin:0;
+      font-size:12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    /* =========================
+       Event Card（崩れにくい2カラム→スマホ1カラム）
+       ✅ 左：A4縦枠　右：説明＆ボタン
+    ========================= */
+    .event{
+      border-radius: var(--radius2);
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.35);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:grid;
+      grid-template-columns: 380px 1fr;
+    }
+    @media (max-width: 860px){
+      .event{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .event-left{
+      padding: 14px;
+      border-right: 1px solid rgba(255,255,255,.12);
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+    @media (max-width: 860px){
+      .event-left{
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,.12);
+      }
+    }
+
+    /* ✅ A4枠：縦比率固定・画像はcontain */
+    .a4frame{
+      width: min(320px, 100%);
+      aspect-ratio: 1 / var(--a4ratio);
+      border-radius: 16px;
+      border: 1px dashed rgba(255,255,255,.26);
+      background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 10px;
+    }
+    .a4frame img{
+      width:100%;
+      height:100%;
+      object-fit:contain; /* ✅ A4縮小を切らない */
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+    }
+    .a4ph{
+      width:100%;
+      height:100%;
+      border-radius: 12px;
+      border: 1px dashed rgba(255,255,255,.18);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      color: rgba(255,255,255,.62);
+      font-family: var(--mono);
+      font-weight:900;
+      letter-spacing:.06em;
+      font-size:12px;
+      padding: 10px;
+    }
+
+    .event-right{
+      padding: 14px 14px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-width:0;
+    }
+
+    .topline{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .name{
+      margin:0;
+      font-weight:900;
+      font-size:16px;
+      letter-spacing:.02em;
+      line-height:1.25;
+    }
+    .status{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(143,214,255,.50);
+      background: rgba(143,214,255,.12);
+      color:#dff4ff;
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .desc{
+      margin:0;
+      color: rgba(255,255,255,.86);
+      font-size:13px;
+      line-height:1.8;
+    }
+
+    .tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:2px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.86);
+      white-space:nowrap;
+    }
+    .tag.good{ border-color: rgba(159,255,168,.40); background: rgba(159,255,168,.10); color:#dcffe0; }
+    .tag.warn{ border-color: rgba(255,211,138,.45); background: rgba(255,211,138,.10); color:#fff0d8; }
+    .tag.info{ border-color: rgba(143,214,255,.45); background: rgba(143,214,255,.10); color:#dff4ff; }
+
+    .actions{
+      margin-top:auto;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      padding-top: 6px;
+    }
+    .btn.small{ height:40px; border-radius:14px; font-size:13px; }
+
+    /* =========================
+       Note
+    ========================= */
+    .note{
+      margin-top: 14px;
+      border-radius: var(--radius2);
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.35);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .note h3{
+      margin:0 0 8px;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .note ul{
+      margin:0;
+      padding-left: 18px;
+      color: rgba(255,255,255,.84);
+      font-size:12.5px;
+      line-height:1.75;
+    }
+    .sep{
+      height:1px;
+      background: rgba(255,255,255,.14);
+      margin: 10px 0 0;
+      opacity:.7;
+    }
+    footer{
+      margin-top: 16px;
+      color: var(--muted);
+      font-size:12px;
+      text-align:center;
+      padding: 10px 0 0;
+    }
+
+    /* =========================
+       Toast
+    ========================= */
+    #toast{
+      position:fixed;
+      left:12px;
+      right:12px;
+      bottom: calc(14px + var(--safeB));
+      z-index:99999;
+      pointer-events:none;
+
+      opacity:0;
+      transform: translateY(10px) scale(.98);
+      transition: opacity .16s ease, transform .18s ease;
+
+      padding: 14px 14px;
+      border-radius: 14px;
+      font-weight: 900;
+      letter-spacing: .02em;
+      text-align:center;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.72);
+      color:#fff;
+      backdrop-filter: blur(10px);
+    }
+    #toast.on{
+      opacity:1;
+      transform: translateY(0) scale(1);
+    }
+  </style>
 </head>
 
 <body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
 
-<header>
-  <div class="head-inner">
-    <button class="back" id="backBtn">← 戻る</button>
-    <div class="titlebox">
-      <div class="t1">今遊べるイベント</div>
-      <div class="t2">いま参加できるクエスト</div>
+  <header>
+    <div class="head-inner">
+      <button class="back" id="backBtn" type="button" aria-label="戻る">← 戻る</button>
+
+      <div class="titlebox">
+        <h1 class="t1">今遊べるイベント <span class="badge-live"><span class="dot"></span>LIVE</span></h1>
+        <div class="t2">いま参加できるクエスト（主戦場はX）</div>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
-<main class="wrap">
+  <main>
 
-<section class="hero">
-  <div class="dqbox">
-    ▶ よくきたな。いま遊べるイベントを案内する。<br>
-    この世界のイベントはXで発生する。<br>
-    下のイベントから参加してくれ…たこ。
-  </div>
-</section>
+    <!-- HERO -->
+    <section class="hero" aria-label="案内">
+      <div class="dqbox">
+        <p class="line1">▶ よくきたな。いま遊べるイベントを案内する。</p>
+        <p class="line2">
+          この世界のイベントは基本、<b>X（たこぴ）</b>で発生する。<br>
+          下のイベントから参加して、噂を増やしてくれ…たこ。
+        </p>
+        <div class="hint">💡 迷ったら「Xで参加」を押せ。最新の参加方法に飛べる。</div>
 
-<section class="grid">
+        <div class="btnrow">
+          <!-- 任意：入口URLに差し替え -->
+          <a class="btn" id="homeLink" href="#">入口に戻る</a>
+        </div>
+      </div>
+    </section>
 
-<article class="card">
+    <!-- EVENT -->
+    <section class="sec" aria-label="イベント">
+      <div class="sec-head">
+        <h2>📌 開催中 / 参加できるクエスト</h2>
+        <p class="sub">※ひとまず1件</p>
+      </div>
 
-  <div class="thumb">
-    <div class="a4frame">
-      <!-- A4画像をここに入れる -->
-      <!-- <img src="ここにA4画像URL"> -->
-    </div>
-  </div>
+      <article class="event">
+        <div class="event-left">
+          <div class="a4frame">
+            <!-- ✅ A4縮小画像をここに -->
+            <!-- <img src="https://ul.h3z.jp/xxxxxx.jpg" alt="イベント画像（A4）" /> -->
+            <div class="a4ph">EVENT A4 IMAGE<br>（ここにA4画像）</div>
+          </div>
+        </div>
 
-  <div class="content">
-    <h3 class="name">《今週の匂わせ投稿》</h3>
+        <div class="event-right">
+          <div class="topline">
+            <h3 class="name">《今週の匂わせ投稿》</h3>
+            <span class="status">Xメイン</span>
+          </div>
 
-    <p class="desc">
-      たこぴが“何か”を匂わせる投稿をする。<br>
-      リプ・引用・RTで参加して噂を増やしてくれ…たこ。
-    </p>
+          <p class="desc">
+            たこぴが“何か”を匂わせる投稿をする。<br>
+            リプ・引用・RTで参加して、噂を増やしてくれ…たこ。
+          </p>
 
-    <div class="tags">
-      <span class="tag">🕒 1分</span>
-      <span class="tag">👍 参加しやすい</span>
-      <span class="tag">🧩 謎あり</span>
-    </div>
+          <div class="tags">
+            <span class="tag info">🕒 1分</span>
+            <span class="tag good">👍 参加しやすい</span>
+            <span class="tag warn">🧩 謎あり</span>
+          </div>
 
-    <div class="actions">
-      <!-- Xリンク差し替え -->
-      <a class="btn" href="https://x.com/" target="_blank">Xで参加</a>
-      <button class="btn" data-copy="例：この匂い…焼かれた伝説の予感。">テンプレコピー</button>
-    </div>
-  </div>
+          <div class="actions">
+            <!-- ✅ 必須：たこぴXへ -->
+            <a class="btn primary small" id="xJoinBtn" href="https://x.com/" target="_blank" rel="noopener">Xで参加</a>
+            <button class="btn small" type="button" data-copy="例：引用で『この匂い…焼かれた伝説の予感。』って書く">参加テンプレをコピー</button>
+          </div>
+        </div>
+      </article>
 
-</article>
+    </section>
 
-</section>
+    <!-- NOTE -->
+    <section class="note" aria-label="補足">
+      <h3>🧾 補足</h3>
+      <ul>
+        <li>参加条件や期間は、基本的にX側の告知が最新です。</li>
+        <li>このページは「今遊べるもの」だけを置く掲示板です（増減OK）。</li>
+      </ul>
+      <div class="sep"></div>
+      <div class="btnrow" style="margin-top:12px;">
+        <button class="btn" id="scrollTopBtn" type="button">ページ上へ</button>
+      </div>
 
-<footer>
-© 焼かれた伝説 / たこ焼きトレカ
-</footer>
+      <footer>© 焼かれた伝説 / たこ焼きトレカ</footer>
+    </section>
 
-</main>
+  </main>
 
-<script>
-/* 戻るボタン */
-document.getElementById("backBtn").onclick=()=>history.back();
+  <div id="toast" role="status" aria-live="polite"></div>
 
-/* コピー */
-document.querySelectorAll("[data-copy]").forEach(b=>{
-  b.onclick=()=>{
-    navigator.clipboard.writeText(b.dataset.copy);
-    alert("コピーしたたこ");
-  };
-});
-</script>
+  <script>
+    "use strict";
 
+    // =========================
+    // 設定（ここだけ触ればOK）
+    // =========================
+    const TAKOPI_X_URL = "https://x.com/"; // ← たこぴXアカウントURLに差し替え
+    const HOME_URL = "#"; // ← 入口URLに差し替え（不要なら # のまま）
+
+    // 反映
+    const xJoinBtn = document.getElementById("xJoinBtn");
+    if (xJoinBtn) xJoinBtn.href = TAKOPI_X_URL;
+
+    const homeLink = document.getElementById("homeLink");
+    if (homeLink) homeLink.href = HOME_URL;
+
+    // 戻る：history優先、なければHOME
+    const backBtn = document.getElementById("backBtn");
+    if (backBtn){
+      backBtn.addEventListener("click", () => {
+        if (history.length > 1) history.back();
+        else location.href = HOME_URL || "#";
+      });
+    }
+
+    // ページ上へ
+    const scrollTopBtn = document.getElementById("scrollTopBtn");
+    if (scrollTopBtn){
+      scrollTopBtn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    // コピー
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        toast("コピーした。Xに貼れ…たこ。");
+      }catch(e){
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        toast("コピーした（旧式）。Xに貼れ…たこ。");
+      }
+    }
+
+    document.querySelectorAll("[data-copy]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        copyText(btn.getAttribute("data-copy") || "");
+      });
+    });
+
+    // toast
+    let toastTimer = null;
+    function toast(msg){
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("on");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove("on"), 1400);
+    }
+  </script>
 </body>
 </html>
 
