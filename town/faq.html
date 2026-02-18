@@ -103,39 +103,89 @@
         linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,0));
       pointer-events:none;
     }
+
     .hero-top{
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
-      gap:10px;
+      gap:12px;
     }
+
+    /* 左：タイトル＋文章 */
     .sign{
       display:flex;
       flex-direction:column;
       gap:8px;
       min-width:0;
+      flex: 1 1 auto;
     }
+
+    /* ✅ タイトルは“手動改行しない”＝1行で書く（自動改行はOK） */
     .sign h1{
       margin:0;
       font-size: 18px;
       letter-spacing:.02em;
+      line-height:1.35;
+      white-space: normal;       /* 自動改行OK */
+      word-break: break-word;    /* はみ出し防止 */
     }
+
     .lead{
       margin:0;
       font-size: 13.5px;
       line-height:1.75;
       color:var(--muted);
     }
+
+    /* 右：縦長スクショ＋最終更新 */
+    .hero-right{
+      flex: 0 0 220px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+    }
+    @media(max-width:640px){
+      .hero-top{ flex-direction:column; }
+      .hero-right{
+        width:100%;
+        flex: 1 1 auto;
+        align-items:stretch;
+      }
+    }
+
+    .mini-shot{
+      width:100%;
+      border:2px solid rgba(0,0,0,.20);
+      border-radius: 14px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow: 0 10px 18px rgba(0,0,0,.08);
+    }
+    .mini-shot img{
+      width:100%;
+      height:220px;         /* ✅ 縦長スクショを枠内に収める */
+      object-fit:contain;   /* ✅ 全体が見える（切れない） */
+      display:block;
+      background: #fff;
+    }
+
+    /* ✅ 最終更新：邪魔にならない右下寄りの“薄いラベル” */
     .updated{
       font-size:12px;
       color:rgba(0,0,0,.55);
       white-space:nowrap;
       font-family: var(--mono);
-      padding:8px 10px;
-      border:1px dashed rgba(0,0,0,.25);
+      padding:7px 10px;
+      border:1px dashed rgba(0,0,0,.22);
       border-radius: 12px;
       background: rgba(0,0,0,.03);
+      align-self:flex-end;
     }
+    @media(max-width:640px){
+      .updated{ align-self:flex-start; }
+    }
+
     .hero-actions{
       margin-top:12px;
       display:flex;
@@ -208,18 +258,24 @@
       transform: translateY(-1px);
       box-shadow: 0 10px 18px rgba(0,0,0,.10);
     }
+
+    /* ✅ 画像タップで拡大表示できるように：クリック可能に見せる */
     .city-card .img{
       position:relative;
       border:2px solid rgba(0,0,0,.20);
       border-radius: 14px;
       overflow:hidden;
       background:#fff;
+      cursor: zoom-in;
+      user-select:none;
     }
+    .city-card .img:active{ transform: scale(.995); }
+
     /* ★画像をもっと大きく（統一表示） */
     .city-card img{
       width:100%;
-      height:180px;        /* ←大きくした */
-      object-fit:cover;    /* ←自動トリミング */
+      height:180px;
+      object-fit:cover;
       display:block;
     }
     .city-card .img::after{
@@ -236,6 +292,7 @@
       display:flex;
       align-items:center;
       gap:8px;
+      flex-wrap:wrap;
     }
     .chip{
       font-family: var(--mono);
@@ -553,6 +610,66 @@
 
     /* ===== アンカー補正 ===== */
     [data-anchor]{ scroll-margin-top: 14px; }
+
+    /* ===== 画像拡大モーダル ===== */
+    .imgModal{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.70);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px 12px;
+      z-index: 9999;
+    }
+    .imgModal.active{ display:flex; }
+    .imgModal .frame{
+      width:min(980px, 100%);
+      max-height: calc(100vh - 36px);
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius: 16px;
+      overflow:hidden;
+      box-shadow: 0 25px 80px rgba(0,0,0,.55);
+      backdrop-filter: blur(2px);
+    }
+    .imgModal .head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 10px 10px;
+      background: rgba(0,0,0,.55);
+      color:#fff;
+    }
+    .imgModal .head b{
+      font-size: 13px;
+      letter-spacing:.02em;
+    }
+    .imgModal .close{
+      border:none;
+      cursor:pointer;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 1000;
+      background: rgba(255,255,255,.14);
+      color:#fff;
+    }
+    .imgModal img{
+      width:100%;
+      height:auto;
+      display:block;
+      max-height: calc(100vh - 120px);
+      object-fit: contain;
+      background:#000;
+    }
+    .imgModal .hint{
+      padding: 10px 12px 12px;
+      color: rgba(255,255,255,.85);
+      font-size: 12.5px;
+      line-height:1.65;
+      background: rgba(0,0,0,.55);
+    }
   </style>
 </head>
 
@@ -565,34 +682,47 @@
       <!-- =========================================================
            ✅ 更新メモ（非表示コメント）
            - 最終更新日：#updatedDate の文字だけ変える
-           - 3つの街 画像：#city-info / #city-partners / #city-game のsrc
+           - 右の縦長スクショ：#townShot のsrc
+           - 3つの街 画像：#city-north / #city-center / #city-south のsrc
            - 街の案内文：#guideInfo / #guidePartners / #guideGame の中身（HTML）を編集
            - よくある質問：#faqList の <details class="faq"> を編集
-           - 「遊戯の街」ゲームルール：guideGame の「ゲーム案内」を編集
+           - 「遊技の街」ゲームルール：guideGame の「ゲーム案内」を編集
       ========================================================== -->
 
       <!-- ===== ヒーロー ===== -->
       <article class="paper hero" id="top">
         <div class="inner">
           <div class="hero-top">
+
             <div class="sign">
+              <!-- ✅ ここは手動改行しない（1行で書く） -->
               <h1>町の案内所（3つの街・遊び方・よくある質問）</h1>
+
+              <!-- ✅ 文章はそのまま -->
               <p class="lead">
                 旅人へ。<br>
                 この町は「情報の街」「協力店の街」「遊技の街」の3つに分かれています。<br>
                 まずは街の役割をつかんで、気になった建物から覗いてみてください。
               </p>
-            </div>
-            <div class="updated" id="updatedDate">最終更新：2026-02-17</div>
-          </div>
 
-          <div class="hero-actions">
-            <button class="btn primary" type="button" data-scroll="#three-cities">
-              ▶ 3つの街を見る <small>（全体像）</small>
-            </button>
-            <button class="btn ghost" type="button" data-scroll="#faq">
-              ？ よくある質問へ
-            </button>
+              <div class="hero-actions">
+                <button class="btn primary" type="button" data-scroll="#three-cities">
+                  ▶ 3つの街を見る <small>（全体像）</small>
+                </button>
+                <button class="btn ghost" type="button" data-scroll="#faq">
+                  ？ よくある質問へ
+                </button>
+              </div>
+            </div>
+
+            <!-- ✅ 右側：町全体スクショ＋最終更新（邪魔にならない） -->
+            <div class="hero-right" aria-label="町の全体図と最終更新">
+              <div class="mini-shot" title="町の全体図（縮小表示）">
+                <img id="townShot" src="https://ul.h3z.jp/EpV3R56f.png" alt="町全体の縦長スクショ">
+              </div>
+              <div class="updated" id="updatedDate">最終更新：2026-02-17</div>
+            </div>
+
           </div>
         </div>
       </article>
@@ -603,29 +733,37 @@
           <h2 class="section-title">🗺 このホームページは「3つの街」でできています</h2>
           <p class="section-sub">
             画像のサイズがバラバラでも大丈夫。見た目は“同じ枠に統一”されます。<br>
-            それぞれの「この街の案内へ」を押すと、街の建物の説明が開きます。
+            それぞれの「この街の案内へ」を押すと、街の建物の説明が開きます。<br>
+            ※ 画像はタップすると全体図が開きます。
           </p>
 
           <div class="city-grid">
 
+            <!-- =======================
+                 北の街（＝情報の街）
+                 ======================= -->
             <section class="city-card" id="cityA">
-              <div class="img">
-                <img id="city-info" src="https://ul.h3z.jp/1NHzQTUk.png" alt="情報の街">
+              <div class="img" role="button" tabindex="0"
+                   data-zoom-src="https://ul.h3z.jp/1NHzQTUk.png"
+                   data-zoom-title="北の街（情報の街）｜全体図を表示">
+                <img id="city-north" src="https://ul.h3z.jp/1NHzQTUk.png" alt="北の街（情報の街）">
               </div>
-              <h3><span class="chip">CITY-01</span> 情報の街</h3>
+
+              <h3><span class="chip">CITY-01</span> 北の街（情報の街）</h3>
               <p>
-                お知らせ、開催中のイベント、コンプリートカード、コラボカード、メディア掲載など、<b>「今なにが起きているか」</b>が集まる場所です。
+                実物の<b>たこ焼きトレカ</b>についての情報が集まる街です。<br>
+                お知らせ、開催中のイベント、コンプリートカード、コラボカード、メディア掲載など、<b>「今なにが起きているか」</b>がここにあります。
               </p>
               <div class="goto">
                 <button class="pill" type="button" data-open-guide="info">📍 この街の案内へ</button>
                 <a class="pill dark" href="#faq">？ よくある質問</a>
               </div>
 
-              <!-- 情報の街：案内（展開） -->
+              <!-- 北の街：案内（展開） -->
               <div class="city-guide" id="guideInfo">
                 <div class="guide-box">
                   <div class="guide-head">
-                    <h4>📍 情報の街：建物案内</h4>
+                    <h4>📍 北の街（情報の街）：建物案内</h4>
                     <button class="guide-close" type="button" data-close-guide="info">閉じる</button>
                   </div>
 
@@ -725,11 +863,17 @@
               </div>
             </section>
 
+            <!-- =======================
+                 中央の街（＝協力店の街）
+                 ======================= -->
             <section class="city-card" id="cityB">
-              <div class="img">
-                <img id="city-partners" src="https://ul.h3z.jp/1W5HduaY.png" alt="協力店の街">
+              <div class="img" role="button" tabindex="0"
+                   data-zoom-src="https://ul.h3z.jp/1W5HduaY.png"
+                   data-zoom-title="中央の街（協力店の街）｜全体図を表示">
+                <img id="city-center" src="https://ul.h3z.jp/1W5HduaY.png" alt="中央の街（協力店の街）">
               </div>
-              <h3><span class="chip">CITY-02</span> 協力店の街</h3>
+
+              <h3><span class="chip">CITY-02</span> 中央の街（協力店の街）</h3>
               <p>
                 パンフレット協力店を<b>一つの街</b>に見立てたリンク広場です。<br>
                 〘旅路の塔〙（ホテル＆空港の限定ショップカード）もここに含まれます。<br>
@@ -740,11 +884,11 @@
                 <a class="pill dark" href="#faq">？ よくある質問</a>
               </div>
 
-              <!-- 協力店の街：案内（展開） -->
+              <!-- 中央の街：案内（展開） -->
               <div class="city-guide" id="guidePartners">
                 <div class="guide-box">
                   <div class="guide-head">
-                    <h4>🧭 協力店の街：案内</h4>
+                    <h4>🧭 中央の街（協力店の街）：案内</h4>
                     <button class="guide-close" type="button" data-close-guide="partners">閉じる</button>
                   </div>
 
@@ -817,11 +961,17 @@
               </div>
             </section>
 
+            <!-- =======================
+                 南の街（＝遊技の街）
+                 ======================= -->
             <section class="city-card" id="cityC">
-              <div class="img">
-                <img id="city-game" src="https://ul.h3z.jp/a23zkfh5.png" alt="遊技の街">
+              <div class="img" role="button" tabindex="0"
+                   data-zoom-src="https://ul.h3z.jp/a23zkfh5.png"
+                   data-zoom-title="南の街（遊技の街）｜全体図を表示">
+                <img id="city-south" src="https://ul.h3z.jp/a23zkfh5.png" alt="南の街（遊技の街）">
               </div>
-              <h3><span class="chip">CITY-03</span> 遊技の街</h3>
+
+              <h3><span class="chip">CITY-03</span> 南の街（遊技の街）</h3>
               <p>
                 ここはゲームのセクションです。<br>
                 たこ焼き釣り／たこ焼きタワー／畑／露店――この町の<b>遊びと育成</b>は、ここから始まります。
@@ -831,11 +981,11 @@
                 <a class="pill dark" href="#faq">？ よくある質問</a>
               </div>
 
-              <!-- 遊技の街：案内（展開） -->
+              <!-- 南の街：案内（展開） -->
               <div class="city-guide" id="guideGame">
                 <div class="guide-box">
                   <div class="guide-head">
-                    <h4>🎮 遊技の街：遊び方＆ゲームルール</h4>
+                    <h4>🎮 南の街（遊技の街）：遊び方＆ゲームルール</h4>
                     <button class="guide-close" type="button" data-close-guide="game">閉じる</button>
                   </div>
 
@@ -945,12 +1095,12 @@
 
           <div class="faq-list" id="faqList">
 
-            <!-- ===== 情報の街：よくある質問 ===== -->
+            <!-- ===== 北の街（情報の街）：よくある質問 ===== -->
             <details class="faq" id="f1">
               <summary>
                 <div class="tag">📌</div>
                 <div class="qtext">
-                  <b>（情報の街）どこを見れば最新情報が分かりますか？</b>
+                  <b>（北の街）どこを見れば最新情報が分かりますか？</b>
                   <span>まずここだけ見ればOKな場所</span>
                 </div>
                 <div class="chev2">▼</div>
@@ -967,7 +1117,7 @@
               <summary>
                 <div class="tag">🎪</div>
                 <div class="qtext">
-                  <b>（情報の街）イベントは常にやっていますか？</b>
+                  <b>（北の街）イベントは常にやっていますか？</b>
                   <span>期間限定の遊び方について</span>
                 </div>
                 <div class="chev2">▼</div>
@@ -975,7 +1125,7 @@
               <div class="answer">
                 <div class="log">
                   <p>イベントは「開催中のときだけ」出現します。何もない時期もあります。</p>
-                  <p>その場合は、遊技の街（畑・露店・釣り・タワー）を自由に遊んで大丈夫です。</p>
+                  <p>その場合は、南の街（畑・露店・釣り・タワー）を自由に遊んで大丈夫です。</p>
                 </div>
               </div>
             </details>
@@ -984,7 +1134,7 @@
               <summary>
                 <div class="tag">🏆</div>
                 <div class="qtext">
-                  <b>（情報の街）コンプリートカードって何ですか？</b>
+                  <b>（北の街）コンプリートカードって何ですか？</b>
                   <span>集めた先にある“目的地”</span>
                 </div>
                 <div class="chev2">▼</div>
@@ -997,12 +1147,12 @@
               </div>
             </details>
 
-            <!-- ===== 協力店の街：よくある質問 ===== -->
+            <!-- ===== 中央の街（協力店の街）：よくある質問 ===== -->
             <details class="faq" id="f4">
               <summary>
                 <div class="tag">🏬</div>
                 <div class="qtext">
-                  <b>（協力店の街）ここは何の街ですか？</b>
+                  <b>（中央の街）ここは何の街ですか？</b>
                   <span>リンクだらけの理由</span>
                 </div>
                 <div class="chev2">▼</div>
@@ -1019,7 +1169,7 @@
               <summary>
                 <div class="tag">🗼</div>
                 <div class="qtext">
-                  <b>（協力店の街）旅路の塔は何ですか？</b>
+                  <b>（中央の街）旅路の塔は何ですか？</b>
                   <span>ホテル＆空港の限定カード</span>
                 </div>
                 <div class="chev2">▼</div>
@@ -1036,7 +1186,7 @@
               <summary>
                 <div class="tag">♨</div>
                 <div class="qtext">
-                  <b>（協力店の街）焼きもとの湯はどこに繋がりますか？</b>
+                  <b>（中央の街）焼きもとの湯はどこに繋がりますか？</b>
                   <span>あなたのお店（たこ焼き菜々）</span>
                 </div>
                 <div class="chev2">▼</div>
@@ -1049,12 +1199,12 @@
               </div>
             </details>
 
-            <!-- ===== 遊技の街：よくある質問 ===== -->
+            <!-- ===== 南の街（遊技の街）：よくある質問 ===== -->
             <details class="faq" id="f7">
               <summary>
                 <div class="tag">🎮</div>
                 <div class="qtext">
-                  <b>（遊技の街）何から始めればいいですか？</b>
+                  <b>（南の街）何から始めればいいですか？</b>
                   <span>迷子の最短ルート</span>
                 </div>
                 <div class="chev2">▼</div>
@@ -1071,7 +1221,7 @@
               <summary>
                 <div class="tag">♻</div>
                 <div class="qtext">
-                  <b>（遊技の街）同じカードが出たらハズレですか？</b>
+                  <b>（南の街）同じカードが出たらハズレですか？</b>
                   <span>ダブりの意味</span>
                 </div>
                 <div class="chev2">▼</div>
@@ -1088,7 +1238,7 @@
               <summary>
                 <div class="tag">🧠</div>
                 <div class="qtext">
-                  <b>（遊技の街）ここはゲームですか？</b>
+                  <b>（南の街）ここはゲームですか？</b>
                   <span>ゲームっぽいけど、自由</span>
                 </div>
                 <div class="chev2">▼</div>
@@ -1122,6 +1272,18 @@
     <div class="bar">
       <button class="secondary" type="button" data-scroll="#three-cities">▶ 3つの街へ戻る</button>
       <button type="button" data-scroll="#faq">❓ よくある質問へ</button>
+    </div>
+  </div>
+
+  <!-- ✅ 画像拡大モーダル（3つの街の画像タップで開く） -->
+  <div class="imgModal" id="imgModal" aria-hidden="true">
+    <div class="frame" role="dialog" aria-modal="true" aria-label="画像の全体図">
+      <div class="head">
+        <b id="imgModalTitle">全体図</b>
+        <button class="close" type="button" id="imgModalClose">閉じる</button>
+      </div>
+      <img id="imgModalImg" alt="">
+      <div class="hint">※ 画面の暗い部分をタップしても閉じられます。</div>
     </div>
   </div>
 
@@ -1178,6 +1340,53 @@
       const items = Array.from(document.querySelectorAll("details.faq"));
       document.getElementById("openAll").addEventListener("click", () => items.forEach(d => d.open = true));
       document.getElementById("closeAll").addEventListener("click", () => items.forEach(d => d.open = false));
+
+      // ===== 画像拡大モーダル =====
+      const modal = document.getElementById("imgModal");
+      const modalImg = document.getElementById("imgModalImg");
+      const modalTitle = document.getElementById("imgModalTitle");
+      const modalClose = document.getElementById("imgModalClose");
+
+      function openModal(src, title){
+        modalTitle.textContent = title || "全体図";
+        modalImg.src = src;
+        modalImg.alt = title || "全体図";
+        modal.classList.add("active");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+      }
+      function closeModal(){
+        modal.classList.remove("active");
+        modal.setAttribute("aria-hidden", "true");
+        modalImg.src = "";
+        document.body.style.overflow = "";
+      }
+
+      // 画像クリックで開く（キーボードEnter/Spaceにも対応）
+      document.querySelectorAll(".city-card .img[data-zoom-src]").forEach(box => {
+        const src = box.getAttribute("data-zoom-src");
+        const title = box.getAttribute("data-zoom-title") || "全体図";
+        box.addEventListener("click", () => openModal(src, title));
+        box.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openModal(src, title);
+          }
+        });
+      });
+
+      // 閉じる
+      modalClose.addEventListener("click", closeModal);
+
+      // 背景クリックで閉じる（中身クリックは無視）
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      // Escで閉じる
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("active")) closeModal();
+      });
     })();
   </script>
 </body>
