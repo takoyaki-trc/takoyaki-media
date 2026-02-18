@@ -19,42 +19,62 @@
     align-items:center;
     justify-content:center;
   }
+
+  /* ✅ 画面内に収めるため、wrapを縦flexに */
   .wrap{
     width:min(var(--w), 100vw);
-    padding:10px 10px 14px;
+    min-height:100svh;
+    padding:10px 10px 12px;
     box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
   }
+
   .hud{
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:10px;
-    margin:6px 2px 10px;
+    margin:2px 2px 0;
     font-size:14px;
     opacity:.95;
+    flex:0 0 auto;
   }
   .hud b{ font-size:16px; }
+
+  /* ✅ panelを「余った高さ」に収める */
   .panel{
     background:#141824;
     border:1px solid rgba(255,255,255,.08);
     border-radius:14px;
     overflow:hidden;
     box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    position:relative;
+    flex: 1 1 auto;
+    display:flex;
+    flex-direction:column;
+    min-height: 0; /* ← flex内で縮められるように必須 */
   }
+
+  /* ✅ canvasは見た目サイズをJSで調整する（内部解像度は420x720固定） */
   canvas{
+    display:block;
     width:100%;
     height:auto;
-    display:block;
     background: radial-gradient(120% 80% at 50% 15%, rgba(255,255,255,.06), rgba(0,0,0,0) 50%),
                 linear-gradient(#0f1320, #0b0d13);
     touch-action:manipulation;
+    flex: 1 1 auto;
   }
+
   .controls{
     display:flex;
     gap:10px;
     padding:10px;
     background: rgba(0,0,0,.18);
     border-top:1px solid rgba(255,255,255,.08);
+    flex:0 0 auto;
   }
   button{
     flex:1;
@@ -73,6 +93,7 @@
     color:#fff;
     font-weight:600;
   }
+
   .toast{
     position:absolute;
     left:50%;
@@ -88,65 +109,50 @@
     transition: opacity .15s ease, transform .15s ease;
     pointer-events:none;
     white-space:nowrap;
+    z-index:5;
   }
   .toast.show{
     opacity:1;
     transform:translateX(-50%) translateY(-2px);
   }
+
+  /* ✅ 下の説明文は必ず見えるように */
   .hint{
     font-size:12px;
     opacity:.75;
-    margin-top:10px;
     line-height:1.5;
+    margin:0;
+    flex:0 0 auto;
   }
 
   /* =========================
-   ✅ リザルト：ボタンを画面下に固定（誤タップ防止）
-========================= */
+     ✅ リザルト：ボタンを画面下に固定（誤タップ防止）
+  ========================= */
 
-/* オーバーレイ全体 */
-#takoyakiResultOverlay{
-  align-items: flex-start !important; /* 中央寄せをやめる */
-  padding-top: 14px;                 /* 上に余白 */
-  box-sizing: border-box;
-}
-
-/* リザルトのカードは上寄せに */
-#takoyakiResultOverlay > div:last-child{
-  margin-top: 8px;
-}
-
-/* 「もう一回」ボタンを下固定にする */
-#takoyakiResultOverlay button{
-  position: fixed;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  width: min(92vw, 440px);
-  max-width: 440px;
-  z-index: 10000;
-}
-
-/* 画面下にボタンが来るので、カードの下が隠れないように余白 */
-#takoyakiResultOverlay #resTitle{
-  margin-bottom: 6px;
-}
-/* リザルトのカード内容が「下固定ボタン」と重ならないように余白を確保 */
-#takoyakiResultOverlay > div:last-child{
-  padding-bottom: 92px !important; /* ←ここを増減（80〜120で調整） */
-  box-sizing: border-box;
-}
-
-/* 下固定ボタン（そのまま） */
-#takoyakiResultOverlay button{
-  position: fixed;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  width: min(92vw, 440px);
-  z-index: 10000;
-}
-
+  #takoyakiResultOverlay{
+    align-items: flex-start !important;
+    padding-top: 14px;
+    box-sizing: border-box;
+  }
+  #takoyakiResultOverlay > div:last-child{
+    margin-top: 8px;
+  }
+  #takoyakiResultOverlay button{
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    width: min(92vw, 440px);
+    max-width: 440px;
+    z-index: 10000;
+  }
+  #takoyakiResultOverlay #resTitle{
+    margin-bottom: 6px;
+  }
+  #takoyakiResultOverlay > div:last-child{
+    padding-bottom: 92px !important;
+    box-sizing: border-box;
+  }
 </style>
 </head>
 <body>
@@ -157,7 +163,7 @@
     <div id="state">READY</div>
   </div>
 
-  <div class="panel" style="position:relative;">
+  <div class="panel">
     <div id="toast" class="toast">PERFECT!!</div>
     <canvas id="cv" width="420" height="720" aria-label="たこ焼きタイミングタワー"></canvas>
     <div class="controls">
@@ -166,12 +172,13 @@
     </div>
   </div>
 
-  <div class="hint">
+  <div class="hint" id="hint">
     ・操作は「STOP」だけ。<br/>
     ・下のブロックと重なった分だけ残ります。<br/>
     ・PERFECT（ほぼ同じ位置）だと削れません。<br/>
   </div>
 </div>
+
 <script>
 (() => {
   /* =========================================================
@@ -182,6 +189,7 @@
      - 結果画面：敗因/最後の焼き/履歴は表示しない
      - 背景：昼→夕→夜（0-20-60）
      - 角：四隅角丸（下も丸い）
+     - ✅ 画面内に収める：canvas表示サイズを自動縮小
   ========================================================= */
 
   // =========================
@@ -212,6 +220,54 @@
   }
 
   // =========================
+  // ✅ 画面内に収める：canvas表示サイズ自動調整
+  // - 内部解像度(420x720)は維持
+  // - 見た目だけ高さを縮める（説明文まで入る）
+  // =========================
+  const cv = document.getElementById("cv");
+  const panel = cv.closest(".panel");
+  const hud = document.querySelector(".hud");
+  const hint = document.getElementById("hint");
+  const controls = panel.querySelector(".controls");
+
+  function fitCanvas(){
+    // 画面の「使える高さ」
+    const vh = Math.max(320, window.innerHeight);
+
+    // 上下の余白をざっくり確保（セーフエリア込み）
+    const pad = 24;
+
+    // HUD/説明文/ボタンの実寸を引く
+    const hudH = hud ? hud.getBoundingClientRect().height : 0;
+    const hintH = hint ? hint.getBoundingClientRect().height : 0;
+    const ctrlH = controls ? controls.getBoundingClientRect().height : 0;
+
+    // canvasに割り当てられる最大高さ
+    const maxCanvasH = Math.max(220, vh - (hudH + hintH + ctrlH + pad));
+
+    // 内部比率（720/420）を保って見た目サイズ決定
+    const aspect = 720 / 420;
+
+    // 幅はwrapに合わせて100% → 実幅を取得
+    const panelW = panel.getBoundingClientRect().width;
+    const byWidthH = panelW * aspect;
+
+    // 幅基準の高さと、画面の許容高さの小さい方を採用
+    const displayH = Math.min(byWidthH, maxCanvasH);
+
+    // 高さから逆算した表示幅（ただしpanel幅を超えない）
+    const displayW = Math.min(panelW, displayH / aspect);
+
+    // canvasの見た目サイズだけ変更（描画解像度は固定）
+    cv.style.width = Math.round(displayW) + "px";
+    cv.style.height = Math.round(displayH) + "px";
+    cv.style.margin = "0 auto"; // 中央寄せ
+  }
+
+  window.addEventListener("resize", fitCanvas, { passive:true });
+  window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 80), { passive:true });
+
+  // =========================
   // 設定（バランス調整込み）
   // =========================
   const CONF = {
@@ -238,21 +294,19 @@
 
     BLOCK_DRAW_MODE: "COVER",
 
-    // ✅ 下5段だけ見た目高さブースト（輪切り対策）
     BASE_BOOST: [1.65, 1.55, 1.45, 1.35, 1.25],
 
-    // ✅ スコア設計
-    SCORE_BASE0: 60,        // 1段目の基準点の土台
-    SCORE_PER_FLOOR: 10,    // 階数ごとの基準点増分
+    SCORE_BASE0: 60,
+    SCORE_PER_FLOOR: 10,
     SPEED_BONUS_FAST_MS: 450,
     SPEED_BONUS_MID_MS: 850,
     SPEED_BONUS_FAST: 40,
     SPEED_BONUS_MID: 20,
 
-    PERFECT_MUL: 1.30,      // PERFECTの基本倍率
-    NEAR_MUL: 1.12,         // ほぼ成功（近い）の倍率
-    COMBO_MUL_ADD: 0.05,    // PERFECT連続で倍率が育つ
-    MUL_CAP: 2.00,          // 倍率上限（暴走防止）
+    PERFECT_MUL: 1.30,
+    NEAR_MUL: 1.12,
+    COMBO_MUL_ADD: 0.05,
+    MUL_CAP: 2.00,
   };
 
   // =========================
@@ -292,10 +346,9 @@
   // =========================
   // DOM
   // =========================
-  const cv = document.getElementById("cv");
   const ctx = cv.getContext("2d");
-  const scoreEl = document.getElementById("score"); // ← ここは「点数」を表示
-  const bestEl  = document.getElementById("best");  // ← BEST点数
+  const scoreEl = document.getElementById("score");
+  const bestEl  = document.getElementById("best");
   const stateEl = document.getElementById("state");
   const toastEl = document.getElementById("toast");
   const stopBtn = document.getElementById("stopBtn");
@@ -320,14 +373,11 @@
     playing: false,
     over: false,
 
-    // 進行（段数）
     floors: 0,
 
-    // 点数
     points: 0,
     bestPoints: loadBestPoints(),
 
-    // 倍率関連
     mul: 1.0,
     comboPerfect: 0,
 
@@ -339,7 +389,6 @@
     curr: null,
     allBlocks: [],
 
-    // 結果
     lastTitle: "",
     lastSubtitle: "",
     lastRunAt: "",
@@ -468,10 +517,9 @@
       perfectPlus: def.perfectPlus || 0,
       speedMul: def.speedMul || 1,
       insurance: !!def.insurance,
-      spawnedAt: performance.now(), // ✅ 早押し計測
+      spawnedAt: performance.now(),
     });
 
-    // 一言演出（任意）
     if (S.curr.insurance) showToast("🌈 虹伝説（1回セーフ）");
     else if ((S.curr.perfectPlus||0) > 0) showToast("🥇 金焼き（甘判定）");
     else if ((S.curr.speedMul||1) > 1.9) showToast("🌶 激辛（高速）");
@@ -515,7 +563,7 @@
   }
 
   // =========================
-  // 結果オーバーレイ（敗因/履歴なし）
+  // 結果オーバーレイ
   // =========================
   let resultOverlay = null;
 
@@ -559,7 +607,6 @@
     card.style.transition = "transform .18s ease, opacity .18s ease";
     box.appendChild(card);
 
-    // ミニタワー枠
     const miniWrap = document.createElement("div");
     miniWrap.style.borderRadius = "16px";
     miniWrap.style.border = "1px solid rgba(255,255,255,.14)";
@@ -587,7 +634,6 @@
     miniCanvas.style.borderRadius = "12px";
     miniWrap.appendChild(miniCanvas);
 
-    // 称号
     const h1 = document.createElement("div");
     h1.id = "resTitle";
     h1.style.fontWeight = "900";
@@ -611,7 +657,6 @@
     dt.style.margin = "0 0 10px";
     card.appendChild(dt);
 
-    // 到達＆BEST（段数＆点数）
     const stats = document.createElement("div");
     stats.style.display = "grid";
     stats.style.gridTemplateColumns = "1fr 1fr";
@@ -635,7 +680,6 @@
     statB.innerHTML = `<div style="opacity:.75;font-size:12px;">BEST</div><div id="resBestPts" style="font-weight:900;font-size:20px;margin-top:2px;"></div>`;
     stats.appendChild(statB);
 
-    // ボタン
     const row = document.createElement("div");
     row.style.display = "flex";
     row.style.gap = "10px";
@@ -661,7 +705,6 @@
       start();
     });
 
-    // 背景/カードは反応させない（ボタンだけ）
     bg.addEventListener("click", (e) => e.stopPropagation());
     card.addEventListener("click", (e) => e.stopPropagation());
 
@@ -732,7 +775,6 @@
     mctx.clearRect(0,0,W,H);
     mctx.imageSmoothingEnabled = false;
 
-    // 背景（暗く）
     mctx.save();
     mctx.globalAlpha = 0.20;
     mctx.fillStyle = "#000";
@@ -741,7 +783,6 @@
 
     if (!blocks || blocks.length === 0) return;
 
-    // bounds（世界座標）
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const b of blocks){
       minX = Math.min(minX, b.x);
@@ -755,7 +796,6 @@
     const bh = Math.max(1, maxY - minY);
     const s = Math.min((W - pad*2) / bw, (H - pad*2) / bh);
 
-    // 左右中央 / 下揃え
     const ox = pad + (W - pad*2 - bw*s)/2 - minX*s;
     const oy = pad + (H - pad*2 - bh*s) - minY*s;
 
@@ -841,7 +881,7 @@
     const h = Math.round(b.h * boost);
 
     const tile = b.tileKey ? IMG[b.tileKey] : null;
-    const rAll = Math.round(Math.min(w, h) * 0.40); // ← もっと丸い
+    const rAll = Math.round(Math.min(w, h) * 0.40);
 
     ctx.save();
     ctx.beginPath();
@@ -854,16 +894,8 @@
       grad.addColorStop(1, "#f08b2f");
       ctx.fillStyle = grad;
       ctx.fillRect(x, y, w, h);
-    } else if (CONF.BLOCK_DRAW_MODE === "COVER"){
-      drawImageCover(ctx, tile, x, y, w, h);
-    } else if (CONF.BLOCK_DRAW_MODE === "STRETCH"){
-      ctx.drawImage(tile, x, y, w, h);
     } else {
-      const scale = h / tile.naturalHeight;
-      const tileW = Math.max(1, Math.round(tile.naturalWidth * scale));
-      for (let xx = x; xx < x + w; xx += tileW){
-        ctx.drawImage(tile, xx, y, tileW, h);
-      }
+      drawImageCover(ctx, tile, x, y, w, h);
     }
 
     ctx.restore();
@@ -880,7 +912,6 @@
     }
     if (S.curr) drawBlock(S.curr, S.blocks.length);
 
-    // 左上（点数/倍率）
     ctx.save();
     ctx.globalAlpha = 0.35;
     ctx.fillStyle = "#fff";
@@ -973,13 +1004,10 @@
     const diff = Math.abs(curr.x - prev.x);
     const perfectRange = CONF.perfectPx + (curr.perfectPlus || 0);
     const isPerfect = diff <= perfectRange;
-
-    // 「近い」判定（PERFECTではないが上手い）
     const nearPerfect = (!isPerfect && diff <= perfectRange * 2);
 
     const willShrink = overlapW < curr.width;
 
-    // 虹伝説：1回だけ削れない保険
     if (curr.insurance && willShrink){
       curr.x = overlapLeft;
       curr.insurance = false;
@@ -993,22 +1021,19 @@
       curr.width = overlapW;
     }
 
-    // 確定
     pushConfirmedBlock(curr);
     S.curr = null;
 
-    // ✅ 段数更新
     S.level++;
     S.floors = Math.max(0, S.allBlocks.length - 1);
 
-    // ✅ スコア加算（ここが本題）
-    const base = getBaseScore(S.floors);
+    const base = (CONF.SCORE_BASE0 + S.floors * CONF.SCORE_PER_FLOOR);
     const elapsed = performance.now() - (curr.spawnedAt || performance.now());
-    const speedBonus = getSpeedBonus(elapsed);
+    const speedBonus = (elapsed <= CONF.SPEED_BONUS_FAST_MS) ? CONF.SPEED_BONUS_FAST
+                    : (elapsed <= CONF.SPEED_BONUS_MID_MS)  ? CONF.SPEED_BONUS_MID : 0;
 
     if (isPerfect){
       S.comboPerfect++;
-      // PERFECTで倍率が育つ（×1.30 → +0.05ずつ上昇）
       S.mul = clampMul(CONF.PERFECT_MUL + S.comboPerfect * CONF.COMBO_MUL_ADD);
     } else if (nearPerfect){
       S.comboPerfect = 0;
@@ -1021,18 +1046,15 @@
     const gained = Math.floor(base * S.mul) + speedBonus;
     S.points += gained;
 
-    // 点の内訳を軽く見せる（うざくならない範囲）
     if (speedBonus > 0 && isPerfect) showToast(`+${gained}（早×PERFECT）`);
     else if (isPerfect) showToast(`+${gained}（×${S.mul.toFixed(2)}）`);
     else if (speedBonus > 0) showToast(`+${gained}（早押し）`);
 
-    // ベスト更新（点数）
     if (S.points > S.bestPoints){
       S.bestPoints = S.points;
       saveBestPoints(S.bestPoints);
     }
 
-    // ゲームオーバー判定（幅が限界）
     if (curr.width < CONF.minWidth){
       gameOver();
       return;
@@ -1088,13 +1110,16 @@
   // 初期化
   // =========================
   loadImages().then(() => {
+    // ✅ 先にフィット（説明文が測れるように次フレームでもう一回）
+    fitCanvas();
+    requestAnimationFrame(fitCanvas);
+
     reset();
     loop();
   });
 
 })();
 </script>
-
-
 </body>
 </html>
+
