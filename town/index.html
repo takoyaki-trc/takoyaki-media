@@ -3,66 +3,116 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0">
-
-  <title>焼かれた伝説 / たこ焼きトレカ</title>
-
-  <style>
-/* =========================================================
-  ✅ 0) ベース：iPhoneズレ/横スクロール殺し
-========================================================= */
-html, body{
-  margin:0;
-  padding:0;
-  width:100%;
-}
-body{
-  overflow-x:hidden; /* iOSで右に出るのを防ぐ */
-}
-
-/* =========================================================
-  ✅ 1) 背景（空：JSで --sky を差し替え）
-========================================================= */
+<style>
+/* 空レイヤー：BASEの背景に負けない */
 body::before{
   content:"";
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
+
+  /* 3層＋ビネット */
   background:
-    radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.18) 100%),
-    var(--sky, linear-gradient(#87b8e5 0%, #cfe8ff 55%, #ffffff 100%));
+    /* ビネット（端を少し暗く） */
+    radial-gradient(
+      ellipse at center,
+      rgba(0,0,0,0) 55%,
+      rgba(0,0,0,0.18) 100%
+    ),
+    /* 空の3層（JSがここを書き換える） */
+    var(--sky, linear-gradient(
+      #87b8e5 0%,
+      #cfe8ff 55%,
+      #ffffff 100%
+    ));
+
   transition: background 6s linear;
 }
 
-/* =========================================================
-  ✅ 2) 太陽/月レール
-========================================================= */
-#phase-strip{
-  position: relative;
-  width: 220px;
-  height: 54px !important;
-  margin: 0 auto 4px !important;
-  padding: 0 !important;
+/* ===== 太陽 / 月 レイヤー ===== */
+
+/* “今の位置”だけ光る */
+.phase-dot.is-active{
+  opacity: 1;
+  transform: scale(1.0);
+  filter: drop-shadow(0 0 6px rgba(255,255,255,0.35));
 }
-#phase-orb{
-  position:absolute;
-  top:0 !important;
-  left:0;
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  image-rendering: pixelated;
-  transition: transform .6s ease, filter .6s ease, background .6s ease;
-}
-#phase-orb.sun{
+
+/* 太陽（左端） */
+.phase-dot.sun{
   background: radial-gradient(circle at 30% 30%, #fff7c8 0%, #ffd86b 55%, #f2b705 100%);
   box-shadow: 0 0 14px rgba(255,200,80,0.35);
-  transform: scale(1);
 }
-#phase-orb.moon{
+
+/* 月のベース（右端側） */
+.phase-dot.moon{
   background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e6e6e6 70%, #cfcfcf 100%);
-  transform: scale(.8);
 }
+
+/* 月相：黒い影を重ねて欠けを作る（CSSだけでOK） */
+.phase-dot.moon::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background: rgba(15,20,32,0.95);
+  transform: translateX(var(--shadow-x, 0px));
+}
+
+/* 端末で大きさ調整したいならここだけ触る */
+@media (max-width:480px){
+  #phase-strip .phase-dot{ width:36px; height:36px; }
+}
+
+/* ===== 太陽／月が動くレール ===== */
+#phase-strip{
+  position: relative;
+  width: 220px;          /* 横幅（好みで調整OK） */
+  height: 54px !important;
+  margin: 0 auto 4px !important;  /* 下だけ4pxに */
+  padding: 0 !important;
+}
+
+/* ===== 動く本体（共通） ===== */
+#phase-orb{
+  position: absolute;
+  top: 0 !important;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  image-rendering: pixelated;
+  transition:
+    transform 0.6s ease,
+    filter 0.6s ease,
+    background 0.6s ease;
+}
+
+/* ===== 太陽（昼） ===== */
+#phase-orb.sun{
+  background: radial-gradient(
+    circle at 30% 30%,
+    #fff7c8 0%,
+    #ffd86b 55%,
+    #f2b705 100%
+  );
+  box-shadow: 0 0 14px rgba(255,200,80,0.35);
+  transform: scale(1);     /* 太陽は大きめ */
+}
+
+/* ===== 月（夜） ===== */
+#phase-orb.moon{
+  background: radial-gradient(
+    circle at 35% 30%,
+    #ffffff 0%,
+    #e6e6e6 70%,
+    #cfcfcf 100%
+  );
+  transform: scale(0.8);   /* 月は小さく */
+}
+
+/* ===== 月の満ち欠け（影） ===== */
 #phase-orb.moon::after{
   content:"";
   position:absolute;
@@ -71,129 +121,104 @@ body::before{
   background: rgba(15,20,32,0.95);
   transform: translateX(var(--shadow-x, 0px));
 }
+
+/* ===== スマホ微調整 ===== */
 @media (max-width:480px){
   #phase-strip{ width: 200px; }
   #phase-orb{ width: 36px; height: 36px; }
 }
 
-/* =========================================================
-  ✅ 3) 中央寄せコンテナ
-========================================================= */
-.page-center{
-  width:100%;
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 10px 10px 0;
-  box-sizing: border-box;
+/* ================================
+   MAP 基準（iPhoneズレ対策 完全版）
+   ★ここを丸ごと置き換え
+================================ */
+
+/* 余計な左右ズレ要因を殺す */
+html, body{
+  margin: 0;
+  padding: 0;
+  width: 100%;
 }
 
-/* タイトル画像（そのままでOK） */
+/* iOSで横幅がズレる時の保険（親の影響で右に出るのを防ぐ） */
+body{
+  overflow-x: hidden;
+}
+
+/* タイトルGIF（そのままでOK） */
 .title-gif{
   width: min(720px, 90%);
   margin: 0 auto 24px;
   display: block;
 }
 
-/* =========================================================
-  ✅ 4) タイトル下 タコ民表示（takomin-npc2 の見た目用）
-========================================================= */
-#takominArea{
-  width: min(860px, 96%);
-  margin: 10px auto 16px;
-}
-.takomin-wrap{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-  justify-content:center;
-}
-.takomin-avatar{
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
-  border: 2px solid rgba(255,255,255,.28);
-  background: rgba(10,10,18,.55);
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-  overflow:hidden;
-  flex: 0 0 auto;
-}
-.takomin-avatar img{
-  width:100%;
-  height:100%;
-  object-fit: cover;
-  display:block;
-}
-.takomin-text{
-  max-width: min(640px, 78vw);
-  border: 2px solid rgba(255,255,255,.18);
-  background: rgba(10,10,18,.45);
-  color: rgba(255,255,255,.92);
-  border-radius: 14px;
-  padding: 10px 12px;
-  line-height: 1.6;
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
-  font-weight: 800;
-}
-
-/* =========================================================
-  ✅ 5) MAP：座標基準（iPhoneズレ対策）
-========================================================= */
+/* =========================
+   MAPの「座標基準」
+   - 画像と同じ箱（map-wrap）を基準にする
+   - 余計なpadding/transformの影響を受けにくくする
+========================= */
 .map-wrap{
   position: relative !important;
-  display:block;
-  width:100% !important;
-  max-width: 800px;
-  margin: 0 auto !important;
-  padding: 0 !important;
+  display: block;
+  width: 100% !important;
+  max-width: 800px;          /* PC上限 */
+  margin: 0 auto !important; /* 中央固定 */
+  padding: 0 !important;     /* ← %座標のズレ原因を消す */
   border: 0 !important;
-  box-sizing:border-box !important;
+  box-sizing: border-box !important;
+
+  /* iOSの合成/丸め誤差でズレるのを抑える */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
-}
-.map-wrap .map-img{
-  position: relative;
-  display:block !important;
-  width:100% !important;
-  height:auto !important;
-  margin:0 !important;
-  padding:0 !important;
-  border:0 !important;
-  box-sizing:border-box !important;
-  image-rendering: pixelated;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  z-index: 0;
 }
 
-/* =========================================================
-  ✅ 6) 当たり判定/建物 共通
-========================================================= */
-.map-wrap .hotspot,
-.map-wrap .tf-building{
-  position:absolute !important;
-  display:block !important;
-  cursor:pointer;
+/* 画像：map-wrap に100%フィット（余計な指定を全部潰す） */
+.map-wrap .map-img{
+  position: relative;        /* 念のため */
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  box-sizing: border-box !important;
+
+  image-rendering: pixelated;
+
+  /* iOSで画像が“微妙に横にずれる”時の保険 */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+}
+
+/* =========================
+   当たり判定 / 建物（共通）
+   - 必ず map-wrap を基準に absolute
+========================= */
+.map-wrap .hotspot,
+.map-wrap .tf-building{
+  position: absolute !important;
+  display: block !important;
+  z-index: 60 !important; /* 画像より上 */
+  cursor: pointer;
+
+  /* iOSのタップ/合成ズレを抑える */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+
+  /* タップ遅延/拡大を抑制（iPhone向け） */
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-.map-wrap .tf-building{
-  z-index: 40 !important;
-  transform: translate(-50%, -100%) !important;
-  transform-origin: 50% 100% !important;
-  margin:0 !important;
-  padding:0 !important;
-}
-.map-wrap .tf-building > img{
-  display:block !important;
-  width:100% !important;
-  height:auto !important;
-  image-rendering: pixelated;
-}
-.map-wrap .hotspot{ z-index: 10 !important; }
 
-/* PCホバー */
+/* 建物リンク内の画像も「基準箱いっぱい」 */
+.map-wrap .tf-building > img{
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ホバー演出（PC） */
 @media (hover:hover){
   .map-wrap .hotspot:hover,
   .map-wrap .tf-building:hover{
@@ -202,17 +227,536 @@ body::before{
   }
 }
 
-/* =========================================================
-  ✅ 7) 祭壇（gate4.css側の見た目に上書きしない程度にz-index整理）
-========================================================= */
+/* =========================
+   調整用：ズレ確認（必要な時だけON）
+   これをONにすると、基準箱と当たり判定が見える
+========================= */
+/*
+.map-wrap{ outline:2px solid red; }
+.map-wrap .map-img{ outline:2px solid lime; }
+.map-wrap .hotspot, .map-wrap .tf-building{ background: rgba(0,255,255,0.25); }
+*/
+
+/* =========================
+   フッター下の“でかい余白”を潰す（原因2つを上書き）
+========================= */
+
+/* ① footerはwrapperなので 60px が効いてた → footerだけ無効化 */
+body.shop #mainFooter.wrapper{
+  margin-bottom: 0 !important;
+}
+
+/* ② mainFooter 自体に 60px auto 100px が入ってた → 全部詰める */
+body.shop #mainFooter{
+  margin: 20px auto 0 !important;   /* 上下の余白を必要最小限に */
+  padding: 0 !important;
+}
+
+/* ③ li が mobile で margin-bottom:16px になってる → ロゴ周りの余白になる */
+body.shop #mainFooter .footerMenu ul li{
+  margin-bottom: 0 !important;
+}
+
+body.shop #mainFooter.wrapper,
+body.shop #mainFooter.wrapper + #base_url{
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+
+  /* ===== iPhone配置バグ 強制Fix（最重要） ===== */
+.map-wrap .tf-building{
+  position: absolute !important;
+  display: block !important;
+  z-index: 60 !important;
+}
+/* 背景 */
+.map-wrap .map-img{ position: relative; z-index: 0; }
+
+/* ホットスポット：弱く（タコ民より下） */
+.map-wrap .hotspot{ z-index: 10 !important; }
+
+/* 祭壇（見た目） */
 .map-wrap .spot{ z-index: 20 !important; }
+
+/* 祭壇の当たり判定（必要なら見た目より上） */
 .map-wrap .gate-hit{ z-index: 30 !important; }
 
-/* =========================================================
-  ✅ 8) タコ民（量産）
-========================================================= */
+/* 建物 */
+.map-wrap .tf-building{ z-index: 40 !important; }
+
+/* タコ民 */
+.map-wrap .takomin{ z-index: 60 !important; }
+
+/* 吹き出しは最前 */
+.map-wrap .takomin-balloon{ z-index: 80 !important; }
+
+</style>
+
+<!-- ▼ ボスゲート -->
+<link rel="stylesheet" href="./assets/css/boss-local.css?v=1">
+
+<!-- ▼ たこ焼き釣り -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@4c8919c0a8740505f80998baea383a228b3bb847/takofish.css">
+
+<!-- ▼ タイトル下のタコ民５０人回し -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc2.css?v=789">
+
+<!-- ▼ ホットスポット -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/hotspot1.css?v=777">
+
+<!-- ▼たこ焼きの祭壇 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/saidan.css?v=1">
+
+<!-- ▼タコ民村人セリフ -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-murabito.css?v=777">
+
+<!-- ▼ たこ焼きファーム（宝箱表示の見た目も含むのでトップでも残す） -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/takofarm1.css?v=2">
+</head>
+
+<body id="{block:IndexPage}shopTopPage{/block:IndexPage}{block:ItemPage}shopDetailPage{/block:ItemPage}" class="shop template">
+
+
+
+<div id="phase-strip">
+  <div id="phase-orb"></div>
+</div>
+
+<div class="page-center">
+
+<!-- ▼ タイトル画像 -->
+<center><img
+  src="https://ul.h3z.jp/h12u4pD5.gif"
+  style="display:block;width:400px !important;height:auto !important;"
+>
+<img src="https://basefile.akamaized.net/takoyakitrc-base-shop/69613a78bcb90/mojiji.png">
+</center>
+
+<!-- ==========================================
+  タイトル下・タコ民表示（アクセスごとにランダム）
+========================================== -->
+<div id="takominArea" class="takomin-area">
+  <div class="takomin-wrap">
+
+    <!-- タコ民 -->
+    <a id="takominLink" class="takomin-avatar" href="#" target="_blank" rel="noopener">
+      <img id="takominImg" src="" alt="タコ民">
+    </a>
+
+    <!-- 横テキスト -->
+    <div class="takomin-text">
+      <span id="takominLine">……</span>
+    </div>
+
+  </div>
+</div>
+</div>
+<!-- ✅ トースト（宝箱など：トップで1個だけ） -->
+<div class="tf-toast" aria-live="polite"></div>
+
+<!-- ✅ 街マップのラッパー（宝箱はこの中に出る） -->
+<div class="map-wrap" id="townMap" style="position:relative;">
+
+ <a class="tf-building" href="./farm.html" aria-label="たこ焼き畑へ"
+   style="left:19.5%; top:99%; width:110px;">
+  <img src="https://ul.h3z.jp/iF0mVDkG.png" alt="たこ焼き畑（建物）">
+</a>
+
+<a class="tf-building" href="./roten.html" aria-label="露店へ"
+   style="left:20%; top:93%; width:140px;">
+  <img src="https://ul.h3z.jp/AFW27Fek.png" alt="露店（建物）">
+</a>
+
+<a class="tf-building" href="./zukan.html" aria-label="カード図鑑へ"
+   style="left:80%; top:96%; width:50px;">
+  <img src="https://ul.h3z.jp/nJLgRZOL.png" alt="カード図鑑（建物）">
+</a>
+
+
+
+
+  <!-- 宝箱は takofarm2.js がここに自動出没させる -->
+
+  <!-- ここからたこ焼きの祭壇（収益用） -->
+  <!-- ✅ 見た目（祭壇） -->
+  <button class="spot spot--gate" type="button" aria-label="たこ焼きゲート（見た目）">
+    <!-- 土台（通常配置：高さを作る） -->
+    <img class="spot__base"
+         src="https://ul.h3z.jp/DOpnGGIS.png"
+         data-day="https://ul.h3z.jp/DOpnGGIS.png"
+         data-night="https://ul.h3z.jp/RrfereXw.png"
+         alt="たこ焼きの祭壇">
+
+    <!-- 上に重ねる（アイコン） -->
+    <img class="spot__icon" src="https://ul.h3z.jp/G9HOojAP.png" alt="行き先アイコン">
+  </button>
+
+  <!-- ✅ タップ判定専用（透明ボタン：これが“反応の本体”） -->
+  <button class="gate-hit" type="button" aria-label="たこ焼きゲート（タップ判定）"></button>
+
+  <!-- ✅ ワンクッション（モーダル） -->
+  <div id="gateModal" class="gate-modal" aria-hidden="true">
+    <div class="gate-modal__panel" role="dialog" aria-modal="true" aria-labelledby="gateModalTitle">
+      <img id="gateModalPhoto" class="gate-modal__photo" src="" alt="">
+      <div class="gate-modal__body">
+        <div id="gateModalTitle" class="gate-modal__title">たこ焼きゲート</div>
+        <div id="gateModalDesc" class="gate-modal__desc"></div>
+
+        <div class="gate-modal__btns">
+          <button id="gateModalCancel" type="button" class="gate-modal__btn">やめる</button>
+          <a id="gateModalGo" class="gate-modal__btn gate-modal__btn--go" href="#" target="_blank" rel="noopener">行く</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <img
+    class="map-img"
+    src="https://ul.h3z.jp/0yeAj4R7.png"
+    alt="背景"
+    data-morning="https://ul.h3z.jp/D4jEiu5y.png"
+    data-day="https://ul.h3z.jp/bHkJV3PU.png"
+    data-night="https://ul.h3z.jp/EOmNLbDO.png"/>
+
+  <!-- ✅ ボスゲート（夜だけ表示＆タップでボス会話→バトル） -->
+  <a class="boss-gate night-only" href="#" aria-label="鉄板魔グマに挑む">
+    <img src="https://ul.h3z.jp/CsjyEnG3.png" alt="ボスゲート">
+  </a>
+
+  <!-- ▼タコ民群 -->
+  <!-- ✅ GHOST -->
+  <button class="takomin takomin--ghost takomin--glow is-float" data-id="ghost" type="button" aria-label="GHOSTのタコ民">
+    <img src="https://ul.h3z.jp/yfWcFrT4.png"
+      data-day="https://ul.h3z.jp/yfWcFrT4.png"
+      data-night="https://ul.h3z.jp/93R4C9fH.png"
+      alt="GHOST">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ YOUSHA -->
+  <button class="takomin takomin--yousha takomin--glow" data-id="yousha" type="button" aria-label="YOUSHA">
+    <img
+      src="https://ul.h3z.jp/XNnElwbh.png"
+      data-day="https://ul.h3z.jp/XNnElwbh.png"
+      data-night="https://ul.h3z.jp/2LR6QUQf.png"
+      alt="YOUSHA">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ 追加：もとの湯（たこ焼き菜々） -->
+  <button class="takomin takomin--motoyu is-step takomin--glow" data-id="motoyu" type="button" aria-label="たこ焼き菜々（もとの湯）のタコ民">
+    <img
+      src="https://ul.h3z.jp/vsy0pctI.png"
+      data-day="https://ul.h3z.jp/vsy0pctI.png"
+      data-night="https://ul.h3z.jp/PpSfLird.png"
+      alt="もとの湯">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ kbc -->
+  <button class="takomin takomin--kbc takomin--glow" data-id="kbc" type="button" aria-label="久留米ＫＢＣ">
+    <img
+      src="https://ul.h3z.jp/fy5i61XI.png"
+      data-day="https://ul.h3z.jp/fy5i61XI.png"
+      data-night="https://ul.h3z.jp/mGbOq0Q5.png"
+      alt="久留米ＫＢＣ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ katana -->
+  <button class="takomin takomin--katana takomin--glow" data-id="katana" type="button" aria-label="刀鍛冶">
+    <img
+      src="https://ul.h3z.jp/OnsDTpd8.png"
+      data-day="https://ul.h3z.jp/OnsDTpd8.png"
+      data-night="https://ul.h3z.jp/KgDhxsxP.png"
+      alt="刀鍛冶">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ hotel -->
+  <button class="takomin takomin--hotel takomin--glow" data-id="hotel" type="button" aria-label="旅路の塔">
+    <img
+      src="https://ul.h3z.jp/hx0gOm4a.png"
+      data-day="https://ul.h3z.jp/hx0gOm4a.png"
+      data-night="https://ul.h3z.jp/hx0gOm4a.png"
+      alt="旅路の塔">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅bigmans -->
+  <button class="takomin takomin--bigmans takomin--glow" data-id="bigmans" type="button" aria-label="BIGMANS">
+    <img
+      src="https://ul.h3z.jp/sticAk2s.png"
+      data-day="https://ul.h3z.jp/sticAk2s.png"
+      data-night="https://ul.h3z.jp/q8H3THcE.png"
+      alt="BIGMANS">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ 2bit -->
+  <button class="takomin takomin--twobit takomin--glow" data-id="twobit" type="button" aria-label="twobit">
+    <img
+      src="https://basefile.akamaized.net/takoyakitrc-base-shop/696a673f108bf/2bit1.png"
+      data-day="https://basefile.akamaized.net/takoyakitrc-base-shop/696a673f108bf/2bit1.png"
+      data-night="https://basefile.akamaized.net/takoyakitrc-base-shop/696a6755c2e31/2bit2.png"
+      alt="twobit">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ hanaya -->
+  <button class="takomin takomin--hanaya takomin--glow" data-id="hanaya" type="button" aria-label="華矢式">
+    <img
+      src="https://ul.h3z.jp/JPKQZ6sP.png"
+      data-day="https://ul.h3z.jp/JPKQZ6sP.png"
+      data-night="https://ul.h3z.jp/yF9zSCHU.png"
+      alt="華矢式">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ mars -->
+  <button class="takomin takomin--mars takomin--glow" data-id="mars" type="button" aria-label="mars">
+    <img
+      src="https://ul.h3z.jp/n6sTv8Xr.png"
+      data-day="https://ul.h3z.jp/n6sTv8Xr.png"
+      data-night="https://ul.h3z.jp/tHlNh1NI.png"
+      alt="mars">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ dollis -->
+  <button class="takomin takomin--dollis takomin--glow" data-id="dollis" type="button" aria-label="ドリズ">
+    <img
+      src="https://ul.h3z.jp/yi2Zbd3I.png"
+      data-day="https://ul.h3z.jp/yi2Zbd3I.png"
+      data-night="https://ul.h3z.jp/FmYMG8fu.png"
+      alt="ドリズ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ punipuni -->
+  <button class="takomin takomin--puni takomin--glow" data-id="puni" type="button" aria-label="ぷにぷに">
+    <img
+      src="https://ul.h3z.jp/ujUBACrC.png"
+      data-day="https://ul.h3z.jp/ujUBACrC.png"
+      data-night="https://ul.h3z.jp/0LHkVmoQ.png"
+      alt="ぷにぷに">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- 上のブロックタコ民 -->
+  <button class="takomin takomin--me1 takomin--glow topmenu" data-id="me1" type="button" aria-label="最新のお知らせ">
+    <img src="https://ul.h3z.jp/2z5fOkRX.png"
+      data-day="https://ul.h3z.jp/2z5fOkRX.png"
+      data-night="https://ul.h3z.jp/dUhJu7ky.png"
+      alt="最新のお知らせ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me2 takomin--glow topmenu" data-id="me2" type="button" aria-label="たこ焼きトレカの世界">
+    <img src="https://ul.h3z.jp/CJ443Pa2.png"
+      data-day="https://ul.h3z.jp/CJ443Pa2.png"
+      data-night="https://ul.h3z.jp/QAszf1eo.png"
+      alt="たこ焼きトレカの世界">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me3 takomin--glow topmenu" data-id="me3" type="button" aria-label="よくある質問">
+    <img src="https://ul.h3z.jp/I3PLFgos.png"
+      data-day="https://ul.h3z.jp/I3PLFgos.png"
+      data-night="https://ul.h3z.jp/Qvk5pot0.png"
+      alt="よくある質問">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me4 takomin--glow topmenu" data-id="me4" type="button" aria-label="今遊べるイベント">
+    <img src="https://ul.h3z.jp/y7MHJcs1.png"
+      data-day="https://ul.h3z.jp/y7MHJcs1.png"
+      data-night="https://ul.h3z.jp/HX7qBOFD.png"
+      alt="今遊べるイベント">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me5 takomin--glow topmenu" data-id="me5" type="button" aria-label="ビンゴの泉">
+    <img src="https://ul.h3z.jp/JQGm41Td.png"
+      data-day="https://ul.h3z.jp/JQGm41Td.png"
+      data-night="https://ul.h3z.jp/OrmSjUlC.png"
+      alt="ビンゴの泉">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me6 takomin--glow topmenu" data-id="me6" type="button" aria-label="カードを買う">
+    <img src="https://ul.h3z.jp/Db26pagb.png"
+      data-day="https://ul.h3z.jp/Db26pagb.png"
+      data-night="https://ul.h3z.jp/ko0Xgd8p.png"
+      alt="カードを買う">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me7 takomin--glow topmenu" data-id="me7" type="button" aria-label="たこぴのSNS">
+    <img src="https://ul.h3z.jp/D2KbpmcN.png"
+      data-day="https://ul.h3z.jp/D2KbpmcN.png"
+      data-night="https://ul.h3z.jp/g5bLMwI0.png"
+      alt="たこぴのSNS">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me8 takomin--glow topmenu" data-id="me8" type="button" aria-label="アイテムショップ">
+    <img src="https://ul.h3z.jp/OREcMs5u.png"
+      data-day="https://ul.h3z.jp/OREcMs5u.png"
+      data-night="https://ul.h3z.jp/2gFRuuSs.png"
+      alt="アイテムショップ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me9 takomin--glow topmenu" data-id="me9" type="button" aria-label="達成の記録">
+    <img src="https://ul.h3z.jp/nvhUJBFe.png"
+      data-day="https://ul.h3z.jp/nvhUJBFe.png"
+      data-night="https://ul.h3z.jp/gXNVqtcD.png"
+      alt="達成の記録">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me10 takomin--glow topmenu" data-id="me10" type="button" aria-label="メディア掲載">
+    <img src="https://ul.h3z.jp/s4CIKhrn.png"
+      data-day="https://ul.h3z.jp/s4CIKhrn.png"
+      data-night="https://ul.h3z.jp/5fFm3Fpr.png"
+      alt="メディア掲載">
+    <div class="takomin-balloon"></div>
+  </button>
+
+<button class="takomin takomin--me12 takomin--glow topmenu" data-id="me12" type="button" aria-label="カード図鑑">
+  <img src="https://ul.h3z.jp/Wvnf4dc7.png"
+    data-day="https://ul.h3z.jp/Wvnf4dc7.png"
+    data-night="https://ul.h3z.jp/3aj5G2CO.png"
+    alt="">
+  <div class="takomin-balloon"></div>
+</button>
+
+
+<button class="takomin takomin--me13 is-step" data-id="me13" type="button" aria-label="推し活">
+  <img src="https://ul.h3z.jp/mC7LPEzu.png"
+    data-day="https://ul.h3z.jp/mC7LPEzu.png"
+    data-night="https://ul.h3z.jp/icyNwiaA.png"
+    alt="推し活">
+  <div class="takomin-balloon"></div>
+</button>
+
+
+
+<a class="takomin takomin--fish is-bob" href="#"
+   onclick="window.openTakofishGame && window.openTakofishGame(); return false;">
+  <img
+    src="https://ul.h3z.jp/8taiJLpS.png"
+    data-day="https://ul.h3z.jp/8taiJLpS.png"
+    data-night="https://ul.h3z.jp/QP3AevlY.png"
+    alt="釣りタコ民">
+</a>
+
+<style>/* 🎣 釣りタコ民の位置 */
+.map-wrap .takomin--fish{
+  top: 85.6%;
+  left: 70%;
+}
+/* ✅ タワー兄妹をタワーより上に（最終Fix：一番最後に置く） */
+.map-wrap .takomin--tawa1{
+  position: absolute !important;
+  z-index: 90 !important;   /* ← 兄妹を最前に */
+}
+
+.map-wrap .takomin--tawa{
+  position: absolute !important;
+  z-index: 80 !important;   /* ← タワーは兄妹の一段下 */
+}
+
+
+</style>
+
+<button class="takomin takomin--tawa1 takomin--glow topmenu" data-id="tawa1" type="button" aria-label="タワー兄妹">
+  <img src="https://basefile.akamaized.net/takoyakitrc-base-shop/6978ca4e7ec5c/sasada3.png"
+    data-day="https://basefile.akamaized.net/takoyakitrc-base-shop/6978ca4e7ec5c/sasada3.png"
+    data-night="https://ul.h3z.jp/xonP2u98.png"
+    alt="タワー兄妹">
+  <div class="takomin-balloon"></div>
+</button>
+
+
+<!-- ✅ たこ焼きタワー（起動アイコン） -->
+<button class="takomin takomin--tawa" data-id="tawa" type="button" aria-label="たこ焼きタワー">
+  <img
+    src="https://ul.h3z.jp/QJX6Wqrs.png"
+    data-day="https://ul.h3z.jp/QJX6Wqrs.png"
+    data-night="https://ul.h3z.jp/Rbm88XCj.png"
+    alt="たこ焼きタワー">
+  <div class="takomin-balloon"></div>
+</button>
+
+<script>
+(() => {
+  // =========================
+  // 1) たこ焼きタワー起動（遷移）
+  // =========================
+  const towerBtn = document.querySelector('.takomin--tawa');
+  if (towerBtn) {
+    towerBtn.addEventListener('click', () => {
+      location.href = './takoyaki-tower.html';
+    });
+  }
+
+  // =========================
+  // 2) 昼夜画像切替
+  // =========================
+  const isNight = () =>
+    document.documentElement.classList.contains("is-night") ||
+    document.body?.classList.contains("is-night");
+
+  // ✅ 昼夜切替したい画像を追加
+  const targets = [
+    ".takomin--tawa img",
+    ".takomin--tawa1 img",
+    ".takomin--fish img"
+  ];
+
+  function apply(){
+    targets.forEach(sel => {
+      const img = document.querySelector(sel);
+      if (!img) return;
+
+      const day   = img.dataset.day;
+      const night = img.dataset.night;
+      const url   = isNight() ? night : day;
+
+      if (url) img.src = url;
+    });
+  }
+
+  // 初回
+  apply();
+
+  // class変化で即反映
+  const mo = new MutationObserver(apply);
+  mo.observe(document.documentElement, { attributes:true, attributeFilter:["class"] });
+  if (document.body) mo.observe(document.body, { attributes:true, attributeFilter:["class"] });
+
+  // （保険）他JSがsrcを上書きする場合
+  setInterval(apply, 1000);
+})();
+</script>
+
+
+
+
+
+
+
+
+
+<style>
+/* =========================
+   🐙 タコ民（量産用：共通）
+   ========================= */
 .map-wrap .takomin{
-  position:absolute;
+  position: absolute;
   transform: translate(-50%, -100%);
   width: clamp(56px, 6vw, 64px);
   z-index: 60;
@@ -223,21 +767,24 @@ body::before{
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+
 .map-wrap .takomin img{
-  width:100%;
-  height:auto;
-  display:block;
+  width: 100%;
+  height: auto;
+  display: block;
   image-rendering: pixelated;
 }
+
+/* ✅ 吹き出しを必ず画像より前に出す */
 .map-wrap .takomin-balloon{
-  position:absolute;
-  bottom:100%;
-  left:50%;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
   transform: translateX(-50%);
-  z-index: 999;
-  display:none;
-  background:#000;
-  color:#fff;
+  z-index: 999;            /* ←最前面 */
+  display: none;
+  background: #000;
+  color: #fff;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: clamp(11px, 2.8vw, 14px);
@@ -245,665 +792,496 @@ body::before{
   max-width: min(420px, 85vw);
   white-space: pre-line;
   line-height: 1.4;
-  pointer-events:none;
+  pointer-events: none;
 }
-.map-wrap .takomin-balloon{ z-index: 80 !important; }
-.map-wrap .takomin.topmenu{ width: clamp(38px, 4.3vw, 48px) !important; }
-.map-wrap .takomin[data-id="bigmans"]{ width: clamp(86px, 10vw, 140px); }
-.map-wrap .takomin[data-id="twobit"]{ width: clamp(60px, 10vw, 140px); }
-.map-wrap .takomin[data-id="me13"]{ width: clamp(130px, 10vw, 140px); }
-.map-wrap .takomin[data-id="tawa"]{ width: clamp(130px, 10vw, 200px); }
-.map-wrap .takomin[data-id="puni"]{ width: clamp(60px, 10vw, 140px); }
 
-/* タワー兄妹の画像が固定サイズ問題の潰し */
+/* 兄妹を前に */
+.takomin--tawa1{
+  position: relative;
+  z-index: 40 !important;
+}
+
+/* 起動アイコンは一段後ろ */
+.takomin--tawa{
+  position: relative;
+  z-index: 10 !important;
+}
+
+
+/* =========================
+   🧭 トップメニュー（me1〜me12）だけ小さく
+   - class="topmenu" が付いたものだけ対象
+   - 他の個別サイズ指定より必ず優先
+   ========================= */
+.map-wrap .takomin.topmenu{
+  width: clamp(38px, 4.3vw, 48px) !important;
+}
+
+/* =========================
+   🐙 特大タコ民（必要なものだけ個別）
+   ========================= */
+.map-wrap .takomin[data-id="bigmans"]{
+  width: clamp(86px, 10vw, 140px);
+}
+
+.map-wrap .takomin[data-id="twobit"]{
+  width: clamp(60px, 10vw, 140px);
+}
+
+.map-wrap .takomin[data-id="me13"]{
+  width: clamp(130px, 10vw, 140px);
+}
+
+.map-wrap .takomin[data-id="tawa"]{
+  width: clamp(130px, 10vw, 200px);
+}
+
+.map-wrap .takomin[data-id="puni"]{
+  width: clamp(60px, 10vw, 140px);
+}
+
+/* ✅ 画像が固定サイズのまま問題を潰す */
 button.takomin.takomin--tawa1 > img{
   width: 130% !important;
   height: 130% !important;
   max-width: none !important;
   max-height: none !important;
-  display:block !important;
+  display: block !important;
   object-fit: contain !important;
 }
 
-/* アニメ */
-@keyframes takominFloat { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-3px);} }
-@keyframes takominBob   { 0%,100%{ transform: translateY(0) rotate(0deg);} 50%{ transform: translateY(-2px) rotate(-1deg);} }
-@keyframes takominShake { 0%,100%{ transform: translateX(0);} 20%{ transform: translateX(-1px);} 40%{ transform: translateX(1px);} 60%{ transform: translateX(-1px);} 80%{ transform: translateX(1px);} }
-.map-wrap .takomin.is-float img{ animation: takominFloat 1.8s ease-in-out infinite; will-change: transform; }
-.map-wrap .takomin.is-bob img{ animation: takominBob 1.6s ease-in-out infinite; will-change: transform; }
-.map-wrap .takomin.is-shake img{ animation: takominShake .22s linear infinite; will-change: transform; }
-@keyframes takominStep { 0%{ transform: translateY(0);} 25%{ transform: translateY(-1px);} 50%{ transform: translateY(0);} 75%{ transform: translateY(-1px);} 100%{ transform: translateY(0);} }
-.map-wrap .takomin.is-step img{ animation: takominStep .6s steps(2) infinite; will-change: transform; }
-@media (prefers-reduced-motion: reduce){
-  .map-wrap .takomin img{ animation:none !important; }
+
+/* =========================
+   🐙 タコ民（量産用：座標）
+   ========================= */
+.map-wrap .takomin--me1{ top:5%; left:29%; }
+.map-wrap .takomin--me2{ top:3%; left:70%; }
+.map-wrap .takomin--me3{ top:12.7%; left:32%; }
+.map-wrap .takomin--me4{ top:13%; left:70%; }
+.map-wrap .takomin--me5{ top:20.5%; left:50%; }
+.map-wrap .takomin--me6{ top:23%; left:37%; }
+.map-wrap .takomin--me7{ top:21.4%; left:76%; }
+.map-wrap .takomin--me8{ top:30.5%; left:39%; }
+.map-wrap .takomin--me9{ top:29%; left:68%; }
+.map-wrap .takomin--me10{ top:38.5%; left:30%; }
+.map-wrap .takomin--me12{ top:38%; left:70%; }
+.map-wrap .takomin--me13{ top:68.8%; left:52%; }
+.map-wrap .takomin--tawa{ top:95%; left:50%; }
+.map-wrap .takomin--tawa1{ top:95%; left:55%; }
+.map-wrap .takomin--ghost{ top:72.9%; left:25%; }
+.map-wrap .takomin--yousha{ top:65%; left:27%; }
+.map-wrap .takomin--motoyu{ top:73%; left:50.8%; }
+.map-wrap .takomin--kbc{ top:47.5%; left:75%; }
+.map-wrap .takomin--katana{ top:47.3%; left:23%; }
+.map-wrap .takomin--hotel{ top:58.4%; left:61%; }
+.map-wrap .takomin--bigmans{ top:57.7%; left:24%; }
+.map-wrap .takomin--twobit{ top:80%; left:25%; }
+.map-wrap .takomin--hanaya{ top:65%; left:76%; }
+.map-wrap .takomin--mars{ top:72.8%; left:77%; }
+.map-wrap .takomin--dollis{ top:57.8%; left:75%; }
+.map-wrap .takomin--puni{ top:80%; left:77%; }
+
+
+
+
+
+/* 夜だけ表示制御（bodyに is-night が付く前提） */
+.night-only{ display:none; }
+html.is-night .night-only{ display:block; }
+
+
+
+
+
+
+/* =========================
+   🗺 map-wrap を絶対配置の基準にする（重要）
+   ========================= */
+.map-wrap{ position: relative; }
+
+/* =========================
+   🐙 タコ民：動きプリセット
+   ========================= */
+
+@keyframes takominFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-3px); }
 }
 
-/* glow */
+@keyframes takominBob {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  50%     { transform: translateY(-2px) rotate(-1deg); }
+}
+
+@keyframes takominShake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-1px); }
+  40%     { transform: translateX(1px); }
+  60%     { transform: translateX(-1px); }
+  80%     { transform: translateX(1px); }
+}
+
+/* ✅ 基本：ふわふわ（常時） */
+.map-wrap .takomin.is-float img{
+  animation: takominFloat 1.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ✅ もう少し“生き物感”（常時） */
+.map-wrap .takomin.is-bob img{
+  animation: takominBob 1.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ✅ タップした時だけ震える（JSで付け外し） */
+.map-wrap .takomin.is-shake img{
+  animation: takominShake .22s linear infinite;
+  will-change: transform;
+}
+
+/* ✅ me13 は他の吹き出しより後ろに回す（でも土台よりは前） */
+.map-wrap .takomin[data-id="me13"]{
+  z-index: 45 !important; /* ← 40(祭壇)より上 / 60(他タコ民)より下 */
+}
+
+
+
+/* =========================
+   🐙 タコ民：足踏み（トコトコ）
+   ========================= */
+
+@keyframes takominStep {
+  0%   { transform: translateY(0); }
+  25%  { transform: translateY(-1px); }
+  50%  { transform: translateY(0); }
+  75%  { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
+}
+
+/* ✅ 常時足踏み */
+.map-wrap .takomin.is-step img{
+  animation: takominStep .6s steps(2) infinite;
+  will-change: transform;
+}
+
+/* ✅ iPhone対策：動きを減らす設定の人には止める */
+@media (prefers-reduced-motion: reduce){
+  .map-wrap .takomin img{ animation: none !important; }
+}
+
+/* タコ民アイコン（ボタン or img）に付ける共通クラス */
 .takomin--glow img{
+  /* 画像の縁を光らせる：透明PNGでも効く */
   filter:
     drop-shadow(0 0 2px rgba(255, 240, 150, 0.95))
     drop-shadow(0 0 6px rgba(255, 200, 80, 0.75))
     drop-shadow(0 0 14px rgba(255, 140, 20, 0.55));
 }
 
-/* 夜だけ表示 */
-.night-only{ display:none; }
-html.is-night .night-only{ display:block; }
 
-/* =========================================================
-  ✅ 9) ボスゲート（クリックできるように中間z-index）
-========================================================= */
+@keyframes takominGlow{
+  0%,100%{
+    filter:
+      drop-shadow(0 0 2px rgba(255,240,150,.85))
+      drop-shadow(0 0 6px rgba(255,200,80,.55))
+      drop-shadow(0 0 14px rgba(255,140,20,.35));
+  }
+  50%{
+    filter:
+      drop-shadow(0 0 3px rgba(255,255,200,.95))
+      drop-shadow(0 0 10px rgba(255,210,120,.8))
+      drop-shadow(0 0 22px rgba(255,160,60,.6));
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ✅ ボスゲート（画像リンク） */
 .boss-gate{
   position:absolute;
-  top: 41.3%;
-  left: 50%;
+  top: 41.3%;     /* ←調整 */
+  left: 50%;      /* ←調整 */
   transform: translateX(-50%);
-  width: 18%;
+  width: 18%;     /* ←調整 */
   z-index: 12;
   display:block;
-  cursor:pointer;
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* 画像そのもの */
 .boss-gate img{
-  width:100%;
-  height:auto;
+  width: 100%;
+  height: auto;
   display:block;
   image-rendering: pixelated;
 }
-html.is-night .boss-gate{ animation: bossPulse 1.6s ease-in-out infinite; }
+
+/* （任意）夜のボス感：ふわっと脈動 */
+html.is-night .boss-gate{
+  animation: bossPulse 1.6s ease-in-out infinite;
+}
 @keyframes bossPulse{
-  0%{ transform: translateX(-50%) scale(1); opacity:.95; }
-  50%{ transform: translateX(-50%) scale(1.04); opacity:1; }
-  100%{ transform: translateX(-50%) scale(1); opacity:.95; }
+  0%{ transform: translateX(-50%) scale(1);   opacity: 0.95; }
+  50%{ transform: translateX(-50%) scale(1.04); opacity: 1; }
+  100%{ transform: translateX(-50%) scale(1); opacity: 0.95; }
 }
 
-/* =========================================================
-  ✅ 10) GIF（位置は既存CSSがある前提。無ければ最低限）
-========================================================= */
-.map-gif, .map2-gif{
-  display:block;
-  width: min(780px, 96%);
-  margin: 14px auto 0;
-  height:auto;
-  image-rendering: pixelated;
-}
-
-/* =========================================================
-  ✅ 11) フッター最小
-========================================================= */
-#siteFooter a{ color:#fff; text-decoration:none; border-bottom:1px solid rgba(255,255,255,.35); padding-bottom:1px; }
-
-/* =========================================================
-  ✅ 12) ★最重要：バックアップUI 最前面＆クリック保証
-========================================================= */
-#trcBackupFloat{
-  position: fixed;
-  top: calc(10px + env(safe-area-inset-top, 0px));
-  right: calc(10px + env(safe-area-inset-right, 0px));
-  z-index: 2147483647 !important; /* 最強 */
-  display:flex;
-  gap:8px;
-  align-items:center;
-  padding: 10px;
-  border: 2px solid rgba(255,255,255,.28);
-  border-radius: 14px;
-  background: rgba(10,10,18,.78);
-  backdrop-filter: blur(6px);
-  box-shadow: 0 18px 50px rgba(0,0,0,.65);
-  color:#fff;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif;
-  pointer-events: auto !important;
-}
-#trcBackupFloat, #trcBackupFloat *{
-  pointer-events: auto !important;
-}
-#trcBackupFloat .trcDot{
-  width:6px;height:6px;border-radius:999px;
-  background: rgba(180,220,255,.75);
-  box-shadow: 0 0 0 2px rgba(180,220,255,.18);
-  opacity:.9;
-}
-#trcBackupFloat .trcCap{
-  font-size:12px;
-  color: rgba(255,255,255,.78);
-  font-weight: 900;
-  letter-spacing: .04em;
-  padding: 0 2px;
-}
-#trcBackupFloat .trcBtn{
-  border: 2px solid rgba(255,255,255,.35);
-  background: rgba(255,255,255,.08);
-  color:#fff;
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-weight: 900;
-  letter-spacing: .03em;
-  cursor:pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  white-space: nowrap;
-}
-#trcBackupFloat .trcBtn:active{ transform: translateY(1px); }
-#trcBackupFloat .trcBtnPrimary{
-  background: linear-gradient(180deg, rgba(140,200,255,.22), rgba(255,255,255,.08));
-  border-color: rgba(180,220,255,.55);
-}
-@media (max-width:420px){
-  #trcBackupFloat{ padding:8px; border-radius:12px; }
-  #trcBackupFloat .trcBtn{ padding:9px 10px; border-radius:11px; font-size:12px; }
-}
-
-/* =========================================================
-  ✅ 13) 門番モーダル
-========================================================= */
-#trcGuardModal{
+/* ===== ボス会話（戦う前）オーバーレイ ===== */
+.boss-talk{
   position: fixed;
   inset: 0;
-  z-index: 2147483646; /* バックアップUIの一個下 */
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:16px;
-  background: rgba(0,0,0,.72);
+  display: none;
+  z-index: 9998;
+  background: rgba(0,0,0,0.78);
 }
-#trcGuardModal.on{ display:flex; }
-#trcGuardModal .card{
-  width: min(560px, 100%);
-  border-radius: 14px;
+.boss-talk-panel{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 90vw);
+  padding: 14px 12px;
   border: 3px solid #fff;
-  background: #0a0a12;
-  box-shadow: 0 18px 60px rgba(0,0,0,.75);
-  overflow:hidden;
-  position:relative;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, sans-serif;
 }
-#trcGuardModal .card::before{
-  content:"";
-  position:absolute;
-  inset:7px;
-  border:2px solid rgba(255,255,255,.35);
-  border-radius:12px;
-  pointer-events:none;
+.boss-talk-title{ font-size: 14px; margin-bottom: 8px; }
+.boss-talk-text{
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  min-height: 3.2em;
+  opacity: 0.95;
 }
-#trcGuardModal .head{
-  padding:12px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  border-bottom:1px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.06);
+.boss-talk-buttons{
+  display: flex;
+  gap: 8px;
+  justify-content: center;
 }
-#trcGuardModal .ttl{ font-weight:900; letter-spacing:.03em; }
-#trcGuardModal .xbtn{
-  border:2px solid rgba(255,255,255,.35);
-  background: rgba(255,255,255,.06);
-  color:#fff;
-  border-radius: 10px;
+.boss-talk-buttons button{
   padding: 8px 10px;
-  cursor:pointer;
-  font-weight:900;
+  border: 2px solid #fff;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
 }
-#trcGuardModal .body{ padding:12px 12px 14px; }
-#trcGuardModal .line{ font-size:14px; line-height:1.7; letter-spacing:.02em; padding:2px 2px; }
-#trcGuardModal .sub{ margin-top:8px; font-size:12px; color: rgba(255,255,255,.74); line-height:1.6; }
-#trcGuardModal .actions{
-  margin-top:12px;
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:10px;
+.boss-talk-buttons button:active{ transform: translateY(1px); }
+
+/* ===== バトル結果オーバーレイ ===== */
+.boss-overlay{
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 9999;
+  background: rgba(0,0,0,0.78);
 }
-#trcGuardModal .gbtn{
-  border:2px solid rgba(255,255,255,.35);
-  background: rgba(255,255,255,.06);
-  color:#fff;
-  border-radius: 12px;
-  padding: 12px 12px;
-  cursor:pointer;
-  font-weight:900;
-  letter-spacing:.03em;
+.boss-panel{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 90vw);
+  padding: 14px 12px;
+  border: 3px solid #fff;
+  background: #000;
+  color: #fff;
+  text-align: center;
+  font-family: system-ui, sans-serif;
 }
-#trcGuardModal .gbtn:active{ transform: translateY(1px); }
-#trcGuardModal .gbtn.danger{
-  background: linear-gradient(180deg, rgba(255,120,120,.22), rgba(255,255,255,.06));
-  border-color: rgba(255,160,160,.55);
+.boss-head{ font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
+.boss-name{ font-size: 16px; margin-bottom: 10px; }
+.boss-cardframe{
+  width: min(300px, 78vw);
+  margin: 0 auto 10px;
+  border: 2px solid #fff;
+  padding: 8px;
+  background: #111;
 }
-@media (max-width:420px){
-  #trcGuardModal .actions{ grid-template-columns: 1fr; }
+.boss-cardimg{
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+}
+.boss-result{ font-size: 28px; letter-spacing: 2px; margin-top: 6px; }
+.boss-score{ margin-top: 4px; font-size: 22px; }
+.boss-comment{
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  min-height: 2.8em;
+  opacity: 0.95;
+}
+.boss-footer{ margin-top: 10px; font-size: 12px; opacity: 0.75; line-height: 1.4; }
+.boss-buttons{
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 12px;
+}
+.boss-buttons button{
+  padding: 8px 10px;
+  border: 2px solid #fff;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+}
+.boss-buttons button:active{ transform: translateY(1px); }
+
+
+
+
+/* =========================
+   建物の座標ズレ完全Fix（最優先）
+   ※ 必ず style の一番最後に置く
+========================= */
+
+.map-wrap .tf-building{
+  position:absolute !important;
+
+  /* ← これが今回のキモ（中心＋足元基準） */
+  transform: translate(-50%, -100%) !important;
+  transform-origin: 50% 100% !important;
+
+  margin:0 !important;
+  padding:0 !important;
 }
 
-/* =========================================================
-  ✅ 14) ★左上の「閉じる/夜の一戦」系が被るのを潰す
-  - boss1.js / gate4.js が出す固定HUDが前面に来るのを防ぐ
-========================================================= */
-.boss-ui, .boss-hud, .boss-close, .boss-label,
-#bossUI, #bossHud, #bossClose, #bossLabel,
-.gate-ui, .gate-hud, .gate-close, .gate-label,
-#gateUI, #gateHud, #gateClose, #gateLabel{
-  z-index: 2000 !important;
+.map-wrap .tf-building > img{
+  display:block !important;
+  width:100% !important;
+  height:auto !important;
 }
 
-/* まだ残る場合は “最終手段” をON（必要な時だけ） */
-/*
-.boss-ui, .boss-hud, .boss-close, .boss-label,
-#bossUI, #bossHud, #bossClose, #bossLabel{
-  display:none !important;
-}
-*/
-  </style>
+  
 
-  <!-- ▼ ボスゲート -->
-  <link rel="stylesheet" href="./assets/css/boss-local.css?v=1">
+</style>
 
-  <!-- ▼ たこ焼き釣り -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@4c8919c0a8740505f80998baea383a228b3bb847/takofish.css">
 
-  <!-- ▼ タイトル下のタコ民５０人回し -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc2.css?v=789">
 
-  <!-- ▼ ホットスポット -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/hotspot1.css?v=777">
 
-  <!-- ▼たこ焼きの祭壇 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/saidan.css?v=1">
 
-  <!-- ▼タコ民村人セリフ -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-murabito.css?v=777">
 
-  <!-- ▼ たこ焼きファーム（宝箱表示の見た目も含むのでトップでも残す） -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/takofarm1.css?v=2">
-</head>
 
-<body class="shop template">
 
-  <!-- ✅ 右上固定：バックアップ/復元 -->
-  <div id="trcBackupFloat" role="group" aria-label="バックアップ/復元">
-    <span class="trcDot"></span>
-    <span class="trcCap">DATA</span>
-    <button id="trcBtnBackup" class="trcBtn trcBtnPrimary" type="button">バックアップ</button>
-    <button id="trcBtnRestore" class="trcBtn" type="button">復元</button>
-    <input id="trcRestoreFile" type="file" accept="application/json" style="display:none">
-  </div>
 
-  <!-- ✅ 復元ワンクッション（門番） -->
-  <div id="trcGuardModal" aria-hidden="true">
-    <div class="card" role="dialog" aria-modal="true" aria-label="復元の確認">
-      <div class="head">
-        <div class="ttl">門番の確認</div>
-        <button class="xbtn" type="button" data-act="close">×</button>
-      </div>
-      <div class="body">
-        <div class="line">この扉を開けば、いまの記録は上書きされる。</div>
-        <div class="line">元に戻せない。それでも、過去の記録へ戻るのか？</div>
-        <div class="sub">※ 復元＝端末データの上書きです。心配なら先にバックアップを2本作ってください。</div>
-        <div class="actions">
-          <button class="gbtn" type="button" data-act="cancel">今を選ぶ</button>
-          <button class="gbtn danger" type="button" data-act="proceed">過去へ戻る</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- 太陽/月 -->
-  <div id="phase-strip"><div id="phase-orb"></div></div>
 
-  <div class="page-center">
-    <!-- タイトル -->
-    <center>
-      <img src="https://ul.h3z.jp/h12u4pD5.gif" style="display:block;width:400px !important;height:auto !important;">
-      <img src="https://basefile.akamaized.net/takoyakitrc-base-shop/69613a78bcb90/mojiji.png" style="max-width:92%;height:auto;">
-    </center>
 
-    <!-- タイトル下タコ民 -->
-    <div id="takominArea" class="takomin-area">
-      <div class="takomin-wrap">
-        <a id="takominLink" class="takomin-avatar" href="#" target="_blank" rel="noopener">
-          <img id="takominImg" src="" alt="タコ民">
-        </a>
-        <div class="takomin-text">
-          <span id="takominLine">……</span>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ✅ トースト（宝箱など：トップで1個だけ） -->
-  <div class="tf-toast" aria-live="polite"></div>
 
-  <!-- ✅ 街マップ -->
-  <div class="map-wrap" id="townMap">
 
-    <!-- 建物 -->
-    <a class="tf-building" href="./farm.html" aria-label="たこ焼き畑へ" style="left:19.5%; top:99%; width:110px;">
-      <img src="https://ul.h3z.jp/iF0mVDkG.png" alt="たこ焼き畑（建物）">
-    </a>
 
-    <a class="tf-building" href="./roten.html" aria-label="露店へ" style="left:20%; top:93%; width:140px;">
-      <img src="https://ul.h3z.jp/AFW27Fek.png" alt="露店（建物）">
-    </a>
 
-    <a class="tf-building" href="./zukan.html" aria-label="カード図鑑へ" style="left:80%; top:96%; width:50px;">
-      <img src="https://ul.h3z.jp/nJLgRZOL.png" alt="カード図鑑（建物）">
-    </a>
 
-    <!-- 祭壇（見た目） -->
-    <button class="spot spot--gate" type="button" aria-label="たこ焼きゲート（見た目）">
-      <img class="spot__base"
-           src="https://ul.h3z.jp/DOpnGGIS.png"
-           data-day="https://ul.h3z.jp/DOpnGGIS.png"
-           data-night="https://ul.h3z.jp/RrfereXw.png"
-           alt="たこ焼きの祭壇">
-      <img class="spot__icon" src="https://ul.h3z.jp/G9HOojAP.png" alt="行き先アイコン">
-    </button>
 
-    <!-- 祭壇（タップ判定） -->
-    <button class="gate-hit" type="button" aria-label="たこ焼きゲート（タップ判定）"></button>
 
-    <!-- ゲート モーダル -->
-    <div id="gateModal" class="gate-modal" aria-hidden="true">
-      <div class="gate-modal__panel" role="dialog" aria-modal="true" aria-labelledby="gateModalTitle">
-        <img id="gateModalPhoto" class="gate-modal__photo" src="" alt="">
-        <div class="gate-modal__body">
-          <div id="gateModalTitle" class="gate-modal__title">たこ焼きゲート</div>
-          <div id="gateModalDesc" class="gate-modal__desc"></div>
-          <div class="gate-modal__btns">
-            <button id="gateModalCancel" type="button" class="gate-modal__btn">やめる</button>
-            <a id="gateModalGo" class="gate-modal__btn gate-modal__btn--go" href="#" target="_blank" rel="noopener">行く</a>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- 背景（最後に置く：z-index 0） -->
-    <img class="map-img"
-      src="https://ul.h3z.jp/0yeAj4R7.png"
-      alt="背景"
-      data-morning="https://ul.h3z.jp/D4jEiu5y.png"
-      data-day="https://ul.h3z.jp/bHkJV3PU.png"
-      data-night="https://ul.h3z.jp/EOmNLbDO.png">
 
-    <!-- ✅ ボスゲート -->
-    <a class="boss-gate night-only" href="#" aria-label="鉄板魔グマに挑む">
-      <img src="https://ul.h3z.jp/CsjyEnG3.png" alt="ボスゲート">
-    </a>
 
-    <!-- ▼タコ民群（あなたの元コードをそのまま移植） -->
-    <button class="takomin takomin--ghost takomin--glow is-float" data-id="ghost" type="button" aria-label="GHOSTのタコ民">
-      <img src="https://ul.h3z.jp/yfWcFrT4.png" data-day="https://ul.h3z.jp/yfWcFrT4.png" data-night="https://ul.h3z.jp/93R4C9fH.png" alt="GHOST">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--yousha takomin--glow" data-id="yousha" type="button" aria-label="YOUSHA">
-      <img src="https://ul.h3z.jp/XNnElwbh.png" data-day="https://ul.h3z.jp/XNnElwbh.png" data-night="https://ul.h3z.jp/2LR6QUQf.png" alt="YOUSHA">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--motoyu is-step takomin--glow" data-id="motoyu" type="button" aria-label="たこ焼き菜々（もとの湯）のタコ民">
-      <img src="https://ul.h3z.jp/vsy0pctI.png" data-day="https://ul.h3z.jp/vsy0pctI.png" data-night="https://ul.h3z.jp/PpSfLird.png" alt="もとの湯">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--kbc takomin--glow" data-id="kbc" type="button" aria-label="久留米ＫＢＣ">
-      <img src="https://ul.h3z.jp/fy5i61XI.png" data-day="https://ul.h3z.jp/fy5i61XI.png" data-night="https://ul.h3z.jp/mGbOq0Q5.png" alt="久留米ＫＢＣ">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--katana takomin--glow" data-id="katana" type="button" aria-label="刀鍛冶">
-      <img src="https://ul.h3z.jp/OnsDTpd8.png" data-day="https://ul.h3z.jp/OnsDTpd8.png" data-night="https://ul.h3z.jp/KgDhxsxP.png" alt="刀鍛冶">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--hotel takomin--glow" data-id="hotel" type="button" aria-label="旅路の塔">
-      <img src="https://ul.h3z.jp/hx0gOm4a.png" data-day="https://ul.h3z.jp/hx0gOm4a.png" data-night="https://ul.h3z.jp/hx0gOm4a.png" alt="旅路の塔">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--bigmans takomin--glow" data-id="bigmans" type="button" aria-label="BIGMANS">
-      <img src="https://ul.h3z.jp/sticAk2s.png" data-day="https://ul.h3z.jp/sticAk2s.png" data-night="https://ul.h3z.jp/q8H3THcE.png" alt="BIGMANS">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--twobit takomin--glow" data-id="twobit" type="button" aria-label="twobit">
-      <img src="https://basefile.akamaized.net/takoyakitrc-base-shop/696a673f108bf/2bit1.png"
-           data-day="https://basefile.akamaized.net/takoyakitrc-base-shop/696a673f108bf/2bit1.png"
-           data-night="https://basefile.akamaized.net/takoyakitrc-base-shop/696a6755c2e31/2bit2.png" alt="twobit">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--hanaya takomin--glow" data-id="hanaya" type="button" aria-label="華矢式">
-      <img src="https://ul.h3z.jp/JPKQZ6sP.png" data-day="https://ul.h3z.jp/JPKQZ6sP.png" data-night="https://ul.h3z.jp/yF9zSCHU.png" alt="華矢式">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--mars takomin--glow" data-id="mars" type="button" aria-label="mars">
-      <img src="https://ul.h3z.jp/n6sTv8Xr.png" data-day="https://ul.h3z.jp/n6sTv8Xr.png" data-night="https://ul.h3z.jp/tHlNh1NI.png" alt="mars">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--dollis takomin--glow" data-id="dollis" type="button" aria-label="ドリズ">
-      <img src="https://ul.h3z.jp/yi2Zbd3I.png" data-day="https://ul.h3z.jp/yi2Zbd3I.png" data-night="https://ul.h3z.jp/FmYMG8fu.png" alt="ドリズ">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--puni takomin--glow" data-id="puni" type="button" aria-label="ぷにぷに">
-      <img src="https://ul.h3z.jp/ujUBACrC.png" data-day="https://ul.h3z.jp/ujUBACrC.png" data-night="https://ul.h3z.jp/0LHkVmoQ.png" alt="ぷにぷに">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <!-- 上メニュータコ民 -->
-    <button class="takomin takomin--me1 takomin--glow topmenu" data-id="me1" type="button" aria-label="最新のお知らせ">
-      <img src="https://ul.h3z.jp/2z5fOkRX.png" data-day="https://ul.h3z.jp/2z5fOkRX.png" data-night="https://ul.h3z.jp/dUhJu7ky.png" alt="最新のお知らせ">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me2 takomin--glow topmenu" data-id="me2" type="button" aria-label="たこ焼きトレカの世界">
-      <img src="https://ul.h3z.jp/CJ443Pa2.png" data-day="https://ul.h3z.jp/CJ443Pa2.png" data-night="https://ul.h3z.jp/QAszf1eo.png" alt="たこ焼きトレカの世界">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me3 takomin--glow topmenu" data-id="me3" type="button" aria-label="よくある質問">
-      <img src="https://ul.h3z.jp/I3PLFgos.png" data-day="https://ul.h3z.jp/I3PLFgos.png" data-night="https://ul.h3z.jp/Qvk5pot0.png" alt="よくある質問">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me4 takomin--glow topmenu" data-id="me4" type="button" aria-label="今遊べるイベント">
-      <img src="https://ul.h3z.jp/y7MHJcs1.png" data-day="https://ul.h3z.jp/y7MHJcs1.png" data-night="https://ul.h3z.jp/HX7qBOFD.png" alt="今遊べるイベント">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me5 takomin--glow topmenu" data-id="me5" type="button" aria-label="ビンゴの泉">
-      <img src="https://ul.h3z.jp/JQGm41Td.png" data-day="https://ul.h3z.jp/JQGm41Td.png" data-night="https://ul.h3z.jp/OrmSjUlC.png" alt="ビンゴの泉">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me6 takomin--glow topmenu" data-id="me6" type="button" aria-label="カードを買う">
-      <img src="https://ul.h3z.jp/Db26pagb.png" data-day="https://ul.h3z.jp/Db26pagb.png" data-night="https://ul.h3z.jp/ko0Xgd8p.png" alt="カードを買う">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me7 takomin--glow topmenu" data-id="me7" type="button" aria-label="たこぴのSNS">
-      <img src="https://ul.h3z.jp/D2KbpmcN.png" data-day="https://ul.h3z.jp/D2KbpmcN.png" data-night="https://ul.h3z.jp/g5bLMwI0.png" alt="たこぴのSNS">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me8 takomin--glow topmenu" data-id="me8" type="button" aria-label="アイテムショップ">
-      <img src="https://ul.h3z.jp/OREcMs5u.png" data-day="https://ul.h3z.jp/OREcMs5u.png" data-night="https://ul.h3z.jp/2gFRuuSs.png" alt="アイテムショップ">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me9 takomin--glow topmenu" data-id="me9" type="button" aria-label="達成の記録">
-      <img src="https://ul.h3z.jp/nvhUJBFe.png" data-day="https://ul.h3z.jp/nvhUJBFe.png" data-night="https://ul.h3z.jp/gXNVqtcD.png" alt="達成の記録">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me10 takomin--glow topmenu" data-id="me10" type="button" aria-label="メディア掲載">
-      <img src="https://ul.h3z.jp/s4CIKhrn.png" data-day="https://ul.h3z.jp/s4CIKhrn.png" data-night="https://ul.h3z.jp/5fFm3Fpr.png" alt="メディア掲載">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me12 takomin--glow topmenu" data-id="me12" type="button" aria-label="カード図鑑">
-      <img src="https://ul.h3z.jp/Wvnf4dc7.png" data-day="https://ul.h3z.jp/Wvnf4dc7.png" data-night="https://ul.h3z.jp/3aj5G2CO.png" alt="">
-      <div class="takomin-balloon"></div>
-    </button>
-    <button class="takomin takomin--me13 is-step" data-id="me13" type="button" aria-label="推し活">
-      <img src="https://ul.h3z.jp/mC7LPEzu.png" data-day="https://ul.h3z.jp/mC7LPEzu.png" data-night="https://ul.h3z.jp/icyNwiaA.png" alt="推し活">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <!-- 釣り -->
-    <a class="takomin takomin--fish is-bob" href="#"
-       onclick="window.openTakofishGame && window.openTakofishGame(); return false;">
-      <img src="https://ul.h3z.jp/8taiJLpS.png" data-day="https://ul.h3z.jp/8taiJLpS.png" data-night="https://ul.h3z.jp/QP3AevlY.png" alt="釣りタコ民">
-    </a>
 
-    <!-- タワー兄妹 -->
-    <button class="takomin takomin--tawa1 takomin--glow topmenu" data-id="tawa1" type="button" aria-label="タワー兄妹">
-      <img src="https://basefile.akamaized.net/takoyakitrc-base-shop/6978ca4e7ec5c/sasada3.png"
-           data-day="https://basefile.akamaized.net/takoyakitrc-base-shop/6978ca4e7ec5c/sasada3.png"
-           data-night="https://ul.h3z.jp/xonP2u98.png" alt="タワー兄妹">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <button class="takomin takomin--tawa" data-id="tawa" type="button" aria-label="たこ焼きタワー">
-      <img src="https://ul.h3z.jp/QJX6Wqrs.png" data-day="https://ul.h3z.jp/QJX6Wqrs.png" data-night="https://ul.h3z.jp/Rbm88XCj.png" alt="たこ焼きタワー">
-      <div class="takomin-balloon"></div>
-    </button>
 
-    <!-- 座標（そのまま） -->
-    <style>
-      .map-wrap .takomin--fish{ top: 85.6%; left: 70%; }
-      .map-wrap .takomin--tawa1{ position:absolute !important; z-index:90 !important; top:95%; left:55%; }
-      .map-wrap .takomin--tawa{  position:absolute !important; z-index:80 !important; top:95%; left:50%; }
 
-      .map-wrap .takomin--me1{ top:5%; left:29%; }
-      .map-wrap .takomin--me2{ top:3%; left:70%; }
-      .map-wrap .takomin--me3{ top:12.7%; left:32%; }
-      .map-wrap .takomin--me4{ top:13%; left:70%; }
-      .map-wrap .takomin--me5{ top:20.5%; left:50%; }
-      .map-wrap .takomin--me6{ top:23%; left:37%; }
-      .map-wrap .takomin--me7{ top:21.4%; left:76%; }
-      .map-wrap .takomin--me8{ top:30.5%; left:39%; }
-      .map-wrap .takomin--me9{ top:29%; left:68%; }
-      .map-wrap .takomin--me10{ top:38.5%; left:30%; }
-      .map-wrap .takomin--me12{ top:38%; left:70%; }
-      .map-wrap .takomin--me13{ top:68.8%; left:52%; }
-      .map-wrap .takomin--ghost{ top:72.9%; left:25%; }
-      .map-wrap .takomin--yousha{ top:65%; left:27%; }
-      .map-wrap .takomin--motoyu{ top:73%; left:50.8%; }
-      .map-wrap .takomin--kbc{ top:47.5%; left:75%; }
-      .map-wrap .takomin--katana{ top:47.3%; left:23%; }
-      .map-wrap .takomin--hotel{ top:58.4%; left:61%; }
-      .map-wrap .takomin--bigmans{ top:57.7%; left:24%; }
-      .map-wrap .takomin--twobit{ top:80%; left:25%; }
-      .map-wrap .takomin--hanaya{ top:65%; left:76%; }
-      .map-wrap .takomin--mars{ top:72.8%; left:77%; }
-      .map-wrap .takomin--dollis{ top:57.8%; left:75%; }
-      .map-wrap .takomin--puni{ top:80%; left:77%; }
-    </style>
 
-  </div><!-- /map-wrap -->
 
-  <!-- GIF -->
+
+
+
+
+
+  
+
+  <!-- ダーツ佐俣とニキティGIF -->
   <img src="https://ul.h3z.jp/l2zcjFAE.gif" class="map-gif" alt="コラボカード一覧">
+
+<!-- 北海道焼きもとの湯GIF -->
   <img src="https://ul.h3z.jp/OdXwiBmZ.gif" class="map2-gif" alt="たこ焼き菜々">
 
+
+  
   <!-- ホットスポット -->
   <a class="hotspot hs-osirase" href="https://takoyaki-trc.github.io/takoyaki-media/town/news.html" aria-label="最新のお知らせ"></a>
   <a class="hotspot hs-story" href="https://takoyaki-trc.github.io/takoyaki-media/town/about.html" aria-label="たこ焼きトレカの世界"></a>
   <a class="hotspot hs-situmon" href="https://takoyaki-trc.github.io/takoyaki-media/town/faq.html" aria-label="よくある質問"></a>
   <a class="hotspot hs-bingo" href="https://takoyaki-trc.github.io/takoyaki-media/town/bingo.html" aria-label="ビンゴの泉"></a>
-  <a class="hotspot hs-ivent" href="https://takoyaki-trc.github.io/takoyaki-media/town/events.html" aria-label="いま遊べるイベント"></a>
+   <a class="hotspot hs-ivent" href="https://takoyaki-trc.github.io/takoyaki-media/town/events.html" aria-label="いま遊べるイベント"></a>
   <a class="hotspot hs-kau" href="https://takoyaki-toreka.booth.pm/item_lists/m7YToKe5" aria-label="カードを買う"></a>
   <a class="hotspot hs-sns" href="https://x.com/takopi_trc" aria-label="たこぴのSNS"></a>
   <a class="hotspot hs-item" href="https://takoyaki-toreka.booth.pm/item_lists/nNPTZdOd" aria-label="アイテムショップ"></a>
-  <a class="hotspot hs-kiroku" href="https://takoyaki-trc.github.io/takoyaki-media/town/complete.html" aria-label="達成の記録"></a>
+   <a class="hotspot hs-kiroku" href="https://takoyaki-trc.github.io/takoyaki-media/town/complete.html" aria-label="達成の記録"></a>
   <a class="hotspot hs-medhia" href="https://takoyaki-trc.github.io/takoyaki-media/town/media.html" aria-label="メディア掲載"></a>
   <a class="hotspot hs-korabo" href="./collabo.html" aria-label="コラボカードを見る"></a>
   <a class="hotspot hs-zukan1" href="./cardlist.html" aria-label="カードリスト"></a>
-  <a class="hotspot hs-tou" href="https://takoyaki-trc.github.io/takoyaki-media/town/tabiji.html" aria-label="旅路の塔"></a>
+   <a class="hotspot hs-tou" href="https://takoyaki-trc.github.io/takoyaki-media/town/tabiji.html" aria-label="旅路の塔"></a>
 
-  <!-- 協力店 -->
-  <a class="hotspot hs-ghost" href="https://share.google/zXplullkNy8XP35bj" aria-label="GHOST"></a>
+
+<!-- ホットスポット協力店の街 -->
+   <a class="hotspot hs-ghost" href="https://share.google/zXplullkNy8XP35bj" aria-label="GHOST"></a>
   <a class="hotspot hs-yousha" href="https://share.google/QAtxaPWvWBI4ks2Ug" aria-label="sports and darts cafe YOUSHA"></a>
-  <a class="hotspot hs-bigmans" href="https://share.google/Ag1SRMedWINlgV0S3" aria-label="Darts&Shop BIGMANS"></a>
+  <a class="hotspot hs-bigmans"href="https://share.google/Ag1SRMedWINlgV0S3" aria-label="Darts&Shop BIGMANS"></a>
   <a class="hotspot hs-hanayashiki" href="https://share.google/AOSjhW79YMq0hJUuh" aria-label="華矢式"></a>
-  <a class="hotspot hs-2bit" href="https://share.google/N2MqjpCLRYiKU6S8T" aria-label="Darts room 2 bit"></a>
+   <a class="hotspot hs-2bit" href="https://share.google/N2MqjpCLRYiKU6S8T" aria-label="Darts room 2 bit"></a>
   <a class="hotspot hs-kbc" href="https://share.google/6szp6CoWi6H6kL3Ss" aria-label="ビリヤード＆ダーツＫＢＣ"></a>
   <a class="hotspot hs-mars" href="https://share.google/Nu2j99ORbplos40Zh" aria-label="Mars. Kamata"></a>
-  <a class="hotspot hs-dollis" href="https://share.google/gb0NBa7q35HzEfqq9" aria-label="ダーツカフェ ドリズ DOLLiS"></a>
+<a class="hotspot hs-dollis" href="https://share.google/gb0NBa7q35HzEfqq9" aria-label="ダーツカフェ ドリズ DOLLiS"></a>
   <a class="hotspot hs-puni" href="https://www.instagram.com/punipuni_wakkanai/" aria-label="ぷにぷに稚内"></a>
   <a class="hotspot hs-katanakazi" href="https://share.google/ulEVNRsi6wreMqV8p" aria-label="たこ焼き 刀鍛冶"></a>
-  <a class="hotspot hs-nana" href="https://share.google/MDaHozOZI1bmLxUwL" aria-label="たこ焼き菜々"></a>
+   <a class="hotspot hs-nana" href="https://share.google/MDaHozOZI1bmLxUwL" aria-label="たこ焼き菜々"></a>
 
-  <!-- フッター -->
-  <footer id="siteFooter" style="
-    width:100%;
-    margin: 22px auto 0;
-    padding: 14px 10px calc(18px + env(safe-area-inset-bottom));
-    box-sizing:border-box;
-    text-align:center;
-    color: rgba(255,255,255,.78);
-    font-size: 12px;
-    line-height: 1.6;
-  ">
-    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-bottom:10px;">
-      <a href="./tokushoho.html">特定商取引法に基づく表記</a>
-      <a href="./privacy.html">プライバシーポリシー</a>
-      <a href="./terms.html">利用規約 / 免責</a>
-      <a href="./contact.html">お問い合わせ</a>
-    </div>
-    <div style="opacity:.85;margin-bottom:8px;">
-      ※ゲームの進行データは端末（ブラウザ）に保存されます。<br>機種変更前はバックアップ推奨。
-    </div>
-    <div style="opacity:.75;margin-bottom:8px;">
-      ※画像・文章の転載は禁止転載を禁止します。
-    </div>
-    <div style="opacity:.9;">
-      © たこ焼き菜々 / 焼かれた伝説 たこ焼きトレーディングカード
-    </div>
-  </footer>
 
-  <!-- =========================================================
-    ✅ A) たこ焼きタワー：クリックで遷移＋昼夜画像切替
-  ========================================================== -->
-  <script>
+  
+</div>
+
+
+
+
+
+
+
+
+<style>
+/* night-only は is-night に合わせる（ここは残してOK） */
+.night-only{ display:none; }
+
+</style>
+
+<script>
 (() => {
-  "use strict";
-
-  // 1) タワー起動
-  const towerBtn = document.querySelector('.takomin--tawa');
-  if (towerBtn) {
-    towerBtn.addEventListener('click', () => {
-      location.href = './takoyaki-tower.html';
-    });
-  }
-
-  // 2) 昼夜切替（html.is-night を基準）
-  const isNight = () => document.documentElement.classList.contains("is-night");
-
-  const targets = [
-    ".takomin--tawa img",
-    ".takomin--tawa1 img",
-    ".takomin--fish img"
-  ];
-
-  function apply(){
-    targets.forEach(sel => {
-      const img = document.querySelector(sel);
-      if(!img) return;
-      const day = img.dataset.day;
-      const night = img.dataset.night;
-      const url = isNight() ? night : day;
-      if(url) img.src = url;
-    });
-  }
-
-  apply();
-  const mo = new MutationObserver(apply);
-  mo.observe(document.documentElement, { attributes:true, attributeFilter:["class"] });
-  setInterval(apply, 1000);
-})();
-  </script>
-
-  <!-- =========================================================
-    ✅ B) 昼夜・空・太陽/月（Tokyo固定）
-  ========================================================== -->
-  <script>
-(() => {
-  "use strict";
-
+  /* ===== Tokyo time (全てこれ基準) ===== */
   function nowTokyo(){
     return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
   }
+
+  /* ===== マップ切替 ===== */
   function slotByHour(h){
     if(h >= 5 && h < 11) return "morning";
     if(h >= 11 && h < 20) return "day";
@@ -922,6 +1300,7 @@ html.is-night .boss-gate{ animation: bossPulse 1.6s ease-in-out infinite; }
     if(url && img.src !== url) img.src = url;
   }
 
+  /* ===== 空グラデーション ===== */
   const SKY = [
     ["#0b1020", "#141c2e"], ["#0b1020", "#141c2e"],
     ["#0c1224", "#18223a"], ["#121a33", "#22304f"],
@@ -936,6 +1315,7 @@ html.is-night .boss-gate{ animation: bossPulse 1.6s ease-in-out infinite; }
     ["#2c2f4a", "#1b2430"], ["#1b2430", "#141c2e"],
     ["#121a2b", "#10131f"], ["#0b1020", "#141c2e"]
   ];
+
   const mix = (a,b,t)=>{
     const h=x=>parseInt(x,16);
     const r=x=>x.toString(16).padStart(2,"0");
@@ -944,6 +1324,7 @@ html.is-night .boss-gate{ animation: bossPulse 1.6s ease-in-out infinite; }
     return "#"+A.map((v,i)=>r(Math.round(v+(B[i]-v)*t))).join("");
   };
 
+  /* ===== 太陽／月 ===== */
   function updatePhaseOrb(now){
     const strip = document.getElementById("phase-strip");
     const orb   = document.getElementById("phase-orb");
@@ -965,7 +1346,9 @@ html.is-night .boss-gate{ animation: bossPulse 1.6s ease-in-out infinite; }
     }
 
     const maxX = strip.clientWidth - orb.clientWidth;
-    orb.style.transform = `translateX(${Math.round(maxX*p)}px) scale(${isDay ? 1 : 0.8})`;
+    orb.style.transform =
+      `translateX(${Math.round(maxX * p)}px) scale(${isDay ? 1 : 0.8})`;
+
     orb.classList.toggle("sun", isDay);
     orb.classList.toggle("moon", !isDay);
 
@@ -977,18 +1360,27 @@ html.is-night .boss-gate{ animation: bossPulse 1.6s ease-in-out infinite; }
     }
   }
 
+  /* ===== まとめて反映 ===== */
   function applyAll(){
     const now = nowTokyo();
     const h = now.getHours();
+// 夜判定（ボス用に is-night へ統一）
+const night = (h >= 20 || h < 5);
 
-    // 夜判定（html.is-night）
-    const night = (h >= 20 || h < 5);
-    const html = document.documentElement;
-    html.classList.toggle("is-night", night);
+const html = document.documentElement;
 
+if (night) {
+  html.classList.add("is-night");
+  html.classList.remove("day");
+} else {
+  html.classList.remove("is-night");
+  html.classList.add("day");
+}
+
+    // マップ切替
     applyMapByHour(h);
 
-    // 空（分単位で滑らか）
+    // 空グラデーション（分単位でなめらか）
     const t = (now.getMinutes()*60 + now.getSeconds()) / 3600;
     const next = (h+1)%24;
     document.body.style.setProperty(
@@ -996,305 +1388,85 @@ html.is-night .boss-gate{ animation: bossPulse 1.6s ease-in-out infinite; }
       `linear-gradient(${mix(SKY[h][0],SKY[next][0],t)}, ${mix(SKY[h][1],SKY[next][1],t)})`
     );
 
+    // 太陽/月
     updatePhaseOrb(now);
   }
 
   document.addEventListener("DOMContentLoaded", ()=>{
     applyAll();
-    setInterval(applyAll, 20*1000);
+    setInterval(applyAll, 20 * 1000);
   });
   window.addEventListener("pageshow", applyAll);
 })();
-  </script>
+</script>
 
-  <!-- =========================================================
-    ✅ C) バックアップ/復元（確実に動く：capture＋最前面）
-  ========================================================== -->
-  <script>
-(() => {
-  "use strict";
 
-  // ===== 主要キー =====
-  const KEY = {
-    resident: "trc_v1_resident",
-    lastLogin: "trc_v1_last_login",
-  };
-  const EXIST = {
-    farmBook: "tf_v1_book",
-    farmInv:  "tf_v1_inv",
-    rotenOcto:"roten_v1_octo",
-    tower: "tower_v1_state",
-    fish:  "fish_v1_state",
-  };
 
-  // ===== utils =====
-  const getRaw = (k) => {
-    const v = localStorage.getItem(k);
-    return (v === null || v === undefined) ? null : String(v);
-  };
-  const safeJSONParse = (raw, fallback) => { try { return JSON.parse(raw); } catch (_) { return fallback; } };
-  const safeStringify = (obj) => { try { return JSON.stringify(obj); } catch (_) { return "null"; } };
 
-  function listKeysByRegex(re) {
-    const out = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (re.test(k)) out.push(k);
-    }
-    return out;
-  }
 
-  // 図鑑slim（count+img等）
-  function slimBookRawKeepImg() {
-    const raw = getRaw(EXIST.farmBook);
-    if (!raw) return null;
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc2.js?v=111"></script>
 
-    const book = safeJSONParse(raw, null);
-    if (!book || typeof book !== "object") return raw;
 
-    const got = (book.got && typeof book.got === "object") ? book.got : {};
-    const outGot = {};
-    for (const id of Object.keys(got)) {
-      const node = got[id] || {};
-      const c = Number(node.count || 0);
-      if (c > 0) {
-        const out = { id, count: c };
-        if (typeof node.img === "string" && node.img.trim()) out.img = node.img.trim();
-        if (typeof node.name === "string" && node.name.trim()) out.name = node.name.trim();
-        if (typeof node.rarity === "string" && node.rarity.trim()) out.rarity = node.rarity.trim();
-        if (node.at != null && String(node.at).trim()) out.at = node.at;
-        if (node.lastAt != null && String(node.lastAt).trim()) out.lastAt = node.lastAt;
-        outGot[id] = out;
-      }
-    }
-    const slim = { ver: book.ver ?? 1, got: outGot };
-    return safeStringify(slim);
-  }
+<script defer src="./assets/boss1.js?v=2"></script>
 
-  function findFarmProgressKeys() {
-    const out = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (!/^tf_v1_/i.test(k)) continue;
-      if (/log|history|debug/i.test(k)) continue;
-      if (k === EXIST.farmBook || k === EXIST.farmInv) continue;
-      out.push(k);
-    }
-    const prefer = ["tf_v1_state","tf_v1_level","tf_v1_xp","tf_v1_farm","tf_v1_progress"];
-    const ordered = [];
-    for (const p of prefer) if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
-    for (const k of out) if (!ordered.includes(k)) ordered.push(k);
-    return ordered.slice(0, 60);
-  }
 
-  function findRotenProgressKeys() {
-    const out = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (!/^roten_v1_/i.test(k)) continue;
-      if (/log|history|debug/i.test(k)) continue;
-      out.push(k);
-    }
-    const prefer = [
-      "roten_v1_level","roten_v1_rep","roten_v1_myshop","roten_v1_inventory",
-      "roten_v1_market","roten_v1_state","roten_v1_shelves","roten_v1_octo"
-    ];
-    const ordered = [];
-    for (const p of prefer) if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
-    for (const k of out) if (!ordered.includes(k)) ordered.push(k);
-    return ordered.slice(0, 120);
-  }
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/gate4.js?v=5"></script>
 
-  function buildSlimBackupPayload() {
-    const keys = {};
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-murabito7.js?v=5"></script>
 
-    keys[KEY.resident] = getRaw(KEY.resident);
-    keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
 
-    keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
-    keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
-    keys[EXIST.farmBook]  = slimBookRawKeepImg();
 
-    for (const k of findFarmProgressKeys()) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
-    for (const k of findRotenProgressKeys()) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takofish11.js?v=2"></script>
 
-    // タワー/釣り
-    if (getRaw(EXIST.tower) != null) keys[EXIST.tower] = getRaw(EXIST.tower);
-    for (const k of listKeysByRegex(/tower/i)) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
-    if (getRaw(EXIST.fish) != null) keys[EXIST.fish] = getRaw(EXIST.fish);
-    for (const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
 
-    for (const k of Object.keys(keys)) {
-      if (keys[k] === null || keys[k] === undefined) delete keys[k];
-    }
+<!-- ▼ GitHub（jsDelivr）からJS読み込み（defer推奨） -->
+<script defer src="./assets/takofarm3.js?v=20260129a"></script>
 
-    return {
-      app: "takoyaki-trc",
-      ver: 6,
-      kind: "slim+roten",
-      exportedAt: new Date().toISOString(),
-      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り を保存。ログは保存しない。",
-      keys
-    };
-  }
 
-  function downloadJson(obj, filename) {
-    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
 
-  function backupSlim() {
-    const payload = buildSlimBackupPayload();
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    downloadJson(payload, `takoyaki-trc-backup_${stamp}.json`);
-    return payload;
-  }
 
-  async function restoreFromFile(file) {
-    const text = await file.text();
-    const data = safeJSONParse(text, null);
 
-    if (!data || !data.keys || typeof data.keys !== "object") {
-      alert("このファイルはバックアップ形式ではありません。");
-      return false;
-    }
 
-    const keys = Object.keys(data.keys);
 
-    // 最終確認
-    const ok = confirm(
-      "バックアップから復元します。\n" +
-      "現在のデータは上書きされます（元に戻せません）。\n\n" +
-      `復元キー数: ${keys.length}\n` +
-      `書き出し日時: ${String(data.exportedAt || "")}\n\n` +
-      "続行しますか？"
-    );
-    if (!ok) return false;
+<footer id="siteFooter" style="
+  width:100%;
+  margin: 22px auto 0;
+  padding: 14px 10px calc(18px + env(safe-area-inset-bottom));
+  box-sizing:border-box;
+  text-align:center;
+  color: rgba(255,255,255,.78);
+  font-size: 12px;
+  line-height: 1.6;
+">
+  <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-bottom:10px;">
+    <a href="./tokushoho.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">特定商取引法に基づく表記</a>
+    <a href="./privacy.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">プライバシーポリシー</a>
+    <a href="./terms.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">利用規約 / 免責</a>
+    <a href="./contact.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">お問い合わせ</a>
+  </div>
 
-    for (const k of keys) {
-      const v = data.keys[k];
-      if (v === null || v === undefined) localStorage.removeItem(k);
-      else localStorage.setItem(k, String(v));
-    }
+  <div style="opacity:.85;margin-bottom:8px;">
+    ※ゲームの進行データは端末（ブラウザ）に保存されます。<br>機種変更前はバックアップ推奨。
+  </div>
 
-    alert("復元しました。ページを再読み込みします。");
-    location.reload();
-    return true;
-  }
+  <div style="opacity:.75;margin-bottom:8px;">
+    ※画像・文章の転載は禁止転載を禁止します。
+  </div>
 
-  // ===== UI wiring（確実に拾う：capture） =====
-  const btnBackup  = document.getElementById("trcBtnBackup");
-  const btnRestore = document.getElementById("trcBtnRestore");
-  const inp        = document.getElementById("trcRestoreFile");
-  const modal      = document.getElementById("trcGuardModal");
+  <div style="opacity:.9;">
+    © たこ焼き菜々 / 焼かれた伝説 たこ焼きトレーディングカード
+  </div>
+</footer>
 
-  if (!btnBackup || !btnRestore || !inp || !modal) {
-    console.warn("[TRC] backup UI not found", { btnBackup, btnRestore, inp, modal });
-    return;
-  }
 
-  const openModal  = () => { modal.classList.add("on"); modal.setAttribute("aria-hidden", "false"); };
-  const closeModal = () => { modal.classList.remove("on"); modal.setAttribute("aria-hidden", "true"); };
 
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal();
-    const b = e.target.closest("button");
-    if (!b) return;
-    const act = b.dataset.act;
-    if (act === "close" || act === "cancel") closeModal();
-    if (act === "proceed") {
-      closeModal();
-      setTimeout(() => inp.click(), 80);
-    }
-  });
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal.classList.contains("on")) closeModal();
-  });
 
-  // ✅ バックアップ（captureで最優先）
-  btnBackup.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
 
-    const normal = btnBackup.textContent;
-    btnBackup.disabled = true;
-    btnBackup.textContent = "作成中…";
 
-    setTimeout(() => {
-      try {
-        backupSlim();
-        btnBackup.textContent = "OK!";
-        setTimeout(() => {
-          btnBackup.textContent = normal;
-          btnBackup.disabled = false;
-        }, 650);
-      } catch (err) {
-        console.error(err);
-        alert("バックアップに失敗しました（コンソールを確認してください）");
-        btnBackup.textContent = normal;
-        btnBackup.disabled = false;
-      }
-    }, 40);
-  }, { capture:true });
 
-  // ✅ 復元（門番）
-  btnRestore.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openModal();
-  }, { capture:true });
 
-  // ファイル→復元
-  inp.addEventListener("change", async () => {
-    const f = inp.files && inp.files[0];
-    inp.value = "";
-    if (!f) return;
-
-    const normal = btnRestore.textContent;
-    btnRestore.disabled = true;
-    btnRestore.textContent = "読込中…";
-    try { await restoreFromFile(f); }
-    finally {
-      btnRestore.disabled = false;
-      btnRestore.textContent = normal;
-    }
-  });
-
-  console.log("[TRC] backup UI ready");
-})();
-  </script>
-
-  <!-- 外部JS（あなたの現状通り） -->
-  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc2.js?v=111"></script>
-  <script defer src="./assets/boss1.js?v=2"></script>
-  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/gate4.js?v=5"></script>
-  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-murabito7.js?v=5"></script>
-  <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takofish11.js?v=2"></script>
-  <script defer src="./assets/takofarm3.js?v=20260129a"></script>
-
+  
+  
 </body>
 </html>
-
