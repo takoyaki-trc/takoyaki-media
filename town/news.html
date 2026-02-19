@@ -30,7 +30,7 @@
       --radius:18px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
 
-      /* ✅ 追加：被せカードのサイズ（小さくする） */
+      /* ✅ 被せカードのサイズ（左上/右上 共通） */
       --overlayW: 92px;
       --overlayWsp: 82px;
     }
@@ -231,12 +231,6 @@
       font-size:13px;
     }
 
-    /* ============================
-       ✅ 変更点
-       - 今月のカード画像枠（promoFrame / promoTop / miniChip / promoImgWrap の“枠”を削除
-       - 今月のカード画像 と たこ焼き菜々の画像 を同サイズで大きく
-       ============================ */
-
     /* ✅ 2枚の画像（同サイズ）を並べる */
     .monthlyPair{
       display:grid;
@@ -248,8 +242,9 @@
       gap:12px;
     }
 
-    /* ✅ “枠”なしで大きく見せる：角丸だけ（線/背景/影を付けない） */
+    /* ✅ “枠”なしで大きく見せる：角丸だけ（線/背景/影なし） */
     .bigImage{
+      position:relative; /* ✅ 右上に被せるため */
       border-radius: 14px;
       overflow:hidden;
       aspect-ratio: 16 / 10;
@@ -276,11 +271,12 @@
       object-fit: cover;
       transform: scale(1.01);
     }
-    .shopCardBadge{
+
+    /* ✅ 共通：被せカード（左上/右上） */
+    .overlayBadge{
       position:absolute;
-      left:10px;
       top:10px;
-      width: var(--overlayW); /* ✅ 小さく */
+      width: var(--overlayW);
       border-radius:14px;
       border:1px solid rgba(255,255,255,.18);
       background: rgba(0,0,0,.35);
@@ -288,13 +284,12 @@
       box-shadow: 0 14px 40px rgba(0,0,0,.55);
       backdrop-filter: blur(6px);
     }
-    .shopCardBadge img{
+    .overlayBadge img{
       width:100%;
       height:auto;
       display:block;
     }
-    /* ✅ ラベルは残す（不要なら消してOK） */
-    .shopCardBadge .label{
+    .overlayBadge .label{
       padding: 6px 6px 7px;
       font-size: 10px;
       font-weight: 1000;
@@ -304,8 +299,13 @@
       border-top: 1px solid rgba(255,255,255,.12);
       text-align:center;
     }
+    .overlay-left{ left:10px; }
+    .overlay-right{ right:10px; }
+
     @media (max-width: 360px){
-      .shopCardBadge{ width: var(--overlayWsp); left:8px; top:8px; }
+      .overlayBadge{ width: var(--overlayWsp); top:8px; }
+      .overlay-left{ left:8px; }
+      .overlay-right{ right:8px; }
     }
 
     /* ====== グリッド：貼り紙（カード風） ====== */
@@ -462,7 +462,7 @@
       }
       .paper:nth-child(3){ grid-column: 1 / span 2; }
 
-      /* PCでも同じ比率を維持しつつ大きく見せる（枠無し） */
+      /* PCでも同じ比率を維持しつつ大きく見せる */
       .bigImage,
       .shopImgWrap{
         aspect-ratio: 4 / 3;
@@ -509,32 +509,35 @@
                 </p>
               </div>
 
-              <!-- 右：画像（枠なしで大きく） -->
+              <!-- 右：画像（2枚） -->
               <aside class="monthlyPair" aria-label="今月の画像（2枚）">
                 <div class="monthlyPairGrid">
 
-                  <!-- ✅ 1枚目：今月のたこぴカード（枠削除＆大きく） -->
-                  <div class="bigImage" aria-label="今月のたこぴカード画像">
+                  <!-- ✅ 1枚目：指定の建物画像 + 右上に被せカード -->
+                  <div class="bigImage" aria-label="建物画像（右上にカード被せ）">
                     <img
-                      src="https://ul.h3z.jp/8Tj3Q5wR.JPG"
-                      alt="今月のたこぴカード"
+                      src="https://ul.h3z.jp/blGiIlw8.jpg"
+                      alt="建物画像"
                       loading="lazy"
                     />
+                    <div class="overlayBadge overlay-right" aria-label="被せカード（右上）">
+                      <img src="https://ul.h3z.jp/3g4FXdcK.png" alt="被せカード" loading="lazy" />
+                      <div class="label">今月の店頭限定</div>
+                    </div>
                   </div>
 
-                  <!-- ✅ 2枚目：たこ焼き菜々（建物＋カード被せ）同サイズ -->
+                  <!-- ✅ 2枚目：たこ焼き菜々（建物＋左上に被せカード） -->
                   <div class="shopImgWrap" aria-label="たこ焼き菜々（建物＋被せカード）">
                     <img class="shopBuildingImg"
-                         src="https://ul.h3z.jp/PbQfnYQQ.png"
+                         src="https://ul.h3z.jp/8jmV3I8H.jpg"
                          alt="たこ焼き菜々（建物画像）" loading="lazy" />
-                    <div class="shopCardBadge" aria-label="店頭カード（被せ）">
+                    <div class="overlayBadge overlay-left" aria-label="店頭カード（左上）">
                       <img src="https://ul.h3z.jp/74Zi4eQB.png" alt="店頭の限定ショップカード" loading="lazy" />
                       <div class="label">今月の店頭限定</div>
                     </div>
                   </div>
 
                 </div>
-                ※限定ショップカードコンプリートは店頭で２種揃える必要があります。
               </aside>
 
             </div>
@@ -582,7 +585,6 @@
         <!-- たこぴの噂話（ログ風） -->
         <section class="rumor" aria-label="たこぴの噂話">
           <div class="row">
-            <!-- ✅ ここが画像アイコン -->
             <div class="avatarFrame" aria-hidden="true">
               <img src="https://ul.h3z.jp/YqCD0im9.png" alt="たこぴ" loading="lazy">
             </div>
@@ -616,10 +618,8 @@
     document.getElementById("btnTop").addEventListener("click", () => {
       window.scrollTo({ top:0, behavior:"smooth" });
     });
-
-    // ※元コードにあった btnScrollQuest はHTMLに存在しないので
-    // エラー防止のためイベント登録は入れていません（他は変えていません）
   </script>
 </body>
 </html>
+
 
