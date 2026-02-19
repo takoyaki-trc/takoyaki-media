@@ -11,8 +11,6 @@
       /* ===== 基本色（RPG石板寄り） ===== */
       --bg0:#07060b;
       --bg1:#0c0b12;
-      --stone:#14131c;
-      --stone2:#0f0e15;
       --panel:rgba(255,255,255,.06);
       --line:rgba(255,255,255,.14);
       --text:#fff;
@@ -21,11 +19,9 @@
       /* ===== 金縁 ===== */
       --gold1:#f7dc83;
       --gold2:#caa245;
-      --gold3:#7b5a1a;
 
       /* ===== 形（丸くしすぎない） ===== */
       --r:12px;
-      --r2:10px;
       --shadow: 0 14px 34px rgba(0,0,0,.55);
 
       /* ===== 最大幅 ===== */
@@ -52,7 +48,7 @@
       overflow-x:hidden;
     }
 
-    /* ====== Header（ゲームの看板風） ====== */
+    /* ====== Header ====== */
     .header{
       position:sticky;
       top:0;
@@ -106,7 +102,7 @@
       padding: 14px 12px 38px;
     }
 
-    /* ====== Hero（神殿の石板） ====== */
+    /* ====== Hero ====== */
     .hero{
       position:relative;
       border-radius: var(--r);
@@ -136,7 +132,6 @@
         );
       mix-blend-mode: overlay;
     }
-
     .kicker{
       display:inline-flex;
       align-items:center;
@@ -173,7 +168,6 @@
       position:relative;
       z-index:1;
     }
-
     .micro{
       margin-top:10px;
       padding: 10px 12px;
@@ -187,14 +181,13 @@
       z-index:1;
     }
 
-    /* ====== Section ====== */
+    /* ====== Cards list ====== */
     .section{
       margin-top: 12px;
       display:grid;
       gap:12px;
     }
 
-    /* ====== Showcase（額縁＋台座） ====== */
     .frame{
       border-radius: var(--r);
       background: rgba(20,19,28,.62);
@@ -202,26 +195,19 @@
       box-shadow: var(--shadow);
       overflow:hidden;
     }
-
-    /* 金縁の「額」 */
     .frame .goldline{
       height: 3px;
       background: linear-gradient(90deg, transparent, rgba(247,220,131,.70), rgba(202,162,69,.70), transparent);
       opacity:.9;
     }
 
-    .row{
-      display:grid;
-      grid-template-columns: 1.05fr .95fr;
-      gap: 12px;
+    /* ✅ 画像→（その下に）情報 の縦レイアウト */
+    .card{
       padding: 12px;
-      align-items:center;
-    }
-    .row.alt{
-      grid-template-columns: .95fr 1.05fr;
+      display:grid;
+      gap:10px;
     }
 
-    /* 画像の台座（3枚の見え方を揃える） */
     .stand{
       border-radius: 10px;
       border:1px solid rgba(255,255,255,.12);
@@ -230,26 +216,23 @@
         rgba(10,9,14,.55);
       padding: 10px;
     }
-    .stand .imgbox{
+    .imgbox{
       border-radius: 8px;
       overflow:hidden;
       border:1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.30);
-
-      /* ✅ ここで“見た目のサイズ感”を統一（極端に大きくならない） */
       aspect-ratio: 4 / 3;
       display:flex;
       align-items:center;
       justify-content:center;
     }
-    .stand img{
+    .imgbox img{
       width:100%;
       height:100%;
       display:block;
-      object-fit: contain; /* 写真の比率を崩さず、枠内に収める */
+      object-fit: contain;
     }
 
-    /* 情報エリア */
     .info{
       border-radius: 10px;
       border:1px solid rgba(255,255,255,.10);
@@ -257,7 +240,6 @@
       padding: 10px 10px 12px;
     }
 
-    /* タグ（ドット看板っぽく角丸少なめ） */
     .tag{
       display:inline-flex;
       align-items:center;
@@ -319,7 +301,6 @@
     }
     .req li{margin:2px 0}
 
-    /* 下のまとめ */
     .footer{
       margin-top:12px;
       border-radius: var(--r);
@@ -355,7 +336,7 @@
       font-weight: 900;
     }
 
-    /* ====== Modal（ヘルプ用：最低限） ====== */
+    /* ====== Modal ====== */
     .modal{
       position:fixed;
       inset:0;
@@ -386,34 +367,61 @@
       padding: 10px 12px;
       border-bottom: 1px solid rgba(255,255,255,.10);
     }
-    .sheet .head .t{
-      font-weight: 1000;
-      letter-spacing:.02em;
-    }
+    .sheet .head .t{font-weight: 1000; letter-spacing:.02em;}
     .sheet .body{
       padding: 10px 12px 12px;
       color: rgba(255,255,255,.88);
       font-size: 13px;
       line-height:1.8;
     }
-
-    /* ====== Responsive ====== */
-    @media (max-width: 820px){
-      .row, .row.alt{grid-template-columns: 1fr}
-      .stand .imgbox{aspect-ratio: 4 / 3;}
-    }
   </style>
 </head>
 
 <body>
 
-  <!-- ✅ 画像URL：差し替え済み -->
   <script>
-    const COMPLETE_IMAGES = {
-      booth:  "https://ul.h3z.jp/IhHrKS2v.JPG",  // BOOTHカードコンプリート
-      limited:"https://ul.h3z.jp/0CUr8ViP.JPG",  // 限定ショップカードコンプリート（記憶の証）
-      shop:   "https://ul.h3z.jp/UeoChkCB.JPG"   // 店頭カードコンプリート
-    };
+    // ✅ 2枚目＝記憶の証 / 3枚目＝旅路の証 に修正（順番も固定）
+    const COMPLETE = [
+      {
+        key: "shop",
+        img: "https://ul.h3z.jp/UeoChkCB.JPG",
+        tagClass: "shop",
+        tagText: "店頭カードコンプリート",
+        title: "《完全制覇証：地熱の証》",
+        desc: "現地で焼き尽くした者にだけ刻まれる、熱の記録。<br>“買った”じゃない。“通った”が残る。",
+        req: [
+          "店頭の対象カードを <b>全種コンプリート</b>",
+          "店頭で提示（判別できればOK）",
+          "確認後お渡し（混雑・在庫により後日対応の場合あり）"
+        ]
+      },
+      {
+        key: "memory",
+        img: "https://ul.h3z.jp/0CUr8ViP.JPG",
+        tagClass: "limited",
+        tagText: "限定ショップカードコンプリート",
+        title: "《完全制覇証：記憶の証》",
+        desc: "その場所でしか出会えない“店の記憶”を揃えた者へ。<br>地図にない達成が、ここに残る。",
+        req: [
+          "限定ショップカード対象シリーズを <b>ホテル3種、空港1種、店頭2種で合計6種コンプリート</b>",
+          "店頭で提示（写真でも可：判別できればOK）",
+          "在庫状況により後日お渡しになる場合があります"
+        ]
+      },
+      {
+        key: "booth",
+        img: "https://ul.h3z.jp/IhHrKS2v.JPG",
+        tagClass: "booth",
+        tagText: "BOOTHカードコンプリート",
+        title: "《完全制覇証：旅路の証》",
+        desc: "画面の向こうで集め切った者へ。<br>封を切る瞬間は、いつだって冒険の始まり。",
+        req: [
+          "BOOTH対象カードを <b>全種コンプリート</b>",
+          "購入履歴・写真などで確認（ルールは運営告知に準拠）",
+          "店頭 or 指定方法でお渡し（状況により変動）"
+        ]
+      }
+    ];
   </script>
 
   <header class="header">
@@ -436,7 +444,7 @@
       <div class="kicker"><span class="dot"></span> Achievements</div>
       <h1>コンプリートした者にだけ渡される、<br>“証”のカード。</h1>
       <p class="lead">
-        「店頭カード」「BOOTHカード」「限定ショップカード」<br>
+        「店頭カード」「限定ショップカード」「BOOTHカード」<br>
         それぞれをコンプリートした方へお渡しする、特別なコンプリートカードの紹介ページです。
       </p>
       <div class="micro">
@@ -445,96 +453,7 @@
       </div>
     </section>
 
-    <section class="section">
-
-      <!-- 店頭 -->
-      <article class="frame">
-        <div class="goldline"></div>
-        <div class="row">
-          <div class="stand">
-            <div class="imgbox">
-              <img id="imgShop" alt="店頭カード コンプリートカード" loading="lazy">
-            </div>
-          </div>
-
-          <div class="info">
-            <div class="tag shop"><span class="pip"></span> 店頭カードコンプリート</div>
-            <h3 class="cardname">《完全制覇証：地熱の証》</h3>
-            <p class="desc">
-              現地で焼き尽くした者にだけ刻まれる、熱の記録。<br>
-              “買った”じゃない。“通った”が残る。
-            </p>
-            <div class="req">
-              <div class="ttl">入手条件 / 受け取り</div>
-              <ul>
-                <li>店頭の対象カードを <b>全種コンプリート</b></li>
-                <li>店頭で提示（判別できればOK）</li>
-                <li>確認後お渡し（混雑・在庫により後日対応の場合あり）</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <!-- BOOTH（✅ ここを構造修正：画像がデカくなる原因を解消） -->
-      <article class="frame">
-        <div class="goldline"></div>
-        <div class="row alt">
-          <div class="info">
-            <div class="tag booth"><span class="pip"></span> BOOTHカードコンプリート</div>
-            <h3 class="cardname">《完全制覇証：旅路の証》</h3>
-            <p class="desc">
-              画面の向こうで集め切った者へ。<br>
-              封を切る瞬間は、いつだって冒険の始まり。
-            </p>
-            <div class="req">
-              <div class="ttl">入手条件 / 受け取り</div>
-              <ul>
-                <li>BOOTH対象カードを <b>全種コンプリート</b></li>
-                <li>購入履歴・写真などで確認（ルールは運営告知に準拠）</li>
-                <li>店頭 or 指定方法でお渡し（状況により変動）</li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="stand">
-            <div class="imgbox">
-              <img id="imgBooth" alt="BOOTHカード コンプリートカード" loading="lazy">
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <!-- 限定ショップ（記憶の証：✅ 他2枚と同じ枠・同じ比率で表示） -->
-      <article class="frame">
-        <div class="goldline"></div>
-        <div class="row">
-          <div class="stand">
-            <div class="imgbox">
-              <img id="imgLimited" alt="限定ショップカード コンプリートカード" loading="lazy">
-            </div>
-          </div>
-
-          <div class="info">
-            <div class="tag limited"><span class="pip"></span> 限定ショップカードコンプリート</div>
-            <h3 class="cardname">《完全制覇証：記憶の証》</h3>
-            <p class="desc">
-              その場所でしか出会えない“店の記憶”を揃えた者へ。<br>
-              地図にない達成が、ここに残る。
-            </p>
-            <div class="req">
-              <div class="ttl">入手条件 / 受け取り</div>
-              <ul>
-                <li>限定ショップカード対象シリーズを <b>ホテル3種、空港1種、店頭2種で合計6種コンプリート</b></li>
-                <li>店頭で提示（写真でも可：判別できればOK）</li>
-                <li>在庫状況により後日お渡しになる場合があります</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </article>
-
-    </section>
+    <section class="section" id="cards"></section>
 
     <section class="footer">
       <h2>達成報告</h2>
@@ -551,7 +470,6 @@
 
   </main>
 
-  <!-- Modal（ヘルプ用：最低限） -->
   <div class="modal" id="modal" aria-hidden="true">
     <div class="backdrop" id="modalClose"></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
@@ -564,11 +482,33 @@
   </div>
 
   <script>
-    // 画像セット
     const $ = (s)=>document.querySelector(s);
-    $("#imgShop").src = COMPLETE_IMAGES.shop;
-    $("#imgBooth").src = COMPLETE_IMAGES.booth;
-    $("#imgLimited").src = COMPLETE_IMAGES.limited;
+
+    // ✅ 縦レイアウト（画像→下に説明）でカードを生成
+    const cards = $("#cards");
+    cards.innerHTML = COMPLETE.map(c => `
+      <article class="frame">
+        <div class="goldline"></div>
+        <div class="card">
+          <div class="stand">
+            <div class="imgbox">
+              <img src="${c.img}" alt="${c.tagText}" loading="lazy">
+            </div>
+          </div>
+          <div class="info">
+            <div class="tag ${c.tagClass}"><span class="pip"></span> ${c.tagText}</div>
+            <h3 class="cardname">${c.title}</h3>
+            <p class="desc">${c.desc}</p>
+            <div class="req">
+              <div class="ttl">入手条件 / 受け取り</div>
+              <ul>
+                ${c.req.map(x=>`<li>${x}</li>`).join("")}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </article>
+    `).join("");
 
     // 戻る
     $("#backBtn").addEventListener("click", () => {
@@ -597,6 +537,7 @@
     $("#helpBtn").addEventListener("click", ()=>{
       openModal("このページについて", `
         ここは <b>3種類のコンプリートカード</b> の紹介ページです。<br>
+        上から <b>地熱の証 → 記憶の証 → 旅路の証</b> の順に表示しています。<br>
         画像は実物写真のため、ホロの反射で見え方が変わります。<br><br>
         ※配布条件・お渡し方法は運営状況により変更される場合があります。
       `);
@@ -609,3 +550,4 @@
 
 </body>
 </html>
+
