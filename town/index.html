@@ -313,6 +313,112 @@ body.shop #mainFooter.wrapper + #base_url{
 
 <!-- ▼ たこ焼きファーム（宝箱表示の見た目も含むのでトップでも残す） -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/takofarm1.css?v=2">
+
+
+
+
+
+
+
+<style>
+/* ===== フッター内 バックアップボックス ===== */
+#trcFooterDataBox{
+  width: min(720px, 92%);
+  margin: 14px auto 10px;
+  padding: 12px 12px;
+  border: 2px solid rgba(255,255,255,.22);
+  border-radius: 14px;
+  background: rgba(10,10,18,.55);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 16px 50px rgba(0,0,0,.45);
+  text-align: left;
+}
+
+#trcFooterDataBox .row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+}
+
+#trcFooterDataBox .title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight: 900;
+  letter-spacing:.03em;
+  color:#fff;
+}
+
+#trcFooterDataBox .dot{
+  width:8px; height:8px;
+  border-radius:999px;
+  background: rgba(180,220,255,.85);
+  box-shadow: 0 0 0 2px rgba(180,220,255,.18);
+}
+
+#trcFooterDataBox .desc{
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255,255,255,.76);
+}
+
+#trcFooterDataBox .btns{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+#trcFooterDataBox .btn{
+  border: 2px solid rgba(255,255,255,.30);
+  background: rgba(255,255,255,.08);
+  color:#fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 900;
+  letter-spacing: .03em;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+
+#trcFooterDataBox .btn.primary{
+  background: linear-gradient(180deg, rgba(140,200,255,.22), rgba(255,255,255,.08));
+  border-color: rgba(180,220,255,.55);
+}
+
+#trcFooterDataBox .btn:active{ transform: translateY(1px); }
+
+@media (max-width:420px){
+  #trcFooterDataBox{ padding: 10px 10px; }
+  #trcFooterDataBox .btn{ padding: 9px 10px; font-size: 12px; }
+}
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </head>
 
 <body id="{block:IndexPage}shopTopPage{/block:IndexPage}{block:ItemPage}shopDetailPage{/block:ItemPage}" class="shop template">
@@ -1438,6 +1544,33 @@ if (night) {
   font-size: 12px;
   line-height: 1.6;
 ">
+
+
+
+<div id="trcFooterDataBox" aria-label="データのバックアップと復元">
+  <div class="row">
+    <div class="title"><span class="dot"></span>DATA（端末保存）</div>
+    <div class="btns">
+      <button id="trcFooterBackup" class="btn primary" type="button">バックアップ</button>
+      <button id="trcFooterRestore" class="btn" type="button">復元</button>
+      <input id="trcFooterRestoreFile" type="file" accept="application/json" style="display:none">
+    </div>
+  </div>
+
+  <div class="desc">
+    ※ ゲームの進行データは端末（ブラウザ）に保存されます。<br>
+    機種変更前は「バックアップ」推奨。復元は上書きになります。
+  </div>
+</div>
+
+
+
+
+
+
+
+
+  
   <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-bottom:10px;">
     <a href="./tokushoho.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">特定商取引法に基づく表記</a>
     <a href="./privacy.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">プライバシーポリシー</a>
@@ -1456,12 +1589,256 @@ if (night) {
   <div style="opacity:.9;">
     © たこ焼き菜々 / 焼かれた伝説 たこ焼きトレーディングカード
   </div>
+
+
+
+
+
+
+
+
+  
 </footer>
 
 
 
 
 
+<script>
+(() => {
+  "use strict";
+
+  // ===== 主要キー（必要ならここだけ増やせる） =====
+  const KEY = {
+    resident: "trc_v1_resident",
+    lastLogin: "trc_v1_last_login",
+  };
+  const EXIST = {
+    farmBook: "tf_v1_book",
+    farmInv:  "tf_v1_inv",
+    rotenOcto:"roten_v1_octo",
+    tower: "tower_v1_state",
+    fish:  "fish_v1_state",
+  };
+
+  // ===== utils =====
+  const getRaw = (k) => {
+    const v = localStorage.getItem(k);
+    return (v === null || v === undefined) ? null : String(v);
+  };
+  const safeJSONParse = (raw, fallback) => { try { return JSON.parse(raw); } catch (_) { return fallback; } };
+  const safeStringify = (obj) => { try { return JSON.stringify(obj); } catch (_) { return "null"; } };
+
+  function listKeysByRegex(re) {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (re.test(k)) out.push(k);
+    }
+    return out;
+  }
+
+  // ===== 図鑑slim（count+img等） =====
+  function slimBookRawKeepImg() {
+    const raw = getRaw(EXIST.farmBook);
+    if (!raw) return null;
+
+    const book = safeJSONParse(raw, null);
+    if (!book || typeof book !== "object") return raw;
+
+    const got = (book.got && typeof book.got === "object") ? book.got : {};
+    const outGot = {};
+    for (const id of Object.keys(got)) {
+      const node = got[id] || {};
+      const c = Number(node.count || 0);
+      if (c > 0) {
+        const out = { id, count: c };
+        if (typeof node.img === "string" && node.img.trim()) out.img = node.img.trim();
+        if (typeof node.name === "string" && node.name.trim()) out.name = node.name.trim();
+        if (typeof node.rarity === "string" && node.rarity.trim()) out.rarity = node.rarity.trim();
+        if (node.at != null && String(node.at).trim()) out.at = node.at;
+        if (node.lastAt != null && String(node.lastAt).trim()) out.lastAt = node.lastAt;
+        outGot[id] = out;
+      }
+    }
+    const slim = { ver: book.ver ?? 1, got: outGot };
+    return safeStringify(slim);
+  }
+
+  function findFarmProgressKeys() {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (!/^tf_v1_/i.test(k)) continue;
+      if (/log|history|debug/i.test(k)) continue;
+      if (k === EXIST.farmBook || k === EXIST.farmInv) continue;
+      out.push(k);
+    }
+    const prefer = ["tf_v1_state","tf_v1_level","tf_v1_xp","tf_v1_farm","tf_v1_progress"];
+    const ordered = [];
+    for (const p of prefer) {
+      if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
+    }
+    for (const k of out) if (!ordered.includes(k)) ordered.push(k);
+    return ordered.slice(0, 40);
+  }
+
+  function findRotenProgressKeys() {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (!/^roten_v1_/i.test(k)) continue;
+      if (/log|history|debug/i.test(k)) continue;
+      out.push(k);
+    }
+    const prefer = [
+      "roten_v1_level","roten_v1_rep","roten_v1_myshop","roten_v1_inventory",
+      "roten_v1_market","roten_v1_state","roten_v1_shelves","roten_v1_octo"
+    ];
+    const ordered = [];
+    for (const p of prefer) {
+      if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
+    }
+    for (const k of out) if (!ordered.includes(k)) ordered.push(k);
+    return ordered.slice(0, 90);
+  }
+
+  function buildSlimBackupPayload() {
+    const keys = {};
+
+    keys[KEY.resident] = getRaw(KEY.resident);
+    keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
+
+    keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
+    keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
+    keys[EXIST.farmBook]  = slimBookRawKeepImg();
+
+    for (const k of findFarmProgressKeys()) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
+    for (const k of findRotenProgressKeys()) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
+
+    if (getRaw(EXIST.tower) != null) keys[EXIST.tower] = getRaw(EXIST.tower);
+    for (const k of listKeysByRegex(/tower/i)) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
+
+    if (getRaw(EXIST.fish) != null) keys[EXIST.fish] = getRaw(EXIST.fish);
+    for (const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
+
+    for (const k of Object.keys(keys)) {
+      if (keys[k] === null || keys[k] === undefined) delete keys[k];
+    }
+
+    return {
+      app: "takoyaki-trc",
+      ver: 5,
+      kind: "slim+roten",
+      exportedAt: new Date().toISOString(),
+      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り を保存。ログは保存しない。",
+      keys
+    };
+  }
+
+  function downloadJson(obj, filename) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function backupSlim() {
+    const payload = buildSlimBackupPayload();
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    downloadJson(payload, `takoyaki-trc-backup_${stamp}.json`);
+  }
+
+  async function restoreFromFile(file) {
+    const text = await file.text();
+    const data = safeJSONParse(text, null);
+
+    if (!data || !data.keys || typeof data.keys !== "object") {
+      alert("このファイルはバックアップ形式ではありません。");
+      return;
+    }
+
+    const keys = Object.keys(data.keys);
+    const ok = confirm(
+      "バックアップから復元します。\n" +
+      "現在のデータは上書きされます（元に戻せません）。\n\n" +
+      `復元キー数: ${keys.length}\n` +
+      `書き出し日時: ${String(data.exportedAt || "")}\n\n` +
+      "続行しますか？"
+    );
+    if (!ok) return;
+
+    for (const k of keys) {
+      const v = data.keys[k];
+      if (v === null || v === undefined) localStorage.removeItem(k);
+      else localStorage.setItem(k, String(v));
+    }
+
+    alert("復元しました。ページを再読み込みします。");
+    location.reload();
+  }
+
+  // ===== UI wiring（フッター版） =====
+  const btnBackup  = document.getElementById("trcFooterBackup");
+  const btnRestore = document.getElementById("trcFooterRestore");
+  const inp        = document.getElementById("trcFooterRestoreFile");
+
+  if (!btnBackup || !btnRestore || !inp) return;
+
+  btnBackup.addEventListener("click", () => {
+    const normal = btnBackup.textContent;
+    btnBackup.disabled = true;
+    btnBackup.textContent = "作成中…";
+    setTimeout(() => {
+      try { backupSlim(); }
+      finally {
+        btnBackup.disabled = false;
+        btnBackup.textContent = normal;
+      }
+    }, 50);
+  });
+
+  btnRestore.addEventListener("click", () => {
+    inp.click();
+  });
+
+  inp.addEventListener("change", async () => {
+    const f = inp.files && inp.files[0];
+    inp.value = "";
+    if (!f) return;
+
+    const normal = btnRestore.textContent;
+    btnRestore.disabled = true;
+    btnRestore.textContent = "読込中…";
+    try { await restoreFromFile(f); }
+    finally {
+      btnRestore.disabled = false;
+      btnRestore.textContent = normal;
+    }
+  });
+
+})();
+</script>
 
 
 
