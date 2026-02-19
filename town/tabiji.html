@@ -30,9 +30,13 @@
 
       --max:1040px;
 
-      /* ✅被せカードのサイズ（少し小さく） */
-      --badgeW: 108px;   /* ←前より小さく */
-      --badgeWsp: 96px;  /* 小さい画面用 */
+      /* ✅ 施設画像に被せるカードのサイズ（小さめ） */
+      --badgeW: 108px;
+      --badgeWsp: 96px;
+
+      /* ✅ 店頭（当店）ブロックに被せるカードサイズ（少し大きめで見栄え） */
+      --shopBadgeW: 124px;
+      --shopBadgeWsp: 110px;
     }
 
     *{box-sizing:border-box}
@@ -180,7 +184,88 @@
     .btn:active{transform: translateY(1px)}
     .note{ margin-top:10px; font-size: 12px; color: rgba(255,255,255,.62); line-height:1.7; }
 
-    /* 一覧 */
+    /* ✅ 最新情報から同期して差し替える「店頭（当店）ブロック」 */
+    .syncShop{
+      margin-top:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      border-radius: 18px;
+      overflow:hidden;
+      box-shadow: 0 16px 50px rgba(0,0,0,.45);
+    }
+    .syncShop .building{
+      position:relative;
+      width:100%;
+      aspect-ratio: 16 / 10;
+      background: rgba(0,0,0,.35);
+      overflow:hidden;
+    }
+    .syncShop .building img.shopBuilding{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+      transform: scale(1.01);
+    }
+    .syncShop .cardBadge{
+      position:absolute;
+      left: 10px;
+      top: 10px;
+      width: var(--shopBadgeW);
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.22);
+      background: rgba(0,0,0,.35);
+      overflow:hidden;
+      box-shadow: 0 14px 40px rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+    }
+    .syncShop .cardBadge img{
+      width:100%;
+      height:auto;
+      display:block;
+    }
+    .syncShop .cardBadge .label{
+      padding: 7px 7px 8px;
+      font-size: 10.5px;
+      font-weight: 1000;
+      letter-spacing:.02em;
+      color: rgba(255,255,255,.86);
+      background: rgba(0,0,0,.35);
+      border-top: 1px solid rgba(255,255,255,.12);
+      text-align:center;
+    }
+    @media (max-width: 360px){
+      .syncShop .cardBadge{ width: var(--shopBadgeWsp); left:8px; top:8px; }
+    }
+    .syncShop .body{
+      padding: 12px 12px 14px;
+    }
+    .syncShop .title{
+      margin: 2px 0 8px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .syncShop .title .name{
+      margin:0;
+      font-weight:1000;
+      letter-spacing:.03em;
+      font-size: 15px;
+      line-height:1.2;
+    }
+    .syncShop .title .mini{
+      margin-top:4px;
+      font-size: 12px;
+      color: rgba(255,255,255,.72);
+      line-height:1.35;
+    }
+    .syncShop .text{
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.75;
+      margin: 0;
+    }
+
+    /* 一覧（4施設） */
     .grid{
       margin-top:14px;
       display:grid;
@@ -199,7 +284,6 @@
       box-shadow: 0 16px 50px rgba(0,0,0,.45);
     }
 
-    /* 建物画像＋カード被せ */
     .building{
       position:relative;
       width:100%;
@@ -242,14 +326,12 @@
       border-top: 1px solid rgba(255,255,255,.12);
       text-align:center;
     }
-
     @media (max-width: 360px){
       .cardBadge{ width: var(--badgeWsp); left:8px; top:8px; }
     }
 
     .spotBody{ padding: 12px 12px 14px; }
 
-    /* 施設名は画像に被せない */
     .spotTitle{
       margin: 2px 0 8px;
       padding-bottom: 10px;
@@ -276,7 +358,6 @@
       margin: 0;
     }
 
-    /* ✅「ホームページで見る」ボタンは削除。施設ボタンも1つだけに */
     .spotBtns{
       display:flex;
       flex-wrap:wrap;
@@ -336,7 +417,7 @@
       <p>
         <b>函館空港・花びしホテル・湯元 啄木亭・ホテル雨宮館</b>のロビーに置かせていただいている
         <b>限定ショップカード</b>を集める旅の案内所です。<br>
-        さらに、<b>店頭で毎月変わる限定ショップカード 2種類（例：ねぎ味噌 など）</b>も集めると――
+        さらに、<b>店頭で毎月変わる限定ショップカード 2種類</b>も集めると――
         <b>コンプリート証「旅路の証」カード</b>と<b>達成証</b>がもらえます。
       </p>
 
@@ -348,11 +429,36 @@
 
       <div class="btnRow">
         <a class="btn primary" href="complite.html">🏆 コンプリート証（旅路の証）を見る</a>
-        <a class="btn ghost" href="https://takoyaki-trc.github.io/takoyaki-media/town/news.html">📰 今月の店頭限定2種（最新情報）へ</a>
+        <a class="btn ghost" href="https://takoyaki-trc.github.io/takoyaki-media/town/news.html">📰 最新情報へ</a>
       </div>
 
+      <!-- ✅ここ：ご要望の「当店ブロック」（コンプリート証ボタンの下） -->
+      <article class="syncShop" id="shopSyncBlock" aria-label="店頭（月替わり）ブロック">
+        <div class="building">
+          <!-- 建物画像は固定（当店） -->
+          <img class="shopBuilding" src="https://ul.h3z.jp/8jmV3I8H.jpg" alt="たこ焼き菜々（建物画像）">
+
+          <!-- ✅ このカード画像だけ、最新情報側のJSONで差し替える -->
+          <div class="cardBadge" aria-label="今月の店頭限定カード（同期）">
+            <img id="shopSyncCardImg" src="https://ul.h3z.jp/74Zi4eQB.png" alt="今月の店頭限定カード（差し替え）">
+            <div class="label" id="shopSyncCardLabel">今月の店頭限定カード</div>
+          </div>
+        </div>
+
+        <div class="body">
+          <div class="title">
+            <p class="name">たこ焼き菜々（店頭）</p>
+            <div class="mini">月替わりの限定ショップカード（最新情報と連動）</div>
+          </div>
+          <p class="text">
+            このブロックは <b>最新情報ページ側の更新</b>に合わせて、カード画像が自動で差し替わります。
+            （更新は「最新情報」だけでOK）
+          </p>
+        </div>
+      </article>
+
       <div class="note">
-        ※月替わりカード（ねぎ味噌など）は <b>news.html</b> 側で更新してください。
+        ※月替わりカードは <b>最新情報側</b>で画像URLを差し替えるだけで、このページにも反映されます。
       </div>
     </section>
 
@@ -380,7 +486,6 @@
           </p>
 
           <div class="spotBtns">
-            <!-- TODO: 公式URLがあれば href を差し替え -->
             <a class="primary" href="#" onclick="alert('リンクURLが未設定です。必要なら教えてください。'); return false;">🔗 函館空港のページへ</a>
           </div>
         </div>
@@ -466,12 +571,51 @@
 
     </section>
 
-    <!-- ✅「今月の店頭限定2種」BOXは削除（ご要望） -->
-
     <footer>
       ©たこ焼き菜々/焼かれた伝説 たこ焼きトレーディングカード
     </footer>
   </div>
+
+  <!-- ✅ 最新情報側のJSONを読んで、このページの「当店カード」を自動差し替え -->
+  <script>
+  (async () => {
+    try {
+      /*
+        【重要】最新情報側で管理するデータ
+        1) town/ に news-sync.json を置く（news.html と同じ階層が楽）
+        2) そこに以下の形で card のURLを書き換えるだけでOK
+
+        例）news-sync.json
+        {
+          "shop_monthly": {
+            "card_image": "https://ul.h3z.jp/74Zi4eQB.png",
+            "card_label": "ねぎ味噌（今月）"
+          }
+        }
+
+        この tabiji.html が town/ と同じフォルダなら fetch("./news-sync.json") でOK
+        フォルダが違うならパスだけ直す（例：fetch("./town/news-sync.json")）
+      */
+
+      const res = await fetch("./news-sync.json", { cache: "no-store" });
+      if (!res.ok) throw new Error("news-sync.json not found");
+
+      const data = await res.json();
+      const shop = data && data.shop_monthly ? data.shop_monthly : null;
+      if (!shop || !shop.card_image) return;
+
+      const img = document.getElementById("shopSyncCardImg");
+      const label = document.getElementById("shopSyncCardLabel");
+
+      img.src = shop.card_image;
+      if (shop.card_label) label.textContent = shop.card_label;
+
+    } catch (e) {
+      // 失敗してもページはそのまま（初期画像のまま表示）
+      // console.log(e);
+    }
+  })();
+  </script>
 </body>
 </html>
 
