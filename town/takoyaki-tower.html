@@ -183,6 +183,7 @@
 (() => {
   /* =========================================================
      ✅ たこ焼きタイミングタワー（完全版：スコア実装）
+     - ✅ 端末差を吸収：delta time(dt)で速度を統一（Chrome体感に寄せる）
      - 基準点：階数に応じて増える
      - 早押しボーナス：出現して早く落とすほど加点
      - PERFECT：倍率＆コンボ加算（×1.2→×1.3→…）
@@ -279,6 +280,7 @@
     minWidth: 34,
     marginX: 16,
 
+    // ※速度は「60fps基準」に合わせる（dtで正規化するので端末差が出にくい）
     speedBase: 2.25,
     speedPerLevel: 0.085,
     perfectPx: 4,
@@ -308,6 +310,10 @@
     COMBO_MUL_ADD: 0.05,
     MUL_CAP: 2.00,
   };
+
+  // 任意：iPhoneは体感「止めづらい」なら判定だけ少し甘くできる
+  // const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  // if (isIOS) CONF.perfectPx = 5;
 
   // =========================
   // 種類テーブル（出現率p / 高さh）
@@ -394,6 +400,9 @@
     lastRunAt: "",
     lastRunFloors: 0,
     lastRunPoints: 0,
+
+    // ✅ 端末差吸収用（dt）
+    lastFrameT: 0,
   };
 
   // =========================
@@ -548,16 +557,6 @@
   // =========================
   // スコア計算
   // =========================
-  function getBaseScore(floor){
-    return CONF.SCORE_BASE0 + floor * CONF.SCORE_PER_FLOOR;
-  }
-
-  function getSpeedBonus(ms){
-    if (ms <= CONF.SPEED_BONUS_FAST_MS) return CONF.SPEED_BONUS_FAST;
-    if (ms <= CONF.SPEED_BONUS_MID_MS)  return CONF.SPEED_BONUS_MID;
-    return 0;
-  }
-
   function clampMul(m){
     return Math.min(CONF.MUL_CAP, Math.max(1.0, m));
   }
@@ -943,6 +942,9 @@
     S.cameraY = 0;
     S.dir = 1;
 
+    // ✅ dt
+    S.lastFrameT = 0;
+
     spawnBase();
     spawnCurrent();
 
@@ -1064,10 +1066,22 @@
     setHUD();
   }
 
-  function update(){
+  // ✅ dt対応 update（Chrome体感に寄せて統一）
+  function update(now){
+    if (!S.lastFrameT) S.lastFrameT = now;
+    let dt = (now - S.lastFrameT) / 1000; // sec
+    S.lastFrameT = now;
+
+    // タブ復帰/端末負荷で一気に進むのを抑える
+    dt = Math.min(dt, 0.033); // 最大33ms分まで
+
     if (S.playing && !S.over && S.curr){
       const sp = levelSpeed();
-      S.curr.x += sp * S.dir;
+
+      // ✅ 60fps基準に正規化（いまの値をそのまま使うため×60）
+      const step = sp * dt * 60;
+
+      S.curr.x += step * S.dir;
 
       const minX = CONF.marginX;
       const maxX = CONF.canvasW - CONF.marginX - S.curr.width;
@@ -1084,8 +1098,8 @@
     if (!S.over) updateCamera();
   }
 
-  function loop(){
-    update();
+  function loop(now){
+    update(now || performance.now());
     draw();
     requestAnimationFrame(loop);
   }
@@ -1122,4 +1136,3 @@
 </script>
 </body>
 </html>
-
