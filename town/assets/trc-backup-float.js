@@ -3,6 +3,10 @@
    TRC 共通：バックアップ / 復元（固定フローティングUI）
    - どのページでも <script src="assets/trc-backup-float.js"></script> だけでOK
    - 復元は「門番の確認モーダル」でワンクッション（誤タップ防止）
+   - ✅ 住民票（紙プロフィール版）もバックアップ対象に追加
+      - trc_v1_resident_paper（今回の住民票ページ）
+      - trc_v1_resident（旧/入口側が使ってる場合）
+      - trc_v1_last_login（旧）
    ========================================================= */
 (() => {
   "use strict";
@@ -33,18 +37,22 @@
 
     // 復元確認のあと、ファイル選択へ進むか？
     // true: 確認OK→ファイル選択ダイアログ
-    // false: まずファイルを選ばせてから最終確認（今回の要望はワンクッションなので true が自然）
+    // false: まずファイルを選ばせてから最終確認
     confirmThenPickFile: true,
 
     // ページ側で無効化したい場合：id="trcBackupFloatDisable" があれば出さない
   };
 
   // =========================
-  // 保存対象キー
+  // 保存対象キー（✅住民票を追加）
   // =========================
   const KEY = {
+    // 旧（入口側などが使う）
     resident: "trc_v1_resident",
     lastLogin: "trc_v1_last_login",
+
+    // ✅ 新（紙プロフィール住民票ページが使う）
+    residentPaper: "trc_v1_resident_paper",
   };
 
   const EXIST = {
@@ -158,45 +166,55 @@
   function buildSlimBackupPayload() {
     const keys = {};
 
+    // ✅ 住民票：旧 + 新（紙プロフィール）
     keys[KEY.resident] = getRaw(KEY.resident);
     keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
+    keys[KEY.residentPaper] = getRaw(KEY.residentPaper);
 
+    // 基本
     keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
     keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
 
+    // 図鑑は slim
     keys[EXIST.farmBook]  = slimBookRawKeepImg();
 
+    // 畑進行
     for (const k of findFarmProgressKeys()) {
       const v = getRaw(k);
       if (v != null) keys[k] = v;
     }
+
+    // 露店進行
     for (const k of findRotenProgressKeys()) {
       const v = getRaw(k);
       if (v != null) keys[k] = v;
     }
 
+    // タワー関連
     if (getRaw(EXIST.tower) != null) keys[EXIST.tower] = getRaw(EXIST.tower);
     for (const k of listKeysByRegex(/tower/i)) {
       const v = getRaw(k);
       if (v != null) keys[k] = v;
     }
 
+    // 釣り関連
     if (getRaw(EXIST.fish) != null) keys[EXIST.fish] = getRaw(EXIST.fish);
     for (const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)) {
       const v = getRaw(k);
       if (v != null) keys[k] = v;
     }
 
+    // null削除
     for (const k of Object.keys(keys)) {
       if (keys[k] === null || keys[k] === undefined) delete keys[k];
     }
 
     return {
       app: "takoyaki-trc",
-      ver: 5,
-      kind: "slim+roten",
+      ver: 6, // ✅ 住民票追加でver更新
+      kind: "slim+roten+residentPaper",
       exportedAt: new Date().toISOString(),
-      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り を保存。ログは保存しない。",
+      note: "住民票(旧/新)/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り を保存。ログは保存しない。",
       keys
     };
   }
@@ -469,7 +487,7 @@
       if (e.target === m) closeModal(m);
     });
 
-    // ボタン
+    // ボタン（close/cancel）
     m.addEventListener("click", (e) => {
       const btn = e.target.closest("button");
       if (!btn) return;
@@ -562,14 +580,13 @@
 
       const proceed = () => {
         closeModal(modal);
-        // ちょい遅らせる（モーダルが閉じる演出のあとにファイル選択）
         setTimeout(() => startPick(), 60);
       };
 
       btnRestore.addEventListener("click", () => {
         openModal(modal);
 
-        // proceed のワンショットを仕込む（多重登録防止）
+        // proceed のワンショット（多重登録防止）
         const onProceed = (e) => {
           const b = e.target.closest("button");
           if (!b) return;
