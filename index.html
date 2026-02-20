@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>焼かれた伝説｜入口</title>
+<meta name="description" content="焼かれた伝説 / たこ焼きトレカ 入口。日本語・英語の扉を選び、住民票へ進めます。">
 
 <style>
 :root{
@@ -13,9 +14,16 @@
   --ink:#1a1a1a;
   --gold2:#b98a2c;
   --glow:#7fd0ff;
+  --glow2:#ffe7a0;
+
+  --safeT: env(safe-area-inset-top, 0px);
+  --safeB: env(safe-area-inset-bottom, 0px);
+  --safeL: env(safe-area-inset-left, 0px);
+  --safeR: env(safe-area-inset-right, 0px);
 }
 
 *{box-sizing:border-box}
+html,body{height:100%}
 body{
   margin:0;
   font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;
@@ -28,11 +36,76 @@ body{
   flex-direction:column;
   align-items:center;
   justify-content:center;
+  padding: calc(14px + var(--safeT)) calc(12px + var(--safeR)) calc(16px + var(--safeB)) calc(12px + var(--safeL));
+  overflow-x:hidden;
 }
 
+/* ===== 背景：粒エフェクト（星/火の粉） ===== */
+.fx{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+}
+.fx i{
+  position:absolute;
+  left:0; top:0;
+  width:3px; height:3px;
+  border-radius:999px;
+  background: rgba(255,255,255,.75);
+  opacity:.0;
+  transform: translate3d(0,0,0);
+  filter: blur(.2px);
+  animation: floatUp linear infinite;
+}
+.fx i.gold{ background: rgba(255,220,140,.75); }
+.fx i.blue{ background: rgba(130,210,255,.70); }
+.fx i.big{ width:5px; height:5px; opacity:.0; }
+
+@keyframes floatUp{
+  0%   { transform: translate3d(var(--x), calc(100vh + 20px), 0) scale(var(--s)); opacity:0; }
+  10%  { opacity: var(--o); }
+  80%  { opacity: var(--o); }
+  100% { transform: translate3d(calc(var(--x) + var(--dx)), -40px, 0) scale(var(--s)); opacity:0; }
+}
+
+/* ===== メイン ===== */
 .stage{
   width:min(900px,92vw);
   text-align:center;
+  position:relative;
+  z-index:1;
+}
+
+/* ===== タイトルロゴ（ドット風） ===== */
+.logo{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  margin: 0 auto 10px;
+}
+.logo .jp{
+  font-weight:1000;
+  letter-spacing:.16em;
+  font-size:20px;
+  text-shadow:
+    0 2px 0 rgba(0,0,0,.35),
+    0 0 18px rgba(127,208,255,.18),
+    0 0 22px rgba(255,231,160,.12);
+}
+.logo .en{
+  font-weight:900;
+  letter-spacing:.22em;
+  font-size:11px;
+  opacity:.82;
+}
+.logo .line{
+  width:min(520px,86vw);
+  height:1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  margin-top:6px;
 }
 
 /* ===== 扉｜キャラ｜扉 ===== */
@@ -54,6 +127,7 @@ body{
   position:relative;
   border-radius:18px;
   transform-origin: 50% 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 .door img{
   width:100%;
@@ -70,10 +144,10 @@ body{
   inset:-10px;
   border-radius:22px;
   background:
-    radial-gradient(circle at 50% 40%, rgba(127,208,255,.50), rgba(127,208,255,0) 60%),
-    radial-gradient(circle at 50% 70%, rgba(255,230,160,.30), rgba(255,230,160,0) 65%);
+    radial-gradient(circle at 50% 40%, rgba(127,208,255,.52), rgba(127,208,255,0) 60%),
+    radial-gradient(circle at 50% 70%, rgba(255,231,160,.34), rgba(255,231,160,0) 65%);
   filter: blur(10px);
-  opacity:.15;
+  opacity:.18;
   z-index:-1;
   animation: doorGlow 2.2s ease-in-out infinite;
 }
@@ -95,11 +169,11 @@ body{
 }
 
 @keyframes doorGlow{
-  0%,100%{ opacity:.16; transform: scale(1); }
-  50%    { opacity:.40; transform: scale(1.02); }
+  0%,100%{ opacity:.18; transform: scale(1); }
+  50%    { opacity:.42; transform: scale(1.02); }
 }
 @keyframes doorSpark{
-  0%,100%{ opacity:.05; }
+  0%,100%{ opacity:.06; }
   50%    { opacity:.22; }
 }
 
@@ -108,49 +182,65 @@ body{
   filter: brightness(1.06);
 }
 .door:hover::before{
-  opacity:.55;
+  opacity:.60;
 }
 
-/* ===== 中央キャラ（トコトコ） ===== */
+/* 扉ラベル（小さく） */
+.doorTag{
+  margin-top:8px;
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:.04em;
+  opacity:.92;
+}
+.doorTag .pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+}
+.doorTag .dot{
+  width:6px;height:6px;border-radius:999px;
+  background:rgba(255,231,160,.9);
+  box-shadow:0 0 0 2px rgba(255,231,160,.18);
+}
+
+/* ===== 中央キャラ（足踏み） ===== */
 .charWrap{
   width:min(150px, 22vw);
   pointer-events:none;
   position:relative;
-  /* 横にちょい往復 */
-  animation: tocoMove 1.4s ease-in-out infinite;
 }
 .char{
   width:100%;
-  /* 上下にバウンス */
-  animation: tocoBob .55s ease-in-out infinite;
-  transform-origin: 50% 100%;
+  transform-origin:50% 100%;
+  animation: stepBounce .5s ease-in-out infinite;
 }
 .char img{
   width:100%;
   height:auto;
   image-rendering:pixelated;
   display:block;
+  animation: stepTilt .5s ease-in-out infinite;
 }
-
-/* 足踏み感（微回転） */
-.char img{
-  animation: tocoTilt .55s ease-in-out infinite;
-}
-
-@keyframes tocoMove{
-  0%,100%{ transform: translateX(-6px); }
-  50%    { transform: translateX( 6px); }
-}
-@keyframes tocoBob{
+@keyframes stepBounce{
   0%,100%{ transform: translateY(0px); }
-  50%    { transform: translateY(-6px); }
+  50%    { transform: translateY(-3px); }
 }
-@keyframes tocoTilt{
-  0%,100%{ transform: rotate(-1.6deg); }
-  50%    { transform: rotate( 1.6deg); }
+@keyframes stepTilt{
+  0%   { transform: rotate(-1.2deg); }
+  50%  { transform: rotate( 1.2deg); }
+  100% { transform: rotate(-1.2deg); }
 }
 
-/* “足元の影” で歩いてる感UP */
+/* 足元の影 */
 .shadow{
   position:absolute;
   left:50%;
@@ -161,11 +251,11 @@ body{
   background: radial-gradient(ellipse at center, rgba(0,0,0,.45), rgba(0,0,0,0) 70%);
   filter: blur(1px);
   opacity:.7;
-  animation: shadowPulse .55s ease-in-out infinite;
+  animation: shadowStep .5s ease-in-out infinite;
 }
-@keyframes shadowPulse{
-  0%,100%{ transform: translateX(-50%) scale(1.00); opacity:.65; }
-  50%    { transform: translateX(-50%) scale(0.86); opacity:.48; }
+@keyframes shadowStep{
+  0%,100%{ transform: translateX(-50%) scale(1.0); opacity:.65; }
+  50%    { transform: translateX(-50%) scale(0.92); opacity:.45; }
 }
 
 /* ===== RPGメッセージBOX ===== */
@@ -181,7 +271,28 @@ body{
   font-weight:900;
   line-height:1.65;
   text-align:left;
+  position:relative;
+  overflow:hidden;
 }
+
+/* “カーソル”っぽい点滅（DQ風） */
+.msg::after{
+  content:"";
+  position:absolute;
+  right:16px;
+  bottom:14px;
+  width:10px;height:10px;
+  border-radius:3px;
+  background:rgba(0,0,0,.22);
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,.08);
+  animation: cursorBlink 1.1s steps(2,end) infinite;
+  opacity:.65;
+}
+@keyframes cursorBlink{
+  0%,49%{ opacity:.0; }
+  50%,100%{ opacity:.65; }
+}
+
 .msg .name{
   font-size:13px;
   opacity:.65;
@@ -191,26 +302,44 @@ body{
   font-size:15px;
 }
 
-/* 住民票リンク（小さく） */
+/* 住民名表示（ある時だけ） */
+.playerLine{
+  margin-top:8px;
+  font-size:12px;
+  opacity:.75;
+}
+.playerLine b{font-weight:1000}
+
+/* リンク群 */
 .links{
   margin-top: 10px;
   display:flex;
-  justify-content:flex-end;
+  justify-content:space-between;
+  gap:10px;
   width:min(760px,92vw);
+  flex-wrap:wrap;
 }
 .links a{
-  color:rgba(255,255,255,.82);
+  color:rgba(255,255,255,.86);
   text-decoration:none;
   font-size:12px;
-  padding:8px 10px;
+  padding:9px 10px;
   border:1px solid rgba(255,255,255,.18);
   border-radius:10px;
   background:rgba(255,255,255,.06);
 }
 .links a:hover{ filter:brightness(1.08); }
 
+/* 小さい注意 */
+.hint{
+  margin-top:10px;
+  font-size:12px;
+  opacity:.75;
+}
+
 /* ===== モバイル ===== */
 @media(max-width:600px){
+  .logo .jp{ font-size:18px; letter-spacing:.14em; }
   .selectRow{ gap:14px; }
   .door{ width:38vw; max-width:170px; }
   .charWrap{ width:22vw; max-width:110px; }
@@ -221,46 +350,276 @@ body{
 
 <body>
 
+<!-- 背景エフェクト -->
+<div class="fx" id="fx" aria-hidden="true"></div>
+
 <div class="stage">
 
+  <!-- タイトル -->
+  <div class="logo" aria-label="タイトル">
+    <div class="jp">焼かれた伝説</div>
+    <div class="en">TAKOYAKI TRADING CARD</div>
+    <div class="line"></div>
+  </div>
+
+  <!-- 扉選択 -->
   <div class="selectRow">
 
     <!-- 左：日本語 -->
-    <a class="door" href="town/index.html" aria-label="日本語の街へ">
-      <!-- ✅ 扉画像は「逆だったので」こちらにキャラ画像を使う → 入れ替え -->
-      <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="日本語入口（扉）">
-    </a>
+    <div>
+      <a class="door" id="doorJP" href="town/index.html" aria-label="日本語の街へ">
+        <!-- ✅ 扉とキャラが逆だったので：扉＝v0hjoXZ3.png -->
+        <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="日本語入口（扉）">
+      </a>
+      <div class="doorTag"><span class="pill"><span class="dot"></span>日本語の街</span></div>
+    </div>
 
-    <!-- 中央：キャラ（トコトコ） -->
+    <!-- 中央：キャラ（足踏み） -->
     <div class="charWrap" aria-hidden="true">
       <div class="shadow"></div>
       <div class="char">
-        <!-- ✅ キャラ画像は「逆だったので」こちらに扉画像を使う → 入れ替え -->
+        <!-- ✅ キャラ＝X8jPVkhD.png -->
         <img src="https://ul.h3z.jp/X8jPVkhD.png" alt="たこぴ">
       </div>
     </div>
 
     <!-- 右：英語 -->
-    <a class="door" href="en/index.html" aria-label="Go to English site">
-      <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="English Entrance（Door）">
-    </a>
-
-  </div>
-
-  <div class="msg">
-    <div class="name">たこぴ</div>
-    <div class="text">
-      どの世界に入るたこ？<br>
-      左は日本の街、右は海外の街…<br>
-      選んだ扉の先で、君の物語が始まるたこ。
+    <div>
+      <a class="door" id="doorEN" href="en/index.html" aria-label="Go to English site">
+        <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="English Entrance（Door）">
+      </a>
+      <div class="doorTag"><span class="pill"><span class="dot" style="background:rgba(127,208,255,.95);box-shadow:0 0 0 2px rgba(127,208,255,.18)"></span>English Gate</span></div>
     </div>
+
   </div>
 
-  <div class="links">
-    <a href="town/jumin.html">タコ民の住民票を見る</a>
+  <!-- セリフ -->
+  <div class="msg" role="group" aria-label="メッセージ">
+    <div class="name" id="speakerName">たこぴ</div>
+    <div class="text" id="msgText">
+      読み込み中…
+    </div>
+    <div class="playerLine" id="playerLine" style="display:none;"></div>
   </div>
+
+  <!-- リンク -->
+  <div class="links" aria-label="リンク">
+    <a href="town/jumin.html" id="linkResident">タコ民の住民票を見る</a>
+    <a href="town/jumin.html#edit" id="linkResidentMake">住民票を作る</a>
+  </div>
+
+  <div class="hint" id="hintLine">※ 扉に触れると、光と音が反応します。</div>
 
 </div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* =========================================================
+     入口：全部入り
+     ✅ 足踏みキャラ（CSS）
+     ✅ 扉ぽわー発光（CSS）
+     ✅ 粒エフェクト（JS生成）
+     ✅ ランダムセリフ（住民票があると内容変化）
+     ✅ SE（クリック/ホバー）
+     ========================================================= */
+
+  // ===== 住民票（もしあるなら表示）=====
+  // 住民票ページ側のキーが違う可能性があるので、複数候補から拾う
+  const RESIDENT_KEYS = [
+    "trc_v1_resident_paper",
+    "trc_v1_resident",
+    "trc_v1_resident_v1"
+  ];
+
+  function safeParse(json, fallback=null){
+    try{ return JSON.parse(json); }catch(_){ return fallback; }
+  }
+
+  function loadResident(){
+    for(const k of RESIDENT_KEYS){
+      const raw = localStorage.getItem(k);
+      if(!raw) continue;
+      const obj = safeParse(raw, null);
+      if(obj && typeof obj === "object") return obj;
+    }
+    return null;
+  }
+
+  const speakerName = document.getElementById("speakerName");
+  const msgText = document.getElementById("msgText");
+  const playerLine = document.getElementById("playerLine");
+
+  const res = loadResident();
+  const playerName = (res && typeof res.name === "string" && res.name.trim()) ? res.name.trim() : "";
+
+  // ===== ランダムセリフ（初回/再訪/深夜/住民名あり）=====
+  function hour(){
+    return new Date().getHours();
+  }
+
+  function pick(arr){
+    return arr[Math.floor(Math.random()*arr.length)];
+  }
+
+  const linesBase = [
+    "どの世界に入るたこ？<br>左は日本の街、右は海外の街…<br>選んだ扉の先で、君の物語が始まるたこ。",
+    "扉は2つ。<br>でも、焼かれる未来は1つ…たこ。",
+    "今日は“焼き日和”だたこ。<br>さぁ、どっちの世界を覗く？",
+    "旅人よ…<br>足元には火種、頭上には伝説…たこ。"
+  ];
+
+  const linesWithName = [
+    "ようこそ <b>{name}</b>…たこ。<br>今日も焼かれに来た？<br>扉の先で待ってるたこ。",
+    "<b>{name}</b> の住民票、ちゃんと生きてるたこ。<br>世界は滞在するほど濃くなる…たこ。",
+    "ねぇ <b>{name}</b>。<br>左は馴染みの街、右は未知の街。<br>選ぶのは…君だたこ。"
+  ];
+
+  const linesLate = [
+    "…夜だたこ。<br>扉の光、いつもより強い気がしない？",
+    "深夜の入口は…ちょっと危ないたこ。<br>でも、来たなら焼かれよう。",
+    "静かな時間ほど、世界の音が聞こえるたこ。"
+  ];
+
+  function renderMessage(){
+    let html = "";
+
+    const h = hour();
+    const isLate = (h >= 23 || h <= 4);
+
+    if(playerName){
+      html = pick(linesWithName).replaceAll("{name}", escapeHtml(playerName));
+      playerLine.style.display = "block";
+      playerLine.innerHTML = `ようこそ <b>${escapeHtml(playerName)}</b> さん`;
+    }else{
+      html = pick(linesBase);
+      playerLine.style.display = "none";
+      playerLine.textContent = "";
+    }
+
+    if(isLate){
+      html += "<br><br><span style='opacity:.72'>" + pick(linesLate) + "</span>";
+    }
+
+    msgText.innerHTML = html;
+  }
+
+  function escapeHtml(s){
+    return String(s || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+
+  renderMessage();
+
+  // ===== 粒エフェクト生成 =====
+  const fx = document.getElementById("fx");
+  const COUNT = 34; // 粒の数（軽め）
+  for(let i=0;i<COUNT;i++){
+    const p = document.createElement("i");
+    const r = Math.random();
+    if(r < 0.33) p.classList.add("gold");
+    else if(r < 0.66) p.classList.add("blue");
+    if(Math.random() < 0.18) p.classList.add("big");
+
+    // CSS変数で個別制御
+    const x = Math.floor(Math.random()*100) + "vw";
+    const dx = (Math.random()*24 - 12) + "vw";     // 横流れ
+    const dur = (8 + Math.random()*10).toFixed(2) + "s";
+    const delay = (-Math.random()*10).toFixed(2) + "s";
+    const s = (0.7 + Math.random()*1.2).toFixed(2);
+    const o = (0.18 + Math.random()*0.45).toFixed(2);
+
+    p.style.setProperty("--x", x);
+    p.style.setProperty("--dx", dx);
+    p.style.setProperty("--s", s);
+    p.style.setProperty("--o", o);
+    p.style.animationDuration = dur;
+    p.style.animationDelay = delay;
+
+    fx.appendChild(p);
+  }
+
+  // ===== SE（WebAudio）=====
+  // ※外部音源なし。軽いピコ音を生成
+  let audioCtx = null;
+
+  function ensureAudio(){
+    if(audioCtx) return audioCtx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    audioCtx = new AC();
+    return audioCtx;
+  }
+
+  function beep({freq=880, dur=0.07, type="square", gain=0.06} = {}){
+    const ctx = ensureAudio();
+    if(!ctx) return;
+
+    // iOS等で停止してたら再開
+    if(ctx.state === "suspended"){
+      ctx.resume().catch(()=>{});
+    }
+
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(gain, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+
+    osc.connect(g);
+    g.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + dur + 0.02);
+  }
+
+  function sparkle(){
+    // 2音でキラッ
+    beep({freq: 1040, dur: 0.06, type:"triangle", gain:0.05});
+    setTimeout(()=>beep({freq: 1560, dur: 0.05, type:"triangle", gain:0.045}), 35);
+  }
+
+  function doorOpen(){
+    // ドアっぽい「ドン＋ピコ」
+    beep({freq: 220, dur: 0.08, type:"square", gain:0.05});
+    setTimeout(()=>beep({freq: 740, dur: 0.06, type:"triangle", gain:0.05}), 60);
+  }
+
+  // 最初のユーザー操作でAudioを起こす（自動再生対策）
+  function wakeAudioOnce(){
+    ensureAudio();
+    window.removeEventListener("pointerdown", wakeAudioOnce);
+  }
+  window.addEventListener("pointerdown", wakeAudioOnce, { once:true });
+
+  // 扉イベント
+  const doorJP = document.getElementById("doorJP");
+  const doorEN = document.getElementById("doorEN");
+
+  [doorJP, doorEN].forEach(a => {
+    a.addEventListener("pointerenter", () => sparkle());
+    a.addEventListener("focus", () => sparkle());
+    a.addEventListener("click", () => doorOpen());
+  });
+
+  // セリフ：たまに切り替え（入口で雰囲気）
+  // ずっと変わるとウザいので控えめ：12秒に1回 30%で更新
+  setInterval(() => {
+    if(document.visibilityState !== "visible") return;
+    if(Math.random() < 0.30) renderMessage();
+  }, 12000);
+
+})();
+</script>
 
 </body>
 </html>
