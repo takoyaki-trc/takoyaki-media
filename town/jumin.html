@@ -23,9 +23,12 @@
 
   --shadow:0 16px 50px rgba(0,0,0,.55);
   --radius:18px;
+
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
 }
 
 *{box-sizing:border-box}
+html,body{height:100%}
 body{
   margin:0;
   font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;
@@ -84,14 +87,10 @@ body{
 
 .wrap{
   width:min(980px,92vw);
-  margin:18px auto 40px;
+  margin:18px auto 24px;
   display:grid;
-  grid-template-columns: repeat(2, minmax(0,1fr));
+  grid-template-columns: 1fr;
   gap:14px;
-}
-
-@media(max-width:820px){
-  .wrap{ grid-template-columns:1fr; }
 }
 
 /* ===== 住民票カード ===== */
@@ -126,16 +125,19 @@ body{
   display:flex;
   gap:12px;
   align-items:center;
+  flex-wrap:wrap;
 }
 
 .avatar{
-  width:72px;
-  height:72px;
-  border-radius:16px;
+  width:80px;
+  height:80px;
+  border-radius:18px;
   border:2px solid rgba(255,255,255,.18);
   background:rgba(0,0,0,.25);
   overflow:hidden;
   flex:0 0 auto;
+  display:grid;
+  place-items:center;
 }
 .avatar img{
   width:100%;
@@ -145,9 +147,15 @@ body{
 }
 
 .meta{
-  flex:1 1 auto;
+  flex:1 1 260px;
   text-align:left;
   min-width:0;
+}
+.badgeRow{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
 }
 .badge{
   display:inline-flex;
@@ -161,6 +169,8 @@ body{
   background:rgba(0,0,0,.18);
   opacity:.95;
 }
+.badge.mono{ font-family:var(--mono); letter-spacing:.06em; }
+
 .name{
   margin:8px 0 0;
   font-size:18px;
@@ -181,6 +191,9 @@ body{
   grid-template-columns: 1fr 1fr;
   gap:10px;
 }
+@media(max-width:700px){
+  .grid{ grid-template-columns: 1fr; }
+}
 .field{
   border:1px solid rgba(255,255,255,.14);
   background:rgba(255,255,255,.06);
@@ -197,6 +210,15 @@ body{
   font-size:13px;
   font-weight:900;
   line-height:1.45;
+}
+.value .big{
+  font-size:18px;
+  letter-spacing:.02em;
+}
+.value .mini{
+  font-size:11px;
+  opacity:.78;
+  margin-top:2px;
 }
 
 /* RPG風セリフBOX */
@@ -220,7 +242,116 @@ body{
   line-height:1.65;
 }
 
-/* フッター */
+/* 操作ボタン */
+.actions{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.btn{
+  border:2px solid rgba(255,255,255,.30);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  border-radius:12px;
+  padding:10px 12px;
+  cursor:pointer;
+  font-weight:900;
+  font-size:12px;
+}
+.btn.primary{
+  background: linear-gradient(180deg, rgba(140,200,255,.20), rgba(255,255,255,.06));
+  border-color: rgba(180,220,255,.55);
+}
+.btn:active{ transform: translateY(1px); }
+
+/* モーダル */
+.modal{
+  position:fixed; inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(0,0,0,.72);
+  z-index:50;
+  overscroll-behavior: contain;
+}
+.modal.on{display:flex}
+.modal .cardM{
+  width:min(560px, 100%);
+  border-radius:14px;
+  border:2px solid rgba(255,255,255,.35);
+  background: #0b0b14;
+  box-shadow: var(--shadow);
+  overflow:hidden;
+}
+.modal .head{
+  padding:12px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border-bottom:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+}
+.modal .head .ttl{font-weight:900;letter-spacing:.03em}
+.modal .close{
+  border:2px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  border-radius:10px;
+  padding:8px 10px;
+  cursor:pointer;
+  font-weight:900;
+}
+.modal .body{padding:12px 12px 14px}
+
+.fieldI{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;}
+.fieldI label{font-size:12px;color:rgba(255,255,255,.78);font-weight:800}
+.fieldI input{
+  width:100%;
+  padding:12px 12px;
+  border-radius:12px;
+  border:2px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  outline:none;
+  font-weight:800;
+}
+
+.avatarGrid{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:10px;
+}
+.avOpt{
+  border:2px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.06);
+  border-radius:12px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  user-select:none;
+}
+.avOpt.on{
+  border-color: rgba(180,220,255,.60);
+  background: rgba(140,200,255,.10);
+}
+.avOpt .img{
+  width:52px;height:52px;
+  border-radius:12px;
+  border:2px solid rgba(255,255,255,.22);
+  background:rgba(0,0,0,.25);
+  overflow:hidden;
+  display:grid;place-items:center;
+}
+.avOpt img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+.avOpt .nm{font-size:11px;color:rgba(255,255,255,.9);text-align:center;line-height:1.2;font-weight:800}
+
 .note{
   width:min(980px,92vw);
   margin:0 auto 40px;
@@ -228,7 +359,14 @@ body{
   font-size:12px;
   line-height:1.7;
 }
-.note a{ color:rgba(255,255,255,.86); }
+.note code{
+  font-family:var(--mono);
+  font-size:11px;
+  background:rgba(255,255,255,.08);
+  padding:2px 6px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.14);
+}
 </style>
 </head>
 
@@ -239,95 +377,93 @@ body{
     <a class="back" href="./index.html">← 街へ戻る</a>
     <div class="title">
       <h1>タコ民 住民票</h1>
-      <p>この街に住む者の記録（追加して増やせます）</p>
+      <p>あなたのプロフィールと記録</p>
     </div>
   </div>
 </header>
 
 <main class="wrap">
 
-  <!-- ===== サンプル住民票 ===== -->
-  <article class="card">
+  <article class="card" aria-label="住民票">
     <div class="cardInner">
 
       <div class="top">
-        <div class="avatar">
-          <!-- 画像：とりあえず入口キャラでもOK（後で差し替え） -->
-          <img src="https://ul.h3z.jp/X8jPVkhD.png" alt="住民アイコン">
+        <div class="avatar" id="avBox">
+          <img id="avImg" src="https://ul.h3z.jp/X8jPVkhD.png" alt="アバター">
         </div>
 
         <div class="meta">
-          <div class="badge">住民番号：TKM-001</div>
-          <div class="name">案内係・たこぴ</div>
-          <div class="sub">肩書き：街の入口の番人 / 旅人の導き手</div>
+          <div class="badgeRow">
+            <div class="badge mono" id="badgeNo">住民番号：TKM-???</div>
+            <div class="badge" id="badgeRarity">N CITIZEN</div>
+          </div>
+
+          <div class="name" id="nameLine">名無しのタコ民</div>
+          <div class="sub" id="subLine">称号：はじまりの焼き手</div>
         </div>
       </div>
 
       <div class="grid">
         <div class="field">
-          <div class="label">居住地</div>
-          <div class="value">入口広場</div>
+          <div class="label">ログイン日数</div>
+          <div class="value">
+            <div class="big"><span id="stDays">0</span> 日</div>
+            <div class="mini">連続：<span id="stStreak">0</span> 日 / 最終：<span id="stLast">—</span></div>
+          </div>
         </div>
+
         <div class="field">
-          <div class="label">好きなたこ焼き</div>
-          <div class="value">焼かれた伝説（熱々）</div>
+          <div class="label">タワー最高点</div>
+          <div class="value">
+            <div class="big"><span id="stTower">0</span></div>
+            <div class="mini">（tower_v1_state より）</div>
+          </div>
         </div>
+
         <div class="field">
-          <div class="label">特技</div>
-          <div class="value">《扉の発光》<br>ぽわーッで道を示す</div>
+          <div class="label">露店販売数</div>
+          <div class="value">
+            <div class="big"><span id="stSold">0</span></div>
+            <div class="mini">（<code>roten_v1_sold</code> を読む）</div>
+          </div>
         </div>
+
         <div class="field">
-          <div class="label">注意事項</div>
-          <div class="value">迷うと、住民票が増える。</div>
+          <div class="label">オクト</div>
+          <div class="value">
+            <div class="big"><span id="stOcto">0</span></div>
+            <div class="mini">（roten_v1_octo より）</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="label">図鑑総数</div>
+          <div class="value">
+            <div class="big"><span id="stZukan">0</span></div>
+            <div class="mini">（tf_v1_book の count 合計）</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="label">メモ</div>
+          <div class="value">
+            <div style="font-size:12px;opacity:.85;line-height:1.6">
+              この住民票は端末保存です。<br>
+              キャッシュ削除で消えるので、必要ならバックアップ推奨。
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="say">
-        <div class="who">たこぴ</div>
-        <div class="text">「この街、住民票が増えるほど…世界が濃くなるたこ。」</div>
+        <div class="who">門番</div>
+        <div class="text" id="quoteLine">「今日も焼かれに来たのか。」</div>
       </div>
 
-    </div>
-  </article>
-
-  <!-- ===== 空欄テンプレ（コピペして増やす用） ===== -->
-  <article class="card">
-    <div class="cardInner">
-
-      <div class="top">
-        <div class="avatar">
-          <img src="https://ul.h3z.jp/X8jPVkhD.png" alt="住民アイコン（仮）">
-        </div>
-
-        <div class="meta">
-          <div class="badge">住民番号：TKM-___</div>
-          <div class="name">住民名（ここに名前）</div>
-          <div class="sub">肩書き：＿＿＿＿＿＿</div>
-        </div>
-      </div>
-
-      <div class="grid">
-        <div class="field">
-          <div class="label">居住地</div>
-          <div class="value">＿＿＿＿＿＿</div>
-        </div>
-        <div class="field">
-          <div class="label">好きなたこ焼き</div>
-          <div class="value">＿＿＿＿＿＿</div>
-        </div>
-        <div class="field">
-          <div class="label">特技</div>
-          <div class="value">《＿＿＿＿》<br>＿＿＿＿＿＿</div>
-        </div>
-        <div class="field">
-          <div class="label">注意事項</div>
-          <div class="value">＿＿＿＿＿＿</div>
-        </div>
-      </div>
-
-      <div class="say">
-        <div class="who">本人</div>
-        <div class="text">「＿＿＿＿＿＿＿＿＿＿」</div>
+      <div class="actions">
+        <button class="btn primary" id="editBtn" type="button">名前/アバター変更</button>
+        <button class="btn" id="copyBtn" type="button">住民票をコピー</button>
+        <button class="btn" id="resetBtn" type="button" title="住民票だけ初期化">住民票リセット</button>
       </div>
 
     </div>
@@ -336,9 +472,353 @@ body{
 </main>
 
 <div class="note">
-  ※このページは “住民票（タコ民）” を増やしていく名簿です。<br>
-  追加したい住民が出たら、このカード（&lt;article class="card"&gt;…）をコピペして増やしてください。
+  ■ 連携する保存キー（読むだけ）<br>
+  ・図鑑：<code>tf_v1_book</code>（got[id].count 合計）<br>
+  ・オクト：<code>roten_v1_octo</code><br>
+  ・露店販売数：<code>roten_v1_sold</code>（※露店側で加算してね）<br>
+  ・タワー：<code>tower_v1_state</code><br>
 </div>
+
+<!-- ===== 編集モーダル ===== -->
+<div class="modal" id="editModal" aria-hidden="true">
+  <div class="cardM">
+    <div class="head">
+      <div class="ttl">住民票 編集</div>
+      <button class="close" id="editClose" type="button">×</button>
+    </div>
+    <div class="body">
+      <div class="fieldI">
+        <label for="nameInput">ニックネーム（最大16文字）</label>
+        <input id="nameInput" type="text" maxlength="16" placeholder="例：焼き師のmika / たこぴ太郎 など">
+      </div>
+
+      <div class="fieldI">
+        <label>アバター</label>
+        <div class="avatarGrid" id="avatarGrid"></div>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn primary" id="saveBtn" type="button" style="flex:1">保存</button>
+        <button class="btn" id="cancelBtn" type="button" style="flex:1">キャンセル</button>
+      </div>
+
+      <div style="margin-top:10px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.6">
+        ※ データは端末の localStorage に保存（サーバ送信なし）
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // =========================
+  // 設定
+  // =========================
+  const KEY_RESIDENT = "trc_v1_resident";
+
+  const K_BOOK  = "tf_v1_book";
+  const K_OCTO  = "roten_v1_octo";
+  const K_SOLD  = "roten_v1_sold";
+  const K_TOWER = "tower_v1_state";
+
+  // 住民票：初期値
+  const DEFAULT_RES = {
+    id: "",               // 住民番号（初回生成）
+    name: "名無しのタコ民",
+    title: "はじまりの焼き手",
+    rarity: "N CITIZEN",
+    avatarUrl: "https://ul.h3z.jp/X8jPVkhD.png",
+
+    days: 0,              // ログイン日数
+    streak: 0,            // 連続ログイン
+    lastDate: ""          // "YYYY-MM-DD"
+  };
+
+  // アバター候補（必要なら増やしてOK）
+  const AVATARS = [
+    { id:"a1", name:"ゲート", url:"https://ul.h3z.jp/X8jPVkhD.png" },
+    { id:"a2", name:"たこぴ", url:"https://ul.h3z.jp/v0hjoXZ3.png" }
+  ];
+
+  // =========================
+  // ユーティリティ
+  // =========================
+  const $ = (s, r=document) => r.querySelector(s);
+
+  function todayStr(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function safeParse(json, fallback){
+    try{ return JSON.parse(json); }catch(_){ return fallback; }
+  }
+
+  function getLS(key, fallback){
+    const v = localStorage.getItem(key);
+    if(v == null) return fallback;
+    return v;
+  }
+
+  function getIntLS(key, fallback=0){
+    const v = localStorage.getItem(key);
+    if(v == null) return fallback;
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.floor(n) : fallback;
+  }
+
+  function makeResidentId(){
+    // TKM- + 5桁ランダム（端末内だけ）
+    const n = Math.floor(10000 + Math.random()*90000);
+    return `TKM-${n}`;
+  }
+
+  function loadResident(){
+    const raw = localStorage.getItem(KEY_RESIDENT);
+    const obj = raw ? safeParse(raw, null) : null;
+    const res = Object.assign({}, DEFAULT_RES, obj || {});
+    if(!res.id) res.id = makeResidentId();
+    return res;
+  }
+
+  function saveResident(res){
+    localStorage.setItem(KEY_RESIDENT, JSON.stringify(res));
+  }
+
+  function updateLoginCounters(res){
+    const today = todayStr();
+
+    if(res.lastDate === today){
+      // 今日すでにカウント済み
+      return res;
+    }
+
+    // 日付差（ざっくり日単位）
+    if(res.lastDate){
+      const last = new Date(res.lastDate + "T00:00:00");
+      const now  = new Date(today + "T00:00:00");
+      const diffDays = Math.round((now - last) / 86400000);
+
+      if(diffDays === 1){
+        res.streak = (res.streak || 0) + 1;
+      }else{
+        res.streak = 1;
+      }
+    }else{
+      res.streak = 1;
+    }
+
+    res.days = (res.days || 0) + 1;
+    res.lastDate = today;
+    return res;
+  }
+
+  // 図鑑総数（tf_v1_book の got[id].count 合計）
+  function calcZukanTotal(){
+    const raw = localStorage.getItem(K_BOOK);
+    if(!raw) return 0;
+    const book = safeParse(raw, null);
+    if(!book) return 0;
+
+    const got = book.got || book; // どちら形式でも一応拾う
+    if(!got || typeof got !== "object") return 0;
+
+    let sum = 0;
+    for(const k of Object.keys(got)){
+      const v = got[k];
+      const c = (v && typeof v === "object") ? Number(v.count || 0) : 0;
+      if(Number.isFinite(c)) sum += c;
+    }
+    return sum;
+  }
+
+  // タワー最高（tower_v1_state 内の best / bestScore / hiScore を探す）
+  function readTowerBest(){
+    const raw = localStorage.getItem(K_TOWER);
+    if(!raw) return 0;
+    const st = safeParse(raw, null);
+    if(!st || typeof st !== "object") return 0;
+
+    const cand = [
+      st.best,
+      st.bestScore,
+      st.hiScore,
+      st.highScore,
+      st.max,
+      st.top
+    ].map(Number).filter(n => Number.isFinite(n));
+
+    return cand.length ? Math.max(...cand) : 0;
+  }
+
+  // =========================
+  // DOM
+  // =========================
+  const badgeNo = $("#badgeNo");
+  const badgeRarity = $("#badgeRarity");
+  const nameLine = $("#nameLine");
+  const subLine = $("#subLine");
+  const avImg = $("#avImg");
+
+  const stDays = $("#stDays");
+  const stStreak = $("#stStreak");
+  const stLast = $("#stLast");
+
+  const stTower = $("#stTower");
+  const stSold = $("#stSold");
+  const stOcto = $("#stOcto");
+  const stZukan = $("#stZukan");
+
+  const quoteLine = $("#quoteLine");
+
+  const editBtn = $("#editBtn");
+  const copyBtn = $("#copyBtn");
+  const resetBtn = $("#resetBtn");
+
+  const editModal = $("#editModal");
+  const editClose = $("#editClose");
+  const cancelBtn = $("#cancelBtn");
+  const saveBtn = $("#saveBtn");
+
+  const nameInput = $("#nameInput");
+  const avatarGrid = $("#avatarGrid");
+
+  let selectedAvatarUrl = null;
+
+  function openModal(){
+    editModal.classList.add("on");
+    editModal.setAttribute("aria-hidden","false");
+  }
+  function closeModal(){
+    editModal.classList.remove("on");
+    editModal.setAttribute("aria-hidden","true");
+  }
+
+  function renderAvatarPicker(currentUrl){
+    avatarGrid.innerHTML = "";
+    selectedAvatarUrl = currentUrl;
+
+    AVATARS.forEach(a => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "avOpt" + (a.url === currentUrl ? " on" : "");
+      b.innerHTML = `
+        <div class="img"><img src="${a.url}" alt="${a.name}"></div>
+        <div class="nm">${a.name}</div>
+      `;
+      b.addEventListener("click", () => {
+        selectedAvatarUrl = a.url;
+        [...avatarGrid.children].forEach(el => el.classList.remove("on"));
+        b.classList.add("on");
+      });
+      avatarGrid.appendChild(b);
+    });
+  }
+
+  function render(res){
+    badgeNo.textContent = `住民番号：${res.id}`;
+    badgeRarity.textContent = res.rarity || "N CITIZEN";
+    nameLine.textContent = res.name || "名無しのタコ民";
+    subLine.textContent = `称号：${res.title || "はじまりの焼き手"}`;
+    avImg.src = res.avatarUrl || DEFAULT_RES.avatarUrl;
+
+    stDays.textContent = String(res.days || 0);
+    stStreak.textContent = String(res.streak || 0);
+    stLast.textContent = res.lastDate ? res.lastDate : "—";
+
+    // 連携値
+    stOcto.textContent = String(getIntLS(K_OCTO, 0));
+    stSold.textContent = String(getIntLS(K_SOLD, 0));
+    stZukan.textContent = String(calcZukanTotal());
+    stTower.textContent = String(readTowerBest());
+
+    // セリフ（ログイン日数に応じて変える）
+    const d = res.days || 0;
+    const s = res.streak || 0;
+    if(d <= 1){
+      quoteLine.textContent = "「住民票の発行、完了だ。ここから焼かれろ。」";
+    }else if(s >= 7){
+      quoteLine.textContent = "「連続7日…もう立派な住民だな。」";
+    }else{
+      quoteLine.textContent = "「今日も焼かれに来たのか。」";
+    }
+  }
+
+  // =========================
+  // 起動処理
+  // =========================
+  let resident = loadResident();
+  resident = updateLoginCounters(resident);
+  saveResident(resident);
+  render(resident);
+
+  // =========================
+  // イベント
+  // =========================
+  editBtn.addEventListener("click", () => {
+    resident = loadResident(); // 最新
+    nameInput.value = resident.name || "";
+    renderAvatarPicker(resident.avatarUrl || DEFAULT_RES.avatarUrl);
+    openModal();
+  });
+
+  editClose.addEventListener("click", closeModal);
+  cancelBtn.addEventListener("click", closeModal);
+
+  editModal.addEventListener("click", (e) => {
+    if(e.target === editModal) closeModal();
+  });
+
+  saveBtn.addEventListener("click", () => {
+    resident = loadResident();
+    const nm = String(nameInput.value || "").trim();
+    if(nm) resident.name = nm;
+    if(selectedAvatarUrl) resident.avatarUrl = selectedAvatarUrl;
+    saveResident(resident);
+    render(resident);
+    closeModal();
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    resident = loadResident();
+    const text =
+`【タコ民 住民票】
+住民番号：${resident.id}
+名前：${resident.name}
+称号：${resident.title}
+ログイン日数：${resident.days}日（連続${resident.streak}日）
+タワー最高：${readTowerBest()}
+露店販売数：${getIntLS(K_SOLD,0)}
+オクト：${getIntLS(K_OCTO,0)}
+図鑑総数：${calcZukanTotal()}
+最終ログイン：${resident.lastDate || "—"}`;
+    try{
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = "コピーしました！";
+      setTimeout(()=>copyBtn.textContent="住民票をコピー", 1200);
+    }catch(_){
+      alert("コピーに失敗しました（ブラウザの制限）");
+    }
+  });
+
+  resetBtn.addEventListener("click", () => {
+    if(!confirm("住民票だけ初期化します。よろしいですか？")) return;
+    const keep = loadResident();
+    // 住民番号は残す（世界観的に）
+    const id = keep.id || makeResidentId();
+    const fresh = Object.assign({}, DEFAULT_RES, { id });
+    saveResident(fresh);
+    resident = fresh;
+    render(resident);
+  });
+
+})();
+</script>
 
 </body>
 </html>
