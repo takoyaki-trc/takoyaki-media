@@ -8,54 +8,58 @@
 
 <style>
 :root{
-  --bg0:#05060b;
-  --bg1:#0b1030;
+  --bg:#07060b;
 
-  --panel:rgba(255,255,255,.08);
-  --panel2:rgba(255,255,255,.12);
-  --line:rgba(255,255,255,.16);
+  /* 紙 */
+  --paper:#f7f1dc;
+  --paper2:#f2e7c6;
+  --ink:#2b2416;
+  --line:#b79b59;
+  --accent:#8b6c2f;
 
-  --paper:#fffdf6;
-  --ink:#1a1a1a;
-
-  --gold1:#e7c66a;
-  --gold2:#b98a2c;
-
-  --shadow:0 16px 50px rgba(0,0,0,.55);
-  --radius:18px;
+  --shadow:0 12px 34px rgba(0,0,0,.55);
+  --radius:14px;
 
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+
+  --safeT: env(safe-area-inset-top, 0px);
+  --safeB: env(safe-area-inset-bottom, 0px);
+  --safeL: env(safe-area-inset-left, 0px);
+  --safeR: env(safe-area-inset-right, 0px);
+
+  /* スクショに収まる幅（スマホ想定） */
+  --shotW: 420px;
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
+
 body{
   margin:0;
-  font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;
+  background: radial-gradient(circle at 50% 20%, rgba(90,120,255,.12), transparent 55%),
+              radial-gradient(circle at 70% 30%, rgba(255,210,120,.10), transparent 55%),
+              linear-gradient(#05060b, #0a0a16);
   color:#fff;
-  background:
-    radial-gradient(circle at 35% 20%, rgba(95,140,255,.18), transparent 55%),
-    radial-gradient(circle at 70% 30%, rgba(255,220,120,.10), transparent 55%),
-    linear-gradient(var(--bg0), var(--bg1));
-  min-height:100vh;
+  font-family: "Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+  padding: calc(14px + var(--safeT)) calc(10px + var(--safeR)) calc(16px + var(--safeB)) calc(10px + var(--safeL));
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
 }
 
-.header{
-  position:sticky;
-  top:0;
-  z-index:10;
-  backdrop-filter: blur(8px);
-  background: linear-gradient(rgba(5,6,11,.72), rgba(5,6,11,.30));
-  border-bottom:1px solid rgba(255,255,255,.10);
+/* ===== ページ枠：スクショに収める ===== */
+.page{
+  width:100%;
+  max-width: var(--shotW);
 }
-.headInner{
-  width:min(980px,92vw);
-  margin:0 auto;
-  padding:12px 0;
+
+/* ===== ヘッダー（小さく） ===== */
+.topbar{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:12px;
+  gap:10px;
+  margin:0 0 10px;
 }
 .back{
   display:inline-flex;
@@ -65,79 +69,97 @@ body{
   color:rgba(255,255,255,.88);
   font-weight:900;
   padding:10px 12px;
-  border:1px solid rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.18);
   border-radius:12px;
   background:rgba(255,255,255,.06);
+  font-family: system-ui,-apple-system,"Noto Sans JP",sans-serif;
 }
-.back:hover{ filter:brightness(1.08); }
-
-.title{
+.back:active{ transform: translateY(1px); }
+.topmeta{
   text-align:right;
+  font-family: system-ui,-apple-system,"Noto Sans JP",sans-serif;
 }
-.title h1{
-  margin:0;
-  font-size:16px;
-  letter-spacing:.02em;
-}
-.title p{
-  margin:2px 0 0;
+.topmeta .ttl{
+  font-weight:1000;
   font-size:12px;
-  opacity:.75;
+  letter-spacing:.08em;
+  opacity:.95;
+}
+.topmeta .sub{
+  font-size:11px;
+  opacity:.70;
 }
 
-.wrap{
-  width:min(980px,92vw);
-  margin:18px auto 24px;
-  display:grid;
-  grid-template-columns: 1fr;
-  gap:14px;
-}
-
-/* ===== 住民票カード ===== */
-.card{
-  border:1px solid rgba(255,255,255,.14);
-  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+/* ===== 紙の住民票 ===== */
+.paper{
+  background:
+    radial-gradient(circle at 30% 20%, rgba(0,0,0,.06), transparent 52%),
+    radial-gradient(circle at 80% 10%, rgba(0,0,0,.04), transparent 50%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,.018),
+      rgba(0,0,0,.018) 2px,
+      transparent 2px,
+      transparent 5px
+    ),
+    linear-gradient(180deg, var(--paper), var(--paper2));
+  color: var(--ink);
+  border:4px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  overflow:hidden;
+  padding:14px 14px 12px;
   position:relative;
+  overflow:hidden;
 }
 
-.card::before{
+/* 内枠 */
+.paper::before{
   content:"";
   position:absolute;
-  inset:-2px;
-  background: radial-gradient(circle at 20% 10%, rgba(231,198,106,.22), transparent 55%),
-              radial-gradient(circle at 80% 20%, rgba(140,210,255,.14), transparent 55%);
-  filter: blur(18px);
-  opacity:.9;
-  z-index:0;
+  inset:8px;
+  border:2px solid rgba(183,155,89,.55);
+  border-radius: 12px;
+  pointer-events:none;
 }
 
-.cardInner{
-  position:relative;
-  z-index:1;
-  padding:14px;
+/* 紙の角ダメージ風 */
+.paper::after{
+  content:"";
+  position:absolute;
+  right:-30px; top:-30px;
+  width:90px; height:90px;
+  background: radial-gradient(circle at 30% 30%, rgba(0,0,0,.12), transparent 62%);
+  transform: rotate(20deg);
+  opacity:.35;
+  pointer-events:none;
 }
 
-/* 上段：顔写真＆基本情報 */
+.title{
+  text-align:center;
+  font-weight:1000;
+  font-size:18px;
+  letter-spacing:.16em;
+  margin:4px 0 12px;
+  text-shadow: 0 1px 0 rgba(255,255,255,.6);
+}
+
+/* ===== 上段 ===== */
 .top{
   display:flex;
   gap:12px;
   align-items:center;
-  flex-wrap:wrap;
 }
 
 .avatar{
-  width:80px;
-  height:80px;
-  border-radius:18px;
-  border:2px solid rgba(255,255,255,.18);
-  background:rgba(0,0,0,.25);
+  width:74px;
+  height:74px;
+  border:3px solid var(--line);
+  border-radius:12px;
+  background: rgba(255,255,255,.35);
   overflow:hidden;
-  flex:0 0 auto;
   display:grid;
   place-items:center;
+  flex:0 0 auto;
 }
 .avatar img{
   width:100%;
@@ -146,127 +168,174 @@ body{
   image-rendering:pixelated;
 }
 
-.meta{
-  flex:1 1 260px;
-  text-align:left;
+.nameBlock{
+  flex:1 1 auto;
   min-width:0;
 }
-.badgeRow{
+.name{
+  font-size:17px;
+  font-weight:1000;
+  letter-spacing:.02em;
+  line-height:1.25;
+}
+.subline{
+  margin-top:4px;
+  font-size:11px;
+  opacity:.78;
   display:flex;
   gap:8px;
   flex-wrap:wrap;
   align-items:center;
 }
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
+.subline .mono{
+  font-family: var(--mono);
+  letter-spacing:.06em;
   font-size:11px;
-  font-weight:900;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(0,0,0,.18);
-  opacity:.95;
-}
-.badge.mono{ font-family:var(--mono); letter-spacing:.06em; }
-
-.name{
-  margin:8px 0 0;
-  font-size:18px;
-  font-weight:1000;
-  letter-spacing:.02em;
-}
-.sub{
-  margin:4px 0 0;
-  font-size:12px;
-  opacity:.78;
-  line-height:1.4;
 }
 
-/* 明細 */
-.grid{
+/* ===== 行テーブル ===== */
+.table{
   margin-top:12px;
-  display:grid;
-  grid-template-columns: 1fr 1fr;
+  border-top:2px solid rgba(183,155,89,.75);
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
   gap:10px;
-}
-@media(max-width:700px){
-  .grid{ grid-template-columns: 1fr; }
-}
-.field{
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.06);
-  border-radius:14px;
-  padding:10px 10px;
+  border-bottom:1px dashed rgba(183,155,89,.85);
+  padding:8px 2px;
+  font-size:13px;
 }
 .label{
-  font-size:11px;
-  opacity:.75;
-  margin-bottom:4px;
+  opacity:.85;
   font-weight:900;
 }
 .value{
-  font-size:13px;
-  font-weight:900;
-  line-height:1.45;
+  font-weight:1000;
+  text-align:right;
 }
 .value .big{
-  font-size:18px;
-  letter-spacing:.02em;
+  font-size:16px;
 }
 .value .mini{
   font-size:11px;
-  opacity:.78;
+  opacity:.72;
   margin-top:2px;
 }
 
-/* RPG風セリフBOX */
+/* 2列ブロック（スクショ内に収める） */
+.grid2{
+  margin-top:8px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:8px;
+}
+.box{
+  border:2px solid rgba(183,155,89,.75);
+  border-radius:12px;
+  padding:8px 10px;
+  background: rgba(255,255,255,.28);
+}
+.box b{
+  display:block;
+  font-size:11px;
+  opacity:.75;
+  margin-bottom:3px;
+  letter-spacing:.02em;
+}
+.box .n{
+  font-weight:1000;
+  font-size:16px;
+}
+.box .s{
+  margin-top:2px;
+  font-size:11px;
+  opacity:.70;
+  font-family: var(--mono);
+}
+
+/* ===== EXP ===== */
+.expWrap{
+  margin-top:10px;
+}
+.expLine{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  font-size:12px;
+  font-weight:1000;
+}
+.expLine .mono{ font-family: var(--mono); letter-spacing:.06em; }
+.expBar{
+  margin-top:6px;
+  height:12px;
+  border:2px solid rgba(183,155,89,.85);
+  border-radius:999px;
+  background: rgba(255,255,255,.35);
+  overflow:hidden;
+}
+.expFill{
+  height:100%;
+  width:0%;
+  background: linear-gradient(180deg, #ffe7a0, #d6a642);
+}
+
+/* ===== セリフ ===== */
 .say{
-  margin-top:12px;
-  background: var(--paper);
-  color: var(--ink);
-  border:3px solid var(--gold2);
-  border-radius:14px;
-  padding:12px 12px;
-  box-shadow:0 12px 34px rgba(0,0,0,.35);
+  margin-top:10px;
+  border:3px double rgba(183,155,89,.9);
+  border-radius:12px;
+  padding:10px 10px;
+  background: rgba(255,255,255,.40);
 }
 .say .who{
-  font-size:12px;
-  opacity:.65;
+  font-size:11px;
+  opacity:.72;
   font-weight:900;
 }
 .say .text{
   margin-top:4px;
-  font-weight:1000;
+  font-size:13px;
   line-height:1.65;
+  font-weight:1000;
 }
 
-/* 操作ボタン */
+/* ===== ボタン ===== */
 .actions{
-  margin-top:12px;
+  margin-top:10px;
   display:flex;
-  gap:10px;
+  gap:8px;
   flex-wrap:wrap;
   justify-content:flex-end;
+  font-family: system-ui,-apple-system,"Noto Sans JP",sans-serif;
 }
 .btn{
-  border:2px solid rgba(255,255,255,.30);
-  background:rgba(255,255,255,.06);
-  color:#fff;
+  border:2px solid rgba(183,155,89,.90);
+  background: rgba(255,255,255,.34);
+  color: #2b2416;
   border-radius:12px;
   padding:10px 12px;
   cursor:pointer;
-  font-weight:900;
+  font-weight:1000;
   font-size:12px;
 }
 .btn.primary{
-  background: linear-gradient(180deg, rgba(140,200,255,.20), rgba(255,255,255,.06));
-  border-color: rgba(180,220,255,.55);
+  background: linear-gradient(180deg, rgba(255,231,160,.75), rgba(214,166,66,.35));
 }
 .btn:active{ transform: translateY(1px); }
 
-/* モーダル */
+.note{
+  margin-top:8px;
+  font-size:10.5px;
+  opacity:.70;
+  text-align:center;
+  font-family: system-ui,-apple-system,"Noto Sans JP",sans-serif;
+}
+
+/* ===== モーダル（編集） ===== */
 .modal{
   position:fixed; inset:0;
   display:none;
@@ -274,50 +343,60 @@ body{
   justify-content:center;
   padding:16px;
   background:rgba(0,0,0,.72);
-  z-index:50;
-  overscroll-behavior: contain;
+  z-index:9999;
 }
 .modal.on{display:flex}
-.modal .cardM{
-  width:min(560px, 100%);
+.modalCard{
+  width:min(var(--shotW), 100%);
   border-radius:14px;
-  border:2px solid rgba(255,255,255,.35);
-  background: #0b0b14;
-  box-shadow: var(--shadow);
+  border:2px solid rgba(255,255,255,.22);
+  background:#0b0b14;
+  box-shadow: 0 18px 60px rgba(0,0,0,.70);
   overflow:hidden;
+  font-family: system-ui,-apple-system,"Noto Sans JP",sans-serif;
+  color:#fff;
 }
-.modal .head{
+.modalHead{
   padding:12px 12px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  border-bottom:1px solid rgba(255,255,255,.18);
+  border-bottom:1px solid rgba(255,255,255,.16);
   background: rgba(255,255,255,.06);
 }
-.modal .head .ttl{font-weight:900;letter-spacing:.03em}
-.modal .close{
-  border:2px solid rgba(255,255,255,.35);
+.modalHead .ttl{font-weight:1000;letter-spacing:.04em}
+.modalClose{
+  border:2px solid rgba(255,255,255,.28);
   background:rgba(255,255,255,.06);
   color:#fff;
   border-radius:10px;
   padding:8px 10px;
   cursor:pointer;
+  font-weight:1000;
+}
+.modalBody{ padding:12px 12px 14px; }
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin:0 0 12px;
+}
+.field label{
+  font-size:12px;
+  color:rgba(255,255,255,.78);
   font-weight:900;
 }
-.modal .body{padding:12px 12px 14px}
-
-.fieldI{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;}
-.fieldI label{font-size:12px;color:rgba(255,255,255,.78);font-weight:800}
-.fieldI input{
+.field input{
   width:100%;
   padding:12px 12px;
   border-radius:12px;
-  border:2px solid rgba(255,255,255,.28);
+  border:2px solid rgba(255,255,255,.24);
   background:rgba(255,255,255,.06);
   color:#fff;
   outline:none;
-  font-weight:800;
+  font-weight:900;
 }
 
 .avatarGrid{
@@ -326,7 +405,7 @@ body{
   gap:10px;
 }
 .avOpt{
-  border:2px solid rgba(255,255,255,.22);
+  border:2px solid rgba(255,255,255,.18);
   background:rgba(255,255,255,.06);
   border-radius:12px;
   padding:8px;
@@ -350,160 +429,131 @@ body{
   display:grid;place-items:center;
 }
 .avOpt img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
-.avOpt .nm{font-size:11px;color:rgba(255,255,255,.9);text-align:center;line-height:1.2;font-weight:800}
+.avOpt .nm{font-size:11px;color:rgba(255,255,255,.9);text-align:center;line-height:1.2;font-weight:900}
 
-.note{
-  width:min(980px,92vw);
-  margin:0 auto 40px;
-  opacity:.78;
-  font-size:12px;
-  line-height:1.7;
-}
-.note code{
-  font-family:var(--mono);
-  font-size:11px;
-  background:rgba(255,255,255,.08);
-  padding:2px 6px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,.14);
+.modalBtns{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
 }
 </style>
 </head>
 
 <body>
 
-<header class="header">
-  <div class="headInner">
-    <a class="back" href="./index.html">← 街へ戻る</a>
-    <div class="title">
-      <h1>タコ民 住民票</h1>
-      <p>あなたのプロフィールと記録</p>
+<div class="page">
+  <div class="topbar">
+    <a class="back" href="./index.html">← 戻る</a>
+    <div class="topmeta">
+      <div class="ttl">TAKOMIN PROFILE</div>
+      <div class="sub">retrol paper</div>
     </div>
   </div>
-</header>
 
-<main class="wrap">
+  <section class="paper" aria-label="住民票">
 
-  <article class="card" aria-label="住民票">
-    <div class="cardInner">
+    <div class="title">タコ民 住民票</div>
 
-      <div class="top">
-        <div class="avatar" id="avBox">
-          <img id="avImg" src="https://ul.h3z.jp/X8jPVkhD.png" alt="アバター">
-        </div>
-
-        <div class="meta">
-          <div class="badgeRow">
-            <div class="badge mono" id="badgeNo">住民番号：TKM-???</div>
-            <div class="badge" id="badgeRarity">N CITIZEN</div>
-          </div>
-
-          <div class="name" id="nameLine">名無しのタコ民</div>
-          <div class="sub" id="subLine">称号：はじまりの焼き手</div>
-        </div>
+    <div class="top">
+      <div class="avatar">
+        <img id="uiAvatar" src="https://ul.h3z.jp/v0hjoXZ3.png" alt="アバター">
       </div>
 
-      <div class="grid">
-        <div class="field">
-          <div class="label">ログイン日数</div>
-          <div class="value">
-            <div class="big"><span id="stDays">0</span> 日</div>
-            <div class="mini">連続：<span id="stStreak">0</span> 日 / 最終：<span id="stLast">—</span></div>
-          </div>
-        </div>
-
-        <div class="field">
-          <div class="label">タワー最高点</div>
-          <div class="value">
-            <div class="big"><span id="stTower">0</span></div>
-            <div class="mini">（tower_v1_state より）</div>
-          </div>
-        </div>
-
-        <div class="field">
-          <div class="label">露店販売数</div>
-          <div class="value">
-            <div class="big"><span id="stSold">0</span></div>
-            <div class="mini">（<code>roten_v1_sold</code> を読む）</div>
-          </div>
-        </div>
-
-        <div class="field">
-          <div class="label">オクト</div>
-          <div class="value">
-            <div class="big"><span id="stOcto">0</span></div>
-            <div class="mini">（roten_v1_octo より）</div>
-          </div>
-        </div>
-
-        <div class="field">
-          <div class="label">図鑑総数</div>
-          <div class="value">
-            <div class="big"><span id="stZukan">0</span></div>
-            <div class="mini">（tf_v1_book の count 合計）</div>
-          </div>
-        </div>
-
-        <div class="field">
-          <div class="label">メモ</div>
-          <div class="value">
-            <div style="font-size:12px;opacity:.85;line-height:1.6">
-              この住民票は端末保存です。<br>
-              キャッシュ削除で消えるので、必要ならバックアップ推奨。
-            </div>
-          </div>
+      <div class="nameBlock">
+        <div class="name" id="uiName">名無しのタコ民</div>
+        <div class="subline">
+          <span id="uiTitle">称号：はじまりの焼き手</span>
+          <span class="mono" id="uiId">TKM------</span>
         </div>
       </div>
-
-      <div class="say">
-        <div class="who">門番</div>
-        <div class="text" id="quoteLine">「今日も焼かれに来たのか。」</div>
-      </div>
-
-      <div class="actions">
-        <button class="btn primary" id="editBtn" type="button">名前/アバター変更</button>
-        <button class="btn" id="copyBtn" type="button">住民票をコピー</button>
-        <button class="btn" id="resetBtn" type="button" title="住民票だけ初期化">住民票リセット</button>
-      </div>
-
     </div>
-  </article>
 
-</main>
+    <div class="table">
+      <div class="row">
+        <div class="label">ログイン日数</div>
+        <div class="value">
+          <div class="big"><span id="uiDays">0</span> 日</div>
+          <div class="mini">連続 <span id="uiStreak">0</span> / 最終 <span id="uiLast">—</span></div>
+        </div>
+      </div>
+    </div>
 
-<div class="note">
-  ■ 連携する保存キー（読むだけ）<br>
-  ・図鑑：<code>tf_v1_book</code>（got[id].count 合計）<br>
-  ・オクト：<code>roten_v1_octo</code><br>
-  ・露店販売数：<code>roten_v1_sold</code>（※露店側で加算してね）<br>
-  ・タワー：<code>tower_v1_state</code><br>
+    <div class="grid2">
+      <div class="box">
+        <b>図鑑総数</b>
+        <div class="n"><span id="uiZukan">0</span></div>
+        <div class="s">tf_v1_book</div>
+      </div>
+      <div class="box">
+        <b>オクト</b>
+        <div class="n"><span id="uiOcto">0</span></div>
+        <div class="s">roten_v1_octo</div>
+      </div>
+
+      <div class="box">
+        <b>露店販売数</b>
+        <div class="n"><span id="uiSold">0</span></div>
+        <div class="s">roten_v1_sold</div>
+      </div>
+      <div class="box">
+        <b>タワー最高</b>
+        <div class="n"><span id="uiTower">0</span></div>
+        <div class="s">tower_v1_state</div>
+      </div>
+    </div>
+
+    <div class="expWrap">
+      <div class="expLine">
+        <span>経験値</span>
+        <span class="mono" id="uiExpText">Lv1 0 / 100</span>
+      </div>
+      <div class="expBar"><div class="expFill" id="uiExpFill"></div></div>
+    </div>
+
+    <div class="say">
+      <div class="who">門番</div>
+      <div class="text" id="uiQuote">「この街にいるほど、経験が染み込む…」</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btnEdit" type="button">編集</button>
+      <button class="btn" id="btnCopy" type="button">コピー</button>
+      <button class="btn" id="btnReset" type="button">住民票リセット</button>
+    </div>
+
+    <div class="note">
+      ※ 住民票は端末保存（localStorage）です
+    </div>
+
+  </section>
 </div>
 
 <!-- ===== 編集モーダル ===== -->
 <div class="modal" id="editModal" aria-hidden="true">
-  <div class="cardM">
-    <div class="head">
+  <div class="modalCard" role="dialog" aria-modal="true" aria-label="住民票編集">
+    <div class="modalHead">
       <div class="ttl">住民票 編集</div>
-      <button class="close" id="editClose" type="button">×</button>
+      <button class="modalClose" id="btnClose" type="button">×</button>
     </div>
-    <div class="body">
-      <div class="fieldI">
+    <div class="modalBody">
+      <div class="field">
         <label for="nameInput">ニックネーム（最大16文字）</label>
         <input id="nameInput" type="text" maxlength="16" placeholder="例：焼き師のmika / たこぴ太郎 など">
       </div>
 
-      <div class="fieldI">
+      <div class="field">
         <label>アバター</label>
         <div class="avatarGrid" id="avatarGrid"></div>
       </div>
 
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn primary" id="saveBtn" type="button" style="flex:1">保存</button>
-        <button class="btn" id="cancelBtn" type="button" style="flex:1">キャンセル</button>
+      <div class="modalBtns">
+        <button class="btn primary" id="btnSave" type="button" style="flex:1">保存</button>
+        <button class="btn" id="btnCancel" type="button" style="flex:1">キャンセル</button>
       </div>
 
       <div style="margin-top:10px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.6">
-        ※ データは端末の localStorage に保存（サーバ送信なし）
+        ※ サーバ送信はありません（端末内保存のみ）<br>
+        ※ 経験値は「滞在時間」で増えます
       </div>
     </div>
   </div>
@@ -513,40 +563,48 @@ body{
 (() => {
   "use strict";
 
-  // =========================
-  // 設定
-  // =========================
-  const KEY_RESIDENT = "trc_v1_resident";
+  /* =========================================================
+     タコ民 住民票（紙プロフィール）
+     ✅ スマホでスクショに収まる幅（max 420px）
+     ✅ ログイン日数・連続ログイン（YYYY-MM-DD判定）
+     ✅ ホームページ滞在時間で経験値（5秒ごと加算）
+     ✅ 表示：タワー最高 / 露店販売数 / オクト / 図鑑総数
+     ========================================================= */
 
+  // ===== 保存キー =====
+  const KEY_RESIDENT = "trc_v1_resident_paper";
+
+  // ===== 連携キー（読むだけ）=====
   const K_BOOK  = "tf_v1_book";
   const K_OCTO  = "roten_v1_octo";
-  const K_SOLD  = "roten_v1_sold";
+  const K_SOLD  = "roten_v1_sold";    // 露店側で加算してね
   const K_TOWER = "tower_v1_state";
 
-  // 住民票：初期値
+  // ===== EXP設定 =====
+  const EXP_PER_SEC = 0.5;     // 滞在1秒あたり加算EXP（調整OK）
+  const EXP_PER_LV  = 100;     // 1レベルに必要なEXP
+
+  // ===== 初期値 =====
   const DEFAULT_RES = {
-    id: "",               // 住民番号（初回生成）
+    id: "",
     name: "名無しのタコ民",
     title: "はじまりの焼き手",
-    rarity: "N CITIZEN",
-    avatarUrl: "https://ul.h3z.jp/X8jPVkhD.png",
-
-    days: 0,              // ログイン日数
-    streak: 0,            // 連続ログイン
-    lastDate: ""          // "YYYY-MM-DD"
+    avatarUrl: "https://ul.h3z.jp/v0hjoXZ3.png",
+    days: 0,
+    streak: 0,
+    lastDate: "",
+    exp: 0
   };
 
-  // アバター候補（必要なら増やしてOK）
+  // ===== アバター候補（増やしてOK）=====
   const AVATARS = [
-    { id:"a1", name:"ゲート", url:"https://ul.h3z.jp/X8jPVkhD.png" },
-    { id:"a2", name:"たこぴ", url:"https://ul.h3z.jp/v0hjoXZ3.png" }
+    { id:"a1", name:"たこぴ", url:"https://ul.h3z.jp/v0hjoXZ3.png" },
+    { id:"a2", name:"扉",     url:"https://ul.h3z.jp/X8jPVkhD.png" }
   ];
 
-  // =========================
-  // ユーティリティ
-  // =========================
   const $ = (s, r=document) => r.querySelector(s);
 
+  // ===== 日付 YYYY-MM-DD =====
   function todayStr(){
     const d = new Date();
     const y = d.getFullYear();
@@ -559,12 +617,6 @@ body{
     try{ return JSON.parse(json); }catch(_){ return fallback; }
   }
 
-  function getLS(key, fallback){
-    const v = localStorage.getItem(key);
-    if(v == null) return fallback;
-    return v;
-  }
-
   function getIntLS(key, fallback=0){
     const v = localStorage.getItem(key);
     if(v == null) return fallback;
@@ -573,7 +625,6 @@ body{
   }
 
   function makeResidentId(){
-    // TKM- + 5桁ランダム（端末内だけ）
     const n = Math.floor(10000 + Math.random()*90000);
     return `TKM-${n}`;
   }
@@ -583,6 +634,7 @@ body{
     const obj = raw ? safeParse(raw, null) : null;
     const res = Object.assign({}, DEFAULT_RES, obj || {});
     if(!res.id) res.id = makeResidentId();
+    if(typeof res.exp !== "number" || !Number.isFinite(res.exp)) res.exp = 0;
     return res;
   }
 
@@ -590,20 +642,14 @@ body{
     localStorage.setItem(KEY_RESIDENT, JSON.stringify(res));
   }
 
-  function updateLoginCounters(res){
+  function updateLogin(res){
     const today = todayStr();
+    if(res.lastDate === today) return res;
 
-    if(res.lastDate === today){
-      // 今日すでにカウント済み
-      return res;
-    }
-
-    // 日付差（ざっくり日単位）
     if(res.lastDate){
       const last = new Date(res.lastDate + "T00:00:00");
       const now  = new Date(today + "T00:00:00");
       const diffDays = Math.round((now - last) / 86400000);
-
       if(diffDays === 1){
         res.streak = (res.streak || 0) + 1;
       }else{
@@ -625,7 +671,7 @@ body{
     const book = safeParse(raw, null);
     if(!book) return 0;
 
-    const got = book.got || book; // どちら形式でも一応拾う
+    const got = book.got || book;
     if(!got || typeof got !== "object") return 0;
 
     let sum = 0;
@@ -637,7 +683,7 @@ body{
     return sum;
   }
 
-  // タワー最高（tower_v1_state 内の best / bestScore / hiScore を探す）
+  // タワー最高（best / bestScore / hiScore 等を探す）
   function readTowerBest(){
     const raw = localStorage.getItem(K_TOWER);
     if(!raw) return 0;
@@ -652,41 +698,38 @@ body{
       st.max,
       st.top
     ].map(Number).filter(n => Number.isFinite(n));
-
     return cand.length ? Math.max(...cand) : 0;
   }
 
-  // =========================
-  // DOM
-  // =========================
-  const badgeNo = $("#badgeNo");
-  const badgeRarity = $("#badgeRarity");
-  const nameLine = $("#nameLine");
-  const subLine = $("#subLine");
-  const avImg = $("#avImg");
+  // ===== UI =====
+  const uiAvatar = $("#uiAvatar");
+  const uiName   = $("#uiName");
+  const uiTitle  = $("#uiTitle");
+  const uiId     = $("#uiId");
 
-  const stDays = $("#stDays");
-  const stStreak = $("#stStreak");
-  const stLast = $("#stLast");
+  const uiDays   = $("#uiDays");
+  const uiStreak = $("#uiStreak");
+  const uiLast   = $("#uiLast");
 
-  const stTower = $("#stTower");
-  const stSold = $("#stSold");
-  const stOcto = $("#stOcto");
-  const stZukan = $("#stZukan");
+  const uiZukan  = $("#uiZukan");
+  const uiOcto   = $("#uiOcto");
+  const uiSold   = $("#uiSold");
+  const uiTower  = $("#uiTower");
 
-  const quoteLine = $("#quoteLine");
+  const uiExpText = $("#uiExpText");
+  const uiExpFill = $("#uiExpFill");
+  const uiQuote   = $("#uiQuote");
 
-  const editBtn = $("#editBtn");
-  const copyBtn = $("#copyBtn");
-  const resetBtn = $("#resetBtn");
+  const btnEdit  = $("#btnEdit");
+  const btnCopy  = $("#btnCopy");
+  const btnReset = $("#btnReset");
 
   const editModal = $("#editModal");
-  const editClose = $("#editClose");
-  const cancelBtn = $("#cancelBtn");
-  const saveBtn = $("#saveBtn");
-
+  const btnClose  = $("#btnClose");
+  const btnCancel = $("#btnCancel");
+  const btnSave   = $("#btnSave");
   const nameInput = $("#nameInput");
-  const avatarGrid = $("#avatarGrid");
+  const avatarGrid= $("#avatarGrid");
 
   let selectedAvatarUrl = null;
 
@@ -720,61 +763,97 @@ body{
     });
   }
 
+  function levelFromExp(exp){
+    const lv = Math.floor(exp / EXP_PER_LV) + 1;
+    const cur = exp % EXP_PER_LV;
+    return { lv, cur, next: EXP_PER_LV };
+  }
+
   function render(res){
-    badgeNo.textContent = `住民番号：${res.id}`;
-    badgeRarity.textContent = res.rarity || "N CITIZEN";
-    nameLine.textContent = res.name || "名無しのタコ民";
-    subLine.textContent = `称号：${res.title || "はじまりの焼き手"}`;
-    avImg.src = res.avatarUrl || DEFAULT_RES.avatarUrl;
+    uiAvatar.src = res.avatarUrl || DEFAULT_RES.avatarUrl;
+    uiName.textContent  = res.name || "名無しのタコ民";
+    uiTitle.textContent = `称号：${res.title || "はじまりの焼き手"}`;
+    uiId.textContent    = res.id || "TKM------";
 
-    stDays.textContent = String(res.days || 0);
-    stStreak.textContent = String(res.streak || 0);
-    stLast.textContent = res.lastDate ? res.lastDate : "—";
+    uiDays.textContent   = String(res.days || 0);
+    uiStreak.textContent = String(res.streak || 0);
+    uiLast.textContent   = res.lastDate ? res.lastDate : "—";
 
-    // 連携値
-    stOcto.textContent = String(getIntLS(K_OCTO, 0));
-    stSold.textContent = String(getIntLS(K_SOLD, 0));
-    stZukan.textContent = String(calcZukanTotal());
-    stTower.textContent = String(readTowerBest());
+    // 連携
+    uiOcto.textContent  = String(getIntLS(K_OCTO, 0));
+    uiSold.textContent  = String(getIntLS(K_SOLD, 0));
+    uiZukan.textContent = String(calcZukanTotal());
+    uiTower.textContent = String(readTowerBest());
 
-    // セリフ（ログイン日数に応じて変える）
+    // EXP
+    const { lv, cur, next } = levelFromExp(Math.max(0, res.exp || 0));
+    uiExpText.textContent = `Lv${lv} ${Math.floor(cur)} / ${next}`;
+    uiExpFill.style.width = `${Math.min(100, (cur/next)*100)}%`;
+
+    // セリフ
     const d = res.days || 0;
     const s = res.streak || 0;
-    if(d <= 1){
-      quoteLine.textContent = "「住民票の発行、完了だ。ここから焼かれろ。」";
+    if(lv >= 10){
+      uiQuote.textContent = "「ここまで来たか…もう古参だな。」";
     }else if(s >= 7){
-      quoteLine.textContent = "「連続7日…もう立派な住民だな。」";
+      uiQuote.textContent = "「連続7日…街の匂いが染みている。」";
+    }else if(d <= 1){
+      uiQuote.textContent = "「住民票の発行、完了だ。ここから焼かれろ。」";
     }else{
-      quoteLine.textContent = "「今日も焼かれに来たのか。」";
+      uiQuote.textContent = "「この街にいるほど、経験が染み込む…」";
     }
   }
 
-  // =========================
-  // 起動処理
-  // =========================
+  // ===== 起動 =====
   let resident = loadResident();
-  resident = updateLoginCounters(resident);
+  resident = updateLogin(resident);
   saveResident(resident);
   render(resident);
 
-  // =========================
-  // イベント
-  // =========================
-  editBtn.addEventListener("click", () => {
+  // ===== 滞在時間EXP（ページが見えてる間だけ）=====
+  let lastTick = Date.now();
+
+  function tick(){
+    // 非表示中は加算しない
+    if(document.visibilityState !== "visible"){
+      lastTick = Date.now();
+      return;
+    }
+
+    const now = Date.now();
+    const dt = Math.max(0, (now - lastTick) / 1000);
+    lastTick = now;
+
+    // 長時間放置や復帰で一気に増えすぎないよう上限（例：1回最大30秒分）
+    const capped = Math.min(dt, 30);
+
     resident = loadResident(); // 最新
+    resident.exp = Number(resident.exp || 0) + capped * EXP_PER_SEC;
+    saveResident(resident);
+    render(resident);
+  }
+
+  // 5秒ごとに加算（軽くて安定）
+  setInterval(tick, 5000);
+
+  // タブ復帰でズレないように
+  document.addEventListener("visibilitychange", () => {
+    lastTick = Date.now();
+  });
+
+  // ===== UIイベント =====
+  btnEdit.addEventListener("click", () => {
+    resident = loadResident();
     nameInput.value = resident.name || "";
     renderAvatarPicker(resident.avatarUrl || DEFAULT_RES.avatarUrl);
     openModal();
   });
 
-  editClose.addEventListener("click", closeModal);
-  cancelBtn.addEventListener("click", closeModal);
+  btnClose.addEventListener("click", closeModal);
+  btnCancel.addEventListener("click", closeModal);
+  editModal.addEventListener("click", (e) => { if(e.target === editModal) closeModal(); });
 
-  editModal.addEventListener("click", (e) => {
-    if(e.target === editModal) closeModal();
-  });
-
-  saveBtn.addEventListener("click", () => {
+  btnSave.addEventListener("click", () => {
     resident = loadResident();
     const nm = String(nameInput.value || "").trim();
     if(nm) resident.name = nm;
@@ -784,14 +863,17 @@ body{
     closeModal();
   });
 
-  copyBtn.addEventListener("click", async () => {
+  btnCopy.addEventListener("click", async () => {
     resident = loadResident();
+    const { lv } = levelFromExp(Math.max(0, resident.exp || 0));
     const text =
 `【タコ民 住民票】
 住民番号：${resident.id}
 名前：${resident.name}
 称号：${resident.title}
 ログイン日数：${resident.days}日（連続${resident.streak}日）
+Lv：${lv}
+経験値：${Math.floor(resident.exp || 0)}
 タワー最高：${readTowerBest()}
 露店販売数：${getIntLS(K_SOLD,0)}
 オクト：${getIntLS(K_OCTO,0)}
@@ -799,17 +881,17 @@ body{
 最終ログイン：${resident.lastDate || "—"}`;
     try{
       await navigator.clipboard.writeText(text);
-      copyBtn.textContent = "コピーしました！";
-      setTimeout(()=>copyBtn.textContent="住民票をコピー", 1200);
+      const old = btnCopy.textContent;
+      btnCopy.textContent = "コピーしました！";
+      setTimeout(()=>btnCopy.textContent=old, 1200);
     }catch(_){
       alert("コピーに失敗しました（ブラウザの制限）");
     }
   });
 
-  resetBtn.addEventListener("click", () => {
-    if(!confirm("住民票だけ初期化します。よろしいですか？")) return;
+  btnReset.addEventListener("click", () => {
+    if(!confirm("住民票だけ初期化します（経験値/日数など）。よろしいですか？")) return;
     const keep = loadResident();
-    // 住民番号は残す（世界観的に）
     const id = keep.id || makeResidentId();
     const fresh = Object.assign({}, DEFAULT_RES, { id });
     saveResident(fresh);
