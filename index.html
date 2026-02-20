@@ -12,6 +12,7 @@
   --panel:#fffdf6;
   --ink:#1a1a1a;
   --gold2:#b98a2c;
+  --glow:#7fd0ff;
 }
 
 *{box-sizing:border-box}
@@ -39,49 +40,145 @@ body{
   display:flex;
   justify-content:center;
   align-items:flex-end;
-  gap: min(4vw, 28px);
+  gap:min(4vw,28px);
   margin-top: 12px;
+  position:relative;
 }
 
-/* 扉 */
+/* ===== 扉（ぽわーッ発光） ===== */
 .door{
   display:block;
-  width: min(220px, 30vw);  /* ←小さく */
+  width:min(220px, 30vw);
   cursor:pointer;
   transition: transform .22s ease, filter .22s ease;
-}
-.door:hover{
-  transform:translateY(-5px) scale(1.03);
-  filter:brightness(1.08);
+  position:relative;
+  border-radius:18px;
+  transform-origin: 50% 100%;
 }
 .door img{
   width:100%;
   height:auto;
   image-rendering:pixelated;
+  display:block;
+  border-radius:18px;
 }
 
-/* 中央キャラ */
-.char{
-  width: min(150px, 22vw); /* ←小さく */
+/* 発光レイヤー（脈動） */
+.door::before{
+  content:"";
+  position:absolute;
+  inset:-10px;
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(127,208,255,.50), rgba(127,208,255,0) 60%),
+    radial-gradient(circle at 50% 70%, rgba(255,230,160,.30), rgba(255,230,160,0) 65%);
+  filter: blur(10px);
+  opacity:.15;
+  z-index:-1;
+  animation: doorGlow 2.2s ease-in-out infinite;
+}
+
+/* 薄い粒キラ（ふわっと） */
+.door::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:18px;
+  background:
+    radial-gradient(circle at 22% 28%, rgba(255,255,255,.35), transparent 22%),
+    radial-gradient(circle at 68% 42%, rgba(255,255,255,.25), transparent 26%),
+    radial-gradient(circle at 40% 78%, rgba(255,255,255,.20), transparent 28%);
+  opacity:.0;
+  mix-blend-mode:screen;
+  animation: doorSpark 2.8s ease-in-out infinite;
   pointer-events:none;
+}
+
+@keyframes doorGlow{
+  0%,100%{ opacity:.16; transform: scale(1); }
+  50%    { opacity:.40; transform: scale(1.02); }
+}
+@keyframes doorSpark{
+  0%,100%{ opacity:.05; }
+  50%    { opacity:.22; }
+}
+
+.door:hover{
+  transform: translateY(-5px) scale(1.03);
+  filter: brightness(1.06);
+}
+.door:hover::before{
+  opacity:.55;
+}
+
+/* ===== 中央キャラ（トコトコ） ===== */
+.charWrap{
+  width:min(150px, 22vw);
+  pointer-events:none;
+  position:relative;
+  /* 横にちょい往復 */
+  animation: tocoMove 1.4s ease-in-out infinite;
+}
+.char{
+  width:100%;
+  /* 上下にバウンス */
+  animation: tocoBob .55s ease-in-out infinite;
+  transform-origin: 50% 100%;
 }
 .char img{
   width:100%;
   height:auto;
   image-rendering:pixelated;
+  display:block;
+}
+
+/* 足踏み感（微回転） */
+.char img{
+  animation: tocoTilt .55s ease-in-out infinite;
+}
+
+@keyframes tocoMove{
+  0%,100%{ transform: translateX(-6px); }
+  50%    { transform: translateX( 6px); }
+}
+@keyframes tocoBob{
+  0%,100%{ transform: translateY(0px); }
+  50%    { transform: translateY(-6px); }
+}
+@keyframes tocoTilt{
+  0%,100%{ transform: rotate(-1.6deg); }
+  50%    { transform: rotate( 1.6deg); }
+}
+
+/* “足元の影” で歩いてる感UP */
+.shadow{
+  position:absolute;
+  left:50%;
+  bottom:-6px;
+  width:72%;
+  height:14px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.45), rgba(0,0,0,0) 70%);
+  filter: blur(1px);
+  opacity:.7;
+  animation: shadowPulse .55s ease-in-out infinite;
+}
+@keyframes shadowPulse{
+  0%,100%{ transform: translateX(-50%) scale(1.00); opacity:.65; }
+  50%    { transform: translateX(-50%) scale(0.86); opacity:.48; }
 }
 
 /* ===== RPGメッセージBOX ===== */
 .msg{
   margin: 18px auto 0;
-  width: min(760px, 92vw);
+  width:min(760px,92vw);
   background:var(--panel);
   color:var(--ink);
   border:3px solid var(--gold2);
   border-radius:14px;
   padding:16px 18px;
   box-shadow:0 14px 40px rgba(0,0,0,.4);
-  font-weight:800;
+  font-weight:900;
   line-height:1.65;
   text-align:left;
 }
@@ -94,14 +191,29 @@ body{
   font-size:15px;
 }
 
-/* ===== モバイル最適化 ===== */
+/* 住民票リンク（小さく） */
+.links{
+  margin-top: 10px;
+  display:flex;
+  justify-content:flex-end;
+  width:min(760px,92vw);
+}
+.links a{
+  color:rgba(255,255,255,.82);
+  text-decoration:none;
+  font-size:12px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:10px;
+  background:rgba(255,255,255,.06);
+}
+.links a:hover{ filter:brightness(1.08); }
+
+/* ===== モバイル ===== */
 @media(max-width:600px){
-  .selectRow{
-    gap: 14px;
-    align-items:flex-end;
-  }
-  .door{ width: 38vw; max-width: 170px; }
-  .char{ width: 22vw; max-width: 110px; }
+  .selectRow{ gap:14px; }
+  .door{ width:38vw; max-width:170px; }
+  .charWrap{ width:22vw; max-width:110px; }
   .msg .text{ font-size:14px; }
 }
 </style>
@@ -111,27 +223,30 @@ body{
 
 <div class="stage">
 
-  <!-- 扉｜キャラ｜扉 -->
   <div class="selectRow">
 
-    <!-- 日本語（左扉） -->
+    <!-- 左：日本語 -->
     <a class="door" href="town/index.html" aria-label="日本語の街へ">
-      <img src="https://ul.h3z.jp/X8jPVkhD.png" alt="日本語入口（扉）">
+      <!-- ✅ 扉画像は「逆だったので」こちらにキャラ画像を使う → 入れ替え -->
+      <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="日本語入口（扉）">
     </a>
 
-    <!-- キャラクター（中央） -->
-    <div class="char" aria-hidden="true">
-      <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="たこぴ">
+    <!-- 中央：キャラ（トコトコ） -->
+    <div class="charWrap" aria-hidden="true">
+      <div class="shadow"></div>
+      <div class="char">
+        <!-- ✅ キャラ画像は「逆だったので」こちらに扉画像を使う → 入れ替え -->
+        <img src="https://ul.h3z.jp/X8jPVkhD.png" alt="たこぴ">
+      </div>
     </div>
 
-    <!-- 英語（右扉） -->
+    <!-- 右：英語 -->
     <a class="door" href="en/index.html" aria-label="Go to English site">
-      <img src="https://ul.h3z.jp/X8jPVkhD.png" alt="English Entrance（Door）">
+      <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="English Entrance（Door）">
     </a>
 
   </div>
 
-  <!-- セリフ -->
   <div class="msg">
     <div class="name">たこぴ</div>
     <div class="text">
@@ -139,6 +254,10 @@ body{
       左は日本の街、右は海外の街…<br>
       選んだ扉の先で、君の物語が始まるたこ。
     </div>
+  </div>
+
+  <div class="links">
+    <a href="town/jumin.html">タコ民の住民票を見る</a>
   </div>
 
 </div>
