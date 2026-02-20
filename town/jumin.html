@@ -446,12 +446,11 @@ body{
     <a class="back" href="./index.html">← 戻る</a>
     <div class="topmeta">
       <div class="ttl">TAKOMIN PROFILE</div>
-      <div class="sub">retrol paper</div>
+      <div class="sub">retro paper</div>
     </div>
   </div>
 
   <section class="paper" aria-label="住民票">
-
     <div class="title">タコ民 住民票</div>
 
     <div class="top">
@@ -522,9 +521,8 @@ body{
     </div>
 
     <div class="note">
-      ※ 住民票は端末保存（localStorage）です
+      ※ 住民票は端末保存（localStorage）です（バックアップ対象）
     </div>
-
   </section>
 </div>
 
@@ -553,7 +551,7 @@ body{
 
       <div style="margin-top:10px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.6">
         ※ サーバ送信はありません（端末内保存のみ）<br>
-        ※ 経験値は「滞在時間」で増えます
+        ※ 経験値は「滞在時間」で増えます（今回は“遅め”に調整済み）
       </div>
     </div>
   </div>
@@ -565,24 +563,36 @@ body{
 
   /* =========================================================
      タコ民 住民票（紙プロフィール）
-     ✅ スマホでスクショに収まる幅（max 420px）
-     ✅ ログイン日数・連続ログイン（YYYY-MM-DD判定）
-     ✅ ホームページ滞在時間で経験値（5秒ごと加算）
-     ✅ 表示：タワー最高 / 露店販売数 / オクト / 図鑑総数
+     ✅ バックアップ/復元コードが保存するキーから「必要情報」を拾って表示＆住民票データに反映
+       - trc_v1_resident_paper（このページの本体）
+       - trc_v1_resident（旧住民票があれば移植）
+       - trc_v1_last_login（旧があれば補助）
+       - tf_v1_book / roten_v1_octo / roten_v1_sold / tower_v1_state（表示）
+     ✅ 経験値：増加が早すぎる問題を “かなり遅く” 調整
+        - 10秒ごと加算
+        - 1秒あたりEXPを下げる
+        - 復帰で一気に増えない上限
      ========================================================= */
 
-  // ===== 保存キー =====
-  const KEY_RESIDENT = "trc_v1_resident_paper";
+  // ===== 保存キー（バックアップ対象）=====
+  const KEY_RESIDENT_PAPER = "trc_v1_resident_paper";
 
-  // ===== 連携キー（読むだけ）=====
+  // ===== 旧住民票（バックアップ対象）=====
+  const KEY_RESIDENT_OLD   = "trc_v1_resident";
+  const KEY_LASTLOGIN_OLD  = "trc_v1_last_login";
+
+  // ===== 連携キー（読むだけ：バックアップ対象）=====
   const K_BOOK  = "tf_v1_book";
   const K_OCTO  = "roten_v1_octo";
   const K_SOLD  = "roten_v1_sold";    // 露店側で加算してね
   const K_TOWER = "tower_v1_state";
 
-  // ===== EXP設定 =====
-  const EXP_PER_SEC = 0.5;     // 滞在1秒あたり加算EXP（調整OK）
-  const EXP_PER_LV  = 100;     // 1レベルに必要なEXP
+  // ===== EXP設定（✅遅くした）=====
+  // 例：1分で約3EXP（見えてる間だけ）
+  const EXP_PER_SEC = 0.05;   // ← 以前0.5だったので 10分の1に（さらに遅くしたいなら 0.03 など）
+  const EXP_PER_LV  = 100;
+  const TICK_MS     = 10000;  // ← 以前5000ms（5秒）→ 10秒に
+  const DT_CAP_SEC  = 12;     // 復帰で一気に増えない（1回最大12秒分）
 
   // ===== 初期値 =====
   const DEFAULT_RES = {
@@ -629,8 +639,96 @@ body{
     return `TKM-${n}`;
   }
 
+  // ===== 旧住民票 → 新住民票へ移植（あれば）=====
+  function normalizeOldResident(obj){
+    if(!obj || typeof obj !== "object") return null;
+
+    // よくある候補名を吸い上げて整形
+    const out = {};
+
+    // id
+    out.id = String(obj.id || obj.residentId || obj.uid || obj.code || "").trim();
+
+    // name/title/avatar
+    out.name = String(obj.name || obj.nickname || obj.playerName || obj.handle || "").trim();
+    out.title = String(obj.title || obj.rank || obj.badge || obj.role || "").trim();
+    out.avatarUrl = String(obj.avatarUrl || obj.avatar || obj.icon || obj.iconUrl || "").trim();
+
+    // days/streak/lastDate/exp
+    const days = Number(obj.days ?? obj.loginDays ?? obj.totalDays ?? obj.day ?? obj.countDays ?? NaN);
+    const streak = Number(obj.streak ?? obj.loginStreak ?? obj.continuous ?? obj.combo ?? NaN);
+    const exp = Number(obj.exp ?? obj.xp ?? obj.experience ?? obj.point ?? NaN);
+
+    out.days = Number.isFinite(days) ? Math.max(0, Math.floor(days)) : undefined;
+    out.streak = Number.isFinite(streak) ? Math.max(0, Math.floor(streak)) : undefined;
+    out.exp = Number.isFinite(exp) ? Math.max(0, exp) : undefined;
+
+    // lastDate: "YYYY-MM-DD" を期待
+    const last = String(obj.lastDate || obj.lastLogin || obj.last || obj.last_day || obj.lastDay || "").trim();
+    out.lastDate = last;
+
+    // 空は消す
+    for(const k of Object.keys(out)){
+      if(out[k] === "" || out[k] === undefined) delete out[k];
+    }
+    return out;
+  }
+
+  function tryMigrateFromOldIfNeeded(){
+    // すでに新住民票があれば何もしない
+    const existing = localStorage.getItem(KEY_RESIDENT_PAPER);
+    if(existing) return;
+
+    const rawOld = localStorage.getItem(KEY_RESIDENT_OLD);
+    const rawLast = localStorage.getItem(KEY_LASTLOGIN_OLD);
+
+    const oldObj = rawOld ? safeParse(rawOld, null) : null;
+    const lastObj = rawLast ? safeParse(rawLast, null) : null;
+
+    let migrated = null;
+
+    // oldObj がオブジェクトならまずそれを試す
+    if(oldObj && typeof oldObj === "object"){
+      migrated = normalizeOldResident(oldObj);
+
+      // old が配列っぽい場合（住民一覧など）→先頭を採用
+      if(!migrated && Array.isArray(oldObj) && oldObj[0] && typeof oldObj[0] === "object"){
+        migrated = normalizeOldResident(oldObj[0]);
+      }
+    }
+
+    // last_login がオブジェクトなら補助情報として取り込む（あれば）
+    if(lastObj && typeof lastObj === "object"){
+      // last_login 形式が {days, streak, lastDate} とかの場合がある
+      const days = Number(lastObj.days ?? lastObj.loginDays ?? lastObj.totalDays ?? NaN);
+      const streak = Number(lastObj.streak ?? lastObj.loginStreak ?? NaN);
+      const lastDate = String(lastObj.lastDate || lastObj.lastLogin || lastObj.last || "").trim();
+
+      migrated = migrated || {};
+      if(Number.isFinite(days) && migrated.days == null) migrated.days = Math.max(0, Math.floor(days));
+      if(Number.isFinite(streak) && migrated.streak == null) migrated.streak = Math.max(0, Math.floor(streak));
+      if(lastDate && !migrated.lastDate) migrated.lastDate = lastDate;
+    }
+
+    // 何も取れなかったら終了
+    if(!migrated) return;
+
+    // DEFAULT と合成して保存
+    const res = Object.assign({}, DEFAULT_RES, migrated);
+    if(!res.id) res.id = makeResidentId();
+    if(!res.name) res.name = DEFAULT_RES.name;
+    if(!res.title) res.title = DEFAULT_RES.title;
+    if(!res.avatarUrl) res.avatarUrl = DEFAULT_RES.avatarUrl;
+    if(typeof res.exp !== "number" || !Number.isFinite(res.exp)) res.exp = 0;
+
+    localStorage.setItem(KEY_RESIDENT_PAPER, JSON.stringify(res));
+  }
+
   function loadResident(){
-    const raw = localStorage.getItem(KEY_RESIDENT);
+    // 起動時に旧→新の移植を一度だけ試す
+    tryMigrateFromOldIfNeeded();
+
+    const raw = localStorage.getItem(KEY_RESIDENT_PAPER);
     const obj = raw ? safeParse(raw, null) : null;
     const res = Object.assign({}, DEFAULT_RES, obj || {});
     if(!res.id) res.id = makeResidentId();
@@ -639,7 +737,7 @@ body{
   }
 
   function saveResident(res){
-    localStorage.setItem(KEY_RESIDENT, JSON.stringify(res));
+    localStorage.setItem(KEY_RESIDENT_PAPER, JSON.stringify(res));
   }
 
   function updateLogin(res){
@@ -671,7 +769,8 @@ body{
     const book = safeParse(raw, null);
     if(!book) return 0;
 
-    const got = book.got || book;
+    // book.got がある想定、なければ book 自体を “gotっぽい” として見る
+    const got = (book.got && typeof book.got === "object") ? book.got : book;
     if(!got || typeof got !== "object") return 0;
 
     let sum = 0;
@@ -779,7 +878,7 @@ body{
     uiStreak.textContent = String(res.streak || 0);
     uiLast.textContent   = res.lastDate ? res.lastDate : "—";
 
-    // 連携
+    // 連携（バックアップのコードが保存してるキー群）
     uiOcto.textContent  = String(getIntLS(K_OCTO, 0));
     uiSold.textContent  = String(getIntLS(K_SOLD, 0));
     uiZukan.textContent = String(calcZukanTotal());
@@ -790,17 +889,19 @@ body{
     uiExpText.textContent = `Lv${lv} ${Math.floor(cur)} / ${next}`;
     uiExpFill.style.width = `${Math.min(100, (cur/next)*100)}%`;
 
-    // セリフ
+    // セリフ（雰囲気）
     const d = res.days || 0;
     const s = res.streak || 0;
-    if(lv >= 10){
+    if(lv >= 20){
+      uiQuote.textContent = "「古い紙ほど…価値がある。お前は、もう“遺産”だ。」";
+    }else if(lv >= 10){
       uiQuote.textContent = "「ここまで来たか…もう古参だな。」";
     }else if(s >= 7){
       uiQuote.textContent = "「連続7日…街の匂いが染みている。」";
     }else if(d <= 1){
       uiQuote.textContent = "「住民票の発行、完了だ。ここから焼かれろ。」";
     }else{
-      uiQuote.textContent = "「この街にいるほど、経験が染み込む…」";
+      uiQuote.textContent = "「この街にいるほど、経験が染み込む…（ゆっくりな）」";
     }
   }
 
@@ -814,7 +915,6 @@ body{
   let lastTick = Date.now();
 
   function tick(){
-    // 非表示中は加算しない
     if(document.visibilityState !== "visible"){
       lastTick = Date.now();
       return;
@@ -824,17 +924,17 @@ body{
     const dt = Math.max(0, (now - lastTick) / 1000);
     lastTick = now;
 
-    // 長時間放置や復帰で一気に増えすぎないよう上限（例：1回最大30秒分）
-    const capped = Math.min(dt, 30);
+    // 復帰・放置で一気に増えない
+    const capped = Math.min(dt, DT_CAP_SEC);
 
-    resident = loadResident(); // 最新
+    resident = loadResident(); // 最新を読む
     resident.exp = Number(resident.exp || 0) + capped * EXP_PER_SEC;
     saveResident(resident);
     render(resident);
   }
 
-  // 5秒ごとに加算（軽くて安定）
-  setInterval(tick, 5000);
+  // ✅ 10秒ごと（遅め）
+  setInterval(tick, TICK_MS);
 
   // タブ復帰でズレないように
   document.addEventListener("visibilitychange", () => {
@@ -901,6 +1001,9 @@ Lv：${lv}
 
 })();
 </script>
+
+<!-- ✅ 共通バックアップUI（導入済みならこのまま） -->
+<!-- <script src="assets/trc-backup-float.js"></script> -->
 
 </body>
 </html>
