@@ -1,10 +1,11 @@
 
 /* =========================================================
-   sell.js（図鑑のダブり売却）
-   - 対象: tf_v1_book.got[id].count > 1 のものだけ
-   - 売却: count から指定枚数を減らし、roten_v1_octo に加算
-   - 探しやすさ: 検索 + ソート
-   - 画像/名前: book側に無い場合は id 表示（拡張できるように設計）
+   sell.js（図鑑のダブり売却）/* =========================================================
+   sell.js（図鑑の売却）
+   - tf_v1_book.got が「配列 / オブジェクト」どちらでも対応
+   - 通常カード：ダブり（count>1）のみ売れる（1枚は残す）
+   - 職人カード：1枚でも売れる（設定で「1枚残す」にもできる）
+   - 売却：count を減らし、roten_v1_octo に加算
 ========================================================= */
 (() => {
   "use strict";
@@ -13,6 +14,17 @@
     octo: "roten_v1_octo",
     book: "tf_v1_book"
   };
+
+  // =========================
+  // ✅ 設定（ここだけ好みで）
+  // =========================
+
+  // 職人カード（CRAFT）は「1枚でも売れる」にする？
+  // true : 1枚でも売れる（0枚になるまで売れる）
+  // false: 通常カードと同じ（1枚は残す＝count>1のみ売れる）
+  const CRAFT_CAN_SELL_LAST_ONE = true;
+
+  // =========================
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -37,21 +49,79 @@
     localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v)||0))));
   }
 
-  function loadBook(){
-    const book = loadJSON(LS.book, { ver:1, got:{} });
-    book.got = book.got || {};
+  // =========================
+  // ✅ 職人判定
+  // =========================
+  function isCraftId(id){
+    const s = String(id || "").trim().toUpperCase();
+    return s.startsWith("CRAFT_") || s.startsWith("CRAFT-") || s.startsWith("CRAFT");
+  }
+  function isCraftEntry(entry){
+    const r = String(entry?.rarity || entry?.rank || "").trim().toUpperCase();
+    return r === "CRAFT" || r.includes("CRAFT");
+  }
+  function isCraftCard(id, entry){
+    return isCraftId(id) || isCraftEntry(entry);
+  }
+
+  // =========================
+  // ✅ book読み込み（配列/オブジェクト両対応）
+  // - 内部では必ず got を { [id]: entry } に揃える
+  // =========================
+  function normalizeBook(bookRaw){
+    const book = bookRaw && typeof bookRaw === "object" ? bookRaw : { ver:1, got:{} };
+    let got = book.got;
+
+    // got が配列なら {id:entry} に変換
+    if(Array.isArray(got)){
+      const map = {};
+      for(const x of got){
+        const id = String(x?.id || "").trim();
+        if(!id) continue;
+        // 同IDが複数来たら count を合算（念のため）
+        const prev = map[id];
+        if(prev){
+          const pc = Number(prev.count || 1);
+          const nc = Number(x?.count || 1);
+          map[id] = { ...prev, ...x, count: (Number.isFinite(pc)?pc:1) + (Number.isFinite(nc)?nc:1) };
+        }else{
+          map[id] = { ...x, count: (Number.isFinite(Number(x?.count)) ? Number(x.count) : 1) };
+        }
+      }
+      book.got = map;
+      return book;
+    }
+
+    // got がオブジェクトならそのまま
+    if(got && typeof got === "object"){
+      book.got = got;
+      return book;
+    }
+
+    book.got = {};
     return book;
   }
+
+  function loadBook(){
+    const raw = loadJSON(LS.book, { ver:1, got:{} });
+    return normalizeBook(raw);
+  }
+
   function saveBook(book){
+    // 保存は常にオブジェクト形式でOK（あなたの図鑑は object / array 両方読める）
     saveJSON(LS.book, book);
   }
 
-  // ---- 価格ルール（必要ならここだけ後で調整） ----
-  // ・基本：1枚 = 5オクト
-  // ・rarity が入っていれば上げる（あれば、の話）
+  // =========================
+  // 価格ルール（必要ならここだけ調整）
+  // =========================
   function priceFor(meta){
     const base = 150;
     const r = (meta.rarity || "").toUpperCase();
+
+    // ✅ 職人は少し高め（お好みで）
+    if(r.includes("CRAFT")) return 400;
+
     if(r.includes("LR")) return 3000;
     if(r.includes("UR")) return 1500;
     if(r.includes("SR")) return 500;
@@ -59,20 +129,13 @@
     return base;
   }
 
-  // book.got の中身がカードによって違っても落ちないようにする
+  // bookの中身の揺れに強く
   function resolveMeta(id, entry){
-    // entryに name/img がある場合はそれを使う
     const name = entry?.name || entry?.title || id;
     const img  = entry?.img  || entry?.image || entry?.url || null;
     const rarity = entry?.rarity || entry?.rank || "";
-    // 画像が無い場合のプレースホルダ（売却ページ用）
-    const fallbackImg = "https://ul.h3z.jp/7moREJnl.png"; // たこ焼き画像
-    return {
-      id,
-      name,
-      img: img || fallbackImg,
-      rarity
-    };
+    const fallbackImg = "https://ul.h3z.jp/7moREJnl.png";
+    return { id, name, img: img || fallbackImg, rarity };
   }
 
   // ---- modal ----
@@ -101,34 +164,61 @@
   modalBg?.addEventListener("click", closeModal);
   modalX?.addEventListener("click", closeModal);
 
-  // ---- build list ----
-  function collectDupCards(){
+  // =========================
+  // ✅ 売却対象の収集
+  // - 通常: count>1 のみ（1枚残す）
+  // - 職人: 設定により count>0 でもOK
+  // =========================
+  function collectSellableCards(){
     const book = loadBook();
     const out = [];
-    for(const id of Object.keys(book.got)){
+
+    for(const id of Object.keys(book.got || {})){
       const entry = book.got[id];
       const count = Number(entry?.count || 0);
-      if(count > 1){
-        const meta = resolveMeta(id, entry);
-        const dup = count - 1;
-        const unit = priceFor(meta);
-        out.push({
-          id,
-          meta,
-          count,
-          dup,
-          unit
-        });
+
+      if(!Number.isFinite(count) || count <= 0) continue;
+
+      const craft = isCraftCard(id, entry);
+
+      // 通常はダブりのみ
+      // 職人は設定で 1枚でもOK にできる
+      let canSell = 0;
+
+      if(craft){
+        canSell = CRAFT_CAN_SELL_LAST_ONE ? count : Math.max(0, count - 1);
+      }else{
+        canSell = Math.max(0, count - 1);
       }
+
+      if(canSell <= 0) continue;
+
+      const meta = resolveMeta(id, entry);
+      // rarityにCRAFT表記が無い場合でも、ここで付けておく（表示/価格用）
+      if(craft && !String(meta.rarity || "").toUpperCase().includes("CRAFT")){
+        meta.rarity = meta.rarity ? `${meta.rarity} / CRAFT` : "CRAFT";
+      }
+
+      const unit = priceFor(meta);
+
+      out.push({
+        id,
+        meta,
+        count,
+        canSell,   // 売れる最大枚数（通常＝count-1、職人＝count など）
+        unit,
+        craft
+      });
     }
+
     return out;
   }
 
   function refreshTop(){
     $("#sellOcto") && ($("#sellOcto").textContent = String(getOcto()));
-    const list = collectDupCards();
-    const totalDup = list.reduce((a,c)=>a+c.dup, 0);
-    $("#sellDupTotal") && ($("#sellDupTotal").textContent = String(totalDup));
+    const list = collectSellableCards();
+    const total = list.reduce((a,c)=>a + c.canSell, 0);
+    $("#sellDupTotal") && ($("#sellDupTotal").textContent = String(total));
   }
 
   function applyFilterSort(list){
@@ -147,11 +237,11 @@
 
     a = a.slice();
     a.sort((p, q2) => {
-      if(sort === "dupdesc") return (q2.dup - p.dup) || (q2.unit - p.unit) || (p.meta.name.localeCompare(q2.meta.name));
+      if(sort === "dupdesc") return (q2.canSell - p.canSell) || (q2.unit - p.unit) || (p.meta.name.localeCompare(q2.meta.name));
       if(sort === "named")   return p.meta.name.localeCompare(q2.meta.name);
       if(sort === "namea")   return q2.meta.name.localeCompare(p.meta.name);
-      if(sort === "pricedesc") return (q2.unit - p.unit) || (q2.dup - p.dup);
-      if(sort === "priceasc")  return (p.unit - q2.unit) || (q2.dup - p.dup);
+      if(sort === "pricedesc") return (q2.unit - p.unit) || (q2.canSell - p.canSell);
+      if(sort === "priceasc")  return (p.unit - q2.unit) || (q2.canSell - p.canSell);
       return 0;
     });
 
@@ -164,14 +254,14 @@
     const grid = $("#sellGrid");
     if(!grid) return;
 
-    const list = applyFilterSort(collectDupCards());
+    const list = applyFilterSort(collectSellableCards());
 
     if(list.length === 0){
       grid.innerHTML = `
         <div style="grid-column:1/-1; padding:14px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:rgba(0,0,0,.18);">
-          <div style="font-weight:900;">ダブりカードがない…</div>
+          <div style="font-weight:900;">売れるカードがない…</div>
           <div style="color:rgba(255,255,255,.72); font-size:12px; margin-top:6px;">
-            たこぴ：<br>「売れるほど集めたってこと…すごい…たこ。<br>でも今は、売るものが無い…たこ。」
+            たこぴ：<br>「今は…売るものが無い…たこ。<br>（ダブりが増えるか、職人カードが増えたら出るよ…たこ）」 
           </div>
         </div>
       `;
@@ -179,16 +269,22 @@
     }
 
     grid.innerHTML = list.map(x => {
-      const maxSell = x.dup; // 1枚は残す
+      const maxSell = x.canSell;
       const label = x.meta.rarity ? ` / ${x.meta.rarity}` : "";
+      const craftTag = x.craft ? `<span style="margin-left:6px;padding:2px 8px;border:1px solid rgba(255,255,255,.14);border-radius:999px;font-size:11px;opacity:.9;">職人</span>` : "";
+      const keepNote = x.craft
+        ? (CRAFT_CAN_SELL_LAST_ONE ? "※職人は0枚になるまで売れる" : "※職人も1枚は残る")
+        : "※通常カードは必ず1枚残る";
+
       return `
         <article class="card" data-id="${x.id}">
           <div class="card-top">
             <div class="imgbox"><img src="${x.meta.img}" alt="${x.meta.name}" loading="lazy"></div>
             <div class="meta">
-              <div class="name">${x.meta.name}</div>
+              <div class="name">${x.meta.name}${craftTag}</div>
               <div class="desc">ID: ${x.id}${label}</div>
               <div class="desc">売値：<b>${x.unit}</b> オクト / 1枚</div>
+              <div class="desc" style="opacity:.7;font-size:11px;">${keepNote}</div>
             </div>
           </div>
           <div class="row">
@@ -210,7 +306,7 @@
   }
 
   function openSellModal(item){
-    const maxSell = item.dup;
+    const maxSell = item.canSell;
     const unit = item.unit;
 
     const options = Array.from({length:maxSell}).map((_,i)=>{
@@ -218,14 +314,9 @@
       return `<option value="${n}">${n} 枚</option>`;
     }).join("");
 
-    openModal("♻️ 売却（ダブりのみ）", `
+    openModal("♻️ 売却", `
       <div class="fx">
         <div style="font-weight:900; font-size:14px;">🎰 売却イベント発生</div>
-        <div class="note" style="margin-top:6px;">
-          たこぴ：<br>
-          「売るってことは…“手放す”ってこと…たこ。<br>
-          でもね、手放した分だけ…オクトは増える…たこ。」
-        </div>
 
         <div class="line"></div>
 
@@ -244,7 +335,7 @@
         <div class="line"></div>
 
         <div style="display:grid; gap:8px;">
-          <div class="note">何枚売る？（※必ず1枚は残る）</div>
+          <div class="note">何枚売る？</div>
           <select class="qty" id="sellQty">${options}</select>
           <div class="note">合計：<b id="sellTotal">${unit}</b> オクト</div>
         </div>
@@ -285,17 +376,36 @@
     if(!entry) return;
 
     const count = Number(entry.count || 0);
-    const dup = count - 1;
-    const canSell = Math.max(0, Math.min(dup, qty));
+    if(!Number.isFinite(count) || count <= 0) return;
+
+    const craft = isCraftCard(id, entry);
+
+    // 売れる最大枚数
+    const maxSell = craft
+      ? (CRAFT_CAN_SELL_LAST_ONE ? count : Math.max(0, count - 1))
+      : Math.max(0, count - 1);
+
+    const canSell = Math.max(0, Math.min(maxSell, Math.floor(Number(qty)||0)));
     if(canSell <= 0) return;
 
     const meta = resolveMeta(id, entry);
+    if(craft && !String(meta.rarity || "").toUpperCase().includes("CRAFT")){
+      meta.rarity = meta.rarity ? `${meta.rarity} / CRAFT` : "CRAFT";
+    }
+
     const unit = priceFor(meta);
     const gain = unit * canSell;
 
-    // 図鑑 count 減らす（1枚は残る）
+    // count 減らす
     entry.count = count - canSell;
-    book.got[id] = entry;
+
+    // 0枚になったら削除する（職人を0まで売れる設定のとき）
+    if(entry.count <= 0){
+      delete book.got[id];
+    }else{
+      book.got[id] = entry;
+    }
+
     saveBook(book);
 
     // オクト増やす
@@ -312,12 +422,10 @@
         <div class="fx">
           <div style="font-weight:900;">やることは2つだけ</div>
           <div class="note" style="margin-top:8px;">
-            1) ダブりカード（所持2枚以上）から選ぶ<br>
-            2) 売る枚数を選んで「売却する」<br><br>
-            ※必ず1枚は残る（図鑑コンプが崩れない）
-          </div>
-          <div class="note" style="margin-top:10px;">
-            たこぴ：<br>「売るのは怖い…でもね、<br>そのオクトで“次の運命”を買える…たこ。」
+            1) 売るカードを選ぶ<br>
+            2) 枚数を選んで「売却する」<br><br>
+            ※通常カードは必ず1枚残る<br>
+            ※職人カードは設定により0枚まで売れる
           </div>
           <div style="margin-top:12px;">
             <button class="btn" id="okHelp">OK</button>
