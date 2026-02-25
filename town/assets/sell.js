@@ -112,22 +112,19 @@
     saveJSON(LS.book, book);
   }
 
-  // =========================
-  // 価格ルール（必要ならここだけ調整）
-  // =========================
-  function priceFor(meta){
-    const base = 150;
-    const r = (meta.rarity || "").toUpperCase();
+ function priceFor(meta){
+  // ✅ 職人は売値1000で固定
+  const r = (meta.rarity || "").toUpperCase();
+  if(r.includes("CRAFT")) return 1000;
 
-    // ✅ 職人は少し高め（お好みで）
-    if(r.includes("CRAFT")) return 400;
-
-    if(r.includes("LR")) return 3000;
-    if(r.includes("UR")) return 1500;
-    if(r.includes("SR")) return 500;
-    if(r.includes("R"))  return 300;
-    return base;
-  }
+  // 通常カード（今まで通り）
+  const base = 150;
+  if(r.includes("LR")) return 3000;
+  if(r.includes("UR")) return 1500;
+  if(r.includes("SR")) return 500;
+  if(r.includes("R"))  return 300;
+  return base;
+}
 
   // bookの中身の揺れに強く
   function resolveMeta(id, entry){
