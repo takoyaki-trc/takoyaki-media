@@ -107,7 +107,7 @@
     ],
     LR: [
       { no:"TN-025", name:"たこ焼き化石in函館山", img:"https://ul.h3z.jp/NEuFQ7PB.png" },
-      { no:"TN-050", name:"焼かれし記憶、ソースに還る", img:"assets/images/1stcard/01ur1.png" },
+      { no:"TN-050", name:"焼かれし記憶、ソースに還る", img:"assets/images/1stcard/050lr1.png" },
     ],
   };
 
