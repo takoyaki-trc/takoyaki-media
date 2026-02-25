@@ -37,9 +37,10 @@
     *{box-sizing:border-box}
     body{
       margin:0;
-      background:radial-gradient(1200px 600px at 40% -10%, rgba(106,160,255,.18), transparent 60%),
-                 radial-gradient(900px 500px at 90% 10%, rgba(255,180,80,.10), transparent 65%),
-                 var(--bg);
+      background:
+        radial-gradient(1200px 600px at 40% -10%, rgba(106,160,255,.18), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(255,180,80,.10), transparent 65%),
+        var(--bg);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", sans-serif;
     }
@@ -452,6 +453,7 @@
           <option value="bs">ダーツプロ（BS）</option>
           <option value="sp">スペシャル（SP）</option>
           <option value="col">コラボ（COL）</option>
+          <option value="craft">職人（5分ステージ）</option>
           <option value="all_serial">全カード品番順（おすすめ）</option>
         </select>
       </div>
@@ -494,6 +496,7 @@
   <script>
     // =========================================================
     // 図鑑（count方式 / IDごとに1枚表示）
+    // - gate.js 側で追加される職人カード（craft_XXX）も表示・並び替え可能
     // =========================================================
 
     const LS_KEY = "tf_v1_book";
@@ -528,9 +531,21 @@
 
     function parseCardId(id){
       const s = (id ?? "").toString().trim().toUpperCase();
-      const m = s.match(/^([A-Z]+)[-_]?(\d+)?$/);
-      if(!m) return { prefix:"ZZ", num:9999 };
-      return { prefix: m[1], num: Number(m[2] || 0) };
+      // TN-001, TP-001 など
+      let m = s.match(/^([A-Z]+)[-_]?(\d+)$/);
+      if(m) return { prefix:m[1], num:Number(m[2] || 0) };
+
+      // craft_001 など
+      m = s.match(/^([A-Z]+)[-_]?(\d+)$/i);
+      if(m) return { prefix:m[1].toUpperCase(), num:Number(m[2] || 0) };
+
+      // craft_001 の prefix を CRAFT に寄せたい
+      if(s.startsWith("CRAFT_") || s.startsWith("CRAFT-")){
+        const n = Number((s.split(/[_-]/)[1] || "0"));
+        return { prefix:"CRAFT", num: Number.isFinite(n)?n:9999 };
+      }
+
+      return { prefix:"ZZ", num:9999 };
     }
 
     function isSpecialSPCard(item){
@@ -543,6 +558,12 @@
       if(name.includes("焦げ") || name.includes("生焼け")) return true;
       if(id.includes("BURN") || id.includes("RAW") || id.includes("NAMA") || id.includes("KOGE")) return true;
       return false;
+    }
+
+    function isCraftCard(item){
+      const id = (item?.id ?? "").toString().trim().toUpperCase();
+      const rar = (item?.rarity ?? "").toString().trim().toUpperCase();
+      return id.startsWith("CRAFT_") || id.startsWith("CRAFT-") || rar === "CRAFT";
     }
 
     function idToNumber(id){
@@ -566,10 +587,9 @@
       if(r.includes("LR")) return "LR";
       if(r.includes("UR")) return "UR";
       if(r.includes("SR")) return "SR";
-      // Rより先にSR/UR/LRを判定してるのでOK
       if(r === "R" || r.includes(" R") || r.endsWith("R")) return "R";
       if(r === "N" || r.includes("N")) return "N";
-      // 不明はN扱い（色つけの保険）
+      // CRAFT は色が無いので N に寄せる（必要ならCSS増やせる）
       return "N";
     }
 
@@ -659,6 +679,7 @@
         gotArr = [];
       }
 
+      // ✅ gate.js が保存する形式（lastAddedAt / photo / desc）にも対応
       all = gotArr.map(x => ({
         id: x?.id ?? "",
         name: x?.name ?? "",
@@ -666,6 +687,8 @@
         rarity: x?.rarity ?? "",
         at: x?.at ?? "",
         lastAt: x?.lastAt ?? "",
+        // gate.js: lastAddedAt を使う
+        lastAddedAt: x?.lastAddedAt ?? "",
         count: x?.count ?? 1
       }));
 
@@ -683,12 +706,10 @@
         return hay.includes(q);
       });
 
+      const timeOf = (it) => toTime(it.lastAt || it.lastAddedAt || it.at);
+
       if(sort === "new"){
-        view.sort((a,b) => {
-          const ta = toTime(a.lastAt || a.at);
-          const tb = toTime(b.lastAt || b.at);
-          return tb - ta;
-        });
+        view.sort((a,b) => timeOf(b) - timeOf(a));
 
       }else if(sort === "dup"){
         view.sort((a,b) => {
@@ -701,9 +722,7 @@
           if(A.prefix !== B.prefix) return A.prefix.localeCompare(B.prefix);
           if(A.num !== B.num) return A.num - B.num;
 
-          const ta = toTime(a.lastAt || a.at);
-          const tb = toTime(b.lastAt || b.at);
-          return tb - ta;
+          return timeOf(b) - timeOf(a);
         });
 
       }else if(sort === "tn_shop"){
@@ -738,17 +757,25 @@
                      if(A0.prefix === "SP" && B0.prefix === "SP" && A0.num !== B0.num){
                        return A0.num - B0.num;
                      }
-                     const ta = toTime(a.lastAt || a.at);
-                     const tb = toTime(b.lastAt || b.at);
-                     return tb - ta;
+                     return timeOf(b) - timeOf(a);
                    });
 
       }else if(sort === "col"){
         view = view.filter(c=> parseCardId(c.id).prefix === "COL")
                    .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
+      }else if(sort === "craft"){
+        // ✅ 職人（5分ステージ）だけ
+        view = view.filter(c=> isCraftCard(c))
+                   .sort((a,b)=>{
+                     const A = parseCardId(a.id);
+                     const B = parseCardId(b.id);
+                     if(A.num !== B.num) return A.num - B.num;
+                     return timeOf(b) - timeOf(a);
+                   });
+
       }else if(sort === "all_serial"){
-        const prefixOrder = { TN:1, TP:2, NK:3, BS:4, COL:5, SP:6 };
+        const prefixOrder = { TN:1, TP:2, NK:3, BS:4, COL:5, SP:6, CRAFT:7 };
 
         view.sort((a,b)=>{
           const A0 = parseCardId(a.id);
@@ -763,9 +790,7 @@
 
           if(A.num !== B.num) return A.num - B.num;
 
-          const ta = toTime(a.lastAt || a.at);
-          const tb = toTime(b.lastAt || b.at);
-          return tb - ta;
+          return timeOf(b) - timeOf(a);
         });
 
       }else{
@@ -885,7 +910,7 @@
       mTitle.textContent = item.name || "(no name)";
       mId.textContent = item.id || "-";
       mRarity.textContent = item.rarity || "-";
-      mAt.textContent = formatAt(item.lastAt || item.at);
+      mAt.textContent = formatAt(item.lastAt || item.lastAddedAt || item.at);
       mGlow.style.display = isSRPlus(item.rarity) ? "inline-flex" : "none";
       mCount.textContent = `${getCount(item.id)} 枚`;
 
