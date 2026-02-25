@@ -745,8 +745,8 @@
     window.scrollTo(0, __scrollY);
   }
 
-  function onBackdrop(e){ if(e.target === modal) closeModalOrCommit(); }
-  function onEsc(e){ if(e.key === "Escape") closeModalOrCommit(); }
+  function onBackdrop(e){ if(e.target === modal) closeModalOrCommit(); } // ★収穫中は確定させたいので OrCommit に
+  function onEsc(e){ if(e.key === "Escape") closeModalOrCommit(); }      // ★同上
 
   function openModal(title, html){
     modal.removeEventListener("click", onBackdrop);
@@ -838,11 +838,7 @@
   }
 
   // =========================================================
-  // ✅ グリッド選択UI（★改修：説明/効果はアコーディオン表示）
-  // - 画像サイズは一切変更しない（gridImg の中は現状維持）
-  // - 1列3個は既存CSSの gridWrap 前提（ここでは崩さない）
-  // - 説明と効果は <details> で折りたたみ
-  // - 「装備する」クリックは pickBtn のみ（details 操作で誤装備しない）
+  // ✅ グリッド選択UI
   // =========================================================
   function openPickGrid(kind){
     inv = loadInv();
@@ -865,91 +861,24 @@
         (isWater && loadout.waterId === x.id) ||
         (isFert && loadout.fertId === x.id);
 
-      const descHtml = (x.desc || "").replace(/\n/g,"<br>");
-      const fxHtml = x.fx ? `効果：<b>${x.fx}</b>` : "";
-
-      // ✅ 画像サイズはそのまま：gridImgブロックは従来と同等のDOM
-      // ✅ 説明/効果は details 内（開けば全文が読める）
       return `
-        <div class="gridCard ${selected ? "isSelected":""} ${disabled ? "isDisabled":""}">
-          <button class="pickBtn" type="button" data-pick="${x.id}" ${disabled ? "disabled":""}>
-            <div class="gridImg">
-              <img src="${x.img}" alt="${x.name}">
-              <div class="gridCnt">×${cnt}</div>
-              ${selected ? `<div class="gridSel">装備中</div>` : ``}
-              ${disabled ? `<div class="gridEmpty">在庫なし</div>` : ``}
-            </div>
-            <div class="gridName">${x.name}</div>
-          </button>
-
-          <details class="gridAcc" ${selected ? "" : ""}>
-            <summary class="gridAccSum">
-              <span class="s1">説明 / 効果</span>
-              <span class="s2">開く</span>
-            </summary>
-            <div class="gridAccBody">
-              ${descHtml ? `<div class="gridDesc">${descHtml}</div>` : ``}
-              ${fxHtml ? `<div class="gridFx">${fxHtml}</div>` : ``}
-            </div>
-          </details>
-        </div>
+        <button class="gridCard ${selected ? "isSelected":""}" type="button" data-pick="${x.id}" ${disabled ? "disabled":""}>
+          <div class="gridImg">
+            <img src="${x.img}" alt="${x.name}">
+            <div class="gridCnt">×${cnt}</div>
+            ${selected ? `<div class="gridSel">装備中</div>` : ``}
+            ${disabled ? `<div class="gridEmpty">在庫なし</div>` : ``}
+          </div>
+          <div class="gridName">${x.name}</div>
+          <div class="gridDesc">${(x.desc || "").replace(/\n/g,"<br>")}</div>
+          <div class="gridFx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
+        </button>
       `;
     }).join("");
 
     openModal(title, `
-      <style>
-        /* ===== このモーダル内だけに効く最小スタイル（画像サイズは触らない） ===== */
-        .gridCard{ position:relative; }
-        .gridCard .pickBtn{
-          width:100%;
-          border:0;
-          padding:0;
-          background:transparent;
-          color:inherit;
-          text-align:left;
-          cursor:pointer;
-        }
-        .gridCard .pickBtn:disabled{ cursor:not-allowed; opacity:.75; }
-        .gridAcc{
-          margin-top:8px;
-          border:1px solid rgba(255,255,255,.14);
-          border-radius:12px;
-          background:rgba(255,255,255,.05);
-          overflow:hidden;
-        }
-        .gridAccSum{
-          list-style:none;
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:10px;
-          padding:10px 10px;
-          cursor:pointer;
-          user-select:none;
-          font-weight:900;
-          font-size:12px;
-          opacity:.95;
-        }
-        .gridAccSum::-webkit-details-marker{ display:none; }
-        .gridAcc[open] .gridAccSum .s2{ opacity:.75; }
-        .gridAccBody{
-          padding:10px 10px 12px;
-          border-top:1px solid rgba(255,255,255,.12);
-          font-size:12px;
-          line-height:1.6;
-          opacity:.92;
-        }
-        .gridAccBody .gridDesc{ margin:0 0 8px; }
-        .gridAccBody .gridFx{ margin:0; }
-      </style>
-
-      <div class="step">
-        ※すべて在庫制。露店で買って増やす。<br>
-        装備は消費しない（植えた時に消費）。
-      </div>
-
+      <div class="step">※すべて在庫制。露店で買って増やす。<br>装備は消費しない（植えた時に消費）。</div>
       <div class="gridWrap">${cells}</div>
-
       <div class="row">
         <button type="button" id="gridClose">閉じる</button>
       </div>
@@ -958,13 +887,6 @@
     // グリッド系モーダルでは harvestCommit は無効
     clearHarvestCommit();
 
-    // ✅ 説明アコーディオン操作が “装備” を誤発火しないようにする（安全策）
-    mBody.querySelectorAll(".gridAcc, .gridAcc *").forEach(el=>{
-      el.addEventListener("click", (e)=>{ e.stopPropagation(); }, { passive:true });
-      el.addEventListener("touchstart", (e)=>{ e.stopPropagation(); }, { passive:true });
-    });
-
-    // ✅ 装備：pickBtn だけ反応
     mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
       btn.addEventListener("click", () => {
         if(btn.disabled) return;
@@ -1181,7 +1103,7 @@
       (fixedRarity === "SR") ? "SR65" :
       "NONE";
 
-    // ✅ まず plot を作る
+    // ✅ まず plot を作る（ここまでは現状と同じ情報）
     const plot = {
       state: "GROW",
       seedId,
@@ -1447,4 +1369,8 @@
   render();
   setInterval(tick, TICK_MS);
 
+  // =========================================================
+  // ✅ イベントをグローバルに生やさないため：必要ならここで onPlotTap を呼ぶ
+  // （あなたのHTML側で plotボタンを作っているので onPlotTap は render() 内で紐付いてます）
+  // =========================================================
 })();
