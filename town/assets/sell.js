@@ -301,8 +301,12 @@
               </div>
               <div class="desc" style="font-size:11px; margin-top:4px;">ID: ${escapeHTML(x.id)}</div>
               <div class="desc" style="font-size:11px;">売値：<b>${x.unit}</b> / 1枚</div>
-              <div class="desc" style="font-size:11px;">所持：<b>${x.count}</b> ／ 売れる：<b>${maxSell}</b></div>
-            </div>
+              <div class="desc" style="font-size:11px; line-height:1.35;">
+  所持：<b>${x.count}</b> 枚<br>
+  売れる：<b>${maxSell}</b> 枚
+</div>
+
+              
           </article>
         `;
       })
