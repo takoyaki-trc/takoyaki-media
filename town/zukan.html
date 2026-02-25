@@ -1,10 +1,10 @@
-
 <!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>たこ焼き図鑑</title>
+
   <style>
     :root{
       --bg:#0b0f18;
@@ -59,7 +59,7 @@
     }
     .field{display:flex;flex-direction:column;gap:6px;min-width:170px;flex:1 1 220px;}
     .label{font-size:11px;color:var(--muted);letter-spacing:.03em;}
-    input[type="search"], select, input[type="password"], textarea{
+    input[type="search"], select{
       width:100%;
       padding:10px 12px;
       border-radius:12px;
@@ -69,8 +69,7 @@
       outline:none;
       font-size:14px;
     }
-    textarea{min-height:140px;resize:vertical;line-height:1.45}
-    input[type="search"]::placeholder, textarea::placeholder{color:rgba(255,255,255,.35)}
+    input[type="search"]::placeholder{color:rgba(255,255,255,.35)}
     .row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1 1 220px;flex-wrap:wrap;}
     .pill{
       display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;
@@ -82,7 +81,10 @@
       background:rgba(0,0,0,.18);color:var(--text);font-size:13px;cursor:pointer;
     }
     .btn.small{padding:8px 10px;font-size:12px}
-    .btn.danger{border-color:rgba(255,80,80,.35); color:#ffd3d3}
+    .btn.primary{
+      background:linear-gradient(180deg, rgba(140,200,255,.18), rgba(255,255,255,.08));
+      border-color: rgba(180,220,255,.38);
+    }
     .btn:hover{filter:brightness(1.05)}
     .btn:active{transform:translateY(1px)}
 
@@ -126,13 +128,9 @@
       z-index:5;
     }
 
-    /* =========================================================
+    /* =========================
        ✅ SR以上：おすすめ（上品×視認性）
-       - 外周ホロ：薄め＆低速回転
-       - 斜めスイープ：細く、たまに流れる
-       - 粒：最小限（1レイヤーだけ、ゆっくり）
-       ========================================================= */
-
+       ========================= */
     .card.is-glow{
       border-color:rgba(255,230,120,.38);
       transform: translateZ(0);
@@ -143,8 +141,6 @@
         0 0 34px rgba(120,210,255,.07);
       filter:saturate(1.06) brightness(1.015);
     }
-
-    /* 外周の薄いホロ（低速） */
     .card.is-glow::before{
       content:"";
       position:absolute;
@@ -165,8 +161,6 @@
       mix-blend-mode: screen;
       z-index:1;
     }
-
-    /* 面のハイライト（薄め） */
     .card.is-glow::after{
       content:"";
       position:absolute;
@@ -180,11 +174,9 @@
       mix-blend-mode: screen;
       z-index:2;
     }
-
     .card.is-glow .meta{position:relative;z-index:4;}
     .card.is-glow .thumb{position:relative;z-index:3;}
 
-    /* 斜めスイープ：細く、頻度低め */
     .card.is-glow .thumb::after{
       content:"";
       position:absolute;
@@ -203,7 +195,6 @@
       animation: shineSweep 6.8s ease-in-out infinite;
     }
 
-    /* 粒スパーク：少数＆ゆっくり（1レイヤーのみ） */
     .card.is-glow .spark{
       position:absolute; inset:0;
       pointer-events:none;
@@ -220,11 +211,7 @@
       animation: sparkTwinkle 2.6s ease-in-out infinite;
     }
 
-    @keyframes holoSpin{
-      from{ transform: rotate(0deg); }
-      to{ transform: rotate(360deg); }
-    }
-
+    @keyframes holoSpin{ from{ transform: rotate(0deg); } to{ transform: rotate(360deg); } }
     @keyframes shineSweep{
       0%   { transform: translateX(-85%) translateY(25%); opacity:0; }
       12%  { opacity:.35; }
@@ -232,19 +219,15 @@
       30%  { opacity:.30; }
       100% { transform: translateX(75%) translateY(-10%); opacity:0; }
     }
-
     @keyframes sparkTwinkle{
       0%{ opacity:.10; transform: translateY(0); }
       50%{ opacity:.45; }
       100%{ opacity:.16; transform: translateY(-1px); }
     }
-
     @media (prefers-reduced-motion: reduce){
       .card.is-glow::before,
       .card.is-glow .thumb::after,
-      .card.is-glow .spark{
-        animation: none !important;
-      }
+      .card.is-glow .spark{ animation:none !important; }
     }
 
     .empty{
@@ -266,7 +249,6 @@
       box-shadow:0 24px 60px rgba(0,0,0,.5);
       overflow:hidden;position:relative;
     }
-
     .modal__img{width:100%;height:auto;display:block;background:rgba(255,255,255,.05);image-rendering:pixelated;image-rendering:crisp-edges;}
     .modal__body{padding:12px 12px 14px;display:flex;flex-direction:column;gap:10px;}
     .modal__title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
@@ -286,21 +268,6 @@
       color:#ffe9b8;background:rgba(255,220,120,.08);
     }
 
-    #bModal textarea, #bModal input[type="password"]{
-      background:rgba(0,0,0,.35);
-    }
-
-    .bm-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
-    .bm-title{font-size:14px;font-weight:700}
-    .bm-note{color:var(--muted);font-size:12px;line-height:1.4}
-    .bm-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px}
-    .bm-row{display:flex;gap:10px;flex-wrap:wrap}
-    .bm-row .btn{flex:1 1 160px}
-    .bm-mini{font-size:12px;color:var(--muted)}
-    .bm-ok{color:#9fffa8}
-    .bm-ng{color:#ffd3d3}
-    .hr{height:1px;background:var(--border);margin:6px 0 2px}
-
     @media (max-width: 520px){
       :root{ --tile:96px; --gap:10px; --thumbPad:5px; }
       .field{min-width:140px}
@@ -309,36 +276,39 @@
       .modal__panel{width:min(94vw, 560px)}
     }
 
-    /* ===== 図鑑タイトルブロック ===== */
-.title{
-  text-align:center;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
+    /* ===== 図鑑タイトルブロック（詰め） ===== */
+    .title{
+      text-align:center;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:2px;
+      padding:0;
+      margin:0;
+    }
+    .title h1{
+      margin:0;
+      padding:0;
+      line-height:1.1;
+      font-size:22px;
+    }
+    #lastBackupLine{
+      margin:0;
+      padding:0;
+      font-size:10px;
+      line-height:1;
+      opacity:.6;
+    }
 
-  gap:2px;        /* ← 間隔ほぼゼロに */
-  padding:0;      /* ← 余白削除 */
-  margin:0;
-}
-
-/* ← ココが最大の原因（h1デフォルト余白） */
-.title h1{
-  margin:0;               /* ← これ超重要 */
-  padding:0;
-  line-height:1.1;        /* ← 高さを詰める */
-  font-size:22px;
-}
-
-/* サブ文字 */
-#lastBackupLine{
-  margin:0;               /* ← 余白削除 */
-  padding:0;
-  font-size:10px;         /* さらに小さく */
-  line-height:1;          /* ← 詰める */
-  opacity:.6;
-}
-
+    /* =========================================================
+       ✅ 重要：この図鑑ページでは「復元ボタン」は置かない
+       - town/assets/trc-backup-float.js は共通UIで復元も出る仕様なので
+       - このページだけCSSで復元ボタンを非表示にする
+       ========================================================= */
+    #trcBackupFloat .trcBtn:not(.trcBtnPrimary){
+      display:none !important; /* 復元ボタンを隠す */
+    }
   </style>
 </head>
 
@@ -353,8 +323,7 @@
 
         <div class="title">
           <h1>所有カード一覧</h1>
-         <span id="lastBackupLine"></span>
-          </div>
+          <span id="lastBackupLine"></span>
         </div>
       </div>
 
@@ -385,8 +354,13 @@
 
       <div class="row">
         <button class="btn small" id="btnReload" type="button">再読込</button>
-        <button class="btn small" id="btnBackup" type="button">バックアップ / 復元</button>
-        <button class="btn small danger" id="btnClear" type="button" title="図鑑データを消します">図鑑を消去</button>
+
+        <!-- ✅ 図鑑を消去ボタンは削除（要望） -->
+        <!-- ✅ 代わりに「マイ露店でカードを売る」ボタン -->
+        <button class="btn small primary" id="btnMyShop" type="button">マイ露店でカードを売る</button>
+
+        <!-- ✅ バックアップは共通のフローティングUI（右上DATA）で統一
+             このページは復元を置かない（CSSで復元ボタン非表示） -->
       </div>
     </section>
 
@@ -419,728 +393,445 @@
     </div>
   </div>
 
-  <!-- バックアップ/復元 Modal -->
-  <div class="modal" id="bModal" aria-hidden="true" role="dialog" aria-label="バックアップと復元">
-    <div class="modal__panel" role="document">
-      <div class="modal__body">
-        <div class="bm-head">
-          <div class="bm-title">バックアップ / 復元（この端末の図鑑）</div>
-          <button class="close" id="bClose" type="button">閉じる</button>
-        </div>
-        <div class="bm-note">
-          ✅ 各ユーザーが自分で「復元コード」を作って保管すれば、データ消去後でも復元できます。<br>
-          🔒 PIN（合言葉）を設定すると暗号化され、PINを知らない人は復元できません。
-        </div>
+  <script>
+    // =========================================================
+    // 図鑑 + ダブり集計（count方式 / IDごとに1枚表示）
+    // =========================================================
 
-        <div class="hr"></div>
+    const LS_KEY = "tf_v1_book";
 
-        <div class="bm-grid">
-          <div>
-            <div class="label">PIN（任意 / 推奨）</div>
-            <input id="pin" type="password" placeholder="例：1234 / takopi など（忘れると復元不可）" autocomplete="off" />
-            <div class="bm-mini">※ PINを忘れた場合、暗号化コードは復元できません。</div>
-          </div>
+    // ✅ マイ露店URL（あなたの実ファイル名に合わせて調整OK）
+    // 例）露店が town/roten/ 配下なら： "./roten/index.html" や "./roten/myshop.html" など
+    const MYSHOP_URL = "./roten/index.html";
 
-          <div class="bm-row">
-            <button class="btn" id="btnMakeCode" type="button">復元コードを発行</button>
-            <button class="btn" id="btnCopyCode" type="button">コードをコピー</button>
-            <button class="btn" id="btnSaveTxt" type="button">.txtで保存</button>
-          </div>
+    const elGrid = document.getElementById("grid");
+    const elEmpty = document.getElementById("empty");
+    const elPill = document.getElementById("statPill");
+    const elQ = document.getElementById("q");
+    const elSort = document.getElementById("sort");
+    const btnReload = document.getElementById("btnReload");
+    const btnBack = document.getElementById("btnBack");
+    const btnMyShop = document.getElementById("btnMyShop");
+    const lastBackupLine = document.getElementById("lastBackupLine");
 
-          <div>
-            <div class="label">復元コード（貼り付け）</div>
-            <textarea id="codeBox" placeholder="ここに復元コードを貼り付けてください"></textarea>
-            <div class="bm-row">
-              <button class="btn" id="btnRestore" type="button">このコードで復元</button>
-              <label class="btn" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;">
-                <input id="filePick" type="file" accept=".txt" style="display:none">
-                .txt読み込み
-              </label>
-            </div>
-            <div class="bm-mini bm-ng" id="bMsg"></div>
-          </div>
+    // card modal
+    const modal = document.getElementById("modal");
+    const mImg = document.getElementById("mImg");
+    const mTitle = document.getElementById("mTitle");
+    const mId = document.getElementById("mId");
+    const mRarity = document.getElementById("mRarity");
+    const mAt = document.getElementById("mAt");
+    const mGlow = document.getElementById("mGlow");
+    const mClose = document.getElementById("mClose");
+    const mCount = document.getElementById("mCount");
 
-          <div class="bm-mini">
-            💡おすすめ：図鑑が増えた日（または週1）に「発行→コピー」して、自分のメモ帳に貼る。
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+    let all = [];
+    let view = [];
+    let countMap = {};
 
-<script>
-  // =========================================================
-  // 図鑑 + ダブり集計（count方式 / IDごとに1枚表示） + バックアップ（復元コード）
-  // =========================================================
+    function safeJSONParse(str){ try { return JSON.parse(str); } catch(e){ return null; } }
+    function normalizeText(s){ return (s ?? "").toString().trim().toLowerCase(); }
 
-  const LS_KEY = "tf_v1_book";
-  const LS_BACKUP_AT = "tf_v1_book_backup_at";
-
-  const elGrid = document.getElementById("grid");
-  const elEmpty = document.getElementById("empty");
-  const elPill = document.getElementById("statPill");
-  const elQ = document.getElementById("q");
-  const elSort = document.getElementById("sort");
-  const btnReload = document.getElementById("btnReload");
-  const btnClear = document.getElementById("btnClear");
-  const btnBack = document.getElementById("btnBack");
-  const btnBackup = document.getElementById("btnBackup");
-  const lastBackupLine = document.getElementById("lastBackupLine");
-
-  // card modal
-  const modal = document.getElementById("modal");
-  const mImg = document.getElementById("mImg");
-  const mTitle = document.getElementById("mTitle");
-  const mId = document.getElementById("mId");
-  const mRarity = document.getElementById("mRarity");
-  const mAt = document.getElementById("mAt");
-  const mGlow = document.getElementById("mGlow");
-  const mClose = document.getElementById("mClose");
-  const mCount = document.getElementById("mCount");
-
-  // backup modal
-  const bModal = document.getElementById("bModal");
-  const bClose = document.getElementById("bClose");
-  const pin = document.getElementById("pin");
-  const codeBox = document.getElementById("codeBox");
-  const btnMakeCode = document.getElementById("btnMakeCode");
-  const btnCopyCode = document.getElementById("btnCopyCode");
-  const btnSaveTxt = document.getElementById("btnSaveTxt");
-  const btnRestore = document.getElementById("btnRestore");
-  const filePick = document.getElementById("filePick");
-  const bMsg = document.getElementById("bMsg");
-
-  let all = [];
-  let view = [];
-  let countMap = {};
-
-  function safeJSONParse(str){ try { return JSON.parse(str); } catch(e){ return null; } }
-  function normalizeText(s){ return (s ?? "").toString().trim().toLowerCase(); }
-
-  // ========= 品番解析（TN/TP/NK/BS/SP/COL など） =========
-  function parseCardId(id){
-    const s = (id ?? "").toString().trim().toUpperCase();
-    const m = s.match(/^([A-Z]+)[-_]?(\d+)?$/);
-    if(!m) return { prefix:"ZZ", num:9999 };
-    return { prefix: m[1], num: Number(m[2] || 0) };
-  }
-
-  // ★ SP判定（焦げ/生焼けをSPに含める保険）
-  function isSpecialSPCard(item){
-    const id = (item?.id ?? "").toString().trim().toUpperCase();
-    const name = (item?.name ?? "").toString().trim();
-    const rarity = (item?.rarity ?? "").toString().trim().toUpperCase();
-
-    if(id.startsWith("SP")) return true;
-    if(rarity === "SP") return true;
-    if(name.includes("焦げ") || name.includes("生焼け")) return true;
-    if(id.includes("BURN") || id.includes("RAW") || id.includes("NAMA") || id.includes("KOGE")) return true;
-
-    return false;
-  }
-
-  function idToNumber(id){
-    const p = parseCardId(id);
-    return Number.isFinite(p.num) ? p.num : Number.POSITIVE_INFINITY;
-  }
-
-  function isSRPlus(rarity){
-    const r = normalizeText(rarity);
-    if(!r) return false;
-    if(r.includes("sr")) return true;
-    if(r.includes("ur")) return true;
-    if(r.includes("lr")) return true;
-    if(r.includes("hr")) return true;
-    if(r.includes("xr")) return true;
-    return false;
-  }
-
-  // 日時（表示は日本時間固定）
-  const te = new TextEncoder();
-  const td = new TextDecoder();
-
-  function toDate(at){
-    if(at == null || at === "") return null;
-    if(typeof at === "number"){
-      return new Date(normalizeEpoch(at));
+    // ========= 品番解析（TN/TP/NK/BS/SP/COL など） =========
+    function parseCardId(id){
+      const s = (id ?? "").toString().trim().toUpperCase();
+      const m = s.match(/^([A-Z]+)[-_]?(\d+)?$/);
+      if(!m) return { prefix:"ZZ", num:9999 };
+      return { prefix: m[1], num: Number(m[2] || 0) };
     }
-    const s = String(at).trim();
-    if(/^\d+$/.test(s)){
-      const n = Number(s);
-      if(!Number.isFinite(n)) return null;
-      return new Date(normalizeEpoch(n));
-    }
-    const d = new Date(s);
-    if(isNaN(d.getTime())) return null;
-    return d;
-  }
-  function normalizeEpoch(n){
-    const abs = Math.abs(n);
-    if(abs < 1e11) return n * 1000; // 秒→ms
-    return n; // ms
-  }
-  function fmtTokyo(d){
-    try{
-      const fmt = new Intl.DateTimeFormat("ja-JP",{
-        timeZone:"Asia/Tokyo",
-        year:"numeric", month:"2-digit", day:"2-digit",
-        hour:"2-digit", minute:"2-digit",
-        hour12:false
-      });
-      const parts = fmt.formatToParts(d);
-      const get = (t) => parts.find(p=>p.type===t)?.value ?? "";
-      return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
-    }catch(e){
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth()+1).padStart(2,"0");
-      const dd = String(d.getDate()).padStart(2,"0");
-      const hh = String(d.getHours()).padStart(2,"0");
-      const mi = String(d.getMinutes()).padStart(2,"0");
-      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
-    }
-  }
-  function formatAt(at){
-    const d = toDate(at);
-    if(!d) return "-";
-    return fmtTokyo(d);
-  }
-  function toTime(at){
-    const d = toDate(at);
-    return d ? d.getTime() : 0;
-  }
 
-  // count方式
-  function buildCountMap(){
-    countMap = {};
-    for(const item of all){
-      const id = (item.id ?? "").toString();
-      if(!id) continue;
-      const c = Number(item.count);
-      countMap[id] = (Number.isFinite(c) && c > 0) ? c : 1;
-    }
-  }
-  function getCount(id){
-    const key = (id ?? "").toString();
-    return countMap[key] || 1;
-  }
+    // ★ SP判定（焦げ/生焼けをSPに含める保険）
+    function isSpecialSPCard(item){
+      const id = (item?.id ?? "").toString().trim().toUpperCase();
+      const name = (item?.name ?? "").toString().trim();
+      const rarity = (item?.rarity ?? "").toString().trim().toUpperCase();
 
-  function updateBackupLine(){
-    const n = Number(localStorage.getItem(LS_BACKUP_AT));
-    if(!n){
-      lastBackupLine.textContent = "バックアップ未作成（万が一のため復元コードを発行してね）";
-      return;
-    }
-    lastBackupLine.textContent = `最終バックアップ：${fmtTokyo(new Date(n))}`;
-  }
+      if(id.startsWith("SP")) return true;
+      if(rarity === "SP") return true;
+      if(name.includes("焦げ") || name.includes("生焼け")) return true;
+      if(id.includes("BURN") || id.includes("RAW") || id.includes("NAMA") || id.includes("KOGE")) return true;
 
-  function load(){
-    const raw = localStorage.getItem(LS_KEY);
-    if(!raw){
-      all = [];
+      return false;
+    }
+
+    function idToNumber(id){
+      const p = parseCardId(id);
+      return Number.isFinite(p.num) ? p.num : Number.POSITIVE_INFINITY;
+    }
+
+    function isSRPlus(rarity){
+      const r = normalizeText(rarity);
+      if(!r) return false;
+      if(r.includes("sr")) return true;
+      if(r.includes("ur")) return true;
+      if(r.includes("lr")) return true;
+      if(r.includes("hr")) return true;
+      if(r.includes("xr")) return true;
+      return false;
+    }
+
+    // 日時（表示は日本時間固定）
+    function toDate(at){
+      if(at == null || at === "") return null;
+      if(typeof at === "number") return new Date(normalizeEpoch(at));
+      const s = String(at).trim();
+      if(/^\d+$/.test(s)){
+        const n = Number(s);
+        if(!Number.isFinite(n)) return null;
+        return new Date(normalizeEpoch(n));
+      }
+      const d = new Date(s);
+      if(isNaN(d.getTime())) return null;
+      return d;
+    }
+    function normalizeEpoch(n){
+      const abs = Math.abs(n);
+      if(abs < 1e11) return n * 1000; // 秒→ms
+      return n; // ms
+    }
+    function fmtTokyo(d){
+      try{
+        const fmt = new Intl.DateTimeFormat("ja-JP",{
+          timeZone:"Asia/Tokyo",
+          year:"numeric", month:"2-digit", day:"2-digit",
+          hour:"2-digit", minute:"2-digit",
+          hour12:false
+        });
+        const parts = fmt.formatToParts(d);
+        const get = (t) => parts.find(p=>p.type===t)?.value ?? "";
+        return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
+      }catch(e){
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth()+1).padStart(2,"0");
+        const dd = String(d.getDate()).padStart(2,"0");
+        const hh = String(d.getHours()).padStart(2,"0");
+        const mi = String(d.getMinutes()).padStart(2,"0");
+        return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+      }
+    }
+    function formatAt(at){
+      const d = toDate(at);
+      if(!d) return "-";
+      return fmtTokyo(d);
+    }
+    function toTime(at){
+      const d = toDate(at);
+      return d ? d.getTime() : 0;
+    }
+
+    // count方式
+    function buildCountMap(){
+      countMap = {};
+      for(const item of all){
+        const id = (item.id ?? "").toString();
+        if(!id) continue;
+        const c = Number(item.count);
+        countMap[id] = (Number.isFinite(c) && c > 0) ? c : 1;
+      }
+    }
+    function getCount(id){
+      const key = (id ?? "").toString();
+      return countMap[key] || 1;
+    }
+
+    function updateBackupLine(){
+      // ✅ 統一バックアップは「右上DATAボタン（フローティング）」のみ
+      lastBackupLine.textContent = "右上のDATAからバックアップできます（このページに復元は置きません）";
+    }
+
+    function load(){
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw){
+        all = [];
+        render();
+        showEmpty(
+          `図鑑データが見つからないよ。<br>
+           localStorage の <code>${LS_KEY}</code> を畑側で保存してから開いてね。`
+        );
+        elPill.textContent = "0 / 0";
+        updateBackupLine();
+        return;
+      }
+
+      const obj = safeJSONParse(raw);
+
+      let gotArr = [];
+      if(obj && Array.isArray(obj.got)){
+        gotArr = obj.got;
+      } else if(obj && obj.got && typeof obj.got === "object"){
+        gotArr = Object.values(obj.got);
+      } else {
+        gotArr = [];
+      }
+
+      all = gotArr.map(x => ({
+        id: x?.id ?? "",
+        name: x?.name ?? "",
+        img: x?.img ?? "",
+        rarity: x?.rarity ?? "",
+        at: x?.at ?? "",
+        lastAt: x?.lastAt ?? "",
+        count: x?.count ?? 1
+      }));
+
+      buildCountMap();
       render();
-      showEmpty(
-        `図鑑データが見つからないよ。<br>
-         localStorage の <code>${LS_KEY}</code> を畑側で保存してから開いてね。`
-      );
-      elPill.textContent = "0 / 0";
       updateBackupLine();
-      return;
     }
 
-    const obj = safeJSONParse(raw);
+    function applyFilterSort(){
+      const q = normalizeText(elQ.value);
+      const sort = elSort.value;
 
-    let gotArr = [];
-    if(obj && Array.isArray(obj.got)){
-      gotArr = obj.got;
-    } else if(obj && obj.got && typeof obj.got === "object"){
-      gotArr = Object.values(obj.got);
-    } else {
-      gotArr = [];
-    }
-
-    all = gotArr.map(x => ({
-      id: x?.id ?? "",
-      name: x?.name ?? "",
-      img: x?.img ?? "",
-      rarity: x?.rarity ?? "",
-      at: x?.at ?? "",
-      lastAt: x?.lastAt ?? "",
-      count: x?.count ?? 1
-    }));
-
-    buildCountMap();
-    render();
-    updateBackupLine();
-  }
-
-  function applyFilterSort(){
-    const q = normalizeText(elQ.value);
-    const sort = elSort.value;
-
-    view = all.filter(item => {
-      if(!q) return true;
-      const hay = [ item.id, item.name, item.rarity ].map(normalizeText).join(" ");
-      return hay.includes(q);
-    });
-
-    if(sort === "new"){
-      view.sort((a,b) => {
-        const ta = toTime(a.lastAt || a.at);
-        const tb = toTime(b.lastAt || b.at);
-        return tb - ta;
+      view = all.filter(item => {
+        if(!q) return true;
+        const hay = [ item.id, item.name, item.rarity ].map(normalizeText).join(" ");
+        return hay.includes(q);
       });
 
-    }else if(sort === "dup"){
-      view.sort((a,b) => {
-        const ca = getCount(a.id);
-        const cb = getCount(b.id);
-        if(cb !== ca) return cb - ca;
+      if(sort === "new"){
+        view.sort((a,b) => {
+          const ta = toTime(a.lastAt || a.at);
+          const tb = toTime(b.lastAt || b.at);
+          return tb - ta;
+        });
 
-        const A = parseCardId(a.id);
-        const B = parseCardId(b.id);
-        if(A.prefix !== B.prefix) return A.prefix.localeCompare(B.prefix);
-        if(A.num !== B.num) return A.num - B.num;
+      }else if(sort === "dup"){
+        view.sort((a,b) => {
+          const ca = getCount(a.id);
+          const cb = getCount(b.id);
+          if(cb !== ca) return cb - ca;
 
-        const ta = toTime(a.lastAt || a.at);
-        const tb = toTime(b.lastAt || b.at);
-        return tb - ta;
-      });
+          const A = parseCardId(a.id);
+          const B = parseCardId(b.id);
+          if(A.prefix !== B.prefix) return A.prefix.localeCompare(B.prefix);
+          if(A.num !== B.num) return A.num - B.num;
 
-    }else if(sort === "tn_shop"){
-      view = view.filter(c=>{
-        const p = parseCardId(c.id);
-        return p.prefix === "TN" && p.num >= 1 && p.num <= 25;
-      }).sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+          const ta = toTime(a.lastAt || a.at);
+          const tb = toTime(b.lastAt || b.at);
+          return tb - ta;
+        });
 
-    }else if(sort === "tn_net"){
-      view = view.filter(c=>{
-        const p = parseCardId(c.id);
-        return p.prefix === "TN" && p.num >= 26 && p.num <= 50;
-      }).sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+      }else if(sort === "tn_shop"){
+        view = view.filter(c=>{
+          const p = parseCardId(c.id);
+          return p.prefix === "TN" && p.num >= 1 && p.num <= 25;
+        }).sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
-    }else if(sort === "tp"){
-      view = view.filter(c=> parseCardId(c.id).prefix === "TP")
-                 .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+      }else if(sort === "tn_net"){
+        view = view.filter(c=>{
+          const p = parseCardId(c.id);
+          return p.prefix === "TN" && p.num >= 26 && p.num <= 50;
+        }).sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
-    }else if(sort === "nk"){
-      view = view.filter(c=> parseCardId(c.id).prefix === "NK")
-                 .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+      }else if(sort === "tp"){
+        view = view.filter(c=> parseCardId(c.id).prefix === "TP")
+                   .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
-    }else if(sort === "bs"){
-      view = view.filter(c=> parseCardId(c.id).prefix === "BS")
-                 .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+      }else if(sort === "nk"){
+        view = view.filter(c=> parseCardId(c.id).prefix === "NK")
+                   .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
-    }else if(sort === "sp"){
-      view = view.filter(c=> isSpecialSPCard(c))
-                 .sort((a,b)=>{
-                   const A0 = parseCardId(a.id);
-                   const B0 = parseCardId(b.id);
-                   if(A0.prefix === "SP" && B0.prefix === "SP" && A0.num !== B0.num){
-                     return A0.num - B0.num;
-                   }
-                   const ta = toTime(a.lastAt || a.at);
-                   const tb = toTime(b.lastAt || b.at);
-                   return tb - ta;
-                 });
+      }else if(sort === "bs"){
+        view = view.filter(c=> parseCardId(c.id).prefix === "BS")
+                   .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
-    }else if(sort === "col"){
-      view = view.filter(c=> parseCardId(c.id).prefix === "COL")
-                 .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+      }else if(sort === "sp"){
+        view = view.filter(c=> isSpecialSPCard(c))
+                   .sort((a,b)=>{
+                     const A0 = parseCardId(a.id);
+                     const B0 = parseCardId(b.id);
+                     if(A0.prefix === "SP" && B0.prefix === "SP" && A0.num !== B0.num){
+                       return A0.num - B0.num;
+                     }
+                     const ta = toTime(a.lastAt || a.at);
+                     const tb = toTime(b.lastAt || b.at);
+                     return tb - ta;
+                   });
 
-    }else if(sort === "all_serial"){
-      const prefixOrder = { TN:1, TP:2, NK:3, BS:4, COL:5, SP:6 };
+      }else if(sort === "col"){
+        view = view.filter(c=> parseCardId(c.id).prefix === "COL")
+                   .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
-      view.sort((a,b)=>{
-        const A0 = parseCardId(a.id);
-        const B0 = parseCardId(b.id);
+      }else if(sort === "all_serial"){
+        const prefixOrder = { TN:1, TP:2, NK:3, BS:4, COL:5, SP:6 };
 
-        const A = isSpecialSPCard(a) ? { prefix:"SP", num:A0.num } : A0;
-        const B = isSpecialSPCard(b) ? { prefix:"SP", num:B0.num } : B0;
+        view.sort((a,b)=>{
+          const A0 = parseCardId(a.id);
+          const B0 = parseCardId(b.id);
 
-        const pa = prefixOrder[A.prefix] ?? 99;
-        const pb = prefixOrder[B.prefix] ?? 99;
-        if(pa !== pb) return pa - pb;
+          const A = isSpecialSPCard(a) ? { prefix:"SP", num:A0.num } : A0;
+          const B = isSpecialSPCard(b) ? { prefix:"SP", num:B0.num } : B0;
 
-        if(A.num !== B.num) return A.num - B.num;
+          const pa = prefixOrder[A.prefix] ?? 99;
+          const pb = prefixOrder[B.prefix] ?? 99;
+          if(pa !== pb) return pa - pb;
 
-        const ta = toTime(a.lastAt || a.at);
-        const tb = toTime(b.lastAt || b.at);
-        return tb - ta;
-      });
+          if(A.num !== B.num) return A.num - B.num;
 
-    }else{
-      view.sort((a,b) => idToNumber(a.id) - idToNumber(b.id));
-    }
+          const ta = toTime(a.lastAt || a.at);
+          const tb = toTime(b.lastAt || b.at);
+          return tb - ta;
+        });
 
-    elPill.textContent = `${view.length} / ${all.length}`;
-  }
-
-  function render(){
-    hideEmpty();
-    applyFilterSort();
-    elGrid.innerHTML = "";
-
-    if(view.length === 0){
-      showEmpty("該当カードがないよ（検索条件を変えてみてね）。");
-      return;
-    }
-
-    const frag = document.createDocumentFragment();
-
-    for(const item of view){
-      const card = document.createElement("div");
-      const glow = isSRPlus(item.rarity);
-      card.className = "card" + (glow ? " is-glow" : "");
-      card.setAttribute("role","button");
-      card.setAttribute("tabindex","0");
-
-      const img = document.createElement("img");
-      img.className = "thumb";
-      img.alt = item.name || item.id || "card";
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.src = item.img || "";
-      img.onerror = () => {
-        img.removeAttribute("src");
-        img.alt = "画像なし";
-        img.style.display = "block";
-        img.style.objectFit = "contain";
-      };
-
-      // ✅ SR以上だけスパーク（上品版：1レイヤーだけ）
-      if(glow){
-        const s1 = document.createElement("div");
-        s1.className = "spark";
-        card.appendChild(s1);
+      }else{
+        view.sort((a,b) => idToNumber(a.id) - idToNumber(b.id));
       }
 
-      const meta = document.createElement("div");
-      meta.className = "meta";
+      elPill.textContent = `${view.length} / ${all.length}`;
+    }
 
-      const name = document.createElement("div");
-      name.className = "name";
-      name.textContent = item.name || "(no name)";
+    function render(){
+      hideEmpty();
+      applyFilterSort();
+      elGrid.innerHTML = "";
 
-      const mini = document.createElement("div");
-      mini.className = "mini";
+      if(view.length === 0){
+        showEmpty("該当カードがないよ（検索条件を変えてみてね）。");
+        return;
+      }
 
-      const tag = document.createElement("div");
-      tag.className = "tag";
-      tag.innerHTML = `<span class="id">#${escapeHTML(item.id || "-")}</span>`;
+      const frag = document.createDocumentFragment();
 
-      const rar = document.createElement("div");
-      rar.className = "tag";
-      rar.innerHTML = `<b>${escapeHTML(item.rarity || "-")}</b>`;
+      for(const item of view){
+        const card = document.createElement("div");
+        const glow = isSRPlus(item.rarity);
+        card.className = "card" + (glow ? " is-glow" : "");
+        card.setAttribute("role","button");
+        card.setAttribute("tabindex","0");
 
-      mini.appendChild(tag);
-      mini.appendChild(rar);
+        const img = document.createElement("img");
+        img.className = "thumb";
+        img.alt = item.name || item.id || "card";
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.src = item.img || "";
+        img.onerror = () => {
+          img.removeAttribute("src");
+          img.alt = "画像なし";
+          img.style.display = "block";
+          img.style.objectFit = "contain";
+        };
 
-      meta.appendChild(name);
-      meta.appendChild(mini);
-
-      const cnt = getCount(item.id);
-      const badge = document.createElement("div");
-      badge.className = "countBadge";
-      badge.textContent = `×${cnt}`;
-
-      card.appendChild(img);
-      card.appendChild(meta);
-      card.appendChild(badge);
-
-      card.addEventListener("click", () => openModal(item));
-      card.addEventListener("keydown", (e) => {
-        if(e.key === "Enter" || e.key === " "){
-          e.preventDefault();
-          openModal(item);
+        if(glow){
+          const s1 = document.createElement("div");
+          s1.className = "spark";
+          card.appendChild(s1);
         }
-      });
 
-      frag.appendChild(card);
-    }
+        const meta = document.createElement("div");
+        meta.className = "meta";
 
-    elGrid.appendChild(frag);
-  }
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = item.name || "(no name)";
 
-  function escapeHTML(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-  function showEmpty(html){
-    elEmpty.style.display = "block";
-    elEmpty.innerHTML = html;
-  }
-  function hideEmpty(){
-    elEmpty.style.display = "none";
-    elEmpty.innerHTML = "";
-  }
+        const mini = document.createElement("div");
+        mini.className = "mini";
 
-  function openModal(item){
-    mImg.src = item.img || "";
-    mImg.alt = item.name || item.id || "card";
-    mTitle.textContent = item.name || "(no name)";
-    mId.textContent = item.id || "-";
-    mRarity.textContent = item.rarity || "-";
-    mAt.textContent = formatAt(item.lastAt || item.at);
-    mGlow.style.display = isSRPlus(item.rarity) ? "inline-flex" : "none";
-    mCount.textContent = `${getCount(item.id)} 枚`;
+        const tag = document.createElement("div");
+        tag.className = "tag";
+        tag.innerHTML = `<span class="id">#${escapeHTML(item.id || "-")}</span>`;
 
-    modal.setAttribute("aria-hidden","false");
-    document.addEventListener("keydown", onEscClose, { once:false });
-  }
-  function closeModal(){
-    modal.setAttribute("aria-hidden","true");
-    mImg.removeAttribute("src");
-    document.removeEventListener("keydown", onEscClose);
-  }
-  function onEscClose(e){
-    if(e.key === "Escape") closeModal();
-  }
-  modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
+        const rar = document.createElement("div");
+        rar.className = "tag";
+        rar.innerHTML = `<b>${escapeHTML(item.rarity || "-")}</b>`;
 
-  // =========================================================
-  // ★ 復元コード（ユーザーごとに自分で作る）
-  // =========================================================
-  function b64uEncodeBytes(bytes){
-    let bin = "";
-    const chunk = 0x8000;
-    for(let i=0;i<bytes.length;i+=chunk){
-      bin += String.fromCharCode(...bytes.subarray(i, i+chunk));
-    }
-    const b64 = btoa(bin);
-    return b64.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-  }
-  function b64uDecodeToBytes(b64u){
-    const b64 = b64u.replace(/-/g,"+").replace(/_/g,"/") + "===".slice((b64u.length + 3) % 4);
-    const bin = atob(b64);
-    const bytes = new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
-    return bytes;
-  }
-  function b64uEncodeText(str){ return b64uEncodeBytes(te.encode(str)); }
-  function b64uDecodeText(b64u){ return td.decode(b64uDecodeToBytes(b64u)); }
+        mini.appendChild(tag);
+        mini.appendChild(rar);
 
-  function randBytes(n){
-    const a = new Uint8Array(n);
-    crypto.getRandomValues(a);
-    return a;
-  }
+        meta.appendChild(name);
+        meta.appendChild(mini);
 
-  async function deriveKeyFromPIN(pinStr, saltBytes, iterations){
-    const baseKey = await crypto.subtle.importKey(
-      "raw", te.encode(pinStr), { name:"PBKDF2" }, false, ["deriveKey"]
-    );
-    return crypto.subtle.deriveKey(
-      { name:"PBKDF2", salt:saltBytes, iterations, hash:"SHA-256" },
-      baseKey,
-      { name:"AES-GCM", length:256 },
-      false,
-      ["encrypt","decrypt"]
-    );
-  }
+        const cnt = getCount(item.id);
+        const badge = document.createElement("div");
+        badge.className = "countBadge";
+        badge.textContent = `×${cnt}`;
 
-  async function makeRestoreCode(){
-    bMsg.className = "bm-mini bm-ng";
-    bMsg.textContent = "";
+        card.appendChild(img);
+        card.appendChild(meta);
+        card.appendChild(badge);
 
-    const raw = localStorage.getItem(LS_KEY);
-    if(!raw){
-      bMsg.textContent = "所有カードがありません（tf_v1_book が空）。";
-      return;
-    }
+        card.addEventListener("click", () => openModal(item));
+        card.addEventListener("keydown", (e) => {
+          if(e.key === "Enter" || e.key === " "){
+            e.preventDefault();
+            openModal(item);
+          }
+        });
 
-    const pinStr = (pin.value ?? "").trim();
-
-    if(!pinStr){
-      const payload = { v:1, alg:"PLAIN", key:LS_KEY, data_b64:b64uEncodeText(raw) };
-      codeBox.value = b64uEncodeText(JSON.stringify(payload));
-      localStorage.setItem(LS_BACKUP_AT, String(Date.now()));
-      updateBackupLine();
-      bMsg.className = "bm-mini bm-ok";
-      bMsg.textContent = "発行しました（PINなし / 暗号化なし）。コピー or .txt保存してね。";
-      return;
-    }
-
-    const salt = randBytes(16);
-    const iv = randBytes(12);
-    const iterations = 120000;
-
-    const key = await deriveKeyFromPIN(pinStr, salt, iterations);
-    const plainBytes = te.encode(raw);
-    const ct = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, key, plainBytes);
-
-    const payload = {
-      v:1,
-      alg:"A256GCM",
-      kdf:"PBKDF2-SHA256",
-      iter:iterations,
-      key:LS_KEY,
-      salt_b64:b64uEncodeBytes(salt),
-      iv_b64:b64uEncodeBytes(iv),
-      ct_b64:b64uEncodeBytes(new Uint8Array(ct))
-    };
-
-    codeBox.value = b64uEncodeText(JSON.stringify(payload));
-    localStorage.setItem(LS_BACKUP_AT, String(Date.now()));
-    updateBackupLine();
-    bMsg.className = "bm-mini bm-ok";
-    bMsg.textContent = "発行しました（PINあり / 暗号化）。PINも忘れずに保管してね。";
-  }
-
-  async function restoreFromCode(){
-    bMsg.className = "bm-mini bm-ng";
-    bMsg.textContent = "";
-
-    const code = (codeBox.value ?? "").trim();
-    if(!code){ bMsg.textContent = "復元コードが空です。"; return; }
-
-    let payload = null;
-    try{
-      payload = JSON.parse(b64uDecodeText(code));
-    }catch(e){
-      bMsg.textContent = "復元コードの形式が正しくありません（デコード失敗）。";
-      return;
-    }
-
-    if(!payload || payload.v !== 1 || !payload.alg){
-      bMsg.textContent = "復元コードの形式が正しくありません（payload不正）。";
-      return;
-    }
-
-    const targetKey = payload.key || LS_KEY;
-
-    if(payload.alg === "PLAIN"){
-      try{
-        const raw = b64uDecodeText(payload.data_b64);
-        localStorage.setItem(targetKey, raw);
-        load();
-        bMsg.className = "bm-mini bm-ok";
-        bMsg.textContent = "復元しました！";
-        return;
-      }catch(e){
-        bMsg.textContent = "復元に失敗しました（平文データの復号失敗）。";
-        return;
+        frag.appendChild(card);
       }
+
+      elGrid.appendChild(frag);
     }
 
-    if(payload.alg === "A256GCM"){
-      const pinStr = (pin.value ?? "").trim();
-      if(!pinStr){
-        bMsg.textContent = "この復元コードは暗号化されています。PINを入力してください。";
-        return;
-      }
-      try{
-        const salt = b64uDecodeToBytes(payload.salt_b64);
-        const iv = b64uDecodeToBytes(payload.iv_b64);
-        const ct = b64uDecodeToBytes(payload.ct_b64);
-        const iter = payload.iter || 120000;
-
-        const key = await deriveKeyFromPIN(pinStr, salt, iter);
-        const pt = await crypto.subtle.decrypt({ name:"AES-GCM", iv }, key, ct);
-        const raw = td.decode(new Uint8Array(pt));
-
-        localStorage.setItem(targetKey, raw);
-        load();
-        bMsg.className = "bm-mini bm-ok";
-        bMsg.textContent = "復元しました！";
-        return;
-      }catch(e){
-        bMsg.textContent = "復元に失敗しました。PINが違うか、コードが壊れています。";
-        return;
-      }
+    function escapeHTML(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+    function showEmpty(html){
+      elEmpty.style.display = "block";
+      elEmpty.innerHTML = html;
+    }
+    function hideEmpty(){
+      elEmpty.style.display = "none";
+      elEmpty.innerHTML = "";
     }
 
-    bMsg.textContent = "未対応の復元コードです。";
-  }
+    function openModal(item){
+      mImg.src = item.img || "";
+      mImg.alt = item.name || item.id || "card";
+      mTitle.textContent = item.name || "(no name)";
+      mId.textContent = item.id || "-";
+      mRarity.textContent = item.rarity || "-";
+      mAt.textContent = formatAt(item.lastAt || item.at);
+      mGlow.style.display = isSRPlus(item.rarity) ? "inline-flex" : "none";
+      mCount.textContent = `${getCount(item.id)} 枚`;
 
-  function copyCode(){
-    const t = (codeBox.value ?? "").trim();
-    if(!t){ bMsg.className="bm-mini bm-ng"; bMsg.textContent = "コピーするコードがありません。"; return; }
-    navigator.clipboard?.writeText(t).then(()=>{
-      bMsg.className="bm-mini bm-ok"; bMsg.textContent = "コピーしました！";
-    }).catch(()=>{
-      codeBox.focus(); codeBox.select();
-      document.execCommand("copy");
-      bMsg.className="bm-mini bm-ok"; bMsg.textContent = "コピーしました！";
+      modal.setAttribute("aria-hidden","false");
+      document.addEventListener("keydown", onEscClose, { once:false });
+    }
+    function closeModal(){
+      modal.setAttribute("aria-hidden","true");
+      mImg.removeAttribute("src");
+      document.removeEventListener("keydown", onEscClose);
+    }
+    function onEscClose(e){
+      if(e.key === "Escape") closeModal();
+    }
+    modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
+
+    // controls
+    elQ.addEventListener("input", () => render());
+    elSort.addEventListener("change", () => render());
+    btnReload.addEventListener("click", () => load());
+
+    btnBack.addEventListener("click", () => {
+      if(history.length > 1) history.back();
+      else location.href = "./index.html";
     });
-  }
 
-  function saveTxt(){
-    const t = (codeBox.value ?? "").trim();
-    if(!t){ bMsg.className="bm-mini bm-ng"; bMsg.textContent = "保存するコードがありません。"; return; }
-    const blob = new Blob([t], { type:"text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const ts = new Date();
-    a.href = url;
-    a.download = `takoyaki_zukan_restore_code_${ts.getFullYear()}${String(ts.getMonth()+1).padStart(2,"0")}${String(ts.getDate()).padStart(2,"0")}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    bMsg.className="bm-mini bm-ok"; bMsg.textContent = ".txtで保存しました！";
-  }
+    btnMyShop.addEventListener("click", () => {
+      location.href = MYSHOP_URL;
+    });
 
-  filePick.addEventListener("change", async (e)=>{
-    const f = e.target.files?.[0];
-    if(!f) return;
-    const text = await f.text();
-    codeBox.value = text.trim();
-    bMsg.className="bm-mini bm-ok";
-    bMsg.textContent = "読み込みました。復元ボタンを押してね。";
-    filePick.value = "";
-  });
+    // modal close
+    mClose.addEventListener("click", closeModal);
 
-  function openBackupModal(){
-    bMsg.className="bm-mini bm-ng";
-    bMsg.textContent = "";
-    bModal.setAttribute("aria-hidden","false");
-    document.addEventListener("keydown", onEscBackup, { once:false });
-  }
-  function closeBackupModal(){
-    bModal.setAttribute("aria-hidden","true");
-    document.removeEventListener("keydown", onEscBackup);
-  }
-  function onEscBackup(e){
-    if(e.key === "Escape") closeBackupModal();
-  }
-  bModal.addEventListener("click", (e)=>{ if(e.target===bModal) closeBackupModal(); });
-
-  // controls
-  elQ.addEventListener("input", () => render());
-  elSort.addEventListener("change", () => render());
-  btnReload.addEventListener("click", () => load());
-
-  btnClear.addEventListener("click", () => {
-    const ok = confirm("図鑑（tf_v1_book）を消去する？\n※この端末の図鑑が消えます");
-    if(!ok) return;
-    localStorage.removeItem(LS_KEY);
+    // init
     load();
-  });
+    updateBackupLine();
+  </script>
 
-  btnBack.addEventListener("click", () => {
-    if(history.length > 1) history.back();
-    else location.href = "./index.html";
-  });
-
-  // backup modal buttons（★二重登録しない）
-  btnBackup.addEventListener("click", openBackupModal);
-  bClose.addEventListener("click", closeBackupModal);
-  btnMakeCode.addEventListener("click", () => makeRestoreCode());
-  btnCopyCode.addEventListener("click", copyCode);
-  btnSaveTxt.addEventListener("click", saveTxt);
-  btnRestore.addEventListener("click", () => restoreFromCode());
-
-  // modal close
-  mClose.addEventListener("click", closeModal);
-
-  // init
-  load();
-  updateBackupLine();
-</script>
+  <!-- ✅ 共通バックアップ（town/assets/trc-backup-float.js）を読み込み
+       ※ このHTMLが town/ 配下なら "./assets/..." でOK
+       ※ もし階層が違う場合はパスだけ調整してください -->
+  <script src="./assets/trc-backup-float.js"></script>
 </body>
 </html>
 
