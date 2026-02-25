@@ -118,7 +118,6 @@
       width:100%;
       max-width:980px;
 
-      /* ❌高さ固定をやめる（画像＋会話欄で伸びる） */
       height:auto;
 
       border-radius:14px;
@@ -130,21 +129,21 @@
     /* 画像エリア（上段） */
     .stage-bg{
       width:100%;
-      aspect-ratio: 16 / 9;     /* ✅画像エリアの高さを比率で決定 */
+      aspect-ratio: 16 / 9;
       height:auto;
       object-fit:cover;
       image-rendering:pixelated;
       display:block;
     }
     @media (max-width: 520px){
-      .stage-bg{ aspect-ratio: 16 / 10; } /* スマホは少し縦長に */
+      .stage-bg{ aspect-ratio: 16 / 10; }
     }
 
     /* 客タコ民（画像エリア内） */
     .stage-visitor{
       position:absolute;
       left:50%;
-      bottom:118px;              /* ✅会話欄に被らない位置 */
+      bottom:118px;
       height:150px;
       image-rendering: pixelated;
       pointer-events:none;
@@ -157,8 +156,7 @@
 
     /* ✅会話＆タグ（画像の下に配置） */
     .stage-ui{
-      position:relative;        /* ✅absolute解除 */
-      left:auto; right:auto; bottom:auto;
+      position:relative;
 
       display:flex;
       align-items:flex-start;
@@ -182,7 +180,7 @@
       line-height:1.25;
     }
     .bubble .n{font-weight:900;font-size:12px}
-    .bubble .n.neg{ color: var(--bad); } /* マイナスキャラは赤 */
+    .bubble .n.neg{ color: var(--bad); }
     .bubble .m{color:rgba(255,255,255,.80);font-size:12px;margin-top:3px}
 
     .stage-tags{
@@ -513,7 +511,6 @@
         <div class="stage" id="stage">
           <img id="stageBg" class="stage-bg" alt="" src="">
           <img id="stageVisitor" class="stage-visitor" alt="" src="">
-          <!-- ✅ ここが画像の下に来る -->
           <div class="stage-ui">
             <div class="bubble">
               <div class="n" id="stageName">—</div>
@@ -577,7 +574,7 @@
       <div class="sheet-b">
         <div class="cards" id="pickCards"></div>
         <div style="margin-top:10px;font-size:12px;color:var(--muted);display:none" id="pickEmpty">
-          ダブりカード（図鑑に1枚残しても余る分）がありません。
+          出品できるカードがありません。
         </div>
       </div>
       <div class="sheet-actions">
@@ -595,6 +592,7 @@
       <div class="sheet-b">
         <div style="font-size:12px;color:rgba(255,255,255,.86);line-height:1.65">
           ・棚をタップ → 「図鑑に1枚残しても余る分」から出品<br>
+          ・<b>職人カード（CRAFT）は例外で、最後の1枚でも出品OK</b><br>
           ・売買は「来店ステージ」でのみ発生<br>
           ・来客だけでも EXP +1（育つ）<br>
           ・売れたら EXP 追加 +4（合計+5）<br>
@@ -625,6 +623,19 @@
 <script>
 (() => {
   "use strict";
+
+  /* =========================================================
+     ✅ 職人カード（CRAFT）判定＆ルール
+     - 職人は「最後の1枚でも出品OK」
+     - 通常カードは「図鑑に1枚残す」
+  ========================================================= */
+  const CRAFT_CAN_LIST_LAST_ONE = true;
+
+  function isCraftCard(obj){
+    const id = String(obj?.id || obj?._key || "").toUpperCase();
+    const r  = String(obj?.rarity || obj?.rank || "").toUpperCase();
+    return id.startsWith("CRAFT_") || id.startsWith("CRAFT-") || r.includes("CRAFT");
+  }
 
   /* =========================================================
      アセット
@@ -707,7 +718,6 @@
     return map[goalId] || ["……"];
   }
 
-  /* マイナスキャラ定義（赤文字＋評判DOWN系） */
   const NEG_TYPES = new Set(["looker","picky","flipper"]);
   const isNegativeType = (t) => NEG_TYPES.has(String(t||""));
 
@@ -818,7 +828,7 @@
     const log = lsGet(LS.log, { ver:1, items:[] });
     const items = Array.isArray(log.items) ? log.items : [];
     if(items.length === 0){
-      logEl.innerHTML = `<div class="item"><div class="t">まだ何も起きていない</div><div class="m">棚にダブりカードを出品すると、来客が始まるよ。</div></div>`;
+      logEl.innerHTML = `<div class="item"><div class="t">まだ何も起きていない</div><div class="m">棚にカードを出品すると、来客が始まるよ。</div></div>`;
       return;
     }
     logEl.innerHTML = items.map(it => {
@@ -1161,10 +1171,7 @@
   }
 
   /* ==========================
-     ✅ 価格（ユーザー指定に変更）
-     - 評判50が基準：N500 / R800 / SR2000 / UR5000 / LR10000
-     - 評判0 → 0.5倍、評判100 → 2.0倍（線形）
-     - 値段Tier（安い/普通/高い）はそのまま加算
+     ✅ 価格（ユーザー指定）
   ========================== */
   function basePriceFor(card){
     const r = String(card?.rarity || "").toUpperCase();
@@ -1180,7 +1187,6 @@
     return 1.00;
   }
   function repFactor(rep){
-    // rep 50 => 1.0, rep 0 => 0.5, rep 100 => 2.0
     return 0.5 + (rep/100)*1.5;
   }
 
@@ -1279,14 +1285,24 @@
     return map;
   }
 
-  function listPickableDuplicateCards(){
+  /* =========================================================
+     ✅ 出品できるカード一覧（ここが職人対応の本丸）
+     - 通常：図鑑に1枚残す ⇒ spare = count - 1 - listed
+     - 職人：最後の1枚もOK ⇒ spare = count - listed（1枚目から出品可）
+  ========================================================= */
+  function listPickableCardsForListing(){
     const owned = listOwnedCardsFromBook();
     const listedMap = countListedById();
 
     const pickable = [];
     for(const c of owned){
       const listed = Number(listedMap[c.id]||0);
-      const spare = (Number(c.count||0) - 1 - listed);
+      const craft = isCraftCard(c);
+
+      const spare = craft
+        ? (Number(c.count||0) - listed)                 // ★職人は残さない
+        : (Number(c.count||0) - 1 - listed);            // 通常は1枚残す
+
       if(spare >= 1){
         pickable.push({
           id: c.id,
@@ -1295,10 +1311,12 @@
           rarity: c.rarity,
           spare,
           count: c.count,
-          raw: c.raw
+          raw: c.raw,
+          craft
         });
       }
     }
+
     pickable.sort((a,b)=> (b.spare-a.spare) || a.name.localeCompare(b.name,"ja"));
     return pickable;
   }
@@ -1446,7 +1464,7 @@
     pickTitleEl.textContent = `棚${slotIdx+1} に出品するカード`;
     pickHintEl.textContent = current
       ? `現在：${current.name||current.id}（変更できます）`
-      : "ダブり（図鑑に1枚残しても余る分）から選べます。";
+      : "出品できるカードから選べます（通常は1枚残す／職人は最後の1枚OK）";
 
     renderPickCards();
 
@@ -1465,7 +1483,7 @@
   }
 
   function renderPickCards(){
-    const list = listPickableDuplicateCards();
+    const list = listPickableCardsForListing();
 
     pickCardsEl.innerHTML = "";
     if(list.length === 0){
@@ -1485,6 +1503,7 @@
       const imgWrap = document.createElement("div");
       imgWrap.className = "cimg";
 
+      const badge = c.craft ? "（職人）" : "";
       if(c.img){
         imgWrap.innerHTML = `
           <img alt="${escapeHTML(c.name||c.id)}" loading="lazy" decoding="async" src="${escapeHTML(c.img)}">
@@ -1497,7 +1516,7 @@
       const meta = document.createElement("div");
       meta.className = "cmeta";
       meta.innerHTML = `
-        <div class="cname">${escapeHTML(c.name||"(no name)")}</div>
+        <div class="cname">${escapeHTML((c.name||"(no name)") + badge)}</div>
         <div class="csub">
           <div class="tagmini"><span>#${escapeHTML(c.id)}</span></div>
           <div class="tagmini"><b>${escapeHTML(c.rarity||"-")}</b></div>
@@ -1523,13 +1542,42 @@
     pickCardsEl.appendChild(frag);
   }
 
+  /* =========================================================
+     ✅ 出品処理（ここも職人対応）
+     - 通常：count >= 2 が前提（1枚残す）
+     - 職人：count >= 1 でOK（最後の1枚まで出せる）
+     ※ listed 反映は listPickableCardsForListing が担保
+  ========================================================= */
+  function canDecrementForListing(cardId){
+    const book = loadFarmBook();
+    const key = findGotKeyByCardId(book, cardId);
+    if(!key) return false;
+    const c = book.got[key];
+    const cnt = Math.max(0, Number(c?.count||0));
+    const craft = isCraftCard({ id: String(cardId), rarity: String(c?.rarity||"") });
+
+    if(craft && CRAFT_CAN_LIST_LAST_ONE){
+      return cnt >= 1;
+    }
+    return cnt >= 2;
+  }
+
   function selectCardForSlot(slotIdx, pickedCard){
     const shop = loadMyShop();
     const slot = shop.slots[slotIdx];
     if(!slot) return;
 
+    // 既に置いてるものは先に図鑑に戻す（職人も同様）
     if(slot.item){
       incrementBookCountById(slot.item.id, slot.item.raw || slot.item);
+    }
+
+    // ここで「通常は1枚残す / 職人は例外」を最終チェック
+    if(!canDecrementForListing(pickedCard.id)){
+      toast("出品できない", "通常カードは1枚残す必要があります（職人は例外）", "");
+      renderAll();
+      closePickModal();
+      return;
     }
 
     const ok = decrementBookCountById(pickedCard.id);
@@ -1568,7 +1616,7 @@
     const slotIdx = st.targetSlot;
     const slot = shop.slots[slotIdx];
     if(!slot || !slot.item){
-      addRep(-1); /* ★買わない扱い */
+      addRep(-1);
       beginLeave("……目当ての棚が空だった。客は黙って帰った。");
       renderAll();
       return;
@@ -1600,7 +1648,7 @@
 
     const willBuy = Math.random() < buyP;
     if(!willBuy){
-      addRep(-1); /* ✅買わないことで評判 -1 */
+      addRep(-1);
       pushLog("買わない", "……今日は買わなかった。評判 -1", `rep ${loadRep().rep}`);
       beginLeave(pick(LEAVE_LINES));
       renderAll();
@@ -1609,7 +1657,7 @@
 
     saveOcto(loadOcto() + price);
 
-    const lv = addExp(4);          /* 売れたら追加 +4（来店+1と合わせて+5） */
+    const lv = addExp(4);
     const repState = addRep(cust.repDeltaOnBuy);
 
     const soldItem = slot.item;
@@ -1646,7 +1694,7 @@
         const baseLines = VISITOR_LINES[s2.vType] || ["……"];
         const gLines = goalLines(s2.vGoal);
         s2.vMsg = (Math.random()<0.55) ? pick(baseLines) : pick(gLines);
-        saveStage(s2);
+        lsSet(LS.stage, s2);
         renderStage();
       }, rand(3000, 6000));
 
@@ -1691,7 +1739,6 @@
       saveStage(s);
       renderStage();
 
-      /* ✅ 来店ごとにEXP +1（ユーザー指定） */
       const lvup = addExp(1);
       if(lvup.leveled){
         pushLog("レベルアップ", `Lv${lvup.state.lv}になった！`, "");
@@ -1801,7 +1848,6 @@
     const q = loadQueue();
     if(q.shoutPending){
       checkDueAndQueueNormal();
-
       if(nowMs >= Number(q.shoutSpawnAt||0)){
         const target = Number(q.shoutTargetSlot);
         q.shoutPending = false;
@@ -2085,5 +2131,4 @@
 </script>
 </body>
 </html>
-
 
