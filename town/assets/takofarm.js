@@ -100,14 +100,14 @@
       { no:"TN-049", name:"たこ焼きの御神体", img:"https://ul.h3z.jp/GQ8H0lGq.jpg" },
     ],
     UR: [
-      { no:"TN-001", name:"黒き真珠イカさま焼き", img:"https://ul.h3z.jp/2KeO7gmu.jpg" },
-      { no:"TN-007", name:"ローソク出せ！", img:"https://ul.h3z.jp/FI5xXdQ7.jpg" },
-      { no:"TN-033", name:"鉄板のビーナス", img:"https://ul.h3z.jp/0Tvf0Asc.jpg" },
-      { no:"TN-045", name:"ドリームファイト", img:"https://ul.h3z.jp/IzPy6UsO.jpg" },
+      { no:"TN-001", name:"黒き真珠イカさま焼き", img:"assets/images/1stcard/001ur1.png" },
+      { no:"TN-007", name:"ローソク出せ！", img:"assets/images/1stcard/007ur1.png" },
+      { no:"TN-033", name:"鉄板のビーナス", img:"assets/images/1stcard/033ur1.png" },
+      { no:"TN-045", name:"ドリームファイト", img:"assets/images/1stcard/045ur1.png" },
     ],
     LR: [
       { no:"TN-025", name:"たこ焼き化石in函館山", img:"https://ul.h3z.jp/NEuFQ7PB.png" },
-      { no:"TN-050", name:"焼かれし記憶、ソースに還る", img:"https://ul.h3z.jp/0I6s0icl.jpg" },
+      { no:"TN-050", name:"焼かれし記憶、ソースに還る", img:"assets/images/1stcard/01ur1.png" },
     ],
   };
 
@@ -1228,6 +1228,7 @@
       const fert = FERTS.find(x=>x.id===p.fertId);
       const remain = (p.readyAt||0) - Date.now();
 
+      // ✅ 修正：確定レア表示を削除（p.fixedRarity を出さない）
       openModal("育成中", `
         <div class="step">このマスは育成中。収穫まであと <b>${fmtRemain(remain)}</b></div>
         <div class="reward">
@@ -1236,7 +1237,6 @@
             種：${seed?seed.name:"-"}<br>
             水：${water?water.name:"-"}<br>
             肥料：${fert?fert.name:"-"}<br>
-            ${(!p.fixedRarity || p.fixedRarity === "N") ? `` : `確定レア：<b>${p.fixedRarity}</b>`}
           </div>
         </div>
         <div class="row"><button type="button" id="btnOk">OK</button></div>
@@ -1363,8 +1363,6 @@
     if(changed) saveState(state);
     render();
   }
-
- 
 
   // 初期
   renderLoadout();
