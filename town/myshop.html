@@ -109,7 +109,10 @@
     .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
 
     /* =========================================================
-       ✅ 来店ステージ（修正版：名前/コメントは画像の下）
+       ✅ 来店ステージ（修正版）
+       - 背景画像：見切れない（contain）
+       - 昼/夜・次：右上に被せ表示
+       - 会話欄：文字大きく＆目立つ
     ========================================================= */
     .stage-card{margin-bottom:12px}
 
@@ -117,9 +120,6 @@
       position:relative;
       width:100%;
       max-width:980px;
-
-      height:auto;
-
       border-radius:14px;
       overflow:hidden;
       border:1px solid rgba(255,255,255,.14);
@@ -127,23 +127,37 @@
     }
 
     /* 画像エリア（上段） */
-    .stage-bg{
+    .stage-media{
+      position:relative;
       width:100%;
+      /* ここで高さ（比率）を確保 */
       aspect-ratio: 16 / 9;
-      height:auto;
-      object-fit:cover;
-      image-rendering:pixelated;
-      display:block;
+      background: rgba(0,0,0,.22);
+      border-bottom:1px solid rgba(255,255,255,.12);
+      overflow:hidden;
     }
     @media (max-width: 520px){
-      .stage-bg{ aspect-ratio: 16 / 10; }
+      .stage-media{ aspect-ratio: 16 / 10; }
+    }
+
+    /* ✅ 背景：見切れないように contain */
+    .stage-bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:contain;              /* ←ここがポイント（cover→contain） */
+      object-position:center;
+      image-rendering:pixelated;
+      display:block;
+      background: rgba(0,0,0,.22);     /* 余白が出た時の下地 */
     }
 
     /* 客タコ民（画像エリア内） */
     .stage-visitor{
       position:absolute;
       left:50%;
-      bottom:118px;
+      bottom:10px;
       height:150px;
       image-rendering: pixelated;
       pointer-events:none;
@@ -151,53 +165,76 @@
       transform:translateX(-50%) translateY(8px);
       transition: opacity .45s ease, transform .45s ease;
       will-change: opacity, transform;
+      filter: drop-shadow(0 10px 22px rgba(0,0,0,.55));
     }
     .stage-visitor.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    /* ✅会話＆タグ（画像の下に配置） */
-    .stage-ui{
-      position:relative;
-
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-
-      padding:10px;
-      pointer-events:auto;
-
-      border-top:1px solid rgba(255,255,255,.12);
-      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55));
-    }
-
-    .bubble{
-      flex: 1 1 auto;
-      max-width:none;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(0,0,0,.55);
-      border-radius:14px;
-      padding:10px 12px;
-      line-height:1.25;
-    }
-    .bubble .n{font-weight:900;font-size:12px}
-    .bubble .n.neg{ color: var(--bad); }
-    .bubble .m{color:rgba(255,255,255,.80);font-size:12px;margin-top:3px}
-
-    .stage-tags{
-      flex: 0 0 auto;
+    /* ✅ 右上オーバーレイ（昼/夜・次） */
+    .stage-overlay{
+      position:absolute;
+      right:10px;
+      top:10px;
       display:flex;
       gap:8px;
       flex-wrap:wrap;
       justify-content:flex-end;
+      pointer-events:none;
+      z-index:5;
     }
-    .tag{
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(0,0,0,.45);
+    .stage-overlay .tag{
+      border:1px solid rgba(255,255,255,.22);
+      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.78));
       border-radius:999px;
-      padding:6px 8px;
-      font-size:11px;
-      color:rgba(255,255,255,.86);
+      padding:7px 10px;
+      font-size:12px;
+      color:rgba(255,255,255,.92);
       white-space:nowrap;
+      box-shadow: 0 12px 30px rgba(0,0,0,.45);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      text-shadow: 0 2px 0 rgba(0,0,0,.35);
+    }
+
+    /* ✅ 会話欄（画像の下） */
+    .stage-ui{
+      position:relative;
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-start;
+      gap:10px;
+      padding:12px;
+      pointer-events:auto;
+      background: linear-gradient(180deg, rgba(0,0,0,.40), rgba(0,0,0,.62));
+    }
+
+    .bubble{
+      width:100%;
+      border:1px solid rgba(255,255,255,.20);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(127,208,255,.12), rgba(0,0,0,0) 55%),
+        rgba(0,0,0,.62);
+      border-radius:14px;
+      padding:12px 14px;
+      line-height:1.35;
+      box-shadow:
+        0 18px 45px rgba(0,0,0,.45),
+        0 0 0 1px rgba(255,255,255,.06) inset;
+    }
+    /* ✅ 名前：大きく */
+    .bubble .n{
+      font-weight:950;
+      font-size:16px;
+      letter-spacing:.02em;
+      text-shadow: 0 2px 0 rgba(0,0,0,.35);
+    }
+    .bubble .n.neg{ color: var(--bad); }
+    /* ✅ コメント：大きく＆読みやすく */
+    .bubble .m{
+      color:rgba(255,255,255,.92);
+      font-size:14px;
+      margin-top:6px;
+      line-height:1.55;
+      text-shadow: 0 2px 0 rgba(0,0,0,.25);
     }
 
     /* layout (1カラム) */
@@ -502,23 +539,30 @@
       <div class="card-h">
         <div>
           <div class="card-title">来店ステージ</div>
-          <div class="card-desc">✅会話は画像の下に表示（画像に被らない）</div>
+          <div class="card-desc">✅画像は見切れない／昼夜・次秒は右上に被せ表示</div>
         </div>
-
         <button class="btn ghost" id="fixBtn" type="button">修理</button>
       </div>
+
       <div class="card-b">
         <div class="stage" id="stage">
-          <img id="stageBg" class="stage-bg" alt="" src="">
-          <img id="stageVisitor" class="stage-visitor" alt="" src="">
+          <!-- ✅ 画像エリア -->
+          <div class="stage-media">
+            <img id="stageBg" class="stage-bg" alt="" src="">
+            <img id="stageVisitor" class="stage-visitor" alt="" src="">
+
+            <!-- ✅ 右上に被せるタグ（昼/夜・次） -->
+            <div class="stage-overlay" aria-hidden="true">
+              <div class="tag" id="stageTimeTag">—</div>
+              <div class="tag" id="stageNextTag">次：—</div>
+            </div>
+          </div>
+
+          <!-- ✅ 会話（画像の下） -->
           <div class="stage-ui">
             <div class="bubble">
               <div class="n" id="stageName">—</div>
               <div class="m" id="stageMsg">まだ誰も来ていない。</div>
-            </div>
-            <div class="stage-tags">
-              <div class="tag" id="stageTimeTag">—</div>
-              <div class="tag" id="stageNextTag">次：—</div>
             </div>
           </div>
         </div>
@@ -1287,8 +1331,6 @@
 
   /* =========================================================
      ✅ 出品できるカード一覧（ここが職人対応の本丸）
-     - 通常：図鑑に1枚残す ⇒ spare = count - 1 - listed
-     - 職人：最後の1枚もOK ⇒ spare = count - listed（1枚目から出品可）
   ========================================================= */
   function listPickableCardsForListing(){
     const owned = listOwnedCardsFromBook();
@@ -1300,8 +1342,8 @@
       const craft = isCraftCard(c);
 
       const spare = craft
-        ? (Number(c.count||0) - listed)                 // ★職人は残さない
-        : (Number(c.count||0) - 1 - listed);            // 通常は1枚残す
+        ? (Number(c.count||0) - listed)
+        : (Number(c.count||0) - 1 - listed);
 
       if(spare >= 1){
         pickable.push({
@@ -1542,12 +1584,6 @@
     pickCardsEl.appendChild(frag);
   }
 
-  /* =========================================================
-     ✅ 出品処理（ここも職人対応）
-     - 通常：count >= 2 が前提（1枚残す）
-     - 職人：count >= 1 でOK（最後の1枚まで出せる）
-     ※ listed 反映は listPickableCardsForListing が担保
-  ========================================================= */
   function canDecrementForListing(cardId){
     const book = loadFarmBook();
     const key = findGotKeyByCardId(book, cardId);
@@ -1567,12 +1603,10 @@
     const slot = shop.slots[slotIdx];
     if(!slot) return;
 
-    // 既に置いてるものは先に図鑑に戻す（職人も同様）
     if(slot.item){
       incrementBookCountById(slot.item.id, slot.item.raw || slot.item);
     }
 
-    // ここで「通常は1枚残す / 職人は例外」を最終チェック
     if(!canDecrementForListing(pickedCard.id)){
       toast("出品できない", "通常カードは1枚残す必要があります（職人は例外）", "");
       renderAll();
@@ -1607,7 +1641,6 @@
     closePickModal();
   }
 
-  /* ✅ ここがユーザー指定：買わないで評判 -1 / 来店ごとにEXP +1 */
   function saleProcess(){
     const st = loadStage();
     if(!st.hasVisitor || st.leaving) return;
@@ -2131,4 +2164,3 @@
 </script>
 </body>
 </html>
-
