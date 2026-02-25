@@ -670,18 +670,50 @@
       return countMap[key] || 1;
     }
 
-    function load(){
-      const raw = localStorage.getItem(LS_KEY);
-      if(!raw){
-        all = [];
-        render();
-        showEmpty(
-          `図鑑データが見つからないよ。<br>
-           localStorage の <code>${LS_KEY}</code> を畑側で保存してから開いてね。`
-        );
-        elPill.textContent = "0 / 0";
-        return;
-      }
+   function load(){
+  const raw = localStorage.getItem(LS_KEY);
+
+  // ===== データ未登録時 =====
+  if(!raw){
+    all = [];
+    render();
+
+    showEmpty(
+      `まだカードが登録されていないよ。<br>
+       畑で収穫したり、カードを入手するとここに表示されるよ。`
+    );
+
+    elPill.textContent = "0 / 0";
+    return;
+  }
+
+  // ===== JSON読み込み =====
+  const obj = safeJSONParse(raw);
+
+  let gotArr = [];
+  if(obj && Array.isArray(obj.got)){
+    gotArr = obj.got;
+  } else if(obj && obj.got && typeof obj.got === "object"){
+    gotArr = Object.values(obj.got);
+  } else {
+    gotArr = [];
+  }
+
+  // ===== データ整形 =====
+  all = gotArr.map(x => ({
+    id: x?.id ?? "",
+    name: x?.name ?? "",
+    img: x?.img ?? "",
+    rarity: x?.rarity ?? "",
+    at: x?.at ?? "",
+    lastAt: x?.lastAt ?? "",
+    lastAddedAt: x?.lastAddedAt ?? "",
+    count: x?.count ?? 1
+  }));
+
+  buildCountMap();
+  render();
+}
 
       const obj = safeJSONParse(raw);
 
