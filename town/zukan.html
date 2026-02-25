@@ -70,7 +70,7 @@
       font-size:14px;
     }
     input[type="search"]::placeholder{color:rgba(255,255,255,.35)}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1 1 220px;flex-wrap:wrap;}
+    .row{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex:1 1 220px;flex-wrap:wrap;}
     .pill{
       display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;
       border:1px solid var(--border);background:rgba(0,0,0,.18);color:var(--muted);
@@ -176,7 +176,6 @@
     }
     .card.is-glow .meta{position:relative;z-index:4;}
     .card.is-glow .thumb{position:relative;z-index:3;}
-
     .card.is-glow .thumb::after{
       content:"";
       position:absolute;
@@ -194,7 +193,6 @@
       mix-blend-mode: screen;
       animation: shineSweep 6.8s ease-in-out infinite;
     }
-
     .card.is-glow .spark{
       position:absolute; inset:0;
       pointer-events:none;
@@ -241,7 +239,6 @@
       padding:16px;background:rgba(0,0,0,.72);z-index:9999;
     }
     .modal[aria-hidden="false"]{display:flex}
-
     .modal__panel{
       width:min(92vw, 560px);
       border-radius:18px;border:1px solid var(--border);
@@ -302,13 +299,47 @@
     }
 
     /* =========================================================
-       ✅ 重要：この図鑑ページでは「復元ボタン」は置かない
-       - town/assets/trc-backup-float.js は共通UIで復元も出る仕様なので
-       - このページだけCSSで復元ボタンを非表示にする
+       ✅ 共通バックアップUIの見た目調整（このページ用）
+       - 右上固定をやめて、ボタンを .row 内へ移動（JSで移植）
+       - DATA文字とドットと外枠を完全削除して「ボタンだけ」にする
+       - 復元ボタンは出さない（backupのみ）
        ========================================================= */
-    #trcBackupFloat .trcBtn:not(.trcBtnPrimary){
-      display:none !important; /* 復元ボタンを隠す */
+    #trcBackupFloat{
+      position: static !important;
+      z-index: auto !important;
+      display: inline-flex !important;
+      gap: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      box-shadow: none !important;
+      color: inherit !important;
     }
+    #trcBackupFloat .trcDot,
+    #trcBackupFloat .trcCap,
+    #trcBackupFloat .trcMini{
+      display:none !important;
+    }
+    /* 復元ボタン（Primary以外）を完全に消す */
+    #trcBackupFloat .trcBtn:not(.trcBtnPrimary){
+      display:none !important;
+    }
+    /* バックアップボタンだけ、既存ボタンと揃える（このページの見た目） */
+    #trcBackupFloat .trcBtnPrimary{
+      padding: 8px 10px !important;
+      border-radius: 12px !important;
+      border: 1px solid var(--border) !important;
+      background: rgba(0,0,0,.18) !important;
+      color: var(--text) !important;
+      font-size: 12px !important;
+      font-weight: 800 !important;
+      letter-spacing: .02em !important;
+      box-shadow: none !important;
+    }
+    #trcBackupFloat .trcBtnPrimary:hover{ filter:brightness(1.05); }
+    #trcBackupFloat .trcBtnPrimary:active{ transform:translateY(1px); }
   </style>
 </head>
 
@@ -352,15 +383,13 @@
         </select>
       </div>
 
-      <div class="row">
-        <button class="btn small" id="btnReload" type="button">再読込</button>
+      <div class="row" id="actionRow">
+        <!-- ✅ 再読込ボタンは削除（要望） -->
 
-        <!-- ✅ 図鑑を消去ボタンは削除（要望） -->
-        <!-- ✅ 代わりに「マイ露店でカードを売る」ボタン -->
+        <!-- ✅ 共通バックアップ（trc-backup-float.js）のバックアップボタンだけをここへ移動して表示 -->
+
+        <!-- ✅ マイ露店 -->
         <button class="btn small primary" id="btnMyShop" type="button">マイ露店でカードを売る</button>
-
-        <!-- ✅ バックアップは共通のフローティングUI（右上DATA）で統一
-             このページは復元を置かない（CSSで復元ボタン非表示） -->
       </div>
     </section>
 
@@ -401,7 +430,6 @@
     const LS_KEY = "tf_v1_book";
 
     // ✅ マイ露店URL（あなたの実ファイル名に合わせて調整OK）
-    // 例）露店が town/roten/ 配下なら： "./roten/index.html" や "./roten/myshop.html" など
     const MYSHOP_URL = "./roten/index.html";
 
     const elGrid = document.getElementById("grid");
@@ -409,10 +437,10 @@
     const elPill = document.getElementById("statPill");
     const elQ = document.getElementById("q");
     const elSort = document.getElementById("sort");
-    const btnReload = document.getElementById("btnReload");
     const btnBack = document.getElementById("btnBack");
     const btnMyShop = document.getElementById("btnMyShop");
     const lastBackupLine = document.getElementById("lastBackupLine");
+    const actionRow = document.getElementById("actionRow");
 
     // card modal
     const modal = document.getElementById("modal");
@@ -432,7 +460,6 @@
     function safeJSONParse(str){ try { return JSON.parse(str); } catch(e){ return null; } }
     function normalizeText(s){ return (s ?? "").toString().trim().toLowerCase(); }
 
-    // ========= 品番解析（TN/TP/NK/BS/SP/COL など） =========
     function parseCardId(id){
       const s = (id ?? "").toString().trim().toUpperCase();
       const m = s.match(/^([A-Z]+)[-_]?(\d+)?$/);
@@ -440,7 +467,6 @@
       return { prefix: m[1], num: Number(m[2] || 0) };
     }
 
-    // ★ SP判定（焦げ/生焼けをSPに含める保険）
     function isSpecialSPCard(item){
       const id = (item?.id ?? "").toString().trim().toUpperCase();
       const name = (item?.name ?? "").toString().trim();
@@ -470,7 +496,6 @@
       return false;
     }
 
-    // 日時（表示は日本時間固定）
     function toDate(at){
       if(at == null || at === "") return null;
       if(typeof at === "number") return new Date(normalizeEpoch(at));
@@ -486,8 +511,8 @@
     }
     function normalizeEpoch(n){
       const abs = Math.abs(n);
-      if(abs < 1e11) return n * 1000; // 秒→ms
-      return n; // ms
+      if(abs < 1e11) return n * 1000;
+      return n;
     }
     function fmtTokyo(d){
       try{
@@ -519,7 +544,6 @@
       return d ? d.getTime() : 0;
     }
 
-    // count方式
     function buildCountMap(){
       countMap = {};
       for(const item of all){
@@ -535,8 +559,7 @@
     }
 
     function updateBackupLine(){
-      // ✅ 統一バックアップは「右上DATAボタン（フローティング）」のみ
-      lastBackupLine.textContent = "右上のDATAからバックアップできます（このページに復元は置きません）";
+      lastBackupLine.textContent = "バックアップはこの列のボタンから（復元はこのページに置きません）";
     }
 
     function load(){
@@ -809,7 +832,6 @@
     // controls
     elQ.addEventListener("input", () => render());
     elSort.addEventListener("change", () => render());
-    btnReload.addEventListener("click", () => load());
 
     btnBack.addEventListener("click", () => {
       if(history.length > 1) history.back();
@@ -820,19 +842,45 @@
       location.href = MYSHOP_URL;
     });
 
-    // modal close
     mClose.addEventListener("click", closeModal);
+
+    // =========================================================
+    // ✅ 共通バックアップUIを「この列(actionRow)」に移植する
+    // - 右上固定ではなく、ボタン列に置く
+    // - DATA文字/枠/ドットはCSSで削除済み
+    // - 復元はCSSで非表示（バックアップだけ）
+    // =========================================================
+    function moveBackupUIIntoRow(){
+      const wrap = document.getElementById("trcBackupFloat");
+      if(!wrap) return;
+
+      // もし body 直下等にあれば、rowの先頭へ移動（好みで末尾でもOK）
+      if(actionRow && wrap.parentElement !== actionRow){
+        actionRow.insertBefore(wrap, actionRow.firstChild);
+      }
+    }
 
     // init
     load();
     updateBackupLine();
+
+    // JSロード後・UI生成後に移動（遅延保険）
+    const mo = new MutationObserver(() => {
+      if(document.getElementById("trcBackupFloat")){
+        moveBackupUIIntoRow();
+        mo.disconnect();
+      }
+    });
+    mo.observe(document.documentElement, { childList:true, subtree:true });
+
+    // 念のためDOMContentLoaded後も実行
+    window.addEventListener("DOMContentLoaded", () => moveBackupUIIntoRow(), { once:true });
   </script>
 
-  <!-- ✅ 共通バックアップ（town/assets/trc-backup-float.js）を読み込み
+  <!-- ✅ 共通バックアップ（town/assets/trc-backup-float.js）
        ※ このHTMLが town/ 配下なら "./assets/..." でOK
-       ※ もし階層が違う場合はパスだけ調整してください -->
+       ※ 階層が違う場合はパスだけ調整 -->
   <script src="./assets/trc-backup-float.js"></script>
 </body>
 </html>
-
 
