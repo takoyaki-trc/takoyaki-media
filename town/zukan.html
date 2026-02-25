@@ -17,6 +17,22 @@
 
       --tile:84px;
       --thumbPad:5px;
+
+      /* ✅ レアリティ色（枠/背景） */
+      --rarN-bg: rgba(60, 170, 255, .30);     /* 濃い水色（深め） */
+      --rarN-bd: rgba(60, 170, 255, .55);
+
+      --rarR-bg: rgba(255, 80, 90, .22);      /* 赤 */
+      --rarR-bd: rgba(255, 110, 120, .50);
+
+      --rarSR-bg: rgba(205, 127, 50, .22);    /* ブロンズ */
+      --rarSR-bd: rgba(205, 127, 50, .52);
+
+      --rarUR-bg: rgba(210, 220, 235, .18);   /* シルバー */
+      --rarUR-bd: rgba(220, 230, 245, .42);
+
+      --rarLR-bg: rgba(255, 205, 85, .22);    /* ゴールド */
+      --rarLR-bd: rgba(255, 215, 120, .52);
     }
     *{box-sizing:border-box}
     body{
@@ -38,14 +54,14 @@
       display:flex;align-items:flex-start;gap:10px;min-width:0;
     }
 
-    /* ✅ 戻る：必ず横並び（縦崩れ防止） */
+    /* ✅ 戻る：必ず横並び */
     .backBtn{
       display:inline-flex;
-      flex-direction:row;          /* ←横固定 */
+      flex-direction:row;
       align-items:center;
       justify-content:center;
       gap:8px;
-      white-space:nowrap;          /* ←改行させない */
+      white-space:nowrap;
       padding:9px 12px;
       border-radius:999px;
       border:1px solid var(--border);
@@ -56,7 +72,7 @@
       user-select:none;
       -webkit-tap-highlight-color:transparent;
       box-shadow:0 10px 18px rgba(0,0,0,.18);
-      line-height:1;               /* ←縦ズレ防止 */
+      line-height:1;
     }
     .backBtn:active{transform:translateY(1px)}
     .backBtn .ico{
@@ -70,14 +86,13 @@
       font-weight:900;
       flex:0 0 auto;
     }
-    .backBtn span:last-child{ /* 「戻る」 */
+    .backBtn span:last-child{
       display:inline-block;
       line-height:1;
     }
 
     .title{display:flex;flex-direction:column;gap:4px;min-width:0;}
     h1{margin:0;font-size:20px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .sub{color:var(--muted);font-size:12px;line-height:1.35}
 
     .controls{
       display:flex;flex-wrap:wrap;gap:10px;
@@ -102,7 +117,6 @@
     }
     input[type="search"]::placeholder{color:rgba(255,255,255,.35)}
 
-    /* ✅ 操作列：右寄せ */
     .row{
       display:flex;
       align-items:center;
@@ -129,7 +143,7 @@
     }
     .btn.small{padding:8px 10px;font-size:12px}
 
-    /* ✅ “装飾したボタン”統一（マイ露店と同じ系統） */
+    /* ✅ “装飾したボタン”統一 */
     .btn.primary{
       background: linear-gradient(180deg, rgba(140,200,255,.26), rgba(255,255,255,.08));
       border-color: rgba(180,220,255,.48);
@@ -164,13 +178,27 @@
     .meta{padding:7px 8px 9px;display:flex;flex-direction:column;gap:4px;}
     .name{font-size:12px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
     .mini{display:flex;align-items:center;justify-content:space-between;gap:6px;color:var(--muted);font-size:11px;}
+
     .tag{
       display:inline-flex;align-items:center;gap:6px;
       padding:2px 8px;border-radius:999px;border:1px solid var(--border);
       background:rgba(0,0,0,.18);color:var(--muted);max-width:100%;
     }
-    .tag b{color:var(--text);font-weight:600}
+    .tag b{color:var(--text);font-weight:700}
     .id{opacity:.95}
+
+    /* ✅ レアリティ枠（右下）に色を付ける（rarityのtagだけ） */
+    .tag.rarity{
+      color: rgba(255,255,255,.95);
+      border-color: rgba(255,255,255,.20);
+      background: rgba(0,0,0,.22);
+      text-shadow: 0 1px 0 rgba(0,0,0,.35);
+    }
+    .tag.rarity[data-r="N"]{  background:var(--rarN-bg);  border-color:var(--rarN-bd); }
+    .tag.rarity[data-r="R"]{  background:var(--rarR-bg);  border-color:var(--rarR-bd); }
+    .tag.rarity[data-r="SR"]{ background:var(--rarSR-bg); border-color:var(--rarSR-bd); }
+    .tag.rarity[data-r="UR"]{ background:var(--rarUR-bg); border-color:var(--rarUR-bd); color:rgba(10,16,26,.92); text-shadow:none; }
+    .tag.rarity[data-r="LR"]{ background:var(--rarLR-bg); border-color:var(--rarLR-bd); color:rgba(30,20,0,.92); text-shadow:none; }
 
     .countBadge{
       position:absolute;right:6px;top:6px;
@@ -342,15 +370,13 @@
       line-height:1.1;
       font-size:22px;
     }
-    /* ✅ 下の文字列は削除（要望） */
+    /* ✅ 下の文字列は削除 */
     #lastBackupLine{ display:none !important; }
 
     /* =========================================================
        ✅ 共通バックアップUI（このページ用）
-       - 右上固定ではなく .row へ移植（JS）
-       - DATA文字/枠/ドットを削除し「ボタンだけ」にする
-       - 復元ボタンは出さない（backupのみ）
-       - 見た目は .btn.primary と同じ系統に寄せる
+       - ボタンのみ表示
+       - 復元は出さない（backupのみ）
        ========================================================= */
     #trcBackupFloat{
       position: static !important;
@@ -370,7 +396,6 @@
     #trcBackupFloat .trcMini{ display:none !important; }
     #trcBackupFloat .trcBtn:not(.trcBtnPrimary){ display:none !important; }
 
-    /* ✅ バックアップボタンを“ちゃんとボタン”に見せる */
     #trcBackupFloat .trcBtnPrimary{
       padding: 8px 10px !important;
       border-radius: 12px !important;
@@ -432,9 +457,8 @@
       </div>
 
       <div class="row" id="actionRow">
-        <!-- ✅ 左：マイ露店 -->
         <button class="btn small primary" id="btnMyShop" type="button">マイ露店でカードを売る</button>
-        <!-- ✅ 右：バックアップ（共通JSが生成→ここへ移動） -->
+        <!-- バックアップ（共通JSが生成→ここへ移動） -->
       </div>
     </section>
 
@@ -473,9 +497,7 @@
     // =========================================================
 
     const LS_KEY = "tf_v1_book";
-
-    // ✅ マイ露店URL（あなたの実ファイル名に合わせて調整OK）
-    const MYSHOP_URL = "./roten/index.html";
+    const MYSHOP_URL = "./roten/index.html"; // 必要なら変更
 
     const elGrid = document.getElementById("grid");
     const elEmpty = document.getElementById("empty");
@@ -537,6 +559,18 @@
       if(r.includes("hr")) return true;
       if(r.includes("xr")) return true;
       return false;
+    }
+
+    function rarityCode(rarityRaw){
+      const r = (rarityRaw ?? "").toString().trim().toUpperCase();
+      if(r.includes("LR")) return "LR";
+      if(r.includes("UR")) return "UR";
+      if(r.includes("SR")) return "SR";
+      // Rより先にSR/UR/LRを判定してるのでOK
+      if(r === "R" || r.includes(" R") || r.endsWith("R")) return "R";
+      if(r === "N" || r.includes("N")) return "N";
+      // 不明はN扱い（色つけの保険）
+      return "N";
     }
 
     function toDate(at){
@@ -794,7 +828,9 @@
         tag.innerHTML = `<span class="id">#${escapeHTML(item.id || "-")}</span>`;
 
         const rar = document.createElement("div");
-        rar.className = "tag";
+        const rcode = rarityCode(item.rarity);
+        rar.className = "tag rarity";
+        rar.dataset.r = rcode; /* ✅ 色分け */
         rar.innerHTML = `<b>${escapeHTML(item.rarity || "-")}</b>`;
 
         mini.appendChild(tag);
@@ -888,18 +924,14 @@
       const wrap = document.getElementById("trcBackupFloat");
       if(!wrap || !actionRow) return;
 
-      // row内に入れる
       if(wrap.parentElement !== actionRow){
         actionRow.appendChild(wrap);
       }
-
-      // 位置を「マイ露店の右隣」に固定：btnMyShopの直後に挿入
       if(btnMyShop && btnMyShop.nextSibling !== wrap){
         actionRow.insertBefore(wrap, btnMyShop.nextSibling);
       }
     }
 
-    // 生成待ち
     const mo = new MutationObserver(() => {
       if(document.getElementById("trcBackupFloat")){
         moveBackupUIToRightOfMyShop();
