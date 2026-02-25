@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>たこ焼きトレカ｜ギルド掲示板（最新情報）</title>
   <meta name="description" content="焼かれた伝説 / たこ焼きトレカ 最新情報。クエスト・プロモ・イベント・噂話を掲示。" />
+
   <style>
     :root{
       --bg:#070815;
@@ -67,7 +68,7 @@
       justify-content:space-between;
     }
 
-    /* ✅ 追加：左側（戻る＋タイトル） */
+    /* ✅ 左側（戻る＋タイトル） */
     .leftHead{
       display:flex;
       align-items:center;
@@ -88,28 +89,11 @@
     }
     .backBtn:active{ transform: translateY(1px) scale(.99); }
 
-    /* ✅ タイトルを「ギルド掲示板」に固定（右横に表示） */
     .topTitle{
       font-size:18px;
       font-weight:900;
       letter-spacing:.02em;
       line-height:1.1;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .titlebox{
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      min-width:0;
-    }
-    .kicker{
-      font-size:12px;
-      letter-spacing:.12em;
-      color:rgba(255,255,255,.72);
-      text-transform:uppercase;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
@@ -234,7 +218,7 @@
       padding:12px;
       display:grid;
       gap:8px;
-      min-width:0; /* ✅ PCでのはみ出し対策 */
+      min-width:0;
     }
     .questCard h2{
       margin:0;
@@ -252,18 +236,18 @@
     .monthlyPair{
       display:grid;
       gap:12px;
-      min-width:0; /* ✅ PCでのはみ出し対策 */
+      min-width:0;
     }
     .monthlyPairGrid{
       display:grid;
       grid-template-columns: 1fr;
       gap:12px;
-      min-width:0; /* ✅ PCでのはみ出し対策 */
+      min-width:0;
     }
 
     /* ✅ “枠”なしで大きく見せる：角丸だけ */
     .bigImage{
-      position:relative;
+      position:relative;           /* ✅ 明示（保険） */
       border-radius: 14px;
       overflow:hidden;
       aspect-ratio: 16 / 10;
@@ -278,7 +262,7 @@
 
     /* ✅ たこ焼き菜々（建物＋カード被せ） */
     .shopImgWrap{
-      position:relative;
+      position:relative;           /* ✅ 明示（保険） */
       border-radius:14px;
       overflow:hidden;
       aspect-ratio: 16 / 10;
@@ -298,25 +282,36 @@
       width: var(--overlayW);
       border-radius:14px;
       border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.35);
+      background: rgba(0,0,0,.42); /* 少し濃く（見えない切り分け用。薄く戻してOK） */
       overflow:hidden;
       box-shadow: 0 14px 40px rgba(0,0,0,.55);
       backdrop-filter: blur(6px);
+
+      z-index: 30;                /* ✅ 重なり順を明示 */
+      transform: translateZ(0);   /* ✅ iOS/Safari系の描画バグ回避 */
+      will-change: transform;
     }
     .overlayBadge img{
       width:100%;
       height:auto;
       display:block;
     }
+
+    /* ✅ 被せカードの文字：中央＆上下薄め（※重複定義を統一） */
     .overlayBadge .label{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  padding:3px 6px 4px;   /* ←上下を半分くらいに */
-  line-height:1.1;        /* ←文字の上下余白を削減 */
-  font-size:10px;         /* ←小さめにして収まり良く */
-}
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      padding:3px 6px 4px;
+      line-height:1.1;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.02em;
+      color: rgba(255,255,255,.92);
+      background: rgba(0,0,0,.28);
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
 
     .overlay-left{ left:10px; }
     .overlay-right{ right:10px; }
@@ -461,7 +456,7 @@
       white-space:nowrap;
     }
 
-    /* ====== ✅ 追加：フッター（コピーライト） ====== */
+    /* ====== フッター ====== */
     footer{
       max-width:980px;
       margin:12px auto 0;
@@ -471,48 +466,35 @@
       text-align:center;
     }
 
-   @media (min-width: 760px){
+    @media (min-width: 760px){
+      /* PCでは画像2枚を横並び */
+      .monthlyPairGrid{
+        grid-template-columns: 1fr 1fr;
+        align-items:stretch;
+      }
 
-  /* PCでは画像2枚を横並び */
-  .monthlyPairGrid{
-    grid-template-columns: 1fr 1fr;
-    align-items:stretch;
-  }
+      /* 紙の掲示物も2列 */
+      .grid{
+        grid-template-columns: 1fr 1fr;
+      }
 
-  /* 紙の掲示物も2列 */
-  .grid{
-    grid-template-columns: 1fr 1fr;
-  }
+      /* 3枚目は横幅フル */
+      .paper:nth-child(3){
+        grid-column: 1 / span 2;
+      }
 
-  /* 3枚目は横幅フル */
-  .paper:nth-child(3){
-    grid-column: 1 / span 2;
-  }
-
-  /* PCでは画像比率を固定 */
-  .bigImage,
-  .shopImgWrap{
-    aspect-ratio: 4 / 3;
-  }
-}
-
-/* 被せカードの文字中央 */
-.overlayBadge .label{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  padding:6px 6px 7px;
-}
-
-    
+      /* PCでは画像比率を固定 */
+      .bigImage,
+      .shopImgWrap{
+        aspect-ratio: 4 / 3;
+      }
+    }
   </style>
 </head>
 
 <body>
   <header class="topbar">
     <div class="brand">
-      <!-- ✅ 左上：戻る / 右横：ギルド掲示板 -->
       <div class="leftHead">
         <button class="backBtn" type="button" onclick="history.back()" aria-label="戻る">← 戻る</button>
         <div class="topTitle">最新情報</div>
@@ -564,7 +546,7 @@
                       loading="lazy"
                     />
                     <div class="overlayBadge overlay-right" aria-label="被せカード（右上）">
-                      <img src="/takoyaki-media/town/assets/images/takopi/takopi7.png" alt="被せカード" loading="lazy" />
+                      <img src="/takoyaki-media/town/assets/images/takopi/takopi7.png" alt="今月のたこぴカード" loading="lazy" />
                       <div class="label">今月のたこぴ</div>
                     </div>
                   </div>
@@ -660,7 +642,6 @@
     </main>
   </div>
 
-  <!-- ✅ フッター（コピーライト） -->
   <footer>©たこ焼き菜々/焼かれた伝説 たこ焼きトレーディングカード</footer>
 
   <script>
@@ -680,7 +661,7 @@
     });
 
     // =========================
-    // ✅ たこぴの噂話：31個を日替わり表示
+    // たこぴの噂話：31個を日替わり表示
     // =========================
     const rumors = [
       "……ねぇ、知ってるたこ？ 今日のカード、まだ“あったかい”たこ。焼かれたばっかで、指先がちょっと…ひりってするたこ。",
@@ -727,5 +708,4 @@
   </script>
 </body>
 </html>
-
 
