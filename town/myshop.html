@@ -109,10 +109,7 @@
     .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
 
     /* =========================================================
-       ✅ 来店ステージ（修正版）
-       - 背景画像：見切れない（contain）
-       - 昼/夜・次：右上に被せ表示
-       - 会話欄：文字大きく＆目立つ
+       ✅ 来店ステージ
     ========================================================= */
     .stage-card{margin-bottom:12px}
 
@@ -126,11 +123,9 @@
       background:rgba(0,0,0,.18);
     }
 
-    /* 画像エリア（上段） */
     .stage-media{
       position:relative;
       width:100%;
-      /* ここで高さ（比率）を確保 */
       aspect-ratio: 16 / 9;
       background: rgba(0,0,0,.22);
       border-bottom:1px solid rgba(255,255,255,.12);
@@ -140,20 +135,18 @@
       .stage-media{ aspect-ratio: 16 / 10; }
     }
 
-    /* ✅ 背景：見切れないように contain */
     .stage-bg{
       position:absolute;
       inset:0;
       width:100%;
       height:100%;
-      object-fit:contain;              /* ←ここがポイント（cover→contain） */
+      object-fit:contain;
       object-position:center;
       image-rendering:pixelated;
       display:block;
-      background: rgba(0,0,0,.22);     /* 余白が出た時の下地 */
+      background: rgba(0,0,0,.22);
     }
 
-    /* 客タコ民（画像エリア内） */
     .stage-visitor{
       position:absolute;
       left:50%;
@@ -169,7 +162,6 @@
     }
     .stage-visitor.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    /* ✅ 右上オーバーレイ（昼/夜・次） */
     .stage-overlay{
       position:absolute;
       right:10px;
@@ -195,7 +187,6 @@
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
     }
 
-    /* ✅ 会話欄（画像の下） */
     .stage-ui{
       position:relative;
       display:flex;
@@ -220,7 +211,6 @@
         0 18px 45px rgba(0,0,0,.45),
         0 0 0 1px rgba(255,255,255,.06) inset;
     }
-    /* ✅ 名前：大きく */
     .bubble .n{
       font-weight:950;
       font-size:16px;
@@ -228,7 +218,6 @@
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
     }
     .bubble .n.neg{ color: var(--bad); }
-    /* ✅ コメント：大きく＆読みやすく */
     .bubble .m{
       color:rgba(255,255,255,.92);
       font-size:14px;
@@ -237,7 +226,7 @@
       text-shadow: 0 2px 0 rgba(0,0,0,.25);
     }
 
-    /* layout (1カラム) */
+    /* layout */
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
 
     /* shelves */
@@ -289,6 +278,18 @@
       border:1px solid rgba(255,255,255,.18);
       padding:2px 6px;border-radius:999px;
     }
+    /* ✅ まとめ陳列：数量バッジ */
+    .slot .qty{
+      position:absolute; right:6px; bottom:6px;
+      font-size:10px; font-weight:900;
+      background:rgba(0,0,0,.62);
+      border:1px solid rgba(255,255,255,.18);
+      padding:2px 6px;border-radius:999px;
+      font-family:var(--mono);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
     .shelf-info{flex:1;min-width:0}
     .line{font-size:12px;color:var(--muted);line-height:1.35}
     .line b{color:var(--text)}
@@ -407,7 +408,7 @@
     }
     .csub .tagmini b{color:var(--text);font-weight:700}
 
-    /* toast（通常） */
+    /* toast */
     .toast{
       position:fixed;
       left:12px;
@@ -436,7 +437,6 @@
       to  { transform: translateY(0)   scale(1);   opacity: 1; }
     }
 
-    /* 売れた：グロー */
     .toast .box.toast--sale{
       border-color: rgba(255,211,138,.90);
       background: linear-gradient(180deg, rgba(255,211,138,.28), rgba(0,0,0,.80));
@@ -465,7 +465,6 @@
       color:rgba(255,255,255,.96);
     }
 
-    /* 売れた時のフラッシュ */
     .sale-flash{
       position:fixed; inset:0;
       pointer-events:none;
@@ -482,7 +481,6 @@
       100%{ opacity:0; }
     }
 
-    /* 呼び込みボタンの小さなタイマー表示 */
     .cd{
       font-size:11px;
       color:var(--muted);
@@ -495,27 +493,6 @@
       gap:8px;
       flex-wrap:wrap;
       justify-content:flex-end;
-    }
-
-    /* 右下固定：バックアップ/復元 */
-    .fab-wrap{
-      position:fixed;
-      right:12px;
-      bottom:12px;
-      z-index:60;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-    .fab-wrap .btn{
-      box-shadow: 0 12px 30px rgba(0,0,0,.45);
-      border-radius:14px;
-      padding:10px 12px;
-    }
-    .fab-wrap .btn.ghost{
-      background: rgba(255,255,255,.10);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
     }
   </style>
 </head>
@@ -546,19 +523,15 @@
 
       <div class="card-b">
         <div class="stage" id="stage">
-          <!-- ✅ 画像エリア -->
           <div class="stage-media">
             <img id="stageBg" class="stage-bg" alt="" src="">
             <img id="stageVisitor" class="stage-visitor" alt="" src="">
-
-            <!-- ✅ 右上に被せるタグ（昼/夜・次） -->
             <div class="stage-overlay" aria-hidden="true">
               <div class="tag" id="stageTimeTag">—</div>
               <div class="tag" id="stageNextTag">次：—</div>
             </div>
           </div>
 
-          <!-- ✅ 会話（画像の下） -->
           <div class="stage-ui">
             <div class="bubble">
               <div class="n" id="stageName">—</div>
@@ -591,7 +564,7 @@
         <div class="card-h">
           <div>
             <div class="card-title">最近の出来事</div>
-            <div class="card-desc">ログ</div>
+            <div class="card-desc">ログ（自動更新）</div>
           </div>
         </div>
         <div class="card-b">
@@ -599,11 +572,6 @@
         </div>
       </div>
     </div>
-  </div>
-
-  <div class="fab-wrap" aria-label="バックアップと復元">
-    <button class="btn ghost" id="backupBtn" type="button">バックアップ</button>
-    <button class="btn ghost" id="restoreBtn" type="button">復元</button>
   </div>
 
   <div class="modal" id="pickModal" aria-hidden="true">
@@ -644,7 +612,10 @@
           ・「呼び込み」は60秒に1回、<b>通常スケジュール（次：xxx）は変えずに</b>、呼び込んだ客だけ先に来る<br>
           ・もし通常の来客タイミングと被ったら、通常の方は<b>待機</b>して、呼び込み客が帰ったら来る<br><br>
           <b>棚解放</b><br>
-          Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5
+          Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5<br><br>
+          <b>まとめ陳列（まとめ売り）</b><br>
+          Lv10: 棚1 / Lv15: 棚2 / Lv20: 棚3 / Lv25: 棚4 / Lv30: 棚5<br>
+          （まとめ陳列できる棚は、同じカードを複数枚まとめて置けます。売れるたびに数量が減ります）
         </div>
       </div>
       <div class="sheet-actions">
@@ -662,8 +633,6 @@
     </div>
   </div>
 
-  <input id="restoreFile" type="file" accept="application/json" style="display:none" />
-
 <script>
 (() => {
   "use strict";
@@ -680,6 +649,13 @@
     const r  = String(obj?.rarity || obj?.rank || "").toUpperCase();
     return id.startsWith("CRAFT_") || id.startsWith("CRAFT-") || r.includes("CRAFT");
   }
+
+  /* =========================================================
+     ✅ まとめ陳列（まとめ売り）解放ルール
+     Lv10で棚1、以降Lv+5ごとに棚2,3...
+  ========================================================= */
+  function bulkUnlockLevelForSlot(idx){ return 10 + (idx * 5); } // idx:0→10, 1→15...
+  function isBulkUnlocked(idx, lv){ return lv >= bulkUnlockLevelForSlot(idx); }
 
   /* =========================================================
      アセット
@@ -812,9 +788,6 @@
   const backBtn = $("#backBtn");
   const shoutBtn = $("#shoutBtn");
   const shoutCdEl = $("#shoutCd");
-  const backupBtn = $("#backupBtn");
-  const restoreBtn = $("#restoreBtn");
-  const restoreFile = $("#restoreFile");
   const fixBtn = $("#fixBtn");
 
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -871,10 +844,12 @@
   function renderLog(){
     const log = lsGet(LS.log, { ver:1, items:[] });
     const items = Array.isArray(log.items) ? log.items : [];
+
     if(items.length === 0){
       logEl.innerHTML = `<div class="item"><div class="t">まだ何も起きていない</div><div class="m">棚にカードを出品すると、来客が始まるよ。</div></div>`;
       return;
     }
+
     logEl.innerHTML = items.map(it => {
       const d = new Date(it.at);
       const hh = String(d.getHours()).padStart(2,"0");
@@ -887,6 +862,17 @@
         </div>
       `;
     }).join("");
+  }
+
+  /* ✅ ログが動いていない対策：初回に必ず1行入れる */
+  function ensureLogBoot(){
+    const log = lsGet(LS.log, { ver:1, items:[] });
+    const items = Array.isArray(log.items) ? log.items : [];
+    if(items.length === 0){
+      pushLog("起動", "マイ露店を開いた（ログ開始）", "");
+    }else{
+      renderLog();
+    }
   }
 
   function isNight(){
@@ -1069,25 +1055,27 @@
     return null;
   }
 
-  function decrementBookCountById(cardId){
+  function decrementBookCountById(cardId, n=1){
+    n = Math.max(1, Math.floor(Number(n||1)));
     const book = loadFarmBook();
     const key = findGotKeyByCardId(book, cardId);
     if(!key) return false;
     const c = book.got[key];
     const cnt = Math.max(0, Number(c?.count||0));
-    if(cnt <= 0) return false;
-    c.count = cnt - 1;
+    if(cnt < n) return false;
+    c.count = cnt - n;
     book.got[key] = c;
     lsSet(LS.farmBook, book);
     return true;
   }
 
-  function incrementBookCountById(cardId, cardSnapshot){
+  function incrementBookCountById(cardId, cardSnapshot, n=1){
+    n = Math.max(1, Math.floor(Number(n||1)));
     const book = loadFarmBook();
     const key = findGotKeyByCardId(book, cardId) || String(cardId||"");
     const exist = book.got[key] || (cardSnapshot ? {...cardSnapshot} : { id: cardId, name: `カード ${cardId}` });
     const cnt = Math.max(0, Number(exist.count||0));
-    exist.count = cnt + 1;
+    exist.count = cnt + n;
 
     if(cardSnapshot){
       if(!exist.id) exist.id = cardSnapshot.id || cardId;
@@ -1124,24 +1112,34 @@
 
   /* 店（棚） */
   const SHOP_DEFAULT = {
-    ver:1,
+    ver:2,
     slots: [
-      { item:null, priceTier:"普通", createdAt:0 },
-      { item:null, priceTier:"普通", createdAt:0 },
-      { item:null, priceTier:"普通", createdAt:0 },
-      { item:null, priceTier:"普通", createdAt:0 },
-      { item:null, priceTier:"普通", createdAt:0 },
+      { item:null, qty:0, priceTier:"普通", createdAt:0 },
+      { item:null, qty:0, priceTier:"普通", createdAt:0 },
+      { item:null, qty:0, priceTier:"普通", createdAt:0 },
+      { item:null, qty:0, priceTier:"普通", createdAt:0 },
+      { item:null, qty:0, priceTier:"普通", createdAt:0 },
     ]
   };
   function loadMyShop(){
     const s = lsGet(LS.myshop, SHOP_DEFAULT);
     if(!Array.isArray(s.slots)) s.slots = SHOP_DEFAULT.slots.map(x=>({...x}));
-    while(s.slots.length < 5) s.slots.push({ item:null, priceTier:"普通", createdAt:0 });
+    while(s.slots.length < 5) s.slots.push({ item:null, qty:0, priceTier:"普通", createdAt:0 });
+
     s.slots = s.slots.slice(0,5).map(x => ({
       item: x.item || null,
+      qty: Math.max(0, Math.floor(Number(x.qty ?? (x.item ? 1 : 0)))),
       priceTier: x.priceTier || "普通",
       createdAt: Number(x.createdAt||0),
     }));
+
+    // ✅ 旧データ救済：itemがあるのにqtyが0なら1にする
+    s.slots = s.slots.map(x=>{
+      if(x.item && (!x.qty || x.qty<1)) x.qty = 1;
+      if(!x.item) x.qty = 0;
+      return x;
+    });
+
     return s;
   }
   function saveMyShop(s){ lsSet(LS.myshop, s); }
@@ -1214,9 +1212,7 @@
     }
   }
 
-  /* ==========================
-     ✅ 価格（ユーザー指定）
-  ========================== */
+  /* 価格 */
   function basePriceFor(card){
     const r = String(card?.rarity || "").toUpperCase();
     const map = { "N":500, "R":800, "SR":2000, "UR":5000, "LR":10000 };
@@ -1324,13 +1320,14 @@
     for(const s of shop.slots){
       const id = s?.item?.id;
       if(!id) continue;
-      map[id] = (map[id]||0) + 1;
+      map[id] = (map[id]||0) + Math.max(1, Number(s.qty||1));
     }
     return map;
   }
 
   /* =========================================================
-     ✅ 出品できるカード一覧（ここが職人対応の本丸）
+     ✅ 出品できるカード一覧（職人対応 + まとめ陳列）
+     spare = 出品に回せる枚数（通常は1枚残す／職人は残さなくてOK）
   ========================================================= */
   function listPickableCardsForListing(){
     const owned = listOwnedCardsFromBook();
@@ -1371,6 +1368,8 @@
 
     shop.slots.forEach((slot, idx)=>{
       const locked = !canUseSlot(idx, lv);
+      const bulkOK = isBulkUnlocked(idx, lv);
+
       const wrap = document.createElement("div");
       wrap.className = "shelf" + (locked ? " locked" : "");
 
@@ -1378,8 +1377,8 @@
       top.className = "shelf-top";
       top.innerHTML = `
         <div>
-          <div class="shelf-name">棚${idx+1}</div>
-          <div class="shelf-tag">解放：Lv${SHELF_UNLOCK[idx] || "?"}</div>
+          <div class="shelf-name">棚${idx+1} ${bulkOK ? "（まとめOK）" : ""}</div>
+          <div class="shelf-tag">解放：Lv${SHELF_UNLOCK[idx] || "?"} / まとめ：Lv${bulkUnlockLevelForSlot(idx)}</div>
         </div>
         <div class="shelf-tag mono">${escapeHTML(slot.priceTier || "普通")}</div>
       `;
@@ -1392,9 +1391,11 @@
       slotEl.title = locked ? "未解放" : "タップで出品/変更";
 
       if(slot.item && slot.item.img){
+        const qty = Math.max(1, Number(slot.qty||1));
         slotEl.innerHTML = `
           <div class="tier">${escapeHTML(slot.priceTier||"普通")}</div>
           <img alt="" src="${escapeHTML(slot.item.img)}">
+          <div class="qty">×${escapeHTML(qty)}</div>
         `;
       }else{
         slotEl.innerHTML = `<div class="ph">空き<br>（タップで出品）</div>`;
@@ -1416,11 +1417,12 @@
       const base = slot.item ? basePriceFor(slot.item) : 0;
       const rep = loadRep().rep;
       const price = slot.item ? Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep))) : 0;
+      const qty = slot.item ? Math.max(1, Number(slot.qty||1)) : 0;
 
       info.innerHTML = `
         <div class="line"><b>${escapeHTML(name)}</b></div>
         <div class="line">レア：<b>${escapeHTML(rar)}</b></div>
-        <div class="line">買取：<b>${slot.item ? fmt(price) : "-"}</b></div>
+        <div class="line">買取：<b>${slot.item ? fmt(price) : "-"}</b> <span style="color:rgba(255,255,255,.65)">${slot.item ? `（数量×${qty}）` : ""}</span></div>
         <div class="shelf-actions"></div>
       `;
 
@@ -1446,13 +1448,16 @@
       removeBtn.addEventListener("click", ()=>{
         const s = loadMyShop();
         const it = s.slots[idx].item;
+        const q  = Math.max(1, Number(s.slots[idx].qty||1));
         if(!it) return;
+
         s.slots[idx].item = null;
+        s.slots[idx].qty = 0;
         s.slots[idx].createdAt = 0;
         saveMyShop(s);
 
-        incrementBookCountById(it.id, it.raw || it);
-        pushLog("取り下げ", `${it.name||it.id} を棚${idx+1}から戻した`, it.id);
+        incrementBookCountById(it.id, it.raw || it, q);
+        pushLog("取り下げ", `${it.name||it.id} を棚${idx+1}から戻した（×${q}）`, it.id);
         renderAll();
       });
 
@@ -1503,10 +1508,14 @@
     const shop = loadMyShop();
     const current = shop.slots[slotIdx]?.item;
 
+    const bulkOK = isBulkUnlocked(slotIdx, lv);
+
     pickTitleEl.textContent = `棚${slotIdx+1} に出品するカード`;
     pickHintEl.textContent = current
       ? `現在：${current.name||current.id}（変更できます）`
-      : "出品できるカードから選べます（通常は1枚残す／職人は最後の1枚OK）";
+      : bulkOK
+        ? "✅この棚は「まとめ陳列」OK（複数枚まとめて置けます）"
+        : "出品できるカードから選べます（通常は1枚残す／職人は最後の1枚OK）";
 
     renderPickCards();
 
@@ -1584,7 +1593,8 @@
     pickCardsEl.appendChild(frag);
   }
 
-  function canDecrementForListing(cardId){
+  function canDecrementForListing(cardId, n=1){
+    n = Math.max(1, Math.floor(Number(n||1)));
     const book = loadFarmBook();
     const key = findGotKeyByCardId(book, cardId);
     if(!key) return false;
@@ -1593,9 +1603,22 @@
     const craft = isCraftCard({ id: String(cardId), rarity: String(c?.rarity||"") });
 
     if(craft && CRAFT_CAN_LIST_LAST_ONE){
-      return cnt >= 1;
+      return cnt >= n;
     }
-    return cnt >= 2;
+    // 通常は1枚残し → cnt >= n+1
+    return cnt >= (n + 1);
+  }
+
+  function askBulkQty(slotIdx, max){
+    const lv = loadLevel().lv;
+    if(!isBulkUnlocked(slotIdx, lv)) return 1;
+    if(max <= 1) return 1;
+
+    const raw = prompt(`まとめ陳列の数量を入力（1〜${max}）`, String(Math.min(3, max)));
+    if(raw == null) return null; // cancel
+    const n = Math.floor(Number(raw));
+    if(!isFinite(n) || n < 1 || n > max) return 1;
+    return n;
   }
 
   function selectCardForSlot(slotIdx, pickedCard){
@@ -1603,18 +1626,34 @@
     const slot = shop.slots[slotIdx];
     if(!slot) return;
 
+    // まず既存を戻す（数量も戻す）
     if(slot.item){
-      incrementBookCountById(slot.item.id, slot.item.raw || slot.item);
+      const qBack = Math.max(1, Number(slot.qty||1));
+      incrementBookCountById(slot.item.id, slot.item.raw || slot.item, qBack);
     }
 
-    if(!canDecrementForListing(pickedCard.id)){
+    // ✅ 今回出す数量（まとめ陳列）
+    const lv = loadLevel().lv;
+    const bulkOK = isBulkUnlocked(slotIdx, lv);
+
+    const maxQty = bulkOK ? Math.max(1, Number(pickedCard.spare||1)) : 1;
+    const qty = bulkOK ? askBulkQty(slotIdx, maxQty) : 1;
+    if(qty === null){
+      // キャンセル：元の棚を空にするのは不親切なので、戻した後に終了（結果、棚は空）
+      pushLog("キャンセル", `棚${slotIdx+1}の出品をキャンセルした`, "");
+      renderAll();
+      closePickModal();
+      return;
+    }
+
+    if(!canDecrementForListing(pickedCard.id, qty)){
       toast("出品できない", "通常カードは1枚残す必要があります（職人は例外）", "");
       renderAll();
       closePickModal();
       return;
     }
 
-    const ok = decrementBookCountById(pickedCard.id);
+    const ok = decrementBookCountById(pickedCard.id, qty);
     if(!ok){
       toast("出品できない", "図鑑側の数が足りません（同期ずれの可能性）", "");
       renderAll();
@@ -1629,12 +1668,13 @@
       rarity: pickedCard.rarity,
       raw: pickedCard.raw
     };
+    slot.qty = Math.max(1, Math.floor(Number(qty||1)));
     slot.createdAt = now();
     shop.slots[slotIdx] = slot;
     saveMyShop(shop);
 
-    pushLog("出品", `${pickedCard.name||pickedCard.id} を棚${slotIdx+1}に置いた`, pickedCard.id);
-    toast("出品OK", `棚${slotIdx+1}に ${pickedCard.name||pickedCard.id}`, "");
+    pushLog("出品", `${pickedCard.name||pickedCard.id} を棚${slotIdx+1}に置いた（×${slot.qty}）`, pickedCard.id);
+    toast("出品OK", `棚${slotIdx+1}に ${pickedCard.name||pickedCard.id} ×${slot.qty}`, "");
 
     ensureNextAtForActiveSlots();
     renderAll();
@@ -1688,14 +1728,25 @@
       return;
     }
 
+    // ✅ 売れた：数量がある場合は1減らす（まとめ陳列）
+    const beforeQty = Math.max(1, Number(slot.qty||1));
+    const afterQty = beforeQty - 1;
+
     saveOcto(loadOcto() + price);
 
     const lv = addExp(4);
     const repState = addRep(cust.repDeltaOnBuy);
 
     const soldItem = slot.item;
-    shop.slots[slotIdx].item = null;
-    shop.slots[slotIdx].createdAt = 0;
+
+    if(afterQty <= 0){
+      shop.slots[slotIdx].item = null;
+      shop.slots[slotIdx].qty = 0;
+      shop.slots[slotIdx].createdAt = 0;
+    }else{
+      shop.slots[slotIdx].qty = afterQty;
+      // itemは残す（陳列続行）
+    }
     saveMyShop(shop);
 
     const t = loadTick();
@@ -1703,8 +1754,9 @@
     t.nextAtBySlot[String(slotIdx)] = now() + nextVisitDelayMs();
     saveTick(t);
 
-    pushLog("売れた！", `${soldItem.name||soldItem.id} が ${fmt(price)} OCTOで売れた`, `棚${slotIdx+1} / rep ${repState.rep}`);
-    toast("🔥 売れた！！ 🔥", `${soldItem.name||soldItem.id} ／ +${fmt(price)} OCTO`, "sale");
+    const leftText = (afterQty > 0) ? `（残り×${afterQty}）` : "（完売）";
+    pushLog("売れた！", `${soldItem.name||soldItem.id} が ${fmt(price)} OCTOで売れた ${leftText}`, `棚${slotIdx+1} / rep ${repState.rep}`);
+    toast("🔥 売れた！！ 🔥", `${soldItem.name||soldItem.id} ／ +${fmt(price)} OCTO ${leftText}`, "sale");
 
     if(lv.leveled){
       pushLog("レベルアップ", `Lv${lv.state.lv}になった！`, "");
@@ -1771,6 +1823,8 @@
       s.source = (type==="shout") ? "shout" : "normal";
       saveStage(s);
       renderStage();
+
+      pushLog("来客", `${s.vName} が棚${targetSlot+1}を見ている`, `${typeLabel}`);
 
       const lvup = addExp(1);
       if(lvup.leveled){
@@ -1986,135 +2040,6 @@
     renderAll();
   }
 
-  function downloadText(filename, text){
-    const blob = new Blob([text], { type:"application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=> URL.revokeObjectURL(url), 1500);
-  }
-
-  function makeBackup(){
-    const keys = [
-      LS.octo, LS.myshop, LS.log, LS.lvl, LS.rep, LS.tick, LS.shout, LS.stage,
-      LS.farmBook,
-      "tf_v1_inv",
-      LS.queue
-    ];
-
-    const data = {};
-    for(const k of keys){
-      const raw = localStorage.getItem(k);
-      if(raw == null){
-        data[k] = null;
-        continue;
-      }
-      const parsed = safeJSON(raw, null);
-      data[k] = (parsed !== null) ? parsed : raw;
-    }
-
-    const d = new Date();
-    const pad = (n)=> String(n).padStart(2,"0");
-    const stamp = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-    const filename = `takoyaki-myshop-backup-${stamp}.json`;
-
-    const payload = {
-      exportedAt: d.toISOString(),
-      note: "マイ露店のlocalStorageバックアップ（復元は復元ボタンで可能）",
-      keys,
-      data
-    };
-
-    downloadText(filename, JSON.stringify(payload, null, 2));
-    toast("バックアップ作成", `${filename} を保存しました`, "");
-    pushLog("バックアップ", "ローカルデータをJSONに書き出した", filename);
-  }
-
-  function restoreFromPayload(payload){
-    if(!payload || typeof payload !== "object"){
-      toast("復元失敗", "JSONの形式が不正です", "");
-      return false;
-    }
-    const data = payload.data;
-    if(!data || typeof data !== "object"){
-      toast("復元失敗", "data が見つかりません", "");
-      return false;
-    }
-
-    const keys = Array.isArray(payload.keys) ? payload.keys : Object.keys(data);
-
-    for(const k of keys){
-      if(!(k in data)) continue;
-      const v = data[k];
-
-      if(v === null || v === undefined){
-        localStorage.removeItem(k);
-        continue;
-      }
-
-      if(typeof v === "string"){
-        localStorage.setItem(k, v);
-      }else{
-        localStorage.setItem(k, JSON.stringify(v));
-      }
-    }
-    return true;
-  }
-
-  function openRestoreDialog(){
-    restoreFile.value = "";
-    restoreFile.click();
-  }
-
-  restoreFile.addEventListener("change", async ()=>{
-    const file = restoreFile.files && restoreFile.files[0];
-    if(!file) return;
-
-    try{
-      const text = await file.text();
-      const payload = JSON.parse(text);
-
-      if(!confirm("復元しますか？（今のデータは上書きされます）")) return;
-
-      const ok = restoreFromPayload(payload);
-      if(ok){
-        pushLog("復元", "バックアップから復元した", file.name);
-        toast("復元OK", "ページを再読み込みします", "");
-        setTimeout(()=> location.reload(), 650);
-      }
-    }catch(e){
-      toast("復元失敗", "JSONを読み込めませんでした", "");
-    }
-  });
-
-  fixBtn.addEventListener("click", ()=>{
-    const STAGE_DEFAULT2 = {
-      ver:1,
-      hasVisitor:false,
-      leaving:false,
-      vUrl:"",
-      vName:"—",
-      vMsg:"まだ誰も来ていない。",
-      vType:"",
-      vGoal:"",
-      stayMs:0,
-      targetSlot:-1,
-      updatedAt: Date.now(),
-      source:""
-    };
-
-    localStorage.setItem(LS.stage, JSON.stringify(STAGE_DEFAULT2));
-    localStorage.removeItem(LS.tick);
-    localStorage.setItem(LS.queue, JSON.stringify(QUEUE_DEFAULT));
-
-    alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
-    location.reload();
-  });
-
   function renderAll(){
     renderStats();
     renderShelves();
@@ -2151,10 +2076,33 @@
 
   shoutBtn.addEventListener("click", shout);
 
-  backupBtn.addEventListener("click", makeBackup);
-  restoreBtn.addEventListener("click", openRestoreDialog);
+  fixBtn.addEventListener("click", ()=>{
+    const STAGE_DEFAULT2 = {
+      ver:1,
+      hasVisitor:false,
+      leaving:false,
+      vUrl:"",
+      vName:"—",
+      vMsg:"まだ誰も来ていない。",
+      vType:"",
+      vGoal:"",
+      stayMs:0,
+      targetSlot:-1,
+      updatedAt: Date.now(),
+      source:""
+    };
 
+    localStorage.setItem(LS.stage, JSON.stringify(STAGE_DEFAULT2));
+    localStorage.removeItem(LS.tick);
+    localStorage.setItem(LS.queue, JSON.stringify(QUEUE_DEFAULT));
+
+    alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
+    location.reload();
+  });
+
+  /* ===== 起動 ===== */
   applyDayNight();
+  ensureLogBoot();      // ✅ ログが必ず表示される
   renderAll();
   scheduleStage();
   trySpawnQueuedIfPossible();
