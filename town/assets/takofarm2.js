@@ -1,26 +1,27 @@
-/* takofarm2.js（テスト用：開設記念シリアル “anniv” フル対応版）
-   ✅ これ1本で完結するようにしてある：
-   - farm2.htmlの #serialBtn からシリアル入力UIを出す
-   - redeem → seed_tokens を localStorage(tf_v1_seedtokens) に保存
-   - seed_anniv は invではなく token 回数で管理
-   - 植える時：token消費 → GASへ plant（失敗したら戻す）
-   - 収穫時：GASへ harvest → result.card_id を受け取り → 画像/レアに変換
+/* takofarm2.js（開設記念シリアル “anniv” フル対応・クリック不具合対策入り）
+   ✅ 要件対応：
+   1) #serialBtn を確実に拾う
+   2) elementFromPoint で被さり要素を検出し、必要なら z-index / pointer-events を調整
+   3) モーダルに #serialCode + #serialSend を表示
+   4) GASへ JSON POST で redeem
+   5) tf_v1_seedtokens.tokens.anniv に seed_tokens を concat
+   6) renderLoadout()/render() で ×数即反映
+   7) USED / NOT_FOUND 等をモーダル内に表示
+   8) harvest commit（閉じる＝確定）仕様は維持
 */
 
 (() => {
   "use strict";
 
-  // =========================
-  // ✅ GAS WebアプリURL（redeem と同じ URL）
-  // =========================
+  // =========================================================
+  // ✅ GAS WebアプリURL（redeem/plant/harvest 同一URL）
+  // =========================================================
   const SERIAL_API_URL = "https://script.google.com/macros/s/AKfycbwXJXFLCgL7ZMgb7M1hHwfKI6vBPicWgf0yutF5qyo9fkLrGH393zSoA20sRqk7PO71/exec";
-
-  // ✅ GAS側で apiKey を要求しているので必須
   const SERIAL_API_KEY = "takopi-gratan-2026";
 
-  // =========================
-  // マス画像（状態ごと）
-  // =========================
+  // =========================================================
+  // 画像
+  // =========================================================
   const PLOT_IMG = {
     EMPTY: "https://ul.h3z.jp/muPEAkao.png",
     GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
@@ -33,20 +34,20 @@
     GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png"
   };
 
-  // =========================
+  // =========================================================
   // LocalStorage Keys
-  // =========================
-  const LS_STATE   = "tf_v1_state";
-  const LS_BOOK    = "tf_v1_book";
-  const LS_PLAYER  = "tf_v1_player";
-  const LS_INV     = "tf_v1_inv";
-  const LS_LOADOUT = "tf_v1_loadout";
-  const LS_OCTO    = "roten_v1_octo";
-
-  // ✅ シリアル種のトークン保管（rewardごとに配列で保持）
+  // =========================================================
+  const LS_STATE      = "tf_v1_state";
+  const LS_BOOK       = "tf_v1_book";
+  const LS_PLAYER     = "tf_v1_player";
+  const LS_INV        = "tf_v1_inv";
+  const LS_LOADOUT    = "tf_v1_loadout";
+  const LS_OCTO       = "roten_v1_octo";
   const LS_SEEDTOKENS = "tf_v1_seedtokens";
 
-  // 育成時間など
+  // =========================================================
+  // 時間系
+  // =========================================================
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;
   const READY_TO_BURN_MS = 24 * 60 * 60 * 1000;
   const TICK_MS = 1000;
@@ -54,7 +55,7 @@
   const BASE_RARITY_RATE = { N:70, R:20, SR:8, UR:1.8, LR:0.2 };
 
   // =========================================================
-  // カードプール（あなたの現行のまま）
+  // カードプール（ユーザー現行）
   // =========================================================
   const CARD_POOLS = {
     N: [
@@ -120,7 +121,7 @@
   };
 
   // =========================================================
-  // ★タネ一覧（seed_anniv を追加）
+  // タネ/水/肥料
   // =========================================================
   const SEEDS = [
     { id:"seed_random", name:"なに出るタネ", desc:"何が育つかは完全ランダム。\n店主も知らない。", factor:1.00, img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
@@ -158,9 +159,9 @@
     { id:"fert_timeno", name:"時間を信じない肥料", desc:"最終兵器・禁忌。\n（今は時短だけ）", factor:0.10, fx:"時短 90〜100%", img:"https://ul.h3z.jp/l2njWY57.png", burnCardUp:0.00, rawCardChance:0.03, mantra:false, skipGrowAnim:true },
   ];
 
-  // =========================
+  // =========================================================
   // 開設記念：card_id → 画像/レア対応
-  // =========================
+  // =========================================================
   const ANNIV_CARD_MAP = {
     "ANN-N-001":  { name:"開設記念 N",  rarity:"N",  img:"assets/images/anniversary/1.png"  },
     "ANN-R-001":  { name:"開設記念 R",  rarity:"R",  img:"assets/images/anniversary/2.png"  },
@@ -186,6 +187,7 @@
   function xpNeedForLevel(level){
     return 120 + (level - 1) * 50 + Math.floor(Math.pow(level - 1, 1.6) * 20);
   }
+
   function defaultPlayer(){ return { ver:1, level:1, xp:0, unlocked:START_UNLOCK }; }
   function loadPlayer(){
     try{
@@ -246,8 +248,7 @@
   }
 
   // =========================================================
-  // ✅ シリアル seed_token 管理
-  // tokens[reward] = ["SEED-...","SEED-..."]
+  // ✅ シリアル seed_token 管理（tokens[reward]=[...]）
   // =========================================================
   function defaultSeedTokens(){ return { ver:1, tokens:{} }; }
   function loadSeedTokens(){
@@ -310,11 +311,9 @@
     return next;
   }
 
-  function randInt(min, max){
-    min = Math.floor(min); max = Math.floor(max);
-    if(max < min) [min, max] = [max, min];
-    return min + Math.floor(Math.random() * (max - min + 1));
-  }
+  // =========================================================
+  // Utility
+  // =========================================================
   function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
   function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function pad2(n){ return String(n).padStart(2,"0"); }
@@ -328,7 +327,7 @@
   }
 
   // =========================================================
-  // ✅ GAS 呼び出し（apiKey込みで統一）
+  // ✅ GAS 呼び出し（JSON POST）
   // =========================================================
   async function callSerial(action, payload){
     const res = await fetch(SERIAL_API_URL, {
@@ -336,7 +335,14 @@
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ apiKey: SERIAL_API_KEY, action, ...payload })
     });
-    return await res.json();
+
+    // GASがHTML返す/エラー返す等の事故に備えて保険
+    const text = await res.text();
+    try{
+      return JSON.parse(text);
+    }catch(e){
+      return { ok:false, error:"BAD_JSON", raw:text };
+    }
   }
 
   // =========================================================
@@ -369,7 +375,7 @@
   }
 
   // =========================================================
-  // 種でTN範囲制限（元のまま）
+  // 種でTN範囲制限
   // =========================================================
   function makeTNSet(from, to){
     const set = new Set();
@@ -404,10 +410,9 @@
   }
 
   // =========================================================
-  // 通常報酬抽選
+  // 通常報酬抽選（seed_anniv は抽選しない）
   // =========================================================
   function drawRewardForPlot(p){
-    // ✅ seed_anniv はここでは抽選しない（GAS確定）
     if (p && p.seedId === "seed_anniv") return null;
 
     const rarity = (p && p.fixedRarity) ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
@@ -464,14 +469,14 @@
   }
   function saveLoadout(l){ localStorage.setItem(LS_LOADOUT, JSON.stringify(l)); }
 
-  let state  = loadState();
-  let book   = loadBook();
-  let inv    = loadInv();
+  let state   = loadState();
+  let book    = loadBook();
+  let inv     = loadInv();
   let loadout = loadLoadout();
 
-  // =========================
+  // =========================================================
   // DOM
-  // =========================
+  // =========================================================
   const farmEl   = document.getElementById("farm");
   const stBookEl = document.getElementById("stBook");
   const stGrow   = document.getElementById("stGrow");
@@ -519,6 +524,7 @@
   if(!equipWaterBtn) __missing.push("#equipWater");
   if(!equipFertBtn) __missing.push("#equipFert");
   if(!serialBtn) __missing.push("#serialBtn");
+
   if(__missing.length){
     console.error("❌ 必須DOMが見つからない:", __missing.join(", "));
     alert("HTMLに必須IDが足りません: " + __missing.join(", "));
@@ -526,7 +532,7 @@
   }
 
   // =========================================================
-  // Modal（あなたのロック版を簡略維持）
+  // Modal（閉じる＝収穫確定仕様を維持）
   // =========================================================
   let __harvestCommitFn = null;
   function setHarvestCommit(fn){ __harvestCommitFn = (typeof fn === "function") ? fn : null; }
@@ -552,68 +558,186 @@
     closeModal();
   }
   mClose.addEventListener("click", closeModalOrCommit);
+  modal.querySelector(".backdrop")?.addEventListener("click", closeModalOrCommit);
 
   // =========================================================
-  // ✅ redeem UI（ここが「最初から入れるべきだった保存処理」）
+  // ✅ クリック不具合対策（elementFromPointで被さり検出→補正）
   // =========================================================
+  function describeEl(el){
+    if(!el) return "(null)";
+    const id = el.id ? `#${el.id}` : "";
+    const cls = (el.className && typeof el.className === "string") ? "." + el.className.trim().split(/\s+/).join(".") : "";
+    return `${el.tagName}${id}${cls}`;
+  }
+
+  function ensureSerialBtnClickable(){
+    // 1) 強制的に serialBtn を前面＆押せる設定
+    serialBtn.style.position = serialBtn.style.position || "relative";
+    serialBtn.style.zIndex = serialBtn.style.zIndex || "10001";
+    serialBtn.style.pointerEvents = "auto";
+
+    // 2) ボタン中心点で elementFromPoint を確認
+    const r = serialBtn.getBoundingClientRect();
+    const cx = Math.floor(r.left + r.width/2);
+    const cy = Math.floor(r.top  + r.height/2);
+    const hit = document.elementFromPoint(cx, cy);
+
+    // hit が serialBtn か、その子要素ならOK
+    if(hit === serialBtn || (hit && serialBtn.contains(hit))) return { ok:true };
+
+    // 3) 被さってる要素を検出→必要なら pointer-events を切る（危険な全解除はしない）
+    //    「headerの飾り」「透明のオーバーレイ」「疑似要素レイヤ」等が原因のことが多い
+    const hitStyle = hit ? getComputedStyle(hit) : null;
+    const info = {
+      ok:false,
+      hit: describeEl(hit),
+      hitZ: hitStyle ? hitStyle.zIndex : "",
+      hitPE: hitStyle ? hitStyle.pointerEvents : "",
+    };
+    console.warn("⚠️ serialBtn が被さりで押せない可能性:", info);
+
+    // 4) もし hit が topbar の装飾や透明レイヤ系なら pointer-events を無効化
+    //    ※安全のため「ボタン以外で、透明に近い/クリック目的でなさそう」だけ対象
+    if(hit && hit !== document.body && hit !== document.documentElement){
+      // ボタンやリンク等のインタラクティブ要素は触らない
+      const tag = (hit.tagName || "").toLowerCase();
+      const interactive = (tag === "button" || tag === "a" || hit.hasAttribute("role"));
+      if(!interactive){
+        // 最小限：当たっている要素だけ pointer-events を切る
+        hit.style.pointerEvents = "none";
+        // 再チェック
+        const hit2 = document.elementFromPoint(cx, cy);
+        if(hit2 === serialBtn || (hit2 && serialBtn.contains(hit2))){
+          console.warn("✅ 被さり要素の pointer-events を無効化して解決:", describeEl(hit));
+          return { ok:true, fixed:true, disabled: describeEl(hit) };
+        }else{
+          // 戻す（無闇に壊さない）
+          hit.style.pointerEvents = "";
+        }
+      }
+    }
+
+    // 5) 最終手段：serialBtn をさらに上へ
+    serialBtn.style.zIndex = "20001";
+    return { ok:false };
+  }
+
+  // 起動直後/リサイズ時にチェック（「押せない」を先回りで潰す）
+  ensureSerialBtnClickable();
+  window.addEventListener("resize", ensureSerialBtnClickable);
+
+  // =========================================================
+  // ✅ redeem 実処理
+  // =========================================================
+  function formatRedeemError(code){
+    // GAS想定: USED / NOT_FOUND / INVALID / BAD_KEY / ...
+    const c = String(code || "REDEEM_FAILED");
+    if(c === "USED") return "このコードは使用済みです（USED）";
+    if(c === "NOT_FOUND") return "コードが見つかりません（NOT_FOUND）";
+    if(c === "INVALID") return "コード形式が不正です（INVALID）";
+    if(c === "BAD_KEY") return "APIキーが不正です（BAD_KEY）";
+    if(c === "BAD_JSON") return "サーバー応答がJSONではありません（BAD_JSON）";
+    return `失敗：${c}`;
+  }
+
   async function doRedeemFlow(code){
     const c = String(code || "").trim();
     if(!c) throw new Error("EMPTY_CODE");
 
+    // 要件4) payload例：{ action:"redeem", apiKey:"...", code:"XXXX" }
     const r = await callSerial("redeem", { code: c });
-    if(!r || !r.ok) throw new Error((r && r.error) ? r.error : "REDEEM_FAILED");
+
+    if(!r || !r.ok){
+      const err = (r && r.error) ? r.error : "REDEEM_FAILED";
+      throw new Error(err);
+    }
 
     const reward = String(r.reward || "");
     const tokens = Array.isArray(r.seed_tokens) ? r.seed_tokens : [];
 
-    // ✅ ここで localStorage(tf_v1_seedtokens) に保存
+    // 要件5) tokens.anniv 配列に concat（reward が anniv の想定）
     addTokens(reward, tokens);
 
-    return { reward, amount: Number(r.amount || tokens.length || 0), added: tokens.length };
+    return {
+      reward,
+      added: tokens.length,
+      total: tokenCount(reward),
+      amount: Number(r.amount || tokens.length || 0)
+    };
   }
 
+  // =========================================================
+  // ✅ redeem モーダル（要件3: #serialCode #serialSend）
+  // =========================================================
   function openRedeemModal(){
     openModal("シリアル入力", `
       <div class="step">
-        ✅ 開設記念なら <b>anniv</b> が付いたコードを入れる。<br>
-        反映されたら「開設記念のタネ」の × が増える。
+        <b>開設記念のタネ</b>（anniv）のコードを入力すると、<br>
+        <b>seed_token</b> が追加されて「開設記念のタネ」の <b>×数</b> が増えます。
       </div>
-      <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
-        <input id="serialInput" type="text" placeholder="シリアルコード" style="flex:1;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.25);color:#fff;outline:none;">
-        <button id="serialGo" type="button" class="primary">送信</button>
+
+      <div style="display:flex;gap:10px;align-items:center;margin-top:12px;">
+        <input id="serialCode" type="text" placeholder="シリアルコード"
+          style="flex:1;padding:12px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.16);
+                 background:rgba(0,0,0,.25);color:#fff;outline:none;" />
+        <button id="serialSend" type="button" class="primary"
+          style="padding:12px 14px;border-radius:14px;border:1px solid rgba(127,208,255,.55);
+                 background:rgba(127,208,255,.18);color:#fff;font-weight:900;cursor:pointer;">
+          送信
+        </button>
       </div>
-      <div id="serialMsg" style="margin-top:10px;font-size:13px;opacity:.9;"></div>
+
+      <div id="serialMsg" style="margin-top:10px;font-size:13px;line-height:1.6;color:rgba(255,255,255,.9);"></div>
+
       <div class="row" style="margin-top:12px;">
         <button type="button" id="serialClose">閉じる</button>
       </div>
     `);
 
-    const input = document.getElementById("serialInput");
+    const input = document.getElementById("serialCode");
+    const send  = document.getElementById("serialSend");
     const msg   = document.getElementById("serialMsg");
-    const go    = document.getElementById("serialGo");
     const cls   = document.getElementById("serialClose");
 
     const run = async () => {
-      go.disabled = true;
+      send.disabled = true;
       msg.textContent = "通信中…";
       try{
         const res = await doRedeemFlow(input.value);
-        msg.innerHTML = `✅ 追加完了：<b>${res.reward}</b> ×${res.added}<br>（合計：${tokenCount(res.reward)}）`;
-        render(); // ✅ 表示更新
+        msg.innerHTML = `✅ 追加完了：<b>${res.reward}</b> ×${res.added}<br>合計：<b>${res.total}</b>`;
+        // 要件6) 即反映
+        renderLoadout();
+        render();
       }catch(e){
-        msg.textContent = "❌ 失敗: " + (e && e.message ? e.message : String(e));
+        const code = (e && e.message) ? e.message : String(e || "REDEEM_FAILED");
+        if(code === "EMPTY_CODE"){
+          msg.textContent = "❌ シリアルコードを入力してください。";
+        }else{
+          msg.textContent = "❌ " + formatRedeemError(code);
+        }
       }finally{
-        go.disabled = false;
+        send.disabled = false;
       }
     };
 
-    go.addEventListener("click", run);
-    input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") run(); });
+    send.addEventListener("click", run);
+    input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") run(); });
     cls.addEventListener("click", closeModal);
+
     input.focus();
   }
 
-  serialBtn.addEventListener("click", openRedeemModal);
+  // =========================================================
+  // ✅ serialBtn の click を「確実に拾う」
+  //  - click / pointerup 両対応
+  //  - 押せない時は ensureSerialBtnClickable() を先に実行
+  // =========================================================
+  function openRedeemModalSafe(){
+    ensureSerialBtnClickable();
+    openRedeemModal();
+  }
+  serialBtn.addEventListener("click", openRedeemModalSafe, { passive:true });
+  serialBtn.addEventListener("pointerup", openRedeemModalSafe, { passive:true });
 
   // =========================================================
   // ✅ 装備表示更新（seed_anniv は token 数）
@@ -622,9 +746,9 @@
     inv = loadInv();
     loadout = loadLoadout();
 
-    const seed  = SEEDS.find(x=>x.id===loadout.seedId)  || null;
+    const seed  = SEEDS.find(x=>x.id===loadout.seedId)   || null;
     const water = WATERS.find(x=>x.id===loadout.waterId) || null;
-    const fert  = FERTS.find(x=>x.id===loadout.fertId)  || null;
+    const fert  = FERTS.find(x=>x.id===loadout.fertId)   || null;
 
     if(seed){
       equipSeedImg.src = seed.img;
@@ -752,7 +876,7 @@
       if(locked){
         btn.innerHTML = `
           <img src="${PLOT_IMG.EMPTY}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:14px;display:block;opacity:.55;">
-          <div class="tag" style="position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;">ロック</div>
+          <div class="tag">ロック</div>
         `;
         btn.addEventListener("click", () => onPlotTap(i));
         d.appendChild(btn);
@@ -785,7 +909,7 @@
 
       btn.innerHTML = `
         <img src="${img}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:14px;display:block;">
-        <div class="tag" style="position:absolute; bottom:6px; left:0; right:0;text-align:center; font-size:11px; font-weight:900; color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6); pointer-events:none;">${label}</div>
+        <div class="tag">${label}</div>
       `;
       btn.addEventListener("click", () => onPlotTap(i));
       d.appendChild(btn);
@@ -809,9 +933,6 @@
     stXpLeft.textContent = String(left);
     stXpNeed.textContent = String(need);
     stXpBar.style.width  = pct + "%";
-
-    const stXpNow = document.getElementById("stXpNow");
-    if (stXpNow) stXpNow.textContent = String(now);
 
     renderLoadout();
   }
