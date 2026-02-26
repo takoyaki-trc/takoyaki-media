@@ -23,13 +23,6 @@
       --tile:84px;
       --thumbPad:5px;
       --gap:10px;
-
-      /* ✅ 来店コメント（セリフ）色 */
-      --bubbleBg: rgba(10,14,26,.86);
-      --bubbleTint: rgba(127,208,255,.14);
-      --bubbleLine: rgba(255,255,255,.28);
-      --bubbleNameBg: rgba(255,211,138,.16);
-      --bubbleNameLine: rgba(255,211,138,.45);
     }
     *{box-sizing:border-box}
     body{
@@ -37,7 +30,7 @@
       font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
     }
     body.noscroll{ overflow:hidden; touch-action:none; }
-    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 140px}
+    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 90px} /* ✅ 下部余白を少し減らす */
     .mono{font-family:var(--mono)}
     .btn{
       border:1px solid var(--line);
@@ -117,6 +110,7 @@
 
     /* =========================================================
        ✅ 来店ステージ
+       - 露店画像の下（stage-ui）に “色” を付ける
     ========================================================= */
     .stage-card{margin-bottom:12px}
     .stage{
@@ -188,6 +182,8 @@
       -webkit-backdrop-filter: blur(6px);
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
     }
+
+    /* ✅ ここが「露店画像の下の枠内」：色を付ける */
     .stage-ui{
       position:relative;
       display:flex;
@@ -196,76 +192,92 @@
       gap:10px;
       padding:12px;
       pointer-events:auto;
-      background: linear-gradient(180deg, rgba(0,0,0,.40), rgba(0,0,0,.62));
+
+      /* ↓ 色付き（青緑寄りの発光＆帯） */
+      background:
+        linear-gradient(180deg, rgba(127,208,255,.18), rgba(0,0,0,.70)),
+        radial-gradient(circle at 18% 0%, rgba(159,255,168,.14), rgba(0,0,0,0) 55%),
+        radial-gradient(circle at 75% 30%, rgba(255,211,138,.12), rgba(0,0,0,0) 55%);
+      border-top:1px solid rgba(255,255,255,.10);
+    }
+    .stage-ui::before{
+      content:"";
+      position:absolute;
+      left:10px; right:10px; top:8px;
+      height:3px;
+      border-radius:999px;
+      background: linear-gradient(90deg, rgba(127,208,255,.85), rgba(159,255,168,.75), rgba(255,211,138,.75));
+      opacity:.75;
+      filter: blur(.2px);
+      pointer-events:none;
     }
 
-    /* ✅ セリフっぽい枠（色つき + しっぽ） */
     .bubble{
-      position:relative;
       width:100%;
-      border:1px solid var(--bubbleLine);
+      border:1px solid rgba(255,255,255,.20);
       background:
-        radial-gradient(circle at 18% 18%, var(--bubbleTint), rgba(0,0,0,0) 55%),
-        var(--bubbleBg);
-      border-radius:16px;
-      padding:12px 14px 12px;
+        radial-gradient(circle at 20% 10%, rgba(127,208,255,.12), rgba(0,0,0,0) 55%),
+        rgba(0,0,0,.62);
+      border-radius:14px;
+      padding:12px 14px;
       line-height:1.35;
       box-shadow:
         0 18px 45px rgba(0,0,0,.45),
         0 0 0 1px rgba(255,255,255,.06) inset;
     }
-    .bubble::after{
-      content:"";
-      position:absolute;
-      left:22px;
-      bottom:-10px;
-      width:18px;
-      height:18px;
-      background: var(--bubbleBg);
-      border-left:1px solid var(--bubbleLine);
-      border-bottom:1px solid var(--bubbleLine);
-      transform: rotate(45deg);
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,.35));
-    }
     .bubble .n{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
       font-weight:950;
       font-size:16px;
       letter-spacing:.02em;
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid var(--bubbleNameLine);
-      background: linear-gradient(180deg, var(--bubbleNameBg), rgba(0,0,0,.18));
-      box-shadow: 0 10px 22px rgba(0,0,0,.25);
     }
-    .bubble .n.neg{ color: var(--bad); border-color: rgba(255,154,165,.55); background: linear-gradient(180deg, rgba(255,154,165,.16), rgba(0,0,0,.18)); }
+    .bubble .n.neg{ color: var(--bad); }
     .bubble .m{
-      color:rgba(255,255,255,.94);
+      color:rgba(255,255,255,.92);
       font-size:14px;
-      margin-top:10px;
+      margin-top:6px;
       line-height:1.55;
       text-shadow: 0 2px 0 rgba(0,0,0,.25);
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
     }
 
     /* layout */
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
 
-    /* shelves */
-    .shelves{display:grid;grid-template-columns: repeat(2, minmax(0,1fr));gap:10px;}
-    @media (max-width: 560px){ .shelves{grid-template-columns:1fr} }
+    /* =========================================================
+       ✅ 棚（出品）レイアウト変更（他は変えない）
+       - 下までスクロールしなくても棚5に触れるように
+       - 横スクロールの“陳列レーン”にする（スマホはスワイプ）
+    ========================================================= */
+    .shelves{
+      display:flex;
+      gap:10px;
+      overflow-x:auto;
+      overflow-y:hidden;
+      padding:2px 2px 8px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .shelves::-webkit-scrollbar{ height:8px; }
+    .shelves::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,.18);
+      border-radius:999px;
+    }
+
     .shelf{
       border:1px solid var(--line);
       border-radius:14px;
       background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.08));
       overflow:hidden;
+      scroll-snap-align: start;
+
+      /* ✅ “カード1枚分”みたいに並べる */
+      flex: 0 0 320px;
     }
+    @media (max-width: 560px){
+      .shelf{ flex-basis: 86vw; } /* ✅ スマホはほぼ1枚表示→スワイプで棚5へ */
+    }
+
     .shelf.locked{opacity:.6;filter:saturate(.7)}
     .shelf-top{
       padding:10px 10px 8px;
@@ -324,20 +336,6 @@
     .shelf-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
     .mini{padding:8px 10px;border-radius:12px;font-size:12px;font-weight:900}
 
-    /* log */
-    .log{
-      font-size:12px;color:var(--muted);
-      line-height:1.35;
-      display:flex;flex-direction:column;gap:8px;
-      max-height:260px; overflow:auto;
-      padding-right:6px;
-      -webkit-overflow-scrolling: touch;
-    }
-    .log .item{border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.14);border-radius:12px;padding:8px 10px;}
-    .log .t{color:rgba(255,255,255,.8);font-weight:900}
-    .log .m{margin-top:3px}
-    .log .s{margin-top:3px;font-family:var(--mono);font-size:11px;opacity:.85}
-
     /* modal */
     .modal{
       position:fixed; inset:0;
@@ -376,59 +374,6 @@
     }
     .sheet-actions{display:flex;gap:8px;justify-content:flex-end;padding:12px;border-top:1px solid var(--line);flex:0 0 auto}
     .close{width:40px;height:40px;border-radius:12px}
-
-    /* =========================================================
-       ✅ 出品カード選択：スクロール地獄対策（検索 + フィルタ + ページ送り）
-       - 他は変えず、モーダル内だけ「上にツールバー」を追加
-    ========================================================= */
-    .pick-tools{
-      position: sticky;
-      top: 0;
-      z-index: 3;
-      margin: -12px -12px 12px; /* sheet-b のpaddingを相殺して全面に */
-      padding: 10px 12px;
-      background: linear-gradient(180deg, rgba(15,18,32,.98), rgba(15,18,32,.82));
-      border-bottom: 1px solid rgba(255,255,255,.12);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .pick-row{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .pick-left,.pick-right{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
-    .pick-inp, .pick-sel{
-      height:40px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.22);
-      color: var(--text);
-      padding: 0 12px;
-      outline: none;
-      font-weight:800;
-    }
-    .pick-inp{ min-width: 220px; flex: 1 1 240px; }
-    .pick-sel{ min-width: 140px; }
-    .pick-mini{
-      font-size:12px;
-      color:rgba(255,255,255,.78);
-      white-space:nowrap;
-    }
-    .pager{
-      margin-top:10px;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
-    }
-    .pager .nums{
-      display:flex;gap:8px;align-items:center;flex-wrap:wrap;
-      font-size:12px;color:rgba(255,255,255,.78);
-    }
 
     /* 出品カード選択 */
     .cards{
@@ -648,7 +593,7 @@
         <div class="card-h">
           <div>
             <div class="card-title">棚（出品）</div>
-            <div class="card-desc">棚にカードを置くとお客さんが買いに来るよ♪</div>
+            <div class="card-desc">棚にカードを置くとお客さんが買いに来るよ♪（横にスワイプで棚5まで）</div>
           </div>
 
           <div class="head-actions-row">
@@ -661,6 +606,8 @@
         </div>
       </div>
 
+      <!-- ✅ ログ表示は不要：このカードごと削除 -->
+      <!--
       <div class="card">
         <div class="card-h">
           <div>
@@ -672,6 +619,7 @@
           <div class="log" id="log"></div>
         </div>
       </div>
+      -->
     </div>
   </div>
 
@@ -685,42 +633,6 @@
         <button class="btn close" id="pickClose" type="button" aria-label="閉じる">×</button>
       </div>
       <div class="sheet-b">
-        <!-- ✅ 追加：検索＆ページ送り（ここだけレイアウト変更） -->
-        <div class="pick-tools">
-          <div class="pick-row">
-            <div class="pick-left" style="flex:1;min-width:0">
-              <input class="pick-inp" id="pickSearch" type="search" placeholder="検索：カード名 / id（例：TN- / CRAFT_ / たこぴ）" autocomplete="off" />
-              <select class="pick-sel" id="pickRarity">
-                <option value="">レアリティ：全部</option>
-                <option value="N">N</option>
-                <option value="R">R</option>
-                <option value="SR">SR</option>
-                <option value="UR">UR</option>
-                <option value="LR">LR</option>
-                <option value="CRAFT">CRAFT</option>
-              </select>
-              <select class="pick-sel" id="pickSort">
-                <option value="spare">並び：余り多い順</option>
-                <option value="name">並び：名前</option>
-                <option value="rar">並び：レア</option>
-              </select>
-            </div>
-
-            <div class="pick-right">
-              <span class="pick-mini mono" id="pickCount">—</span>
-              <button class="btn" id="pickClear" type="button">クリア</button>
-            </div>
-          </div>
-
-          <div class="pager">
-            <div class="nums mono" id="pickPageInfo">—</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn" id="pickPrev" type="button">← 前</button>
-              <button class="btn" id="pickNext" type="button">次 →</button>
-            </div>
-          </div>
-        </div>
-
         <div class="cards" id="pickCards"></div>
         <div style="margin-top:10px;font-size:12px;color:var(--muted);display:none" id="pickEmpty">
           出品できるカードがありません。
@@ -784,8 +696,6 @@
 
   /* =========================================================
      ✅ 重要：localStorage が落ちても止まらない「安全ストレージ」
-     - setItem/getItem が例外でも、メモリに退避して続行
-     - これで「ログが表示されない（=JSが途中で死ぬ）」を潰す
   ========================================================= */
   const __memStore = Object.create(null);
 
@@ -938,7 +848,7 @@
   const LS = {
     octo:     "roten_v1_octo",
     myshop:   "roten_v1_myshop",
-    log:      "roten_v1_log",
+    log:      "roten_v1_log",      /* ✅ UIは消したが、内部保存は残す（動作に影響なし） */
     lvl:      "roten_v1_level",
     rep:      "roten_v1_rep",
     tick:     "roten_v1_shop_tick",
@@ -952,7 +862,6 @@
 
   const statsEl = $("#stats");
   const shelvesEl = $("#shelves");
-  const logEl = $("#log");
 
   const stageBg = $("#stageBg");
   const stageVisitor = $("#stageVisitor");
@@ -968,16 +877,6 @@
   const pickHintEl = $("#pickHint");
   const pickCloseBtn = $("#pickClose");
   const pickCancelBtn = $("#pickCancel");
-
-  /* ✅ 追加：検索UI */
-  const pickSearchEl = $("#pickSearch");
-  const pickRarityEl = $("#pickRarity");
-  const pickSortEl   = $("#pickSort");
-  const pickCountEl  = $("#pickCount");
-  const pickClearBtn = $("#pickClear");
-  const pickPrevBtn  = $("#pickPrev");
-  const pickNextBtn  = $("#pickNext");
-  const pickPageInfo = $("#pickPageInfo");
 
   const helpModal = $("#helpModal");
   const helpBtn = $("#helpBtn");
@@ -1039,50 +938,23 @@
     }, (type==="sale" ? 4200 : 3000));
   }
 
+  /* =========================================================
+     ✅ ログUI削除に伴う処理
+     - 保存だけ残す（デバッグ用・ゲーム進行に無害）
+     - renderLog() は呼ばない
+  ========================================================= */
   function pushLog(title, msg, meta){
     const log = lsGet(LS.log, { ver:1, items:[] });
     log.items = Array.isArray(log.items) ? log.items : [];
     log.items.unshift({ at: now(), title, msg, meta: meta || "" });
     log.items = log.items.slice(0, 60);
     lsSet(LS.log, log);
-    renderLog();
   }
-
-  function renderLog(){
-    if(!logEl){
-      showErr("logEl が見つかりません（id='log' を確認）");
-      return;
-    }
-
-    const log = lsGet(LS.log, { ver:1, items:[] });
-    const items = Array.isArray(log.items) ? log.items : [];
-
-    if(items.length === 0){
-      logEl.innerHTML = `<div class="item"><div class="t">まだ何も起きていない</div><div class="m">棚にカードを出品すると、来客が始まるよ。</div></div>`;
-      return;
-    }
-
-    logEl.innerHTML = items.map(it => {
-      const d = new Date(it.at);
-      const hh = String(d.getHours()).padStart(2,"0");
-      const mm = String(d.getMinutes()).padStart(2,"0");
-      return `
-        <div class="item">
-          <div class="t">${hh}:${mm}｜${escapeHTML(it.title)}</div>
-          <div class="m">${escapeHTML(it.msg)}</div>
-          ${it.meta ? `<div class="s">${escapeHTML(it.meta)}</div>` : ""}
-        </div>
-      `;
-    }).join("");
-  }
-
   function ensureLogBoot(){
     const log = lsGet(LS.log, { ver:1, items:[] });
     const items = Array.isArray(log.items) ? log.items : [];
     if(items.length === 0){
       pushLog("起動", "マイ露店を開いた（ログ開始）", "");
-    }else{
-      renderLog();
     }
   }
 
@@ -1702,15 +1574,6 @@
 
   let pickTargetIdx = -1;
 
-  /* ✅ 追加：カード選択の「表示状態」 */
-  const PICK_UI = {
-    q: "",
-    rar: "",
-    sort: "spare",
-    page: 0,
-    pageSize: 60
-  };
-
   function openPickModal(slotIdx){
     pickTargetIdx = slotIdx;
 
@@ -1732,17 +1595,11 @@
         ? "✅この棚は「まとめ陳列」OK（複数枚まとめて置けます）"
         : "出品できるカードから選べます（通常は1枚残す／職人は最後の1枚OK）";
 
-    /* ✅ モーダル開くたびに先頭ページ */
-    PICK_UI.page = 0;
-
     renderPickCards();
 
     pickModal.classList.add("show");
     pickModal.setAttribute("aria-hidden","false");
     lockBodyScroll();
-
-    /* ✅ すぐ検索できるように */
-    try{ pickSearchEl?.focus(); }catch(e){}
   }
 
   function closePickModal(){
@@ -1754,79 +1611,10 @@
     unlockBodyScroll();
   }
 
-  function normalizeRarity(r){
-    const s = String(r||"").toUpperCase();
-    if(s.includes("CRAFT")) return "CRAFT";
-    if(s.includes("LR") || s.includes("HR") || s.includes("XR")) return "LR";
-    if(s.includes("UR")) return "UR";
-    if(s.includes("SR")) return "SR";
-    if(s.includes("R"))  return "R";
-    if(s.includes("N"))  return "N";
-    return "";
-  }
-  function rarityRank(r){
-    const rr = normalizeRarity(r);
-    const map = { "N":1, "R":2, "SR":3, "UR":4, "LR":5, "CRAFT":6 };
-    return map[rr] || 0;
-  }
-
-  function applyPickFilters(list){
-    let out = Array.isArray(list) ? list.slice() : [];
-    const q = String(PICK_UI.q||"").trim().toLowerCase();
-    const rar = String(PICK_UI.rar||"").trim().toUpperCase();
-
-    if(q){
-      out = out.filter(c=>{
-        const a = String(c.name||"").toLowerCase();
-        const b = String(c.id||"").toLowerCase();
-        return a.includes(q) || b.includes(q);
-      });
-    }
-
-    if(rar){
-      out = out.filter(c=>{
-        if(rar==="CRAFT") return !!c.craft || normalizeRarity(c.rarity)==="CRAFT";
-        return normalizeRarity(c.rarity) === rar;
-      });
-    }
-
-    if(PICK_UI.sort === "name"){
-      out.sort((a,b)=> String(a.name||"").localeCompare(String(b.name||""), "ja"));
-    }else if(PICK_UI.sort === "rar"){
-      out.sort((a,b)=> (rarityRank(b.rarity)-rarityRank(a.rarity)) || (b.spare-a.spare) || String(a.name||"").localeCompare(String(b.name||""),"ja"));
-    }else{
-      out.sort((a,b)=> (b.spare-a.spare) || String(a.name||"").localeCompare(String(b.name||""),"ja"));
-    }
-
-    return out;
-  }
-
   function renderPickCards(){
-    const base = listPickableCardsForListing();
-    const list = applyPickFilters(base);
-
-    /* ✅ 件数表示 */
-    if(pickCountEl){
-      pickCountEl.textContent = `${list.length} 件`;
-    }
-
-    /* ✅ ページング */
-    const pageSize = Math.max(12, Number(PICK_UI.pageSize||60));
-    const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
-    PICK_UI.page = clamp(PICK_UI.page, 0, totalPages-1);
-
-    const from = PICK_UI.page * pageSize;
-    const to = Math.min(list.length, from + pageSize);
-    const pageItems = list.slice(from, to);
-
-    if(pickPageInfo){
-      pickPageInfo.textContent = `ページ ${PICK_UI.page+1}/${totalPages} ｜表示 ${from+1}-${to} / ${list.length}`;
-    }
-    if(pickPrevBtn) pickPrevBtn.disabled = (PICK_UI.page <= 0);
-    if(pickNextBtn) pickNextBtn.disabled = (PICK_UI.page >= totalPages-1);
+    const list = listPickableCardsForListing();
 
     pickCardsEl.innerHTML = "";
-
     if(list.length === 0){
       pickEmptyEl.style.display = "block";
       return;
@@ -1834,7 +1622,8 @@
     pickEmptyEl.style.display = "none";
 
     const frag = document.createDocumentFragment();
-    for(const c of pageItems){
+
+    for(const c of list){
       const item = document.createElement("div");
       item.className = "citem";
       item.setAttribute("role","button");
@@ -2326,7 +2115,6 @@
   function renderAll(){
     renderStats();
     renderShelves();
-    renderLog();
     applyDayNight();
     updateNextTag();
     updateShoutUI();
@@ -2359,43 +2147,6 @@
 
   shoutBtn.addEventListener("click", shout);
 
-  /* ✅ 追加：検索UIイベント */
-  function onPickUiChanged(){
-    PICK_UI.q   = String(pickSearchEl?.value||"");
-    PICK_UI.rar = String(pickRarityEl?.value||"");
-    PICK_UI.sort= String(pickSortEl?.value||"spare");
-    PICK_UI.page= 0;
-    renderPickCards();
-  }
-  pickSearchEl?.addEventListener("input", ()=>{
-    // 入力中の再描画を軽く（簡易デバウンス）
-    clearTimeout(pickSearchEl.__t);
-    pickSearchEl.__t = setTimeout(onPickUiChanged, 120);
-  });
-  pickRarityEl?.addEventListener("change", onPickUiChanged);
-  pickSortEl?.addEventListener("change", onPickUiChanged);
-
-  pickClearBtn?.addEventListener("click", ()=>{
-    if(pickSearchEl) pickSearchEl.value = "";
-    if(pickRarityEl) pickRarityEl.value = "";
-    if(pickSortEl)   pickSortEl.value   = "spare";
-    PICK_UI.q=""; PICK_UI.rar=""; PICK_UI.sort="spare"; PICK_UI.page=0;
-    renderPickCards();
-    try{ pickSearchEl?.focus(); }catch(e){}
-  });
-
-  pickPrevBtn?.addEventListener("click", ()=>{
-    PICK_UI.page = Math.max(0, PICK_UI.page-1);
-    renderPickCards();
-    // 上のツールバーが見える位置に戻す（任意）
-    try{ pickModal.querySelector(".sheet-b")?.scrollTo({ top:0, behavior:"smooth" }); }catch(e){}
-  });
-  pickNextBtn?.addEventListener("click", ()=>{
-    PICK_UI.page = PICK_UI.page+1;
-    renderPickCards();
-    try{ pickModal.querySelector(".sheet-b")?.scrollTo({ top:0, behavior:"smooth" }); }catch(e){}
-  });
-
   fixBtn.addEventListener("click", ()=>{
     Storage.setItem(LS.stage, JSON.stringify({
       ver:1,hasVisitor:false,leaving:false,vUrl:"",vName:"—",vMsg:"まだ誰も来ていない。",
@@ -2411,7 +2162,7 @@
   /* ===== 起動 ===== */
   try{
     applyDayNight();
-    ensureLogBoot();
+    ensureLogBoot();      /* ✅ UI表示はしないが、初回だけ内部ログを作る */
     renderAll();
     scheduleStage();
     trySpawnQueuedIfPossible();
