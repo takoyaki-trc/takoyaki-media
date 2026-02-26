@@ -141,13 +141,13 @@
 
     // ✅ 開設記念（シリアル専用）
     {
-      id:"seed_anniv",
-      name:"開設記念のタネ",
-      desc:"シリアルで入手した seed_token を消費して植える。\n排出はGAS側で確定済み。",
-      factor:1.00,
-      img:"assets/images/anniversary/seed.png", // 無ければ後で置けばOK
-      fx:"シリアル専用"
-    }
+  id:"seed_anniversary",
+  name:"開設記念のタネ",
+  desc:"ホームページ開設を祝う特別なタネ。\n特別カードが育つ。",
+  factor:1.00,
+  img:"town/assets/images/anniversary/anv1.png",
+  fx:"記念イベント専用"
+},
   ];
 
   const WATERS = [
