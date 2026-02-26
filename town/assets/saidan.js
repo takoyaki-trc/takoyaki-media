@@ -1,4 +1,3 @@
-
 (() => {
   /* =========================
     gate.js（完全版 + 図鑑追加/制限つき）
@@ -7,6 +6,9 @@
     - 図鑑：5分イベント中に表示される“職人カード”を図鑑に追加できる
       ✅ 1人1日1職人1枚まで（同じ職人はその日1回だけ図鑑に入る）
     - 優先：イベント中はイベントを上書き
+    ✅ 修正点：
+      ・図鑑に保存する「メイン画像」は icon ではなく photo を優先する
+      ・icon は thumb（サムネ）として別保存
   ========================= */
 
   const isNight = () => document.documentElement.classList.contains("is-night");
@@ -31,7 +33,7 @@
        - 1日1職人1枚まで（同職人）
   ========================= */
 
-  // ✅ 日本時間で「YYYY-MM-DD」を作る（端末のTZがズレても安全寄り）
+  // ✅ 日本時間で「YYYY-MM-DD」を作る（端末TZズレ対策）
   function todayKeyJP(){
     const now = new Date();
     const jp = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
@@ -70,13 +72,26 @@
     const prev = book.got[craftId];
     const nextCount = (prev && typeof prev.count === "number") ? (prev.count + 1) : 1;
 
+    // ✅ 図鑑に登録するメイン画像は photo を優先（これが本命）
+    //  - 図鑑側で「img」を表示しているなら、これで photo が出る
+    //  - icon は thumb に退避（一覧用に使いたい時に便利）
+    const mainImg = (craft.photo && String(craft.photo)) || (craft.img && String(craft.img)) || (craft.icon && String(craft.icon)) || "";
+    const thumbImg = (craft.icon && String(craft.icon)) || "";
+
     book.got[craftId] = {
       ...(prev || {}),
       id: craftId,
       name: craftName,
       rarity: craft.rarity || "CRAFT",
-      img: craft.icon || craft.img || "",
-      photo: craft.photo || "",
+
+      // ✅ 図鑑の「登録画像」＝ photo（優先）
+      img: mainImg,
+
+      // ✅ 追加：サムネ（祭壇アイコン）も残す
+      thumb: thumbImg,
+
+      // ✅ 追加情報
+      url: craft.url || "",
       desc: craft.desc || "",
       count: nextCount,
       lastAddedAt: Date.now()
@@ -85,12 +100,11 @@
     saveBook(book);
     localStorage.setItem(claimKey, "1");
 
-    return { ok:true, msg:`「${craftName}」を図鑑に追加！` };
+    return { ok:true, msg:`「${craftName}」を図鑑に追加！（写真を登録したよ）` };
   }
 
   // ✅ 超軽量トースト（無ければalert）
   function toast(msg){
-    // 既にあなたのtoastがあるならそっちを優先
     if(typeof window.toast === "function"){ window.toast(msg); return; }
     if(typeof window.showToast === "function"){ window.showToast(msg); return; }
     alert(msg);
@@ -116,15 +130,14 @@
 
   /* =========================
     ② 5分イベント：候補プール（＝職人カード）
-    ✅ ここが「図鑑に入れたい職人」です
-    - id を必ずユニークにする（図鑑キー/制限キーに使う）
+    ✅ 図鑑に入れたいのは photo（料理写真など）
   ========================= */
   const EVENT_POOL = [
     { id:"craft_001", name:"5分限定①", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/zqoEDppD.jpg", desc:"1日5分だけ出現する職人。" },
-    { id:"craft_002", name:"5分限定②", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/8ipISSBp.png", photo:"https://ul.h3z.jp/NpBmmHXa.jpg", desc:"1日5分だけ出現する職人。" },
-    { id:"craft_003", name:"5分限定③", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/IShYv1or.png", photo:"https://ul.h3z.jp/zF3JHtL2.png", desc:"1日5分だけ出現する職人。" },
-    { id:"craft_004", name:"5分限定④", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/UHcLPRSi.png", photo:"https://ul.h3z.jp/oHafyMzg.png", desc:"1日5分だけ出現する職人。" },
-    { id:"craft_005", name:"5分限定⑤", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/lLEWj0Pu.png", photo:"https://ul.h3z.jp/qKBz4tee.jpg", desc:"1日5分だけ出現する職人。" }
+    { id:"craft_002", name:"5分限定②", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/NpBmmHXa.jpg", desc:"1日5分だけ出現する職人。" },
+    { id:"craft_003", name:"5分限定③", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/zF3JHtL2.png", desc:"1日5分だけ出現する職人。" },
+    { id:"craft_004", name:"5分限定④", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/oHafyMzg.png", desc:"1日5分だけ出現する職人。" },
+    { id:"craft_005", name:"5分限定⑤", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/qKBz4tee.jpg", desc:"1日5分だけ出現する職人。" }
   ];
 
   // 旧todayKey互換（日本時間）
@@ -238,8 +251,6 @@
     let btnClaim = document.getElementById("gateModalClaim");
     if(btnClaim) return btnClaim;
 
-    // 追加先：キャンセル/行くボタンがある想定なので、その近くに置く
-    // - どこに入れても良いが、まずは btnGo の親に差し込む
     const parent = (btnGo && btnGo.parentElement) ? btnGo.parentElement : modal;
     btnClaim = document.createElement("button");
     btnClaim.id = "gateModalClaim";
@@ -266,7 +277,7 @@
     if(!modal) return;
     const d = dest || gate._dest || getCurrentDest();
 
-    // 画像
+    // 画像（モーダルの大画像は photo）
     if(mPhoto){
       mPhoto.classList.remove("is-ready");
 
@@ -299,30 +310,11 @@
       if(d.isEvent){
         btnClaim.style.display = "block";
 
-        // クリック時：図鑑へ追加（1日1職人1枚）
-        btnClaim.onclick = () => {
-          const res = claimCraftToBook(d);
-          toast(res.msg);
-
-          // 追加済みならボタンを押せないように見せる（任意）
-          if(res.ok){
-            btnClaim.textContent = "図鑑に入れた！（今日はこの職人は終了）";
-            btnClaim.disabled = true;
-            btnClaim.style.opacity = "0.7";
-            btnClaim.style.cursor = "default";
-          }else{
-            // 既に追加済み
-            btnClaim.disabled = true;
-            btnClaim.textContent = "今日はもう図鑑に入れた";
-            btnClaim.style.opacity = "0.7";
-            btnClaim.style.cursor = "default";
-          }
-        };
-
-        // 開いた時点で「今日すでに入れたか」判定して見た目を整える
+        // 開いた時点で「今日すでに入れたか」判定
         const day = todayKeyJP();
         const claimKey = `tf_v1_craft_claim_${day}__${String(d.id || "craft_unknown")}`;
         const already = localStorage.getItem(claimKey) === "1";
+
         if(already){
           btnClaim.disabled = true;
           btnClaim.textContent = "今日はもう図鑑に入れた";
@@ -333,6 +325,18 @@
           btnClaim.textContent = "図鑑に入れる（職人）";
           btnClaim.style.opacity = "1";
           btnClaim.style.cursor = "pointer";
+
+          btnClaim.onclick = () => {
+            const res = claimCraftToBook(d);
+            toast(res.msg);
+
+            btnClaim.disabled = true;
+            btnClaim.textContent = res.ok
+              ? "図鑑に入れた！（今日はこの職人は終了）"
+              : "今日はもう図鑑に入れた";
+            btnClaim.style.opacity = "0.7";
+            btnClaim.style.cursor = "default";
+          };
         }
       }else{
         btnClaim.style.display = "none";
