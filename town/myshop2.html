@@ -20,8 +20,8 @@
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
       /* 図鑑寄せ（カード一覧） */
-      --tile:84px;
-      --thumbPad:5px;
+      --tile:96px;          /* 少し大きくして「2列でも見やすい」 */
+      --thumbPad:6px;
       --gap:10px;
     }
     *{box-sizing:border-box}
@@ -30,7 +30,7 @@
       font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
     }
     body.noscroll{ overflow:hidden; touch-action:none; }
-    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 90px} /* ✅ 下部余白を少し減らす */
+    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 140px}
     .mono{font-family:var(--mono)}
     .btn{
       border:1px solid var(--line);
@@ -88,29 +88,44 @@
     .card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
     .card-b{padding:12px}
 
-    /* stats */
+    /* =========================================================
+       ✅ 統計（コンパクト化）
+       - 4つを「小さいカード」＋余白を削る
+    ========================================================= */
     .stats{
       display:grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0,1fr));
       gap:8px;
       margin-bottom:12px;
     }
-    @media (max-width: 560px){ .stats{grid-template-columns: repeat(2, 1fr)} }
+    @media (max-width: 680px){
+      .stats{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
     .stat{
       border:1px solid var(--line);
       background:rgba(0,0,0,.14);
       border-radius:12px;
-      padding:10px;
-      min-height:62px;
+      padding:8px 10px;         /* 小さく */
+      min-height:auto;          /* 高さ固定やめ */
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
     }
-    .stat .k{font-size:11px;color:var(--muted)}
-    .stat .v{font-size:16px;font-weight:900;margin-top:4px;display:flex;align-items:baseline;gap:6px}
-    .stat .v small{font-size:11px;color:var(--muted);font-weight:700}
+    .stat .k{font-size:11px;color:var(--muted);white-space:nowrap}
+    .stat .v{
+      font-size:14px;
+      font-weight:950;
+      display:flex;
+      align-items:baseline;
+      gap:6px;
+      white-space:nowrap;
+    }
+    .stat .v small{font-size:11px;color:var(--muted);font-weight:800}
     .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
 
     /* =========================================================
        ✅ 来店ステージ
-       - 露店画像の下（stage-ui）に “色” を付ける
     ========================================================= */
     .stage-card{margin-bottom:12px}
     .stage{
@@ -183,7 +198,7 @@
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
     }
 
-    /* ✅ ここが「露店画像の下の枠内」：色を付ける */
+    /* ✅ 上部の細いカラー帯（stage-uiの黒帯っぽい部分）を削除 → 背景なしに */
     .stage-ui{
       position:relative;
       display:flex;
@@ -192,38 +207,26 @@
       gap:10px;
       padding:12px;
       pointer-events:auto;
-
-      /* ↓ 色付き（青緑寄りの発光＆帯） */
-      background:
-        linear-gradient(180deg, rgba(127,208,255,.18), rgba(0,0,0,.70)),
-        radial-gradient(circle at 18% 0%, rgba(159,255,168,.14), rgba(0,0,0,0) 55%),
-        radial-gradient(circle at 75% 30%, rgba(255,211,138,.12), rgba(0,0,0,0) 55%);
-      border-top:1px solid rgba(255,255,255,.10);
-    }
-    .stage-ui::before{
-      content:"";
-      position:absolute;
-      left:10px; right:10px; top:8px;
-      height:3px;
-      border-radius:999px;
-      background: linear-gradient(90deg, rgba(127,208,255,.85), rgba(159,255,168,.75), rgba(255,211,138,.75));
-      opacity:.75;
-      filter: blur(.2px);
-      pointer-events:none;
+      background: transparent; /* ←これで帯が消える */
     }
 
+    /* ✅ 吹き出しエリア：青緑系の発光グラデ背景 */
     .bubble{
       width:100%;
-      border:1px solid rgba(255,255,255,.20);
+      border:1px solid rgba(120,255,235,.38);
       background:
-        radial-gradient(circle at 20% 10%, rgba(127,208,255,.12), rgba(0,0,0,0) 55%),
-        rgba(0,0,0,.62);
+        radial-gradient(circle at 18% 20%, rgba(0,255,204,.20), rgba(0,0,0,0) 52%),
+        radial-gradient(circle at 82% 30%, rgba(64,160,255,.16), rgba(0,0,0,0) 55%),
+        linear-gradient(180deg, rgba(0,170,160,.18), rgba(0,0,0,.62));
       border-radius:14px;
       padding:12px 14px;
       line-height:1.35;
       box-shadow:
         0 18px 45px rgba(0,0,0,.45),
-        0 0 0 1px rgba(255,255,255,.06) inset;
+        0 0 0 1px rgba(255,255,255,.06) inset,
+        0 0 34px rgba(0,255,204,.18);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
     .bubble .n{
       font-weight:950;
@@ -233,7 +236,7 @@
     }
     .bubble .n.neg{ color: var(--bad); }
     .bubble .m{
-      color:rgba(255,255,255,.92);
+      color:rgba(255,255,255,.94);
       font-size:14px;
       margin-top:6px;
       line-height:1.55;
@@ -244,24 +247,18 @@
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
 
     /* =========================================================
-       ✅ 棚（出品）レイアウト変更（他は変えない）
-       - 下までスクロールしなくても棚5に触れるように
-       - 横スクロールの“陳列レーン”にする（スマホはスワイプ）
+       ✅ 棚：スクロール量を減らす（2列固定寄り）
+       - スマホでも「2列」で棚5へ到達しやすく
+       - 横スクロールは使わない
     ========================================================= */
     .shelves{
-      display:flex;
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
       gap:10px;
-      overflow-x:auto;
-      overflow-y:hidden;
-      padding:2px 2px 8px;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
     }
-    .shelves::-webkit-scrollbar{ height:8px; }
-    .shelves::-webkit-scrollbar-thumb{
-      background: rgba(255,255,255,.18);
-      border-radius:999px;
+    @media (min-width: 940px){
+      /* 広い画面は3列でさらに短く */
+      .shelves{ grid-template-columns: repeat(3, minmax(0,1fr)); }
     }
 
     .shelf{
@@ -269,26 +266,25 @@
       border-radius:14px;
       background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.08));
       overflow:hidden;
-      scroll-snap-align: start;
-
-      /* ✅ “カード1枚分”みたいに並べる */
-      flex: 0 0 320px;
     }
-    @media (max-width: 560px){
-      .shelf{ flex-basis: 86vw; } /* ✅ スマホはほぼ1枚表示→スワイプで棚5へ */
-    }
-
     .shelf.locked{opacity:.6;filter:saturate(.7)}
     .shelf-top{
-      padding:10px 10px 8px;
+      padding:9px 10px 7px; /* 少し詰める */
       display:flex;align-items:center;justify-content:space-between;gap:10px;
       border-bottom:1px dashed rgba(255,255,255,.16);
     }
     .shelf-name{font-weight:900;font-size:13px}
     .shelf-tag{font-size:11px;color:var(--muted)}
-    .shelf-body{padding:10px;display:flex;gap:10px;align-items:flex-start}
+    .shelf-body{
+      padding:10px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+
+    /* 棚スロットを少し小さくして高さ削減 */
     .slot{
-      width:76px; height:108px;
+      width:70px; height:98px;
       border-radius:12px;
       border:1px solid rgba(255,255,255,.18);
       background:rgba(0,0,0,.20);
@@ -375,13 +371,21 @@
     .sheet-actions{display:flex;gap:8px;justify-content:flex-end;padding:12px;border-top:1px solid var(--line);flex:0 0 auto}
     .close{width:40px;height:40px;border-radius:12px}
 
-    /* 出品カード選択 */
+    /* =========================================================
+       ✅ 出品カード選択：スマホでも「1列に2枚」
+       - auto-fillだと小さすぎたり崩れたりするので
+         モバイルは 2列固定、PCは自動で増える
+    ========================================================= */
     .cards{
       display:grid;
-      grid-template-columns:repeat(auto-fill, minmax(var(--tile), 1fr));
+      grid-template-columns: repeat(3, minmax(0,1fr));
       gap:var(--gap);
       align-items:stretch;
     }
+    @media (max-width: 780px){
+      .cards{ grid-template-columns: repeat(2, minmax(0,1fr)); } /* ←要望の2列 */
+    }
+
     .citem{
       position:relative;
       border:1px solid rgba(255,255,255,.14);
@@ -391,10 +395,10 @@
       cursor:pointer;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
-      min-height:calc(var(--tile) + 34px);
       transition:transform .12s ease, filter .12s ease;
       display:flex;
       flex-direction:column;
+      min-height:calc(var(--tile) + 34px);
     }
     .citem:active{transform:scale(.985)}
     .cimg{width:100%;height:var(--tile);display:block;background:rgba(0,0,0,.14);position:relative;}
@@ -593,7 +597,7 @@
         <div class="card-h">
           <div>
             <div class="card-title">棚（出品）</div>
-            <div class="card-desc">棚にカードを置くとお客さんが買いに来るよ♪（横にスワイプで棚5まで）</div>
+            <div class="card-desc">棚にカードを置くとお客さんが買いに来るよ♪</div>
           </div>
 
           <div class="head-actions-row">
@@ -606,20 +610,7 @@
         </div>
       </div>
 
-      <!-- ✅ ログ表示は不要：このカードごと削除 -->
-      <!--
-      <div class="card">
-        <div class="card-h">
-          <div>
-            <div class="card-title">最近の出来事</div>
-            <div class="card-desc">ログ（自動更新）</div>
-          </div>
-        </div>
-        <div class="card-b">
-          <div class="log" id="log"></div>
-        </div>
-      </div>
-      -->
+      <!-- ✅ ログ表示は不要 → カードごと削除 -->
     </div>
   </div>
 
@@ -663,7 +654,7 @@
           <b>棚解放</b><br>
           Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5<br><br>
           <b>まとめ陳列（まとめ売り）</b><br>
-          Lv10: 棚1 / Lv15: 棚2 / Lv20: 棚3 / Lv25: 棚4 / Lv30: 棚5<br>
+          Lv6: 棚1 / Lv8: 棚2 / Lv10: 棚3 / Lv12: 棚4 / Lv14: 棚5<br>
           （まとめ陳列できる棚は、同じカードを複数枚まとめて置けます。売れるたびに数量が減ります）
         </div>
       </div>
@@ -756,9 +747,10 @@
   }
 
   /* =========================================================
-     ✅ まとめ陳列（まとめ売り）解放ルール
+     ✅ まとめ陳列（まとめ売り）解放ルール（変更）
+     Lv6:棚1 / Lv8:棚2 / Lv10:棚3 / Lv12:棚4 / Lv14:棚5
   ========================================================= */
-  function bulkUnlockLevelForSlot(idx){ return 10 + (idx * 5); }
+  function bulkUnlockLevelForSlot(idx){ return 6 + (idx * 2); }
   function isBulkUnlocked(idx, lv){ return lv >= bulkUnlockLevelForSlot(idx); }
 
   /* =========================================================
@@ -848,7 +840,7 @@
   const LS = {
     octo:     "roten_v1_octo",
     myshop:   "roten_v1_myshop",
-    log:      "roten_v1_log",      /* ✅ UIは消したが、内部保存は残す（動作に影響なし） */
+    log:      "roten_v1_log",      // ログUIは消すが、内部記録は残す（他動作に影響させない）
     lvl:      "roten_v1_level",
     rep:      "roten_v1_rep",
     tick:     "roten_v1_shop_tick",
@@ -939,9 +931,7 @@
   }
 
   /* =========================================================
-     ✅ ログUI削除に伴う処理
-     - 保存だけ残す（デバッグ用・ゲーム進行に無害）
-     - renderLog() は呼ばない
+     ✅ ログUI削除：保存だけ残す（動作を変えない）
   ========================================================= */
   function pushLog(title, msg, meta){
     const log = lsGet(LS.log, { ver:1, items:[] });
@@ -949,13 +939,6 @@
     log.items.unshift({ at: now(), title, msg, meta: meta || "" });
     log.items = log.items.slice(0, 60);
     lsSet(LS.log, log);
-  }
-  function ensureLogBoot(){
-    const log = lsGet(LS.log, { ver:1, items:[] });
-    const items = Array.isArray(log.items) ? log.items : [];
-    if(items.length === 0){
-      pushLog("起動", "マイ露店を開いた（ログ開始）", "");
-    }
   }
 
   function isNight(){
@@ -2162,7 +2145,6 @@
   /* ===== 起動 ===== */
   try{
     applyDayNight();
-    ensureLogBoot();      /* ✅ UI表示はしないが、初回だけ内部ログを作る */
     renderAll();
     scheduleStage();
     trySpawnQueuedIfPossible();
