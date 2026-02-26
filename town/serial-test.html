@@ -1,197 +1,130 @@
 
-
-
-
 <!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>redeem → タネ反映テスト</title>
+  <title>GAS redeem 診断テスト</title>
   <style>
-    :root{
-      --bg:#0b0d17;
-      --panel:rgba(255,255,255,.06);
-      --line:rgba(255,255,255,.14);
-      --text:#fff;
-      --muted:rgba(255,255,255,.75);
-      --good:#9fffa8;
-      --bad:#ff9aa5;
-      --radius:14px;
-    }
-    body{ margin:0; font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif; background:var(--bg); color:var(--text); }
+    body{ margin:0; font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif; background:#0b0d17; color:#fff; }
     .wrap{ max-width:860px; margin:0 auto; padding:18px 12px 40px; }
-    .panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin:12px 0; }
+    .panel{ background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:14px; padding:14px; margin:12px 0; }
     .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     input{ flex:1; min-width:240px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.2); background:rgba(0,0,0,.25); color:#fff; font-size:16px; }
     button{ padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.22); background:rgba(255,255,255,.08); color:#fff; font-weight:900; cursor:pointer; }
     button:disabled{ opacity:.55; cursor:not-allowed; }
     pre{ white-space:pre-wrap; word-break:break-word; background:rgba(0,0,0,.35); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); }
-    .muted{ color:var(--muted); font-size:12px; line-height:1.6; }
-    .seedCard{
-      display:flex; gap:12px; align-items:center;
-      padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.22);
-    }
-    .seedImg{
-      width:84px; height:84px; border-radius:14px; overflow:hidden;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.06);
-      flex:0 0 auto;
-    }
-    .seedImg img{ width:100%; height:100%; object-fit:cover; display:block; }
-    .seedMeta{ flex:1; min-width:0; }
-    .seedName{ font-weight:900; }
-    .seedCnt{ margin-top:4px; font-weight:900; }
-    .ok{ color:var(--good); font-weight:900; }
-    .ng{ color:var(--bad); font-weight:900; }
+    .muted{ color:rgba(255,255,255,.75); font-size:12px; line-height:1.6; }
+    .ok{ color:#9fffa8; font-weight:900; }
+    .ng{ color:#ff9aa5; font-weight:900; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1 style="margin:6px 0 2px;">redeem → タネ反映テスト</h1>
+    <h1 style="margin:6px 0 2px;">GAS redeem 診断テスト</h1>
     <div class="muted">
-      目的：redeem成功で <b>tf_v1_seedtokens</b> に保存し、タネの×数を即反映。
+      1) <b>Alive(GET)</b> → GASが生きてるか<br>
+      2) <b>redeem(POST)</b> → JSONで返ってくるか / ok:falseの理由は何か
     </div>
 
     <div class="panel">
       <div class="row">
+        <button id="aliveBtn">Alive（GET）</button>
         <input id="code" placeholder="例）TC-ANN-0002" />
-        <button id="btn">redeem</button>
-        <button id="btnShow">保存を見る</button>
-        <button id="btnReset">保存リセット</button>
+        <button id="redeemBtn">redeem（POST）</button>
       </div>
       <div class="muted" style="margin-top:10px;">
-        reward=anniv の seed_token を増やします。
+        API_URL はこのページに埋め込み済み。結果は下のログに全部出ます。
       </div>
     </div>
 
     <div class="panel">
-      <div class="muted" style="margin-bottom:8px;">タネ表示（仮）</div>
-      <div id="seedBox"></div>
-    </div>
-
-    <div class="panel">
-      <div class="muted" style="margin-bottom:6px;">ログ</div>
+      <div class="muted" style="margin-bottom:6px;">ログ（ここをコピペすれば原因確定できます）</div>
       <pre id="log">準備OK</pre>
     </div>
   </div>
 
 <script>
-  // ====== ここだけ自分のものに合わせる ======
-  const API_URL = "https://script.google.com/macros/s/AKfycbw4vS58-uznOh0EkCNvTvU3KRQKZlaxSJlRdCwI02uMriNniJOSFWtN1szfQRFVTRviMw/exec"; // ←あなたの /exec に置換
+  // ✅ あなたの /exec を入れた
+  const API_URL = "https://script.google.com/macros/s/AKfycbw4vS58-uznOh0EkCNvTvU3KRQKZlaxSJlRdCwI02uMriNniJOSFWtN1szfQRFVTRviMw/exec";
   const API_KEY = "takopi-gratan-2026";
-  // 仮タネ画像（好きなURLに変えてOK）
-  const ANNIV_SEED_IMG = "https://via.placeholder.com/512x512.png?text=ANNIV+SEED";
-  // ===========================================
 
-  const LS_SEEDTOKENS = "tf_v1_seedtokens";
-  const logEl  = document.getElementById("log");
+  const logEl = document.getElementById("log");
   const codeEl = document.getElementById("code");
-  const btnEl  = document.getElementById("btn");
-  const seedBox = document.getElementById("seedBox");
+  const aliveBtn = document.getElementById("aliveBtn");
+  const redeemBtn = document.getElementById("redeemBtn");
 
   function log(x){
     logEl.textContent = (typeof x === "string") ? x : JSON.stringify(x, null, 2);
   }
 
-  function loadSeedTokens(){
+  async function safeFetch(url, opt){
     try{
-      const raw = localStorage.getItem(LS_SEEDTOKENS);
-      if(!raw) return { ver:1, tokens:{} };
-      const obj = JSON.parse(raw);
-      if(!obj || typeof obj !== "object") return { ver:1, tokens:{} };
-      obj.tokens = obj.tokens || {};
-      return obj;
+      const res = await fetch(url, opt);
+      const text = await res.text();
+      return { res, text };
     }catch(e){
-      return { ver:1, tokens:{} };
+      throw new Error("FETCH_FAILED: " + (e && e.message ? e.message : e));
     }
   }
 
-  function saveSeedTokens(obj){
-    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(obj));
-  }
-
-  function tokenCount(reward){
-    const st = loadSeedTokens();
-    const arr = st.tokens[reward] || [];
-    return Array.isArray(arr) ? arr.length : 0;
-  }
-
-  function addTokens(reward, tokens){
-    const r = String(reward || "").trim();
-    const add = Array.isArray(tokens) ? tokens.filter(Boolean).map(String) : [];
-    if(!r) throw new Error("NO_REWARD");
-    if(!add.length) throw new Error("NO_SEED_TOKENS");
-
-    const st = loadSeedTokens();
-    const cur = Array.isArray(st.tokens[r]) ? st.tokens[r] : [];
-    st.tokens[r] = cur.concat(add);
-    saveSeedTokens(st);
-    return { reward:r, added:add.length, total: st.tokens[r].length };
-  }
-
-  function renderSeed(){
-    const cnt = tokenCount("anniv");
-    seedBox.innerHTML = `
-      <div class="seedCard">
-        <div class="seedImg"><img src="${ANNIV_SEED_IMG}" alt="開設記念のタネ"></div>
-        <div class="seedMeta">
-          <div class="seedName">開設記念のタネ（仮表示）</div>
-          <div class="seedCnt">×${cnt}</div>
-          <div class="muted">localStorage(tf_v1_seedtokens).tokens.anniv の数</div>
-        </div>
-      </div>
-    `;
-  }
-
-  async function apiPost(payload){
-    const res = await fetch(API_URL, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ apiKey: API_KEY, ...payload })
-    });
-    const text = await res.text();
-    try{ return JSON.parse(text); }
-    catch(e){ throw new Error("NON_JSON_RESPONSE: " + text.slice(0, 250)); }
-  }
-
-  document.getElementById("btnShow").onclick = () => log(loadSeedTokens());
-  document.getElementById("btnReset").onclick = () => { localStorage.removeItem(LS_SEEDTOKENS); renderSeed(); log("保存リセットOK"); };
-
-  btnEl.onclick = async () => {
-    const code = codeEl.value.trim();
-    if(!code) return log("コードを入力してください");
-
-    btnEl.disabled = true;
-    log("redeem中...");
-
+  aliveBtn.onclick = async () => {
+    aliveBtn.disabled = true;
+    log("Alive(GET) 実行中…");
     try{
-      const data = await apiPost({ action:"redeem", code });
-
-      if(!data || !data.ok){
-        log("❌ redeem失敗: " + (data && data.error ? data.error : "UNKNOWN") + "\n\n" + JSON.stringify(data, null, 2));
-        return;
-      }
-
-      const saved = addTokens(data.reward, data.seed_tokens);
-      renderSeed();
-
-      log("✅ 成功\nreward=" + saved.reward + "\n追加=" + saved.added + "\n合計=" + saved.total + "\n\n" + JSON.stringify(data, null, 2));
+      const { res, text } = await safeFetch(API_URL, { method:"GET", redirect:"follow" });
+      let parsed = null;
+      try{ parsed = JSON.parse(text); }catch(_){}
+      log({
+        step: "alive",
+        httpStatus: res.status,
+        contentType: res.headers.get("content-type"),
+        textHead: text.slice(0, 250),
+        json: parsed
+      });
     }catch(e){
-      log("❌ エラー: " + (e && e.message ? e.message : e));
+      log("❌ " + e.message);
     }finally{
-      btnEl.disabled = false;
+      aliveBtn.disabled = false;
     }
   };
 
-  // 初期表示
-  renderSeed();
+  redeemBtn.onclick = async () => {
+    const code = codeEl.value.trim();
+    if(!code) return log("コードを入力してください（例：TC-ANN-0002）");
+
+    redeemBtn.disabled = true;
+    log("redeem(POST) 実行中…");
+
+    try{
+      const payload = { apiKey: API_KEY, action:"redeem", code };
+      const { res, text } = await safeFetch(API_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(payload),
+        redirect:"follow"
+      });
+
+      let data = null;
+      let jsonError = null;
+      try{ data = JSON.parse(text); }catch(e){ jsonError = String(e); }
+
+      log({
+        step: "redeem",
+        sent: payload,
+        httpStatus: res.status,
+        contentType: res.headers.get("content-type"),
+        textHead: text.slice(0, 500),
+        jsonParsed: data,
+        jsonParseError: jsonError
+      });
+
+    }catch(e){
+      log("❌ " + e.message);
+    }finally{
+      redeemBtn.disabled = false;
+    }
+  };
 </script>
 </body>
 </html>
-
-
-
-
-
