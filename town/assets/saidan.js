@@ -133,11 +133,11 @@
     ✅ 図鑑に入れたいのは photo（料理写真など）
   ========================= */
   const EVENT_POOL = [
-    { id:"craft_001", name:"5分限定①", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/zqoEDppD.jpg", desc:"1日5分だけ出現する職人。" },
-    { id:"craft_002", name:"5分限定②", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/NpBmmHXa.jpg", desc:"1日5分だけ出現する職人。" },
-    { id:"craft_003", name:"5分限定③", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/zF3JHtL2.png", desc:"1日5分だけ出現する職人。" },
-    { id:"craft_004", name:"5分限定④", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/oHafyMzg.png", desc:"1日5分だけ出現する職人。" },
-    { id:"craft_005", name:"5分限定⑤", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/qKBz4tee.jpg", desc:"1日5分だけ出現する職人。" }
+    { id:"craft_001", name:"5分限定①", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/zqoEDppD.jpg", desc:"職人カード" },
+    { id:"craft_002", name:"5分限定②", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/NpBmmHXa.jpg", desc:"職人カード" },
+    { id:"craft_003", name:"5分限定③", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/zF3JHtL2.png", desc:"職人カード" },
+    { id:"craft_004", name:"5分限定④", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/oHafyMzg.png", desc:"職人カード" },
+    { id:"craft_005", name:"5分限定⑤", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://ul.h3z.jp/qKBz4tee.jpg", desc:"職人カード" }
   ];
 
   // 旧todayKey互換（日本時間）
