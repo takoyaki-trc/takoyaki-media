@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>シリアル redeem テスト</title>
+  <title>シリアル redeem テスト（タネ追加）</title>
   <style>
     body{ margin:0; font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif; background:#0b0d17; color:#fff; }
     .wrap{ max-width:860px; margin:0 auto; padding:18px 12px 40px; }
@@ -13,26 +13,53 @@
     button{ padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.22); background:rgba(255,255,255,.08); color:#fff; font-weight:900; cursor:pointer; }
     button:hover{ background:rgba(255,255,255,.12); }
     pre{ white-space:pre-wrap; word-break:break-word; background:rgba(0,0,0,.35); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); }
-    .muted{ color:rgba(255,255,255,.75); font-size:12px; }
+    .muted{ color:rgba(255,255,255,.75); font-size:12px; line-height:1.6; }
+    .pill{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.22); }
+    .ok{ color:#9fffa8; font-weight:900; }
+    .ng{ color:#ff9aa5; font-weight:900; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1 style="margin:6px 0 2px;">シリアル redeem テスト</h1>
-    <div class="muted">まずは redeem が通るかだけ確認。seed_token が返ってくればOK。</div>
+    <h1 style="margin:6px 0 2px;">シリアル redeem テスト（タネ追加）</h1>
+    <div class="muted">
+      redeem が成功したら <b>seed_token</b> をローカルに保存して「所持数」が増えます。<br>
+      保存先：<code>localStorage["tf_v1_seedtokens"]</code>（畑ページと同じ）
+    </div>
 
     <div class="panel">
       <div class="row">
         <input id="code" placeholder="例）TC-GRA-0001" />
         <button id="btn">redeem（送信）</button>
+        <button id="btnReset" title="テスト用：保存を消す">保存リセット</button>
       </div>
       <div class="muted" style="margin-top:10px;">
-        ※GASのWebアプリURLを下の <b>API_URL</b> に貼ってから使ってください。
+        ※GASのWebアプリURLを <b>API_URL</b> に貼ってから使ってください。<br>
+        ※コピペ末尾の空白・改行対策で <b>trim()</b> して送信します。
       </div>
     </div>
 
     <div class="panel">
-      <div class="muted" style="margin-bottom:6px;">レスポンス</div>
+      <div class="row" style="justify-content:space-between;">
+        <div class="pill">
+          <span class="muted">現在の所持（reward=</span><b id="curReward">anniv</b><span class="muted">）</span>
+          <b id="curCount" style="font-size:18px;">0</b>
+        </div>
+
+        <div class="row">
+          <input id="rewardKey" placeholder="所持数を見るreward（例：anniv）" style="min-width:260px; flex:0 1 260px;" />
+          <button id="btnCheck">所持数を見る</button>
+        </div>
+      </div>
+
+      <div class="muted" style="margin-top:10px;">
+        ※redeemの戻り値の <b>reward</b> がこのキーになります。例：<code>anniv</code><br>
+        ※あなたのGASが reward を「anniv」で返すなら、このままでOKです。
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="muted" style="margin-bottom:6px;">レスポンス / 状態</div>
       <pre id="log">準備OK</pre>
     </div>
   </div>
@@ -44,31 +71,162 @@
   // ✅ GAS側のCONFIG.API_KEYと同じにする
   const API_KEY = "takopi-gratan-2026";
 
+  // ✅ 畑ページと同じ保存先
+  const LS_SEEDTOKENS = "tf_v1_seedtokens";
+
   const logEl = document.getElementById("log");
   const codeEl = document.getElementById("code");
+  const btnEl = document.getElementById("btn");
+
+  const curRewardEl = document.getElementById("curReward");
+  const curCountEl  = document.getElementById("curCount");
+  const rewardKeyEl = document.getElementById("rewardKey");
 
   function log(x){
     logEl.textContent = (typeof x === "string") ? x : JSON.stringify(x, null, 2);
   }
 
+  // =========================
+  // localStorage helpers
+  // =========================
+  function defaultSeedTokens(){
+    return { ver:1, tokens:{} };
+  }
+  function loadSeedTokens(){
+    try{
+      const raw = localStorage.getItem(LS_SEEDTOKENS);
+      if(!raw) return defaultSeedTokens();
+      const obj = JSON.parse(raw);
+      if(!obj || typeof obj !== "object") return defaultSeedTokens();
+      obj.tokens = obj.tokens || {};
+      return obj;
+    }catch(e){
+      return defaultSeedTokens();
+    }
+  }
+  function saveSeedTokens(obj){
+    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(obj));
+  }
+  function addTokens(reward, seedTokens){
+    const r = String(reward || "").trim();
+    if(!r) throw new Error("NO_REWARD_KEY");
+
+    const arr = Array.isArray(seedTokens) ? seedTokens.filter(Boolean).map(String) : [];
+    if(!arr.length) throw new Error("NO_SEED_TOKENS");
+
+    const st = loadSeedTokens();
+    const cur = Array.isArray(st.tokens[r]) ? st.tokens[r] : [];
+    st.tokens[r] = cur.concat(arr);
+    saveSeedTokens(st);
+
+    return { added: arr.length, total: st.tokens[r].length, reward: r };
+  }
+  function tokenCount(reward){
+    const r = String(reward || "").trim();
+    const st = loadSeedTokens();
+    const arr = st.tokens[r];
+    return Array.isArray(arr) ? arr.length : 0;
+  }
+  function resetTokens(){
+    localStorage.removeItem(LS_SEEDTOKENS);
+  }
+
+  // =========================
+  // API
+  // =========================
   async function apiPost(payload){
     const res = await fetch(API_URL, {
       method:"POST",
+      headers: { "Content-Type":"application/json" },
       body: JSON.stringify({ apiKey: API_KEY, ...payload })
     });
-    return await res.json();
+
+    // GASが時々JSON以外返す事故対策
+    const text = await res.text();
+    try{
+      return JSON.parse(text);
+    }catch(e){
+      throw new Error("NON_JSON_RESPONSE: " + text.slice(0, 200));
+    }
   }
 
-  document.getElementById("btn").onclick = async () => {
+  function humanizeError(code){
+    const m = String(code || "");
+    if(m.includes("NON_JSON_RESPONSE")) return "GASがJSONを返していません（デプロイ/URL/権限を確認）";
+    if(m === "BAD_API_KEY") return "APIキーが一致していません（BAD_API_KEY）";
+    if(m === "NOT_FOUND") return "コードが見つかりません（NOT_FOUND）";
+    if(m === "USED") return "このコードは使用済みです（USED）";
+    if(m === "NO_REWARD_KEY") return "GASの返り値に reward がありません";
+    if(m === "NO_SEED_TOKENS") return "GASの返り値に seed_tokens がありません";
+    return m || "FAILED";
+  }
+
+  function refreshCountUI(reward){
+    const key = String(reward || "anniv").trim() || "anniv";
+    curRewardEl.textContent = key;
+    curCountEl.textContent  = tokenCount(key);
+  }
+
+  // 初期表示
+  rewardKeyEl.value = "anniv";
+  refreshCountUI("anniv");
+
+  // 所持数を見る
+  document.getElementById("btnCheck").onclick = () => {
+    const key = rewardKeyEl.value.trim() || "anniv";
+    refreshCountUI(key);
+    log("所持数更新: " + key + " = " + tokenCount(key));
+  };
+
+  // 保存リセット
+  document.getElementById("btnReset").onclick = () => {
+    resetTokens();
+    refreshCountUI(rewardKeyEl.value.trim() || "anniv");
+    log("保存をリセットしました（" + LS_SEEDTOKENS + " を削除）");
+  };
+
+  // redeem実行
+  btnEl.onclick = async () => {
     const code = codeEl.value.trim();
     if(!code) return log("コードを入力してください");
 
     log("redeem中...");
+    btnEl.disabled = true;
+
     try{
       const data = await apiPost({ action:"redeem", code });
+
+      // まず返り値を表示
       log(data);
+
+      if(!data || !data.ok){
+        throw new Error(data && data.error ? data.error : "REDEEM_FAILED");
+      }
+
+      // ✅ 成功：タネ（seed_token）を保存
+      const reward = data.reward;                 // 例：anniv
+      const tokens = data.seed_tokens || [];      // ["SEED-...","SEED-..."]
+      const saved  = addTokens(reward, tokens);
+
+      // UI更新
+      rewardKeyEl.value = saved.reward;
+      refreshCountUI(saved.reward);
+
+      log([
+        "✅ redeem成功 → タネ追加OK",
+        "reward: " + saved.reward,
+        "追加: " + saved.added,
+        "合計: " + saved.total,
+        "",
+        "（下にGASレスポンスも載せます）",
+        JSON.stringify(data, null, 2)
+      ].join("\n"));
+
     }catch(e){
-      log("通信エラー: " + e);
+      const msg = (e && e.message) ? e.message : String(e);
+      log("❌ 失敗: " + humanizeError(msg) + "\n\n" + msg);
+    }finally{
+      btnEl.disabled = false;
     }
   };
 </script>
