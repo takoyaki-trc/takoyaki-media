@@ -47,6 +47,15 @@
       line-height: 1.1 !important;
     }
 
+    /* ✅ HUD：オクトの右横に「種/水/肥料」を並べる */
+    .hud-left{
+      display:flex !important;
+      align-items:center !important;
+      gap:10px !important;
+      flex-wrap:wrap !important; /* 端末幅が狭い時だけ自然に折り返し */
+    }
+    .hud-pill{ white-space: nowrap; }
+
     /* =====================================================
        ✅ 売り方をえらぶ：2択モーダル（横並び / スマホ最適）
     ===================================================== */
@@ -192,6 +201,7 @@
           <span class="num" id="octoNow">0</span>
         </div>
 
+        <!-- ✅ オクトの右横へ移動（枠ごと） -->
         <div class="hud-pill">
           <span class="ico">🌱</span><span class="lbl">種</span><b id="chipSeed">0</b>
           <span class="sep">/</span>
@@ -205,9 +215,7 @@
         <button class="btn btn-ghost" id="btnOpenInv" type="button">所持資材</button>
         <button class="btn btn-ghost" id="btnOpenRates" type="button">水のレア率メモ</button>
 
-        <button class="btn btn-ghost" id="btnDebugPlus100000" type="button" aria-label="デバッグ：オクトを100000増やす">
-          🧪 オクト＋100000
-        </button>
+        <!-- ❌ 削除：🧪 オクト＋100000 -->
 
         <!-- ✅ 2択モーダル起動 -->
         <button class="btn btn-gold" id="btnOpenSell" type="button">
@@ -320,6 +328,113 @@
 
   <script src="assets/roten.js"></script>
 
+  <!-- ✅ 公開記念プレゼント：+5000オクトを“追加”する上書き（roten.jsを触らず追記） -->
+  <script>
+    (function(){
+      const btn = document.getElementById("btnLaunchPresent");
+      if(!btn) return;
+
+      // できるだけ既存実装の邪魔をしない：
+      // クリック後（既存処理が走った後）に +5000 を加算する
+      function toInt(v){
+        const n = parseInt(String(v||"0").replace(/[^\d-]/g,""),10);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      const CAND_KEYS = [
+        "octo", "OCTO", "octoNow", "TRC_OCTO", "LS_OCTO",
+        "tf_v1_octo", "tf_octo", "tf_v1_state", "TRC_STATE"
+      ];
+
+      function readOcto(){
+        // 1) よくあるキーから探す（数値直）
+        for(const k of CAND_KEYS){
+          const raw = localStorage.getItem(k);
+          if(raw == null) continue;
+
+          // state系(JSON)なら中も探す
+          if((raw.startsWith("{") && raw.endsWith("}")) || (raw.startsWith("[") && raw.endsWith("]"))){
+            try{
+              const obj = JSON.parse(raw);
+              // 代表的な候補
+              const candidates = [
+                obj?.octo, obj?.OCTO, obj?.money, obj?.wallet,
+                obj?.inv?.octo, obj?.player?.octo
+              ];
+              for(const c of candidates){
+                if(Number.isFinite(Number(c))) return Number(c);
+              }
+            }catch(_){}
+            continue;
+          }
+
+          const n = toInt(raw);
+          if(n !== 0 || raw === "0") return n;
+        }
+
+        // 2) 表示から読む
+        const el = document.getElementById("octoNow");
+        if(el) return toInt(el.textContent);
+        return 0;
+      }
+
+      function writeOcto(next){
+        // 表示更新（最低限）
+        const el = document.getElementById("octoNow");
+        if(el) el.textContent = String(next);
+
+        // 既存キーに“上書き”できるものは反映（見つかったものだけ）
+        for(const k of CAND_KEYS){
+          const raw = localStorage.getItem(k);
+          if(raw == null) continue;
+
+          if((raw.startsWith("{") && raw.endsWith("}"))){
+            try{
+              const obj = JSON.parse(raw);
+              // よくある格納先をできるだけ壊さず反映
+              if(typeof obj === "object" && obj){
+                if("octo" in obj) obj.octo = next;
+                else if("OCTO" in obj) obj.OCTO = next;
+                else if(obj.inv && typeof obj.inv === "object" && ("octo" in obj.inv)) obj.inv.octo = next;
+                else {
+                  // それでも入らない場合は触らない
+                  continue;
+                }
+                localStorage.setItem(k, JSON.stringify(obj));
+              }
+            }catch(_){}
+            continue;
+          }
+
+          // 数値直キー
+          const n = toInt(raw);
+          if(n !== 0 || raw === "0"){
+            localStorage.setItem(k, String(next));
+          }
+        }
+
+        // 既存の描画更新がイベントで走る実装に備えて通知
+        window.dispatchEvent(new CustomEvent("octo:changed", { detail: { octo: next } }));
+      }
+
+      btn.addEventListener("click", function(){
+        setTimeout(function(){
+          const cur = readOcto();
+          const next = cur + 5000;
+          writeOcto(next);
+
+          // toastがあるなら軽く表示（あれば）
+          const t = document.getElementById("toast");
+          if(t){
+            t.textContent = "🎁 公開記念プレゼント：+5000オクト！";
+            t.classList.add("is-show");
+            setTimeout(()=>t.classList.remove("is-show"), 1400);
+          }
+        }, 0);
+      }, true); // captureで確実に拾う
+    })();
+  </script>
+
   <!-- ✅ このページ専用：売却ボタン → 2択モーダル（roten.jsを触らず上書き） -->
   <script>
     (function(){
@@ -357,7 +472,5 @@
   </script>
 </body>
 </html>
-
-
 
 
