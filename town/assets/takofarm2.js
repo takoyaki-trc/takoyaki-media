@@ -145,7 +145,7 @@
   name:"開設記念のタネ",
   desc:"ホームページ開設を祝う特別なタネ。\n特別カードが育つ。",
   factor:1.00,
-  img:"town/assets/images/anniversary/anv1.png",
+  img:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/anniversary/anv1.png",
   fx:"記念イベント専用"
 },
   ];
