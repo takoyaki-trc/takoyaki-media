@@ -30,7 +30,7 @@
       font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
     }
     body.noscroll{ overflow:hidden; touch-action:none; }
-    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 110px}
+    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 140px}
     .mono{font-family:var(--mono)}
     .btn{
       border:1px solid var(--line);
@@ -112,7 +112,6 @@
        ✅ 来店ステージ
     ========================================================= */
     .stage-card{margin-bottom:12px}
-
     .stage{
       position:relative;
       width:100%;
@@ -122,7 +121,6 @@
       border:1px solid rgba(255,255,255,.14);
       background:rgba(0,0,0,.18);
     }
-
     .stage-media{
       position:relative;
       width:100%;
@@ -134,7 +132,6 @@
     @media (max-width: 520px){
       .stage-media{ aspect-ratio: 16 / 10; }
     }
-
     .stage-bg{
       position:absolute;
       inset:0;
@@ -146,7 +143,6 @@
       display:block;
       background: rgba(0,0,0,.22);
     }
-
     .stage-visitor{
       position:absolute;
       left:50%;
@@ -161,7 +157,6 @@
       filter: drop-shadow(0 10px 22px rgba(0,0,0,.55));
     }
     .stage-visitor.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
     .stage-overlay{
       position:absolute;
       right:10px;
@@ -186,7 +181,6 @@
       -webkit-backdrop-filter: blur(6px);
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
     }
-
     .stage-ui{
       position:relative;
       display:flex;
@@ -197,7 +191,6 @@
       pointer-events:auto;
       background: linear-gradient(180deg, rgba(0,0,0,.40), rgba(0,0,0,.62));
     }
-
     .bubble{
       width:100%;
       border:1px solid rgba(255,255,255,.20);
@@ -278,7 +271,6 @@
       border:1px solid rgba(255,255,255,.18);
       padding:2px 6px;border-radius:999px;
     }
-    /* ✅ まとめ陳列：数量バッジ */
     .slot .qty{
       position:absolute; right:6px; bottom:6px;
       font-size:10px; font-weight:900;
@@ -494,6 +486,27 @@
       flex-wrap:wrap;
       justify-content:flex-end;
     }
+
+    /* ✅ もしJSが落ちた時に原因が見えるようにするエラーバナー */
+    .errbar{
+      position:fixed;
+      left:10px; right:10px;
+      bottom:10px;
+      z-index:9999;
+      display:none;
+    }
+    .errbar.show{display:block}
+    .errbar .box{
+      border:1px solid rgba(255,154,165,.55);
+      background:rgba(0,0,0,.78);
+      border-radius:14px;
+      padding:10px 12px;
+      box-shadow: 0 14px 50px rgba(0,0,0,.55);
+      font-size:12px;
+      line-height:1.5;
+    }
+    .errbar .t{font-weight:900;color:var(--bad)}
+    .errbar .m{margin-top:4px;color:rgba(255,255,255,.92);white-space:pre-wrap;font-family:var(--mono)}
   </style>
 </head>
 <body>
@@ -633,9 +646,69 @@
     </div>
   </div>
 
+  <!-- ✅ JSエラーが出たらここに表示 -->
+  <div class="errbar" id="errBar" aria-hidden="true">
+    <div class="box">
+      <div class="t">JSエラー（ここが出たら教えて）</div>
+      <div class="m" id="errMsg">—</div>
+    </div>
+  </div>
+
 <script>
 (() => {
   "use strict";
+
+  /* =========================================================
+     ✅ 重要：localStorage が落ちても止まらない「安全ストレージ」
+     - setItem/getItem が例外でも、メモリに退避して続行
+     - これで「ログが表示されない（=JSが途中で死ぬ）」を潰す
+  ========================================================= */
+  const __memStore = Object.create(null);
+
+  function safeStorageAvailable(){
+    try{
+      const k="__t"; localStorage.setItem(k,"1"); localStorage.removeItem(k);
+      return true;
+    }catch(e){ return false; }
+  }
+  const __lsOK = safeStorageAvailable();
+
+  const Storage = {
+    getItem(key){
+      try{
+        if(__lsOK) return localStorage.getItem(key);
+      }catch(e){}
+      return Object.prototype.hasOwnProperty.call(__memStore, key) ? __memStore[key] : null;
+    },
+    setItem(key, val){
+      try{
+        if(__lsOK) return localStorage.setItem(key, val);
+      }catch(e){}
+      __memStore[key] = String(val);
+    },
+    removeItem(key){
+      try{
+        if(__lsOK) return localStorage.removeItem(key);
+      }catch(e){}
+      delete __memStore[key];
+    }
+  };
+
+  /* ✅ 画面にエラー表示 */
+  const errBar = document.getElementById("errBar");
+  const errMsg = document.getElementById("errMsg");
+  function showErr(msg){
+    if(!errBar || !errMsg) return;
+    errMsg.textContent = String(msg || "unknown error");
+    errBar.classList.add("show");
+    errBar.setAttribute("aria-hidden","false");
+  }
+  window.addEventListener("error", (e)=>{
+    showErr((e && e.message) ? e.message : "window error");
+  });
+  window.addEventListener("unhandledrejection", (e)=>{
+    showErr(e && e.reason ? (e.reason.stack || e.reason.message || String(e.reason)) : "promise rejection");
+  });
 
   /* =========================================================
      ✅ 職人カード（CRAFT）判定＆ルール
@@ -795,11 +868,14 @@
 
   function safeJSON(raw, fallback){ try{ return JSON.parse(raw);}catch(e){ return fallback; } }
   function lsGet(key, fallback){
-    const raw = localStorage.getItem(key);
+    const raw = Storage.getItem(key);
     if(raw==null) return fallback;
     return safeJSON(raw, fallback);
   }
-  function lsSet(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+  function lsSet(key, val){
+    try{ Storage.setItem(key, JSON.stringify(val)); }
+    catch(e){ showErr("lsSet failed: " + (e?.message||e)); }
+  }
 
   function escapeHTML(s){
     return String(s||"").replace(/[&<>"']/g, m => ({
@@ -829,30 +905,27 @@
     }, (type==="sale" ? 4200 : 3000));
   }
 
-  /* =========================================================
-     ✅ ログ（ここを堅牢化：必ず描画される）
-  ========================================================= */
   function pushLog(title, msg, meta){
     const log = lsGet(LS.log, { ver:1, items:[] });
     log.items = Array.isArray(log.items) ? log.items : [];
     log.items.unshift({ at: now(), title, msg, meta: meta || "" });
     log.items = log.items.slice(0, 60);
     lsSet(LS.log, log);
-    renderLog(); // ✅ 追加→即描画
+    renderLog();
   }
 
   function renderLog(){
-    if(!logEl) return; // 念のため
+    // ✅ logEl が無い/取れてない時でも落ちない
+    if(!logEl){
+      showErr("logEl が見つかりません（id='log' を確認）");
+      return;
+    }
 
     const log = lsGet(LS.log, { ver:1, items:[] });
     const items = Array.isArray(log.items) ? log.items : [];
 
     if(items.length === 0){
-      logEl.innerHTML =
-        `<div class="item">
-          <div class="t">まだ何も起きていない</div>
-          <div class="m">棚にカードを出品すると、来客が始まるよ。</div>
-        </div>`;
+      logEl.innerHTML = `<div class="item"><div class="t">まだ何も起きていない</div><div class="m">棚にカードを出品すると、来客が始まるよ。</div></div>`;
       return;
     }
 
@@ -870,15 +943,15 @@
     }).join("");
   }
 
-  // ✅ 起動時：ログが空なら必ず1行追加してから描画
+  /* ✅ ログが動いていない対策：起動時に必ず1行入れる */
   function ensureLogBoot(){
     const log = lsGet(LS.log, { ver:1, items:[] });
     const items = Array.isArray(log.items) ? log.items : [];
     if(items.length === 0){
       pushLog("起動", "マイ露店を開いた（ログ開始）", "");
-      return;
+    }else{
+      renderLog();
     }
-    renderLog();
   }
 
   function isNight(){
@@ -992,11 +1065,11 @@
 
   /* 通貨/レベル/評判 */
   function loadOcto(){
-    const v = Number(localStorage.getItem(LS.octo) || 0);
+    const v = Number(Storage.getItem(LS.octo) || 0);
     return isFinite(v) ? v : 0;
   }
   function saveOcto(v){
-    localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v||0)))));
+    Storage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v||0)))));
   }
 
   const LEVEL_DEFAULT = { ver:1, lv:1, exp:0, totalVisit:0, totalSold:0, updatedAt: now() };
@@ -1243,21 +1316,21 @@
     { id:"flipper",  name:"よっぱらいタコ民", repDeltaOnBuy:-3, baseBuy:0.34 },
     { id:"careful",  name:"つぶやきタコ民",   repDeltaOnBuy:+5, baseBuy:0.38 },
     { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 },
-    { id:"rich",     name:"札束タコ民",       repDeltaOnBuy:+8, baseBuy:0.50 },
-    { id:"climber",  name:"踏破タコ民",       repDeltaOnBuy:+5, baseBuy:0.40 },
-    { id:"guide",    name:"ナビタコ民",       repDeltaOnBuy:+3, baseBuy:0.30 },
-    { id:"relax",    name:"ほぐしタコ民",     repDeltaOnBuy:+3, baseBuy:0.36 },
-    { id:"artisan",  name:"返し職人タコ民",   repDeltaOnBuy:+4, baseBuy:0.46 },
-    { id:"diet",     name:"ゼロ理論タコ民",   repDeltaOnBuy:+1, baseBuy:0.48 },
-    { id:"overflow", name:"枠外タコ民",       repDeltaOnBuy: 0, baseBuy:0.33 },
-    { id:"collector",name:"未開封保護タコ民", repDeltaOnBuy:+1, baseBuy:0.41 },
-    { id:"shadow",   name:"防水タコ民",       repDeltaOnBuy:-2, baseBuy:0.35 },
-    { id:"ramen",    name:"替え玉タコ民",     repDeltaOnBuy:+1, baseBuy:0.44 },
-    { id:"streamer", name:"投げ銭タコ民",     repDeltaOnBuy:+2, baseBuy:0.39 },
-    { id:"gourmet",  name:"舌判定タコ民",     repDeltaOnBuy:+2, baseBuy:0.37 },
-    { id:"opener",   name:"即バリタコ民",     repDeltaOnBuy:+1, baseBuy:0.52 },
-    { id:"party",    name:"宴タコ民",         repDeltaOnBuy:-1, baseBuy:0.47 },
-    { id:"pilgrim",  name:"覚悟タコ民",       repDeltaOnBuy:+3, baseBuy:0.58 }
+    { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+8, baseBuy:0.50 },
+    { id:"climber",  name:"踏破タコ民",        repDeltaOnBuy:+5, baseBuy:0.40 },
+    { id:"guide",    name:"ナビタコ民",        repDeltaOnBuy:+3, baseBuy:0.30 },
+    { id:"relax",    name:"ほぐしタコ民",      repDeltaOnBuy:+3, baseBuy:0.36 },
+    { id:"artisan",  name:"返し職人タコ民",    repDeltaOnBuy:+4, baseBuy:0.46 },
+    { id:"diet",     name:"ゼロ理論タコ民",    repDeltaOnBuy:+1, baseBuy:0.48 },
+    { id:"overflow", name:"枠外タコ民",        repDeltaOnBuy: 0, baseBuy:0.33 },
+    { id:"collector",name:"未開封保護タコ民",  repDeltaOnBuy:+1, baseBuy:0.41 },
+    { id:"shadow",   name:"防水タコ民",        repDeltaOnBuy:-2, baseBuy:0.35 },
+    { id:"ramen",    name:"替え玉タコ民",      repDeltaOnBuy:+1, baseBuy:0.44 },
+    { id:"streamer", name:"投げ銭タコ民",      repDeltaOnBuy:+2, baseBuy:0.39 },
+    { id:"gourmet",  name:"舌判定タコ民",      repDeltaOnBuy:+2, baseBuy:0.37 },
+    { id:"opener",   name:"即バリタコ民",      repDeltaOnBuy:+1, baseBuy:0.52 },
+    { id:"party",    name:"宴タコ民",          repDeltaOnBuy:-1, baseBuy:0.47 },
+    { id:"pilgrim",  name:"覚悟タコ民",        repDeltaOnBuy:+3, baseBuy:0.58 }
   ];
 
   function chooseCustomer(rep){
@@ -2038,7 +2111,7 @@
   function renderAll(){
     renderStats();
     renderShelves();
-    renderLog();       // ✅ 毎回ログ描画（空のまま事故を防ぐ）
+    renderLog();      // ✅ ここで必ず描画
     applyDayNight();
     updateNextTag();
     updateShoutUI();
@@ -2072,39 +2145,28 @@
   shoutBtn.addEventListener("click", shout);
 
   fixBtn.addEventListener("click", ()=>{
-    const STAGE_DEFAULT2 = {
-      ver:1,
-      hasVisitor:false,
-      leaving:false,
-      vUrl:"",
-      vName:"—",
-      vMsg:"まだ誰も来ていない。",
-      vType:"",
-      vGoal:"",
-      stayMs:0,
-      targetSlot:-1,
-      updatedAt: Date.now(),
-      source:""
-    };
-
-    localStorage.setItem(LS.stage, JSON.stringify(STAGE_DEFAULT2));
-    localStorage.removeItem(LS.tick);
-    localStorage.setItem(LS.queue, JSON.stringify(QUEUE_DEFAULT));
+    Storage.setItem(LS.stage, JSON.stringify({
+      ver:1,hasVisitor:false,leaving:false,vUrl:"",vName:"—",vMsg:"まだ誰も来ていない。",
+      vType:"",vGoal:"",stayMs:0,targetSlot:-1,updatedAt:Date.now(),source:""
+    }));
+    Storage.removeItem(LS.tick);
+    lsSet(LS.queue, { ver:1, shoutPending:false, shoutTargetSlot:null, shoutSpawnAt:0, normalPending:false, normalTargetSlot:null, queuedAt:0 });
 
     alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
     location.reload();
   });
 
   /* ===== 起動 ===== */
-  applyDayNight();
-
-  // ✅ ここがポイント：起動ログ保証 → その後まとめて描画
-  ensureLogBoot();
-  renderAll();
-
-  scheduleStage();
-  trySpawnQueuedIfPossible();
-  setInterval(tick, 1000);
+  try{
+    applyDayNight();
+    ensureLogBoot();      // ✅ ここで必ず1行入る
+    renderAll();
+    scheduleStage();
+    trySpawnQueuedIfPossible();
+    setInterval(tick, 1000);
+  }catch(e){
+    showErr(e?.stack || e?.message || String(e));
+  }
 
 })();
 </script>
