@@ -47,14 +47,45 @@
       line-height: 1.1 !important;
     }
 
-    /* ✅ HUD：オクトの右横に「種/水/肥料」を並べる */
-    .hud-left{
+    /* =====================================================
+       ✅ HUD：スマホでも「オクトの右横に種/水/肥料」を確実に
+       → roten.css の column / width:100% / block化 を全部潰す
+    ===================================================== */
+
+    /* hud 自体の並びも保険で固定 */
+    .hud{
       display:flex !important;
+      align-items:flex-start !important;
+      justify-content: space-between !important;
+      gap:10px !important;
+    }
+
+    .hud .hud-left{
+      display:flex !important;
+      flex-direction: row !important;  /* ✅ column を潰す */
       align-items:center !important;
       gap:10px !important;
-      flex-wrap:wrap !important; /* 端末幅が狭い時だけ自然に折り返し */
+      flex-wrap: wrap !important;      /* 狭い時だけ折り返す */
+      width:auto !important;
+      min-width: 0 !important;
     }
-    .hud-pill{ white-space: nowrap; }
+
+    .hud .hud-left .hud-pill{
+      width:auto !important;           /* ✅ width:100% を潰す */
+      flex: 0 0 auto !important;       /* ✅ 横並び固定 */
+      white-space: nowrap !important;
+      margin: 0 !important;
+    }
+
+    .hud .hud-left .hud-pill--big{
+      margin:0 !important;
+    }
+
+    /* 右側ボタン群が押し出されるときの保険 */
+    .hud .hud-right{
+      flex: 0 0 auto !important;
+      min-width: 0 !important;
+    }
 
     /* =====================================================
        ✅ 売り方をえらぶ：2択モーダル（横並び / スマホ最適）
@@ -201,7 +232,7 @@
           <span class="num" id="octoNow">0</span>
         </div>
 
-        <!-- ✅ オクトの右横へ移動（枠ごと） -->
+        <!-- ✅ オクトの右横へ（スマホでも強制） -->
         <div class="hud-pill">
           <span class="ico">🌱</span><span class="lbl">種</span><b id="chipSeed">0</b>
           <span class="sep">/</span>
@@ -217,7 +248,6 @@
 
         <!-- ❌ 削除：🧪 オクト＋100000 -->
 
-        <!-- ✅ 2択モーダル起動 -->
         <button class="btn btn-gold" id="btnOpenSell" type="button">
           🪙 カード売却
         </button>
@@ -334,8 +364,6 @@
       const btn = document.getElementById("btnLaunchPresent");
       if(!btn) return;
 
-      // できるだけ既存実装の邪魔をしない：
-      // クリック後（既存処理が走った後）に +5000 を加算する
       function toInt(v){
         const n = parseInt(String(v||"0").replace(/[^\d-]/g,""),10);
         return Number.isFinite(n) ? n : 0;
@@ -347,16 +375,13 @@
       ];
 
       function readOcto(){
-        // 1) よくあるキーから探す（数値直）
         for(const k of CAND_KEYS){
           const raw = localStorage.getItem(k);
           if(raw == null) continue;
 
-          // state系(JSON)なら中も探す
           if((raw.startsWith("{") && raw.endsWith("}")) || (raw.startsWith("[") && raw.endsWith("]"))){
             try{
               const obj = JSON.parse(raw);
-              // 代表的な候補
               const candidates = [
                 obj?.octo, obj?.OCTO, obj?.money, obj?.wallet,
                 obj?.inv?.octo, obj?.player?.octo
@@ -372,18 +397,15 @@
           if(n !== 0 || raw === "0") return n;
         }
 
-        // 2) 表示から読む
         const el = document.getElementById("octoNow");
         if(el) return toInt(el.textContent);
         return 0;
       }
 
       function writeOcto(next){
-        // 表示更新（最低限）
         const el = document.getElementById("octoNow");
         if(el) el.textContent = String(next);
 
-        // 既存キーに“上書き”できるものは反映（見つかったものだけ）
         for(const k of CAND_KEYS){
           const raw = localStorage.getItem(k);
           if(raw == null) continue;
@@ -391,29 +413,23 @@
           if((raw.startsWith("{") && raw.endsWith("}"))){
             try{
               const obj = JSON.parse(raw);
-              // よくある格納先をできるだけ壊さず反映
               if(typeof obj === "object" && obj){
                 if("octo" in obj) obj.octo = next;
                 else if("OCTO" in obj) obj.OCTO = next;
                 else if(obj.inv && typeof obj.inv === "object" && ("octo" in obj.inv)) obj.inv.octo = next;
-                else {
-                  // それでも入らない場合は触らない
-                  continue;
-                }
+                else continue;
                 localStorage.setItem(k, JSON.stringify(obj));
               }
             }catch(_){}
             continue;
           }
 
-          // 数値直キー
           const n = toInt(raw);
           if(n !== 0 || raw === "0"){
             localStorage.setItem(k, String(next));
           }
         }
 
-        // 既存の描画更新がイベントで走る実装に備えて通知
         window.dispatchEvent(new CustomEvent("octo:changed", { detail: { octo: next } }));
       }
 
@@ -423,7 +439,6 @@
           const next = cur + 5000;
           writeOcto(next);
 
-          // toastがあるなら軽く表示（あれば）
           const t = document.getElementById("toast");
           if(t){
             t.textContent = "🎁 公開記念プレゼント：+5000オクト！";
@@ -431,7 +446,7 @@
             setTimeout(()=>t.classList.remove("is-show"), 1400);
           }
         }, 0);
-      }, true); // captureで確実に拾う
+      }, true);
     })();
   </script>
 
