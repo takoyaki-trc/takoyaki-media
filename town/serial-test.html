@@ -42,7 +42,6 @@
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbwXJXFLCgL7ZMgb7M1hHwfKI6vBPicWgf0yutF5qyo9fkLrGH393zSoA20sRqk7PO71/exec";
   const API_KEY = "takopi-gratan-2026";
-  const LS_SEEDTOKENS = "tf_v1_seedtokens";
 
   const logEl = document.getElementById("log");
   const codeEl = document.getElementById("code");
@@ -52,76 +51,48 @@
     logEl.textContent = (typeof x === "string") ? x : JSON.stringify(x, null, 2);
   }
 
-  function loadSeedTokens(){
+  async function postJson(payload){
+    // ✅ 失敗理由を絶対に見えるようにする
+    let res, text;
     try{
-      const raw = localStorage.getItem(LS_SEEDTOKENS);
-      if(!raw) return { ver:1, tokens:{} };
-      const obj = JSON.parse(raw);
-      if(!obj || typeof obj !== "object") return { ver:1, tokens:{} };
-      obj.tokens = obj.tokens || {};
-      return obj;
+      res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ apiKey: API_KEY, ...payload }),
+        redirect: "follow"
+      });
     }catch(e){
-      return { ver:1, tokens:{} };
+      throw new Error("FETCH_FAILED: " + (e && e.message ? e.message : e));
     }
+
+    try{
+      text = await res.text();
+    }catch(e){
+      throw new Error("READ_FAILED: " + (e && e.message ? e.message : e));
+    }
+
+    let data;
+    try{
+      data = JSON.parse(text);
+    }catch(e){
+      throw new Error("NON_JSON_RESPONSE: HTTP " + res.status + " / " + text.slice(0, 250));
+    }
+
+    return { httpStatus: res.status, data };
   }
-
-  function saveSeedTokens(obj){
-    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(obj));
-  }
-
-  function addTokens(reward, tokens){
-    const r = String(reward || "").trim();
-    const add = Array.isArray(tokens) ? tokens.filter(Boolean).map(String) : [];
-    if(!r) throw new Error("NO_REWARD");
-    if(!add.length) throw new Error("NO_SEED_TOKENS");
-
-    const st = loadSeedTokens();
-    const cur = Array.isArray(st.tokens[r]) ? st.tokens[r] : [];
-    st.tokens[r] = cur.concat(add);
-    saveSeedTokens(st);
-    return { reward:r, added:add.length, total: st.tokens[r].length };
-  }
-
-  async function apiPost(payload){
-    const res = await fetch(API_URL, {
-      method:"POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ apiKey: API_KEY, ...payload })
-    });
-    const text = await res.text();
-    try{ return JSON.parse(text); }
-    catch(e){ throw new Error("NON_JSON_RESPONSE: " + text.slice(0, 250)); }
-  }
-
-  document.getElementById("btnShow").onclick = () => {
-    log(loadSeedTokens());
-  };
-
-  document.getElementById("btnReset").onclick = () => {
-    localStorage.removeItem(LS_SEEDTOKENS);
-    log("保存をリセットしました");
-  };
 
   btnEl.onclick = async () => {
     const code = codeEl.value.trim();
     if(!code) return log("コードを入力してください");
 
     btnEl.disabled = true;
-    log("redeem中...");
+    log("通信中...");
 
     try{
-      const data = await apiPost({ action:"redeem", code });
-
-      if(!data || !data.ok){
-        log("❌ redeem失敗: " + (data && data.error ? data.error : "UNKNOWN") + "\n\n" + JSON.stringify(data, null, 2));
-        return;
-      }
-
-      const saved = addTokens(data.reward, data.seed_tokens);
-      log("✅ 成功して保存しました\nreward=" + saved.reward + "\n追加=" + saved.added + "\n合計=" + saved.total + "\n\n" + JSON.stringify(data, null, 2));
-
+      const out = await postJson({ action:"redeem", code });
+      log(out);
     }catch(e){
-      log("❌ エラー: " + (e && e.message ? e.message : e));
+      log("❌ " + (e && e.message ? e.message : e));
     }finally{
       btnEl.disabled = false;
     }
