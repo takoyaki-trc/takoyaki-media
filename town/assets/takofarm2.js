@@ -13,7 +13,7 @@
   // =========================
   // ✅ GAS WebアプリURL（redeem と同じ URL）
   // =========================
-  const SERIAL_API_URL = "ここにGASのWebアプリURLを貼る";
+  const SERIAL_API_URL = "https://script.google.com/macros/s/AKfycbwXJXFLCgL7ZMgb7M1hHwfKI6vBPicWgf0yutF5qyo9fkLrGH393zSoA20sRqk7PO71/exec";
 
   // =========================
   // マス画像（状態ごと）
