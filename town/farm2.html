@@ -2,128 +2,610 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>たこ焼きファーム</title>
-  <link rel="stylesheet" href="assets/takofarm.css">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>たこ焼きファーム（畑）</title>
+  <meta name="description" content="たこ焼きトレカの畑。タネ・水・肥料を装備して育成し、収穫して図鑑へ登録。" />
+
+  <style>
+    :root{
+      --bg0:#07060b;
+      --bg1:#0c0b12;
+      --panel:rgba(255,255,255,.07);
+      --panel2:rgba(255,255,255,.10);
+      --line:rgba(255,255,255,.14);
+      --text:#fff;
+      --muted:rgba(255,255,255,.72);
+      --good:#9fffa8;
+      --warn:#ffd38a;
+      --bad:#ff9aa5;
+      --accent:#7fd0ff;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius:14px;
+      --radius2:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 50% 18%, #1a2040 0%, #070812 62%),
+        linear-gradient(var(--bg0),var(--bg1));
+      min-height:100svh;
+      overflow-x:hidden;
+    }
+
+    /* =========================
+       Topbar（クリック不具合対策）
+       - sticky + 明確な z-index
+       - 余計な被さりは pointer-events で制御
+    ========================= */
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:9999;
+      padding: 12px 12px 10px;
+      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
+      backdrop-filter: blur(10px);
+    }
+    .topbar-inner{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    .titlebox{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width: 0;
+    }
+    .title{
+      font-weight: 900;
+      letter-spacing:.02em;
+      font-size: 18px;
+      line-height:1.1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .subtitle{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:0 0 auto;
+      position:relative;
+      z-index: 10000; /* 念のため */
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.10);
+      color:var(--text);
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      line-height:1;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      position:relative;
+      z-index: 10001; /* 被さり対策 */
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: rgba(127,208,255,.55);
+      background: rgba(127,208,255,.18);
+    }
+
+    /* =========================
+       Layout
+    ========================= */
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 10px 12px 26px;
+    }
+
+    .panel{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+      padding: 12px;
+      margin-top: 8px;
+    }
+    @media (min-width:720px){
+      .stats{ grid-template-columns: 1.2fr .8fr; }
+    }
+
+    .statbox{
+      padding: 12px;
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .statrow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(255,255,255,.9);
+    }
+    .pill b{font-size: 13px; color:#fff}
+    .xpbar{
+      margin-top: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .xpbar > i{
+      display:block;
+      height:100%;
+      width:0%;
+      background: rgba(127,208,255,.70);
+    }
+    .xpmeta{
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+    }
+
+    /* =========================
+       Loadout
+    ========================= */
+    .loadout{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media (min-width:720px){
+      .loadout{ grid-template-columns: 1fr 1fr 1fr; }
+    }
+    .equip{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding: 10px;
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      min-height: 72px;
+    }
+    .equip button{
+      all:unset;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      width:100%;
+    }
+    .equip .ico{
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      overflow:hidden;
+      flex: 0 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .equip .ico img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .equip .meta{
+      min-width:0;
+      flex: 1 1 auto;
+    }
+    .equip .name{
+      font-weight: 900;
+      font-size: 13px;
+      line-height:1.2;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .equip .cnt{
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    /* =========================
+       Farm Grid
+    ========================= */
+    .farm{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    @media (min-width:720px){
+      .farm{ grid-template-columns: repeat(5, 1fr); }
+    }
+    .plot{
+      position:relative;
+      border-radius: var(--radius2);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 14px 40px rgba(0,0,0,.35);
+      min-height: 98px;
+    }
+    .plot button{
+      all:unset;
+      cursor:pointer;
+      display:block;
+      width:100%;
+      height:100%;
+      position:relative;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .plot .tag{
+      position:absolute;
+      left:10px;
+      right:10px;
+      bottom:10px;
+      text-align:center;
+      font-size: 11px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,.6);
+      pointer-events:none;
+      background: rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      padding: 5px 8px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* =========================
+       Modal
+    ========================= */
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      z-index: 20000;
+    }
+    .modal[aria-hidden="false"]{ display:block; }
+    .modal .backdrop{
+      position:absolute;
+      inset:0;
+      background: rgba(0,0,0,.58);
+      backdrop-filter: blur(6px);
+    }
+    .modal .sheet{
+      position:absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      max-width: 760px;
+      margin: 0 auto;
+      border-radius: 22px;
+      background: rgba(20,18,30,.95);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 30px 80px rgba(0,0,0,.6);
+      overflow:hidden;
+    }
+    .modal .head{
+      padding: 14px 14px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    .modal .head h2{
+      margin:0;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing:.02em;
+    }
+    .modal .close{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      color:#fff;
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-weight: 900;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .modal .body{
+      padding: 14px;
+      max-height: min(70svh, 520px);
+      overflow:auto;
+    }
+    .step{
+      font-size: 13px;
+      color: rgba(255,255,255,.86);
+      line-height: 1.6;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      margin-top: 12px;
+    }
+    .row button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      color:#fff;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .row button.primary{
+      border-color: rgba(127,208,255,.55);
+      background: rgba(127,208,255,.18);
+    }
+
+    /* pick grid */
+    .gridWrap{
+      margin-top: 12px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media (min-width:720px){
+      .gridWrap{ grid-template-columns: 1fr 1fr; }
+    }
+    .gridCard{
+      text-align:left;
+      width:100%;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      padding: 10px;
+      cursor:pointer;
+      position:relative;
+    }
+    .gridCard:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+    .gridCard.isSelected{
+      border-color: rgba(127,208,255,.65);
+      box-shadow: 0 0 0 2px rgba(127,208,255,.12) inset;
+    }
+    .gridImg{
+      position:relative;
+      border-radius: 16px;
+      overflow:hidden;
+      height: 160px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+    }
+    .gridImg img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .gridCnt{
+      position:absolute;
+      left:10px;
+      top:10px;
+      font-weight: 1000;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.38);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(8px);
+    }
+    .gridSel, .gridEmpty{
+      position:absolute;
+      right:10px;
+      top:10px;
+      font-weight: 1000;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(127,208,255,.20);
+      border:1px solid rgba(127,208,255,.45);
+      backdrop-filter: blur(8px);
+    }
+    .gridEmpty{
+      background: rgba(255,154,165,.18);
+      border-color: rgba(255,154,165,.45);
+    }
+    .gridName{
+      margin-top: 10px;
+      font-weight: 1000;
+      font-size: 14px;
+      letter-spacing:.01em;
+    }
+    .gridDesc{
+      margin-top: 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+      line-height: 1.55;
+    }
+    .gridFx{
+      margin-top: 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+    }
+
+    /* reward */
+    .reward{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .reward .big{
+      font-weight: 1000;
+      font-size: 14px;
+      letter-spacing:.01em;
+    }
+    .reward .mini{
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+      line-height: 1.55;
+    }
+    .reward .img{
+      width: 100%;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      display:block;
+      max-height: 46svh;
+      object-fit: contain;
+    }
+  </style>
 </head>
 
 <body>
-  <div class="wrap">
-
-    <div class="topbar">
-      <a class="backBtn" href="./index.html">← 戻る</a>
-
-      <div class="topTitle">
-        <div class="topTitleMain">たこ焼きファーム</div>
-        <div class="topTitleSub">畑を育てて、焼かれた伝説を収穫せよ</div>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="titlebox">
+        <div class="title">たこ焼きファーム（畑）</div>
+        <div class="subtitle">タネ・水・肥料を装備して育成 → 収穫 → 図鑑へ</div>
       </div>
 
-      <!-- ✅ 追加：シリアル入力ボタン -->
-      <button class="zukanBtn" id="serialBtn" type="button" style="margin-right:8px;">シリアル</button>
-
-      <a class="zukanBtn" href="./zukan.html">図鑑</a>
-    </div>
-
-    <div class="hero">
-      <div class="heroBadge">FARM QUEST</div>
-      <div class="heroMain">
-        <div class="heroIcon" aria-hidden="true">🐙</div>
-        <div class="heroText">
-          <div class="heroTtl">「タネ・ミズ・ヒリョウ」装備でワンタップ植え</div>
-          <div class="heroDesc">
-            基本 <b>5時間</b>で収穫。放置すると<b>焼ける</b>ので注意。<br>
-            <small>※最初は3マス。収穫でXP → LvUPで畑が増える。</small>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="board">
-      <div class="boardRow">
-        <div class="chip">Lv <b id="stLevel">1</b></div>
-        <div class="chip">XP <b id="stXP">0</b></div>
-        <div class="chip">解放 <b id="stUnlock">3</b>/25</div>
-        <div class="chip">獲得 <b id="stBook">0</b></div>
-      </div>
-
-      <div class="boardRow">
-        <div class="chip warn">育成中 <b id="stGrow">0</b></div>
-        <div class="chip good">収穫可 <b id="stReady">0</b></div>
-        <div class="chip bad">焼け <b id="stBurn">0</b></div>
-      </div>
-
-      <div class="xpPanel">
-        <div class="xpTop">
-          <div>次Lvまで：<b id="stXpLeft">0</b> XP</div>
-          <small><span id="stXpNow">0</span>/<span id="stXpNeed">0</span></small>
-        </div>
-        <div class="xpBarWrap">
-          <div id="stXpBar" class="xpBar"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="loadoutWrap" aria-label="現在の装備">
-      <div class="loadoutHead">
-        <div class="loadoutTtl">現在の装備</div>
-        <div class="loadoutSub">タップで変更（装備は消費しない）</div>
-      </div>
-
-      <div class="loadout" id="loadout">
-        <button class="equipCard" id="equipSeed" type="button" aria-label="種を変更">
-          <div class="equipTop">
-            <span class="equipTag">タネ</span>
-            <span class="equipCnt" id="equipSeedCnt">×0</span>
-          </div>
-          <div class="equipImg">
-            <img id="equipSeedImg" alt="種" src="https://ul.h3z.jp/muPEAkao.png">
-          </div>
-          <div class="equipName" id="equipSeedName">未装備</div>
+      <div class="top-actions">
+        <!-- ✅ 要件 1) シリアルボタン追加 -->
+        <button id="serialBtn" class="btn primary" type="button" aria-label="シリアル入力を開く">
+          シリアル
         </button>
 
-        <button class="equipCard" id="equipWater" type="button" aria-label="水を変更">
-          <div class="equipTop">
-            <span class="equipTag">ミズ</span>
-            <span class="equipCnt" id="equipWaterCnt">×0</span>
-          </div>
-          <div class="equipImg">
-            <img id="equipWaterImg" alt="水" src="https://ul.h3z.jp/muPEAkao.png">
-          </div>
-          <div class="equipName" id="equipWaterName">未装備</div>
-        </button>
-
-        <button class="equipCard" id="equipFert" type="button" aria-label="肥料を変更">
-          <div class="equipTop">
-            <span class="equipTag">ヒリョウ</span>
-            <span class="equipCnt" id="equipFertCnt">×0</span>
-          </div>
-          <div class="equipImg">
-            <img id="equipFertImg" alt="肥料" src="https://ul.h3z.jp/muPEAkao.png">
-          </div>
-          <div class="equipName" id="equipFertName">未装備</div>
-        </button>
-      </div>
-
-      <div class="loadoutHint">
-        ✅ 空きマスをタップすると、この装備で<b>ワンタップ植え</b>。
+        <a class="btn" href="./zukan.html" style="text-decoration:none;">図鑑</a>
+        <a class="btn" href="./roten.html" style="text-decoration:none;">露店</a>
       </div>
     </div>
+  </header>
 
-    <div id="farm" class="farm" aria-label="畑"></div>
-
-    <div id="modal" class="modal" aria-hidden="true">
-      <div class="sheet" role="dialog" aria-label="畑操作">
-        <div class="sheetHead">
-          <div class="ttl" id="mTitle">操作</div>
-          <button id="mClose" type="button">閉じる</button>
+  <main class="wrap">
+    <section class="panel stats">
+      <div class="statbox">
+        <div class="statrow">
+          <span class="pill">図鑑 <b id="stBook">0</b></span>
+          <span class="pill">育成 <b id="stGrow">0</b></span>
+          <span class="pill">収穫 <b id="stReady">0</b></span>
+          <span class="pill">焦げ <b id="stBurn">0</b></span>
         </div>
-        <div class="sheetBody" id="mBody"></div>
-      </div>
-    </div>
 
+        <div class="xpbar" aria-label="XPバー">
+          <i id="stXpBar"></i>
+        </div>
+        <div class="xpmeta">
+          <span>Lv <b id="stLevel">1</b> / XP <b id="stXP">0</b></span>
+          <span>次Lvまで <b id="stXpLeft">0</b> / 必要 <b id="stXpNeed">0</b></span>
+          <span>解放マス <b id="stUnlock">3</b></span>
+        </div>
+      </div>
+
+      <div class="statbox">
+        <div class="loadout">
+          <div class="equip">
+            <button id="equipSeed" type="button" aria-label="タネを選ぶ">
+              <div class="ico"><img id="equipSeedImg" alt="" src="https://ul.h3z.jp/muPEAkao.png"></div>
+              <div class="meta">
+                <div class="name" id="equipSeedName">未装備</div>
+                <div class="cnt"  id="equipSeedCnt">×0</div>
+              </div>
+            </button>
+          </div>
+
+          <div class="equip">
+            <button id="equipWater" type="button" aria-label="水を選ぶ">
+              <div class="ico"><img id="equipWaterImg" alt="" src="https://ul.h3z.jp/muPEAkao.png"></div>
+              <div class="meta">
+                <div class="name" id="equipWaterName">未装備</div>
+                <div class="cnt"  id="equipWaterCnt">×0</div>
+              </div>
+            </button>
+          </div>
+
+          <div class="equip">
+            <button id="equipFert" type="button" aria-label="肥料を選ぶ">
+              <div class="ico"><img id="equipFertImg" alt="" src="https://ul.h3z.jp/muPEAkao.png"></div>
+              <div class="meta">
+                <div class="name" id="equipFertName">未装備</div>
+                <div class="cnt"  id="equipFertCnt">×0</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Farm grid -->
+    <section id="farm" class="farm" aria-label="畑のマス一覧"></section>
+  </main>
+
+  <!-- Modal -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="backdrop" aria-hidden="true"></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+      <div class="head">
+        <h2 id="mTitle">タイトル</h2>
+        <button id="mClose" class="close" type="button">閉じる</button>
+      </div>
+      <div id="mBody" class="body"></div>
+    </div>
   </div>
 
-  <!-- ✅ takofarm2.jsを読み込む -->
+  <!-- JS -->
   <script src="assets/takofarm2.js"></script>
 </body>
 </html>
