@@ -1,0 +1,1619 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>たこ焼き釣り｜TAKOFISH</title>
+  <meta name="description" content="たこ焼き釣りゲーム（TAKOFISH）。最高得点保存・結果日時表示・SP-抽選つき。" />
+
+  <style>
+    :root{
+      --bg0:#05060b;
+      --bg1:#0c1025;
+      --panel: rgba(255,255,255,.08);
+      --line: rgba(255,255,255,.14);
+      --text:#fff;
+      --muted: rgba(255,255,255,.75);
+      --btn: rgba(255,255,255,.10);
+      --btn2: rgba(255,255,255,.16);
+      --good:#9fffa8;
+      --warn:#ffd38a;
+      --bad:#ff9aa5;
+      --radius: 16px;
+      --shadow: 0 18px 46px rgba(0,0,0,.55);
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 50% 20%, #1a2040 0%, #070812 60%),
+        linear-gradient(var(--bg0), var(--bg1));
+      min-height:100svh;
+      overflow-x:hidden;
+    }
+
+    /* ===== layout: 画面内で完結（スマホでもスクロール無しで開始できる） ===== */
+    .page{
+      min-height: 100svh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .topbar{
+      position: sticky;
+      top:0;
+      z-index:50;
+      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
+      backdrop-filter: blur(8px);
+    }
+    .topbar-inner{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 12px 12px 10px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    .left-group{ display:flex; align-items:center; gap:10px; min-width: 0; }
+    .backBtn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .titlebox{ min-width:0; }
+    .title{
+      font-weight: 950;
+      letter-spacing:.02em;
+      font-size: 18px;
+      line-height:1.1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .sub{
+      margin-top:2px;
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .right-group{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      padding: 8px 10px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .pill b{ color:#fff; font-weight: 950; }
+
+    .main{
+      flex: 1;
+      display:flex;
+      align-items: stretch;
+      justify-content:center;
+      padding: 10px 12px 14px;
+    }
+
+    .card{
+      width: min(560px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height: 0; /* 重要：内部スクロールを抑える */
+    }
+
+    .hud{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,.20);
+      flex-wrap:wrap;
+    }
+
+    .hud-left{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: var(--btn);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 950;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{ background: var(--btn2); }
+    .btn[disabled]{ opacity:.5; cursor:not-allowed; }
+
+    .stats{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .stats b{ color:#fff; }
+
+    .stage{
+      position: relative;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+
+    .canvasbox{
+      position: relative;
+      border: 2px solid rgba(255,255,255,.35);
+      border-radius: 14px;
+      overflow:hidden;
+      background:#081425;
+      /* 画面内で収まるように高さを制御（スクロール抑制） */
+      flex: 1;
+      min-height: 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    canvas#tfCanvas{
+      width: 100%;
+      height: auto;
+      display:block;
+      image-rendering: pixelated;
+      touch-action: none; /* スマホスクロール誤爆防止 */
+      user-select:none;
+      -webkit-user-select:none;
+    }
+
+    .note{
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.45;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ===== overlays ===== */
+    .overlay{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.72);
+      padding: 12px;
+    }
+    .panel{
+      width: min(440px, 96%);
+      max-height: 86vh;
+      overflow:auto;
+      border: 1px solid rgba(255,255,255,.28);
+      background: rgba(10,14,24,.96);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 18px 46px rgba(0,0,0,.7);
+    }
+    .panel h2{
+      margin:0 0 8px;
+      font-size: 15px;
+      font-weight: 950;
+      letter-spacing:.02em;
+    }
+    .panel .p{
+      font-size: 12px;
+      color: rgba(255,255,255,.88);
+      line-height: 1.6;
+      margin: 6px 0;
+    }
+    .panel .small{
+      margin-top: 8px;
+      font-size: 11px;
+      color: rgba(255,255,255,.65);
+      line-height: 1.55;
+    }
+    .panel .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.88);
+    }
+    .panel .grid b{ color:#fff; }
+    .panel .actions{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+    }
+    .panel .actions .btn{ flex:1; }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.08);
+      font-size: 12px;
+      margin-bottom: 8px;
+      color: rgba(255,255,255,.85);
+    }
+    .badge .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: rgba(0,255,255,.75);
+      box-shadow: 0 0 14px rgba(0,255,255,.35);
+    }
+
+    /* 端末が極端に低い場合でもボタンが見えるよう調整 */
+    @media (max-height: 740px){
+      .stage{ padding: 10px; }
+      .hud{ padding: 8px 10px; }
+      .btn{ padding: 9px 11px; }
+      .panel{ max-height: 82vh; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="left-group">
+        <button class="backBtn" id="backBtn" type="button" aria-label="戻る">← 戻る</button>
+        <div class="titlebox">
+          <div class="title">たこ焼き釣り（TAKOFISH）</div>
+          <div class="sub">タップで糸を落下 → 当てる → 巻き上げ。天敵に注意。</div>
+        </div>
+      </div>
+
+      <div class="right-group">
+        <div class="pill">最高：<b id="bestLine">0</b></div>
+        <div class="pill">SP-入手：<b id="spLine">0</b></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="card" aria-label="TAKOFISH">
+      <div class="hud">
+        <div class="hud-left">
+          <button class="btn" id="btnStart" type="button">スタート</button>
+          <button class="btn" id="btnRetry" type="button" disabled>もう一回</button>
+        </div>
+        <div class="stats" aria-label="ゲーム状況">
+          <span>スコア：<b id="tfScore">0</b></span>
+          <span>残り：<b id="tfTime">--</b>s</span>
+          <span>連続：<b id="tfCombo">0</b></span>
+          <span>失敗：<b id="tfMiss">0</b></span>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="canvasbox">
+          <canvas id="tfCanvas" width="360" height="520"></canvas>
+
+          <!-- ルール -->
+          <div class="overlay" id="ovRules">
+            <div class="panel" role="dialog" aria-modal="true" aria-label="ルール">
+              <div class="badge"><span class="dot"></span> ルール</div>
+              <h2>タップした場所に糸（ピック）を垂らして、たこ焼きに当てて釣り上げよう。</h2>
+              <div class="p">
+                天敵（観光客・イカ・流れ）にぶつかると奪われる。生焼けはマイナス。
+              </div>
+
+              <div class="grid">
+                <div>極小：<b>120</b></div>
+                <div>普通：<b>70</b></div>
+                <div>巨大：<b>40</b></div>
+              </div>
+
+              <div class="p" style="margin-top:10px;font-weight:900;">種類（倍率 / マイナス）</div>
+              <div class="p">
+                ソース ×1.00 / いかさま ×1.40 / ゴールド ×2.80 / レインボー ×5.50 / 生焼け <b style="color:var(--bad)">-120</b>
+              </div>
+
+              <div class="p" style="margin-top:10px;font-weight:900;">時間</div>
+              <div class="p">
+                まず<b>30秒</b>。30秒時点でスコアが <b id="unlockTxt">600</b> 点以上なら<b>60秒</b>まで延長。<br>
+                延長できた場合、<b>45秒</b>から<b style="color:rgba(0,255,255,.9)">鬼モード</b>（突入時0.3秒停止・天敵速度2.2倍）
+              </div>
+
+              <div class="small">※この画面はスクロールできます（でも開始ボタンは必ず見える位置にあります）</div>
+
+              <div class="actions">
+                <button class="btn" id="btnRuleStart" type="button">開始</button>
+                <button class="btn" id="btnRuleClose" type="button" style="opacity:.85;">閉じる</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- リザルト -->
+          <div class="overlay" id="ovResult" style="display:none;">
+            <div class="panel" role="dialog" aria-modal="true" aria-label="結果">
+              <div class="badge"><span class="dot"></span> 結果</div>
+              <h2 id="resTitle">結果</h2>
+              <div class="p" id="resMain" style="font-weight:950;font-size:18px;line-height:1.35;margin:10px 0 6px;"></div>
+              <div class="p" id="resSub" style="opacity:.92;"></div>
+              <div class="actions">
+                <button class="btn" id="btnAgain" type="button">もう一回</button>
+                <button class="btn" id="btnCloseResult" type="button" style="opacity:.85;">閉じる</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="note">
+          ・狙い：小さいほど高得点。<br>
+          ・SP-抽選：最終スコアが <b>-500 / 1000 / 2000 / 3000</b> のとき <b>10%</b> で入手。<br>
+          ・最高得点は端末に保存されます。
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* =========================================================
+     TAKOFISH（takofish.html 一本化・完全版）
+     ✅ 最高得点の保存＆表示
+     ✅ 結果画面に「日時」表示
+     ✅ 最終スコアが -500 / 1000 / 2000 / 3000 のとき 10% で SP- 入手
+     ✅ スマホでもスクロール無しで開始できるUI（Startボタン常に見える）
+     ✅ 左上「戻る」ボタン
+  ========================================================= */
+
+  /* =========================
+     0) localStorage keys
+  ========================= */
+  const LS = {
+    best: "takoyakiFishing_best_points",
+    last: "takoyakiFishing_last_points",
+    playedAt: "takoyakiFishing_last_played",
+    spCount: "takoyakiFishing_sp_count",
+    spLog: "takoyakiFishing_sp_log", // JSON array (recent)
+    // 互換（もし別ページで参照している場合の保険）
+    fishState: "fish_v1_state",
+    // 図鑑（もし使っている場合の保険：tf_v1_book に sp_fish を加算）
+    book: "tf_v1_book",
+  };
+
+  function readInt(key, def=0){
+    const raw = localStorage.getItem(key);
+    const n = Math.floor(Number(raw));
+    return Number.isFinite(n) ? n : def;
+  }
+  function writeInt(key, n){
+    localStorage.setItem(key, String(Math.floor(Number(n)||0)));
+  }
+  function safeJSONParse(raw, def){
+    try{ return JSON.parse(raw); }catch(_){ return def; }
+  }
+
+  function fmtJPDateTime(d){
+    try{
+      return new Intl.DateTimeFormat("ja-JP", {
+        year:"numeric", month:"2-digit", day:"2-digit",
+        hour:"2-digit", minute:"2-digit", second:"2-digit",
+      }).format(d);
+    }catch(_){
+      // fallback
+      const pad = (v)=>String(v).padStart(2,"0");
+      return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+  }
+
+  function refreshTopLines(){
+    const best = readInt(LS.best, 0);
+    const sp = readInt(LS.spCount, 0);
+    document.getElementById("bestLine").textContent = String(best);
+    document.getElementById("spLine").textContent = String(sp);
+  }
+
+  function saveFishingRecord(score){
+    score = Math.floor(Number(score) || 0);
+
+    // 今回
+    localStorage.setItem(LS.last, String(score));
+    const playedISO = new Date().toISOString();
+    localStorage.setItem(LS.playedAt, playedISO);
+
+    // 最高
+    const best = readInt(LS.best, 0);
+    const isNew = score > best;
+    if (isNew) localStorage.setItem(LS.best, String(score));
+    const newBest = Math.max(best, score);
+
+    // 互換保存（gate等で参照している場合の保険）
+    try{
+      const key = LS.fishState;
+      let st = safeJSONParse(localStorage.getItem(key) || "{}", {});
+      st.best = Math.max(Math.floor(Number(st.best)||0), newBest);
+      st.last = score;
+      st.updatedAt = Date.now();
+      localStorage.setItem(key, JSON.stringify(st));
+    }catch(_){}
+
+    return { best:newBest, isNew, playedISO };
+  }
+
+  /* =========================
+     1) SP- 抽選（最終スコア）
+  ========================= */
+  const SP_TARGETS = new Set([-500, 1000, 2000, 3000]);
+  const SP_RATE = 0.10; // 10%
+
+  function grantSPCardIfLucky(finalScore){
+    if (!SP_TARGETS.has(finalScore)) return { ok:false, reason:"not_target" };
+
+    const hit = Math.random() < SP_RATE;
+    if (!hit) return { ok:false, reason:"miss" };
+
+    const now = new Date();
+    const when = now.toISOString();
+
+    // count
+    const cur = readInt(LS.spCount, 0) + 1;
+    writeInt(LS.spCount, cur);
+
+    // log (recent 30)
+    const log = safeJSONParse(localStorage.getItem(LS.spLog) || "[]", []);
+    log.unshift({ at: when, score: finalScore, id: "SP-FISH" });
+    while (log.length > 30) log.pop();
+    localStorage.setItem(LS.spLog, JSON.stringify(log));
+
+    // 図鑑へ加算（tf_v1_book がある場合）
+    try{
+      let book = safeJSONParse(localStorage.getItem(LS.book) || "{}", {});
+      if (!book.got) book.got = {};
+      if (!book.got["sp_fish"]) book.got["sp_fish"] = { count: 0, lastAt: 0, note: "TAKOFISH SP-" };
+      book.got["sp_fish"].count = (book.got["sp_fish"].count|0) + 1;
+      book.got["sp_fish"].lastAt = Date.now();
+      localStorage.setItem(LS.book, JSON.stringify(book));
+    }catch(_){}
+
+    // 互換 state
+    try{
+      let st = safeJSONParse(localStorage.getItem(LS.fishState) || "{}", {});
+      st.sp = (st.sp|0) + 1;
+      st.updatedAt = Date.now();
+      localStorage.setItem(LS.fishState, JSON.stringify(st));
+    }catch(_){}
+
+    return { ok:true, score: finalScore, whenISO: when, total: cur };
+  }
+
+  /* =========================
+     2) 画像URL
+  ========================= */
+  const CDN_BASE = "https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/assets/takofish/";
+  const V = "1"; // 画像差し替え時に上げる
+
+  const IMG_URLS = {
+    pick:          `${CDN_BASE}pick.png?v=${V}`,
+    sauce:         `${CDN_BASE}tako_sauce.png?v=${V}`,
+    ika_tako:      `${CDN_BASE}tako_ika.png?v=${V}`,
+    gold:          `${CDN_BASE}tako_gold.png?v=${V}`,
+    rainbow:       `${CDN_BASE}tako_rainbow.png?v=${V}`,
+    raw:           `${CDN_BASE}tako_raw.png?v=${V}`,
+    tourist_left:  `${CDN_BASE}tourist_left.png?v=${V}`,
+    tourist_right: `${CDN_BASE}tourist_right.png?v=${V}`,
+    squid:         `${CDN_BASE}ika.png?v=${V}`,
+  };
+
+  function loadImage(src){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error(src));
+      img.src = src;
+    });
+  }
+  async function loadAllImages(){
+    const keys = Object.keys(IMG_URLS);
+    const images = {};
+    const failed = [];
+    for (const k of keys){
+      try { images[k] = await loadImage(IMG_URLS[k]); }
+      catch(e){ failed.push({ key:k, url:String(e.message || e) }); }
+    }
+    return { images, failed };
+  }
+
+  /* =========================
+     3) ゲーム定数（元コード準拠）
+  ========================= */
+  const CFG = {
+    W: 360,
+    H: 520,
+
+    BASE_LIMIT: 30,
+    EXT_LIMIT: 60,
+    EXT_SCORE: 600,
+    ONI_AT: 45,
+    ONI_FREEZE_MS: 300,
+    ONI_SPEED_MUL: 2.2,
+
+    HOOK_DROP: 680,
+    HOOK_REEL: 260,
+    HOOK_HIT_R: 10,
+    TOP_Y: 18,
+    FLOOR_Y_RATIO: 0.86,
+
+    PICK_DRAW: 24,
+
+    ITEM_COUNT: 7,
+    ITEM_BASE_SPEED: 45,
+    ITEM_MAX_SPEED: 130,
+    ITEM_ACCEL: 240,
+
+    GIANT_DROP_CHANCE: 0.18,
+    GIANT_DROP_START_Y_RATIO: 0.62,
+
+    SIZE: {
+      tiny:   { label: "極小",  draw: 24, base: 120 },
+      normal: { label: "普通",  draw: 40, base: 70  },
+      giant:  { label: "巨大",  draw: 56, base: 40  },
+    },
+    SIZE_WEIGHTS: [
+      { key: "normal", w: 62 },
+      { key: "tiny",   w: 28 },
+      { key: "giant",  w: 10 },
+    ],
+
+    TYPE: {
+      sauce:   { label: "ソース",     mult: 1.00, kind: "plus",  imgKey: "sauce" },
+      ika:     { label: "いかさま",   mult: 1.40, kind: "plus",  imgKey: "ika_tako" },
+      gold:    { label: "ゴールド",   mult: 2.80, kind: "plus",  imgKey: "gold" },
+      rainbow: { label: "レインボー", mult: 5.50, kind: "plus",  imgKey: "rainbow" },
+      raw:     { label: "生焼け",     mult: 0.00, kind: "minus", imgKey: "raw", penalty: -120 },
+    },
+    TYPE_WEIGHTS: [
+      { key: "sauce",   w: 55 },
+      { key: "ika",     w: 20 },
+      { key: "gold",    w: 10 },
+      { key: "rainbow", w:  5 },
+      { key: "raw",     w: 10 },
+    ],
+
+    ENEMY_CENTER_Y_RATIO: 0.45,
+    ENEMY_GAP: 170,
+
+    TOURIST: { w: 34, h: 18, speed: 90 },
+    SQUID: { w: 58, h: 58, speed: 18, ampX: 10, ampY: 16, freq: 0.55 },
+
+    DASH: {
+      yBias: -12,
+      w: 54,
+      h: 10,
+      speed: 950,
+      minS: 10,
+      maxS: 15,
+      oniMinS: 4,
+      oniMaxS: 7,
+      trail: 4,
+    },
+
+    MARGIN_X: 10,
+  };
+
+  document.getElementById("unlockTxt").textContent = String(CFG.EXT_SCORE);
+
+  /* =========================
+     4) ランク定義（元コード準拠）
+  ========================= */
+  const RANKS_MINUS = [
+    { min: -1000, max: -1000, name: "〘未投入〙", line: "鉄板に、置かれていない。" },
+    { min: -999,  max: -900,  name: "〘焼かれていない存在〙", line: "まだ、始まってすらいない。" },
+    { min: -899,  max: -800,  name: "〘生焼け信者（末期）〙", line: "これは“通”の味。" },
+    { min: -799,  max: -700,  name: "〘回収係に顔を覚えられた〙", line: "また来たんですね。" },
+    { min: -699,  max: -600,  name: "〘ソース未装備〙", line: "武器を忘れてきた。" },
+    { min: -599,  max: -500,  name: "〘焼き台に謝ってる人〙", line: "違う、そうじゃない。" },
+    { min: -499,  max: -400,  name: "〘粉に戻った人〙", line: "最初からやり直せると思った？" },
+    { min: -399,  max: -300,  name: "〘鉄板の外側〙", line: "そこ、焼けない。" },
+    { min: -299,  max: -200,  name: "〘回収対象（仮）〙", line: "まだ返せると思っている。" },
+    { min: -199,  max: -100,  name: "〘生焼け肯定派〙", line: "これはこれで、って言い始めた。" },
+    { min: -99,   max: -1,    name: "〘ひっくり返し忘れ〙", line: "あっ、って言った。" },
+  ];
+  const RANKS_PLUS = [
+    { min: 0,    max: 149,  name: "〘粉の妖精（未焼成）〙", line: "まだ丸くすらない。人生も。" },
+    { min: 150,  max: 299,  name: "〘ソースの素振りマン〙", line: "かけてないのに、気持ちだけ濃い。" },
+    { min: 300,  max: 449,  name: "〘青のり散らし職人（風）〙", line: "職人“風”って言った？言ったね？" },
+    { min: 450,  max: 599,  name: "〘祭壇の前で深呼吸する人〙", line: "扉の前で呼吸するな。焼ける。" },
+    { min: 600,  max: 699,  name: "〘延長の民（帰れない）〙", line: "帰ろうと思った瞬間、延長が始まる。" },
+    { min: 700,  max: 799,  name: "〘潮目の読み間違い王〙", line: "読むな。感じろ。だいたい外れる。" },
+    { min: 800,  max: 899,  name: "〘鬼モード予備軍（危険物）〙", line: "近づくな。熱さに慣れた目をしてる。" },
+    { min: 900,  max: 999,  name: "〘回収されがちコレクター〙", line: "取ったと思ったら、取られてる。人生。" },
+    { min: 1000, max: 1149, name: "〘焼き台の反復横跳び〙", line: "足が速いのに、目的が分からない。" },
+    { min: 1150, max: 1299, name: "〘深海市場の常連（財布が不穏）〙", line: "買うな。回収される。なぜ来た。" },
+    { min: 1300, max: 1449, name: "〘図鑑を開く手が震える人〙", line: "ページめくると、たこ焼き増えると思ってる？" },
+    { min: 1450, max: 1599, name: "〘旅路の証っぽいもの保持者〙", line: "“っぽいもの”って言ったら全部軽くなる。" },
+    { min: 1600, max: 1749, name: "〘流れと握手した人〙", line: "握手した手が、もう戻ってこない。" },
+    { min: 1750, max: 1899, name: "〘観測者（現場猫）〙", line: "ヨシ！って言った瞬間、全部持ってかれた。" },
+    { min: 1900, max: 1999, name: "〘黒潮と同棲中〙", line: "家賃？払ってるのはメンタル。" },
+    { min: 2000, max: 2199, name: "〘仕様の外で生きてる人〙", line: "説明書が逃げた。戻ってこない。" },
+    { min: 2200, max: 2399, name: "〘焼かれた伝説（胃もたれ付き）〙", line: "伝説は重い。胃も重い。" },
+    { min: 2400, max: 2499, name: "〘禁断の回収免許皆伝〙", line: "免許？返納しろ。危ない。" },
+    { min: 2500, max: 2699, name: "〘観測不能（本人も不明）〙", line: "あなた誰？こっちが聞きたい。" },
+    { min: 2700, max: 2899, name: "〘祭壇が先にお辞儀した人〙", line: "偉いのはあなたじゃない。祭壇だ。" },
+    { min: 2900, max: 2999, name: "〘世界の外側でたこ焼き数えてる人〙", line: "数えるな。戻れなくなる。" },
+
+    { min: 3001, max: 3299, name: "〘上限突破：序章〙", line: "ここから先は、説明書が燃える。" },
+    { min: 3300, max: 3599, name: "〘回収無効化〙", line: "奪われない。奪わせない。" },
+    { min: 3600, max: 3999, name: "〘鬼の手元〙", line: "指先が熱を覚えている。" },
+    { min: 4000, max: 4499, name: "〘鉄板と同調〙", line: "揺れが読める。世界が遅い。" },
+    { min: 4500, max: 4999, name: "〘潮目支配〙", line: "流れを避けるんじゃない。使う。" },
+
+    { min: 5000, max: 5499, name: "〘焼成管理者〙", line: "火加減ではなく、運命を回している。" },
+    { min: 5500, max: 5999, name: "〘神速の返し〙", line: "拾う前に、もう次を取っている。" },
+    { min: 6000, max: 6499, name: "〘回収の外側〙", line: "観光客が止まって見える。" },
+    { min: 6500, max: 6999, name: "〘深海の釣神〙", line: "海が静かに道を空ける。" },
+    { min: 7000, max: 7499, name: "〘レインボー統制〙", line: "色が来るタイミングが分かる。" },
+
+    { min: 7500, max: 7999, name: "〘鬼モード常駐〙", line: "もう戻れない。戻る必要もない。" },
+    { min: 8000, max: 8499, name: "〘焼かれた伝説：真〙", line: "伝説は“結果”ではなく“操作”だった。" },
+    { min: 8500, max: 8999, name: "〘鉄板の王〙", line: "火傷しない。火傷が逃げる。" },
+    { min: 9000, max: 9499, name: "〘世界線固定〙", line: "揺れが消える。残るのは精度。" },
+    { min: 9500, max: 9999, name: "〘釣り台の神〙", line: "あなたが動く前に、たこ焼きが寄る。" },
+
+    { min: 10000, max: 999999, name: "〘運営側〙", line: "……テストプレイ、ありがとうございます。" },
+  ];
+  const SCORE_3000_LINE = "それでも、たこ焼きは残らなかった。";
+
+  function getRank(score){
+    if (score === 3000) return null;
+    const list = (score < 0) ? RANKS_MINUS : RANKS_PLUS;
+    if (score < list[0].min) return list[0];
+    if (score > list[list.length - 1].max) return list[list.length - 1];
+    for (const r of list){
+      if (score >= r.min && score <= r.max) return r;
+    }
+    return list[list.length - 1];
+  }
+
+  /* =========================
+     5) Helpers
+  ========================= */
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function rand(a,b){ return a + Math.random()*(b-a); }
+  function pickByWeight(list){
+    let sum = 0;
+    for (const it of list) sum += it.w;
+    let r = Math.random() * sum;
+    for (const it of list){
+      r -= it.w;
+      if (r <= 0) return it.key;
+    }
+    return list[list.length-1].key;
+  }
+  function circleHit(ax,ay,ar,bx,by,br){
+    const dx=ax-bx, dy=ay-by;
+    return (dx*dx+dy*dy) <= (ar+br)*(ar+br);
+  }
+  function circleRectHit(cx, cy, cr, rx, ry, rw, rh){
+    const nx = clamp(cx, rx, rx + rw);
+    const ny = clamp(cy, ry, ry + rh);
+    const dx = cx - nx;
+    const dy = cy - ny;
+    return (dx*dx + dy*dy) <= cr*cr;
+  }
+  function nowMs(){ return performance.now(); }
+
+  function buildTakoyakiSpec(){
+    const sizeKey = pickByWeight(CFG.SIZE_WEIGHTS);
+    const typeKey = pickByWeight(CFG.TYPE_WEIGHTS);
+    const size = CFG.SIZE[sizeKey];
+    const type = CFG.TYPE[typeKey];
+
+    let points = 0;
+    if (type.kind === "minus") points = type.penalty;
+    else points = Math.round(size.base * type.mult);
+
+    return { sizeKey, size, type, points };
+  }
+
+  function pointerToCanvasX(e, cvs){
+    const rect = cvs.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (CFG.W / rect.width);
+    return clamp(x, CFG.MARGIN_X, CFG.W - CFG.MARGIN_X);
+  }
+
+  /* =========================
+     6) UI elements
+  ========================= */
+  const backBtn = document.getElementById("backBtn");
+  const btnStart = document.getElementById("btnStart");
+  const btnRetry = document.getElementById("btnRetry");
+
+  const ovRules = document.getElementById("ovRules");
+  const btnRuleStart = document.getElementById("btnRuleStart");
+  const btnRuleClose = document.getElementById("btnRuleClose");
+
+  const ovResult = document.getElementById("ovResult");
+  const resTitle = document.getElementById("resTitle");
+  const resMain  = document.getElementById("resMain");
+  const resSub   = document.getElementById("resSub");
+  const btnAgain = document.getElementById("btnAgain");
+  const btnCloseResult = document.getElementById("btnCloseResult");
+
+  const scoreEl = document.getElementById("tfScore");
+  const timeEl  = document.getElementById("tfTime");
+  const comboEl = document.getElementById("tfCombo");
+  const missEl  = document.getElementById("tfMiss");
+
+  const cvs = document.getElementById("tfCanvas");
+  const ctx = cvs.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+
+  backBtn.addEventListener("click", () => {
+    // 戻り先が無い場合はトップへ逃がす（必要ならURL差し替えてOK）
+    if (history.length > 1) history.back();
+    else location.href = "./";
+  });
+
+  /* =========================
+     7) Game state
+  ========================= */
+  let IMGS = null;
+
+  let rafId = null;
+  let timerId = null;
+  let onPointer = null;
+
+  let STATE = null;
+
+  function stopGame(){
+    if (timerId) clearInterval(timerId);
+    timerId = null;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+
+    if (onPointer){
+      cvs.removeEventListener("pointerdown", onPointer);
+      onPointer = null;
+    }
+    STATE = null;
+
+    btnRetry.disabled = true;
+  }
+
+  function setButtonsIdle(){
+    btnStart.disabled = false;
+    btnRetry.disabled = true;
+  }
+
+  function setButtonsPlaying(){
+    btnStart.disabled = true;
+    btnRetry.disabled = false;
+  }
+
+  function showRules(){
+    ovRules.style.display = "flex";
+  }
+  function hideRules(){
+    ovRules.style.display = "none";
+  }
+
+  function showResultOverlay(){
+    ovResult.style.display = "flex";
+  }
+  function hideResultOverlay(){
+    ovResult.style.display = "none";
+  }
+
+  function flashText(msg, ms){
+    if (!STATE) return;
+    STATE.flashMsg = msg;
+    STATE.flashUntil = nowMs() + ms;
+  }
+
+  function drawImageCentered(img, x, y, size){
+    ctx.drawImage(img, Math.round(x - size/2), Math.round(y - size/2), size, size);
+  }
+
+  function drawBackground(now){
+    const W = CFG.W, H = CFG.H;
+    const FLOOR_Y = Math.floor(H * CFG.FLOOR_Y_RATIO);
+    const isOni = STATE.oni;
+
+    ctx.fillStyle = isOni ? "#060819" : "#081425";
+    ctx.fillRect(0, 0, W, H);
+
+    const t = now / 1000;
+    const band1 = Math.floor(40 + 12 * Math.sin(t * 0.6));
+    const band2 = Math.floor(70 + 18 * Math.cos(t * 0.42));
+    ctx.fillStyle = isOni ? "rgba(120,70,170,0.07)" : "rgba(60,130,220,0.07)";
+    ctx.fillRect(0, 0, W, band1);
+    ctx.fillRect(0, band1 + 50, W, band2);
+
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    ctx.fillRect(0, FLOOR_Y - 6, W, 6);
+
+    if (isOni){
+      ctx.fillStyle = "rgba(0,255,255,0.04)";
+      ctx.fillRect(0,0,W,H);
+    }
+  }
+
+  function drawItems(){
+    for (const it of STATE.items){
+      if (!it.alive) continue;
+      const img = IMGS[it.spec.type.imgKey];
+      drawImageCentered(img, it.x, it.y, it.spec.size.draw);
+    }
+  }
+
+  function drawTourist(){
+    const t = STATE.tourist;
+    const img = (t.dir > 0) ? IMGS.tourist_right : IMGS.tourist_left;
+    const size = 44;
+    drawImageCentered(img, t.x + t.w/2, t.y, size);
+  }
+
+  function drawSquid(){
+    const s = STATE.squid;
+    const img = IMGS.squid;
+    const cx = s.x + s.w/2;
+    const cy = s.y;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(s.dir, 1);
+    ctx.drawImage(img, Math.round(-s.w/2), Math.round(-s.h/2), s.w, s.h);
+    ctx.restore();
+  }
+
+  function drawDash(now){
+    const d = STATE.dash;
+    if (!d.active) return;
+
+    const trail = STATE.dashTrail;
+    trail.unshift({ x: d.x, t: now });
+    if (trail.length > CFG.DASH.trail) trail.pop();
+
+    for (let i=trail.length-1; i>=0; i--){
+      const a = (i+1) / (trail.length+1);
+      const alpha = 0.12 + 0.22 * (1 - a);
+      const wid = d.w + i * 14;
+      const hi  = d.h + i * 2;
+
+      const x = trail[i].x - i * 10;
+      const y = d.y;
+
+      ctx.fillStyle = `rgba(0, 220, 255, ${alpha})`;
+      ctx.fillRect(Math.round(x), Math.round(y - hi/2), wid, hi);
+    }
+
+    ctx.fillStyle = "rgba(210, 255, 255, 0.35)";
+    ctx.fillRect(Math.round(d.x), Math.round(d.y - d.h/2), d.w, d.h);
+
+    ctx.fillStyle = "rgba(0, 255, 255, 0.35)";
+    ctx.fillRect(Math.round(d.x + d.w - 6), Math.round(d.y - d.h/2), 6, d.h);
+  }
+
+  function drawHook(){
+    const h = STATE.hook;
+
+    ctx.strokeStyle = "rgba(255,255,255,.22)";
+    ctx.beginPath();
+    ctx.moveTo(h.x, CFG.TOP_Y);
+    ctx.lineTo(h.x, h.y);
+    ctx.stroke();
+
+    drawImageCentered(IMGS.pick, h.x, h.y, CFG.PICK_DRAW);
+
+    if (h.hasCatch && h.caught){
+      const s = h.caught.size.draw;
+      const ty = h.y + (CFG.PICK_DRAW/2) + (s/2) - 2;
+      const img = IMGS[h.caught.type.imgKey];
+      drawImageCentered(img, h.x, ty, s);
+    }
+  }
+
+  function remaining(){
+    return Math.max(0, STATE.limit - STATE.elapsed);
+  }
+
+  function drawHUD(now){
+    const W = CFG.W, H = CFG.H;
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "13px system-ui";
+
+    const h = STATE.hook;
+    if (h.phase === "idle") ctx.fillText("タップ：好きな位置に糸を垂らす", 10, 18);
+    else if (h.phase === "drop") ctx.fillText("落下中…当てろ！", 10, 18);
+    else ctx.fillText("巻き上げ中！天敵に注意！", 10, 18);
+
+    if (STATE.extended){
+      ctx.fillStyle = "rgba(255,255,255,.75)";
+      ctx.font = "12px system-ui";
+      ctx.fillText("延長中", 10, 36);
+    }
+    if (STATE.oni){
+      ctx.fillStyle = "rgba(0,255,255,.85)";
+      ctx.font = "12px system-ui";
+      ctx.fillText("鬼モード", 60, 36);
+    }
+
+    if (now < STATE.flashUntil && STATE.flashMsg){
+      ctx.fillStyle = "rgba(0,0,0,.55)";
+      ctx.fillRect(0, 44, W, 26);
+      ctx.fillStyle = "#fff";
+      ctx.font = "13px system-ui";
+      ctx.fillText(STATE.flashMsg, 12, 62);
+    }
+
+    if (STATE.freezeUntil && now < STATE.freezeUntil){
+      ctx.fillStyle = "rgba(0,0,0,.35)";
+      ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = "rgba(0,255,255,.9)";
+      ctx.font = "18px system-ui";
+      ctx.fillText("鬼モード突入", 110, 230);
+    }
+
+    if (remaining() <= 0){
+      ctx.fillStyle = "rgba(0,0,0,.65)";
+      ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = "#fff";
+      ctx.font = "22px system-ui";
+      ctx.fillText("TIME UP!", 120, 230);
+    }
+  }
+
+  function render(now){
+    drawBackground(now);
+    drawTourist();
+    drawSquid();
+    drawDash(now);
+
+    if (!STATE.hook.hasCatch) drawItems();
+    drawHook();
+    drawHUD(now);
+  }
+
+  function resetCanvasMessage(msg){
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = "#081425";
+    ctx.fillRect(0,0,CFG.W,CFG.H);
+    ctx.fillStyle = "#fff";
+    ctx.font = "16px system-ui";
+    ctx.fillText(msg, 90, 260);
+  }
+
+  /* =========================
+     8) Result UI（最高 + 日時 + SP抽選）
+  ========================= */
+  function showResult(score, extended, oniReached){
+    const rec = saveFishingRecord(score);
+    const best = rec.best;
+    const isNew = rec.isNew;
+
+    // SP抽選（最終スコア）
+    const sp = grantSPCardIfLucky(score);
+
+    refreshTopLines();
+
+    const playedAt = new Date(rec.playedISO);
+    const playedJP = fmtJPDateTime(playedAt);
+
+    resTitle.textContent = isNew ? "結果（NEW RECORD!）" : "結果";
+
+    // 3000点ちょうど：一文のみ（元仕様）
+    if (score === 3000){
+      resMain.textContent = SCORE_3000_LINE;
+      const spLine = (sp.ok)
+        ? `<div style="margin-top:8px;color:rgba(0,255,255,.95);font-weight:950;">🎉 SP-入手！（合計 ${sp.total}）</div>`
+        : (SP_TARGETS.has(score) ? `<div style="margin-top:8px;opacity:.85;">SP-抽選：今回はハズレ</div>` : "");
+      resSub.innerHTML = `
+        <div>日時：<b>${playedJP}</b></div>
+        <div>Score：<b>${score}</b></div>
+        <div>Best：<b>${best}</b>${isNew ? "（更新）" : ""}</div>
+        ${spLine}
+      `;
+      showResultOverlay();
+      return;
+    }
+
+    const r = getRank(score);
+    resMain.textContent = `［ ${r.name} ］`;
+
+    const lines = [];
+    lines.push(`<div style="opacity:.95">${r.line}</div>`);
+    lines.push(`<div>日時：<b>${playedJP}</b></div>`);
+    lines.push(`<div>Score：<b>${score}</b></div>`);
+    lines.push(`<div>Best：<b>${best}</b>${isNew ? "（更新）" : ""}</div>`);
+    lines.push(`<div>${extended ? "延長：あり（60秒）" : "延長：なし（30秒）"}</div>`);
+    if (extended) lines.push(`<div>${oniReached ? "鬼モード：到達" : "鬼モード：未到達"}</div>`);
+
+    if (SP_TARGETS.has(score)){
+      if (sp.ok){
+        lines.push(`<div style="margin-top:6px;color:rgba(0,255,255,.95);font-weight:950;">🎉 SP-入手！（合計 ${sp.total}）</div>`);
+      }else{
+        lines.push(`<div style="margin-top:6px;opacity:.85;">SP-抽選：今回はハズレ（10%）</div>`);
+      }
+    }
+
+    resSub.innerHTML = lines.join("");
+    showResultOverlay();
+  }
+
+  /* =========================
+     9) Start / Game loop（元ロジック準拠）
+  ========================= */
+  function startGame(){
+    if (!IMGS){
+      resetCanvasMessage("画像が未ロードです…");
+      return;
+    }
+
+    hideResultOverlay();
+    hideRules();
+    setButtonsPlaying();
+
+    const W = CFG.W, H = CFG.H;
+    const FLOOR_Y = Math.floor(H * CFG.FLOOR_Y_RATIO);
+    const GIANT_DROP_START_Y = Math.floor(H * CFG.GIANT_DROP_START_Y_RATIO);
+
+    const ENEMY_CENTER_Y = Math.floor(H * CFG.ENEMY_CENTER_Y_RATIO);
+    const TOURIST_Y = ENEMY_CENTER_Y - Math.floor(CFG.ENEMY_GAP * 0.55);
+    const SQUID_Y   = ENEMY_CENTER_Y + Math.floor(CFG.ENEMY_GAP * 0.55);
+
+    STATE = {
+      elapsed: 0,
+      limit: CFG.BASE_LIMIT,
+      extended: false,
+      oni: false,
+      oniReached: false,
+      freezeUntil: 0,
+
+      score: 0,
+      combo: 0,
+      miss: 0,
+
+      flashMsg: "",
+      flashUntil: 0,
+
+      items: [],
+      hook: null,
+      tourist: null,
+      squid: null,
+      dash: null,
+
+      dashTrail: [],
+      ended: false,
+    };
+
+    // UI reset
+    scoreEl.textContent = "0";
+    comboEl.textContent = "0";
+    missEl.textContent  = "0";
+    timeEl.textContent  = String(CFG.BASE_LIMIT);
+
+    for (let i=0; i<CFG.ITEM_COUNT; i++){
+      const spec = buildTakoyakiSpec();
+      const baseY = (FLOOR_Y - 14) + rand(-2, 2);
+      STATE.items.push({
+        x: rand(W*0.15, W*0.85),
+        baseY,
+        y: baseY,
+        alive: true,
+        spec,
+        vx: (Math.random()<0.5?-1:1) * (CFG.ITEM_BASE_SPEED + rand(0,22)),
+        vxTarget: (Math.random()<0.5?-1:1) * (CFG.ITEM_BASE_SPEED + rand(0,50)),
+        bobAmp: rand(0.6,2.4),
+        bobSpd: rand(3.0,7.8),
+        bobPhase: rand(0, Math.PI*2),
+        nextMind: nowMs() + rand(450,1100),
+        pauseUntil: 0,
+      });
+    }
+
+    function resetItem(it){
+      it.spec = buildTakoyakiSpec();
+      const baseY = (FLOOR_Y - 14) + rand(-2,2);
+      it.x = rand(W*0.15, W*0.85);
+      it.baseY = baseY;
+      it.y = baseY;
+      it.alive = true;
+      it.vx = (Math.random()<0.5?-1:1) * (CFG.ITEM_BASE_SPEED + rand(0,22));
+      it.vxTarget = (Math.random()<0.5?-1:1) * (CFG.ITEM_BASE_SPEED + rand(0,50));
+      it.bobAmp = rand(0.6,2.4);
+      it.bobSpd = rand(3.0,7.8);
+      it.bobPhase = rand(0,Math.PI*2);
+      it.nextMind = nowMs() + rand(450,1100);
+      it.pauseUntil = 0;
+    }
+
+    STATE.hook = {
+      x: W*0.5,
+      y: CFG.TOP_Y,
+      phase: "idle",
+      hitR: CFG.HOOK_HIT_R,
+      hasCatch: false,
+      caught: null,
+      giantDropArmed: false,
+      giantDropRolled: false,
+      giantWillDrop: false,
+    };
+
+    function setHookIdle(){
+      const h = STATE.hook;
+      h.phase = "idle";
+      h.y = CFG.TOP_Y;
+      h.hasCatch = false;
+      h.caught = null;
+      h.giantDropArmed = false;
+      h.giantDropRolled = false;
+      h.giantWillDrop = false;
+    }
+
+    STATE.tourist = {
+      x: 0,
+      y: TOURIST_Y,
+      w: CFG.TOURIST.w,
+      h: CFG.TOURIST.h,
+      dir: 1,
+      speed: CFG.TOURIST.speed,
+    };
+
+    STATE.squid = {
+      baseX: W - CFG.SQUID.w,
+      baseY: SQUID_Y,
+      x: W - CFG.SQUID.w,
+      y: SQUID_Y,
+      w: CFG.SQUID.w,
+      h: CFG.SQUID.h,
+      dir: -1,
+      speed: CFG.SQUID.speed,
+      ampX: CFG.SQUID.ampX,
+      ampY: CFG.SQUID.ampY,
+      freq: CFG.SQUID.freq,
+      phase: Math.random()*Math.PI*2,
+    };
+
+    const dashY = Math.floor((TOURIST_Y + SQUID_Y) * 0.5) + CFG.DASH.yBias;
+    STATE.dash = {
+      active: false,
+      x: W + 60,
+      y: dashY,
+      w: CFG.DASH.w,
+      h: CFG.DASH.h,
+      vx: -CFG.DASH.speed,
+      nextAt: nowMs() + (CFG.DASH.minS*1000 + Math.random()*(CFG.DASH.maxS-CFG.DASH.minS)*1000),
+    };
+
+    function spawnDash(now){
+      const d = STATE.dash;
+      d.active = true;
+      d.x = W + d.w + 10;
+      d.vx = -CFG.DASH.speed * (STATE.oni ? 1.15 : 1.0);
+
+      const minS = STATE.oni ? CFG.DASH.oniMinS : CFG.DASH.minS;
+      const maxS = STATE.oni ? CFG.DASH.oniMaxS : CFG.DASH.maxS;
+      d.nextAt = now + (minS*1000 + Math.random()*(maxS-minS)*1000);
+
+      STATE.dashTrail.length = 0;
+      flashText("⚠ 流れが来た", 520);
+    }
+    function despawnDash(){
+      const d = STATE.dash;
+      d.active = false;
+      d.x = W + d.w + 10;
+    }
+
+    function applyCatchScore(spec){
+      if (spec.type.kind === "minus"){
+        STATE.score += spec.points;
+        STATE.combo = 0;
+        STATE.miss++;
+        flashText(`ハズレ！${spec.type.label} ${spec.points}`, 900);
+        return;
+      }
+      STATE.combo++;
+      const comboBonus = Math.min(120, STATE.combo * 6);
+      STATE.score += spec.points + comboBonus;
+      flashText(`GET! +${spec.points}（${spec.size.label}/${spec.type.label}）`, 850);
+    }
+
+    function onStolen(who){
+      STATE.combo = 0;
+      STATE.miss++;
+      if (who === "squid"){
+        STATE.score -= 40;
+        flashText("イカに奪われた… -40", 950);
+      } else {
+        flashText("観光客に横取りされた！", 850);
+      }
+      setHookIdle();
+    }
+
+    function onDropGiant(){
+      STATE.combo = 0;
+      STATE.miss++;
+      flashText("巨大たこ焼き、落ちた！！", 950);
+      setHookIdle();
+    }
+
+    function startDropAt(x){
+      if (remaining() <= 0) return;
+      const h = STATE.hook;
+      if (h.phase !== "idle") return;
+
+      h.x = clamp(x, CFG.MARGIN_X, W - CFG.MARGIN_X);
+      h.phase = "drop";
+      h.hasCatch = false;
+      h.caught = null;
+      h.giantDropArmed = false;
+      h.giantDropRolled = false;
+      h.giantWillDrop = false;
+    }
+
+    onPointer = (e) => {
+      e.preventDefault();
+      startDropAt(pointerToCanvasX(e, cvs));
+    };
+    cvs.addEventListener("pointerdown", onPointer, { passive:false });
+
+    // timer (1s)
+    timerId = setInterval(() => {
+      if (remaining() <= 0) return;
+      STATE.elapsed++;
+
+      if (STATE.elapsed === CFG.BASE_LIMIT){
+        if (STATE.score >= CFG.EXT_SCORE){
+          STATE.extended = true;
+          STATE.limit = CFG.EXT_LIMIT;
+          flashText(`延長解放！60秒へ（30秒時点 ${STATE.score}点）`, 1200);
+        } else {
+          STATE.limit = CFG.BASE_LIMIT;
+          flashText(`終了！延長条件：${CFG.EXT_SCORE}点（いま ${STATE.score}点）`, 1400);
+        }
+      }
+
+      if (STATE.extended && STATE.elapsed === CFG.ONI_AT){
+        STATE.oni = true;
+        STATE.oniReached = true;
+        STATE.freezeUntil = nowMs() + CFG.ONI_FREEZE_MS;
+        flashText("鬼モード突入！！", 1000);
+      }
+
+      timeEl.textContent  = String(remaining());
+      scoreEl.textContent = String(STATE.score);
+      comboEl.textContent = String(STATE.combo);
+      missEl.textContent  = String(STATE.miss);
+
+      if (remaining() <= 0 && !STATE.ended){
+        STATE.ended = true;
+        setTimeout(() => {
+          setButtonsIdle();
+          btnRetry.disabled = false;
+          showResult(STATE.score, STATE.extended, STATE.oniReached);
+        }, 120);
+      }
+    }, 1000);
+
+    let last = nowMs();
+
+    function step(now){
+      const dt = Math.min(0.033, (now - last) / 1000);
+      last = now;
+
+      if (remaining() > 0){
+        if (STATE.freezeUntil && now < STATE.freezeUntil){
+          render(now);
+          rafId = requestAnimationFrame(step);
+          return;
+        }
+
+        const mul = STATE.oni ? CFG.ONI_SPEED_MUL : 1.0;
+
+        for (const it of STATE.items){
+          if (!it.alive) continue;
+
+          if (now < it.pauseUntil){
+            it.vx *= 0.90;
+          } else {
+            if (now >= it.nextMind){
+              if (Math.random() < 0.10) it.pauseUntil = now + rand(260, 620);
+
+              const flip = (Math.random() < 0.18) ? -1 : 1;
+              const spd = CFG.ITEM_BASE_SPEED + rand(-18, 60);
+              it.vxTarget = clamp(flip * (Math.random()<0.5?-1:1) * spd, -CFG.ITEM_MAX_SPEED, CFG.ITEM_MAX_SPEED);
+
+              it.bobAmp = clamp(it.bobAmp + rand(-0.6, 0.9), 0.5, 3.4);
+              it.bobSpd = clamp(it.bobSpd + rand(-1.2, 1.4), 2.0, 9.0);
+              it.nextMind = now + rand(350, 1300);
+            }
+
+            const dv = it.vxTarget - it.vx;
+            const stepV = clamp(dv, -CFG.ITEM_ACCEL*dt, CFG.ITEM_ACCEL*dt);
+            it.vx += stepV;
+            it.vx += rand(-6, 6) * dt;
+            it.vx = clamp(it.vx, -CFG.ITEM_MAX_SPEED, CFG.ITEM_MAX_SPEED);
+          }
+
+          it.x += it.vx * dt;
+
+          const half = it.spec.size.draw / 2;
+          if (it.x - half < CFG.MARGIN_X){
+            it.x = CFG.MARGIN_X + half;
+            it.vx = Math.abs(it.vx) * (0.85 + Math.random()*0.25);
+            it.vxTarget = Math.abs(it.vxTarget) * (0.8 + Math.random()*0.4);
+            it.nextMind = Math.min(it.nextMind, now + rand(120, 420));
+          }
+          if (it.x + half > W - CFG.MARGIN_X){
+            it.x = (W - CFG.MARGIN_X) - half;
+            it.vx = -Math.abs(it.vx) * (0.85 + Math.random()*0.25);
+            it.vxTarget = -Math.abs(it.vxTarget) * (0.8 + Math.random()*0.4);
+            it.nextMind = Math.min(it.nextMind, now + rand(120, 420));
+          }
+
+          it.y = it.baseY + Math.sin((now/1000) * it.bobSpd + it.bobPhase) * it.bobAmp;
+        }
+
+        const t = STATE.tourist;
+        t.x += t.dir * t.speed * mul * dt;
+        if (t.x < 0){ t.x = 0; t.dir *= -1; }
+        if (t.x + t.w > W){ t.x = W - t.w; t.dir *= -1; }
+
+        const s = STATE.squid;
+        s.baseX += s.dir * s.speed * mul * dt;
+        if (s.baseX < 0){ s.baseX = 0; s.dir *= -1; }
+        if (s.baseX + s.w > W){ s.baseX = W - s.w; s.dir *= -1; }
+
+        const sec = (now/1000) * (Math.PI*2) * s.freq + s.phase;
+        s.x = s.baseX + Math.sin(sec) * s.ampX;
+        s.y = s.baseY + Math.cos(sec * 0.85) * s.ampY;
+
+        const d = STATE.dash;
+        if (!d.active && now >= d.nextAt){
+          spawnDash(now);
+        }
+        if (d.active){
+          d.x += d.vx * dt;
+          if (d.x + d.w < -40) despawnDash();
+        }
+
+        const h = STATE.hook;
+
+        if (h.phase === "drop"){
+          h.y += CFG.HOOK_DROP * dt;
+
+          if (!h.hasCatch){
+            for (const it of STATE.items){
+              if (!it.alive) continue;
+              const rr = it.spec.size.draw * 0.38;
+              if (circleHit(h.x, h.y, h.hitR, it.x, it.y, rr)){
+                h.hasCatch = true;
+                h.phase = "reel";
+                h.caught = it.spec;
+
+                h.giantDropArmed = (it.spec.sizeKey === "giant");
+                h.giantDropRolled = false;
+                h.giantWillDrop = false;
+
+                it.alive = false;
+                flashText(`HIT!（${it.spec.size.label}/${it.spec.type.label}）`, 750);
+                break;
+              }
+            }
+          }
+
+          if (h.y >= FLOOR_Y - 10){
+            h.y = FLOOR_Y - 10;
+            h.phase = "reel";
+            if (!h.hasCatch){
+              STATE.combo = 0;
+              flashText("空振り…！", 600);
+            }
+          }
+        }
+
+        if (h.phase === "reel"){
+          h.y -= CFG.HOOK_REEL * dt;
+
+          if (h.hasCatch && h.caught && h.giantDropArmed){
+            if (!h.giantDropRolled && h.y < GIANT_DROP_START_Y){
+              h.giantDropRolled = true;
+              h.giantWillDrop = (Math.random() < CFG.GIANT_DROP_CHANCE);
+            }
+            if (h.giantWillDrop && h.y < (GIANT_DROP_START_Y - 40)){
+              const dead = STATE.items.find(v => !v.alive);
+              if (dead) resetItem(dead);
+
+              h.hasCatch = false;
+              h.caught = null;
+              onDropGiant();
+            }
+          }
+
+          if (h.hasCatch && h.caught){
+            const fishSize = h.caught.size.draw;
+            const fishR = fishSize * 0.38;
+            const fishX = h.x;
+            const fishY = h.y + (CFG.PICK_DRAW/2) + (fishSize/2) - 2;
+
+            if (circleRectHit(fishX, fishY, fishR, t.x, t.y - t.h/2, t.w, t.h)){
+              const dead = STATE.items.find(v => !v.alive);
+              if (dead) resetItem(dead);
+              h.hasCatch = false;
+              h.caught = null;
+              onStolen("tourist");
+            }
+
+            if (h.hasCatch && circleRectHit(fishX, fishY, fishR, s.x, s.y - s.h/2, s.w, s.h)){
+              const dead = STATE.items.find(v => !v.alive);
+              if (dead) resetItem(dead);
+              h.hasCatch = false;
+              h.caught = null;
+              onStolen("squid");
+            }
+
+            if (h.hasCatch && d.active){
+              if (circleRectHit(fishX, fishY, fishR, d.x, d.y - d.h/2, d.w, d.h)){
+                const dead = STATE.items.find(v => !v.alive);
+                if (dead) resetItem(dead);
+                h.hasCatch = false;
+                h.caught = null;
+                onStolen("tourist");
+                despawnDash();
+              }
+            }
+          }
+
+          if (h.y <= CFG.TOP_Y){
+            h.y = CFG.TOP_Y;
+            if (h.hasCatch && h.caught){
+              const dead = STATE.items.find(v => !v.alive);
+              if (dead) resetItem(dead);
+
+              applyCatchScore(h.caught);
+
+              h.hasCatch = false;
+              h.caught = null;
+              setHookIdle();
+            } else {
+              setHookIdle();
+            }
+          }
+        }
+      }
+
+      scoreEl.textContent = String(STATE.score);
+      comboEl.textContent = String(STATE.combo);
+      missEl.textContent  = String(STATE.miss);
+      timeEl.textContent  = String(remaining());
+
+      render(now);
+      rafId = requestAnimationFrame(step);
+    }
+
+    setHookIdle();
+    flashText("", 0);
+    rafId = requestAnimationFrame(step);
+  }
+
+  /* =========================
+     10) Init (images + first view)
+  ========================= */
+  async function init(){
+    refreshTopLines();
+    resetCanvasMessage("画像を読み込み中…");
+
+    const { images, failed } = await loadAllImages();
+    if (failed.length){
+      ctx.fillStyle = "#081425";
+      ctx.fillRect(0,0,CFG.W,CFG.H);
+      ctx.fillStyle = "#fff";
+      ctx.font = "14px system-ui";
+      ctx.fillText("画像が読み込めないものがあります：", 18, 40);
+      ctx.font = "11px system-ui";
+      let y=70;
+      for (const f of failed){
+        ctx.fillText(`- ${f.key}: ${f.url}`, 18, y);
+        y += 16;
+        if (y > CFG.H - 30) break;
+      }
+      ctx.fillText("CDN_BASE / ファイル名を確認してください。", 18, CFG.H-16);
+      return;
+    }
+
+    IMGS = images;
+    resetCanvasMessage("準備OK！「スタート」で開始");
+    showRules();
+    setButtonsIdle();
+  }
+
+  /* =========================
+     11) UI events
+  ========================= */
+  btnStart.addEventListener("click", () => {
+    // まずルールを見せる（開始ボタンは常に見える）
+    showRules();
+  });
+
+  btnRuleStart.addEventListener("click", () => {
+    startGame();
+  });
+
+  btnRuleClose.addEventListener("click", () => {
+    hideRules();
+  });
+
+  btnRetry.addEventListener("click", () => {
+    // ゲームを止めて最初から
+    stopGame();
+    hideResultOverlay();
+    showRules();
+    resetCanvasMessage("準備OK！「開始」でスタート");
+  });
+
+  btnAgain.addEventListener("click", () => {
+    stopGame();
+    hideResultOverlay();
+    showRules();
+    resetCanvasMessage("準備OK！「開始」でスタート");
+  });
+
+  btnCloseResult.addEventListener("click", () => {
+    hideResultOverlay();
+    // 結果閉じても再挑戦できるように
+    btnRetry.disabled = false;
+  });
+
+  // 結果/ルールの外側クリックで閉じない（誤爆防止）
+  // ※必要なら実装可
+
+  // 初期化
+  init();
+
+})();
+</script>
+</body>
+</html>
