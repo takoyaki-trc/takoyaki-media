@@ -1,622 +1,1675 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>焼かれた伝説｜入口</title>
-<meta name="description" content="焼かれた伝説 / たこ焼きトレカ 入口。日本語・英語の扉を選び、住民票へ進めます。">
-
-<style>
-:root{
-  --bg1:#05060b;
-  --bg2:#0c1025;
-  --panel:#fffdf6;
-  --ink:#1a1a1a;
-  --gold2:#b98a2c;
-  --glow:#7fd0ff;
-  --glow2:#ffe7a0;
-
-  --safeT: env(safe-area-inset-top, 0px);
-  --safeB: env(safe-area-inset-bottom, 0px);
-  --safeL: env(safe-area-inset-left, 0px);
-  --safeR: env(safe-area-inset-right, 0px);
-}
-
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;
-  color:#fff;
-  background:
-    radial-gradient(circle at 50% 30%, #1a2040 0%, #070812 60%),
-    linear-gradient(var(--bg1),var(--bg2));
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding: calc(14px + var(--safeT)) calc(12px + var(--safeR)) calc(16px + var(--safeB)) calc(12px + var(--safeL));
-  overflow-x:hidden;
-}
-
-/* ===== 背景：粒エフェクト（星/火の粉） ===== */
-.fx{
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  z-index:0;
-  overflow:hidden;
-}
-.fx i{
-  position:absolute;
-  left:0; top:0;
-  width:3px; height:3px;
-  border-radius:999px;
-  background: rgba(255,255,255,.75);
-  opacity:.0;
-  transform: translate3d(0,0,0);
-  filter: blur(.2px);
-  animation: floatUp linear infinite;
-}
-.fx i.gold{ background: rgba(255,220,140,.75); }
-.fx i.blue{ background: rgba(130,210,255,.70); }
-.fx i.big{ width:5px; height:5px; opacity:.0; }
-
-@keyframes floatUp{
-  0%   { transform: translate3d(var(--x), calc(100vh + 20px), 0) scale(var(--s)); opacity:0; }
-  10%  { opacity: var(--o); }
-  80%  { opacity: var(--o); }
-  100% { transform: translate3d(calc(var(--x) + var(--dx)), -40px, 0) scale(var(--s)); opacity:0; }
-}
-
-/* ===== メイン ===== */
-.stage{
-  width:min(900px,92vw);
-  text-align:center;
-  position:relative;
-  z-index:1;
-}
-
-/* ===== タイトルロゴ（ドット風） ===== */
-.logo{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-  margin: 0 auto 10px;
-}
-.logo .jp{
-  font-weight:1000;
-  letter-spacing:.16em;
-  font-size:20px;
-  text-shadow:
-    0 2px 0 rgba(0,0,0,.35),
-    0 0 18px rgba(127,208,255,.18),
-    0 0 22px rgba(255,231,160,.12);
-}
-.logo .en{
-  font-weight:900;
-  letter-spacing:.22em;
-  font-size:11px;
-  opacity:.82;
-}
-.logo .line{
-  width:min(520px,86vw);
-  height:1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
-  margin-top:6px;
-}
-
-/* ===== 扉｜キャラ｜扉 ===== */
-.selectRow{
-  display:flex;
-  justify-content:center;
-  align-items:flex-end;
-  gap:min(4vw,28px);
-  margin-top: 12px;
-  position:relative;
-}
-
-/* ===== 扉（ぽわーッ発光） ===== */
-.door{
-  display:block;
-  width:min(220px, 30vw);
-  cursor:pointer;
-  transition: transform .22s ease, filter .22s ease;
-  position:relative;
-  border-radius:18px;
-  transform-origin: 50% 100%;
-  -webkit-tap-highlight-color: transparent;
-}
-.door img{
-  width:100%;
-  height:auto;
-  image-rendering:pixelated;
-  display:block;
-  border-radius:18px;
-}
-
-/* 発光レイヤー（脈動） */
-.door::before{
-  content:"";
-  position:absolute;
-  inset:-10px;
-  border-radius:22px;
-  background:
-    radial-gradient(circle at 50% 40%, rgba(127,208,255,.52), rgba(127,208,255,0) 60%),
-    radial-gradient(circle at 50% 70%, rgba(255,231,160,.34), rgba(255,231,160,0) 65%);
-  filter: blur(10px);
-  opacity:.18;
-  z-index:-1;
-  animation: doorGlow 2.2s ease-in-out infinite;
-}
-
-/* 薄い粒キラ（ふわっと） */
-.door::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  border-radius:18px;
-  background:
-    radial-gradient(circle at 22% 28%, rgba(255,255,255,.35), transparent 22%),
-    radial-gradient(circle at 68% 42%, rgba(255,255,255,.25), transparent 26%),
-    radial-gradient(circle at 40% 78%, rgba(255,255,255,.20), transparent 28%);
-  opacity:.0;
-  mix-blend-mode:screen;
-  animation: doorSpark 2.8s ease-in-out infinite;
-  pointer-events:none;
-}
-
-@keyframes doorGlow{
-  0%,100%{ opacity:.18; transform: scale(1); }
-  50%    { opacity:.42; transform: scale(1.02); }
-}
-@keyframes doorSpark{
-  0%,100%{ opacity:.06; }
-  50%    { opacity:.22; }
-}
-
-.door:hover{
-  transform: translateY(-5px) scale(1.03);
-  filter: brightness(1.06);
-}
-.door:hover::before{
-  opacity:.60;
-}
-
-/* 扉ラベル（小さく） */
-.doorTag{
-  margin-top:8px;
-  display:inline-flex;
-  gap:8px;
-  align-items:center;
-  justify-content:center;
-  font-weight:900;
-  font-size:12px;
-  letter-spacing:.04em;
-  opacity:.92;
-}
-.doorTag .pill{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 10px;
-  border:1px solid rgba(255,255,255,.16);
-  border-radius:999px;
-  background:rgba(255,255,255,.06);
-}
-.doorTag .dot{
-  width:6px;height:6px;border-radius:999px;
-  background:rgba(255,231,160,.9);
-  box-shadow:0 0 0 2px rgba(255,231,160,.18);
-}
-
-/* ===== 中央キャラ（足踏み） ===== */
-.charWrap{
-  width:min(150px, 22vw);
-  pointer-events:none;
-  position:relative;
-}
-.char{
-  width:100%;
-  transform-origin:50% 100%;
-  animation: stepBounce .5s ease-in-out infinite;
-}
-.char img{
-  width:100%;
-  height:auto;
-  image-rendering:pixelated;
-  display:block;
-  animation: stepTilt .5s ease-in-out infinite;
-}
-@keyframes stepBounce{
-  0%,100%{ transform: translateY(0px); }
-  50%    { transform: translateY(-3px); }
-}
-@keyframes stepTilt{
-  0%   { transform: rotate(-1.2deg); }
-  50%  { transform: rotate( 1.2deg); }
-  100% { transform: rotate(-1.2deg); }
-}
-
-/* 足元の影 */
-.shadow{
-  position:absolute;
-  left:50%;
-  bottom:-6px;
-  width:72%;
-  height:14px;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(0,0,0,.45), rgba(0,0,0,0) 70%);
-  filter: blur(1px);
-  opacity:.7;
-  animation: shadowStep .5s ease-in-out infinite;
-}
-@keyframes shadowStep{
-  0%,100%{ transform: translateX(-50%) scale(1.0); opacity:.65; }
-  50%    { transform: translateX(-50%) scale(0.92); opacity:.45; }
-}
-
-/* ===== RPGメッセージBOX ===== */
-.msg{
-  margin: 18px auto 0;
-  width:min(760px,92vw);
-  background:var(--panel);
-  color:var(--ink);
-  border:3px solid var(--gold2);
-  border-radius:14px;
-  padding:16px 18px;
-  box-shadow:0 14px 40px rgba(0,0,0,.4);
-  font-weight:900;
-  line-height:1.65;
-  text-align:left;
-  position:relative;
-  overflow:hidden;
-}
-
-/* “カーソル”っぽい点滅（DQ風） */
-.msg::after{
-  content:"";
-  position:absolute;
-  right:16px;
-  bottom:14px;
-  width:10px;height:10px;
-  border-radius:3px;
-  background:rgba(0,0,0,.22);
-  box-shadow: inset 0 0 0 2px rgba(0,0,0,.08);
-  animation: cursorBlink 1.1s steps(2,end) infinite;
-  opacity:.65;
-}
-@keyframes cursorBlink{
-  0%,49%{ opacity:.0; }
-  50%,100%{ opacity:.65; }
-}
-
-.msg .name{
-  font-size:13px;
-  opacity:.65;
-  margin-bottom:6px;
-}
-.msg .text{
-  font-size:15px;
-}
-
-/* 住民名表示（ある時だけ） */
-.playerLine{
-  margin-top:8px;
-  font-size:12px;
-  opacity:.75;
-}
-.playerLine b{font-weight:1000}
-
-/* リンク群 */
-.links{
-  margin-top: 10px;
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  width:min(760px,92vw);
-  flex-wrap:wrap;
-}
-.links a{
-  color:rgba(255,255,255,.86);
-  text-decoration:none;
-  font-size:12px;
-  padding:9px 10px;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:10px;
-  background:rgba(255,255,255,.06);
-}
-.links a:hover{ filter:brightness(1.08); }
-
-/* 小さい注意 */
-.hint{
-  margin-top:10px;
-  font-size:12px;
-  opacity:.75;
-}
-
-/* ===== モバイル ===== */
-@media(max-width:600px){
-  .logo .jp{ font-size:18px; letter-spacing:.14em; }
-  .selectRow{ gap:14px; }
-  .door{ width:38vw; max-width:170px; }
-  .charWrap{ width:22vw; max-width:110px; }
-  .msg .text{ font-size:14px; }
-}
-</style>
-</head>
-
-<body>
-
-<!-- 背景エフェクト -->
-<div class="fx" id="fx" aria-hidden="true"></div>
-
-<div class="stage">
+  <!-- =========================
+       基本メタ（先に置く）
+  ========================== -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
   <!-- タイトル -->
-  <div class="logo" aria-label="タイトル">
-    <div class="jp">焼かれた伝説</div>
-    <div class="en">TAKOYAKI TRADING CARD</div>
-    <div class="line"></div>
-  </div>
+  <title>焼かれた伝説｜たこ焼きトレーディングカード</title>
+  <meta name="description" content="ゲームみたいに遊べる、たこ焼きトレカの世界。街マップ・畑・露店・図鑑・イベント・最新情報。">
 
-  <!-- 扉選択 -->
-  <div class="selectRow">
+  <!-- 正式URL -->
+  <link rel="canonical" href="https://takoyaki-trc.github.io/takoyaki-media/town/">
 
-    <!-- 左：日本語 -->
-    <div>
-      <a class="door" id="doorJP" href="town/index.html" aria-label="日本語の街へ">
-        <!-- ✅ 扉とキャラが逆だったので：扉＝v0hjoXZ3.png -->
-        <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="日本語入口（扉）">
-      </a>
-      <div class="doorTag"><span class="pill"><span class="dot"></span>日本語の街</span></div>
+  <!-- =========================
+       OGP（共有用）
+  ========================== -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="焼かれた伝説｜たこ焼きトレカ">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:title" content="焼かれた伝説｜たこ焼きトレーディングカード">
+  <meta property="og:description" content="ゲームみたいに遊べる、たこ焼きトレカの世界。街マップ・畑・露店・図鑑・イベント・最新情報。">
+  <meta property="og:url" content="https://takoyaki-trc.github.io/takoyaki-media/town/">
+  <meta property="og:image" content="https://ul.h3z.jp/0yeAj4R7.png">
+
+  <!-- =========================
+       Twitterカード
+  ========================== -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="焼かれた伝説｜たこ焼きトレーディングカード">
+  <meta name="twitter:description" content="街マップ・畑・露店・図鑑・イベント。ゲームみたいに遊べる“たこ焼きトレカ”の世界へ。">
+  <meta name="twitter:image" content="https://ul.h3z.jp/0yeAj4R7.png">
+
+  <!-- =========================
+       アイコン（絶対パス版）
+  ========================== -->
+  <link rel="icon" href="https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/icon.png">
+  <link rel="apple-touch-icon" href="https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/icon.png">
+  <meta name="apple-mobile-web-app-title" content="焼かれた伝説">
+
+  <!-- =========================
+       CSP（http画像の混在を自動でhttpsに）
+  ========================== -->
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
+  <!-- =========================
+       アクセス解析（GA4）
+       ※ head内のどこでも動くが、基本メタの後が無難
+  ========================== -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3RHSWHL9J"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-D3RHSWHL9J');
+  </script>
+
+  <!-- =========================
+       ここからCSS（あなたの既存をそのまま）
+  ========================== -->
+  <style>
+    /* 空レイヤー：BASEの背景に負けない */
+    body::before{
+      content:"";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+
+      /* 3層＋ビネット */
+      background:
+        /* ビネット（端を少し暗く） */
+        radial-gradient(
+          ellipse at center,
+          rgba(0,0,0,0) 55%,
+          rgba(0,0,0,0.18) 100%
+        ),
+        /* 空の3層（JSがここを書き換える） */
+        var(--sky, linear-gradient(
+          #87b8e5 0%,
+          #cfe8ff 55%,
+          #ffffff 100%
+        ));
+
+      transition: background 6s linear;
+    }
+
+    /* ===== 太陽 / 月 レイヤー ===== */
+
+    /* “今の位置”だけ光る */
+    .phase-dot.is-active{
+      opacity: 1;
+      transform: scale(1.0);
+      filter: drop-shadow(0 0 6px rgba(255,255,255,0.35));
+    }
+
+    /* 太陽（左端） */
+    .phase-dot.sun{
+      background: radial-gradient(circle at 30% 30%, #fff7c8 0%, #ffd86b 55%, #f2b705 100%);
+      box-shadow: 0 0 14px rgba(255,200,80,0.35);
+    }
+
+    /* 月のベース（右端側） */
+    .phase-dot.moon{
+      background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e6e6e6 70%, #cfcfcf 100%);
+    }
+
+    /* 月相：黒い影を重ねて欠けを作る（CSSだけでOK） */
+    .phase-dot.moon::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:50%;
+      background: rgba(15,20,32,0.95);
+      transform: translateX(var(--shadow-x, 0px));
+    }
+
+    /* 端末で大きさ調整したいならここだけ触る */
+    @media (max-width:480px){
+      #phase-strip .phase-dot{ width:36px; height:36px; }
+    }
+
+    /* ===== 太陽／月が動くレール ===== */
+    #phase-strip{
+      position: relative;
+      width: 220px;          /* 横幅（好みで調整OK） */
+      height: 54px !important;
+      margin: 0 auto 4px !important;  /* 下だけ4pxに */
+      padding: 0 !important;
+    }
+
+    /* ===== 動く本体（共通） ===== */
+    #phase-orb{
+      position: absolute;
+      top: 0 !important;
+      left: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      image-rendering: pixelated;
+      transition:
+        transform 0.6s ease,
+        filter 0.6s ease,
+        background 0.6s ease;
+    }
+
+    /* ===== 太陽（昼） ===== */
+    #phase-orb.sun{
+      background: radial-gradient(
+        circle at 30% 30%,
+        #fff7c8 0%,
+        #ffd86b 55%,
+        #f2b705 100%
+      );
+      box-shadow: 0 0 14px rgba(255,200,80,0.35);
+      transform: scale(1);     /* 太陽は大きめ */
+    }
+
+    /* ===== 月（夜） ===== */
+    #phase-orb.moon{
+      background: radial-gradient(
+        circle at 35% 30%,
+        #ffffff 0%,
+        #e6e6e6 70%,
+        #cfcfcf 100%
+      );
+      transform: scale(0.8);   /* 月は小さく */
+    }
+
+    /* ===== 月の満ち欠け（影） ===== */
+    #phase-orb.moon::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:50%;
+      background: rgba(15,20,32,0.95);
+      transform: translateX(var(--shadow-x, 0px));
+    }
+
+    /* ===== スマホ微調整 ===== */
+    @media (max-width:480px){
+      #phase-strip{ width: 200px; }
+      #phase-orb{ width: 36px; height: 36px; }
+    }
+
+    /* ================================
+       MAP 基準（iPhoneズレ対策 完全版）
+       ★ここを丸ごと置き換え
+    ================================ */
+
+    /* 余計な左右ズレ要因を殺す */
+    html, body{
+      margin: 0;
+      padding: 0;
+      width: 100%;
+    }
+
+    /* iOSで横幅がズレる時の保険（親の影響で右に出るのを防ぐ） */
+    body{
+      overflow-x: hidden;
+    }
+
+    /* タイトルGIF（そのままでOK） */
+    .title-gif{
+      width: min(720px, 90%);
+      margin: 0 auto 24px;
+      display: block;
+    }
+
+    /* =========================
+       MAPの「座標基準」
+       - 画像と同じ箱（map-wrap）を基準にする
+       - 余計なpadding/transformの影響を受けにくくする
+    ========================= */
+    .map-wrap{
+      position: relative !important;
+      display: block;
+      width: 100% !important;
+      max-width: 800px;          /* PC上限 */
+      margin: 0 auto !important; /* 中央固定 */
+      padding: 0 !important;     /* ← %座標のズレ原因を消す */
+      border: 0 !important;
+      box-sizing: border-box !important;
+
+      /* iOSの合成/丸め誤差でズレるのを抑える */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+    }
+
+    /* 画像：map-wrap に100%フィット（余計な指定を全部潰す） */
+    .map-wrap .map-img{
+      position: relative;        /* 念のため */
+      display: block !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      box-sizing: border-box !important;
+
+      image-rendering: pixelated;
+
+      /* iOSで画像が“微妙に横にずれる”時の保険 */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+    }
+
+    /* =========================
+       当たり判定 / 建物（共通）
+       - 必ず map-wrap を基準に absolute
+    ========================= */
+    .map-wrap .hotspot,
+    .map-wrap .tf-building{
+      position: absolute !important;
+      display: block !important;
+      z-index: 60 !important; /* 画像より上 */
+      cursor: pointer;
+
+      /* iOSのタップ/合成ズレを抑える */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+
+      /* タップ遅延/拡大を抑制（iPhone向け） */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 建物リンク内の画像も「基準箱いっぱい」 */
+    .map-wrap .tf-building > img{
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* ホバー演出（PC） */
+    @media (hover:hover){
+      .map-wrap .hotspot:hover,
+      .map-wrap .tf-building:hover{
+        outline: 2px solid rgba(255,255,200,0.9);
+        box-shadow: 0 0 12px rgba(255,255,200,0.9);
+      }
+    }
+
+    /* =========================
+       フッター下の“でかい余白”を潰す（原因2つを上書き）
+    ========================= */
+    body.shop #mainFooter.wrapper{ margin-bottom: 0 !important; }
+    body.shop #mainFooter{ margin: 20px auto 0 !important; padding: 0 !important; }
+    body.shop #mainFooter .footerMenu ul li{ margin-bottom: 0 !important; }
+    body.shop #mainFooter.wrapper,
+    body.shop #mainFooter.wrapper + #base_url{
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* ===== iPhone配置バグ 強制Fix（最重要） ===== */
+    .map-wrap .tf-building{ position: absolute !important; display: block !important; z-index: 60 !important; }
+    .map-wrap .map-img{ position: relative; z-index: 0; }
+    .map-wrap .hotspot{ z-index: 10 !important; }
+    .map-wrap .spot{ z-index: 20 !important; }
+    .map-wrap .gate-hit{ z-index: 30 !important; }
+    .map-wrap .tf-building{ z-index: 40 !important; }
+    .map-wrap .takomin{ z-index: 60 !important; }
+    .map-wrap .takomin-balloon{ z-index: 80 !important; }
+  </style>
+
+  <!-- ▼ ボスゲート -->
+  <link rel="stylesheet" href="./assets/css/boss-local.css?v=1">
+  <!-- ▼ たこ焼き釣り -->
+  <!-- ✅ 削除（外部読み込みをやめたため） -->
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@4c8919c0a8740505f80998baea383a228b3bb847/takofish.css"> -->
+  <!-- ▼ タイトル下のタコ民５０人回し -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc2.css?v=789">
+  <!-- ▼ ホットスポット -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/hotspot1.css?v=777">
+  <!-- ▼たこ焼きの祭壇 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/saidan.css?v=1">
+  <!-- ▼タコ民村人セリフ -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-murabito.css?v=777">
+  <!-- ▼ たこ焼きファーム（宝箱表示の見た目も含むのでトップでも残す） -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-media@main/town/assets/takofarm1.css?v=2">
+
+  <style>
+    /* ===== フッター内 バックアップボックス ===== */
+    #trcFooterDataBox{
+      width: min(720px, 92%);
+      margin: 14px auto 10px;
+      padding: 12px 12px;
+      border: 2px solid rgba(255,255,255,.22);
+      border-radius: 14px;
+      background: rgba(10,10,18,.55);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 16px 50px rgba(0,0,0,.45);
+      text-align: left;
+    }
+
+    #trcFooterDataBox .row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    #trcFooterDataBox .title{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight: 900;
+      letter-spacing:.03em;
+      color:#fff;
+    }
+
+    #trcFooterDataBox .dot{
+      width:8px; height:8px;
+      border-radius:999px;
+      background: rgba(180,220,255,.85);
+      box-shadow: 0 0 0 2px rgba(180,220,255,.18);
+    }
+
+    #trcFooterDataBox .desc{
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(255,255,255,.76);
+    }
+
+    #trcFooterDataBox .btns{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    #trcFooterDataBox .btn{
+      border: 2px solid rgba(255,255,255,.30);
+      background: rgba(255,255,255,.08);
+      color:#fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 900;
+      letter-spacing: .03em;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      white-space: nowrap;
+    }
+
+    #trcFooterDataBox .btn.primary{
+      background: linear-gradient(180deg, rgba(140,200,255,.22), rgba(255,255,255,.08));
+      border-color: rgba(180,220,255,.55);
+    }
+
+    #trcFooterDataBox .btn:active{ transform: translateY(1px); }
+
+    @media (max-width:420px){
+      #trcFooterDataBox{ padding: 10px 10px; }
+      #trcFooterDataBox .btn{ padding: 9px 10px; font-size: 12px; }
+    }
+  </style>
+</head>
+
+<body id="{block:IndexPage}shopTopPage{/block:IndexPage}{block:ItemPage}shopDetailPage{/block:ItemPage}" class="shop template">
+
+<div id="phase-strip">
+  <div id="phase-orb"></div>
+</div>
+
+<div class="page-center">
+
+<!-- ▼ タイトル画像 -->
+<center><img
+  src="https://ul.h3z.jp/h12u4pD5.gif"
+  style="display:block;width:400px !important;height:auto !important;"
+>
+<img src="https://basefile.akamaized.net/takoyakitrc-base-shop/69613a78bcb90/mojiji.png">
+</center>
+
+<!-- ==========================================
+  タイトル下・タコ民表示（アクセスごとにランダム）
+========================================== -->
+<div id="takominArea" class="takomin-area">
+  <div class="takomin-wrap">
+
+    <!-- タコ民 -->
+    <a id="takominLink" class="takomin-avatar" href="#" target="_blank" rel="noopener">
+      <img id="takominImg" src="" alt="タコ民">
+    </a>
+
+    <!-- 横テキスト -->
+    <div class="takomin-text">
+      <span id="takominLine">……</span>
     </div>
 
-    <!-- 中央：キャラ（足踏み） -->
-    <div class="charWrap" aria-hidden="true">
-      <div class="shadow"></div>
-      <div class="char">
-        <!-- ✅ キャラ＝X8jPVkhD.png -->
-        <img src="https://ul.h3z.jp/X8jPVkhD.png" alt="たこぴ">
+  </div>
+</div>
+</div>
+
+<!-- ✅ トースト（宝箱など：トップで1個だけ） -->
+<div class="tf-toast" aria-live="polite"></div>
+
+<!-- ✅ 街マップのラッパー（宝箱はこの中に出る） -->
+<div class="map-wrap" id="townMap" style="position:relative;">
+
+ <a class="tf-building" href="./farm.html" aria-label="たこ焼き畑へ"
+   style="left:19.5%; top:99%; width:110px;">
+  <img src="https://ul.h3z.jp/iF0mVDkG.png" alt="たこ焼き畑（建物）">
+</a>
+
+<a class="tf-building" href="./roten.html" aria-label="露店へ"
+   style="left:20%; top:93%; width:140px;">
+  <img src="https://ul.h3z.jp/AFW27Fek.png" alt="露店（建物）">
+</a>
+
+<a class="tf-building" href="./zukan.html" aria-label="カード図鑑へ"
+   style="left:80%; top:96%; width:50px;">
+  <img src="https://ul.h3z.jp/nJLgRZOL.png" alt="カード図鑑（建物）">
+</a>
+
+  <!-- 宝箱は takofarm2.js がここに自動出没させる -->
+
+  <!-- ここからたこ焼きの祭壇（収益用） -->
+  <!-- ✅ 見た目（祭壇） -->
+  <button class="spot spot--gate" type="button" aria-label="たこ焼きゲート（見た目）">
+    <!-- 土台（通常配置：高さを作る） -->
+    <img class="spot__base"
+         src="https://ul.h3z.jp/DOpnGGIS.png"
+         data-day="https://ul.h3z.jp/DOpnGGIS.png"
+         data-night="https://ul.h3z.jp/RrfereXw.png"
+         alt="たこ焼きの祭壇">
+
+    <!-- 上に重ねる（アイコン） -->
+    <img class="spot__icon" src="https://ul.h3z.jp/G9HOojAP.png" alt="行き先アイコン">
+  </button>
+
+  <!-- ✅ タップ判定専用（透明ボタン：これが“反応の本体”） -->
+  <button class="gate-hit" type="button" aria-label="たこ焼きゲート（タップ判定）"></button>
+
+  <!-- ✅ ワンクッション（モーダル） -->
+  <div id="gateModal" class="gate-modal" aria-hidden="true">
+    <div class="gate-modal__panel" role="dialog" aria-modal="true" aria-labelledby="gateModalTitle">
+      <img id="gateModalPhoto" class="gate-modal__photo" src="" alt="">
+      <div class="gate-modal__body">
+        <div id="gateModalTitle" class="gate-modal__title">たこ焼きゲート</div>
+        <div id="gateModalDesc" class="gate-modal__desc"></div>
+
+        <div class="gate-modal__btns">
+          <button id="gateModalCancel" type="button" class="gate-modal__btn">やめる</button>
+          <a id="gateModalGo" class="gate-modal__btn gate-modal__btn--go" href="#" target="_blank" rel="noopener">行く</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <img
+    class="map-img"
+    src="https://ul.h3z.jp/0yeAj4R7.png"
+    alt="背景"
+    data-morning="https://ul.h3z.jp/D4jEiu5y.png"
+    data-day="https://ul.h3z.jp/bHkJV3PU.png"
+    data-night="https://ul.h3z.jp/EOmNLbDO.png"/>
+
+  <!-- ✅ ボスゲート（夜だけ表示＆タップでボス会話→バトル） -->
+  <a class="boss-gate night-only" href="#" aria-label="鉄板魔グマに挑む">
+    <img src="https://ul.h3z.jp/CsjyEnG3.png" alt="ボスゲート">
+  </a>
+
+  <!-- ▼タコ民群 -->
+  <!-- ✅ GHOST -->
+  <button class="takomin takomin--ghost takomin--glow is-float" data-id="ghost" type="button" aria-label="GHOSTのタコ民">
+    <img src="https://ul.h3z.jp/yfWcFrT4.png"
+      data-day="https://ul.h3z.jp/yfWcFrT4.png"
+      data-night="https://ul.h3z.jp/93R4C9fH.png"
+      alt="GHOST">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ YOUSHA -->
+  <button class="takomin takomin--yousha takomin--glow" data-id="yousha" type="button" aria-label="YOUSHA">
+    <img
+      src="https://ul.h3z.jp/XNnElwbh.png"
+      data-day="https://ul.h3z.jp/XNnElwbh.png"
+      data-night="https://ul.h3z.jp/2LR6QUQf.png"
+      alt="YOUSHA">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ 追加：もとの湯（たこ焼き菜々） -->
+  <button class="takomin takomin--motoyu is-step takomin--glow" data-id="motoyu" type="button" aria-label="たこ焼き菜々（もとの湯）のタコ民">
+    <img
+      src="https://ul.h3z.jp/vsy0pctI.png"
+      data-day="https://ul.h3z.jp/vsy0pctI.png"
+      data-night="https://ul.h3z.jp/PpSfLird.png"
+      alt="もとの湯">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ kbc -->
+  <button class="takomin takomin--kbc takomin--glow" data-id="kbc" type="button" aria-label="久留米ＫＢＣ">
+    <img
+      src="https://ul.h3z.jp/fy5i61XI.png"
+      data-day="https://ul.h3z.jp/fy5i61XI.png"
+      data-night="https://ul.h3z.jp/mGbOq0Q5.png"
+      alt="久留米ＫＢＣ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ katana -->
+  <button class="takomin takomin--katana takomin--glow" data-id="katana" type="button" aria-label="刀鍛冶">
+    <img
+      src="https://ul.h3z.jp/OnsDTpd8.png"
+      data-day="https://ul.h3z.jp/OnsDTpd8.png"
+      data-night="https://ul.h3z.jp/KgDhxsxP.png"
+      alt="刀鍛冶">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ hotel -->
+  <button class="takomin takomin--hotel takomin--glow" data-id="hotel" type="button" aria-label="旅路の塔">
+    <img
+      src="https://ul.h3z.jp/hx0gOm4a.png"
+      data-day="https://ul.h3z.jp/hx0gOm4a.png"
+      data-night="https://ul.h3z.jp/hx0gOm4a.png"
+      alt="旅路の塔">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅bigmans -->
+  <button class="takomin takomin--bigmans takomin--glow" data-id="bigmans" type="button" aria-label="BIGMANS">
+    <img
+      src="https://ul.h3z.jp/sticAk2s.png"
+      data-day="https://ul.h3z.jp/sticAk2s.png"
+      data-night="https://ul.h3z.jp/q8H3THcE.png"
+      alt="BIGMANS">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ 2bit -->
+  <button class="takomin takomin--twobit takomin--glow" data-id="twobit" type="button" aria-label="twobit">
+    <img
+      src="https://basefile.akamaized.net/takoyakitrc-base-shop/696a673f108bf/2bit1.png"
+      data-day="https://basefile.akamaized.net/takoyakitrc-base-shop/696a673f108bf/2bit1.png"
+      data-night="https://basefile.akamaized.net/takoyakitrc-base-shop/696a6755c2e31/2bit2.png"
+      alt="twobit">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ hanaya -->
+  <button class="takomin takomin--hanaya takomin--glow" data-id="hanaya" type="button" aria-label="華矢式">
+    <img
+      src="https://ul.h3z.jp/JPKQZ6sP.png"
+      data-day="https://ul.h3z.jp/JPKQZ6sP.png"
+      data-night="https://ul.h3z.jp/yF9zSCHU.png"
+      alt="華矢式">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ mars -->
+  <button class="takomin takomin--mars takomin--glow" data-id="mars" type="button" aria-label="mars">
+    <img
+      src="https://ul.h3z.jp/n6sTv8Xr.png"
+      data-day="https://ul.h3z.jp/n6sTv8Xr.png"
+      data-night="https://ul.h3z.jp/tHlNh1NI.png"
+      alt="mars">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ dollis -->
+  <button class="takomin takomin--dollis takomin--glow" data-id="dollis" type="button" aria-label="ドリズ">
+    <img
+      src="https://ul.h3z.jp/yi2Zbd3I.png"
+      data-day="https://ul.h3z.jp/yi2Zbd3I.png"
+      data-night="https://ul.h3z.jp/FmYMG8fu.png"
+      alt="ドリズ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- ✅ punipuni -->
+  <button class="takomin takomin--puni takomin--glow" data-id="puni" type="button" aria-label="ぷにぷに">
+    <img
+      src="https://ul.h3z.jp/ujUBACrC.png"
+      data-day="https://ul.h3z.jp/ujUBACrC.png"
+      data-night="https://ul.h3z.jp/0LHkVmoQ.png"
+      alt="ぷにぷに">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <!-- 上のブロックタコ民 -->
+  <button class="takomin takomin--me1 takomin--glow topmenu" data-id="me1" type="button" aria-label="最新のお知らせ">
+    <img src="https://ul.h3z.jp/2z5fOkRX.png"
+      data-day="https://ul.h3z.jp/2z5fOkRX.png"
+      data-night="https://ul.h3z.jp/dUhJu7ky.png"
+      alt="最新のお知らせ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me2 takomin--glow topmenu" data-id="me2" type="button" aria-label="たこ焼きトレカの世界">
+    <img src="https://ul.h3z.jp/CJ443Pa2.png"
+      data-day="https://ul.h3z.jp/CJ443Pa2.png"
+      data-night="https://ul.h3z.jp/QAszf1eo.png"
+      alt="たこ焼きトレカの世界">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me3 takomin--glow topmenu" data-id="me3" type="button" aria-label="よくある質問">
+    <img src="https://ul.h3z.jp/I3PLFgos.png"
+      data-day="https://ul.h3z.jp/I3PLFgos.png"
+      data-night="https://ul.h3z.jp/Qvk5pot0.png"
+      alt="よくある質問">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me4 takomin--glow topmenu" data-id="me4" type="button" aria-label="今遊べるイベント">
+    <img src="https://ul.h3z.jp/y7MHJcs1.png"
+      data-day="https://ul.h3z.jp/y7MHJcs1.png"
+      data-night="https://ul.h3z.jp/HX7qBOFD.png"
+      alt="今遊べるイベント">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me5 takomin--glow topmenu" data-id="me5" type="button" aria-label="ビンゴの泉">
+    <img src="https://ul.h3z.jp/JQGm41Td.png"
+      data-day="https://ul.h3z.jp/JQGm41Td.png"
+      data-night="https://ul.h3z.jp/OrmSjUlC.png"
+      alt="ビンゴの泉">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me6 takomin--glow topmenu" data-id="me6" type="button" aria-label="カードを買う">
+    <img src="https://ul.h3z.jp/Db26pagb.png"
+      data-day="https://ul.h3z.jp/Db26pagb.png"
+      data-night="https://ul.h3z.jp/ko0Xgd8p.png"
+      alt="カードを買う">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me7 takomin--glow topmenu" data-id="me7" type="button" aria-label="たこぴのSNS">
+    <img src="https://ul.h3z.jp/D2KbpmcN.png"
+      data-day="https://ul.h3z.jp/D2KbpmcN.png"
+      data-night="https://ul.h3z.jp/g5bLMwI0.png"
+      alt="たこぴのSNS">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me8 takomin--glow topmenu" data-id="me8" type="button" aria-label="アイテムショップ">
+    <img src="https://ul.h3z.jp/OREcMs5u.png"
+      data-day="https://ul.h3z.jp/OREcMs5u.png"
+      data-night="https://ul.h3z.jp/2gFRuuSs.png"
+      alt="アイテムショップ">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me9 takomin--glow topmenu" data-id="me9" type="button" aria-label="達成の記録">
+    <img src="https://ul.h3z.jp/nvhUJBFe.png"
+      data-day="https://ul.h3z.jp/nvhUJBFe.png"
+      data-night="https://ul.h3z.jp/gXNVqtcD.png"
+      alt="達成の記録">
+    <div class="takomin-balloon"></div>
+  </button>
+
+  <button class="takomin takomin--me10 takomin--glow topmenu" data-id="me10" type="button" aria-label="メディア掲載">
+    <img src="https://ul.h3z.jp/s4CIKhrn.png"
+      data-day="https://ul.h3z.jp/s4CIKhrn.png"
+      data-night="https://ul.h3z.jp/5fFm3Fpr.png"
+      alt="メディア掲載">
+    <div class="takomin-balloon"></div>
+  </button>
+
+<button class="takomin takomin--me12 takomin--glow topmenu" data-id="me12" type="button" aria-label="カード図鑑">
+  <img src="https://ul.h3z.jp/Wvnf4dc7.png"
+    data-day="https://ul.h3z.jp/Wvnf4dc7.png"
+    data-night="https://ul.h3z.jp/3aj5G2CO.png"
+    alt="">
+  <div class="takomin-balloon"></div>
+</button>
+
+<button class="takomin takomin--me13 is-step" data-id="me13" type="button" aria-label="推し活">
+  <img src="https://ul.h3z.jp/mC7LPEzu.png"
+    data-day="https://ul.h3z.jp/mC7LPEzu.png"
+    data-night="https://ul.h3z.jp/icyNwiaA.png"
+    alt="推し活">
+  <div class="takomin-balloon"></div>
+</button>
+
+<!-- ✅ 釣りタコ民：タップで /town/takofish.html へ遷移（変更点） -->
+<a class="takomin takomin--fish is-bob" href="./takofish.html" aria-label="たこ焼き釣りへ">
+  <img
+    src="https://ul.h3z.jp/8taiJLpS.png"
+    data-day="https://ul.h3z.jp/8taiJLpS.png"
+    data-night="https://ul.h3z.jp/QP3AevlY.png"
+    alt="釣りタコ民">
+</a>
+
+<style>/* 🎣 釣りタコ民の位置 */
+.map-wrap .takomin--fish{
+  top: 85.6%;
+  left: 70%;
+}
+/* ✅ タワー兄妹をタワーより上に（最終Fix：一番最後に置く） */
+.map-wrap .takomin--tawa1{
+  position: absolute !important;
+  z-index: 90 !important;   /* ← 兄妹を最前に */
+}
+
+.map-wrap .takomin--tawa{
+  position: absolute !important;
+  z-index: 80 !important;   /* ← タワーは兄妹の一段下 */
+}
+</style>
+
+<button class="takomin takomin--tawa1 takomin--glow topmenu" data-id="tawa1" type="button" aria-label="タワー兄妹">
+  <img src="https://basefile.akamaized.net/takoyakitrc-base-shop/6978ca4e7ec5c/sasada3.png"
+    data-day="https://basefile.akamaized.net/takoyakitrc-base-shop/6978ca4e7ec5c/sasada3.png"
+    data-night="https://ul.h3z.jp/xonP2u98.png"
+    alt="タワー兄妹">
+  <div class="takomin-balloon"></div>
+</button>
+
+<!-- ✅ たこ焼きタワー（起動アイコン） -->
+<button class="takomin takomin--tawa" data-id="tawa" type="button" aria-label="たこ焼きタワー">
+  <img
+    src="https://ul.h3z.jp/QJX6Wqrs.png"
+    data-day="https://ul.h3z.jp/QJX6Wqrs.png"
+    data-night="https://ul.h3z.jp/Rbm88XCj.png"
+    alt="たこ焼きタワー">
+  <div class="takomin-balloon"></div>
+</button>
+
+<script>
+(() => {
+  // =========================
+  // 1) たこ焼きタワー起動（遷移）
+  // =========================
+  const towerBtn = document.querySelector('.takomin--tawa');
+  if (towerBtn) {
+    towerBtn.addEventListener('click', () => {
+      location.href = './takoyaki-tower.html';
+    });
+  }
+
+  // =========================
+  // 2) 昼夜画像切替
+  // =========================
+  const isNight = () =>
+    document.documentElement.classList.contains("is-night") ||
+    document.body?.classList.contains("is-night");
+
+  // ✅ 昼夜切替したい画像を追加
+  const targets = [
+    ".takomin--tawa img",
+    ".takomin--tawa1 img",
+    ".takomin--fish img"
+  ];
+
+  function apply(){
+    targets.forEach(sel => {
+      const img = document.querySelector(sel);
+      if (!img) return;
+
+      const day   = img.dataset.day;
+      const night = img.dataset.night;
+      const url   = isNight() ? night : day;
+
+      if (url) img.src = url;
+    });
+  }
+
+  // 初回
+  apply();
+
+  // class変化で即反映
+  const mo = new MutationObserver(apply);
+  mo.observe(document.documentElement, { attributes:true, attributeFilter:["class"] });
+  if (document.body) mo.observe(document.body, { attributes:true, attributeFilter:["class"] });
+
+  // （保険）他JSがsrcを上書きする場合
+  setInterval(apply, 1000);
+})();
+</script>
+
+<style>
+/* =========================
+   🐙 タコ民（量産用：共通）
+   ========================= */
+.map-wrap .takomin{
+  position: absolute;
+  transform: translate(-50%, -100%);
+  width: clamp(56px, 6vw, 64px);
+  z-index: 60;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.map-wrap .takomin img{
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* ✅ 吹き出しを必ず画像より前に出す */
+.map-wrap .takomin-balloon{
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;            /* ←最前面 */
+  display: none;
+  background: #000;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: clamp(11px, 2.8vw, 14px);
+  width: max-content;
+  max-width: min(420px, 85vw);
+  white-space: pre-line;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+/* 兄妹を前に */
+.takomin--tawa1{
+  position: relative;
+  z-index: 40 !important;
+}
+
+/* 起動アイコンは一段後ろ */
+.takomin--tawa{
+  position: relative;
+  z-index: 10 !important;
+}
+
+/* =========================
+   🧭 トップメニュー（me1〜me12）だけ小さく
+   - class="topmenu" が付いたものだけ対象
+   - 他の個別サイズ指定より必ず優先
+   ========================= */
+.map-wrap .takomin.topmenu{
+  width: clamp(38px, 4.3vw, 48px) !important;
+}
+
+/* =========================
+   🐙 特大タコ民（必要なものだけ個別）
+   ========================= */
+.map-wrap .takomin[data-id="bigmans"]{
+  width: clamp(86px, 10vw, 140px);
+}
+
+.map-wrap .takomin[data-id="twobit"]{
+  width: clamp(60px, 10vw, 140px);
+}
+
+.map-wrap .takomin[data-id="me13"]{
+  width: clamp(130px, 10vw, 140px);
+}
+
+.map-wrap .takomin[data-id="tawa"]{
+  width: clamp(130px, 10vw, 200px);
+}
+
+.map-wrap .takomin[data-id="puni"]{
+  width: clamp(60px, 10vw, 140px);
+}
+
+/* ✅ 画像が固定サイズのまま問題を潰す */
+button.takomin.takomin--tawa1 > img{
+  width: 130% !important;
+  height: 130% !important;
+  max-width: none !important;
+  max-height: none !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+
+/* =========================
+   🐙 タコ民（量産用：座標）
+   ========================= */
+.map-wrap .takomin--me1{ top:5%; left:29%; }
+.map-wrap .takomin--me2{ top:3%; left:70%; }
+.map-wrap .takomin--me3{ top:12.7%; left:32%; }
+.map-wrap .takomin--me4{ top:13%; left:70%; }
+.map-wrap .takomin--me5{ top:20.5%; left:50%; }
+.map-wrap .takomin--me6{ top:23%; left:37%; }
+.map-wrap .takomin--me7{ top:21.4%; left:76%; }
+.map-wrap .takomin--me8{ top:30.5%; left:39%; }
+.map-wrap .takomin--me9{ top:29%; left:68%; }
+.map-wrap .takomin--me10{ top:38.5%; left:30%; }
+.map-wrap .takomin--me12{ top:38%; left:70%; }
+.map-wrap .takomin--me13{ top:68.8%; left:52%; }
+.map-wrap .takomin--tawa{ top:95%; left:50%; }
+.map-wrap .takomin--tawa1{ top:95%; left:55%; }
+.map-wrap .takomin--ghost{ top:72.9%; left:25%; }
+.map-wrap .takomin--yousha{ top:65%; left:27%; }
+.map-wrap .takomin--motoyu{ top:73%; left:50.8%; }
+.map-wrap .takomin--kbc{ top:47.5%; left:75%; }
+.map-wrap .takomin--katana{ top:47.3%; left:23%; }
+.map-wrap .takomin--hotel{ top:58.4%; left:61%; }
+.map-wrap .takomin--bigmans{ top:57.7%; left:24%; }
+.map-wrap .takomin--twobit{ top:80%; left:25%; }
+.map-wrap .takomin--hanaya{ top:65%; left:76%; }
+.map-wrap .takomin--mars{ top:72.8%; left:77%; }
+.map-wrap .takomin--dollis{ top:57.8%; left:75%; }
+.map-wrap .takomin--puni{ top:80%; left:77%; }
+.map-wrap .takomin--fish{ top:85.6%; left:70%; }
+
+/* 夜だけ表示制御（bodyに is-night が付く前提） */
+.night-only{ display:none; }
+html.is-night .night-only{ display:block; }
+
+/* =========================
+   🗺 map-wrap を絶対配置の基準にする（重要）
+   ========================= */
+.map-wrap{ position: relative; }
+
+/* =========================
+   🐙 タコ民：動きプリセット
+   ========================= */
+
+@keyframes takominFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-3px); }
+}
+
+@keyframes takominBob {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  50%     { transform: translateY(-2px) rotate(-1deg); }
+}
+
+@keyframes takominShake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-1px); }
+  40%     { transform: translateX(1px); }
+  60%     { transform: translateX(-1px); }
+  80%     { transform: translateX(1px); }
+}
+
+/* ✅ 基本：ふわふわ（常時） */
+.map-wrap .takomin.is-float img{
+  animation: takominFloat 1.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ✅ もう少し“生き物感”（常時） */
+.map-wrap .takomin.is-bob img{
+  animation: takominBob 1.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ✅ タップした時だけ震える（JSで付け外し） */
+.map-wrap .takomin.is-shake img{
+  animation: takominShake .22s linear infinite;
+  will-change: transform;
+}
+
+/* ✅ me13 は他の吹き出しより後ろに回す（でも土台よりは前） */
+.map-wrap .takomin[data-id="me13"]{
+  z-index: 45 !important; /* ← 40(祭壇)より上 / 60(他タコ民)より下 */
+}
+
+/* =========================
+   🐙 タコ民：足踏み（トコトコ）
+   ========================= */
+
+@keyframes takominStep {
+  0%   { transform: translateY(0); }
+  25%  { transform: translateY(-1px); }
+  50%  { transform: translateY(0); }
+  75%  { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
+}
+
+/* ✅ 常時足踏み */
+.map-wrap .takomin.is-step img{
+  animation: takominStep .6s steps(2) infinite;
+  will-change: transform;
+}
+
+/* ✅ iPhone対策：動きを減らす設定の人には止める */
+@media (prefers-reduced-motion: reduce){
+  .map-wrap .takomin img{ animation: none !important; }
+}
+
+/* タコ民アイコン（ボタン or img）に付ける共通クラス */
+.takomin--glow img{
+  /* 画像の縁を光らせる：透明PNGでも効く */
+  filter:
+    drop-shadow(0 0 2px rgba(255, 240, 150, 0.95))
+    drop-shadow(0 0 6px rgba(255, 200, 80, 0.75))
+    drop-shadow(0 0 14px rgba(255, 140, 20, 0.55));
+}
+
+@keyframes takominGlow{
+  0%,100%{
+    filter:
+      drop-shadow(0 0 2px rgba(255,240,150,.85))
+      drop-shadow(0 0 6px rgba(255,200,80,.55))
+      drop-shadow(0 0 14px rgba(255,140,20,.35));
+  }
+  50%{
+    filter:
+      drop-shadow(0 0 3px rgba(255,255,200,.95))
+      drop-shadow(0 0 10px rgba(255,210,120,.8))
+      drop-shadow(0 0 22px rgba(255,160,60,.6));
+  }
+}
+
+/* ✅ ボスゲート（画像リンク） */
+.boss-gate{
+  position:absolute;
+  top: 41.3%;     /* ←調整 */
+  left: 50%;      /* ←調整 */
+  transform: translateX(-50%);
+  width: 18%;     /* ←調整 */
+  z-index: 12;
+  display:block;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 画像そのもの */
+.boss-gate img{
+  width: 100%;
+  height: auto;
+  display:block;
+  image-rendering: pixelated;
+}
+
+/* （任意）夜のボス感：ふわっと脈動 */
+html.is-night .boss-gate{
+  animation: bossPulse 1.6s ease-in-out infinite;
+}
+@keyframes bossPulse{
+  0%{ transform: translateX(-50%) scale(1);   opacity: 0.95; }
+  50%{ transform: translateX(-50%) scale(1.04); opacity: 1; }
+  100%{ transform: translateX(-50%) scale(1); opacity: 0.95; }
+}
+
+/* ===== ボス会話（戦う前）オーバーレイ ===== */
+.boss-talk{
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 9998;
+  background: rgba(0,0,0,0.78);
+}
+.boss-talk-panel{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 90vw);
+  padding: 14px 12px;
+  border: 3px solid #fff;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+.boss-talk-title{ font-size: 14px; margin-bottom: 8px; }
+.boss-talk-text{
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  min-height: 3.2em;
+  opacity: 0.95;
+}
+.boss-talk-buttons{
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.boss-talk-buttons button{
+  padding: 8px 10px;
+  border: 2px solid #fff;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+}
+.boss-talk-buttons button:active{ transform: translateY(1px); }
+
+/* ===== バトル結果オーバーレイ ===== */
+.boss-overlay{
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 9999;
+  background: rgba(0,0,0,0.78);
+}
+.boss-panel{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 90vw);
+  padding: 14px 12px;
+  border: 3px solid #fff;
+  background: #000;
+  color: #fff;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+.boss-head{ font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
+.boss-name{ font-size: 16px; margin-bottom: 10px; }
+.boss-cardframe{
+  width: min(300px, 78vw);
+  margin: 0 auto 10px;
+  border: 2px solid #fff;
+  padding: 8px;
+  background: #111;
+}
+.boss-cardimg{
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+}
+.boss-result{ font-size: 28px; letter-spacing: 2px; margin-top: 6px; }
+.boss-score{ margin-top: 4px; font-size: 22px; }
+.boss-comment{
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  min-height: 2.8em;
+  opacity: 0.95;
+}
+.boss-footer{ margin-top: 10px; font-size: 12px; opacity: 0.75; line-height: 1.4; }
+.boss-buttons{
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 12px;
+}
+.boss-buttons button{
+  padding: 8px 10px;
+  border: 2px solid #fff;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+}
+.boss-buttons button:active{ transform: translateY(1px); }
+
+/* =========================
+   建物の座標ズレ完全Fix（最優先）
+   ※ 必ず style の一番最後に置く
+========================= */
+
+.map-wrap .tf-building{
+  position:absolute !important;
+
+  /* ← これが今回のキモ（中心＋足元基準） */
+  transform: translate(-50%, -100%) !important;
+  transform-origin: 50% 100% !important;
+
+  margin:0 !important;
+  padding:0 !important;
+}
+
+.map-wrap .tf-building > img{
+  display:block !important;
+  width:100% !important;
+  height:auto !important;
+}
+</style>
+
+  <!-- ダーツ佐俣とニキティGIF -->
+  <img src="https://ul.h3z.jp/l2zcjFAE.gif" class="map-gif" alt="コラボカード一覧">
+
+  <!-- 北海道焼きもとの湯GIF -->
+  <img src="https://ul.h3z.jp/OdXwiBmZ.gif" class="map2-gif" alt="たこ焼き菜々">
+
+  <!-- ホットスポット -->
+  <a class="hotspot hs-osirase" href="https://takoyaki-trc.github.io/takoyaki-media/town/news.html" aria-label="最新のお知らせ"></a>
+  <a class="hotspot hs-story" href="https://takoyaki-trc.github.io/takoyaki-media/town/about.html" aria-label="たこ焼きトレカの世界"></a>
+  <a class="hotspot hs-situmon" href="https://takoyaki-trc.github.io/takoyaki-media/town/faq.html" aria-label="よくある質問"></a>
+  <a class="hotspot hs-bingo" href="https://takoyaki-trc.github.io/takoyaki-media/town/bingo.html" aria-label="ビンゴの泉"></a>
+  <a class="hotspot hs-ivent" href="https://takoyaki-trc.github.io/takoyaki-media/town/events.html" aria-label="いま遊べるイベント"></a>
+  <a class="hotspot hs-kau" href="https://takoyaki-toreka.booth.pm/item_lists/m7YToKe5" aria-label="カードを買う"></a>
+  <a class="hotspot hs-sns" href="https://x.com/takopi_trc" aria-label="たこぴのSNS"></a>
+  <a class="hotspot hs-item" href="https://takoyaki-toreka.booth.pm/item_lists/nNPTZdOd" aria-label="アイテムショップ"></a>
+  <a class="hotspot hs-kiroku" href="https://takoyaki-trc.github.io/takoyaki-media/town/complete.html" aria-label="達成の記録"></a>
+  <a class="hotspot hs-medhia" href="https://takoyaki-trc.github.io/takoyaki-media/town/media.html" aria-label="メディア掲載"></a>
+  <a class="hotspot hs-korabo" href="./collabo.html" aria-label="コラボカードを見る"></a>
+  <a class="hotspot hs-zukan1" href="./cardlist.html" aria-label="カードリスト"></a>
+  <a class="hotspot hs-tou" href="https://takoyaki-trc.github.io/takoyaki-media/town/tabiji.html" aria-label="旅路の塔"></a>
+
+  <!-- ホットスポット協力店の街 -->
+  <a class="hotspot hs-ghost" href="https://share.google/zXplullkNy8XP35bj" aria-label="GHOST"></a>
+  <a class="hotspot hs-yousha" href="https://share.google/QAtxaPWvWBI4ks2Ug" aria-label="sports and darts cafe YOUSHA"></a>
+  <a class="hotspot hs-bigmans" href="https://share.google/Ag1SRMedWINlgV0S3" aria-label="Darts&Shop BIGMANS"></a>
+  <a class="hotspot hs-hanayashiki" href="https://share.google/AOSjhW79YMq0hJUuh" aria-label="華矢式"></a>
+  <a class="hotspot hs-2bit" href="https://share.google/N2MqjpCLRYiKU6S8T" aria-label="Darts room 2 bit"></a>
+  <a class="hotspot hs-kbc" href="https://share.google/6szp6CoWi6H6kL3Ss" aria-label="ビリヤード＆ダーツＫＢＣ"></a>
+  <a class="hotspot hs-mars" href="https://share.google/Nu2j99ORbplos40Zh" aria-label="Mars. Kamata"></a>
+  <a class="hotspot hs-dollis" href="https://share.google/gb0NBa7q35HzEfqq9" aria-label="ダーツカフェ ドリズ DOLLiS"></a>
+  <a class="hotspot hs-puni" href="https://www.instagram.com/punipuni_wakkanai/" aria-label="ぷにぷに稚内"></a>
+  <a class="hotspot hs-katanakazi" href="https://share.google/ulEVNRsi6wreMqV8p" aria-label="たこ焼き 刀鍛冶"></a>
+  <a class="hotspot hs-nana" href="https://share.google/MDaHozOZI1bmLxUwL" aria-label="たこ焼き菜々"></a>
+
+</div>
+
+<style>
+/* night-only は is-night に合わせる（ここは残してOK） */
+.night-only{ display:none; }
+</style>
+
+<script>
+(() => {
+  /* ===== Tokyo time (全てこれ基準) ===== */
+  function nowTokyo(){
+    return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+  }
+
+  /* ===== マップ切替 ===== */
+  function slotByHour(h){
+    if(h >= 5 && h < 11) return "morning";
+    if(h >= 11 && h < 20) return "day";
+    return "night";
+  }
+  function applyMapByHour(h){
+    const img = document.querySelector('.map-img');
+    if(!img) return;
+
+    const slot = slotByHour(h);
+    const url =
+      slot === 'morning' ? img.dataset.morning :
+      slot === 'day'     ? img.dataset.day :
+                           img.dataset.night;
+
+    if(url && img.src !== url) img.src = url;
+  }
+
+  /* ===== 空グラデーション ===== */
+  const SKY = [
+    ["#0b1020", "#141c2e"], ["#0b1020", "#141c2e"],
+    ["#0c1224", "#18223a"], ["#121a33", "#22304f"],
+    ["#1b2a44", "#3b4a6b"], ["#3c3b5a", "#7b6ea8"],
+    ["#8a5a7b", "#f2b5c4"], ["#d97b6a", "#ffd1a9"],
+    ["#8ec1e8", "#eaf4ff"], ["#6fa8dc", "#cfe8ff"],
+    ["#63a4e1", "#dbeeff"], ["#76b5ea", "#eaf4ff"],
+    ["#87b8e5", "#eaf4ff"], ["#87b8e5", "#eaf4ff"],
+    ["#7fb3d5", "#eaf4f4"], ["#9fc5d1", "#eaf4f4"],
+    ["#f9cb9c", "#fff1c1"], ["#f2a65a", "#f6d365"],
+    ["#d96c4f", "#f2a65a"], ["#a35d7b", "#5b4e7a"],
+    ["#2c2f4a", "#1b2430"], ["#1b2430", "#141c2e"],
+    ["#121a2b", "#10131f"], ["#0b1020", "#141c2e"]
+  ];
+
+  const mix = (a,b,t)=>{
+    const h=x=>parseInt(x,16);
+    const r=x=>x.toString(16).padStart(2,"0");
+    const A=a.slice(1).match(/../g).map(h);
+    const B=b.slice(1).match(/../g).map(h);
+    return "#"+A.map((v,i)=>r(Math.round(v+(B[i]-v)*t))).join("");
+  };
+
+  /* ===== 太陽／月 ===== */
+  function updatePhaseOrb(now){
+    const strip = document.getElementById("phase-strip");
+    const orb   = document.getElementById("phase-orb");
+    if(!strip || !orb) return;
+
+    const minutes = now.getHours()*60 + now.getMinutes();
+    const sunrise = 6*60;
+    const sunset  = 19*60;
+    const nextSunrise = 24*60 + sunrise;
+
+    let p, isDay;
+    if(minutes >= sunrise && minutes < sunset){
+      isDay = true;
+      p = (minutes - sunrise) / (sunset - sunrise);
+    }else{
+      isDay = false;
+      const m = minutes < sunrise ? minutes + 1440 : minutes;
+      p = (m - sunset) / (nextSunrise - sunset);
+    }
+
+    const maxX = strip.clientWidth - orb.clientWidth;
+    orb.style.transform =
+      `translateX(${Math.round(maxX * p)}px) scale(${isDay ? 1 : 0.8})`;
+
+    orb.classList.toggle("sun", isDay);
+    orb.classList.toggle("moon", !isDay);
+
+    if(!isDay){
+      const sx = Math.round(26 - 52 * p);
+      orb.style.setProperty("--shadow-x", `${sx}px`);
+    }else{
+      orb.style.removeProperty("--shadow-x");
+    }
+  }
+
+  /* ===== まとめて反映 ===== */
+  function applyAll(){
+    const now = nowTokyo();
+    const h = now.getHours();
+    // 夜判定（ボス用に is-night へ統一）
+    const night = (h >= 20 || h < 5);
+
+    const html = document.documentElement;
+
+    if (night) {
+      html.classList.add("is-night");
+      html.classList.remove("day");
+    } else {
+      html.classList.remove("is-night");
+      html.classList.add("day");
+    }
+
+    // マップ切替
+    applyMapByHour(h);
+
+    // 空グラデーション（分単位でなめらか）
+    const t = (now.getMinutes()*60 + now.getSeconds()) / 3600;
+    const next = (h+1)%24;
+    document.body.style.setProperty(
+      "--sky",
+      `linear-gradient(${mix(SKY[h][0],SKY[next][0],t)}, ${mix(SKY[h][1],SKY[next][1],t)})`
+    );
+
+    // 太陽/月
+    updatePhaseOrb(now);
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    applyAll();
+    setInterval(applyAll, 20 * 1000);
+  });
+  window.addEventListener("pageshow", applyAll);
+})();
+</script>
+
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-npc2.js?v=111"></script>
+<script defer src="./assets/boss1.js?v=2"></script>
+<script defer src="./assets/saidan.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takomin-murabito7.js?v=5"></script>
+
+<!-- ✅ 削除（外部読み込みをやめたため） -->
+<!-- <script defer src="https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/takofish11.js?v=2"></script> -->
+
+<!-- ▼ GitHub（jsDelivr）からJS読み込み（defer推奨） -->
+<script defer src="./assets/takofarm3.js?v=20260129a"></script>
+
+<footer id="siteFooter" style="
+  width:100%;
+  margin: 10px auto 0;
+  padding: 10px 10px calc(18px + env(safe-area-inset-bottom));
+  box-sizing:border-box;
+  text-align:center;
+  color: rgba(255,255,255,.78);
+  font-size: 12px;
+  line-height: 1.6;
+">
+  <div id="trcFooterDataBox" aria-label="データのバックアップと復元">
+    <div class="row">
+      <div class="title"><span class="dot"></span>DATA（端末保存）</div>
+      <div class="btns">
+        <button id="trcFooterBackup" class="btn primary" type="button">バックアップ</button>
+        <button id="trcFooterRestore" class="btn" type="button">復元</button>
+        <input id="trcFooterRestoreFile" type="file" accept="application/json" style="display:none">
       </div>
     </div>
 
-    <!-- 右：英語 -->
-    <div>
-      <a class="door" id="doorEN" href="en/index.html" aria-label="Go to English site">
-        <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="English Entrance（Door）">
-      </a>
-      <div class="doorTag"><span class="pill"><span class="dot" style="background:rgba(127,208,255,.95);box-shadow:0 0 0 2px rgba(127,208,255,.18)"></span>English Gate</span></div>
+    <div class="desc" style="
+      color:#ff6b6b;
+      font-weight:700;
+      line-height:1.5;
+    ">
+      ⚠ 重要：このゲームのデータは端末のブラウザにのみ保存されています。
+      キャッシュ削除･履歴削除･機種変更を行うと、<br>
+      カード画像･ゲーム進行･オクトなどのデータはすべて消えます。<br>
+
+      データはサーバーに保存されません。復旧もできません。<br>
+      必ず事前に「バックアップ」を作成してください。<br>
+
+      ※復元は現在のデータを上書きします。元には戻せません。
     </div>
-
   </div>
 
-  <!-- セリフ -->
-  <div class="msg" role="group" aria-label="メッセージ">
-    <div class="name" id="speakerName">たこぴ</div>
-    <div class="text" id="msgText">
-      読み込み中…
-    </div>
-    <div class="playerLine" id="playerLine" style="display:none;"></div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-bottom:10px;">
+    <a href="./tokushoho.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">特定商取引法に基づく表記</a>
+    <a href="./privacy.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">プライバシーポリシー</a>
+    <a href="./terms.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">利用規約 / 免責</a>
+    <a href="./contact.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">お問い合わせ</a>
   </div>
 
-  <!-- リンク -->
-  <div class="links" aria-label="リンク">
-    <a href="town/jumin.html" id="linkResident">タコ民の住民票を見る</a>
-    <a href="town/jumin.html#edit" id="linkResidentMake">住民票を作る</a>
+  <div style="opacity:.75;margin-bottom:8px;">
+    ※画像･文章の無断転載を禁止します。
   </div>
 
-  <div class="hint" id="hintLine">※ 扉に触れると、光と音が反応します。</div>
-
-</div>
+  <div style="opacity:.9;">
+    © たこ焼き菜々 / 焼かれた伝説 たこ焼きトレーディングカード
+  </div>
+</footer>
 
 <script>
 (() => {
   "use strict";
 
-  /* =========================================================
-     入口：全部入り
-     ✅ 足踏みキャラ（CSS）
-     ✅ 扉ぽわー発光（CSS）
-     ✅ 粒エフェクト（JS生成）
-     ✅ ランダムセリフ（住民票があると内容変化）
-     ✅ SE（クリック/ホバー）
-     ========================================================= */
+  // ===== 主要キー（必要ならここだけ増やせる） =====
+  const KEY = {
+    resident: "trc_v1_resident",
+    lastLogin: "trc_v1_last_login",
+  };
+  const EXIST = {
+    farmBook: "tf_v1_book",
+    farmInv:  "tf_v1_inv",
+    rotenOcto:"roten_v1_octo",
+    tower: "tower_v1_state",
+    fish:  "fish_v1_state",
+  };
 
-  // ===== 住民票（もしあるなら表示）=====
-  // 住民票ページ側のキーが違う可能性があるので、複数候補から拾う
-  const RESIDENT_KEYS = [
-    "trc_v1_resident_paper",
-    "trc_v1_resident",
-    "trc_v1_resident_v1"
-  ];
+  // ===== utils =====
+  const getRaw = (k) => {
+    const v = localStorage.getItem(k);
+    return (v === null || v === undefined) ? null : String(v);
+  };
+  const safeJSONParse = (raw, fallback) => { try { return JSON.parse(raw); } catch (_) { return fallback; } };
+  const safeStringify = (obj) => { try { return JSON.stringify(obj); } catch (_) { return "null"; } };
 
-  function safeParse(json, fallback=null){
-    try{ return JSON.parse(json); }catch(_){ return fallback; }
-  }
-
-  function loadResident(){
-    for(const k of RESIDENT_KEYS){
-      const raw = localStorage.getItem(k);
-      if(!raw) continue;
-      const obj = safeParse(raw, null);
-      if(obj && typeof obj === "object") return obj;
+  function listKeysByRegex(re) {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (re.test(k)) out.push(k);
     }
-    return null;
+    return out;
   }
 
-  const speakerName = document.getElementById("speakerName");
-  const msgText = document.getElementById("msgText");
-  const playerLine = document.getElementById("playerLine");
+  // ===== 図鑑slim（count+img等） =====
+  function slimBookRawKeepImg() {
+    const raw = getRaw(EXIST.farmBook);
+    if (!raw) return null;
 
-  const res = loadResident();
-  const playerName = (res && typeof res.name === "string" && res.name.trim()) ? res.name.trim() : "";
+    const book = safeJSONParse(raw, null);
+    if (!book || typeof book !== "object") return raw;
 
-  // ===== ランダムセリフ（初回/再訪/深夜/住民名あり）=====
-  function hour(){
-    return new Date().getHours();
-  }
-
-  function pick(arr){
-    return arr[Math.floor(Math.random()*arr.length)];
-  }
-
-  const linesBase = [
-    "どの世界に入るたこ？<br>左は日本の街、右は海外の街…<br>選んだ扉の先で、君の物語が始まるたこ。",
-    "扉は2つ。<br>でも、焼かれる未来は1つ…たこ。",
-    "今日は“焼き日和”だたこ。<br>さぁ、どっちの世界を覗く？",
-    "旅人よ…<br>足元には火種、頭上には伝説…たこ。"
-  ];
-
-  const linesWithName = [
-    "ようこそ <b>{name}</b>…たこ。<br>今日も焼かれに来た？<br>扉の先で待ってるたこ。",
-    "<b>{name}</b> の住民票、ちゃんと生きてるたこ。<br>世界は滞在するほど濃くなる…たこ。",
-    "ねぇ <b>{name}</b>。<br>左は馴染みの街、右は未知の街。<br>選ぶのは…君だたこ。"
-  ];
-
-  const linesLate = [
-    "…夜だたこ。<br>扉の光、いつもより強い気がしない？",
-    "深夜の入口は…ちょっと危ないたこ。<br>でも、来たなら焼かれよう。",
-    "静かな時間ほど、世界の音が聞こえるたこ。"
-  ];
-
-  function renderMessage(){
-    let html = "";
-
-    const h = hour();
-    const isLate = (h >= 23 || h <= 4);
-
-    if(playerName){
-      html = pick(linesWithName).replaceAll("{name}", escapeHtml(playerName));
-      playerLine.style.display = "block";
-      playerLine.innerHTML = `ようこそ <b>${escapeHtml(playerName)}</b> さん`;
-    }else{
-      html = pick(linesBase);
-      playerLine.style.display = "none";
-      playerLine.textContent = "";
+    const got = (book.got && typeof book.got === "object") ? book.got : {};
+    const outGot = {};
+    for (const id of Object.keys(got)) {
+      const node = got[id] || {};
+      const c = Number(node.count || 0);
+      if (c > 0) {
+        const out = { id, count: c };
+        if (typeof node.img === "string" && node.img.trim()) out.img = node.img.trim();
+        if (typeof node.name === "string" && node.name.trim()) out.name = node.name.trim();
+        if (typeof node.rarity === "string" && node.rarity.trim()) out.rarity = node.rarity.trim();
+        if (node.at != null && String(node.at).trim()) out.at = node.at;
+        if (node.lastAt != null && String(node.lastAt).trim()) out.lastAt = node.lastAt;
+        outGot[id] = out;
+      }
     }
+    const slim = { ver: book.ver ?? 1, got: outGot };
+    return safeStringify(slim);
+  }
 
-    if(isLate){
-      html += "<br><br><span style='opacity:.72'>" + pick(linesLate) + "</span>";
+  function findFarmProgressKeys() {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (!/^tf_v1_/i.test(k)) continue;
+      if (/log|history|debug/i.test(k)) continue;
+      if (k === EXIST.farmBook || k === EXIST.farmInv) continue;
+      out.push(k);
     }
-
-    msgText.innerHTML = html;
+    const prefer = ["tf_v1_state","tf_v1_level","tf_v1_xp","tf_v1_farm","tf_v1_progress"];
+    const ordered = [];
+    for (const p of prefer) {
+      if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
+    }
+    for (const k of out) if (!ordered.includes(k)) ordered.push(k);
+    return ordered.slice(0, 40);
   }
 
-  function escapeHtml(s){
-    return String(s || "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
+  function findRotenProgressKeys() {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (!/^roten_v1_/i.test(k)) continue;
+      if (/log|history|debug/i.test(k)) continue;
+      out.push(k);
+    }
+    const prefer = [
+      "roten_v1_level","roten_v1_rep","roten_v1_myshop","roten_v1_inventory",
+      "roten_v1_market","roten_v1_state","roten_v1_shelves","roten_v1_octo"
+    ];
+    const ordered = [];
+    for (const p of prefer) {
+      if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
+    }
+    for (const k of out) if (!ordered.includes(k)) ordered.push(k);
+    return ordered.slice(0, 90);
   }
 
-  renderMessage();
+  function buildSlimBackupPayload() {
+    const keys = {};
 
-  // ===== 粒エフェクト生成 =====
-  const fx = document.getElementById("fx");
-  const COUNT = 34; // 粒の数（軽め）
-  for(let i=0;i<COUNT;i++){
-    const p = document.createElement("i");
-    const r = Math.random();
-    if(r < 0.33) p.classList.add("gold");
-    else if(r < 0.66) p.classList.add("blue");
-    if(Math.random() < 0.18) p.classList.add("big");
+    keys[KEY.resident] = getRaw(KEY.resident);
+    keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
 
-    // CSS変数で個別制御
-    const x = Math.floor(Math.random()*100) + "vw";
-    const dx = (Math.random()*24 - 12) + "vw";     // 横流れ
-    const dur = (8 + Math.random()*10).toFixed(2) + "s";
-    const delay = (-Math.random()*10).toFixed(2) + "s";
-    const s = (0.7 + Math.random()*1.2).toFixed(2);
-    const o = (0.18 + Math.random()*0.45).toFixed(2);
+    keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
+    keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
+    keys[EXIST.farmBook]  = slimBookRawKeepImg();
 
-    p.style.setProperty("--x", x);
-    p.style.setProperty("--dx", dx);
-    p.style.setProperty("--s", s);
-    p.style.setProperty("--o", o);
-    p.style.animationDuration = dur;
-    p.style.animationDelay = delay;
-
-    fx.appendChild(p);
-  }
-
-  // ===== SE（WebAudio）=====
-  // ※外部音源なし。軽いピコ音を生成
-  let audioCtx = null;
-
-  function ensureAudio(){
-    if(audioCtx) return audioCtx;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC) return null;
-    audioCtx = new AC();
-    return audioCtx;
-  }
-
-  function beep({freq=880, dur=0.07, type="square", gain=0.06} = {}){
-    const ctx = ensureAudio();
-    if(!ctx) return;
-
-    // iOS等で停止してたら再開
-    if(ctx.state === "suspended"){
-      ctx.resume().catch(()=>{});
+    for (const k of findFarmProgressKeys()) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
+    for (const k of findRotenProgressKeys()) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
     }
 
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
+    if (getRaw(EXIST.tower) != null) keys[EXIST.tower] = getRaw(EXIST.tower);
+    for (const k of listKeysByRegex(/tower/i)) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
 
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    if (getRaw(EXIST.fish) != null) keys[EXIST.fish] = getRaw(EXIST.fish);
+    for (const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
 
-    g.gain.setValueAtTime(0.0001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(gain, ctx.currentTime + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    for (const k of Object.keys(keys)) {
+      if (keys[k] === null || keys[k] === undefined) delete keys[k];
+    }
 
-    osc.connect(g);
-    g.connect(ctx.destination);
-
-    osc.start();
-    osc.stop(ctx.currentTime + dur + 0.02);
+    return {
+      app: "takoyaki-trc",
+      ver: 5,
+      kind: "slim+roten",
+      exportedAt: new Date().toISOString(),
+      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り を保存。ログは保存しない。",
+      keys
+    };
   }
 
-  function sparkle(){
-    // 2音でキラッ
-    beep({freq: 1040, dur: 0.06, type:"triangle", gain:0.05});
-    setTimeout(()=>beep({freq: 1560, dur: 0.05, type:"triangle", gain:0.045}), 35);
+  function downloadJson(obj, filename) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
-  function doorOpen(){
-    // ドアっぽい「ドン＋ピコ」
-    beep({freq: 220, dur: 0.08, type:"square", gain:0.05});
-    setTimeout(()=>beep({freq: 740, dur: 0.06, type:"triangle", gain:0.05}), 60);
+  function backupSlim() {
+    const payload = buildSlimBackupPayload();
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    downloadJson(payload, `takoyaki-trc-backup_${stamp}.json`);
   }
 
-  // 最初のユーザー操作でAudioを起こす（自動再生対策）
-  function wakeAudioOnce(){
-    ensureAudio();
-    window.removeEventListener("pointerdown", wakeAudioOnce);
+  async function restoreFromFile(file) {
+    const text = await file.text();
+    const data = safeJSONParse(text, null);
+
+    if (!data || !data.keys || typeof data.keys !== "object") {
+      alert("このファイルはバックアップ形式ではありません。");
+      return;
+    }
+
+    const keys = Object.keys(data.keys);
+    const ok = confirm(
+      "バックアップから復元します。\n" +
+      "現在のデータは上書きされます（元に戻せません）。\n\n" +
+      `復元キー数: ${keys.length}\n` +
+      `書き出し日時: ${String(data.exportedAt || "")}\n\n` +
+      "続行しますか？"
+    );
+    if (!ok) return;
+
+    for (const k of keys) {
+      const v = data.keys[k];
+      if (v === null || v === undefined) localStorage.removeItem(k);
+      else localStorage.setItem(k, String(v));
+    }
+
+    alert("復元しました。ページを再読み込みします。");
+    location.reload();
   }
-  window.addEventListener("pointerdown", wakeAudioOnce, { once:true });
 
-  // 扉イベント
-  const doorJP = document.getElementById("doorJP");
-  const doorEN = document.getElementById("doorEN");
+  // ===== UI wiring（フッター版） =====
+  const btnBackup  = document.getElementById("trcFooterBackup");
+  const btnRestore = document.getElementById("trcFooterRestore");
+  const inp        = document.getElementById("trcFooterRestoreFile");
 
-  [doorJP, doorEN].forEach(a => {
-    a.addEventListener("pointerenter", () => sparkle());
-    a.addEventListener("focus", () => sparkle());
-    a.addEventListener("click", () => doorOpen());
+  if (!btnBackup || !btnRestore || !inp) return;
+
+  btnBackup.addEventListener("click", () => {
+    const normal = btnBackup.textContent;
+    btnBackup.disabled = true;
+    btnBackup.textContent = "作成中…";
+    setTimeout(() => {
+      try { backupSlim(); }
+      finally {
+        btnBackup.disabled = false;
+        btnBackup.textContent = normal;
+      }
+    }, 50);
   });
 
-  // セリフ：たまに切り替え（入口で雰囲気）
-  // ずっと変わるとウザいので控えめ：12秒に1回 30%で更新
-  setInterval(() => {
-    if(document.visibilityState !== "visible") return;
-    if(Math.random() < 0.30) renderMessage();
-  }, 12000);
+  btnRestore.addEventListener("click", () => {
+    inp.click();
+  });
+
+  inp.addEventListener("change", async () => {
+    const f = inp.files && inp.files[0];
+    inp.value = "";
+    if (!f) return;
+
+    const normal = btnRestore.textContent;
+    btnRestore.disabled = true;
+    btnRestore.textContent = "読込中…";
+    try { await restoreFromFile(f); }
+    finally {
+      btnRestore.disabled = false;
+      btnRestore.textContent = normal;
+    }
+  });
 
 })();
 </script>
