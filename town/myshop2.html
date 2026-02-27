@@ -2,8 +2,9 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>マイ露店</title>
+
   <style>
     :root{
       --bg:#0f1220;
@@ -19,32 +20,52 @@
       --radius:14px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-      /* 出品カードグリッド */
-      --tile:96px;
+      /* モーダルカード一覧（スマホ3列化） */
+      --tile:88px;
       --thumbPad:6px;
       --gap:10px;
 
-      /* ✅ 棚カード（2列運用のため縦積み設計） */
+      /* 棚（出品カード） */
       --shelfPad:10px;
-      --cardAR: 3 / 4; /* トレカ比率 */
+      --cardAR: 3 / 4;
+
+      /* 木目（棚エリア背景用） */
+      --woodA:#6b4a2d;
+      --woodB:#4b2f1a;
+      --woodC:#7a5736;
+      --woodD:#3a2414;
+
+      /* “紙/木”っぽい縁取り */
+      --paperLine: rgba(0,0,0,.10);
+      --paperLine2: rgba(255,255,255,.15);
     }
+
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      margin:0; background:var(--bg); color:var(--text);
+      margin:0;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 50% 20%, #1a2040 0%, #070812 60%),
+        linear-gradient(#07060b,#0c0b12);
+      min-height:100svh;
     }
     body.noscroll{ overflow:hidden; touch-action:none; }
-    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 140px}
+
     .mono{font-family:var(--mono)}
+    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 140px}
     .btn{
+      appearance:none;
       border:1px solid var(--line);
       background:var(--btn);
       color:var(--text);
       padding:10px 12px;
       border-radius:12px;
       cursor:pointer;
-      font-weight:800;
+      font-weight:900;
       white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
     }
     .btn:active{transform:translateY(1px)}
     .btn.warn{background:linear-gradient(180deg, rgba(255,211,138,.18), rgba(255,255,255,.10));}
@@ -62,9 +83,10 @@
     .back{
       width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
       background:var(--btn); color:var(--text); font-size:18px; cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
     }
     .titlebox{flex:1;min-width:0}
-    .title{font-size:16px;font-weight:900;letter-spacing:.02em}
+    .title{font-size:16px;font-weight:950;letter-spacing:.02em}
     .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
     /* cards */
@@ -80,7 +102,7 @@
       border-bottom:1px solid var(--line);
       display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
     }
-    .card-title{font-weight:900;font-size:14px}
+    .card-title{font-weight:950;font-size:14px}
     .card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
     .card-b{padding:12px}
 
@@ -139,12 +161,9 @@
       .stage-media{ aspect-ratio: 16 / 10; }
     }
     .stage-bg{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      object-position:center;
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:contain; object-position:center;
       image-rendering:pixelated;
       display:block;
       background: rgba(0,0,0,.22);
@@ -221,27 +240,84 @@
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
 
     /* =========================================================
-       ✅ 棚：2列でも崩れない「縦積みカード」レイアウト
+       ✅ 棚（出品）全体：木目ボードにする
+       - 黒ベタをやめて「板＋段差＋枠」っぽくする
     ========================================================= */
+    .shelf-board{
+      position:relative;
+      border-radius:16px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow: 0 18px 55px rgba(0,0,0,.55);
+      overflow:hidden;
+
+      /* 木目レイヤー */
+      background:
+        /* うっすら木目筋 */
+        repeating-linear-gradient(
+          90deg,
+          rgba(255,255,255,.035) 0px,
+          rgba(255,255,255,.035) 8px,
+          rgba(0,0,0,.02) 8px,
+          rgba(0,0,0,.02) 18px
+        ),
+        /* 板の段差 */
+        repeating-linear-gradient(
+          180deg,
+          rgba(0,0,0,.10) 0px,
+          rgba(0,0,0,.10) 2px,
+          rgba(255,255,255,.06) 2px,
+          rgba(255,255,255,.06) 36px
+        ),
+        /* ベース木色 */
+        linear-gradient(180deg, rgba(122,87,54,.92), rgba(58,36,20,.92));
+    }
+    .shelf-board:before{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+      /* 角の暗さ＋中心の明るさで“板感” */
+      background:
+        radial-gradient(circle at 50% 20%, rgba(255,255,255,.10), rgba(0,0,0,0) 55%),
+        radial-gradient(circle at 50% 90%, rgba(0,0,0,.20), rgba(0,0,0,0) 60%);
+      mix-blend-mode: overlay;
+      opacity:.9;
+    }
+    .shelf-board:after{
+      content:"";
+      position:absolute; inset:8px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.18);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset;
+      pointer-events:none;
+    }
+
+    /* 棚グリッド（棚そのものは2列） */
     .shelves{
+      position:relative;
       display:grid;
       grid-template-columns: repeat(2, minmax(0,1fr));
       gap:10px;
+      z-index:1; /* 木目より前 */
     }
     @media (min-width: 940px){
       .shelves{ grid-template-columns: repeat(3, minmax(0,1fr)); }
     }
 
     .shelf{
-      border:1px solid var(--line);
+      border:1px solid rgba(255,255,255,.18);
       border-radius:14px;
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.08));
       overflow:hidden;
       min-width:0;
-    }
-    .shelf.locked{opacity:.6;filter:saturate(.7)}
 
-    /* ✅ 上：タイトルは1行にまとめて切る（改行しない） */
+      /* ✅ “棚”カードも木の上に馴染ませる */
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.14), rgba(0,0,0,.28));
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+    .shelf.locked{opacity:.62;filter:saturate(.75)}
+
     .shelf-top{
       padding:10px 10px 8px;
       display:flex;
@@ -260,36 +336,35 @@
     .shelf-name{
       font-weight:950;
       font-size:13px;
-      white-space:nowrap;        /* ✅ 改行禁止 */
+      white-space:nowrap;
       overflow:hidden;
-      text-overflow:ellipsis;    /* ✅ はみ出しは… */
+      text-overflow:ellipsis;
     }
     .shelf-tag{
       font-size:11px;
-      color:var(--muted);
+      color:rgba(255,255,255,.78);
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
       max-width:100%;
     }
 
-    /* ✅ 値段ラベル：色を付ける */
+    /* 値段ラベル（色つき） */
     .tierPill{
       flex:0 0 auto;
       padding:6px 10px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.20);
+      background:rgba(0,0,0,.25);
       font-size:12px;
       font-weight:950;
       line-height:1;
       white-space:nowrap;
     }
-    .tier--high{ color: var(--bad); border-color: rgba(255,154,165,.35); }
-    .tier--mid { color: var(--warn); border-color: rgba(255,211,138,.30); }
-    .tier--low { color: var(--good); border-color: rgba(159,255,168,.28); }
+    .tier--high{ color: var(--bad); border-color: rgba(255,154,165,.38); }
+    .tier--mid { color: var(--warn); border-color: rgba(255,211,138,.34); }
+    .tier--low { color: var(--good); border-color: rgba(159,255,168,.30); }
 
-    /* ✅ 中：棚本体は縦積み（カード→情報→ボタン） */
     .shelf-body{
       padding: var(--shelfPad);
       display:grid;
@@ -297,13 +372,12 @@
       min-width:0;
     }
 
-    /* ✅ カード枠：横いっぱい＆比率固定 */
     .slot{
       width:100%;
       aspect-ratio: var(--cardAR);
       border-radius:14px;
       border:1px solid rgba(255,255,255,.18);
-      background:rgba(0,0,0,.20);
+      background:rgba(0,0,0,.22);
       overflow:hidden;
       position:relative;
       cursor:pointer;
@@ -323,7 +397,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      color:rgba(255,255,255,.65);
+      color:rgba(255,255,255,.70);
       font-size:12px;
       text-align:center;
       padding:10px;
@@ -340,13 +414,12 @@
       -webkit-backdrop-filter: blur(6px);
     }
 
-    /* ✅ 情報（タイトル/レア/買取） */
     .shelf-info{
       min-width:0;
       display:grid;
       gap:6px;
     }
-    .line{font-size:12px;color:var(--muted);line-height:1.35;min-width:0}
+    .line{font-size:12px;color:rgba(255,255,255,.80);line-height:1.35;min-width:0}
     .line b{color:var(--text)}
     .line.titleLine{
       font-size:14px;
@@ -354,14 +427,13 @@
       color:var(--text);
       line-height:1.25;
       display:-webkit-box;
-      -webkit-line-clamp:2;      /* ✅ 2行まで */
+      -webkit-line-clamp:2;
       -webkit-box-orient:vertical;
       overflow:hidden;
     }
     .priceLine b{font-size:16px}
-    .subNote{color:rgba(255,255,255,.65);font-size:11px}
+    .subNote{color:rgba(255,255,255,.68);font-size:11px}
 
-    /* ✅ ボタン：2つ横並び（均等） */
     .shelf-actions{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -370,7 +442,9 @@
     }
     .mini{padding:10px 10px;border-radius:12px;font-size:12px;font-weight:950}
 
-    /* modal（元のまま） */
+    /* =========================================================
+       ✅ モーダル（カード選択） → 1列3枚（スマホでも）
+    ========================================================= */
     .modal{
       position:fixed; inset:0;
       background:rgba(0,0,0,.65);
@@ -406,19 +480,26 @@
       flex: 1 1 auto;
       touch-action: pan-y;
     }
-    .sheet-actions{display:flex;gap:8px;justify-content:flex-end;padding:12px;border-top:1px solid var(--line);flex:0 0 auto}
+    .sheet-actions{
+      display:flex;gap:8px;justify-content:flex-end;
+      padding:12px;border-top:1px solid var(--line);flex:0 0 auto
+    }
     .close{width:40px;height:40px;border-radius:12px}
 
-    /* pick cards */
+    /* ✅ ここが本命：常に3列（超小型だけ2列に落とす） */
     .cards{
       display:grid;
       grid-template-columns: repeat(3, minmax(0,1fr));
       gap:var(--gap);
       align-items:stretch;
     }
-    @media (max-width: 780px){
+    @media (max-width: 340px){
       .cards{ grid-template-columns: repeat(2, minmax(0,1fr)); }
     }
+    @media (min-width: 920px){
+      .cards{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+    }
+
     .citem{
       position:relative;
       border:1px solid rgba(255,255,255,.14);
@@ -451,7 +532,7 @@
     }
     .cimg .cnt{
       position:absolute; right:6px; top:6px;
-      font-size:11px; font-weight:900;
+      font-size:11px; font-weight:950;
       background:rgba(0,0,0,.62);
       border:1px solid rgba(255,255,255,.18);
       padding:3px 8px;border-radius:999px;
@@ -460,7 +541,7 @@
       -webkit-backdrop-filter: blur(6px);
     }
     .cmeta{padding:7px 8px 9px;display:flex;flex-direction:column;gap:4px}
-    .cname{font-size:12px;font-weight:900;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .cname{font-size:12px;font-weight:950;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .csub{display:flex;align-items:center;justify-content:space-between;gap:6px;color:var(--muted);font-size:11px}
     .csub .tagmini{
       display:inline-flex;align-items:center;gap:6px;
@@ -468,7 +549,7 @@
       background:rgba(0,0,0,.18);color:var(--muted);max-width:100%;
       overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
     }
-    .csub .tagmini b{color:var(--text);font-weight:700}
+    .csub .tagmini b{color:var(--text);font-weight:800}
 
     /* toast */
     .toast{
@@ -561,10 +642,11 @@
       font-size:12px;
       line-height:1.5;
     }
-    .errbar .t{font-weight:900;color:var(--bad)}
+    .errbar .t{font-weight:950;color:var(--bad)}
     .errbar .m{margin-top:4px;color:rgba(255,255,255,.92);white-space:pre-wrap;font-family:var(--mono)}
   </style>
 </head>
+
 <body>
   <div class="header">
     <div class="head-inner">
@@ -581,6 +663,7 @@
   <div class="wrap">
     <div class="stats" id="stats"></div>
 
+    <!-- 来店ステージ -->
     <div class="card stage-card">
       <div class="card-h">
         <div>
@@ -590,7 +673,7 @@
         <button class="btn ghost" id="fixBtn" type="button">退場</button>
       </div>
 
-      <div class="card-b">
+    <div class="card-b">
         <div class="stage" id="stage">
           <div class="stage-media">
             <img id="stageBg" class="stage-bg" alt="" src="">
@@ -611,6 +694,7 @@
       </div>
     </div>
 
+    <!-- 棚（出品） -->
     <div class="grid">
       <div class="card">
         <div class="card-h">
@@ -624,25 +708,30 @@
             <div class="cd mono" id="shoutCd">—</div>
           </div>
         </div>
+
         <div class="card-b">
-          <div class="shelves" id="shelves"></div>
+          <!-- ✅ ここが木目板 -->
+          <div class="shelf-board">
+            <div class="shelves" id="shelves"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- 出品カード選択モーダル -->
   <div class="modal" id="pickModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-label="出品するカードを選ぶ">
       <div class="sheet-h">
         <div>
           <b id="pickTitle">出品するカード</b>
-          <div style="margin-top:4px;font-size:12px;color:var(--muted)" id="pickHint">棚を選んでからカードを選択。</div>
+          <div style="margin-top:4px;font-size:12px;color:rgba(255,255,255,.72)" id="pickHint">棚を選んでからカードを選択。</div>
         </div>
         <button class="btn close" id="pickClose" type="button" aria-label="閉じる">×</button>
       </div>
       <div class="sheet-b">
         <div class="cards" id="pickCards"></div>
-        <div style="margin-top:10px;font-size:12px;color:var(--muted);display:none" id="pickEmpty">
+        <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.72);display:none" id="pickEmpty">
           出品できるカードがありません。
         </div>
       </div>
@@ -652,6 +741,7 @@
     </div>
   </div>
 
+  <!-- ヘルプ -->
   <div class="modal" id="helpModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-label="ヘルプ">
       <div class="sheet-h">
@@ -701,19 +791,15 @@
 (() => {
   "use strict";
 
-  /* =========================================================
-     ✅ 重要：localStorage が落ちても止まらない「安全ストレージ」
+ /* =========================================================
+     ✅ localStorage 安全ラッパ（壊れても落ちない）
   ========================================================= */
   const __memStore = Object.create(null);
-
   function safeStorageAvailable(){
-    try{
-      const k="__t"; localStorage.setItem(k,"1"); localStorage.removeItem(k);
-      return true;
-    }catch(e){ return false; }
+    try{ const k="__t"; localStorage.setItem(k,"1"); localStorage.removeItem(k); return true; }
+    catch(e){ return false; }
   }
   const __lsOK = safeStorageAvailable();
-
   const Storage = {
     getItem(key){
       try{ if(__lsOK) return localStorage.getItem(key); }catch(e){}
@@ -756,6 +842,10 @@
   function bulkUnlockLevelForSlot(idx){ return 6 + (idx * 2); }
   function isBulkUnlocked(idx, lv){ return lv >= bulkUnlockLevelForSlot(idx); }
 
+  /* =========================================================
+     ✅ 画像（あなたの現行のまま使える）
+     ※足りない/違うのがあればここだけ差し替えOK
+  ========================================================= */
   const ASSETS = {
     bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
     bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
@@ -765,22 +855,7 @@
       { id:"v03", name:"冷やかしタコ民", type:"looker",  url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku16.png" },
       { id:"v04", name:"見えないタコ民", type:"picky",   url:"https://ul.h3z.jp/MZYfusKm.png" },
       { id:"v05", name:"王様タコ民", type:"king", url:"https://ul.h3z.jp/wMM8PrcP.png" },
-      { id:"v06", name:"よっぱらいタコ民", type:"flipper", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku20.png" },
-      { id:"v07", name:"札束タコ民", type:"rich", url:"https://ul.h3z.jp/pZKu3lSE.png" },
-      { id:"v08", name:"踏破タコ民", type:"climber", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku2.png" },
-      { id:"v09", name:"ナビタコ民", type:"guide", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku3.png" },
-      { id:"v10", name:"ほぐしタコ民", type:"relax", url:"https://ul.h3z.jp/dbBbLypa.png" },
-      { id:"v11", name:"返し職人タコ民", type:"artisan", url:"https://ul.h3z.jp/OA5StkvT.png" },
-      { id:"v12", name:"ゼロ理論タコ民", type:"diet", url:"https://ul.h3z.jp/KVImBYZ8.png" },
-      { id:"v13", name:"枠外タコ民", type:"overflow", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku72.png" },
-      { id:"v14", name:"未開封保護タコ民", type:"collector", url:"https://ul.h3z.jp/zSvGyVq9.png" },
-      { id:"v15", name:"裏棚タコ民", type:"shadow", url:"https://ul.h3z.jp/IBKDrVAm.png" },
-      { id:"v16", name:"替え玉タコ民", type:"ramen", url:"https://ul.h3z.jp/NViRwhdj.png" },
-      { id:"v17", name:"投げ銭タコ民", type:"streamer", url:"https://ul.h3z.jp/8PukOegd.png" },
-      { id:"v18", name:"舌判定タコ民", type:"gourmet", url:"https://ul.h3z.jp/We4UXFSI.png" },
-      { id:"v19", name:"即バリタコ民", type:"opener", url:"https://ul.h3z.jp/9usFHTdU.png" },
-      { id:"v20", name:"宴タコ民", type:"party", url:"https://ul.h3z.jp/pByCAUMC.png" },
-      { id:"v21", name:"覚悟タコ民", type:"pilgrim", url:"https://ul.h3z.jp/eW2dluw2.png" }
+      { id:"v06", name:"よっぱらいタコ民", type:"flipper", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku20.png" }
     ]
   };
 
@@ -790,50 +865,15 @@
     looker:  ["ふーん","見るだけ見よ","賑やかだなあ","撮って帰るわ（買わない）"],
     picky:   ["匂いは悪くない…","焼きのムラは…？","慎重に選びたい","今日は“普通”が強い日…"],
     king:    ["よい。","余は迷わぬ。","この棚…格がある。","買う。異論はない。"],
-    flipper: ["回るか…？","これは動く。","利益の匂いがする","買う。評判は知らん。"],
-    rich: ["値段？ ああ、雰囲気代だろう","高い？ それは“希少”という意味だ","棚ごと欲しいが…今日は我慢する","焼きの格が違う"],
-    climber:["この棚…登れるな","酸素が薄い。レアの高度だ","頂上（UR）は近い…気がする","ここで撤退は恥だ"],
-    guide:["こちらが“後悔ゾーン”です","右を見ると財布、左を見ると欲望","今買うと“語れる思い出”になります","出口は…あ、閉まりました"],
-    relax:["肩の力、抜いて…買いな？","悩みは筋肉に出る","この棚、ツボ押してくる","物欲リンパ流れてる"],
-    artisan:["焼き面…美しい","これは返しが神","手が勝手に回転を想像する","…買う理由が多すぎる"],
-    diet:["これはカード。つまり0カロリー","買っても太らない。むしろ痩せる","罪悪感が焼かれている","理論上、無限に買える"],
-    overflow:["あ、俺ちょっとはみ出てる？","棚から出てるのが味","規格外が一番うまい","枠に収まらない人生でね"],
-    collector:["触らない。眺める","買うか…保存か…","これは2枚必要なやつ","未所持の匂いがする"],
-    shadow:["この街、防御力は高いな。カードの話だが","水は止められる。でも収集欲は止まらん","濡れたら終わり？だから二重スリーブだ","現場終わりの一枚が、今日の報酬だ"],
-    ramen:["これは…濃い","替え玉（追加購入）できる？","スープは無いが深みはある","〆に1枚、いっとくか"],
-    streamer:["みんな見てる〜？","今から運試しするよ〜","当たったら神回","外れても“美味しい”"],
-    gourmet:["香りが語りかけてくる","焼きの思想がある","これは“食後に語れる”","軽率には買えない"],
-    opener:["開けたい","今すぐ開けたい","結果より“音”","我慢？ なにそれ？"],
-    party:["今日は全部祭り","財布？ 酔ってる","景気よく焼こう","買う理由しかない"],
-    pilgrim:["ここまで6時間","買わない選択肢は無い","帰りも6時間","記念になるやつ頼む"]
+    flipper: ["回るか…？","これは動く。","利益の匂いがする","買う。評判は知らん。"]
   };
-
   const LEAVE_LINES = [
     "……財布と心が、今日は噛み合わなかった。",
     "……また来る。焼かれる覚悟ができたら。",
     "……買わない勇気も、立派な消費行動だよね。",
     "……今はその時じゃない。たこ焼きがそう言った。",
-    "……棚の圧が強すぎて、俺が焼けた。",
-    "……帰宅してから後悔する予定です。",
-    "……今日は買わなかった。逆に一生覚えてる"
+    "……棚の圧が強すぎて、俺が焼けた。"
   ];
-
-  const GOALS = [
-    { id:"cheap", label:"安いのを狙ってる" },
-    { id:"rare",  label:"SR以上が欲しい" },
-    { id:"ur",    label:"UR以上しか勝たん" },
-    { id:"any",   label:"なんでもいい、気分" }
-  ];
-  function goalLines(goalId){
-    const map = {
-      cheap: ["コスパ…コスパ…","安く焼かれたい…","値札に焼かれる準備OK","財布が軽い。軽い棚頼む。"],
-      rare:  ["SR以上…来い…","光ってくれ…頼む…","レアの波が来てる気がする","キラの気配…（幻）"],
-      ur:    ["UR以上が無いなら帰る。","UR…UR…（呪文）","光の圧を感じたい","派手に焼かれたい"],
-      any:   ["今日はノリで決める。","運命に任せる。","棚に呼ばれた気がする。","脳内ジャンケンで決める。"]
-    };
-    return map[goalId] || ["……"];
-  }
-
   const NEG_TYPES = new Set(["looker","picky","flipper"]);
   const isNegativeType = (t) => NEG_TYPES.has(String(t||""));
 
@@ -949,18 +989,9 @@
   }
 
   const STAGE_DEFAULT = {
-    ver:1,
-    hasVisitor:false,
-    leaving:false,
-    vUrl:"",
-    vName:"—",
-    vMsg:"まだ誰も来ていない。",
-    vType:"",
-    vGoal:"",
-    stayMs:0,
-    targetSlot:-1,
-    updatedAt:0,
-    source:""
+    ver:1, hasVisitor:false, leaving:false,
+    vUrl:"", vName:"—", vMsg:"まだ誰も来ていない。",
+    vType:"", stayMs:0, targetSlot:-1, updatedAt:0, source:""
   };
   function loadStage(){
     const s = lsGet(LS.stage, STAGE_DEFAULT);
@@ -996,27 +1027,11 @@
   }
 
   const QUEUE_DEFAULT = {
-    ver:1,
-    shoutPending:false,
-    shoutTargetSlot:null,
-    shoutSpawnAt:0,
-    normalPending:false,
-    normalTargetSlot:null,
-    queuedAt:0
+    ver:1, shoutPending:false, shoutTargetSlot:null, shoutSpawnAt:0,
+    normalPending:false, normalTargetSlot:null, queuedAt:0
   };
-  function loadQueue(){
-    const q = lsGet(LS.queue, QUEUE_DEFAULT);
-    return { ...QUEUE_DEFAULT, ...q };
-  }
+  function loadQueue(){ return { ...QUEUE_DEFAULT, ...(lsGet(LS.queue, QUEUE_DEFAULT)||{}) }; }
   function saveQueue(q){ lsSet(LS.queue, q); }
-
-  function clearNormalPending(){
-    const q = loadQueue();
-    q.normalPending = false;
-    q.normalTargetSlot = null;
-    q.queuedAt = 0;
-    saveQueue(q);
-  }
 
   function setStageEmpty(msg){
     clearStageTimers();
@@ -1027,13 +1042,11 @@
     s.vName="—";
     s.vMsg=msg || "まだ誰も来ていない。";
     s.vType="";
-    s.vGoal="";
     s.stayMs=0;
     s.targetSlot=-1;
     s.source="";
     saveStage(s);
     renderStage();
-    trySpawnQueuedIfPossible();
   }
 
   function beginLeave(msg){
@@ -1168,8 +1181,7 @@
     arr.sort((a,b)=> (b.count-a.count) || a.name.localeCompare(b.name, "ja"));
     return arr;
   }
-
-  const SHOP_DEFAULT = {
+const SHOP_DEFAULT = {
     ver:2,
     slots: [
       { item:null, qty:0, priceTier:"普通", createdAt:0 },
@@ -1208,9 +1220,7 @@
   }
   function saveTick(t){ lsSet(LS.tick, t); }
 
-  function nextVisitDelayMs(){
-    return (180 + Math.floor(Math.random()*121)) * 1000;
-  }
+  function nextVisitDelayMs(){ return (180 + Math.floor(Math.random()*121)) * 1000; }
   const SHELF_UNLOCK = [1,1,2,3,4];
   function canUseSlot(idx, lv){ return lv >= (SHELF_UNLOCK[idx] || 99); }
 
@@ -1271,7 +1281,7 @@
 
   function basePriceFor(card){
     const r = String(card?.rarity || "").toUpperCase();
-    const map = { "N":500, "R":800, "SR":2000, "UR":5000, "LR":10000 };
+    const map = { "N":500, "R":800, "SR":2000, "UR":5000, "LR":10000, "SP":1500 };
     for(const k of Object.keys(map)){
       if(r === k || r.includes(k)) return map[k];
     }
@@ -1292,81 +1302,15 @@
     { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+20, baseBuy:0.55 },
     { id:"flipper",  name:"よっぱらいタコ民", repDeltaOnBuy:-3, baseBuy:0.34 },
     { id:"careful",  name:"つぶやきタコ民",   repDeltaOnBuy:+5, baseBuy:0.38 },
-    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 },
-    { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+8, baseBuy:0.50 },
-    { id:"climber",  name:"踏破タコ民",        repDeltaOnBuy:+5, baseBuy:0.40 },
-    { id:"guide",    name:"ナビタコ民",        repDeltaOnBuy:+3, baseBuy:0.30 },
-    { id:"relax",    name:"ほぐしタコ民",      repDeltaOnBuy:+3, baseBuy:0.36 },
-    { id:"artisan",  name:"返し職人タコ民",    repDeltaOnBuy:+4, baseBuy:0.46 },
-    { id:"diet",     name:"ゼロ理論タコ民",    repDeltaOnBuy:+1, baseBuy:0.48 },
-    { id:"overflow", name:"枠外タコ民",        repDeltaOnBuy: 0, baseBuy:0.33 },
-    { id:"collector",name:"未開封保護タコ民",  repDeltaOnBuy:+1, baseBuy:0.41 },
-    { id:"shadow",   name:"防水タコ民",        repDeltaOnBuy:-2, baseBuy:0.35 },
-    { id:"ramen",    name:"替え玉タコ民",      repDeltaOnBuy:+1, baseBuy:0.44 },
-    { id:"streamer", name:"投げ銭タコ民",      repDeltaOnBuy:+2, baseBuy:0.39 },
-    { id:"gourmet",  name:"舌判定タコ民",      repDeltaOnBuy:+2, baseBuy:0.37 },
-    { id:"opener",   name:"即バリタコ民",      repDeltaOnBuy:+1, baseBuy:0.52 },
-    { id:"party",    name:"宴タコ民",          repDeltaOnBuy:-1, baseBuy:0.47 },
-    { id:"pilgrim",  name:"覚悟タコ民",        repDeltaOnBuy:+3, baseBuy:0.58 }
+    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 }
   ];
 
-  function chooseCustomer(rep){
-    const night = isNight();
-    const weights = CUSTOMER_TYPES.map(t=>{
-      if(t.id==="king")     return rep>=55 ? 7 : 3;
-      if(t.id==="flipper")  return rep>=70 ? 4 : 7;
-      if(t.id==="looker")   return night ? 10 : 14;
-      if(t.id==="impulse")  return rep<40 ? 18 : 22;
-      if(t.id==="careful")  return 16;
-      if(t.id==="picky")    return rep>=60 ? 24 : 20;
-      if(t.id==="rich")     return rep>=60 ? 10 : 6;
-      if(t.id==="climber")  return night ? 6 : 9;
-      if(t.id==="guide")    return 8;
-      if(t.id==="relax")    return night ? 10 : 7;
-      if(t.id==="artisan")  return rep>=55 ? 10 : 7;
-      if(t.id==="diet")     return 9;
-      if(t.id==="overflow") return 7;
-      if(t.id==="collector")return rep>=50 ? 10 : 8;
-      if(t.id==="shadow")   return night ? 11 : 6;
-      if(t.id==="ramen")    return 9;
-      if(t.id==="streamer") return rep>=45 ? 9 : 6;
-      if(t.id==="gourmet")  return rep>=65 ? 10 : 6;
-      if(t.id==="opener")   return 10;
-      if(t.id==="party")    return night ? 10 : 6;
-      if(t.id==="pilgrim")  return rep>=45 ? 8 : 5;
-      return 8;
-    });
-
-    if(rep>=70){
-      ["picky","gourmet","artisan","king","pilgrim"].forEach(id=>{
-        const idx = CUSTOMER_TYPES.findIndex(x=>x.id===id);
-        if(idx>=0) weights[idx] += 6;
-      });
-    }
-
-    const total = weights.reduce((a,b)=>a+b,0) || 1;
-    let r = Math.random() * total;
-    for(let i=0;i<CUSTOMER_TYPES.length;i++){
-      r -= weights[i];
-      if(r <= 0) return CUSTOMER_TYPES[i];
-    }
-    return CUSTOMER_TYPES[0];
+  function chooseCustomer(){
+    return pick(CUSTOMER_TYPES);
   }
-
   function pickVisitorAsset(customerId){
     const v = ASSETS.visitors.find(x=>x.type===customerId);
     return v || pick(ASSETS.visitors);
-  }
-
-  function chooseGoal(customerId){
-    if(customerId==="king") return "rare";
-    if(customerId==="flipper") return "cheap";
-    if(customerId==="rich") return (Math.random()<0.55 ? "ur" : "rare");
-    if(customerId==="collector") return "rare";
-    if(customerId==="gourmet") return "rare";
-    if(customerId==="opener") return "any";
-    if(customerId==="pilgrim") return "ur";
-    return pick(GOALS).id;
   }
 
   function countListedById(){
@@ -1411,7 +1355,6 @@
     return pickable;
   }
 
-  /* ✅ ここが今回の本命：棚レンダリングを縦積みに変更 */
   function tierClass(t){
     if(t==="高い") return "tierPill tier--high";
     if(t==="安い") return "tierPill tier--low";
@@ -1436,8 +1379,8 @@
 
       const titleWrap = document.createElement("div");
       titleWrap.className = "shelf-title";
-      const shelfNameText = `棚${idx+1}${bulkOK ? "（まとめOK）" : ""}`;
 
+      const shelfNameText = `棚${idx+1}${bulkOK ? "（まとめOK）" : ""}`;
       titleWrap.innerHTML = `
         <div class="shelf-name" title="${escapeHTML(shelfNameText)}">${escapeHTML(shelfNameText)}</div>
         <div class="shelf-tag">解放 Lv${escapeHTML(SHELF_UNLOCK[idx] || "?")} / まとめ Lv${escapeHTML(bulkUnlockLevelForSlot(idx))}</div>
@@ -1536,6 +1479,7 @@
 
       wrap.appendChild(top);
       wrap.appendChild(body);
+
       shelvesEl.appendChild(wrap);
     });
 
@@ -1546,7 +1490,6 @@
   function renderStats(){
     const lv = loadLevel();
     const rep = loadRep().rep;
-
     const shop = loadMyShop();
     const listed = shop.slots.filter(s=>!!s.item).length;
 
@@ -1576,7 +1519,6 @@
     const current = shop.slots[slotIdx]?.item;
 
     const bulkOK = isBulkUnlocked(slotIdx, lv);
-
     pickTitleEl.textContent = `棚${slotIdx+1} に出品するカード`;
     pickHintEl.textContent = current
       ? `現在：${current.name||current.id}（変更できます）`
@@ -1763,24 +1705,8 @@
     const base = basePriceFor(slot.item);
     const price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
 
-    const stayMs = Number(st.stayMs||0);
-    const stayFactor = clamp(stayMs/16000, 0.6, 1.25);
-
-    let buyP = cust.baseBuy * stayFactor;
-
-    const rar = String(slot.item.rarity||"").toUpperCase();
-    const isSR = rar.includes("SR") || rar.includes("UR") || rar.includes("LR") || rar.includes("HR") || rar.includes("XR");
-    const isUR = rar.includes("UR") || rar.includes("LR") || rar.includes("HR") || rar.includes("XR");
-
-    if(st.vGoal==="cheap"){
-      buyP *= (slot.priceTier==="安い" ? 1.15 : slot.priceTier==="高い" ? 0.80 : 1.0);
-    }else if(st.vGoal==="rare"){
-      buyP *= (isSR ? 1.15 : 0.92);
-    }else if(st.vGoal==="ur"){
-      buyP *= (isUR ? 1.18 : 0.78);
-    }
-
-    /* ✅ “買わない”が多い対策：下限を底上げ（少しでも動く） */
+    let buyP = cust.baseBuy;
+ /* ✅ “買わない”が多い対策：下限を底上げ（自然な範囲） */
     buyP = clamp(buyP, 0.12, 0.94);
 
     const willBuy = Math.random() < buyP;
@@ -1798,7 +1724,7 @@
     saveOcto(loadOcto() + price);
 
     const lv = addExp(4);
-    const repState = addRep(cust.repDeltaOnBuy);
+    addRep(cust.repDeltaOnBuy);
 
     const soldItem = slot.item;
 
@@ -1817,7 +1743,7 @@
     saveTick(t);
 
     const leftText = (afterQty > 0) ? `（残り×${afterQty}）` : "（完売）";
-    pushLog("売れた！", `${soldItem.name||soldItem.id} が ${fmt(price)} OCTOで売れた ${leftText}`, `棚${slotIdx+1} / rep ${repState.rep}`);
+    pushLog("売れた！", `${soldItem.name||soldItem.id} が ${fmt(price)} OCTOで売れた ${leftText}`, `棚${slotIdx+1}`);
     toast("🔥 売れた！！ 🔥", `${soldItem.name||soldItem.id} ／ +${fmt(price)} OCTO ${leftText}`, "sale");
 
     if(lv.leveled){
@@ -1839,9 +1765,8 @@
         const s2 = loadStage();
         if(!s2.hasVisitor || s2.leaving) return;
         const baseLines = VISITOR_LINES[s2.vType] || ["……"];
-        const gLines = goalLines(s2.vGoal);
-        s2.vMsg = (Math.random()<0.55) ? pick(baseLines) : pick(gLines);
-        lsSet(LS.stage, s2);
+        s2.vMsg = pick(baseLines);
+        saveStage(s2);
         renderStage();
       }, rand(3000, 6000));
 
@@ -1856,7 +1781,7 @@
 
   function spawnVisitorSoon(targetSlot, type){
     const typeLabel = (type==="shout") ? "呼び込み" : "通常";
-    toast("誰かくる！", `${typeLabel}：棚${targetSlot+1} を見てる気配…`, "");
+    toast("誰かくる！", `${typeLabel}：棚${targetSlot+1} を見てる気配…！`, "");
 
     spawnLockUntil = now() + 3500;
 
@@ -1864,10 +1789,8 @@
       const st2 = loadStage();
       if(st2.hasVisitor) return;
 
-      const rep = loadRep().rep;
-      const cust = chooseCustomer(rep);
+      const cust = chooseCustomer();
       const asset = pickVisitorAsset(cust.id);
-      const goal = chooseGoal(cust.id);
 
       const stayMs = rand(9000, 18000);
       const msg = pick(VISITOR_LINES[cust.id] || ["……"]);
@@ -1878,7 +1801,6 @@
       s.vType = cust.id;
       s.vName = asset.name || cust.name;
       s.vUrl = asset.url || "";
-      s.vGoal = goal;
       s.vMsg = msg;
       s.stayMs = stayMs;
       s.targetSlot = targetSlot;
@@ -1899,8 +1821,7 @@
         const s2 = loadStage();
         if(!s2.hasVisitor || s2.leaving) return;
         const baseLines = VISITOR_LINES[s2.vType] || ["……"];
-        const gLines = goalLines(s2.vGoal);
-        s2.vMsg = (Math.random()<0.55) ? pick(baseLines) : pick(gLines);
+        s2.vMsg = pick(baseLines);
         saveStage(s2);
         renderStage();
       }, rand(3000, 6000));
@@ -1908,76 +1829,12 @@
       stageSellTimer = setTimeout(()=> saleProcess(), Math.max(1000, stayMs - 1000));
       stageLeaveTimer = setTimeout(()=> beginLeave(pick(LEAVE_LINES)), stayMs);
 
-      if(type !== "shout"){
-        const tickObj = loadTick();
-        tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
-        saveTick(tickObj);
-
-        const q = loadQueue();
-        if(q.normalPending && Number(q.normalTargetSlot) === Number(targetSlot)){
-          clearNormalPending();
-        }
-      }else{
-        pushLog("呼び込み来店", `棚${targetSlot+1} に呼び込み客が来た`, "");
-      }
+      const tickObj = loadTick();
+      tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
+      saveTick(tickObj);
 
       renderAll();
     }, 3000);
-  }
-
-  function trySpawnQueuedIfPossible(){
-    const st = loadStage();
-    if(st.hasVisitor) return;
-    const nowMs = now();
-    if(nowMs < spawnLockUntil) return;
-
-    const q = loadQueue();
-
-    if(q.shoutPending){
-      if(nowMs >= Number(q.shoutSpawnAt||0)){
-        const target = Number(q.shoutTargetSlot);
-        q.shoutPending = false;
-        q.shoutTargetSlot = null;
-        q.shoutSpawnAt = 0;
-        saveQueue(q);
-        spawnVisitorSoon(target, "shout");
-      }
-      return;
-    }
-
-    if(q.normalPending && q.normalTargetSlot != null){
-      const target = Number(q.normalTargetSlot);
-      spawnVisitorSoon(target, "normal");
-      return;
-    }
-  }
-
-  function checkDueAndQueueNormal(){
-    const q = loadQueue();
-    if(q.normalPending) return;
-
-    const lv = loadLevel().lv;
-    const shop = loadMyShop();
-    const t = ensureNextAtForActiveSlots();
-    const nowMs = now();
-
-    const activeIdx = [];
-    shop.slots.forEach((s, idx)=>{
-      if(s.item && canUseSlot(idx, lv)) activeIdx.push(idx);
-    });
-    if(activeIdx.length===0) return;
-
-    const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
-    if(due.length===0) return;
-
-    const targetSlot = pick(due);
-
-    q.normalPending = true;
-    q.normalTargetSlot = targetSlot;
-    q.queuedAt = nowMs;
-    saveQueue(q);
-
-    pushLog("待機", `通常来客（棚${targetSlot+1}）が待機になった`, "");
   }
 
   function tick(){
@@ -1987,31 +1844,8 @@
     const st = loadStage();
     const nowMs = now();
 
-    if(st.hasVisitor){
-      checkDueAndQueueNormal();
-      return;
-    }
-
+    if(st.hasVisitor) return;
     if(nowMs < spawnLockUntil) return;
-
-    const q = loadQueue();
-    if(q.shoutPending){
-      checkDueAndQueueNormal();
-      if(nowMs >= Number(q.shoutSpawnAt||0)){
-        const target = Number(q.shoutTargetSlot);
-        q.shoutPending = false;
-        q.shoutTargetSlot = null;
-        q.shoutSpawnAt = 0;
-        saveQueue(q);
-        spawnVisitorSoon(target, "shout");
-      }
-      return;
-    }
-
-    if(q.normalPending && q.normalTargetSlot != null){
-      spawnVisitorSoon(Number(q.normalTargetSlot), "normal");
-      return;
-    }
 
     const lv = loadLevel().lv;
     const shop = loadMyShop();
@@ -2034,9 +1868,7 @@
     "🔥 焼きの匂いを撒いた！タコ民の足が向く…！",
     "屋台前がざわついてきた…！いまなら釣れる！",
     "タコ民ホイホイ発動！……寄ってくる、寄ってくる！",
-    "《客引き》発動！棚に視線が刺さってる…！",
-    "焼きたてオーラ放出！“買う気の気配”が増えた！",
-    "エンカウント率UP！……誰かが近づいている。"
+    "《客引き》発動！棚に視線が刺さってる…！"
   ];
   let lastShoutLine = "";
   function pickShoutLine(){
@@ -2080,25 +1912,12 @@
     saveShout(cd);
     updateShoutUI();
 
-    const t = ensureNextAtForActiveSlots();
-    let target = active[0];
-    let best = Infinity;
-    for(const idx of active){
-      const at = Number((t.nextAtBySlot||{})[String(idx)]||Infinity);
-      if(at < best){ best = at; target = idx; }
-    }
-
-    const q = loadQueue();
-    q.shoutPending = true;
-    q.shoutTargetSlot = target;
-    q.shoutSpawnAt = n + 3000;
-    saveQueue(q);
-
-    checkDueAndQueueNormal();
+    const target = active[0];
 
     toast("呼び込み！", `棚${target+1}｜${pickShoutLine()}`, "");
     pushLog("呼び込み", `棚${target+1} に客の気配が集まった`, "");
-    renderAll();
+
+    spawnVisitorSoon(target, "shout");
   }
 
   function renderAll(){
@@ -2139,7 +1958,7 @@
   fixBtn.addEventListener("click", ()=>{
     Storage.setItem(LS.stage, JSON.stringify({
       ver:1,hasVisitor:false,leaving:false,vUrl:"",vName:"—",vMsg:"まだ誰も来ていない。",
-      vType:"",vGoal:"",stayMs:0,targetSlot:-1,updatedAt:Date.now(),source:""
+      vType:"",stayMs:0,targetSlot:-1,updatedAt:Date.now(),source:""
     }));
     Storage.removeItem(LS.tick);
     lsSet(LS.queue, { ver:1, shoutPending:false, shoutTargetSlot:null, shoutSpawnAt:0, normalPending:false, normalTargetSlot:null, queuedAt:0 });
@@ -2152,12 +1971,10 @@
     applyDayNight();
     renderAll();
     scheduleStage();
-    trySpawnQueuedIfPossible();
     setInterval(tick, 1000);
   }catch(e){
     showErr(e?.stack || e?.message || String(e));
   }
-
 })();
 </script>
 </body>
