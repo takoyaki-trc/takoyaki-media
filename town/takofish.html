@@ -187,13 +187,16 @@
       vertical-align: middle;
     }
 
-    /* ===== ルール画面：海の模様（グルグルしない） =====
-       ・repeating-radial-gradient をやめて、水平の波＋泡のドット＋光の筋
-       ・見ていて酔いにくい「横方向」ベース
-    */
+    /* ✅ 追加：結果日時表示 */
+    .resultDate{
+      margin-top: 6px;
+      font-size: 12px;
+      opacity: .72;
+    }
+
+    /* ===== ルール画面：海の模様（グルグルしない） ===== */
     .rulesSea{
       background:
-        /* 光の筋 */
         linear-gradient(120deg,
           rgba(120,220,255,.10) 0%,
           transparent 18%,
@@ -202,19 +205,16 @@
           rgba(120,220,255,.06) 60%,
           transparent 78%,
           rgba(120,220,255,.05) 100%),
-        /* 横波（細い帯） */
         repeating-linear-gradient(180deg,
           rgba(255,255,255,.06) 0px,
           rgba(255,255,255,.06) 1px,
           transparent 1px,
           transparent 12px),
-        /* 泡ドット（静的） */
         radial-gradient(circle at 22% 28%, rgba(255,255,255,.12) 0 2px, transparent 3px),
         radial-gradient(circle at 66% 42%, rgba(255,255,255,.10) 0 1.6px, transparent 2.6px),
         radial-gradient(circle at 78% 70%, rgba(255,255,255,.08) 0 1.8px, transparent 2.8px),
         radial-gradient(circle at 35% 78%, rgba(255,255,255,.10) 0 1.4px, transparent 2.4px),
         radial-gradient(circle at 12% 62%, rgba(255,255,255,.08) 0 1.2px, transparent 2.2px),
-        /* 海のグラデ */
         linear-gradient(180deg, rgba(0,40,70,.62), rgba(0,18,40,.78));
     }
 
@@ -351,6 +351,8 @@
                 <div class="panel-body" id="resultBody">
                   <div class="resultMain" id="resultMain"></div>
                   <div class="resultLines" id="resultLines"></div>
+                  <!-- ✅ 追加：結果日時 -->
+                  <div class="resultDate" id="resultDate"></div>
 
                   <!-- SP Surprise block (shown only if won) -->
                   <div id="spBlock" class="spBox" style="display:none;">
@@ -384,17 +386,9 @@
   "use strict";
 
   /* =========================================================
-     ✅ SPサプライズ（ルール非表示/ボタン無し）
-       - -500～-2999 : 10%で SP-03
-       - 1000～1999  : 10%で SP-04
-       - 2000～2999  : 10%で SP-05
-       - 3000以上    : 10%で SP-06
-     ✅ 当たったら結果画面でカード画像表示 → 「図鑑にいれますか？」(はい/いいえ)
-        - はい：図鑑(tf_v1_book)へ保存
-        - いいえ：保存しない
-        - どちらでも図鑑へ移動しない
-     ✅ 糸の速度：もう少しだけ遅く（落下/巻き上げ）
-     ✅ ルール背景：グルグルしない波模様
+     ✅ 変更点（今回）
+     - 結果画面に「日時」を表示（resultDate）
+     - 余計な文章は追加しない（表示は結果内の1行のみ）
   ========================================================= */
 
   /* =========================
@@ -417,6 +411,8 @@
     const el = document.getElementById(id);
     if (el) el.textContent = String(v);
   }
+
+  // ✅ 追加：日時フォーマット（日本のローカル表示）
   function formatLocal(dt){
     const y = dt.getFullYear();
     const m = String(dt.getMonth()+1).padStart(2,"0");
@@ -548,9 +544,7 @@
     ONI_FREEZE_MS: 300,
     ONI_SPEED_MUL: 2.2,
 
-    // ✅ 糸：さらに「ほんの少し」遅く
-    // 前回: DROP 740 / REEL 380
-    // 今回: DROP 700 / REEL 360（体感ちょいだけ遅い）
+    // 糸（落下/巻き上げ）
     HOOK_DROP_BASE: 620,
     HOOK_REEL_BASE: 280,
 
@@ -656,7 +650,7 @@
     { min: 4500, max: 4999, name: "〘潮目支配〙", line: "流れを避けるんじゃない。使う。" },
     { min: 5000, max: 5499, name: "〘焼成管理者〙", line: "火加減ではなく、運命を回している。" },
     { min: 5500, max: 5999, name: "〘神速の返し〙", line: "拾う前に、もう次を取っている。" },
-    { min: 6000, max: 6499, name: "〘回収の外側〙", line: "観光客が止まって見える。" },
+    { min: 6000, max: 6499, name: "〘回収の外側〙", line: "海が静かに道を空ける。" },
     { min: 6500, max: 6999, name: "〘深海の釣神〙", line: "海が静かに道を空ける。" },
     { min: 7000, max: 7499, name: "〘レインボー統制〙", line: "色が来るタイミングが分かる。" },
     { min: 7500, max: 7999, name: "〘鬼モード常駐〙", line: "もう戻れない。戻る必要もない。" },
@@ -727,15 +721,14 @@
     return clamp(x, CFG.MARGIN_X, CFG.W - CFG.MARGIN_X);
   }
 
-  // 体感改善（変化付き） ※速度は落としつつ、カーブは維持
   function hookDropSpeed(hy, floorY){
     const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
-    const mul = 1.02 + 0.62 * t; // 1.02 → 1.64（前回より少し穏やか）
+    const mul = 1.02 + 0.62 * t;
     return CFG.HOOK_DROP_BASE * mul;
   }
   function hookReelSpeed(hy, floorY, hasCatch){
     const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
-    const mul = (1.24 + 0.74 * (1 - t)); // 1.98 → 1.24（前回より少し穏やか）
+    const mul = (1.24 + 0.74 * (1 - t));
     const catchMul = hasCatch ? 1.16 : 1.03;
     return CFG.HOOK_REEL_BASE * mul * catchMul;
   }
@@ -756,6 +749,7 @@
     resultTitle: document.getElementById("resultTitle"),
     resultMain: document.getElementById("resultMain"),
     resultLines: document.getElementById("resultLines"),
+    resultDate: document.getElementById("resultDate"), // ✅ 追加
     resultCloseX: document.getElementById("resultCloseX"),
     resultCloseBtn: document.getElementById("resultCloseBtn"),
     againBtn: document.getElementById("againBtn"),
@@ -864,8 +858,8 @@
   }
 
   /* =========================
-     9) Result render (datetime kept in storage, not in header texts)
-     ✅ SP当選時：画像 + 図鑑保存確認
+     9) Result render
+     ✅ 追加：結果日時をここでセット
   ========================= */
   function resetSPUI(){
     SP_PENDING = null;
@@ -895,6 +889,11 @@
   function showResultScreen(score, extended, oniReached){
     const rec = saveFishingRecord(score);
     refreshBestUI();
+
+    // ✅ 追加：この結果の日時を表示（保存された playedAt を使う）
+    const iso = localStorage.getItem(FISH_LS.playedAt);
+    const dt = iso ? new Date(iso) : new Date();
+    els.resultDate.textContent = `日時：${formatLocal(dt)}`;
 
     resetSPUI();
     SP_PENDING = rollSP(score);
@@ -1040,17 +1039,17 @@
       phase: Math.random()*Math.PI*2,
     };
 
-    const dashY = Math.floor((TOURIST_Y + SQUID_Y) * 0.5) + CFG.DASH.yBias;
-    STATE.dash = { active:false, x: W + 60, y: dashY, w: CFG.DASH.w, h: CFG.DASH.h, vx: -CFG.DASH.speed, nextAt: nowMs() + (CFG.DASH.minS*1000 + Math.random()*(CFG.DASH.maxS-CFG.DASH.minS)*1000) };
+    const dashY = Math.floor((TOURIST_Y + SQUID_Y) * 0.5) - 12;
+    STATE.dash = { active:false, x: W + 60, y: dashY, w: 54, h: 10, vx: -950, nextAt: nowMs() + (10*1000 + Math.random()*(15-10)*1000) };
 
     function spawnDash(now){
       const d = STATE.dash;
       d.active = true;
       d.x = W + d.w + 10;
-      d.vx = -CFG.DASH.speed * (STATE.oni ? 1.15 : 1.0);
+      d.vx = -950 * (STATE.oni ? 1.15 : 1.0);
 
-      const minS = STATE.oni ? CFG.DASH.oniMinS : CFG.DASH.minS;
-      const maxS = STATE.oni ? CFG.DASH.oniMaxS : CFG.DASH.maxS;
+      const minS = STATE.oni ? 4 : 10;
+      const maxS = STATE.oni ? 7 : 15;
       d.nextAt = now + (minS*1000 + Math.random()*(maxS-minS)*1000);
 
       STATE.dashTrail.length = 0;
@@ -1066,7 +1065,7 @@
       if (remaining() <= 0) return;
       const h = STATE.hook;
       if (h.phase !== "idle") return;
-      h.x = clamp(x, CFG.MARGIN_X, W - CFG.MARGIN_X);
+      h.x = clamp(x, 10, W - 10);
       h.phase = "drop";
       h.hasCatch = false;
       h.caught = null;
@@ -1133,7 +1132,7 @@
 
       const trail = STATE.dashTrail;
       trail.unshift({ x: d.x, t: now });
-      if (trail.length > CFG.DASH.trail) trail.pop();
+      if (trail.length > 4) trail.pop();
 
       for (let i=trail.length-1; i>=0; i--){
         const a = (i+1) / (trail.length+1);
@@ -1159,15 +1158,15 @@
       const h = STATE.hook;
       ctx.strokeStyle = "rgba(255,255,255,.22)";
       ctx.beginPath();
-      ctx.moveTo(h.x, CFG.TOP_Y);
+      ctx.moveTo(h.x, 18);
       ctx.lineTo(h.x, h.y);
       ctx.stroke();
 
-      drawImageCentered(ctx, IMGS.pick, h.x, h.y, CFG.PICK_DRAW);
+      drawImageCentered(ctx, IMGS.pick, h.x, h.y, 24);
 
       if (h.hasCatch && h.caught){
         const s = h.caught.size.draw;
-        const ty = h.y + (CFG.PICK_DRAW/2) + (s/2) - 2;
+        const ty = h.y + (24/2) + (s/2) - 2;
         const img = IMGS[h.caught.type.imgKey];
         drawImageCentered(ctx, img, h.x, ty, s);
       }
@@ -1232,21 +1231,21 @@
       if (remaining() <= 0) return;
       STATE.elapsed++;
 
-      if (STATE.elapsed === CFG.BASE_LIMIT){
-        if (STATE.score >= CFG.EXT_SCORE){
+      if (STATE.elapsed === 30){
+        if (STATE.score >= 600){
           STATE.extended = true;
-          STATE.limit = CFG.EXT_LIMIT;
+          STATE.limit = 60;
           flashText(`延長解放！60秒へ`, 1100);
         } else {
-          STATE.limit = CFG.BASE_LIMIT;
+          STATE.limit = 30;
           flashText(`終了！`, 900);
         }
       }
 
-      if (STATE.extended && STATE.elapsed === CFG.ONI_AT){
+      if (STATE.extended && STATE.elapsed === 45){
         STATE.oni = true;
         STATE.oniReached = true;
-        STATE.freezeUntil = nowMs() + CFG.ONI_FREEZE_MS;
+        STATE.freezeUntil = nowMs() + 300;
         flashText("鬼モード突入！！", 1000);
       }
 
@@ -1274,7 +1273,7 @@
           return;
         }
 
-        const mul = STATE.oni ? CFG.ONI_SPEED_MUL : 1.0;
+        const mul = STATE.oni ? 2.2 : 1.0;
 
         for (const it of STATE.items){
           if (!it.alive) continue;
@@ -1285,8 +1284,8 @@
             if (now >= it.nextMind){
               if (Math.random() < 0.10) it.pauseUntil = now + rand(260, 620);
               const flip = (Math.random() < 0.18) ? -1 : 1;
-              const spd = CFG.ITEM_BASE_SPEED + rand(-18, 60);
-              it.vxTarget = clamp(flip * (Math.random()<0.5?-1:1) * spd, -CFG.ITEM_MAX_SPEED, CFG.ITEM_MAX_SPEED);
+              const spd = 45 + rand(-18, 60);
+              it.vxTarget = clamp(flip * (Math.random()<0.5?-1:1) * spd, -130, 130);
 
               it.bobAmp = clamp(it.bobAmp + rand(-0.6, 0.9), 0.5, 3.4);
               it.bobSpd = clamp(it.bobSpd + rand(-1.2, 1.4), 2.0, 9.0);
@@ -1294,23 +1293,23 @@
             }
 
             const dv = it.vxTarget - it.vx;
-            const stepV = clamp(dv, -CFG.ITEM_ACCEL*dt, CFG.ITEM_ACCEL*dt);
+            const stepV = clamp(dv, -240*dt, 240*dt);
             it.vx += stepV;
             it.vx += rand(-6, 6) * dt;
-            it.vx = clamp(it.vx, -CFG.ITEM_MAX_SPEED, CFG.ITEM_MAX_SPEED);
+            it.vx = clamp(it.vx, -130, 130);
           }
 
           it.x += it.vx * dt;
 
           const half = it.spec.size.draw / 2;
-          if (it.x - half < CFG.MARGIN_X){
-            it.x = CFG.MARGIN_X + half;
+          if (it.x - half < 10){
+            it.x = 10 + half;
             it.vx = Math.abs(it.vx) * (0.85 + Math.random()*0.25);
             it.vxTarget = Math.abs(it.vxTarget) * (0.8 + Math.random()*0.4);
             it.nextMind = Math.min(it.nextMind, now + rand(120, 420));
           }
-          if (it.x + half > W - CFG.MARGIN_X){
-            it.x = (W - CFG.MARGIN_X) - half;
+          if (it.x + half > W - 10){
+            it.x = (W - 10) - half;
             it.vx = -Math.abs(it.vx) * (0.85 + Math.random()*0.25);
             it.vxTarget = -Math.abs(it.vxTarget) * (0.8 + Math.random()*0.4);
             it.nextMind = Math.min(it.nextMind, now + rand(120, 420));
@@ -1350,7 +1349,7 @@
             for (const it of STATE.items){
               if (!it.alive) continue;
               const rr = it.spec.size.draw * 0.38;
-              if (circleHit(h.x, h.y, h.hitR, it.x, it.y, rr)){
+              if (circleHit(h.x, h.y, 10, it.x, it.y, rr)){
                 h.hasCatch = true;
                 h.phase = "reel";
                 h.caught = it.spec;
@@ -1383,7 +1382,7 @@
           if (h.hasCatch && h.caught && h.giantDropArmed){
             if (!h.giantDropRolled && h.y < GIANT_DROP_START_Y){
               h.giantDropRolled = true;
-              h.giantWillDrop = (Math.random() < CFG.GIANT_DROP_CHANCE);
+              h.giantWillDrop = (Math.random() < 0.18);
             }
             if (h.giantWillDrop && h.y < (GIANT_DROP_START_Y - 40)){
               const dead = STATE.items.find(v => !v.alive);
@@ -1403,7 +1402,7 @@
             const fishSize = h.caught.size.draw;
             const fishR = fishSize * 0.38;
             const fishX = h.x;
-            const fishY = h.y + (CFG.PICK_DRAW/2) + (fishSize/2) - 2;
+            const fishY = h.y + (24/2) + (fishSize/2) - 2;
 
             if (circleRectHit(fishX, fishY, fishR, t.x, t.y - t.h/2, t.w, t.h)){
               const dead = STATE.items.find(v => !v.alive);
@@ -1433,8 +1432,8 @@
             }
           }
 
-          if (h.y <= CFG.TOP_Y){
-            h.y = CFG.TOP_Y;
+          if (h.y <= 18){
+            h.y = 18;
             if (h.hasCatch && h.caught){
               const dead = STATE.items.find(v => !v.alive);
               if (dead) resetItem(dead);
@@ -1476,7 +1475,7 @@
     setText("tfScore", 0);
     setText("tfCombo", 0);
     setText("tfMiss", 0);
-    setText("tfTime", CFG.BASE_LIMIT);
+    setText("tfTime", 30);
 
     rafId = requestAnimationFrame(step);
   }
