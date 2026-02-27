@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>たこ焼き釣り｜焼かれた伝説</title>
-  <meta name="description" content="たこ焼き釣りミニゲーム（最高記録保存 / 結果に日時表示）" />
+  <meta name="description" content="たこ焼き釣りミニゲーム" />
   <style>
     :root{
       --bg0:#07060b;
@@ -45,9 +45,8 @@
       background: rgba(255,255,255,.08); color:var(--text);
       border-radius: 12px; padding: 10px 12px; font-weight: 900; cursor:pointer;
     }
-    .titlebox{ min-width:0; display:flex; flex-direction:column; gap:2px; }
+    .titlebox{ min-width:0; display:flex; flex-direction:column; gap:0; }
     .title{ font-weight:1000; letter-spacing:.02em; line-height:1.1; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .subtitle{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
     .main{ flex:1; display:flex; justify-content:center; padding: 10px 10px calc(16px + env(safe-area-inset-bottom)); }
     .card{
@@ -188,14 +187,35 @@
       vertical-align: middle;
     }
 
-    /* ===== ルール画面：海の中っぽい模様 ===== */
+    /* ===== ルール画面：海の模様（グルグルしない） =====
+       ・repeating-radial-gradient をやめて、水平の波＋泡のドット＋光の筋
+       ・見ていて酔いにくい「横方向」ベース
+    */
     .rulesSea{
       background:
-        radial-gradient(1200px 900px at 20% 10%, rgba(40,160,255,.16), transparent 60%),
-        radial-gradient(900px 700px at 80% 30%, rgba(0,255,210,.10), transparent 60%),
-        radial-gradient(700px 600px at 40% 90%, rgba(120,90,255,.10), transparent 60%),
-        repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.06) 0 2px, transparent 2px 14px),
-        linear-gradient(180deg, rgba(0,40,70,.55), rgba(0,10,25,.70));
+        /* 光の筋 */
+        linear-gradient(120deg,
+          rgba(120,220,255,.10) 0%,
+          transparent 18%,
+          rgba(120,220,255,.08) 30%,
+          transparent 45%,
+          rgba(120,220,255,.06) 60%,
+          transparent 78%,
+          rgba(120,220,255,.05) 100%),
+        /* 横波（細い帯） */
+        repeating-linear-gradient(180deg,
+          rgba(255,255,255,.06) 0px,
+          rgba(255,255,255,.06) 1px,
+          transparent 1px,
+          transparent 12px),
+        /* 泡ドット（静的） */
+        radial-gradient(circle at 22% 28%, rgba(255,255,255,.12) 0 2px, transparent 3px),
+        radial-gradient(circle at 66% 42%, rgba(255,255,255,.10) 0 1.6px, transparent 2.6px),
+        radial-gradient(circle at 78% 70%, rgba(255,255,255,.08) 0 1.8px, transparent 2.8px),
+        radial-gradient(circle at 35% 78%, rgba(255,255,255,.10) 0 1.4px, transparent 2.4px),
+        radial-gradient(circle at 12% 62%, rgba(255,255,255,.08) 0 1.2px, transparent 2.2px),
+        /* 海のグラデ */
+        linear-gradient(180deg, rgba(0,40,70,.62), rgba(0,18,40,.78));
     }
 
     /* ===== SP表示ブロック ===== */
@@ -246,7 +266,6 @@
         <button id="backBtn" class="backbtn" type="button" aria-label="戻る">← 戻る</button>
         <div class="titlebox">
           <div class="title">たこ焼き釣り</div>
-          <div class="subtitle">最高得点保存 / 結果に日時表示</div>
         </div>
       </div>
     </header>
@@ -275,7 +294,7 @@
             <div id="rulesOverlay" class="overlay show" role="dialog" aria-modal="true" aria-label="ルール">
               <div class="panel">
                 <div class="panel-head">
-                  <div class="h">ルール（点数が分かりやすい版）</div>
+                  <div class="h">ルール</div>
                   <button id="rulesCloseX" class="btn ghost" type="button" aria-label="閉じる">×</button>
                 </div>
                 <div class="panel-body rulesSea">
@@ -353,7 +372,7 @@
           </div>
 
           <div class="footnote">
-            タップで糸を落下 → 当てる → 巻き上げ。天敵に当たると奪われる。
+            タップで糸を落下 → 当てる → 巻き上げ。
           </div>
         </div>
       </section>
@@ -374,8 +393,8 @@
         - はい：図鑑(tf_v1_book)へ保存
         - いいえ：保存しない
         - どちらでも図鑑へ移動しない
-     ✅ 糸の速度：少しだけ減速（落下/巻き上げ）
-     ✅ ルール画面背景：海中っぽい模様
+     ✅ 糸の速度：もう少しだけ遅く（落下/巻き上げ）
+     ✅ ルール背景：グルグルしない波模様
   ========================================================= */
 
   /* =========================
@@ -431,22 +450,13 @@
 
   /* =========================
      1) SP Surprise (no rules / no game UI)
-     - 抽選は「結果確定時」に行い、当たったら結果画面で保存確認
   ========================= */
   const CDN_BASE = "https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/assets/takofish/";
   const V = "1";
 
   const SP_CFG = {
     chance: 0.10,
-    // 図鑑側のIDに合わせる（必要ならここだけ変える）
-    ids: {
-      sp03: "sp_03",
-      sp04: "sp_04",
-      sp05: "sp_05",
-      sp06: "sp_06",
-    },
-    // 結果画面に出すカード画像（必要ならURL差し替え）
-    // ※ファイル名が違う場合：ここだけ修正
+    ids: { sp03: "sp_03", sp04: "sp_04", sp05: "sp_05", sp06: "sp_06" },
     img: {
       sp03: `${CDN_BASE}sp_03.png?v=${V}`,
       sp04: `${CDN_BASE}sp_04.png?v=${V}`,
@@ -463,18 +473,12 @@
     if (score >= 3000) return "sp06";
     return null;
   }
-
   function rollSP(score){
     const bucket = getSPBucket(score);
     if (!bucket) return null;
     if (Math.random() >= SP_CFG.chance) return null;
-    return {
-      bucket,
-      id: SP_CFG.ids[bucket],
-      img: SP_CFG.img[bucket] || "",
-    };
+    return { bucket, id: SP_CFG.ids[bucket], img: SP_CFG.img[bucket] || "" };
   }
-
   function saveSPToZukan(sp){
     if (!sp || !sp.id) return false;
     const now = Date.now();
@@ -544,9 +548,11 @@
     ONI_FREEZE_MS: 300,
     ONI_SPEED_MUL: 2.2,
 
-    // ✅ 糸：少しだけ減速（前回より遅い）
-    HOOK_DROP_BASE: 740,
-    HOOK_REEL_BASE: 380,
+    // ✅ 糸：さらに「ほんの少し」遅く
+    // 前回: DROP 740 / REEL 380
+    // 今回: DROP 700 / REEL 360（体感ちょいだけ遅い）
+    HOOK_DROP_BASE: 700,
+    HOOK_REEL_BASE: 360,
 
     HOOK_HIT_R: 10,
     TOP_Y: 18,
@@ -721,16 +727,16 @@
     return clamp(x, CFG.MARGIN_X, CFG.W - CFG.MARGIN_X);
   }
 
-  // 体感改善（変化付き） ※速度は減らしつつ、カーブは維持
+  // 体感改善（変化付き） ※速度は落としつつ、カーブは維持
   function hookDropSpeed(hy, floorY){
     const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
-    const mul = 1.04 + 0.68 * t; // 1.04 → 1.72
+    const mul = 1.02 + 0.62 * t; // 1.02 → 1.64（前回より少し穏やか）
     return CFG.HOOK_DROP_BASE * mul;
   }
   function hookReelSpeed(hy, floorY, hasCatch){
     const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
-    const mul = (1.30 + 0.80 * (1 - t)); // 2.10 → 1.30
-    const catchMul = hasCatch ? 1.18 : 1.04;
+    const mul = (1.24 + 0.74 * (1 - t)); // 1.98 → 1.24（前回より少し穏やか）
+    const catchMul = hasCatch ? 1.16 : 1.03;
     return CFG.HOOK_REEL_BASE * mul * catchMul;
   }
 
@@ -831,7 +837,6 @@
   let onPointer = null;
   let STATE = null;
 
-  // ✅ SP保留（結果画面で「はい/いいえ」）
   let SP_PENDING = null;
   let SP_DECIDED = false;
 
@@ -859,7 +864,7 @@
   }
 
   /* =========================
-     9) Result render (includes datetime + best)
+     9) Result render (datetime kept in storage, not in header texts)
      ✅ SP当選時：画像 + 図鑑保存確認
   ========================= */
   function resetSPUI(){
@@ -868,7 +873,6 @@
     els.spBlock.style.display = "none";
     els.spImgEl.removeAttribute("src");
   }
-
   function showSPPrompt(sp){
     if (!sp || !sp.img) return;
     els.spImgEl.src = sp.img;
@@ -879,14 +883,12 @@
     if (SP_DECIDED) return;
     SP_DECIDED = true;
     if (SP_PENDING) saveSPToZukan(SP_PENDING);
-    // ボタンは消す（結果画面はそのまま）
     els.spBlock.style.display = "none";
   });
 
   els.spNoBtn.addEventListener("click", () => {
     if (SP_DECIDED) return;
     SP_DECIDED = true;
-    // 保存しない
     els.spBlock.style.display = "none";
   });
 
@@ -894,25 +896,17 @@
     const rec = saveFishingRecord(score);
     refreshBestUI();
 
-    // SP抽選（結果確定時）
     resetSPUI();
     SP_PENDING = rollSP(score);
 
-    const dt = new Date();
-    const played = formatLocal(dt);
-    const best = rec.best;
-    const isNew = rec.isNew;
-
-    els.resultTitle.innerHTML = isNew ? `結果<span class="tagNew">NEW RECORD</span>` : "結果";
+    els.resultTitle.innerHTML = rec.isNew ? `結果<span class="tagNew">NEW</span>` : "結果";
 
     if (score === 3000){
       els.resultMain.textContent = SCORE_3000_LINE;
-      const lines = [];
-      lines.push(`日時：<b>${played}</b>`);
-      lines.push(`Score：<b>${score}</b>`);
-      lines.push(`Best：<b>${best}</b>${isNew ? "（更新）" : ""}`);
-      els.resultLines.innerHTML = lines.map(s => `<div>${s}</div>`).join("");
-
+      els.resultLines.innerHTML = `
+        <div>Score：<b>${score}</b></div>
+        <div>Best：<b>${rec.best}</b>${rec.isNew ? "（更新）" : ""}</div>
+      `;
       if (SP_PENDING) showSPPrompt(SP_PENDING);
       showResult();
       return;
@@ -920,16 +914,13 @@
 
     const r = getRank(score);
     els.resultMain.textContent = `［ ${r.name} ］`;
-
-    const lines = [];
-    lines.push(r.line);
-    lines.push(`日時：<b>${played}</b>`);
-    lines.push(`Score：<b>${score}</b>`);
-    lines.push(`Best：<b>${best}</b>${isNew ? "（更新）" : ""}`);
-    lines.push(extended ? "延長：あり（60秒）" : "延長：なし（30秒）");
-    if (extended) lines.push(oniReached ? "鬼モード：到達" : "鬼モード：未到達");
-
-    els.resultLines.innerHTML = lines.map(s => `<div>${s}</div>`).join("");
+    els.resultLines.innerHTML = `
+      <div>${r.line}</div>
+      <div>Score：<b>${score}</b></div>
+      <div>Best：<b>${rec.best}</b>${rec.isNew ? "（更新）" : ""}</div>
+      <div>${extended ? "延長：あり" : "延長：なし"}</div>
+      ${extended ? `<div>${oniReached ? "鬼モード：到達" : "鬼モード：未到達"}</div>` : ""}
+    `;
 
     if (SP_PENDING) showSPPrompt(SP_PENDING);
     showResult();
@@ -947,11 +938,6 @@
     const cvs = els.canvas;
     const ctx = cvs.getContext("2d");
     ctx.imageSmoothingEnabled = false;
-
-    const scoreEl = document.getElementById("tfScore");
-    const timeEl  = document.getElementById("tfTime");
-    const comboEl = document.getElementById("tfCombo");
-    const missEl  = document.getElementById("tfMiss");
 
     const W = CFG.W, H = CFG.H;
     const FLOOR_Y = Math.floor(H * CFG.FLOOR_Y_RATIO);
@@ -1074,39 +1060,6 @@
       const d = STATE.dash;
       d.active = false;
       d.x = W + d.w + 10;
-    }
-
-    function applyCatchScore(spec){
-      if (spec.type.kind === "minus"){
-        STATE.score += spec.points;
-        STATE.combo = 0;
-        STATE.miss++;
-        flashText(`ハズレ！${spec.type.label} ${spec.points}`, 900);
-        return;
-      }
-      STATE.combo++;
-      const comboBonus = Math.min(120, STATE.combo * 6);
-      STATE.score += spec.points + comboBonus;
-      flashText(`GET! +${spec.points}（${spec.size.label}/${spec.type.label}）`, 850);
-    }
-
-    function onStolen(who){
-      STATE.combo = 0;
-      STATE.miss++;
-      if (who === "squid"){
-        STATE.score -= 40;
-        flashText("イカに奪われた… -40", 950);
-      } else {
-        flashText("観光客に横取りされた！", 850);
-      }
-      setHookIdle();
-    }
-
-    function onDropGiant(){
-      STATE.combo = 0;
-      STATE.miss++;
-      flashText("巨大たこ焼き、落ちた！！", 950);
-      setHookIdle();
     }
 
     function startDropAt(x){
@@ -1283,10 +1236,10 @@
         if (STATE.score >= CFG.EXT_SCORE){
           STATE.extended = true;
           STATE.limit = CFG.EXT_LIMIT;
-          flashText(`延長解放！60秒へ（30秒時点 ${STATE.score}点）`, 1200);
+          flashText(`延長解放！60秒へ`, 1100);
         } else {
           STATE.limit = CFG.BASE_LIMIT;
-          flashText(`終了！延長条件：${CFG.EXT_SCORE}点（いま ${STATE.score}点）`, 1400);
+          flashText(`終了！`, 900);
         }
       }
 
@@ -1486,7 +1439,6 @@
               const dead = STATE.items.find(v => !v.alive);
               if (dead) resetItem(dead);
 
-              // score apply
               if (h.caught.type.kind === "minus"){
                 STATE.score += h.caught.points;
                 STATE.combo = 0;
@@ -1539,7 +1491,7 @@
     ctx.fillRect(0,0,CFG.W,CFG.H);
     ctx.fillStyle = "#fff";
     ctx.font = "16px system-ui";
-    ctx.fillText("画像を読み込み中…", 100, 260);
+    ctx.fillText("読み込み中…", 120, 260);
 
     const { images, failed } = await loadAllImages();
     if (failed.length){
