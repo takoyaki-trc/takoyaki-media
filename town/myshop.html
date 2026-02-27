@@ -2,8 +2,9 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>マイ露店</title>
+
   <style>
     :root{
       --bg:#0f1220;
@@ -19,41 +20,60 @@
       --radius:14px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-      /* 図鑑寄せ（カード一覧） */
-      --tile:84px;
-      --thumbPad:5px;
+      /* ✅ モーダルカード一覧（見やすさ最大） */
+      --tile:112px;
+      --thumbPad:4px;
       --gap:10px;
+
+      /* ✅ 棚（出品カード） */
+      --shelfPad:10px;
+      --cardAR: 3 / 4;
+
+      /* 木目 */
+      --woodA:#6b4a2d;
+      --woodB:#4b2f1a;
+      --woodC:#7a5736;
+      --woodD:#3a2414;
+
+      /* 祀り棚（棚6） */
+      --shrineLine: rgba(180,255,240,.35);
+      --shrineGlow: rgba(0,255,204,.22);
+      --shrineGlow2: rgba(64,160,255,.16);
     }
+
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      margin:0; background:var(--bg); color:var(--text);
+      margin:0;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 50% 20%, #1a2040 0%, #070812 60%),
+        linear-gradient(#07060b,#0c0b12);
+      min-height:100svh;
     }
     body.noscroll{ overflow:hidden; touch-action:none; }
-    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 110px}
+
     .mono{font-family:var(--mono)}
+    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 140px}
+
     .btn{
+      appearance:none;
       border:1px solid var(--line);
       background:var(--btn);
       color:var(--text);
       padding:10px 12px;
       border-radius:12px;
       cursor:pointer;
-      font-weight:800;
+      font-weight:900;
       white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+      min-width:0;
     }
     .btn:active{transform:translateY(1px)}
     .btn.warn{background:linear-gradient(180deg, rgba(255,211,138,.18), rgba(255,255,255,.10));}
     .btn.ghost{background:transparent}
     .btn[disabled]{opacity:.55;cursor:not-allowed}
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px; border-radius:999px;
-      border:1px solid var(--line);
-      background:var(--panel);
-      font-size:12px;
-      white-space:nowrap;
-    }
 
     /* header */
     .header{
@@ -62,14 +82,19 @@
       backdrop-filter: blur(6px);
       border-bottom:1px solid var(--line);
     }
-    .head-inner{max-width:980px;margin:0 auto;padding:10px 12px;display:flex;align-items:center;gap:10px}
+    .head-inner{
+      max-width:980px;margin:0 auto;padding:10px 12px;
+      display:flex;align-items:center;gap:10px;
+    }
     .back{
       width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
       background:var(--btn); color:var(--text); font-size:18px; cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      flex:0 0 auto;
     }
     .titlebox{flex:1;min-width:0}
-    .title{font-size:16px;font-weight:900;letter-spacing:.02em}
-    .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .title{font-size:16px;font-weight:950;letter-spacing:.02em}
+    .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex:0 0 auto}
 
     /* cards */
     .card{
@@ -84,35 +109,46 @@
       border-bottom:1px solid var(--line);
       display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
     }
-    .card-title{font-weight:900;font-size:14px}
+    .card-title{font-weight:950;font-size:14px}
     .card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
     .card-b{padding:12px}
 
     /* stats */
     .stats{
       display:grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0,1fr));
       gap:8px;
       margin-bottom:12px;
     }
-    @media (max-width: 560px){ .stats{grid-template-columns: repeat(2, 1fr)} }
+    @media (max-width: 680px){
+      .stats{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
     .stat{
       border:1px solid var(--line);
       background:rgba(0,0,0,.14);
       border-radius:12px;
-      padding:10px;
-      min-height:62px;
+      padding:8px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-width:0;
     }
-    .stat .k{font-size:11px;color:var(--muted)}
-    .stat .v{font-size:16px;font-weight:900;margin-top:4px;display:flex;align-items:baseline;gap:6px}
-    .stat .v small{font-size:11px;color:var(--muted);font-weight:700}
+    .stat .k{font-size:11px;color:var(--muted);white-space:nowrap}
+    .stat .v{
+      font-size:14px;
+      font-weight:950;
+      display:flex;
+      align-items:baseline;
+      gap:6px;
+      white-space:nowrap;
+      min-width:0;
+    }
+    .stat .v small{font-size:11px;color:var(--muted);font-weight:800}
     .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
 
-    /* =========================================================
-       ✅ 来店ステージ
-    ========================================================= */
+    /* stage */
     .stage-card{margin-bottom:12px}
-
     .stage{
       position:relative;
       width:100%;
@@ -122,7 +158,6 @@
       border:1px solid rgba(255,255,255,.14);
       background:rgba(0,0,0,.18);
     }
-
     .stage-media{
       position:relative;
       width:100%;
@@ -134,19 +169,14 @@
     @media (max-width: 520px){
       .stage-media{ aspect-ratio: 16 / 10; }
     }
-
     .stage-bg{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      object-position:center;
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:contain; object-position:center;
       image-rendering:pixelated;
       display:block;
       background: rgba(0,0,0,.22);
     }
-
     .stage-visitor{
       position:absolute;
       left:50%;
@@ -161,7 +191,6 @@
       filter: drop-shadow(0 10px 22px rgba(0,0,0,.55));
     }
     .stage-visitor.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
     .stage-overlay{
       position:absolute;
       right:10px;
@@ -186,7 +215,6 @@
       -webkit-backdrop-filter: blur(6px);
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
     }
-
     .stage-ui{
       position:relative;
       display:flex;
@@ -195,123 +223,286 @@
       gap:10px;
       padding:12px;
       pointer-events:auto;
-      background: linear-gradient(180deg, rgba(0,0,0,.40), rgba(0,0,0,.62));
+      background: transparent;
     }
-
     .bubble{
       width:100%;
-      border:1px solid rgba(255,255,255,.20);
+      border:1px solid rgba(120,255,235,.38);
       background:
-        radial-gradient(circle at 20% 10%, rgba(127,208,255,.12), rgba(0,0,0,0) 55%),
-        rgba(0,0,0,.62);
+        radial-gradient(circle at 18% 20%, rgba(0,255,204,.20), rgba(0,0,0,0) 52%),
+        radial-gradient(circle at 82% 30%, rgba(64,160,255,.16), rgba(0,0,0,0) 55%),
+        linear-gradient(180deg, rgba(0,170,160,.18), rgba(0,0,0,.62));
       border-radius:14px;
       padding:12px 14px;
       line-height:1.35;
       box-shadow:
         0 18px 45px rgba(0,0,0,.45),
-        0 0 0 1px rgba(255,255,255,.06) inset;
+        0 0 0 1px rgba(255,255,255,.06) inset,
+        0 0 34px rgba(0,255,204,.18);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      min-width:0;
     }
-    .bubble .n{
-      font-weight:950;
-      font-size:16px;
-      letter-spacing:.02em;
-      text-shadow: 0 2px 0 rgba(0,0,0,.35);
-    }
+    .bubble .n{font-weight:950;font-size:16px;letter-spacing:.02em;text-shadow: 0 2px 0 rgba(0,0,0,.35);}
     .bubble .n.neg{ color: var(--bad); }
-    .bubble .m{
-      color:rgba(255,255,255,.92);
-      font-size:14px;
-      margin-top:6px;
-      line-height:1.55;
-      text-shadow: 0 2px 0 rgba(0,0,0,.25);
-    }
+    .bubble .m{color:rgba(255,255,255,.94);font-size:14px;margin-top:6px;line-height:1.55;text-shadow: 0 2px 0 rgba(0,0,0,.25);}
 
-    /* layout */
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
 
-    /* shelves */
-    .shelves{display:grid;grid-template-columns: repeat(2, minmax(0,1fr));gap:10px;}
-    @media (max-width: 560px){ .shelves{grid-template-columns:1fr} }
-    .shelf{
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.08));
+    /* =========================================================
+       ✅ 棚（出品）全体：木目ボード
+    ========================================================= */
+    .shelf-board{
+      position:relative;
+      border-radius:16px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow: 0 18px 55px rgba(0,0,0,.55);
       overflow:hidden;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255,255,255,.035) 0px,
+          rgba(255,255,255,.035) 8px,
+          rgba(0,0,0,.02) 8px,
+          rgba(0,0,0,.02) 18px
+        ),
+        repeating-linear-gradient(
+          180deg,
+          rgba(0,0,0,.10) 0px,
+          rgba(0,0,0,.10) 2px,
+          rgba(255,255,255,.06) 2px,
+          rgba(255,255,255,.06) 36px
+        ),
+        linear-gradient(180deg, rgba(122,87,54,.92), rgba(58,36,20,.92));
     }
-    .shelf.locked{opacity:.6;filter:saturate(.7)}
+    .shelf-board:before{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(255,255,255,.10), rgba(0,0,0,0) 55%),
+        radial-gradient(circle at 50% 90%, rgba(0,0,0,.20), rgba(0,0,0,0) 60%);
+      mix-blend-mode: overlay;
+      opacity:.9;
+    }
+    .shelf-board:after{
+      content:"";
+      position:absolute; inset:8px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.18);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset;
+      pointer-events:none;
+    }
+
+    /* 棚グリッド（棚自体は2列） */
+    .shelves{
+      position:relative;
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:10px;
+      z-index:1;
+    }
+    @media (min-width: 940px){
+      .shelves{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    }
+
+    .shelf{
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:14px;
+      overflow:hidden;
+      min-width:0;
+      background: linear-gradient(180deg, rgba(0,0,0,.14), rgba(0,0,0,.28));
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      position:relative;
+    }
+    .shelf.locked{opacity:.62;filter:saturate(.75)}
+
+    /* ✅ 祀り棚（棚6）専用の見た目 */
+    .shelf.shrine{
+      border-color: var(--shrineLine);
+      box-shadow:
+        0 18px 55px rgba(0,0,0,.55),
+        0 0 0 1px rgba(255,255,255,.06) inset,
+        0 0 34px rgba(0,255,204,.12);
+    }
+    .shelf.shrine:before{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 18% 18%, var(--shrineGlow), rgba(0,0,0,0) 52%),
+        radial-gradient(circle at 82% 26%, var(--shrineGlow2), rgba(0,0,0,0) 55%),
+        linear-gradient(180deg, rgba(0,170,160,.10), rgba(0,0,0,.25));
+      opacity:.9;
+    }
+    .shelf.shrine .shelf-top{
+      border-bottom:1px dashed rgba(180,255,240,.25);
+    }
+
     .shelf-top{
       padding:10px 10px 8px;
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
       border-bottom:1px dashed rgba(255,255,255,.16);
+      min-width:0;
+      position:relative;
+      z-index:1;
     }
-    .shelf-name{font-weight:900;font-size:13px}
-    .shelf-tag{font-size:11px;color:var(--muted)}
-    .shelf-body{padding:10px;display:flex;gap:10px;align-items:flex-start}
+    .shelf-title{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .shelf-name{
+      font-weight:950;
+      font-size:13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .shelf-tag{
+      font-size:11px;
+      color:rgba(255,255,255,.78);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
+
+    .tierPill{
+      flex:0 0 auto;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.20);
+      background:rgba(0,0,0,.25);
+      font-size:12px;
+      font-weight:950;
+      line-height:1;
+      white-space:nowrap;
+      position:relative;
+      z-index:1;
+    }
+    .tier--high{ color: var(--bad); border-color: rgba(255,154,165,.38); }
+    .tier--mid { color: var(--warn); border-color: rgba(255,211,138,.34); }
+    .tier--low { color: var(--good); border-color: rgba(159,255,168,.30); }
+    .tier--shrine{
+      color: rgba(200,255,240,.96);
+      border-color: rgba(180,255,240,.38);
+      background: rgba(0,0,0,.35);
+      text-shadow: 0 2px 0 rgba(0,0,0,.35);
+    }
+
+    /* ✅ 切れ対策：内部は“縦積み＋余白”で安定 */
+    .shelf-body{
+      padding: var(--shelfPad);
+      display:grid;
+      gap:10px;
+      min-width:0;
+      position:relative;
+      z-index:1;
+    }
+
     .slot{
-      width:76px; height:108px;
-      border-radius:12px;
+      width:100%;
+      aspect-ratio: var(--cardAR);
+      border-radius:14px;
       border:1px solid rgba(255,255,255,.18);
-      background:rgba(0,0,0,.20);
+      background:rgba(0,0,0,.22);
       overflow:hidden;
       position:relative;
-      flex:0 0 auto;
       cursor:pointer;
       -webkit-tap-highlight-color: transparent;
     }
     .slot img{
-      width:100%;height:100%;
+      width:100%;
+      height:100%;
       object-fit:contain;
-      padding:3px;
+      padding:5px;
       image-rendering:pixelated;
       display:block;
     }
     .slot .ph{
-      width:100%;height:100%;
-      display:flex;align-items:center;justify-content:center;
-      color:rgba(255,255,255,.65);
-      font-size:11px;text-align:center;padding:8px;line-height:1.2;
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:rgba(255,255,255,.70);
+      font-size:12px;
+      text-align:center;
+      padding:10px;
+      line-height:1.25;
     }
-    .slot .tier{
-      position:absolute;left:6px;top:6px;
-      font-size:10px;font-weight:900;
-      background:rgba(0,0,0,.55);
-      border:1px solid rgba(255,255,255,.18);
-      padding:2px 6px;border-radius:999px;
-    }
-    /* ✅ まとめ陳列：数量バッジ */
     .slot .qty{
-      position:absolute; right:6px; bottom:6px;
-      font-size:10px; font-weight:900;
+      position:absolute; right:8px; bottom:8px;
+      font-size:12px; font-weight:950;
       background:rgba(0,0,0,.62);
       border:1px solid rgba(255,255,255,.18);
-      padding:2px 6px;border-radius:999px;
+      padding:3px 9px;border-radius:999px;
       font-family:var(--mono);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
 
-    .shelf-info{flex:1;min-width:0}
-    .line{font-size:12px;color:var(--muted);line-height:1.35}
-    .line b{color:var(--text)}
-    .line + .line{margin-top:6px}
-    .shelf-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-    .mini{padding:8px 10px;border-radius:12px;font-size:12px;font-weight:900}
-
-    /* log */
-    .log{
-      font-size:12px;color:var(--muted);
-      line-height:1.35;
-      display:flex;flex-direction:column;gap:8px;
-      max-height:260px; overflow:auto;
-      padding-right:6px;
-      -webkit-overflow-scrolling: touch;
+    .shelf-info{
+      min-width:0;
+      display:grid;
+      gap:6px;
     }
-    .log .item{border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.14);border-radius:12px;padding:8px 10px;}
-    .log .t{color:rgba(255,255,255,.8);font-weight:900}
-    .log .m{margin-top:3px}
-    .log .s{margin-top:3px;font-family:var(--mono);font-size:11px;opacity:.85}
 
-    /* modal */
+    .line{
+      font-size:12px;
+      color:rgba(255,255,255,.80);
+      line-height:1.35;
+      min-width:0;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+    .line b{color:var(--text)}
+
+    .line.titleLine{
+      font-size:14px;
+      font-weight:950;
+      color:var(--text);
+      line-height:1.25;
+      display:-webkit-box;
+      -webkit-line-clamp:3;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+
+    .priceLine b{font-size:16px}
+    .subNote{color:rgba(255,255,255,.68);font-size:11px}
+
+    .shelf-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:4px;
+      min-width:0;
+    }
+    .mini{
+      padding:10px 10px;
+      border-radius:12px;
+      font-size:12px;
+      font-weight:950;
+      flex: 1 1 120px;
+      min-width:0;
+    }
+    @media (max-width: 420px){
+      .line.titleLine{ font-size:13px; -webkit-line-clamp:3; }
+      .priceLine b{ font-size:15px; }
+      .mini{ flex: 1 1 100%; }
+    }
+
+    /* =========================================================
+       ✅ モーダル（カード選択）
+    ========================================================= */
     .modal{
       position:fixed; inset:0;
       background:rgba(0,0,0,.65);
@@ -338,6 +529,7 @@
       padding:12px; border-bottom:1px solid var(--line);
       display:flex; align-items:center; justify-content:space-between; gap:10px;
       flex:0 0 auto;
+      min-width:0;
     }
     .sheet-h b{font-size:14px}
     .sheet-b{
@@ -347,16 +539,25 @@
       flex: 1 1 auto;
       touch-action: pan-y;
     }
-    .sheet-actions{display:flex;gap:8px;justify-content:flex-end;padding:12px;border-top:1px solid var(--line);flex:0 0 auto}
+    .sheet-actions{
+      display:flex;gap:8px;justify-content:flex-end;
+      padding:12px;border-top:1px solid var(--line);flex:0 0 auto
+    }
     .close{width:40px;height:40px;border-radius:12px}
 
-    /* 出品カード選択 */
     .cards{
       display:grid;
-      grid-template-columns:repeat(auto-fill, minmax(var(--tile), 1fr));
+      grid-template-columns: repeat(3, minmax(0,1fr));
       gap:var(--gap);
       align-items:stretch;
     }
+    @media (max-width: 340px){
+      .cards{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (min-width: 920px){
+      .cards{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+    }
+
     .citem{
       position:relative;
       border:1px solid rgba(255,255,255,.14);
@@ -366,13 +567,19 @@
       cursor:pointer;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
-      min-height:calc(var(--tile) + 34px);
       transition:transform .12s ease, filter .12s ease;
       display:flex;
       flex-direction:column;
+      min-width:0;
     }
     .citem:active{transform:scale(.985)}
-    .cimg{width:100%;height:var(--tile);display:block;background:rgba(0,0,0,.14);position:relative;}
+    .cimg{
+      width:100%;
+      height:var(--tile);
+      display:block;
+      background:rgba(0,0,0,.14);
+      position:relative;
+    }
     .cimg img{
       width:100%;height:100%;
       object-fit:contain;
@@ -389,7 +596,7 @@
     }
     .cimg .cnt{
       position:absolute; right:6px; top:6px;
-      font-size:11px; font-weight:900;
+      font-size:11px; font-weight:950;
       background:rgba(0,0,0,.62);
       border:1px solid rgba(255,255,255,.18);
       padding:3px 8px;border-radius:999px;
@@ -397,16 +604,41 @@
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
-    .cmeta{padding:7px 8px 9px;display:flex;flex-direction:column;gap:4px}
-    .cname{font-size:12px;font-weight:900;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .csub{display:flex;align-items:center;justify-content:space-between;gap:6px;color:var(--muted);font-size:11px}
+    .cmeta{
+      padding:7px 8px 9px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
+    .cname{
+      font-size:12px;
+      font-weight:950;
+      line-height:1.25;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+    .csub{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:6px;
+      color:var(--muted);
+      font-size:11px;
+      min-width:0;
+    }
     .csub .tagmini{
       display:inline-flex;align-items:center;gap:6px;
       padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.14);
       background:rgba(0,0,0,.18);color:var(--muted);max-width:100%;
       overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+      min-width:0;
     }
-    .csub .tagmini b{color:var(--text);font-weight:700}
+    .csub .tagmini b{color:var(--text);font-weight:800}
 
     /* toast */
     .toast{
@@ -465,6 +697,24 @@
       color:rgba(255,255,255,.96);
     }
 
+    /* ✅ 契約イベント用トースト（祀り棚） */
+    .toast .box.toast--contract{
+      border-color: rgba(180,255,240,.78);
+      background:
+        radial-gradient(circle at 18% 20%, rgba(0,255,204,.22), rgba(0,0,0,0) 52%),
+        radial-gradient(circle at 82% 26%, rgba(64,160,255,.16), rgba(0,0,0,0) 55%),
+        linear-gradient(180deg, rgba(0,170,160,.18), rgba(0,0,0,.84));
+      box-shadow:
+        0 22px 80px rgba(0,0,0,.72),
+        0 0 0 1px rgba(180,255,240,.18) inset,
+        0 0 44px rgba(0,255,204,.18);
+      animation: salePop .20s ease-out, contractPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes contractPulse{
+      0%,100%{ filter: drop-shadow(0 0 0 rgba(0,255,204,0)); }
+      50%{ filter: drop-shadow(0 0 16px rgba(0,255,204,.28)); }
+    }
+
     .sale-flash{
       position:fixed; inset:0;
       pointer-events:none;
@@ -472,30 +722,48 @@
       opacity:0;
       z-index:190;
     }
-    .sale-flash.show{
-      animation: flash .55s ease-out;
-    }
+    .sale-flash.show{ animation: flash .55s ease-out; }
     @keyframes flash{
       0%{ opacity:0; }
       18%{ opacity:1; }
       100%{ opacity:0; }
     }
 
-    .cd{
-      font-size:11px;
-      color:var(--muted);
-      margin-left:8px;
-      align-self:center;
+    /* ✅ 契約フラッシュ */
+    .contract-flash{
+      position:fixed; inset:0;
+      pointer-events:none;
+      background: radial-gradient(circle at 50% 55%, rgba(0,255,204,.20), rgba(0,0,0,0) 58%);
+      opacity:0;
+      z-index:191;
     }
-    .head-actions-row{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
+    .contract-flash.show{ animation: flash .60s ease-out; }
+
+    .cd{font-size:11px;color:var(--muted);margin-left:8px;align-self:center;}
+    .head-actions-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;min-width:0;}
+
+    .errbar{
+      position:fixed;
+      left:10px; right:10px;
+      bottom:10px;
+      z-index:9999;
+      display:none;
     }
+    .errbar.show{display:block}
+    .errbar .box{
+      border:1px solid rgba(255,154,165,.55);
+      background:rgba(0,0,0,.78);
+      border-radius:14px;
+      padding:10px 12px;
+      box-shadow: 0 14px 50px rgba(0,0,0,.55);
+      font-size:12px;
+      line-height:1.5;
+    }
+    .errbar .t{font-weight:950;color:var(--bad)}
+    .errbar .m{margin-top:4px;color:rgba(255,255,255,.92);white-space:pre-wrap;font-family:var(--mono)}
   </style>
 </head>
+
 <body>
   <div class="header">
     <div class="head-inner">
@@ -512,6 +780,7 @@
   <div class="wrap">
     <div class="stats" id="stats"></div>
 
+    <!-- 来店ステージ -->
     <div class="card stage-card">
       <div class="card-h">
         <div>
@@ -542,12 +811,13 @@
       </div>
     </div>
 
+    <!-- 棚（出品） -->
     <div class="grid">
       <div class="card">
         <div class="card-h">
           <div>
             <div class="card-title">棚（出品）</div>
-            <div class="card-desc">棚にカードを置くとお客さんが買いに来るよ♪</div>
+            <div class="card-desc">棚にカードを置くとお客さんが買いに来るよ♪（棚6は「祀り棚」＝契約イベント発動）</div>
           </div>
 
           <div class="head-actions-row">
@@ -555,37 +825,29 @@
             <div class="cd mono" id="shoutCd">—</div>
           </div>
         </div>
-        <div class="card-b">
-          <div class="shelves" id="shelves"></div>
-        </div>
-      </div>
 
-      <div class="card">
-        <div class="card-h">
-          <div>
-            <div class="card-title">最近の出来事</div>
-            <div class="card-desc">ログ（自動更新）</div>
-          </div>
-        </div>
         <div class="card-b">
-          <div class="log" id="log"></div>
+          <div class="shelf-board">
+            <div class="shelves" id="shelves"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- 出品カード選択モーダル -->
   <div class="modal" id="pickModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-label="出品するカードを選ぶ">
       <div class="sheet-h">
-        <div>
+        <div style="min-width:0">
           <b id="pickTitle">出品するカード</b>
-          <div style="margin-top:4px;font-size:12px;color:var(--muted)" id="pickHint">棚を選んでからカードを選択。</div>
+          <div style="margin-top:4px;font-size:12px;color:rgba(255,255,255,.72)" id="pickHint">棚を選んでからカードを選択。</div>
         </div>
         <button class="btn close" id="pickClose" type="button" aria-label="閉じる">×</button>
       </div>
       <div class="sheet-b">
         <div class="cards" id="pickCards"></div>
-        <div style="margin-top:10px;font-size:12px;color:var(--muted);display:none" id="pickEmpty">
+        <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.72);display:none" id="pickEmpty">
           出品できるカードがありません。
         </div>
       </div>
@@ -595,6 +857,7 @@
     </div>
   </div>
 
+  <!-- ヘルプ -->
   <div class="modal" id="helpModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-label="ヘルプ">
       <div class="sheet-h">
@@ -611,11 +874,18 @@
           ・王様が買うと評判UP / 転売が買うと評判DOWN<br>
           ・「呼び込み」は60秒に1回、<b>通常スケジュール（次：xxx）は変えずに</b>、呼び込んだ客だけ先に来る<br>
           ・もし通常の来客タイミングと被ったら、通常の方は<b>待機</b>して、呼び込み客が帰ったら来る<br><br>
+
           <b>棚解放</b><br>
-          Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5<br><br>
+          Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5 / <b>Lv5: 棚6（祀り棚）</b><br><br>
+
           <b>まとめ陳列（まとめ売り）</b><br>
-          Lv10: 棚1 / Lv15: 棚2 / Lv20: 棚3 / Lv25: 棚4 / Lv30: 棚5<br>
-          （まとめ陳列できる棚は、同じカードを複数枚まとめて置けます。売れるたびに数量が減ります）
+          Lv6: 棚1 / Lv8: 棚2 / Lv10: 棚3 / Lv12: 棚4 / Lv14: 棚5<br>
+          ※棚6（祀り棚）はまとめ不可（常に1枚奉納）<br><br>
+
+          <b>棚6：祀り棚（契約イベント）</b><br>
+          ・棚6に置いたカードは「奉納」扱い（値段固定/切替なし）<br>
+          ・売れた瞬間、契約が成立して<b>ボーナス報酬</b>が発生（OCTO/評判/EXP など）<br>
+          ・取り下げは“儀式”（確認が必要）<br>
         </div>
       </div>
       <div class="sheet-actions">
@@ -625,6 +895,7 @@
   </div>
 
   <div class="sale-flash" id="saleFlash" aria-hidden="true"></div>
+  <div class="contract-flash" id="contractFlash" aria-hidden="true"></div>
 
   <div class="toast" aria-live="polite" aria-atomic="true">
     <div class="box" id="toastBox">
@@ -633,32 +904,73 @@
     </div>
   </div>
 
+  <div class="errbar" id="errBar" aria-hidden="true">
+    <div class="box">
+      <div class="t">JSエラー（ここが出たら教えて）</div>
+      <div class="m" id="errMsg">—</div>
+    </div>
+  </div>
+
 <script>
 (() => {
   "use strict";
 
   /* =========================================================
+     ✅ localStorage 安全ラッパ（壊れても落ちない）
+  ========================================================= */
+  const __memStore = Object.create(null);
+  function safeStorageAvailable(){
+    try{ const k="__t"; localStorage.setItem(k,"1"); localStorage.removeItem(k); return true; }
+    catch(e){ return false; }
+  }
+  const __lsOK = safeStorageAvailable();
+  const Storage = {
+    getItem(key){
+      try{ if(__lsOK) return localStorage.getItem(key); }catch(e){}
+      return Object.prototype.hasOwnProperty.call(__memStore, key) ? __memStore[key] : null;
+    },
+    setItem(key, val){
+      try{ if(__lsOK) return localStorage.setItem(key, val); }catch(e){}
+      __memStore[key] = String(val);
+    },
+    removeItem(key){
+      try{ if(__lsOK) return localStorage.removeItem(key); }catch(e){}
+      delete __memStore[key];
+    }
+  };
+
+  const errBar = document.getElementById("errBar");
+  const errMsg = document.getElementById("errMsg");
+  function showErr(msg){
+    if(!errBar || !errMsg) return;
+    errMsg.textContent = String(msg || "unknown error");
+    errBar.classList.add("show");
+    errBar.setAttribute("aria-hidden","false");
+  }
+  window.addEventListener("error", (e)=>{ showErr((e && e.message) ? e.message : "window error"); });
+  window.addEventListener("unhandledrejection", (e)=>{
+    showErr(e && e.reason ? (e.reason.stack || e.reason.message || String(e.reason)) : "promise rejection");
+  });
+
+  /* =========================================================
      ✅ 職人カード（CRAFT）判定＆ルール
-     - 職人は「最後の1枚でも出品OK」
-     - 通常カードは「図鑑に1枚残す」
   ========================================================= */
   const CRAFT_CAN_LIST_LAST_ONE = true;
-
   function isCraftCard(obj){
     const id = String(obj?.id || obj?._key || "").toUpperCase();
     const r  = String(obj?.rarity || obj?.rank || "").toUpperCase();
     return id.startsWith("CRAFT_") || id.startsWith("CRAFT-") || r.includes("CRAFT");
   }
 
-  /* =========================================================
-     ✅ まとめ陳列（まとめ売り）解放ルール
-     Lv10で棚1、以降Lv+5ごとに棚2,3...
-  ========================================================= */
-  function bulkUnlockLevelForSlot(idx){ return 10 + (idx * 5); } // idx:0→10, 1→15...
-  function isBulkUnlocked(idx, lv){ return lv >= bulkUnlockLevelForSlot(idx); }
+  function bulkUnlockLevelForSlot(idx){ return 6 + (idx * 2); }
+  function isBulkUnlocked(idx, lv){
+    // 棚6（祀り棚）はまとめ不可
+    if(idx === 5) return false;
+    return lv >= bulkUnlockLevelForSlot(idx);
+  }
 
   /* =========================================================
-     アセット
+     ✅ 画像（現状のまま）
   ========================================================= */
   const ASSETS = {
     bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
@@ -678,14 +990,14 @@
       { id:"v12", name:"ゼロ理論タコ民", type:"diet",     url:"https://ul.h3z.jp/KVImBYZ8.png" },
       { id:"v13", name:"枠外タコ民",     type:"overflow", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku72.png" },
       { id:"v14", name:"未開封保護タコ民",type:"collector",url:"https://ul.h3z.jp/zSvGyVq9.png" },
-      { id:"v15", name:"裏棚タコ民",     type:"shadow",   url:"https://ul.h3z.jp/IBKDrVAm.png" },
+      { id:"v15", name:"防水タコ民",     type:"shadow",   url:"https://ul.h3z.jp/IBKDrVAm.png" },
       { id:"v16", name:"替え玉タコ民",   type:"ramen",    url:"https://ul.h3z.jp/NViRwhdj.png" },
       { id:"v17", name:"投げ銭タコ民",   type:"streamer", url:"https://ul.h3z.jp/8PukOegd.png" },
       { id:"v18", name:"舌判定タコ民",   type:"gourmet",  url:"https://ul.h3z.jp/We4UXFSI.png" },
       { id:"v19", name:"即バリタコ民",   type:"opener",   url:"https://ul.h3z.jp/9usFHTdU.png" },
       { id:"v20", name:"宴タコ民",       type:"party",    url:"https://ul.h3z.jp/pByCAUMC.png" },
-      { id:"v21", name:"覚悟タコ民",     type:"pilgrim",  url:"https://ul.h3z.jp/eW2dluw2.png" }
-    ]
+      { id:"v21", name:"覚悟タコ民",     type:"pilgrim",  url:"https://ul.h3z.jp/eW2dluw2.png" },
+ ]
   };
 
   const VISITOR_LINES = {
@@ -722,24 +1034,31 @@
     "……今日は買わなかった。逆に一生覚えてる"
   ];
 
-  const GOALS = [
-    { id:"cheap", label:"安いのを狙ってる" },
-    { id:"rare",  label:"SR以上が欲しい" },
-    { id:"ur",    label:"UR以上しか勝たん" },
-    { id:"any",   label:"なんでもいい、気分" }
-  ];
-  function goalLines(goalId){
-    const map = {
-      cheap: ["コスパ…コスパ…","安く焼かれたい…","値札に焼かれる準備OK","財布が軽い。軽い棚頼む。"],
-      rare:  ["SR以上…来い…","光ってくれ…頼む…","レアの波が来てる気がする","キラの気配…（幻）"],
-      ur:    ["UR以上が無いなら帰る。","UR…UR…（呪文）","光の圧を感じたい","派手に焼かれたい"],
-      any:   ["今日はノリで決める。","運命に任せる。","棚に呼ばれた気がする。","脳内ジャンケンで決める。"]
-    };
-    return map[goalId] || ["……"];
-  }
-
   const NEG_TYPES = new Set(["looker","picky","flipper"]);
   const isNegativeType = (t) => NEG_TYPES.has(String(t||""));
+
+  /* =========================================================
+     ✅ 祀り棚（棚6）＋契約イベント
+     - 棚6は「値段固定」「切替なし」「取り下げは儀式」
+     - 売れた瞬間に契約成立 → ボーナス
+  ========================================================= */
+  const SHRINE_SLOT = 5;                // 0-based: 棚6
+  const SHRINE_UNLOCK_LEVEL = 5;        // Lv5で解放
+  const SHRINE_PRICE_MULT = 1.15;       // 祀り棚は少し高く
+  const CONTRACT_COOLDOWN_HOURS = 8;    // 同一契約の“連続成立”抑制（演出用）
+  const CONTRACT_BONUS = {
+    octoMin: 600,
+    octoMax: 1600,
+    repMin:  6,
+    repMax:  14,
+    exp:     6
+  };
+  const CONTRACT_LINES = [
+    "📜 契約成立。……棚が一瞬、呼吸した。",
+    "📜 奉納が受理された。……見えない手が押印した。",
+    "📜 署名完了。……焼かれた運命が、少しだけ味方した。",
+    "📜 契約が通った。……次の客の足音が軽い。"
+  ];
 
   const LS = {
     octo:     "roten_v1_octo",
@@ -751,14 +1070,14 @@
     shout:    "roten_v1_shout_cd",
     farmBook: "tf_v1_book",
     stage:    "roten_v1_stage",
-    queue:    "roten_v1_queue"
+    queue:    "roten_v1_queue",
+    contract: "roten_v1_contract"  // ✅追加
   };
 
   const $ = (q, el=document) => el.querySelector(q);
 
   const statsEl = $("#stats");
   const shelvesEl = $("#shelves");
-  const logEl = $("#log");
 
   const stageBg = $("#stageBg");
   const stageVisitor = $("#stageVisitor");
@@ -784,6 +1103,7 @@
   const toastTitle = $("#toastTitle");
   const toastSub = $("#toastSub");
   const saleFlash = $("#saleFlash");
+  const contractFlash = $("#contractFlash");
 
   const backBtn = $("#backBtn");
   const shoutBtn = $("#shoutBtn");
@@ -798,11 +1118,14 @@
 
   function safeJSON(raw, fallback){ try{ return JSON.parse(raw);}catch(e){ return fallback; } }
   function lsGet(key, fallback){
-    const raw = localStorage.getItem(key);
+    const raw = Storage.getItem(key);
     if(raw==null) return fallback;
     return safeJSON(raw, fallback);
   }
-  function lsSet(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+  function lsSet(key, val){
+    try{ Storage.setItem(key, JSON.stringify(val)); }
+    catch(e){ showErr("lsSet failed: " + (e?.message||e)); }
+  }
 
   function escapeHTML(s){
     return String(s||"").replace(/[&<>"']/g, m => ({
@@ -815,21 +1138,33 @@
     void saleFlash.offsetWidth;
     saleFlash.classList.add("show");
   }
+  function triggerContractFlash(){
+    contractFlash.classList.remove("show");
+    void contractFlash.offsetWidth;
+    contractFlash.classList.add("show");
+  }
 
   function toast(t, s, type){
     toastTitle.textContent = t;
     toastSub.textContent = s || "";
-    toastBox.classList.remove("toast--sale");
+
+    toastBox.classList.remove("toast--sale","toast--contract");
+
     if(type === "sale"){
       toastBox.classList.add("toast--sale");
       triggerSaleFlash();
     }
+    if(type === "contract"){
+      toastBox.classList.add("toast--contract");
+      triggerContractFlash();
+    }
+
     toastBox.classList.add("show");
     clearTimeout(toastBox.__t);
     toastBox.__t = setTimeout(()=>{
       toastBox.classList.remove("show");
-      toastBox.classList.remove("toast--sale");
-    }, (type==="sale" ? 4200 : 3000));
+      toastBox.classList.remove("toast--sale","toast--contract");
+    }, (type==="sale" || type==="contract" ? 5200 : 3000));
   }
 
   function pushLog(title, msg, meta){
@@ -838,41 +1173,6 @@
     log.items.unshift({ at: now(), title, msg, meta: meta || "" });
     log.items = log.items.slice(0, 60);
     lsSet(LS.log, log);
-    renderLog();
-  }
-
-  function renderLog(){
-    const log = lsGet(LS.log, { ver:1, items:[] });
-    const items = Array.isArray(log.items) ? log.items : [];
-
-    if(items.length === 0){
-      logEl.innerHTML = `<div class="item"><div class="t">まだ何も起きていない</div><div class="m">棚にカードを出品すると、来客が始まるよ。</div></div>`;
-      return;
-    }
-
-    logEl.innerHTML = items.map(it => {
-      const d = new Date(it.at);
-      const hh = String(d.getHours()).padStart(2,"0");
-      const mm = String(d.getMinutes()).padStart(2,"0");
-      return `
-        <div class="item">
-          <div class="t">${hh}:${mm}｜${escapeHTML(it.title)}</div>
-          <div class="m">${escapeHTML(it.msg)}</div>
-          ${it.meta ? `<div class="s">${escapeHTML(it.meta)}</div>` : ""}
-        </div>
-      `;
-    }).join("");
-  }
-
-  /* ✅ ログが動いていない対策：初回に必ず1行入れる */
-  function ensureLogBoot(){
-    const log = lsGet(LS.log, { ver:1, items:[] });
-    const items = Array.isArray(log.items) ? log.items : [];
-    if(items.length === 0){
-      pushLog("起動", "マイ露店を開いた（ログ開始）", "");
-    }else{
-      renderLog();
-    }
   }
 
   function isNight(){
@@ -885,20 +1185,10 @@
     stageTimeTag.textContent = night ? "夜" : "昼";
   }
 
-  /* ステージ状態 */
   const STAGE_DEFAULT = {
-    ver:1,
-    hasVisitor:false,
-    leaving:false,
-    vUrl:"",
-    vName:"—",
-    vMsg:"まだ誰も来ていない。",
-    vType:"",
-    vGoal:"",
-    stayMs:0,
-    targetSlot:-1,
-    updatedAt:0,
-    source:""
+    ver:1, hasVisitor:false, leaving:false,
+    vUrl:"", vName:"—", vMsg:"まだ誰も来ていない。",
+    vType:"", stayMs:0, targetSlot:-1, updatedAt:0, source:""
   };
   function loadStage(){
     const s = lsGet(LS.stage, STAGE_DEFAULT);
@@ -933,30 +1223,6 @@
     }
   }
 
-  /* 呼び込み/待機キュー */
-  const QUEUE_DEFAULT = {
-    ver:1,
-    shoutPending:false,
-    shoutTargetSlot:null,
-    shoutSpawnAt:0,
-    normalPending:false,
-    normalTargetSlot:null,
-    queuedAt:0
-  };
-  function loadQueue(){
-    const q = lsGet(LS.queue, QUEUE_DEFAULT);
-    return { ...QUEUE_DEFAULT, ...q };
-  }
-  function saveQueue(q){ lsSet(LS.queue, q); }
-
-  function clearNormalPending(){
-    const q = loadQueue();
-    q.normalPending = false;
-    q.normalTargetSlot = null;
-    q.queuedAt = 0;
-    saveQueue(q);
-  }
-
   function setStageEmpty(msg){
     clearStageTimers();
     const s = loadStage();
@@ -966,13 +1232,11 @@
     s.vName="—";
     s.vMsg=msg || "まだ誰も来ていない。";
     s.vType="";
-    s.vGoal="";
     s.stayMs=0;
     s.targetSlot=-1;
     s.source="";
     saveStage(s);
     renderStage();
-    trySpawnQueuedIfPossible();
   }
 
   function beginLeave(msg){
@@ -984,13 +1248,12 @@
     setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
   }
 
-  /* 通貨/レベル/評判 */
   function loadOcto(){
-    const v = Number(localStorage.getItem(LS.octo) || 0);
+    const v = Number(Storage.getItem(LS.octo) || 0);
     return isFinite(v) ? v : 0;
   }
   function saveOcto(v){
-    localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v||0)))));
+    Storage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v||0)))));
   }
 
   const LEVEL_DEFAULT = { ver:1, lv:1, exp:0, totalVisit:0, totalSold:0, updatedAt: now() };
@@ -1036,7 +1299,6 @@
     return s;
   }
 
-  /* 図鑑（tf_v1_book） */
   function loadFarmBook(){
     const book = lsGet(LS.farmBook, { ver:1, got:{} });
     book.got = book.got || {};
@@ -1110,33 +1372,87 @@
     return arr;
   }
 
-  /* 店（棚） */
+  /* =========================================================
+     ✅ 契約状態（棚6）
+  ========================================================= */
+  const CONTRACT_DEFAULT = {
+    ver:1,
+    active: false,
+    offeredAt: 0,
+    offered: null,        // {id,name,img,rarity}
+    lastSuccessAt: 0
+  };
+  function loadContract(){
+    const c = lsGet(LS.contract, CONTRACT_DEFAULT);
+    return { ...CONTRACT_DEFAULT, ...c };
+  }
+  function saveContract(c){
+    lsSet(LS.contract, c);
+  }
+  function markContractOffered(card){
+    const c = loadContract();
+    c.active = true;
+    c.offeredAt = now();
+    c.offered = card ? { id: card.id, name: card.name, img: card.img, rarity: card.rarity } : null;
+    saveContract(c);
+  }
+  function clearContract(){
+    const c = loadContract();
+    c.active = false;
+    c.offeredAt = 0;
+    c.offered = null;
+    saveContract(c);
+  }
+  function canTriggerContractBonus(){
+    const c = loadContract();
+    const dt = now() - Number(c.lastSuccessAt||0);
+    return dt >= CONTRACT_COOLDOWN_HOURS * 3600 * 1000;
+  }
+  function markContractSuccess(){
+    const c = loadContract();
+    c.lastSuccessAt = now();
+    c.active = false;
+    c.offeredAt = 0;
+    c.offered = null;
+    saveContract(c);
+  }
+
   const SHOP_DEFAULT = {
-    ver:2,
+    ver:3,
     slots: [
       { item:null, qty:0, priceTier:"普通", createdAt:0 },
       { item:null, qty:0, priceTier:"普通", createdAt:0 },
       { item:null, qty:0, priceTier:"普通", createdAt:0 },
       { item:null, qty:0, priceTier:"普通", createdAt:0 },
       { item:null, qty:0, priceTier:"普通", createdAt:0 },
+      // ✅ 棚6（祀り棚）：priceTierは固定（内部的には"奉納"扱い）
+      { item:null, qty:0, priceTier:"奉納", createdAt:0 }
     ]
   };
   function loadMyShop(){
     const s = lsGet(LS.myshop, SHOP_DEFAULT);
     if(!Array.isArray(s.slots)) s.slots = SHOP_DEFAULT.slots.map(x=>({...x}));
-    while(s.slots.length < 5) s.slots.push({ item:null, qty:0, priceTier:"普通", createdAt:0 });
 
-    s.slots = s.slots.slice(0,5).map(x => ({
+    while(s.slots.length < 6){
+      const idx = s.slots.length;
+      s.slots.push(idx===SHRINE_SLOT
+        ? { item:null, qty:0, priceTier:"奉納", createdAt:0 }
+        : { item:null, qty:0, priceTier:"普通", createdAt:0 }
+      );
+    }
+
+    s.slots = s.slots.slice(0,6).map((x, idx) => ({
       item: x.item || null,
       qty: Math.max(0, Math.floor(Number(x.qty ?? (x.item ? 1 : 0)))),
-      priceTier: x.priceTier || "普通",
+      priceTier: (idx===SHRINE_SLOT) ? "奉納" : (x.priceTier || "普通"),
       createdAt: Number(x.createdAt||0),
     }));
 
-    // ✅ 旧データ救済：itemがあるのにqtyが0なら1にする
-    s.slots = s.slots.map(x=>{
+    s.slots = s.slots.map((x, idx)=>{
       if(x.item && (!x.qty || x.qty<1)) x.qty = 1;
       if(!x.item) x.qty = 0;
+      if(idx===SHRINE_SLOT && x.qty > 1) x.qty = 1; // ✅ 祀り棚は常に1
+      if(idx===SHRINE_SLOT) x.priceTier = "奉納";
       return x;
     });
 
@@ -1151,10 +1467,10 @@
   }
   function saveTick(t){ lsSet(LS.tick, t); }
 
-  function nextVisitDelayMs(){
-    return (180 + Math.floor(Math.random()*121)) * 1000;
-  }
-  const SHELF_UNLOCK = [1,1,2,3,4];
+  function nextVisitDelayMs(){ return (180 + Math.floor(Math.random()*121)) * 1000; }
+
+  // ✅ 棚解放：棚6はLv5
+  const SHELF_UNLOCK = [1,1,2,3,4,SHRINE_UNLOCK_LEVEL];
   function canUseSlot(idx, lv){ return lv >= (SHELF_UNLOCK[idx] || 99); }
 
   function ensureNextAtForActiveSlots(){
@@ -1212,15 +1528,30 @@
     }
   }
 
-  /* 価格 */
   function basePriceFor(card){
-    const r = String(card?.rarity || "").toUpperCase();
-    const map = { "N":500, "R":800, "SR":2000, "UR":5000, "LR":10000 };
-    for(const k of Object.keys(map)){
-      if(r === k || r.includes(k)) return map[k];
-    }
-    return 500;
+  const r = String(card?.rarity || "").toUpperCase().trim();
+
+  // ✅ 指定の基本価格
+  const map = {
+    "N":  500,
+    "R":  800,
+    "SR": 1500,
+    "UR": 3000,
+    "LR": 5000
+  };
+
+  // 1) 完全一致を最優先
+  if(map[r] != null) return map[r];
+
+  // 2) 含む表記（例: "SR+" "UR確定" "LR(限定)"）は “長いキーから” 判定
+  const keys = Object.keys(map).sort((a,b)=> b.length - a.length);
+  for(const k of keys){
+    if(r.includes(k)) return map[k];
   }
+
+  // 3) その他
+  return 1000;
+}
   function tierMult(tier){
     if(tier === "安い") return 0.80;
     if(tier === "高い") return 1.30;
@@ -1230,88 +1561,19 @@
     return 0.5 + (rep/100)*1.5;
   }
 
-  /* 客タイプ */
   const CUSTOMER_TYPES = [
     { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+7, baseBuy:0.42 },
     { id:"picky",    name:"見えないタコ民",   repDeltaOnBuy:-2, baseBuy:0.30 },
     { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+20, baseBuy:0.55 },
     { id:"flipper",  name:"よっぱらいタコ民", repDeltaOnBuy:-3, baseBuy:0.34 },
     { id:"careful",  name:"つぶやきタコ民",   repDeltaOnBuy:+5, baseBuy:0.38 },
-    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 },
-    { id:"rich",     name:"札束タコ民",        repDeltaOnBuy:+8, baseBuy:0.50 },
-    { id:"climber",  name:"踏破タコ民",        repDeltaOnBuy:+5, baseBuy:0.40 },
-    { id:"guide",    name:"ナビタコ民",        repDeltaOnBuy:+3, baseBuy:0.30 },
-    { id:"relax",    name:"ほぐしタコ民",      repDeltaOnBuy:+3, baseBuy:0.36 },
-    { id:"artisan",  name:"返し職人タコ民",    repDeltaOnBuy:+4, baseBuy:0.46 },
-    { id:"diet",     name:"ゼロ理論タコ民",    repDeltaOnBuy:+1, baseBuy:0.48 },
-    { id:"overflow", name:"枠外タコ民",        repDeltaOnBuy: 0, baseBuy:0.33 },
-    { id:"collector",name:"未開封保護タコ民",  repDeltaOnBuy:+1, baseBuy:0.41 },
-    { id:"shadow",   name:"防水タコ民",        repDeltaOnBuy:-2, baseBuy:0.35 },
-    { id:"ramen",    name:"替え玉タコ民",      repDeltaOnBuy:+1, baseBuy:0.44 },
-    { id:"streamer", name:"投げ銭タコ民",      repDeltaOnBuy:+2, baseBuy:0.39 },
-    { id:"gourmet",  name:"舌判定タコ民",      repDeltaOnBuy:+2, baseBuy:0.37 },
-    { id:"opener",   name:"即バリタコ民",      repDeltaOnBuy:+1, baseBuy:0.52 },
-    { id:"party",    name:"宴タコ民",          repDeltaOnBuy:-1, baseBuy:0.47 },
-    { id:"pilgrim",  name:"覚悟タコ民",        repDeltaOnBuy:+3, baseBuy:0.58 }
+    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 }
   ];
-
-  function chooseCustomer(rep){
-    const night = isNight();
-    const weights = CUSTOMER_TYPES.map(t=>{
-      if(t.id==="king")     return rep>=55 ? 7 : 3;
-      if(t.id==="flipper")  return rep>=70 ? 4 : 7;
-      if(t.id==="looker")   return night ? 10 : 14;
-      if(t.id==="impulse")  return rep<40 ? 18 : 22;
-      if(t.id==="careful")  return 16;
-      if(t.id==="picky")    return rep>=60 ? 24 : 20;
-      if(t.id==="rich")     return rep>=60 ? 10 : 6;
-      if(t.id==="climber")  return night ? 6 : 9;
-      if(t.id==="guide")    return 8;
-      if(t.id==="relax")    return night ? 10 : 7;
-      if(t.id==="artisan")  return rep>=55 ? 10 : 7;
-      if(t.id==="diet")     return 9;
-      if(t.id==="overflow") return 7;
-      if(t.id==="collector")return rep>=50 ? 10 : 8;
-      if(t.id==="shadow")   return night ? 11 : 6;
-      if(t.id==="ramen")    return 9;
-      if(t.id==="streamer") return rep>=45 ? 9 : 6;
-      if(t.id==="gourmet")  return rep>=65 ? 10 : 6;
-      if(t.id==="opener")   return 10;
-      if(t.id==="party")    return night ? 10 : 6;
-      if(t.id==="pilgrim")  return rep>=45 ? 8 : 5;
-      return 8;
-    });
-
-    if(rep>=70){
-      ["picky","gourmet","artisan","king","pilgrim"].forEach(id=>{
-        const idx = CUSTOMER_TYPES.findIndex(x=>x.id===id);
-        if(idx>=0) weights[idx] += 6;
-      });
-    }
-
-    const total = weights.reduce((a,b)=>a+b,0) || 1;
-    let r = Math.random() * total;
-    for(let i=0;i<CUSTOMER_TYPES.length;i++){
-      r -= weights[i];
-      if(r <= 0) return CUSTOMER_TYPES[i];
-    }
-    return CUSTOMER_TYPES[0];
-  }
+  const pickCustomer = () => CUSTOMER_TYPES[Math.floor(Math.random()*CUSTOMER_TYPES.length)];
 
   function pickVisitorAsset(customerId){
     const v = ASSETS.visitors.find(x=>x.type===customerId);
-    return v || pick(ASSETS.visitors);
-  }
-
-  function chooseGoal(customerId){
-    if(customerId==="king") return "rare";
-    if(customerId==="flipper") return "cheap";
-    if(customerId==="rich") return (Math.random()<0.55 ? "ur" : "rare");
-    if(customerId==="collector") return "rare";
-    if(customerId==="gourmet") return "rare";
-    if(customerId==="opener") return "any";
-    if(customerId==="pilgrim") return "ur";
-    return pick(GOALS).id;
+    return v || ASSETS.visitors[Math.floor(Math.random()*ASSETS.visitors.length)];
   }
 
   function countListedById(){
@@ -1325,10 +1587,6 @@
     return map;
   }
 
-  /* =========================================================
-     ✅ 出品できるカード一覧（職人対応 + まとめ陳列）
-     spare = 出品に回せる枚数（通常は1枚残す／職人は残さなくてOK）
-  ========================================================= */
   function listPickableCardsForListing(){
     const owned = listOwnedCardsFromBook();
     const listedMap = countListedById();
@@ -1360,6 +1618,13 @@
     return pickable;
   }
 
+  function tierClass(t){
+    if(t==="高い") return "tierPill tier--high";
+    if(t==="安い") return "tierPill tier--low";
+    if(t==="奉納") return "tierPill tier--shrine";
+    return "tierPill tier--mid";
+  }
+
   function renderShelves(){
     const shop = loadMyShop();
     const lv = loadLevel().lv;
@@ -1368,37 +1633,54 @@
 
     shop.slots.forEach((slot, idx)=>{
       const locked = !canUseSlot(idx, lv);
+      const isShrine = (idx === SHRINE_SLOT);
       const bulkOK = isBulkUnlocked(idx, lv);
 
       const wrap = document.createElement("div");
-      wrap.className = "shelf" + (locked ? " locked" : "");
+      wrap.className = "shelf" + (locked ? " locked" : "") + (isShrine ? " shrine" : "");
 
       const top = document.createElement("div");
       top.className = "shelf-top";
-      top.innerHTML = `
-        <div>
-          <div class="shelf-name">棚${idx+1} ${bulkOK ? "（まとめOK）" : ""}</div>
-          <div class="shelf-tag">解放：Lv${SHELF_UNLOCK[idx] || "?"} / まとめ：Lv${bulkUnlockLevelForSlot(idx)}</div>
-        </div>
-        <div class="shelf-tag mono">${escapeHTML(slot.priceTier || "普通")}</div>
+
+      const titleWrap = document.createElement("div");
+      titleWrap.className = "shelf-title";
+
+      let shelfNameText = `棚${idx+1}${bulkOK ? "（まとめOK）" : ""}`;
+      let tagText = `解放 Lv${SHELF_UNLOCK[idx] || "?"} / まとめ Lv${bulkUnlockLevelForSlot(idx)}`;
+
+      if(isShrine){
+        shelfNameText = "棚6（祀り棚）";
+        tagText = "奉納したカードが売れた瞬間、契約イベント発動";
+      }
+
+      titleWrap.innerHTML = `
+        <div class="shelf-name" title="${escapeHTML(shelfNameText)}">${escapeHTML(shelfNameText)}</div>
+        <div class="shelf-tag">${escapeHTML(tagText)}</div>
       `;
+
+      const pricePill = document.createElement("div");
+      const tier = (isShrine ? "奉納" : (slot.priceTier || "普通"));
+      pricePill.className = tierClass(tier);
+      pricePill.textContent = tier;
+
+      top.appendChild(titleWrap);
+      top.appendChild(pricePill);
 
       const body = document.createElement("div");
       body.className = "shelf-body";
 
       const slotEl = document.createElement("div");
       slotEl.className = "slot";
-      slotEl.title = locked ? "未解放" : "タップで出品/変更";
+      slotEl.title = locked ? "未解放" : (isShrine ? "タップで奉納/変更" : "タップで出品/変更");
 
       if(slot.item && slot.item.img){
         const qty = Math.max(1, Number(slot.qty||1));
         slotEl.innerHTML = `
-          <div class="tier">${escapeHTML(slot.priceTier||"普通")}</div>
           <img alt="" src="${escapeHTML(slot.item.img)}">
           <div class="qty">×${escapeHTML(qty)}</div>
         `;
       }else{
-        slotEl.innerHTML = `<div class="ph">空き<br>（タップで出品）</div>`;
+        slotEl.innerHTML = `<div class="ph">${isShrine ? "空き<br>（タップで奉納）" : "空き<br>（タップで出品）"}</div>`;
       }
 
       slotEl.addEventListener("click", ()=>{
@@ -1416,52 +1698,81 @@
       const rar  = slot.item ? (slot.item.rarity || "-") : "-";
       const base = slot.item ? basePriceFor(slot.item) : 0;
       const rep = loadRep().rep;
-      const price = slot.item ? Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep))) : 0;
+
+      let price = 0;
+      if(slot.item){
+        if(isShrine){
+          // ✅ 祀り棚：値段固定（評判影響は乗せつつ、少し高め固定）
+          price = Math.max(1, Math.floor(base * repFactor(rep) * SHRINE_PRICE_MULT));
+        }else{
+          price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
+        }
+      }
+
       const qty = slot.item ? Math.max(1, Number(slot.qty||1)) : 0;
 
       info.innerHTML = `
-        <div class="line"><b>${escapeHTML(name)}</b></div>
+        <div class="line titleLine">${escapeHTML(name)}</div>
         <div class="line">レア：<b>${escapeHTML(rar)}</b></div>
-        <div class="line">買取：<b>${slot.item ? fmt(price) : "-"}</b> <span style="color:rgba(255,255,255,.65)">${slot.item ? `（数量×${qty}）` : ""}</span></div>
+        <div class="line priceLine">${isShrine ? "奉納価：" : "買取："}<b>${slot.item ? fmt(price) : "-"}</b> <span class="subNote">${slot.item ? `（数量×${qty}）` : ""}</span></div>
+        <div class="line subNote">${isShrine ? "※売れた瞬間に『契約』が成立しボーナス発生" : ""}</div>
         <div class="shelf-actions"></div>
       `;
 
       const actions = info.querySelector(".shelf-actions");
 
-      const tierBtn = document.createElement("button");
-      tierBtn.className = "btn mini";
-      tierBtn.textContent = "値段：切替";
-      tierBtn.disabled = locked;
-      tierBtn.addEventListener("click", ()=>{
-        const s = loadMyShop();
-        const cur = s.slots[idx].priceTier || "普通";
-        const next = (cur==="普通") ? "安い" : (cur==="安い") ? "高い" : "普通";
-        s.slots[idx].priceTier = next;
-        saveMyShop(s);
-        renderAll();
-      });
+      if(!isShrine){
+        const tierBtn = document.createElement("button");
+        tierBtn.className = "btn mini";
+        tierBtn.textContent = "値段：切替";
+        tierBtn.disabled = locked;
+        tierBtn.addEventListener("click", ()=>{
+          const s = loadMyShop();
+          const cur = s.slots[idx].priceTier || "普通";
+          const next = (cur==="普通") ? "安い" : (cur==="安い") ? "高い" : "普通";
+          s.slots[idx].priceTier = next;
+          saveMyShop(s);
+          renderAll();
+        });
+        actions.appendChild(tierBtn);
+      }
 
       const removeBtn = document.createElement("button");
       removeBtn.className = "btn mini ghost";
-      removeBtn.textContent = "取り下げ";
+      removeBtn.textContent = isShrine ? "儀式で取り下げ" : "取り下げ";
       removeBtn.disabled = locked || !slot.item;
+
       removeBtn.addEventListener("click", ()=>{
         const s = loadMyShop();
         const it = s.slots[idx].item;
         const q  = Math.max(1, Number(s.slots[idx].qty||1));
         if(!it) return;
 
+        if(isShrine){
+          const ok = confirm("棚6（祀り棚）から取り下げます。\n※契約の気配が消えます。\n本当に実行しますか？");
+          if(!ok) return;
+          // “儀式”：二段階
+          const word = prompt("儀式の合言葉を入力：『やきなおし』");
+          if((word||"").trim() !== "やきなおし"){
+            toast("儀式失敗", "合言葉が違う。棚は沈黙した。", "");
+            pushLog("儀式失敗", "棚6の取り下げに失敗（合言葉違い）", it.id);
+            return;
+          }
+          clearContract();
+        }
+
         s.slots[idx].item = null;
         s.slots[idx].qty = 0;
         s.slots[idx].createdAt = 0;
+        if(idx===SHRINE_SLOT) s.slots[idx].priceTier = "奉納";
         saveMyShop(s);
 
         incrementBookCountById(it.id, it.raw || it, q);
         pushLog("取り下げ", `${it.name||it.id} を棚${idx+1}から戻した（×${q}）`, it.id);
+
         renderAll();
       });
 
-      actions.appendChild(tierBtn);
       actions.appendChild(removeBtn);
 
       body.appendChild(slotEl);
@@ -1469,6 +1780,7 @@
 
       wrap.appendChild(top);
       wrap.appendChild(body);
+
       shelvesEl.appendChild(wrap);
     });
 
@@ -1479,7 +1791,6 @@
   function renderStats(){
     const lv = loadLevel();
     const rep = loadRep().rep;
-
     const shop = loadMyShop();
     const listed = shop.slots.filter(s=>!!s.item).length;
 
@@ -1487,7 +1798,7 @@
       <div class="stat"><div class="k">オクト</div><div class="v"><span class="good">${fmt(loadOcto())}</span><small>OCTO</small></div></div>
       <div class="stat"><div class="k">レベル</div><div class="v">${lv.lv}<small>EXP ${fmt(lv.exp)}/${fmt(needExpFor(lv.lv))}</small></div></div>
       <div class="stat"><div class="k">評判</div><div class="v"><span class="${rep>=60?'good':rep>=40?'warn':'bad'}">${rep}</span><small>/100</small></div></div>
-      <div class="stat"><div class="k">出品</div><div class="v">${listed}<small>/5</small></div></div>
+      <div class="stat"><div class="k">出品</div><div class="v">${listed}<small>/6</small></div></div>
     `;
   }
 
@@ -1505,17 +1816,19 @@
       return;
     }
 
+    const isShrine = (slotIdx === SHRINE_SLOT);
     const shop = loadMyShop();
     const current = shop.slots[slotIdx]?.item;
 
     const bulkOK = isBulkUnlocked(slotIdx, lv);
-
-    pickTitleEl.textContent = `棚${slotIdx+1} に出品するカード`;
+    pickTitleEl.textContent = isShrine ? `棚6（祀り棚）に奉納するカード` : `棚${slotIdx+1} に出品するカード`;
     pickHintEl.textContent = current
       ? `現在：${current.name||current.id}（変更できます）`
-      : bulkOK
-        ? "✅この棚は「まとめ陳列」OK（複数枚まとめて置けます）"
-        : "出品できるカードから選べます（通常は1枚残す／職人は最後の1枚OK）";
+      : isShrine
+        ? "✅奉納は1枚のみ。売れた瞬間『契約』が成立しボーナスが発生します。"
+        : bulkOK
+          ? "✅この棚は「まとめ陳列」OK（複数枚まとめて置けます）"
+          : "出品できるカードから選べます（通常は1枚残す／職人は最後の1枚OK）";
 
     renderPickCards();
 
@@ -1605,7 +1918,6 @@
     if(craft && CRAFT_CAN_LIST_LAST_ONE){
       return cnt >= n;
     }
-    // 通常は1枚残し → cnt >= n+1
     return cnt >= (n + 1);
   }
 
@@ -1615,7 +1927,7 @@
     if(max <= 1) return 1;
 
     const raw = prompt(`まとめ陳列の数量を入力（1〜${max}）`, String(Math.min(3, max)));
-    if(raw == null) return null; // cancel
+    if(raw == null) return null;
     const n = Math.floor(Number(raw));
     if(!isFinite(n) || n < 1 || n > max) return 1;
     return n;
@@ -1626,20 +1938,22 @@
     const slot = shop.slots[slotIdx];
     if(!slot) return;
 
-    // まず既存を戻す（数量も戻す）
+    const isShrine = (slotIdx === SHRINE_SLOT);
+
+    // 既存があれば戻す（棚6なら契約も消す）
     if(slot.item){
       const qBack = Math.max(1, Number(slot.qty||1));
       incrementBookCountById(slot.item.id, slot.item.raw || slot.item, qBack);
+      if(isShrine) clearContract();
     }
 
-    // ✅ 今回出す数量（まとめ陳列）
     const lv = loadLevel().lv;
     const bulkOK = isBulkUnlocked(slotIdx, lv);
 
-    const maxQty = bulkOK ? Math.max(1, Number(pickedCard.spare||1)) : 1;
-    const qty = bulkOK ? askBulkQty(slotIdx, maxQty) : 1;
+    // ✅ 祀り棚は常に1枚
+    const maxQty = isShrine ? 1 : (bulkOK ? Math.max(1, Number(pickedCard.spare||1)) : 1);
+    const qty = isShrine ? 1 : (bulkOK ? askBulkQty(slotIdx, maxQty) : 1);
     if(qty === null){
-      // キャンセル：元の棚を空にするのは不親切なので、戻した後に終了（結果、棚は空）
       pushLog("キャンセル", `棚${slotIdx+1}の出品をキャンセルした`, "");
       renderAll();
       closePickModal();
@@ -1670,11 +1984,19 @@
     };
     slot.qty = Math.max(1, Math.floor(Number(qty||1)));
     slot.createdAt = now();
+    slot.priceTier = isShrine ? "奉納" : (slot.priceTier || "普通");
+
     shop.slots[slotIdx] = slot;
     saveMyShop(shop);
 
-    pushLog("出品", `${pickedCard.name||pickedCard.id} を棚${slotIdx+1}に置いた（×${slot.qty}）`, pickedCard.id);
-    toast("出品OK", `棚${slotIdx+1}に ${pickedCard.name||pickedCard.id} ×${slot.qty}`, "");
+    if(isShrine){
+      markContractOffered(slot.item);
+      pushLog("奉納", `${pickedCard.name||pickedCard.id} を棚6（祀り棚）に奉納した`, pickedCard.id);
+      toast("奉納完了", `棚6に ${pickedCard.name||pickedCard.id}（契約の気配…）`, "contract");
+    }else{
+      pushLog("出品", `${pickedCard.name||pickedCard.id} を棚${slotIdx+1}に置いた（×${slot.qty}）`, pickedCard.id);
+      toast("出品OK", `棚${slotIdx+1}に ${pickedCard.name||pickedCard.id} ×${slot.qty}`, "");
+    }
 
     ensureNextAtForActiveSlots();
     renderAll();
@@ -1698,26 +2020,20 @@
     const rep = loadRep().rep;
     const cust = CUSTOMER_TYPES.find(x=>x.id===st.vType) || CUSTOMER_TYPES[0];
     const base = basePriceFor(slot.item);
-    const price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
 
-    const stayMs = Number(st.stayMs||0);
-    const stayFactor = clamp(stayMs/16000, 0.6, 1.25);
+    const isShrine = (slotIdx === SHRINE_SLOT);
 
-    let buyP = cust.baseBuy * stayFactor;
-
-    const rar = String(slot.item.rarity||"").toUpperCase();
-    const isSR = rar.includes("SR") || rar.includes("UR") || rar.includes("LR") || rar.includes("HR") || rar.includes("XR");
-    const isUR = rar.includes("UR") || rar.includes("LR") || rar.includes("HR") || rar.includes("XR");
-
-    if(st.vGoal==="cheap"){
-      buyP *= (slot.priceTier==="安い" ? 1.15 : slot.priceTier==="高い" ? 0.80 : 1.0);
-    }else if(st.vGoal==="rare"){
-      buyP *= (isSR ? 1.15 : 0.92);
-    }else if(st.vGoal==="ur"){
-      buyP *= (isUR ? 1.18 : 0.78);
+    let price = 0;
+    if(isShrine){
+      price = Math.max(1, Math.floor(base * repFactor(rep) * SHRINE_PRICE_MULT));
+    }else{
+      price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
     }
 
-    buyP = clamp(buyP, 0.05, 0.92);
+    let buyP = clamp(cust.baseBuy, 0.12, 0.94);
+
+    // ✅ 祀り棚は“買う気”が少し上がる（神棚の圧）
+    if(isShrine) buyP = clamp(buyP + 0.10, 0.12, 0.96);
 
     const willBuy = Math.random() < buyP;
     if(!willBuy){
@@ -1728,35 +2044,62 @@
       return;
     }
 
-    // ✅ 売れた：数量がある場合は1減らす（まとめ陳列）
+    // 在庫減
     const beforeQty = Math.max(1, Number(slot.qty||1));
     const afterQty = beforeQty - 1;
 
+    // 売上
     saveOcto(loadOcto() + price);
 
+    // 通常EXP/評判
     const lv = addExp(4);
-    const repState = addRep(cust.repDeltaOnBuy);
+    addRep(cust.repDeltaOnBuy);
 
     const soldItem = slot.item;
 
+    // ✅ 祀り棚：必ず1枚なので完売→空
     if(afterQty <= 0){
       shop.slots[slotIdx].item = null;
       shop.slots[slotIdx].qty = 0;
       shop.slots[slotIdx].createdAt = 0;
+      if(isShrine) shop.slots[slotIdx].priceTier = "奉納";
     }else{
       shop.slots[slotIdx].qty = afterQty;
-      // itemは残す（陳列続行）
     }
     saveMyShop(shop);
 
+    // 次来店
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(slotIdx)] = now() + nextVisitDelayMs();
     saveTick(t);
 
     const leftText = (afterQty > 0) ? `（残り×${afterQty}）` : "（完売）";
-    pushLog("売れた！", `${soldItem.name||soldItem.id} が ${fmt(price)} OCTOで売れた ${leftText}`, `棚${slotIdx+1} / rep ${repState.rep}`);
+    pushLog("売れた！", `${soldItem.name||soldItem.id} が ${fmt(price)} OCTOで売れた ${leftText}`, `棚${slotIdx+1}`);
     toast("🔥 売れた！！ 🔥", `${soldItem.name||soldItem.id} ／ +${fmt(price)} OCTO ${leftText}`, "sale");
+
+    // ✅ 契約イベント（棚6で売れた瞬間）
+    if(isShrine){
+      // 契約成立ボーナス（クールダウン中なら演出だけ）
+      const bonusOk = canTriggerContractBonus();
+      const bonusOcto = bonusOk ? rand(CONTRACT_BONUS.octoMin, CONTRACT_BONUS.octoMax) : 0;
+      const bonusRep  = bonusOk ? rand(CONTRACT_BONUS.repMin,  CONTRACT_BONUS.repMax)  : 0;
+
+      if(bonusOk){
+        saveOcto(loadOcto() + bonusOcto);
+        addRep(bonusRep);
+        addExp(CONTRACT_BONUS.exp);
+
+        pushLog("契約成立", `棚6の契約が成立：+${fmt(bonusOcto)} OCTO / 評判 +${bonusRep} / EXP +${CONTRACT_BONUS.exp}`, soldItem.id);
+        toast("📜 契約成立", `${pick(CONTRACT_LINES)}\n+${fmt(bonusOcto)} OCTO / 評判+${bonusRep} / EXP+${CONTRACT_BONUS.exp}`, "contract");
+        markContractSuccess();
+      }else{
+        // 連続成立抑制：演出のみ
+        pushLog("契約（小）", "契約は成立したが、深い報酬は静かに眠っている（クールダウン）", soldItem.id);
+        toast("📜 契約成立", "……契約は通った。\n（報酬は少し時間を置くと濃くなる）", "contract");
+        clearContract();
+      }
+    }
 
     if(lv.leveled){
       pushLog("レベルアップ", `Lv${lv.state.lv}になった！`, "");
@@ -1777,9 +2120,8 @@
         const s2 = loadStage();
         if(!s2.hasVisitor || s2.leaving) return;
         const baseLines = VISITOR_LINES[s2.vType] || ["……"];
-        const gLines = goalLines(s2.vGoal);
-        s2.vMsg = (Math.random()<0.55) ? pick(baseLines) : pick(gLines);
-        lsSet(LS.stage, s2);
+        s2.vMsg = pick(baseLines);
+        saveStage(s2);
         renderStage();
       }, rand(3000, 6000));
 
@@ -1794,7 +2136,7 @@
 
   function spawnVisitorSoon(targetSlot, type){
     const typeLabel = (type==="shout") ? "呼び込み" : "通常";
-    toast("誰かくる！", `${typeLabel}：棚${targetSlot+1} を見てる気配…`, "");
+    toast("誰かくる！", `${typeLabel}：棚${targetSlot+1} を見てる気配…！`, "");
 
     spawnLockUntil = now() + 3500;
 
@@ -1802,10 +2144,8 @@
       const st2 = loadStage();
       if(st2.hasVisitor) return;
 
-      const rep = loadRep().rep;
-      const cust = chooseCustomer(rep);
+      const cust = pickCustomer();
       const asset = pickVisitorAsset(cust.id);
-      const goal = chooseGoal(cust.id);
 
       const stayMs = rand(9000, 18000);
       const msg = pick(VISITOR_LINES[cust.id] || ["……"]);
@@ -1816,7 +2156,6 @@
       s.vType = cust.id;
       s.vName = asset.name || cust.name;
       s.vUrl = asset.url || "";
-      s.vGoal = goal;
       s.vMsg = msg;
       s.stayMs = stayMs;
       s.targetSlot = targetSlot;
@@ -1837,8 +2176,7 @@
         const s2 = loadStage();
         if(!s2.hasVisitor || s2.leaving) return;
         const baseLines = VISITOR_LINES[s2.vType] || ["……"];
-        const gLines = goalLines(s2.vGoal);
-        s2.vMsg = (Math.random()<0.55) ? pick(baseLines) : pick(gLines);
+        s2.vMsg = pick(baseLines);
         saveStage(s2);
         renderStage();
       }, rand(3000, 6000));
@@ -1846,76 +2184,12 @@
       stageSellTimer = setTimeout(()=> saleProcess(), Math.max(1000, stayMs - 1000));
       stageLeaveTimer = setTimeout(()=> beginLeave(pick(LEAVE_LINES)), stayMs);
 
-      if(type !== "shout"){
-        const tickObj = loadTick();
-        tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
-        saveTick(tickObj);
-
-        const q = loadQueue();
-        if(q.normalPending && Number(q.normalTargetSlot) === Number(targetSlot)){
-          clearNormalPending();
-        }
-      }else{
-        pushLog("呼び込み来店", `棚${targetSlot+1} に呼び込み客が来た`, "");
-      }
+      const tickObj = loadTick();
+      tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
+      saveTick(tickObj);
 
       renderAll();
     }, 3000);
-  }
-
-  function trySpawnQueuedIfPossible(){
-    const st = loadStage();
-    if(st.hasVisitor) return;
-    const nowMs = now();
-    if(nowMs < spawnLockUntil) return;
-
-    const q = loadQueue();
-
-    if(q.shoutPending){
-      if(nowMs >= Number(q.shoutSpawnAt||0)){
-        const target = Number(q.shoutTargetSlot);
-        q.shoutPending = false;
-        q.shoutTargetSlot = null;
-        q.shoutSpawnAt = 0;
-        saveQueue(q);
-        spawnVisitorSoon(target, "shout");
-      }
-      return;
-    }
-
-    if(q.normalPending && q.normalTargetSlot != null){
-      const target = Number(q.normalTargetSlot);
-      spawnVisitorSoon(target, "normal");
-      return;
-    }
-  }
-
-  function checkDueAndQueueNormal(){
-    const q = loadQueue();
-    if(q.normalPending) return;
-
-    const lv = loadLevel().lv;
-    const shop = loadMyShop();
-    const t = ensureNextAtForActiveSlots();
-    const nowMs = now();
-
-    const activeIdx = [];
-    shop.slots.forEach((s, idx)=>{
-      if(s.item && canUseSlot(idx, lv)) activeIdx.push(idx);
-    });
-    if(activeIdx.length===0) return;
-
-    const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
-    if(due.length===0) return;
-
-    const targetSlot = pick(due);
-
-    q.normalPending = true;
-    q.normalTargetSlot = targetSlot;
-    q.queuedAt = nowMs;
-    saveQueue(q);
-
-    pushLog("待機", `通常来客（棚${targetSlot+1}）が待機になった`, "");
   }
 
   function tick(){
@@ -1925,31 +2199,8 @@
     const st = loadStage();
     const nowMs = now();
 
-    if(st.hasVisitor){
-      checkDueAndQueueNormal();
-      return;
-    }
-
+    if(st.hasVisitor) return;
     if(nowMs < spawnLockUntil) return;
-
-    const q = loadQueue();
-    if(q.shoutPending){
-      checkDueAndQueueNormal();
-      if(nowMs >= Number(q.shoutSpawnAt||0)){
-        const target = Number(q.shoutTargetSlot);
-        q.shoutPending = false;
-        q.shoutTargetSlot = null;
-        q.shoutSpawnAt = 0;
-        saveQueue(q);
-        spawnVisitorSoon(target, "shout");
-      }
-      return;
-    }
-
-    if(q.normalPending && q.normalTargetSlot != null){
-      spawnVisitorSoon(Number(q.normalTargetSlot), "normal");
-      return;
-    }
 
     const lv = loadLevel().lv;
     const shop = loadMyShop();
@@ -1964,25 +2215,22 @@
     const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
     if(due.length===0) return;
 
-    const targetSlot = pick(due);
+    const targetSlot = due[Math.floor(Math.random()*due.length)];
     spawnVisitorSoon(targetSlot, "normal");
   }
 
-  /* 呼び込み */
   const SHOUT_LINES = [
     "🔥 焼きの匂いを撒いた！タコ民の足が向く…！",
     "屋台前がざわついてきた…！いまなら釣れる！",
     "タコ民ホイホイ発動！……寄ってくる、寄ってくる！",
-    "《客引き》発動！棚に視線が刺さってる…！",
-    "焼きたてオーラ放出！“買う気の気配”が増えた！",
-    "エンカウント率UP！……誰かが近づいている。"
+    "《客引き》発動！棚に視線が刺さってる…！"
   ];
   let lastShoutLine = "";
   function pickShoutLine(){
     if(SHOUT_LINES.length === 0) return "呼び込み！";
     if(SHOUT_LINES.length === 1) return SHOUT_LINES[0];
-    let s = pick(SHOUT_LINES);
-    if(s === lastShoutLine) s = pick(SHOUT_LINES);
+    let s = SHOUT_LINES[Math.floor(Math.random()*SHOUT_LINES.length)];
+    if(s === lastShoutLine) s = SHOUT_LINES[Math.floor(Math.random()*SHOUT_LINES.length)];
     lastShoutLine = s;
     return s;
   }
@@ -2019,31 +2267,16 @@
     saveShout(cd);
     updateShoutUI();
 
-    const t = ensureNextAtForActiveSlots();
-    let target = active[0];
-    let best = Infinity;
-    for(const idx of active){
-      const at = Number((t.nextAtBySlot||{})[String(idx)]||Infinity);
-      if(at < best){ best = at; target = idx; }
-    }
-
-    const q = loadQueue();
-    q.shoutPending = true;
-    q.shoutTargetSlot = target;
-    q.shoutSpawnAt = n + 3000;
-    saveQueue(q);
-
-    checkDueAndQueueNormal();
-
+    const target = active[0];
     toast("呼び込み！", `棚${target+1}｜${pickShoutLine()}`, "");
     pushLog("呼び込み", `棚${target+1} に客の気配が集まった`, "");
-    renderAll();
+
+    spawnVisitorSoon(target, "shout");
   }
 
   function renderAll(){
     renderStats();
     renderShelves();
-    renderLog();
     applyDayNight();
     updateNextTag();
     updateShoutUI();
@@ -2077,37 +2310,25 @@
   shoutBtn.addEventListener("click", shout);
 
   fixBtn.addEventListener("click", ()=>{
-    const STAGE_DEFAULT2 = {
-      ver:1,
-      hasVisitor:false,
-      leaving:false,
-      vUrl:"",
-      vName:"—",
-      vMsg:"まだ誰も来ていない。",
-      vType:"",
-      vGoal:"",
-      stayMs:0,
-      targetSlot:-1,
-      updatedAt: Date.now(),
-      source:""
-    };
-
-    localStorage.setItem(LS.stage, JSON.stringify(STAGE_DEFAULT2));
-    localStorage.removeItem(LS.tick);
-    localStorage.setItem(LS.queue, JSON.stringify(QUEUE_DEFAULT));
+    Storage.setItem(LS.stage, JSON.stringify({
+      ver:1,hasVisitor:false,leaving:false,vUrl:"",vName:"—",vMsg:"まだ誰も来ていない。",
+      vType:"",stayMs:0,targetSlot:-1,updatedAt:Date.now(),source:""
+    }));
+    Storage.removeItem(LS.tick);
+    lsSet(LS.queue, { ver:1, shoutPending:false, shoutTargetSlot:null, shoutSpawnAt:0, normalPending:false, normalTargetSlot:null, queuedAt:0 });
 
     alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
     location.reload();
   });
 
-  /* ===== 起動 ===== */
-  applyDayNight();
-  ensureLogBoot();      // ✅ ログが必ず表示される
-  renderAll();
-  scheduleStage();
-  trySpawnQueuedIfPossible();
-  setInterval(tick, 1000);
-
+  try{
+    applyDayNight();
+    renderAll();
+    scheduleStage();
+    setInterval(tick, 1000);
+  }catch(e){
+    showErr(e?.stack || e?.message || String(e));
+  }
 })();
 </script>
 </body>
