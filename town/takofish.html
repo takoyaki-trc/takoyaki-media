@@ -3,535 +3,572 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>たこ焼き釣り｜TAKOFISH</title>
-  <meta name="description" content="たこ焼き釣りゲーム（TAKOFISH）。最高得点保存・結果日時表示・SP-抽選つき。" />
-
+  <title>たこ焼き釣り｜焼かれた伝説</title>
+  <meta name="description" content="たこ焼き釣りミニゲーム（最高記録保存 / 結果に日時表示）" />
   <style>
     :root{
-      --bg0:#05060b;
+      --bg0:#07060b;
       --bg1:#0c1025;
-      --panel: rgba(255,255,255,.08);
+      --panel: rgba(255,255,255,.07);
       --line: rgba(255,255,255,.14);
       --text:#fff;
-      --muted: rgba(255,255,255,.75);
+      --muted:rgba(255,255,255,.75);
       --btn: rgba(255,255,255,.10);
       --btn2: rgba(255,255,255,.16);
       --good:#9fffa8;
       --warn:#ffd38a;
       --bad:#ff9aa5;
+      --cyan:#7fd0ff;
+      --shadow: 0 14px 40px rgba(0,0,0,.55);
       --radius: 16px;
-      --shadow: 0 18px 46px rgba(0,0,0,.55);
     }
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
       margin:0;
-      font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
-      color: var(--text);
+      font-family: system-ui,-apple-system,"Noto Sans JP",sans-serif;
+      color:var(--text);
       background:
-        radial-gradient(circle at 50% 20%, #1a2040 0%, #070812 60%),
-        linear-gradient(var(--bg0), var(--bg1));
-      min-height:100svh;
-      overflow-x:hidden;
+        radial-gradient(circle at 50% 18%, #1a2040 0%, #070812 60%),
+        linear-gradient(var(--bg0),var(--bg1));
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
     }
+    a{ color:inherit; }
 
-    /* ===== layout: 画面内で完結（スマホでもスクロール無しで開始できる） ===== */
-    .page{
+    /* ===== Page Layout ===== */
+    .app{
       min-height: 100svh;
       display:flex;
       flex-direction:column;
     }
-
     .topbar{
       position: sticky;
       top:0;
-      z-index:50;
+      z-index: 50;
+      padding: 10px 10px 8px;
       background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
       backdrop-filter: blur(8px);
     }
     .topbar-inner{
+      max-width: 920px;
+      margin: 0 auto;
       display:flex;
       align-items:center;
-      justify-content:space-between;
       gap:10px;
-      padding: 12px 12px 10px;
-      max-width: 980px;
-      margin: 0 auto;
     }
-    .left-group{ display:flex; align-items:center; gap:10px; min-width: 0; }
-    .backBtn{
+    .backbtn{
       appearance:none;
       border:1px solid var(--line);
       background: rgba(255,255,255,.08);
-      color: var(--text);
+      color:var(--text);
       border-radius: 12px;
       padding: 10px 12px;
       font-weight: 900;
       cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
     }
-    .titlebox{ min-width:0; }
+    .titlebox{
+      min-width: 0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
     .title{
-      font-weight: 950;
-      letter-spacing:.02em;
-      font-size: 18px;
-      line-height:1.1;
-      white-space:nowrap;
+      font-weight: 1000;
+      letter-spacing: .02em;
+      line-height: 1.1;
+      font-size: 16px;
+      white-space: nowrap;
       overflow:hidden;
-      text-overflow:ellipsis;
+      text-overflow: ellipsis;
     }
-    .sub{
-      margin-top:2px;
+    .subtitle{
       font-size: 12px;
       color: var(--muted);
-      white-space:nowrap;
+      white-space: nowrap;
       overflow:hidden;
-      text-overflow:ellipsis;
+      text-overflow: ellipsis;
     }
-
-    .right-group{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .pill{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      padding: 8px 10px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      border-radius: 999px;
-      font-size: 12px;
-      color: var(--muted);
-      white-space:nowrap;
-    }
-    .pill b{ color:#fff; font-weight: 950; }
 
     .main{
-      flex: 1;
+      flex:1;
       display:flex;
-      align-items: stretch;
+      align-items:stretch;
       justify-content:center;
-      padding: 10px 12px 14px;
+      padding: 10px 10px calc(16px + env(safe-area-inset-bottom));
     }
 
     .card{
       width: min(560px, 100%);
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      border:1px solid var(--line);
       background: rgba(255,255,255,.06);
-      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
       box-shadow: var(--shadow);
       overflow:hidden;
-      min-height: 0; /* 重要：内部スクロールを抑える */
+      display:flex;
+      flex-direction:column;
+      min-height: 0;
     }
 
     .hud{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
       display:flex;
+      flex-wrap:wrap;
       align-items:center;
       justify-content:space-between;
-      gap:10px;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(0,0,0,.20);
-      flex-wrap:wrap;
+      gap:8px;
+      background: rgba(0,0,0,.12);
     }
-
     .hud-left{
       display:flex;
       gap:8px;
-      align-items:center;
       flex-wrap:wrap;
+      align-items:center;
     }
-
     .btn{
       appearance:none;
       border:1px solid var(--line);
       background: var(--btn);
-      color: var(--text);
+      color:var(--text);
       border-radius: 14px;
       padding: 10px 12px;
-      font-weight: 950;
+      font-weight: 900;
       cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
     }
     .btn:hover{ background: var(--btn2); }
-    .btn[disabled]{ opacity:.5; cursor:not-allowed; }
-
+    .btn[disabled]{ opacity:.45; cursor:not-allowed; }
     .stats{
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       align-items:center;
-      font-size: 12px;
-      color: var(--muted);
+      font-size:12px;
+      color: rgba(255,255,255,.9);
     }
-    .stats b{ color:#fff; }
+    .stats b{ font-weight: 1000; }
 
-    .stage{
-      position: relative;
-      padding: 12px;
+    .canvaswrap{
+      position:relative;
+      padding: 10px;
       display:flex;
       flex-direction:column;
       gap:10px;
-      min-height:0;
+      min-height: 0;
+      flex: 1;
     }
 
     .canvasbox{
-      position: relative;
-      border: 2px solid rgba(255,255,255,.35);
-      border-radius: 14px;
+      position:relative;
+      width:100%;
+      border-radius: 16px;
       overflow:hidden;
+      border: 1px solid rgba(255,255,255,.14);
       background:#081425;
-      /* 画面内で収まるように高さを制御（スクロール抑制） */
       flex: 1;
       min-height: 0;
       display:flex;
       align-items:center;
       justify-content:center;
+      touch-action: none;
     }
-
-    canvas#tfCanvas{
-      width: 100%;
-      height: auto;
+    canvas{
+      width:100%;
+      height:auto;
       display:block;
       image-rendering: pixelated;
-      touch-action: none; /* スマホスクロール誤爆防止 */
-      user-select:none;
-      -webkit-user-select:none;
+      touch-action: none;
     }
 
-    .note{
+    .footnote{
       font-size: 11px;
-      color: var(--muted);
-      line-height: 1.45;
-      padding-bottom: env(safe-area-inset-bottom);
+      color: rgba(255,255,255,.7);
+      line-height: 1.5;
     }
 
-    /* ===== overlays ===== */
+    /* ===== Overlays ===== */
     .overlay{
       position:absolute;
       inset:0;
-      display:flex;
-      align-items:center;
+      display:none;
+      align-items:stretch;
       justify-content:center;
       background: rgba(0,0,0,.72);
       padding: 12px;
     }
+    .overlay.show{ display:flex; }
+
     .panel{
-      width: min(440px, 96%);
-      max-height: 86vh;
-      overflow:auto;
-      border: 1px solid rgba(255,255,255,.28);
-      background: rgba(10,14,24,.96);
+      width: min(520px, 100%);
+      background: #0b0f18;
+      border: 1px solid rgba(255,255,255,.18);
       border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 18px 46px rgba(0,0,0,.7);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+      max-height: calc(100svh - 190px); /* 重要：開始ボタンが画面内に残りやすい */
     }
-    .panel h2{
-      margin:0 0 8px;
-      font-size: 15px;
-      font-weight: 950;
+    .panel-head{
+      padding: 10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+    }
+    .panel-head .h{
+      font-weight: 1000;
+      font-size: 14px;
       letter-spacing:.02em;
     }
-    .panel .p{
+    .panel-body{
+      padding: 12px;
+      overflow:auto;
+      min-height: 0;
       font-size: 12px;
-      color: rgba(255,255,255,.88);
       line-height: 1.6;
-      margin: 6px 0;
+      color: rgba(255,255,255,.92);
     }
-    .panel .small{
-      margin-top: 8px;
-      font-size: 11px;
-      color: rgba(255,255,255,.65);
-      line-height: 1.55;
+    .panel-foot{
+      padding: 10px 12px;
+      border-top: 1px solid rgba(255,255,255,.12);
+      display:flex;
+      gap:8px;
+      background: rgba(0,0,0,.10);
+      position: sticky;
+      bottom: 0;
     }
-    .panel .grid{
+    .panel-foot .btn{
+      flex:1;
+      padding: 12px 12px;
+    }
+    .ghost{
+      background: transparent;
+    }
+
+    .grid2{
       display:grid;
       grid-template-columns: 1fr 1fr;
-      gap:10px;
+      gap: 10px;
       margin-top: 10px;
-      font-size: 12px;
-      color: rgba(255,255,255,.88);
     }
-    .panel .grid b{ color:#fff; }
-    .panel .actions{
+    .mini{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .mini .k{ font-weight: 1000; margin-bottom: 6px; }
+    .row{
       display:flex;
+      align-items:center;
       gap:10px;
-      margin-top: 12px;
+      flex-wrap:wrap;
     }
-    .panel .actions .btn{ flex:1; }
-
-    .badge{
+    .chip{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      padding: 6px 10px;
+      padding: 8px 10px;
       border-radius: 999px;
-      border:1px solid rgba(255,255,255,.22);
-      background: rgba(255,255,255,.08);
-      font-size: 12px;
-      margin-bottom: 8px;
-      color: rgba(255,255,255,.85);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      font-weight: 900;
     }
-    .badge .dot{
-      width:10px;height:10px;border-radius:50%;
-      background: rgba(0,255,255,.75);
-      box-shadow: 0 0 14px rgba(0,255,255,.35);
+    .iconimg{
+      width: 26px;
+      height: 26px;
+      image-rendering: pixelated;
+      display:block;
     }
+    .iconimg.big{ width: 30px; height: 30px; }
 
-    /* 端末が極端に低い場合でもボタンが見えるよう調整 */
-    @media (max-height: 740px){
-      .stage{ padding: 10px; }
-      .hud{ padding: 8px 10px; }
-      .btn{ padding: 9px 11px; }
-      .panel{ max-height: 82vh; }
+    .muted{ color: rgba(255,255,255,.72); }
+
+    .resultMain{
+      font-weight: 1000;
+      font-size: 18px;
+      line-height: 1.35;
+      margin: 10px 0 8px;
+    }
+    .resultLines > div{ margin: 2px 0; }
+    .tagNew{
+      display:inline-block;
+      font-size: 11px;
+      font-weight: 1000;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(127,208,255,.18);
+      border: 1px solid rgba(127,208,255,.35);
+      color: #dff3ff;
+      margin-left: 8px;
+      vertical-align: middle;
     }
   </style>
 </head>
 
 <body>
-<div class="page">
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="left-group">
-        <button class="backBtn" id="backBtn" type="button" aria-label="戻る">← 戻る</button>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <button id="backBtn" class="backbtn" type="button" aria-label="戻る">← 戻る</button>
         <div class="titlebox">
-          <div class="title">たこ焼き釣り（TAKOFISH）</div>
-          <div class="sub">タップで糸を落下 → 当てる → 巻き上げ。天敵に注意。</div>
+          <div class="title">たこ焼き釣り</div>
+          <div class="subtitle">最高得点保存 / 結果に日時表示</div>
         </div>
       </div>
+    </header>
 
-      <div class="right-group">
-        <div class="pill">最高：<b id="bestLine">0</b></div>
-        <div class="pill">SP-入手：<b id="spLine">0</b></div>
-      </div>
-    </div>
-  </header>
-
-  <main class="main">
-    <section class="card" aria-label="TAKOFISH">
-      <div class="hud">
-        <div class="hud-left">
-          <button class="btn" id="btnStart" type="button">スタート</button>
-          <button class="btn" id="btnRetry" type="button" disabled>もう一回</button>
+    <main class="main">
+      <section class="card" aria-label="たこ焼き釣り">
+        <div class="hud">
+          <div class="hud-left">
+            <button id="retryBtn" class="btn" type="button">もう一回</button>
+            <button id="rulesBtn" class="btn ghost" type="button">ルール</button>
+          </div>
+          <div class="stats" aria-label="ステータス">
+            <span>スコア：<b id="tfScore">0</b></span>
+            <span>残り：<b id="tfTime">--</b>s</span>
+            <span>連続：<b id="tfCombo">0</b></span>
+            <span>失敗：<b id="tfMiss">0</b></span>
+            <span>最高：<b id="tfBest">0</b></span>
+          </div>
         </div>
-        <div class="stats" aria-label="ゲーム状況">
-          <span>スコア：<b id="tfScore">0</b></span>
-          <span>残り：<b id="tfTime">--</b>s</span>
-          <span>連続：<b id="tfCombo">0</b></span>
-          <span>失敗：<b id="tfMiss">0</b></span>
-        </div>
-      </div>
 
-      <div class="stage">
-        <div class="canvasbox">
-          <canvas id="tfCanvas" width="360" height="520"></canvas>
+        <div class="canvaswrap">
+          <div class="canvasbox">
+            <canvas id="tfCanvas" width="360" height="520"></canvas>
 
-          <!-- ルール -->
-          <div class="overlay" id="ovRules">
-            <div class="panel" role="dialog" aria-modal="true" aria-label="ルール">
-              <div class="badge"><span class="dot"></span> ルール</div>
-              <h2>タップした場所に糸（ピック）を垂らして、たこ焼きに当てて釣り上げよう。</h2>
-              <div class="p">
-                天敵（観光客・イカ・流れ）にぶつかると奪われる。生焼けはマイナス。
-              </div>
+            <!-- Rules Overlay -->
+            <div id="rulesOverlay" class="overlay show" role="dialog" aria-modal="true" aria-label="ルール">
+              <div class="panel">
+                <div class="panel-head">
+                  <div class="h">ルール（点数が分かりやすい版）</div>
+                  <button id="rulesCloseX" class="btn ghost" type="button" aria-label="閉じる">×</button>
+                </div>
+                <div class="panel-body">
+                  <div class="muted" style="margin-bottom:10px;">
+                    タップした場所に糸（ピック）を垂らして、たこ焼きに当てて釣り上げよう。<br>
+                    天敵にぶつかると奪われる。生焼けはマイナス。
+                  </div>
 
-              <div class="grid">
-                <div>極小：<b>120</b></div>
-                <div>普通：<b>70</b></div>
-                <div>巨大：<b>40</b></div>
-              </div>
+                  <div class="grid2">
+                    <div class="mini">
+                      <div class="k">サイズ（基本点）</div>
+                      <div class="row" id="sizeRow"></div>
+                      <div class="muted" style="margin-top:8px;">
+                        ※小さいほど高い。巨大は途中で落ちることがある。
+                      </div>
+                    </div>
 
-              <div class="p" style="margin-top:10px;font-weight:900;">種類（倍率 / マイナス）</div>
-              <div class="p">
-                ソース ×1.00 / いかさま ×1.40 / ゴールド ×2.80 / レインボー ×5.50 / 生焼け <b style="color:var(--bad)">-120</b>
-              </div>
+                    <div class="mini">
+                      <div class="k">種類（倍率 / マイナス）</div>
+                      <div class="row" id="typeRow"></div>
+                      <div class="muted" style="margin-top:8px;">
+                        例：普通70点 × ゴールド2.80 = 196点（＋連続ボーナス）
+                      </div>
+                    </div>
+                  </div>
 
-              <div class="p" style="margin-top:10px;font-weight:900;">時間</div>
-              <div class="p">
-                まず<b>30秒</b>。30秒時点でスコアが <b id="unlockTxt">600</b> 点以上なら<b>60秒</b>まで延長。<br>
-                延長できた場合、<b>45秒</b>から<b style="color:rgba(0,255,255,.9)">鬼モード</b>（突入時0.3秒停止・天敵速度2.2倍）
-              </div>
+                  <div class="mini" style="margin-top:10px;">
+                    <div class="k">時間</div>
+                    <div>
+                      まず<b>30秒</b>。30秒時点でスコアが <b id="unlockTxt">600</b> 点以上なら <b>60秒</b> まで延長。
+                      <br>
+                      延長できた場合、<b>45秒</b>から<b>鬼モード</b>（突入時に一瞬停止・天敵強化）。
+                    </div>
+                  </div>
 
-              <div class="small">※この画面はスクロールできます（でも開始ボタンは必ず見える位置にあります）</div>
-
-              <div class="actions">
-                <button class="btn" id="btnRuleStart" type="button">開始</button>
-                <button class="btn" id="btnRuleClose" type="button" style="opacity:.85;">閉じる</button>
+                  <div class="muted" style="margin-top:10px;font-size:11px;">
+                    ※開始ボタンは常に画面内に残るようにしてあるので、スマホでもスクロール不要で開始できます。
+                  </div>
+                </div>
+                <div class="panel-foot">
+                  <button id="startBtn" class="btn" type="button">スタート</button>
+                  <button id="closeBtn" class="btn ghost" type="button">閉じる</button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- リザルト -->
-          <div class="overlay" id="ovResult" style="display:none;">
-            <div class="panel" role="dialog" aria-modal="true" aria-label="結果">
-              <div class="badge"><span class="dot"></span> 結果</div>
-              <h2 id="resTitle">結果</h2>
-              <div class="p" id="resMain" style="font-weight:950;font-size:18px;line-height:1.35;margin:10px 0 6px;"></div>
-              <div class="p" id="resSub" style="opacity:.92;"></div>
-              <div class="actions">
-                <button class="btn" id="btnAgain" type="button">もう一回</button>
-                <button class="btn" id="btnCloseResult" type="button" style="opacity:.85;">閉じる</button>
+            <!-- Result Overlay -->
+            <div id="resultOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="結果">
+              <div class="panel">
+                <div class="panel-head">
+                  <div class="h" id="resultTitle">結果</div>
+                  <button id="resultCloseX" class="btn ghost" type="button" aria-label="閉じる">×</button>
+                </div>
+                <div class="panel-body">
+                  <div class="resultMain" id="resultMain"></div>
+                  <div class="resultLines" id="resultLines"></div>
+                </div>
+                <div class="panel-foot">
+                  <button id="againBtn" class="btn" type="button">もう一回</button>
+                  <button id="resultCloseBtn" class="btn ghost" type="button">閉じる</button>
+                </div>
               </div>
             </div>
+
           </div>
 
+          <div class="footnote">
+            タップで糸を落下 → 当てる → 巻き上げ。天敵に当たると奪われる。
+          </div>
         </div>
-
-        <div class="note">
-          ・狙い：小さいほど高得点。<br>
-          ・SP-抽選：最終スコアが <b>-500 / 1000 / 2000 / 3000</b> のとき <b>10%</b> で入手。<br>
-          ・最高得点は端末に保存されます。
-        </div>
-      </div>
-    </section>
-  </main>
-</div>
+      </section>
+    </main>
+  </div>
 
 <script>
 (() => {
   "use strict";
 
   /* =========================================================
-     TAKOFISH（takofish.html 一本化・完全版）
-     ✅ 最高得点の保存＆表示
-     ✅ 結果画面に「日時」表示
-     ✅ 最終スコアが -500 / 1000 / 2000 / 3000 のとき 10% で SP- 入手
-     ✅ スマホでもスクロール無しで開始できるUI（Startボタン常に見える）
-     ✅ 左上「戻る」ボタン
+     takofish.html（一本化・完全版）
+     ✅ 最高得点を保存＆常時表示
+     ✅ 結果画面に日時（ローカル）を表示
+     ✅ SPサプライズ（ルールに書かない・ボタン無し）
+        - -500～-2999 : 10%で SP-03
+        - 1000～1999  : 10%で SP-04
+        - 2000～2999  : 10%で SP-04（※ユーザー指定のまま）
+        - 3000以上    : 10%で SP-05
+     ✅ 図鑑（tf_v1_book）へSP保存（枠は既にある前提）
+     ✅ 開始画面：スマホでもスクロール無しで開始できる（ボタン固定）
+     ✅ 左上：戻るボタン（history.back）
+     ✅ 糸：体感を短く（速度に変化 + 巻き上げ加速）
   ========================================================= */
 
   /* =========================
-     0) localStorage keys
+     0) Storage keys
   ========================= */
-  const LS = {
+  const FISH_LS = {
     best: "takoyakiFishing_best_points",
     last: "takoyakiFishing_last_points",
     playedAt: "takoyakiFishing_last_played",
-    spCount: "takoyakiFishing_sp_count",
-    spLog: "takoyakiFishing_sp_log", // JSON array (recent)
-    // 互換（もし別ページで参照している場合の保険）
-    fishState: "fish_v1_state",
-    // 図鑑（もし使っている場合の保険：tf_v1_book に sp_fish を加算）
-    book: "tf_v1_book",
+    compat: "fish_v1_state",         // 互換（他ページが読む可能性）
+    zukan: "tf_v1_book",             // 図鑑
   };
 
-  function readInt(key, def=0){
+  function readIntLS(key, def=0){
     const raw = localStorage.getItem(key);
     const n = Math.floor(Number(raw));
     return Number.isFinite(n) ? n : def;
   }
-  function writeInt(key, n){
-    localStorage.setItem(key, String(Math.floor(Number(n)||0)));
-  }
-  function safeJSONParse(raw, def){
-    try{ return JSON.parse(raw); }catch(_){ return def; }
+
+  function setText(id, v){
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(v);
   }
 
-  function fmtJPDateTime(d){
-    try{
-      return new Intl.DateTimeFormat("ja-JP", {
-        year:"numeric", month:"2-digit", day:"2-digit",
-        hour:"2-digit", minute:"2-digit", second:"2-digit",
-      }).format(d);
-    }catch(_){
-      // fallback
-      const pad = (v)=>String(v).padStart(2,"0");
-      return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-    }
-  }
-
-  function refreshTopLines(){
-    const best = readInt(LS.best, 0);
-    const sp = readInt(LS.spCount, 0);
-    document.getElementById("bestLine").textContent = String(best);
-    document.getElementById("spLine").textContent = String(sp);
+  function formatLocal(dt){
+    // "2026/02/28 02:34" みたいな形
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth()+1).padStart(2,"0");
+    const d = String(dt.getDate()).padStart(2,"0");
+    const hh = String(dt.getHours()).padStart(2,"0");
+    const mm = String(dt.getMinutes()).padStart(2,"0");
+    return `${y}/${m}/${d} ${hh}:${mm}`;
   }
 
   function saveFishingRecord(score){
     score = Math.floor(Number(score) || 0);
 
     // 今回
-    localStorage.setItem(LS.last, String(score));
-    const playedISO = new Date().toISOString();
-    localStorage.setItem(LS.playedAt, playedISO);
+    localStorage.setItem(FISH_LS.last, String(score));
+    localStorage.setItem(FISH_LS.playedAt, new Date().toISOString());
 
     // 最高
-    const best = readInt(LS.best, 0);
+    const best = readIntLS(FISH_LS.best, 0);
     const isNew = score > best;
-    if (isNew) localStorage.setItem(LS.best, String(score));
-    const newBest = Math.max(best, score);
+    const newBest = isNew ? score : best;
+    if (isNew) localStorage.setItem(FISH_LS.best, String(score));
 
-    // 互換保存（gate等で参照している場合の保険）
+    // 互換
     try{
-      const key = LS.fishState;
-      let st = safeJSONParse(localStorage.getItem(key) || "{}", {});
+      let st = {};
+      try{ st = JSON.parse(localStorage.getItem(FISH_LS.compat) || "{}"); }catch(_){}
       st.best = Math.max(Math.floor(Number(st.best)||0), newBest);
       st.last = score;
       st.updatedAt = Date.now();
-      localStorage.setItem(key, JSON.stringify(st));
+      localStorage.setItem(FISH_LS.compat, JSON.stringify(st));
     }catch(_){}
 
-    return { best:newBest, isNew, playedISO };
+    return { best: newBest, isNew };
   }
 
   /* =========================
-     1) SP- 抽選（最終スコア）
+     1) SP Surprise (no UI, no rules)
+     ※ 図鑑枠のIDは環境に合わせて変えられるようにしてあります
   ========================= */
-  const SP_TARGETS = new Set([-500, 1000, 2000, 3000]);
-  const SP_RATE = 0.10; // 10%
+  const SP_CFG = {
+    chance: 0.10,
+    // ★ここが図鑑側の「SP枠ID」と一致している必要があります（必要なら変更）
+    ids: {
+      sp03: "sp_03", // 表示名: SP-03
+      sp04: "sp_04", // 表示名: SP-04
+      sp05: "sp_05", // 表示名: SP-05
+    },
+    label: {
+      sp03: "SP-03",
+      sp04: "SP-04",
+      sp05: "SP-05",
+    }
+  };
 
-  function grantSPCardIfLucky(finalScore){
-    if (!SP_TARGETS.has(finalScore)) return { ok:false, reason:"not_target" };
+  function getSPBucket(score){
+    score = Math.floor(Number(score)||0);
+    // -500 ～ -2999（= score <= -500 && score >= -2999）
+    if (score <= -500 && score >= -2999) return "sp03";
+    // 1000 ～ 1999
+    if (score >= 1000 && score <= 1999) return "sp04";
+    // 2000 ～ 2999（指定通りSP-04）
+    if (score >= 2000 && score <= 2999) return "sp04";
+    // 3000以上
+    if (score >= 3000) return "sp05";
+    return null;
+  }
 
-    const hit = Math.random() < SP_RATE;
-    if (!hit) return { ok:false, reason:"miss" };
+  function grantSPToZukanIfWin(score){
+    const bucket = getSPBucket(score);
+    if (!bucket) return null;
+    if (Math.random() >= SP_CFG.chance) return null;
 
-    const now = new Date();
-    const when = now.toISOString();
+    const id = SP_CFG.ids[bucket];
+    const label = SP_CFG.label[bucket];
+    const now = Date.now();
 
-    // count
-    const cur = readInt(LS.spCount, 0) + 1;
-    writeInt(LS.spCount, cur);
-
-    // log (recent 30)
-    const log = safeJSONParse(localStorage.getItem(LS.spLog) || "[]", []);
-    log.unshift({ at: when, score: finalScore, id: "SP-FISH" });
-    while (log.length > 30) log.pop();
-    localStorage.setItem(LS.spLog, JSON.stringify(log));
-
-    // 図鑑へ加算（tf_v1_book がある場合）
+    // 図鑑(tf_v1_book)へ保存（既存構造を壊さない）
     try{
-      let book = safeJSONParse(localStorage.getItem(LS.book) || "{}", {});
-      if (!book.got) book.got = {};
-      if (!book.got["sp_fish"]) book.got["sp_fish"] = { count: 0, lastAt: 0, note: "TAKOFISH SP-" };
-      book.got["sp_fish"].count = (book.got["sp_fish"].count|0) + 1;
-      book.got["sp_fish"].lastAt = Date.now();
-      localStorage.setItem(LS.book, JSON.stringify(book));
-    }catch(_){}
+      const key = FISH_LS.zukan;
+      let book = {};
+      try{ book = JSON.parse(localStorage.getItem(key) || "{}"); }catch(_){ book = {}; }
 
-    // 互換 state
-    try{
-      let st = safeJSONParse(localStorage.getItem(LS.fishState) || "{}", {});
-      st.sp = (st.sp|0) + 1;
-      st.updatedAt = Date.now();
-      localStorage.setItem(LS.fishState, JSON.stringify(st));
-    }catch(_){}
+      if (!book || typeof book !== "object") book = {};
+      if (!book.got || typeof book.got !== "object") book.got = {};
 
-    return { ok:true, score: finalScore, whenISO: when, total: cur };
+      if (!book.got[id] || typeof book.got[id] !== "object"){
+        book.got[id] = { count: 0 };
+      }
+      book.got[id].count = Math.max(0, Math.floor(Number(book.got[id].count)||0)) + 1;
+      book.got[id].lastAt = now;
+
+      // 保険：更新日時
+      book.updatedAt = now;
+
+      localStorage.setItem(key, JSON.stringify(book));
+    }catch(_){
+      // 図鑑が無い/壊れてる場合でもゲーム自体は続ける
+    }
+
+    return { id, label };
   }
 
   /* =========================
-     2) 画像URL
+     2) Images
   ========================= */
   const CDN_BASE = "https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/assets/takofish/";
-  const V = "1"; // 画像差し替え時に上げる
+  const V = "1"; // 差し替え時に上げる（キャッシュ対策）
 
   const IMG_URLS = {
     pick:          `${CDN_BASE}pick.png?v=${V}`,
@@ -558,19 +595,21 @@
     const images = {};
     const failed = [];
     for (const k of keys){
-      try { images[k] = await loadImage(IMG_URLS[k]); }
+      try{ images[k] = await loadImage(IMG_URLS[k]); }
       catch(e){ failed.push({ key:k, url:String(e.message || e) }); }
     }
     return { images, failed };
   }
 
   /* =========================
-     3) ゲーム定数（元コード準拠）
+     3) Game config
   ========================= */
   const CFG = {
+    // canvas
     W: 360,
     H: 520,
 
+    // time / modes
     BASE_LIMIT: 30,
     EXT_LIMIT: 60,
     EXT_SCORE: 600,
@@ -578,22 +617,29 @@
     ONI_FREEZE_MS: 300,
     ONI_SPEED_MUL: 2.2,
 
-    HOOK_DROP: 680,
-    HOOK_REEL: 260,
+    // hook (体感改善：変化付き)
+    HOOK_DROP_BASE: 820,    // 基本落下速度
+    HOOK_REEL_BASE: 420,    // 基本巻き上げ速度
     HOOK_HIT_R: 10,
     TOP_Y: 18,
     FLOOR_Y_RATIO: 0.86,
 
+    // pick draw
     PICK_DRAW: 24,
 
+    // takoyaki spawn
     ITEM_COUNT: 7,
+
+    // takoyaki “alive” motion
     ITEM_BASE_SPEED: 45,
     ITEM_MAX_SPEED: 130,
     ITEM_ACCEL: 240,
 
+    // giant drop
     GIANT_DROP_CHANCE: 0.18,
     GIANT_DROP_START_Y_RATIO: 0.62,
 
+    // sizes
     SIZE: {
       tiny:   { label: "極小",  draw: 24, base: 120 },
       normal: { label: "普通",  draw: 40, base: 70  },
@@ -605,6 +651,7 @@
       { key: "giant",  w: 10 },
     ],
 
+    // types (weights 55/20/10/5/10)
     TYPE: {
       sauce:   { label: "ソース",     mult: 1.00, kind: "plus",  imgKey: "sauce" },
       ika:     { label: "いかさま",   mult: 1.40, kind: "plus",  imgKey: "ika_tako" },
@@ -620,12 +667,17 @@
       { key: "raw",     w: 10 },
     ],
 
+    // enemies layout
     ENEMY_CENTER_Y_RATIO: 0.45,
     ENEMY_GAP: 170,
 
+    // tourist
     TOURIST: { w: 34, h: 18, speed: 90 },
+
+    // squid
     SQUID: { w: 58, h: 58, speed: 18, ampX: 10, ampY: 16, freq: 0.55 },
 
+    // dash
     DASH: {
       yBias: -12,
       w: 54,
@@ -638,13 +690,12 @@
       trail: 4,
     },
 
+    // safe margin
     MARGIN_X: 10,
   };
 
-  document.getElementById("unlockTxt").textContent = String(CFG.EXT_SCORE);
-
   /* =========================
-     4) ランク定義（元コード準拠）
+     4) Ranks
   ========================= */
   const RANKS_MINUS = [
     { min: -1000, max: -1000, name: "〘未投入〙", line: "鉄板に、置かれていない。" },
@@ -659,6 +710,7 @@
     { min: -199,  max: -100,  name: "〘生焼け肯定派〙", line: "これはこれで、って言い始めた。" },
     { min: -99,   max: -1,    name: "〘ひっくり返し忘れ〙", line: "あっ、って言った。" },
   ];
+
   const RANKS_PLUS = [
     { min: 0,    max: 149,  name: "〘粉の妖精（未焼成）〙", line: "まだ丸くすらない。人生も。" },
     { min: 150,  max: 299,  name: "〘ソースの素振りマン〙", line: "かけてないのに、気持ちだけ濃い。" },
@@ -681,27 +733,24 @@
     { min: 2500, max: 2699, name: "〘観測不能（本人も不明）〙", line: "あなた誰？こっちが聞きたい。" },
     { min: 2700, max: 2899, name: "〘祭壇が先にお辞儀した人〙", line: "偉いのはあなたじゃない。祭壇だ。" },
     { min: 2900, max: 2999, name: "〘世界の外側でたこ焼き数えてる人〙", line: "数えるな。戻れなくなる。" },
-
     { min: 3001, max: 3299, name: "〘上限突破：序章〙", line: "ここから先は、説明書が燃える。" },
     { min: 3300, max: 3599, name: "〘回収無効化〙", line: "奪われない。奪わせない。" },
     { min: 3600, max: 3999, name: "〘鬼の手元〙", line: "指先が熱を覚えている。" },
     { min: 4000, max: 4499, name: "〘鉄板と同調〙", line: "揺れが読める。世界が遅い。" },
     { min: 4500, max: 4999, name: "〘潮目支配〙", line: "流れを避けるんじゃない。使う。" },
-
     { min: 5000, max: 5499, name: "〘焼成管理者〙", line: "火加減ではなく、運命を回している。" },
     { min: 5500, max: 5999, name: "〘神速の返し〙", line: "拾う前に、もう次を取っている。" },
     { min: 6000, max: 6499, name: "〘回収の外側〙", line: "観光客が止まって見える。" },
     { min: 6500, max: 6999, name: "〘深海の釣神〙", line: "海が静かに道を空ける。" },
     { min: 7000, max: 7499, name: "〘レインボー統制〙", line: "色が来るタイミングが分かる。" },
-
     { min: 7500, max: 7999, name: "〘鬼モード常駐〙", line: "もう戻れない。戻る必要もない。" },
     { min: 8000, max: 8499, name: "〘焼かれた伝説：真〙", line: "伝説は“結果”ではなく“操作”だった。" },
     { min: 8500, max: 8999, name: "〘鉄板の王〙", line: "火傷しない。火傷が逃げる。" },
     { min: 9000, max: 9499, name: "〘世界線固定〙", line: "揺れが消える。残るのは精度。" },
     { min: 9500, max: 9999, name: "〘釣り台の神〙", line: "あなたが動く前に、たこ焼きが寄る。" },
-
     { min: 10000, max: 999999, name: "〘運営側〙", line: "……テストプレイ、ありがとうございます。" },
   ];
+
   const SCORE_3000_LINE = "それでも、たこ焼きは残らなかった。";
 
   function getRank(score){
@@ -716,7 +765,7 @@
   }
 
   /* =========================
-     5) Helpers
+     5) Helpers / Physics
   ========================= */
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
   function rand(a,b){ return a + Math.random()*(b-a); }
@@ -762,48 +811,136 @@
     return clamp(x, CFG.MARGIN_X, CFG.W - CFG.MARGIN_X);
   }
 
+  function hookDropSpeed(hy, floorY){
+    // 体感改善：下に行くほど少し加速
+    const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
+    const mul = 1.05 + 0.75 * t; // 1.05 → 1.80
+    return CFG.HOOK_DROP_BASE * mul;
+  }
+  function hookReelSpeed(hy, floorY, hasCatch){
+    // 体感改善：上に近づくほど加速 + キャッチ時はさらに速い
+    const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
+    const mul = (1.35 + 0.85 * (1 - t)); // 2.20 → 1.35
+    const catchMul = hasCatch ? 1.20 : 1.05;
+    return CFG.HOOK_REEL_BASE * mul * catchMul;
+  }
+
   /* =========================
-     6) UI elements
+     6) UI Wiring
   ========================= */
-  const backBtn = document.getElementById("backBtn");
-  const btnStart = document.getElementById("btnStart");
-  const btnRetry = document.getElementById("btnRetry");
+  const els = {
+    backBtn: document.getElementById("backBtn"),
+    retryBtn: document.getElementById("retryBtn"),
+    rulesBtn: document.getElementById("rulesBtn"),
+    rulesOverlay: document.getElementById("rulesOverlay"),
+    rulesCloseX: document.getElementById("rulesCloseX"),
+    startBtn: document.getElementById("startBtn"),
+    closeBtn: document.getElementById("closeBtn"),
 
-  const ovRules = document.getElementById("ovRules");
-  const btnRuleStart = document.getElementById("btnRuleStart");
-  const btnRuleClose = document.getElementById("btnRuleClose");
+    resultOverlay: document.getElementById("resultOverlay"),
+    resultTitle: document.getElementById("resultTitle"),
+    resultMain: document.getElementById("resultMain"),
+    resultLines: document.getElementById("resultLines"),
+    resultCloseX: document.getElementById("resultCloseX"),
+    resultCloseBtn: document.getElementById("resultCloseBtn"),
+    againBtn: document.getElementById("againBtn"),
 
-  const ovResult = document.getElementById("ovResult");
-  const resTitle = document.getElementById("resTitle");
-  const resMain  = document.getElementById("resMain");
-  const resSub   = document.getElementById("resSub");
-  const btnAgain = document.getElementById("btnAgain");
-  const btnCloseResult = document.getElementById("btnCloseResult");
+    canvas: document.getElementById("tfCanvas"),
 
-  const scoreEl = document.getElementById("tfScore");
-  const timeEl  = document.getElementById("tfTime");
-  const comboEl = document.getElementById("tfCombo");
-  const missEl  = document.getElementById("tfMiss");
+    sizeRow: document.getElementById("sizeRow"),
+    typeRow: document.getElementById("typeRow"),
+    unlockTxt: document.getElementById("unlockTxt"),
+  };
 
-  const cvs = document.getElementById("tfCanvas");
-  const ctx = cvs.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
+  // Best display init
+  function refreshBestUI(){
+    const best = readIntLS(FISH_LS.best, 0);
+    setText("tfBest", best);
+  }
+  refreshBestUI();
 
-  backBtn.addEventListener("click", () => {
-    // 戻り先が無い場合はトップへ逃がす（必要ならURL差し替えてOK）
-    if (history.length > 1) history.back();
-    else location.href = "./";
+  els.backBtn.addEventListener("click", () => {
+    // できるだけ「戻る」を優先、だめならトップへ
+    try{
+      if (history.length > 1) history.back();
+      else location.href = "../town/"; // 必要なら変更
+    }catch(_){
+      location.href = "../town/";
+    }
+  });
+
+  function showRules(){
+    els.rulesOverlay.classList.add("show");
+  }
+  function hideRules(){
+    els.rulesOverlay.classList.remove("show");
+  }
+  function showResult(){
+    els.resultOverlay.classList.add("show");
+  }
+  function hideResult(){
+    els.resultOverlay.classList.remove("show");
+  }
+
+  els.rulesBtn.addEventListener("click", showRules);
+  els.rulesCloseX.addEventListener("click", hideRules);
+  els.closeBtn.addEventListener("click", () => {
+    // ルール閉じる＝そのままページ
+    hideRules();
+  });
+
+  els.resultCloseX.addEventListener("click", () => {
+    hideResult();
+    showRules();
+  });
+  els.resultCloseBtn.addEventListener("click", () => {
+    hideResult();
+    showRules();
   });
 
   /* =========================
-     7) Game state
+     7) Build rule visuals using SAME game images
   ========================= */
-  let IMGS = null;
+  function buildRuleVisuals(IMGS){
+    els.unlockTxt.textContent = String(CFG.EXT_SCORE);
 
+    // サイズ（画像は「種類」から借りつつ、サイズ差は説明で）
+    els.sizeRow.innerHTML = `
+      <span class="chip">極小：<b>${CFG.SIZE.tiny.base}</b></span>
+      <span class="chip">普通：<b>${CFG.SIZE.normal.base}</b></span>
+      <span class="chip">巨大：<b>${CFG.SIZE.giant.base}</b></span>
+    `;
+
+    // 種類：ゲーム内画像を貼る
+    const makeType = (key, txt) => {
+      const imgKey = CFG.TYPE[key].imgKey;
+      const img = IMGS[imgKey];
+      // dataURL化はしない（そのままDOMへ）
+      const src = IMG_URLS[imgKey];
+      return `
+        <span class="chip">
+          <img class="iconimg" src="${src}" alt="${CFG.TYPE[key].label}">
+          ${txt}
+        </span>
+      `;
+    };
+
+    els.typeRow.innerHTML = [
+      makeType("sauce", `ソース ×<b>${CFG.TYPE.sauce.mult.toFixed(2)}</b>`),
+      makeType("ika", `いかさま ×<b>${CFG.TYPE.ika.mult.toFixed(2)}</b>`),
+      makeType("gold", `ゴールド ×<b>${CFG.TYPE.gold.mult.toFixed(2)}</b>`),
+      makeType("rainbow", `レインボー ×<b>${CFG.TYPE.rainbow.mult.toFixed(2)}</b>`),
+      makeType("raw", `生焼け <b>${CFG.TYPE.raw.penalty}</b>`),
+    ].join("");
+  }
+
+  /* =========================
+     8) Game runtime state
+  ========================= */
   let rafId = null;
   let timerId = null;
   let onPointer = null;
-
+  let IMGS = null;
   let STATE = null;
 
   function stopGame(){
@@ -812,37 +949,11 @@
     if (rafId) cancelAnimationFrame(rafId);
     rafId = null;
 
-    if (onPointer){
-      cvs.removeEventListener("pointerdown", onPointer);
-      onPointer = null;
-    }
+    const cvs = els.canvas;
+    if (cvs && onPointer) cvs.removeEventListener("pointerdown", onPointer);
+    onPointer = null;
+
     STATE = null;
-
-    btnRetry.disabled = true;
-  }
-
-  function setButtonsIdle(){
-    btnStart.disabled = false;
-    btnRetry.disabled = true;
-  }
-
-  function setButtonsPlaying(){
-    btnStart.disabled = true;
-    btnRetry.disabled = false;
-  }
-
-  function showRules(){
-    ovRules.style.display = "flex";
-  }
-  function hideRules(){
-    ovRules.style.display = "none";
-  }
-
-  function showResultOverlay(){
-    ovResult.style.display = "flex";
-  }
-  function hideResultOverlay(){
-    ovResult.style.display = "none";
   }
 
   function flashText(msg, ms){
@@ -851,250 +962,85 @@
     STATE.flashUntil = nowMs() + ms;
   }
 
-  function drawImageCentered(img, x, y, size){
+  function drawImageCentered(ctx, img, x, y, size){
     ctx.drawImage(img, Math.round(x - size/2), Math.round(y - size/2), size, size);
   }
 
-  function drawBackground(now){
-    const W = CFG.W, H = CFG.H;
-    const FLOOR_Y = Math.floor(H * CFG.FLOOR_Y_RATIO);
-    const isOni = STATE.oni;
-
-    ctx.fillStyle = isOni ? "#060819" : "#081425";
-    ctx.fillRect(0, 0, W, H);
-
-    const t = now / 1000;
-    const band1 = Math.floor(40 + 12 * Math.sin(t * 0.6));
-    const band2 = Math.floor(70 + 18 * Math.cos(t * 0.42));
-    ctx.fillStyle = isOni ? "rgba(120,70,170,0.07)" : "rgba(60,130,220,0.07)";
-    ctx.fillRect(0, 0, W, band1);
-    ctx.fillRect(0, band1 + 50, W, band2);
-
-    ctx.fillStyle = "rgba(255,255,255,0.06)";
-    ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
-    ctx.fillStyle = "rgba(255,255,255,0.05)";
-    ctx.fillRect(0, FLOOR_Y - 6, W, 6);
-
-    if (isOni){
-      ctx.fillStyle = "rgba(0,255,255,0.04)";
-      ctx.fillRect(0,0,W,H);
-    }
-  }
-
-  function drawItems(){
-    for (const it of STATE.items){
-      if (!it.alive) continue;
-      const img = IMGS[it.spec.type.imgKey];
-      drawImageCentered(img, it.x, it.y, it.spec.size.draw);
-    }
-  }
-
-  function drawTourist(){
-    const t = STATE.tourist;
-    const img = (t.dir > 0) ? IMGS.tourist_right : IMGS.tourist_left;
-    const size = 44;
-    drawImageCentered(img, t.x + t.w/2, t.y, size);
-  }
-
-  function drawSquid(){
-    const s = STATE.squid;
-    const img = IMGS.squid;
-    const cx = s.x + s.w/2;
-    const cy = s.y;
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.scale(s.dir, 1);
-    ctx.drawImage(img, Math.round(-s.w/2), Math.round(-s.h/2), s.w, s.h);
-    ctx.restore();
-  }
-
-  function drawDash(now){
-    const d = STATE.dash;
-    if (!d.active) return;
-
-    const trail = STATE.dashTrail;
-    trail.unshift({ x: d.x, t: now });
-    if (trail.length > CFG.DASH.trail) trail.pop();
-
-    for (let i=trail.length-1; i>=0; i--){
-      const a = (i+1) / (trail.length+1);
-      const alpha = 0.12 + 0.22 * (1 - a);
-      const wid = d.w + i * 14;
-      const hi  = d.h + i * 2;
-
-      const x = trail[i].x - i * 10;
-      const y = d.y;
-
-      ctx.fillStyle = `rgba(0, 220, 255, ${alpha})`;
-      ctx.fillRect(Math.round(x), Math.round(y - hi/2), wid, hi);
-    }
-
-    ctx.fillStyle = "rgba(210, 255, 255, 0.35)";
-    ctx.fillRect(Math.round(d.x), Math.round(d.y - d.h/2), d.w, d.h);
-
-    ctx.fillStyle = "rgba(0, 255, 255, 0.35)";
-    ctx.fillRect(Math.round(d.x + d.w - 6), Math.round(d.y - d.h/2), 6, d.h);
-  }
-
-  function drawHook(){
-    const h = STATE.hook;
-
-    ctx.strokeStyle = "rgba(255,255,255,.22)";
-    ctx.beginPath();
-    ctx.moveTo(h.x, CFG.TOP_Y);
-    ctx.lineTo(h.x, h.y);
-    ctx.stroke();
-
-    drawImageCentered(IMGS.pick, h.x, h.y, CFG.PICK_DRAW);
-
-    if (h.hasCatch && h.caught){
-      const s = h.caught.size.draw;
-      const ty = h.y + (CFG.PICK_DRAW/2) + (s/2) - 2;
-      const img = IMGS[h.caught.type.imgKey];
-      drawImageCentered(img, h.x, ty, s);
-    }
-  }
-
-  function remaining(){
-    return Math.max(0, STATE.limit - STATE.elapsed);
-  }
-
-  function drawHUD(now){
-    const W = CFG.W, H = CFG.H;
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "13px system-ui";
-
-    const h = STATE.hook;
-    if (h.phase === "idle") ctx.fillText("タップ：好きな位置に糸を垂らす", 10, 18);
-    else if (h.phase === "drop") ctx.fillText("落下中…当てろ！", 10, 18);
-    else ctx.fillText("巻き上げ中！天敵に注意！", 10, 18);
-
-    if (STATE.extended){
-      ctx.fillStyle = "rgba(255,255,255,.75)";
-      ctx.font = "12px system-ui";
-      ctx.fillText("延長中", 10, 36);
-    }
-    if (STATE.oni){
-      ctx.fillStyle = "rgba(0,255,255,.85)";
-      ctx.font = "12px system-ui";
-      ctx.fillText("鬼モード", 60, 36);
-    }
-
-    if (now < STATE.flashUntil && STATE.flashMsg){
-      ctx.fillStyle = "rgba(0,0,0,.55)";
-      ctx.fillRect(0, 44, W, 26);
-      ctx.fillStyle = "#fff";
-      ctx.font = "13px system-ui";
-      ctx.fillText(STATE.flashMsg, 12, 62);
-    }
-
-    if (STATE.freezeUntil && now < STATE.freezeUntil){
-      ctx.fillStyle = "rgba(0,0,0,.35)";
-      ctx.fillRect(0,0,W,H);
-      ctx.fillStyle = "rgba(0,255,255,.9)";
-      ctx.font = "18px system-ui";
-      ctx.fillText("鬼モード突入", 110, 230);
-    }
-
-    if (remaining() <= 0){
-      ctx.fillStyle = "rgba(0,0,0,.65)";
-      ctx.fillRect(0,0,W,H);
-      ctx.fillStyle = "#fff";
-      ctx.font = "22px system-ui";
-      ctx.fillText("TIME UP!", 120, 230);
-    }
-  }
-
-  function render(now){
-    drawBackground(now);
-    drawTourist();
-    drawSquid();
-    drawDash(now);
-
-    if (!STATE.hook.hasCatch) drawItems();
-    drawHook();
-    drawHUD(now);
-  }
-
-  function resetCanvasMessage(msg){
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = "#081425";
-    ctx.fillRect(0,0,CFG.W,CFG.H);
-    ctx.fillStyle = "#fff";
-    ctx.font = "16px system-ui";
-    ctx.fillText(msg, 90, 260);
-  }
-
   /* =========================
-     8) Result UI（最高 + 日時 + SP抽選）
+     9) Result render (includes datetime + best)
+     ※ SPは「当たったら結果にだけ一言」出す（ルールには書かない）
   ========================= */
-  function showResult(score, extended, oniReached){
+  function showResultScreen(score, extended, oniReached){
     const rec = saveFishingRecord(score);
+    refreshBestUI();
+
+    const dt = new Date();
+    const played = formatLocal(dt);
+
     const best = rec.best;
     const isNew = rec.isNew;
 
-    // SP抽選（最終スコア）
-    const sp = grantSPCardIfLucky(score);
+    // サプライズ抽選（ここで確定）
+    const sp = grantSPToZukanIfWin(score);
 
-    refreshTopLines();
-
-    const playedAt = new Date(rec.playedISO);
-    const playedJP = fmtJPDateTime(playedAt);
-
-    resTitle.textContent = isNew ? "結果（NEW RECORD!）" : "結果";
+    els.resultTitle.textContent = isNew ? "結果（NEW RECORD!）" : "結果";
+    if (isNew){
+      els.resultTitle.innerHTML = `結果<span class="tagNew">NEW RECORD</span>`;
+    }else{
+      els.resultTitle.textContent = "結果";
+    }
 
     // 3000点ちょうど：一文のみ（元仕様）
     if (score === 3000){
-      resMain.textContent = SCORE_3000_LINE;
-      const spLine = (sp.ok)
-        ? `<div style="margin-top:8px;color:rgba(0,255,255,.95);font-weight:950;">🎉 SP-入手！（合計 ${sp.total}）</div>`
-        : (SP_TARGETS.has(score) ? `<div style="margin-top:8px;opacity:.85;">SP-抽選：今回はハズレ</div>` : "");
-      resSub.innerHTML = `
-        <div>日時：<b>${playedJP}</b></div>
-        <div>Score：<b>${score}</b></div>
-        <div>Best：<b>${best}</b>${isNew ? "（更新）" : ""}</div>
-        ${spLine}
-      `;
-      showResultOverlay();
+      els.resultMain.textContent = SCORE_3000_LINE;
+      const lines = [];
+      lines.push(`日時：<b>${played}</b>`);
+      lines.push(`Score：<b>${score}</b>`);
+      lines.push(`Best：<b>${best}</b>${isNew ? "（更新）" : ""}`);
+      if (sp){
+        // ルールには書かない。結果だけ「何かが起きた」演出に留める
+        lines.push(`……何かを入手した。`);
+      }
+      els.resultLines.innerHTML = lines.map(s => `<div>${s}</div>`).join("");
+      showResult();
       return;
     }
 
     const r = getRank(score);
-    resMain.textContent = `［ ${r.name} ］`;
+    els.resultMain.textContent = `［ ${r.name} ］`;
 
     const lines = [];
-    lines.push(`<div style="opacity:.95">${r.line}</div>`);
-    lines.push(`<div>日時：<b>${playedJP}</b></div>`);
-    lines.push(`<div>Score：<b>${score}</b></div>`);
-    lines.push(`<div>Best：<b>${best}</b>${isNew ? "（更新）" : ""}</div>`);
-    lines.push(`<div>${extended ? "延長：あり（60秒）" : "延長：なし（30秒）"}</div>`);
-    if (extended) lines.push(`<div>${oniReached ? "鬼モード：到達" : "鬼モード：未到達"}</div>`);
-
-    if (SP_TARGETS.has(score)){
-      if (sp.ok){
-        lines.push(`<div style="margin-top:6px;color:rgba(0,255,255,.95);font-weight:950;">🎉 SP-入手！（合計 ${sp.total}）</div>`);
-      }else{
-        lines.push(`<div style="margin-top:6px;opacity:.85;">SP-抽選：今回はハズレ（10%）</div>`);
-      }
+    lines.push(r.line);
+    lines.push(`日時：<b>${played}</b>`);
+    lines.push(`Score：<b>${score}</b>`);
+    lines.push(`Best：<b>${best}</b>${isNew ? "（更新）" : ""}`);
+    lines.push(extended ? "延長：あり（60秒）" : "延長：なし（30秒）");
+    if (extended) lines.push(oniReached ? "鬼モード：到達" : "鬼モード：未到達");
+    if (sp){
+      // ここも“内緒”感のある一言だけ（ID/名称は出さない）
+      lines.push(`……何かを入手した。`);
     }
 
-    resSub.innerHTML = lines.join("");
-    showResultOverlay();
+    els.resultLines.innerHTML = lines.map(s => `<div>${s}</div>`).join("");
+    showResult();
   }
 
   /* =========================
-     9) Start / Game loop（元ロジック準拠）
+     10) Game start
   ========================= */
   function startGame(){
-    if (!IMGS){
-      resetCanvasMessage("画像が未ロードです…");
-      return;
-    }
-
-    hideResultOverlay();
+    stopGame();
+    hideResult();
     hideRules();
-    setButtonsPlaying();
+
+    const cvs = els.canvas;
+    const ctx = cvs.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+
+    const scoreEl = document.getElementById("tfScore");
+    const timeEl  = document.getElementById("tfTime");
+    const comboEl = document.getElementById("tfCombo");
+    const missEl  = document.getElementById("tfMiss");
 
     const W = CFG.W, H = CFG.H;
     const FLOOR_Y = Math.floor(H * CFG.FLOOR_Y_RATIO);
@@ -1124,17 +1070,16 @@
       tourist: null,
       squid: null,
       dash: null,
-
       dashTrail: [],
+
       ended: false,
     };
 
-    // UI reset
-    scoreEl.textContent = "0";
-    comboEl.textContent = "0";
-    missEl.textContent  = "0";
-    timeEl.textContent  = String(CFG.BASE_LIMIT);
+    function remaining(){
+      return Math.max(0, STATE.limit - STATE.elapsed);
+    }
 
+    // Items
     for (let i=0; i<CFG.ITEM_COUNT; i++){
       const spec = buildTakoyakiSpec();
       const baseY = (FLOOR_Y - 14) + rand(-2, 2);
@@ -1170,6 +1115,7 @@
       it.pauseUntil = 0;
     }
 
+    // Hook
     STATE.hook = {
       x: W*0.5,
       y: CFG.TOP_Y,
@@ -1193,6 +1139,7 @@
       h.giantWillDrop = false;
     }
 
+    // Enemies
     STATE.tourist = {
       x: 0,
       y: TOURIST_Y,
@@ -1300,7 +1247,159 @@
     };
     cvs.addEventListener("pointerdown", onPointer, { passive:false });
 
-    // timer (1s)
+    function drawBackground(now){
+      const isOni = STATE.oni;
+      ctx.fillStyle = isOni ? "#060819" : "#081425";
+      ctx.fillRect(0, 0, W, H);
+
+      const t = now / 1000;
+      const band1 = Math.floor(40 + 12 * Math.sin(t * 0.6));
+      const band2 = Math.floor(70 + 18 * Math.cos(t * 0.42));
+      ctx.fillStyle = isOni ? "rgba(120,70,170,0.07)" : "rgba(60,130,220,0.07)";
+      ctx.fillRect(0, 0, W, band1);
+      ctx.fillRect(0, band1 + 50, W, band2);
+
+      ctx.fillStyle = "rgba(255,255,255,0.06)";
+      ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+      ctx.fillStyle = "rgba(255,255,255,0.05)";
+      ctx.fillRect(0, FLOOR_Y - 6, W, 6);
+
+      if (isOni){
+        ctx.fillStyle = "rgba(0,255,255,0.04)";
+        ctx.fillRect(0,0,W,H);
+      }
+    }
+
+    function drawItems(){
+      for (const it of STATE.items){
+        if (!it.alive) continue;
+        const img = IMGS[it.spec.type.imgKey];
+        drawImageCentered(ctx, img, it.x, it.y, it.spec.size.draw);
+      }
+    }
+
+    function drawTourist(){
+      const t = STATE.tourist;
+      const img = (t.dir > 0) ? IMGS.tourist_right : IMGS.tourist_left;
+      drawImageCentered(ctx, img, t.x + t.w/2, t.y, 44);
+    }
+
+    function drawSquid(){
+      const s = STATE.squid;
+      const img = IMGS.squid;
+      const cx = s.x + s.w/2;
+      const cy = s.y;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(s.dir, 1);
+      ctx.drawImage(img, Math.round(-s.w/2), Math.round(-s.h/2), s.w, s.h);
+      ctx.restore();
+    }
+
+    function drawDash(now){
+      const d = STATE.dash;
+      if (!d.active) return;
+
+      const trail = STATE.dashTrail;
+      trail.unshift({ x: d.x, t: now });
+      if (trail.length > CFG.DASH.trail) trail.pop();
+
+      for (let i=trail.length-1; i>=0; i--){
+        const a = (i+1) / (trail.length+1);
+        const alpha = 0.12 + 0.22 * (1 - a);
+        const wid = d.w + i * 14;
+        const hi  = d.h + i * 2;
+
+        const x = trail[i].x - i * 10;
+        const y = d.y;
+
+        ctx.fillStyle = `rgba(0, 220, 255, ${alpha})`;
+        ctx.fillRect(Math.round(x), Math.round(y - hi/2), wid, hi);
+      }
+
+      ctx.fillStyle = "rgba(210, 255, 255, 0.35)";
+      ctx.fillRect(Math.round(d.x), Math.round(d.y - d.h/2), d.w, d.h);
+
+      ctx.fillStyle = "rgba(0, 255, 255, 0.35)";
+      ctx.fillRect(Math.round(d.x + d.w - 6), Math.round(d.y - d.h/2), 6, d.h);
+    }
+
+    function drawHook(){
+      const h = STATE.hook;
+
+      ctx.strokeStyle = "rgba(255,255,255,.22)";
+      ctx.beginPath();
+      ctx.moveTo(h.x, CFG.TOP_Y);
+      ctx.lineTo(h.x, h.y);
+      ctx.stroke();
+
+      drawImageCentered(ctx, IMGS.pick, h.x, h.y, CFG.PICK_DRAW);
+
+      if (h.hasCatch && h.caught){
+        const s = h.caught.size.draw;
+        const ty = h.y + (CFG.PICK_DRAW/2) + (s/2) - 2;
+        const img = IMGS[h.caught.type.imgKey];
+        drawImageCentered(ctx, img, h.x, ty, s);
+      }
+    }
+
+    function drawHUD(now){
+      ctx.fillStyle = "#fff";
+      ctx.font = "13px system-ui";
+
+      const h = STATE.hook;
+      if (h.phase === "idle") ctx.fillText("タップ：好きな位置に糸を垂らす", 10, 18);
+      else if (h.phase === "drop") ctx.fillText("落下中…当てろ！", 10, 18);
+      else ctx.fillText("巻き上げ中！天敵に注意！", 10, 18);
+
+      if (STATE.extended){
+        ctx.fillStyle = "rgba(255,255,255,.75)";
+        ctx.font = "12px system-ui";
+        ctx.fillText("延長中", 10, 36);
+      }
+      if (STATE.oni){
+        ctx.fillStyle = "rgba(0,255,255,.85)";
+        ctx.font = "12px system-ui";
+        ctx.fillText("鬼モード", 60, 36);
+      }
+
+      if (now < STATE.flashUntil && STATE.flashMsg){
+        ctx.fillStyle = "rgba(0,0,0,.55)";
+        ctx.fillRect(0, 44, W, 26);
+        ctx.fillStyle = "#fff";
+        ctx.font = "13px system-ui";
+        ctx.fillText(STATE.flashMsg, 12, 62);
+      }
+
+      if (STATE.freezeUntil && now < STATE.freezeUntil){
+        ctx.fillStyle = "rgba(0,0,0,.35)";
+        ctx.fillRect(0,0,W,H);
+        ctx.fillStyle = "rgba(0,255,255,.9)";
+        ctx.font = "18px system-ui";
+        ctx.fillText("鬼モード突入", 110, 230);
+      }
+
+      if (remaining() <= 0){
+        ctx.fillStyle = "rgba(0,0,0,.65)";
+        ctx.fillRect(0,0,W,H);
+        ctx.fillStyle = "#fff";
+        ctx.font = "22px system-ui";
+        ctx.fillText("TIME UP!", 120, 230);
+      }
+    }
+
+    function render(now){
+      drawBackground(now);
+      drawTourist();
+      drawSquid();
+      drawDash(now);
+
+      if (!STATE.hook.hasCatch) drawItems();
+      drawHook();
+      drawHUD(now);
+    }
+
+    // Timer (1s)
     timerId = setInterval(() => {
       if (remaining() <= 0) return;
       STATE.elapsed++;
@@ -1331,9 +1430,7 @@
       if (remaining() <= 0 && !STATE.ended){
         STATE.ended = true;
         setTimeout(() => {
-          setButtonsIdle();
-          btnRetry.disabled = false;
-          showResult(STATE.score, STATE.extended, STATE.oniReached);
+          showResultScreen(STATE.score, STATE.extended, STATE.oniReached);
         }, 120);
       }
     }, 1000);
@@ -1353,6 +1450,7 @@
 
         const mul = STATE.oni ? CFG.ONI_SPEED_MUL : 1.0;
 
+        // Items movement
         for (const it of STATE.items){
           if (!it.alive) continue;
 
@@ -1397,11 +1495,13 @@
           it.y = it.baseY + Math.sin((now/1000) * it.bobSpd + it.bobPhase) * it.bobAmp;
         }
 
+        // Tourist
         const t = STATE.tourist;
         t.x += t.dir * t.speed * mul * dt;
         if (t.x < 0){ t.x = 0; t.dir *= -1; }
         if (t.x + t.w > W){ t.x = W - t.w; t.dir *= -1; }
 
+        // Squid
         const s = STATE.squid;
         s.baseX += s.dir * s.speed * mul * dt;
         if (s.baseX < 0){ s.baseX = 0; s.dir *= -1; }
@@ -1411,6 +1511,7 @@
         s.x = s.baseX + Math.sin(sec) * s.ampX;
         s.y = s.baseY + Math.cos(sec * 0.85) * s.ampY;
 
+        // Dash
         const d = STATE.dash;
         if (!d.active && now >= d.nextAt){
           spawnDash(now);
@@ -1420,10 +1521,12 @@
           if (d.x + d.w < -40) despawnDash();
         }
 
+        // Hook
         const h = STATE.hook;
 
         if (h.phase === "drop"){
-          h.y += CFG.HOOK_DROP * dt;
+          const spd = hookDropSpeed(h.y, FLOOR_Y);
+          h.y += spd * dt;
 
           if (!h.hasCatch){
             for (const it of STATE.items){
@@ -1456,7 +1559,8 @@
         }
 
         if (h.phase === "reel"){
-          h.y -= CFG.HOOK_REEL * dt;
+          const spd = hookReelSpeed(h.y, FLOOR_Y, h.hasCatch);
+          h.y -= spd * dt;
 
           if (h.hasCatch && h.caught && h.giantDropArmed){
             if (!h.giantDropRolled && h.y < GIANT_DROP_START_Y){
@@ -1525,10 +1629,11 @@
         }
       }
 
+      // UI update
       scoreEl.textContent = String(STATE.score);
       comboEl.textContent = String(STATE.combo);
       missEl.textContent  = String(STATE.miss);
-      timeEl.textContent  = String(remaining());
+      timeEl.textContent  = String(Math.max(0, STATE.limit - STATE.elapsed));
 
       render(now);
       rafId = requestAnimationFrame(step);
@@ -1536,15 +1641,27 @@
 
     setHookIdle();
     flashText("", 0);
+
+    scoreEl.textContent = "0";
+    comboEl.textContent = "0";
+    missEl.textContent  = "0";
+    timeEl.textContent  = String(CFG.BASE_LIMIT);
+
     rafId = requestAnimationFrame(step);
   }
 
   /* =========================
-     10) Init (images + first view)
+     11) Init: load images, build rule UI
   ========================= */
   async function init(){
-    refreshTopLines();
-    resetCanvasMessage("画像を読み込み中…");
+    // 先にキャンバスにローディング表示
+    const ctx = els.canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = "#081425";
+    ctx.fillRect(0,0,CFG.W,CFG.H);
+    ctx.fillStyle = "#fff";
+    ctx.font = "16px system-ui";
+    ctx.fillText("画像を読み込み中…", 100, 260);
 
     const { images, failed } = await loadAllImages();
     if (failed.length){
@@ -1552,65 +1669,64 @@
       ctx.fillRect(0,0,CFG.W,CFG.H);
       ctx.fillStyle = "#fff";
       ctx.font = "14px system-ui";
-      ctx.fillText("画像が読み込めないものがあります：", 18, 40);
+      ctx.fillText("画像が読み込めないものがあります：", 20, 40);
       ctx.font = "11px system-ui";
       let y=70;
       for (const f of failed){
-        ctx.fillText(`- ${f.key}: ${f.url}`, 18, y);
+        ctx.fillText(`- ${f.key}: ${f.url}`, 20, y);
         y += 16;
         if (y > CFG.H - 30) break;
       }
-      ctx.fillText("CDN_BASE / ファイル名を確認してください。", 18, CFG.H-16);
+      ctx.fillText("CDN_BASE / ファイル名を確認してください。", 20, CFG.H-16);
       return;
     }
 
     IMGS = images;
-    resetCanvasMessage("準備OK！「スタート」で開始");
+    buildRuleVisuals(IMGS);
+
+    // ルール画面は最初に表示（スタートボタンが見える設計）
     showRules();
-    setButtonsIdle();
   }
 
   /* =========================
-     11) UI events
+     12) Buttons
   ========================= */
-  btnStart.addEventListener("click", () => {
-    // まずルールを見せる（開始ボタンは常に見える）
-    showRules();
-  });
-
-  btnRuleStart.addEventListener("click", () => {
+  els.startBtn.addEventListener("click", () => {
     startGame();
   });
 
-  btnRuleClose.addEventListener("click", () => {
+  els.retryBtn.addEventListener("click", () => {
+    hideResult();
+    showRules();
+    stopGame();
+  });
+
+  els.againBtn.addEventListener("click", () => {
+    hideResult();
+    showRules();
+    stopGame();
+  });
+
+  // ルール画面で閉じる＝ゲーム開始しないで隠す（ただし初回はそのままでもOK）
+  els.closeBtn.addEventListener("click", () => {
     hideRules();
   });
 
-  btnRetry.addEventListener("click", () => {
-    // ゲームを止めて最初から
-    stopGame();
-    hideResultOverlay();
-    showRules();
-    resetCanvasMessage("準備OK！「開始」でスタート");
+  // 画面外クリックで閉じたい場合（ルール / 結果）
+  els.rulesOverlay.addEventListener("click", (e) => {
+    if (e.target === els.rulesOverlay) hideRules();
+  });
+  els.resultOverlay.addEventListener("click", (e) => {
+    if (e.target === els.resultOverlay){
+      hideResult();
+      showRules();
+    }
   });
 
-  btnAgain.addEventListener("click", () => {
-    stopGame();
-    hideResultOverlay();
-    showRules();
-    resetCanvasMessage("準備OK！「開始」でスタート");
-  });
+  // 初期 best 表示
+  setText("tfBest", readIntLS(FISH_LS.best, 0));
 
-  btnCloseResult.addEventListener("click", () => {
-    hideResultOverlay();
-    // 結果閉じても再挑戦できるように
-    btnRetry.disabled = false;
-  });
-
-  // 結果/ルールの外側クリックで閉じない（誤爆防止）
-  // ※必要なら実装可
-
-  // 初期化
+  // 起動
   init();
 
 })();
