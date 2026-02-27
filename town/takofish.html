@@ -329,8 +329,6 @@
                       延長できた場合、<b>45秒</b>から<b>鬼モード</b>（突入時に一瞬停止・天敵強化）。
                     </div>
                   </div>
-
-              
                 </div>
                 <div class="panel-foot">
                   <button id="startBtn" class="btn" type="button">スタート</button>
@@ -385,8 +383,8 @@
 
   /* =========================================================
      ✅ 変更点（今回）
+     - SPカード画像だけ「town/assets/images/sp/」から読む（他の画像に影響なし）
      - 結果画面に「日時」を表示（resultDate）
-     - 余計な文章は追加しない（表示は結果内の1行のみ）
   ========================================================= */
 
   /* =========================
@@ -410,7 +408,7 @@
     if (el) el.textContent = String(v);
   }
 
-  // ✅ 追加：日時フォーマット（日本のローカル表示）
+  // ✅ 日時フォーマット（日本のローカル表示）
   function formatLocal(dt){
     const y = dt.getFullYear();
     const m = String(dt.getMonth()+1).padStart(2,"0");
@@ -443,19 +441,25 @@
   }
 
   /* =========================
-     1) SP Surprise (no rules / no game UI)
+     1) SP Surprise
+     ✅ SP画像だけローカルから読む
+     - town/assets/images/sp/ に入れる
+     - このHTMLが town/ 直下にある前提で ./assets/images/sp/
+       （違う階層なら "../assets/images/sp/" などに変更）
   ========================= */
-  const CDN_BASE = "https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/assets/takofish/";
   const V = "1";
+
+  // ✅ ここが今回の本題（SPだけ別フォルダ）
+  const SP_BASE = "./assets/images/sp/";
 
   const SP_CFG = {
     chance: 0.10,
     ids: { sp03: "sp_03", sp04: "sp_04", sp05: "sp_05", sp06: "sp_06" },
     img: {
-      sp03: `${CDN_BASE}sp_03.png?v=${V}`,
-      sp04: `${CDN_BASE}sp_04.png?v=${V}`,
-      sp05: `${CDN_BASE}sp_05.png?v=${V}`,
-      sp06: `${CDN_BASE}sp_06.png?v=${V}`,
+      sp03: `${SP_BASE}sp_03.png?v=${V}`,
+      sp04: `${SP_BASE}sp_04.png?v=${V}`,
+      sp05: `${SP_BASE}sp_05.png?v=${V}`,
+      sp06: `${SP_BASE}sp_06.png?v=${V}`,
     }
   };
 
@@ -496,7 +500,10 @@
 
   /* =========================
      2) Images (game assets)
+     ※ゲーム素材は従来通りCDNのまま（SPだけ別）
   ========================= */
+  const CDN_BASE = "https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/assets/takofish/";
+
   const IMG_URLS = {
     pick:          `${CDN_BASE}pick.png?v=${V}`,
     sauce:         `${CDN_BASE}tako_sauce.png?v=${V}`,
@@ -747,7 +754,7 @@
     resultTitle: document.getElementById("resultTitle"),
     resultMain: document.getElementById("resultMain"),
     resultLines: document.getElementById("resultLines"),
-    resultDate: document.getElementById("resultDate"), // ✅ 追加
+    resultDate: document.getElementById("resultDate"),
     resultCloseX: document.getElementById("resultCloseX"),
     resultCloseBtn: document.getElementById("resultCloseBtn"),
     againBtn: document.getElementById("againBtn"),
@@ -857,7 +864,6 @@
 
   /* =========================
      9) Result render
-     ✅ 追加：結果日時をここでセット
   ========================= */
   function resetSPUI(){
     SP_PENDING = null;
@@ -888,7 +894,7 @@
     const rec = saveFishingRecord(score);
     refreshBestUI();
 
-    // ✅ 追加：この結果の日時を表示（保存された playedAt を使う）
+    // ✅ 結果の日時
     const iso = localStorage.getItem(FISH_LS.playedAt);
     const dt = iso ? new Date(iso) : new Date();
     els.resultDate.textContent = `日時：${formatLocal(dt)}`;
@@ -1008,9 +1014,9 @@
 
     STATE.hook = {
       x: W*0.5,
-      y: CFG.TOP_Y,
+      y: 18,
       phase: "idle",
-      hitR: CFG.HOOK_HIT_R,
+      hitR: 10,
       hasCatch: false,
       caught: null,
       giantDropArmed: false,
@@ -1021,7 +1027,7 @@
     function setHookIdle(){
       const h = STATE.hook;
       h.phase = "idle";
-      h.y = CFG.TOP_Y;
+      h.y = 18;
       h.hasCatch = false;
       h.caught = null;
       h.giantDropArmed = false;
@@ -1029,11 +1035,11 @@
       h.giantWillDrop = false;
     }
 
-    STATE.tourist = { x: 0, y: TOURIST_Y, w: CFG.TOURIST.w, h: CFG.TOURIST.h, dir: 1, speed: CFG.TOURIST.speed };
+    STATE.tourist = { x: 0, y: TOURIST_Y, w: 34, h: 18, dir: 1, speed: 90 };
     STATE.squid = {
-      baseX: W - CFG.SQUID.w, baseY: SQUID_Y, x: W - CFG.SQUID.w, y: SQUID_Y,
-      w: CFG.SQUID.w, h: CFG.SQUID.h, dir: -1,
-      speed: CFG.SQUID.speed, ampX: CFG.SQUID.ampX, ampY: CFG.SQUID.ampY, freq: CFG.SQUID.freq,
+      baseX: W - 58, baseY: SQUID_Y, x: W - 58, y: SQUID_Y,
+      w: 58, h: 58, dir: -1,
+      speed: 18, ampX: 10, ampY: 16, freq: 0.55,
       phase: Math.random()*Math.PI*2,
     };
 
