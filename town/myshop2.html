@@ -990,7 +990,7 @@
       { id:"v12", name:"ゼロ理論タコ民", type:"diet",     url:"https://ul.h3z.jp/KVImBYZ8.png" },
       { id:"v13", name:"枠外タコ民",     type:"overflow", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku72.png" },
       { id:"v14", name:"未開封保護タコ民",type:"collector",url:"https://ul.h3z.jp/zSvGyVq9.png" },
-      { id:"v15", name:"裏棚タコ民",     type:"shadow",   url:"https://ul.h3z.jp/IBKDrVAm.png" },
+      { id:"v15", name:"防水タコ民",     type:"shadow",   url:"https://ul.h3z.jp/IBKDrVAm.png" },
       { id:"v16", name:"替え玉タコ民",   type:"ramen",    url:"https://ul.h3z.jp/NViRwhdj.png" },
       { id:"v17", name:"投げ銭タコ民",   type:"streamer", url:"https://ul.h3z.jp/8PukOegd.png" },
       { id:"v18", name:"舌判定タコ民",   type:"gourmet",  url:"https://ul.h3z.jp/We4UXFSI.png" },
@@ -1529,13 +1529,29 @@
   }
 
   function basePriceFor(card){
-    const r = String(card?.rarity || "").toUpperCase();
-    const map = { "N":500, "R":800, "SR":2000, "UR":5000, "LR":10000, "SP":1500 };
-    for(const k of Object.keys(map)){
-      if(r === k || r.includes(k)) return map[k];
-    }
-    return 500;
+  const r = String(card?.rarity || "").toUpperCase().trim();
+
+  // ✅ 指定の基本価格
+  const map = {
+    "N":  500,
+    "R":  800,
+    "SR": 1500,
+    "UR": 3000,
+    "LR": 5000
+  };
+
+  // 1) 完全一致を最優先
+  if(map[r] != null) return map[r];
+
+  // 2) 含む表記（例: "SR+" "UR確定" "LR(限定)"）は “長いキーから” 判定
+  const keys = Object.keys(map).sort((a,b)=> b.length - a.length);
+  for(const k of keys){
+    if(r.includes(k)) return map[k];
   }
+
+  // 3) その他
+  return 1000;
+}
   function tierMult(tier){
     if(tier === "安い") return 0.80;
     if(tier === "高い") return 1.30;
