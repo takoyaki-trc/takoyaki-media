@@ -1,5 +1,4 @@
 (() => {
-  console.log("✅ takofarm.js loaded", new Date().toISOString());
   "use strict";
 
   // =========================
@@ -281,44 +280,77 @@
 
   // =========================================================
   // ✅ seed_token（roten→farm 共有）
+  //   ★修正点：roten.js と同じ保存形式「{ tokens: [...] }」を読む
   // =========================================================
   function loadSeedTokens(){
+    // roten.js 側の形式：
+    // { ver?, tokens:[ {token, collabId, issuedAt, ...} ] }
     try{
       const raw = localStorage.getItem(LS_SEEDTOKENS);
-      if(!raw) return [];
+      if(!raw) return { tokens: [] };
+
       const v = JSON.parse(raw);
-      return Array.isArray(v) ? v : [];
+
+      // 既に {tokens:[...]} 形式ならそのまま
+      if(v && typeof v === "object" && Array.isArray(v.tokens)){
+        return { ...v, tokens: v.tokens.slice() };
+      }
+
+      // 旧形式（配列）や壊れた形式でも救済：配列なら tokens に詰め替え
+      if(Array.isArray(v)){
+        return { tokens: v.slice() };
+      }
+
+      return { tokens: [] };
     }catch(e){
-      return [];
+      return { tokens: [] };
     }
   }
-  function saveSeedTokens(arr){
-    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(Array.isArray(arr) ? arr : []));
+  function saveSeedTokens(st){
+    const safe = (st && typeof st === "object") ? st : {};
+    const tokens = Array.isArray(safe.tokens) ? safe.tokens : [];
+    // roten.js に戻しても壊れないように {tokens:[...]} で保存
+    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify({ ...safe, tokens }));
   }
   function normTokenEntry(entry){
-    if(typeof entry === "string") return { token: entry, collabId: null, status: "ISSUED" };
+    // roten.js の token 要素は { token, collabId, issuedAt } （status無し）
+    // farm 側は status が無ければ ISSUED 扱いにする
+    if(typeof entry === "string"){
+      return { token: entry, collabId: null, status: "ISSUED" };
+    }
     if(entry && typeof entry === "object"){
-      return {
-        token: String(entry.token || entry.id || ""),
-        collabId: entry.collabId ? String(entry.collabId) : null,
-        status: entry.status ? String(entry.status) : "ISSUED"
-      };
+      const token = String(entry.token || entry.id || "").trim();
+      const collabId = entry.collabId ? String(entry.collabId).trim() : null;
+      const status = entry.status ? String(entry.status) : "ISSUED";
+      return { ...entry, token, collabId, status };
     }
     return { token:"", collabId:null, status:"ISSUED" };
   }
   function countIssuedTokensByCollab(collabId){
     if(!collabId) return 0;
-    const list = loadSeedTokens().map(normTokenEntry);
+    const st = loadSeedTokens();
+    const list = (st.tokens || []).map(normTokenEntry);
+
+    // ISSUED のみカウント（status 無しは norm で ISSUED）
     return list.filter(x => x.token && x.collabId === collabId && x.status === "ISSUED").length;
   }
   function takeOneIssuedToken(collabId){
     if(!collabId) return null;
-    const list = loadSeedTokens().map(normTokenEntry);
+
+    const st = loadSeedTokens();
+    const list = (st.tokens || []).map(normTokenEntry);
+
     const idx = list.findIndex(x => x.token && x.collabId === collabId && x.status === "ISSUED");
     if(idx < 0) return null;
+
     const picked = list[idx];
-    list[idx] = { ...picked, status: "PLANTED" }; // 表示用（本体はGASが正）
-    saveSeedTokens(list);
+
+    // farm側の表示整合のため、PLANTED に更新して保存（roten.jsは無視してOK）
+    list[idx] = { ...picked, status: "PLANTED", plantedAt: Date.now() };
+
+    st.tokens = list;
+    saveSeedTokens(st);
+
     return picked.token;
   }
 
