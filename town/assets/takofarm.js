@@ -1,3 +1,15 @@
+/* =========================================================
+   takofarm.js（畑）完全版：レイアウトは触らず「コラボのタネが反映されない」を修正
+   ✅ 変更点（見た目はそのまま）
+   - roten.js が保存する seed_token の形式ゆれを“全部吸収”して読む
+     ・["uuid", ...]
+     ・[{token, collabId, issuedAt, status}, ...]
+     ・{ver, tokens:[...]}
+     ・{ver, tokensByCollab:{ collabId:[...], ... }}
+     ・{col_gratan_2026:[...], col_ghost_2026:[...]} みたいな直置き配列
+   - 「コラボ種の所持数」を inv.seed["seed_colabo"] にも同期（互換/反映対策）
+   - 別タブ（露店）でredeemしても畑が即反映されるよう storage イベント監視
+========================================================= */
 (() => {
   "use strict";
 
@@ -280,10 +292,8 @@
 
   // =========================================================
   // ✅ seed_token（roten→farm 共有）
-  // ★修正ポイント：roten.js の保存形式 {tokens:[...]} と、旧形式 [] の両対応
+  // ★最重要：保存形式ゆれを全部吸収して「必ず tokens:[...]」に正規化
   // =========================================================
-
-  // ✅ 読み取り：常に { ver, tokens:[...] } を返す
   function loadSeedTokenStore(){
     try{
       const raw = localStorage.getItem(LS_SEEDTOKENS);
@@ -291,15 +301,48 @@
 
       const v = JSON.parse(raw);
 
-      // 旧形式：配列（["uuid", ...] or [{token,collabId}, ...]）
+      // 1) 旧形式：配列
       if(Array.isArray(v)){
         return { ver:1, tokens: v };
       }
 
-      // 新形式：{ tokens:[...] }（roten.js の applyRedeemTokens がこの形式）
+      // 2) {ver, tokens:[...]}
       if(v && typeof v === "object"){
-        const arr = Array.isArray(v.tokens) ? v.tokens : [];
-        return { ver: Number(v.ver||1) || 1, tokens: arr };
+        // tokens が配列
+        if(Array.isArray(v.tokens)){
+          return { ver: Number(v.ver||1) || 1, tokens: v.tokens };
+        }
+
+        // 3) {tokensByCollab:{ collabId:[...] }}
+        if(v.tokensByCollab && typeof v.tokensByCollab === "object"){
+          const out = [];
+          for(const [collabId, arr] of Object.entries(v.tokensByCollab)){
+            if(!Array.isArray(arr)) continue;
+            for(const t of arr){
+              if(typeof t === "string") out.push({ token:t, collabId, status:"ISSUED", issuedAt:null });
+              else if(t && typeof t === "object") out.push({ ...t, collabId: t.collabId || collabId });
+            }
+          }
+          return { ver: Number(v.ver||1) || 1, tokens: out };
+        }
+
+        // 4) {col_gratan_2026:[...], col_ghost_2026:[...]} みたいな直置き
+        //    ※ ver/tokens 等の既知キー以外で「配列」を持ってたら、それを collabId と見なして吸収
+        const known = new Set(["ver","tokens","tokensByCollab"]);
+        const out = [];
+        for(const [k,val] of Object.entries(v)){
+          if(known.has(k)) continue;
+          if(Array.isArray(val)){
+            for(const t of val){
+              if(typeof t === "string") out.push({ token:t, collabId:k, status:"ISSUED", issuedAt:null });
+              else if(t && typeof t === "object") out.push({ ...t, collabId: t.collabId || k });
+            }
+          }
+        }
+        if(out.length) return { ver: Number(v.ver||1) || 1, tokens: out };
+
+        // それ以外
+        return { ver: Number(v.ver||1) || 1, tokens: [] };
       }
 
       return { ver:1, tokens:[] };
@@ -308,7 +351,6 @@
     }
   }
 
-  // ✅ 書き込み：必ず {tokens:[...]} 形式で保存（roten と揃える）
   function saveSeedTokenStore(store){
     const safe = (store && typeof store === "object") ? store : {};
     const tokens = Array.isArray(safe.tokens) ? safe.tokens : [];
@@ -316,7 +358,6 @@
     localStorage.setItem(LS_SEEDTOKENS, JSON.stringify({ ver, tokens }));
   }
 
-  // 互換維持：このファイル内の既存関数名はそのまま
   function loadSeedTokens(){
     return loadSeedTokenStore().tokens;
   }
@@ -326,20 +367,23 @@
     saveSeedTokenStore(st);
   }
 
+  // 形式ゆれの正規化（roten側が token/collabId を別名で持ってても拾う）
   function normTokenEntry(entry){
-    // 文字列だけ入ってる旧形式
     if(typeof entry === "string"){
-      return {
-        token: entry.trim(),
-        collabId: null,
-        status: "ISSUED",
-        issuedAt: null
-      };
+      return { token: entry.trim(), collabId: null, status:"ISSUED", issuedAt:null };
     }
-    // オブジェクト形式（roten.js: {token, collabId, issuedAt}）
     if(entry && typeof entry === "object"){
-      const token = String(entry.token || entry.id || "").trim();
-      const collabId = entry.collabId ? String(entry.collabId).trim() : null;
+      const token = String(entry.token || entry.id || entry.uuid || "").trim();
+
+      // collabId ゆれ吸収（seedIdしか無い場合も対応）
+      let collabId = null;
+      if(entry.collabId) collabId = String(entry.collabId).trim();
+      else if(entry.collab) collabId = String(entry.collab).trim();
+      else if(entry.c) collabId = String(entry.c).trim();
+      else if(entry.seedId && SEED_TO_COLLAB[String(entry.seedId).trim()]){
+        collabId = SEED_TO_COLLAB[String(entry.seedId).trim()];
+      }
+
       const status = entry.status ? String(entry.status).trim() : "ISSUED";
       const issuedAt = (entry.issuedAt != null) ? Number(entry.issuedAt) : null;
 
@@ -362,7 +406,6 @@
   function takeOneIssuedToken(collabId){
     if(!collabId) return null;
 
-    // ここだけ「store」を直接扱って、形式を壊さず status を反映
     const st = loadSeedTokenStore();
     const list = (st.tokens || []).map(normTokenEntry);
 
@@ -374,7 +417,6 @@
     // ローカル表記用：PLANTED にする（本体はGASが正）
     list[idx] = { ...picked, status: "PLANTED" };
 
-    // st.tokens は「元要素の形」ではなくてもOK（畑/露店は読み取り互換済み）
     st.tokens = list.map(x => ({
       token: x.token,
       collabId: x.collabId,
@@ -384,6 +426,20 @@
 
     saveSeedTokenStore(st);
     return picked.token;
+  }
+
+  // ✅ 互換/反映対策：コラボ種の「見かけ在庫」を inv.seed に同期（他コードがinv参照でも反映される）
+  function syncCollabSeedToInv(){
+    const inv = loadInv();
+    let changed = false;
+    for(const [seedId, collabId] of Object.entries(SEED_TO_COLLAB)){
+      const cnt = countIssuedTokensByCollab(collabId);
+      if(inv.seed && Number(inv.seed[seedId] ?? 0) !== cnt){
+        inv.seed[seedId] = cnt;
+        changed = true;
+      }
+    }
+    if(changed) saveInv(inv);
   }
 
   // =========================================================
@@ -402,6 +458,7 @@
     saveOcto(next);
     return next;
   }
+
   function randInt(min, max){
     min = Math.floor(min); max = Math.floor(max);
     if(max < min) [min, max] = [max, min];
@@ -427,6 +484,8 @@
     }
     return list[list.length-1]?.v;
   }
+
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
   function itemRewardForLevel(level){
     const lv = Math.max(1, Math.floor(level));
@@ -564,7 +623,6 @@
   }
   function saveBook(b){ localStorage.setItem(LS_BOOK, JSON.stringify(b)); }
 
-  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function pad2(n){ return String(n).padStart(2,"0"); }
   function fmtRemain(ms){
     if(ms <= 0) return "00:00:00";
@@ -676,28 +734,22 @@
   // ★報酬抽選（※seed_colaboはローカル抽選しない：GAS harvestで確定）
   // =========================================================
   function drawRewardForPlot(p){
-    // ✅ まず肥料SP（最優先）
     const sp = pickFertSPIfAny(p);
     if(sp) return sp;
 
-    // 固定タネ
     if (p && p.seedId === "seed_special") {
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
     }
 
-    // ✅ コラボ種はローカルで確定しない（ここには来ない運用）
+    // ※ここは基本来ない運用（GAS確定）。保険で残す。
     if (p && p.seedId === "seed_colabo") {
       const c = pick(GRATIN_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:c.rarity };
     }
 
-    if (p && p.seedId === "seed_bussasari") {
-      return pickBussasariReward();
-    }
-    if (p && p.seedId === "seed_namara_kawasar") {
-      return pickNamaraReward();
-    }
+    if (p && p.seedId === "seed_bussasari") return pickBussasariReward();
+    if (p && p.seedId === "seed_namara_kawasar") return pickNamaraReward();
 
     const rarity = (p && p.fixedRarity) ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
 
@@ -913,9 +965,11 @@
   mClose.addEventListener("click", closeModalOrCommit);
 
   // =========================================================
-  // ✅ 装備表示更新
+  // ✅ 装備表示更新（ここで“反映”同期も走らせる）
   // =========================================================
   function renderLoadout(){
+    syncCollabSeedToInv(); // ←重要：露店redeemの反映をinvにも同期
+
     inv = loadInv();
     loadout = loadLoadout();
 
@@ -967,6 +1021,8 @@
   // ✅ グリッド選択UI
   // =========================================================
   function openPickGrid(kind){
+    syncCollabSeedToInv(); // ←重要：開く直前に反映
+
     inv = loadInv();
     loadout = loadLoadout();
 
@@ -1044,6 +1100,8 @@
   // ✅ 描画
   // =========================================================
   function render(){
+    syncCollabSeedToInv(); // ←重要：毎描画で反映
+
     player = loadPlayer();
     book = loadBook();
 
@@ -1170,6 +1228,8 @@
   }
 
   function plantAt(index){
+    syncCollabSeedToInv();
+
     inv = loadInv();
     loadout = loadLoadout();
 
@@ -1276,11 +1336,12 @@
       delete plot.reward;
       plot.fixedRarity = null;
       plot.srHint = "NONE";
+
+      syncCollabSeedToInv(); // ←植えた直後に反映更新
+
     }else{
-      // ✅ それ以外：植えた時点で確定して保存（現状と同じ）
       plot.reward = drawRewardForPlot(plot);
 
-      // ✅ SPが当たったら演出矛盾を消す
       if(plot.reward && plot.reward.rarity === "SP"){
         plot.fixedRarity = null;
         plot.srHint = "NONE";
@@ -1371,7 +1432,6 @@
       const msg = json?.error || `harvest failed (HTTP ${res.status})`;
       throw new Error(msg);
     }
-    // ✅ GASの返却に合わせる（想定：cardId/name/img/rarity）
     return {
       id: String(json.cardId),
       name: String(json.name),
@@ -1433,7 +1493,6 @@
     // =========================================================
     if (p.state === "READY") {
 
-      // ✅ コラボはGASで確定
       if(p.seedId === "seed_colabo"){
         if(!p.seedToken){
           openModal("エラー", `
@@ -1452,7 +1511,6 @@
           try{
             const reward = await gasHarvest(p.seedToken);
 
-            // plotに保存（再表示対策）
             p.reward = reward;
             state.plots[i] = p;
             saveState(state);
@@ -1605,7 +1663,21 @@
     render();
   }
 
+  // =========================================================
+  // ✅ 露店（別タブ）でredeemしたら、畑も即反映（最重要）
+  // =========================================================
+  window.addEventListener("storage", (e) => {
+    if(!e) return;
+    if(e.key === LS_SEEDTOKENS || e.key === LS_INV || e.key === LS_LOADOUT){
+      // state は畑側、inv/seedtokens 変化を優先的に拾う
+      syncCollabSeedToInv();
+      renderLoadout();
+      render();
+    }
+  });
+
   // 初期
+  syncCollabSeedToInv();
   renderLoadout();
   render();
   setInterval(tick, TICK_MS);
