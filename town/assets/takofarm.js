@@ -48,7 +48,7 @@
   const LS_SEEDTOKENS = "tf_v1_seedtokens";
 
   // ✅ あなたのGAS WebApp URL（/execまで）※ここだけ必須変更
-  const GAS_URL = "https://script.google.com/macros/s/XXXXXXXXXXXX/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwFhJjpj0IidOYf95dyANLFYnIYTuPFFaAKOVxmfGmWJW-9AsCGQBsW90uEitpIpcdm/exec";
 
   // =========================================================
   // ✅ コラボ種：seedId -> collabId
