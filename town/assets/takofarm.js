@@ -140,9 +140,21 @@ const SEED_TO_COLLAB = {
     { id:"seed_bussasari", name:"ブッ刺さりタネ", desc:"刺さるのは心だけ。\n出るのは5枚だけ（全部N）。", factor:1.05, img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり固定5枚" },
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor:1.08, img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり固定12枚" },
 
-    // ★コラボ（グラタン）：シリアル付与は露店側 / 畑はseed_token消費
-    { id:"seed_colabo", name:"コラボ【ぐらたんのタネ】", desc:"2種類だけ。\n稀にLR / 基本はN", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" }
-  ];
+
+
+
+　　　// ★コラボ（グラタン）
+{ id:"seed_colabo_gratan", name:"コラボ【ぐらたんのタネ】", desc:"2種類だけ。\n稀にLR / 基本はN", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" },
+
+// ★コラボ（ゴースト）※画像は仮。ゴースト用のタネ画像URLに差し替えてOK
+{ id:"seed_colabo_ghost", name:"コラボ【GHOSTのタネ】", desc:"N多め＋SR/LRが混ざる。\nGASで確定。", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" },
+
+// ★コラボ（hold）※必要なら
+{ id:"seed_colabo_hold", name:"コラボ【HOLDのタネ】", desc:"5段階。\nGASで確定。", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" },
+
+
+
+    
 
   const WATERS = [
     { id:"water_plain_free", name:"ただの水", desc:"無料・UR/LRなし。\n無課金の基準。", factor:1.00, fx:"基準（水）", img:"https://ul.h3z.jp/13XdhuHi.png", rates:{ N:62.5, R:31.2, SR:6.3, UR:0, LR:0 } },
