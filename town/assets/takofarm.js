@@ -38,7 +38,7 @@
   // ✅ オクト（露店と共通のキーを使う）
   const LS_OCTO = "roten_v1_octo";
 
-  // ✅ seed_token（畑側のキー）※露店側が別キーでも拾う（下でALT対応）
+  // ✅ roten.js が保存してる seed_token 群（ここを畑側で消費する）
   const LS_SEEDTOKENS = "tf_v1_seedtokens";
 
   // ✅ あなたのGAS WebApp URL（/execまで）※ここだけ必須変更
@@ -50,26 +50,6 @@
     // "seed_colabo_ghost": "col_ghost_2026",
     // "seed_colabo_hold": "col_hold_2026",
   };
-
-  // =========================
-  // ✅【最重要】露店→畑の在庫/seed_token同期（roten.jsは触らない）
-  // =========================
-  // 露店が使っていそうな在庫キー候補（環境差の沼回避）
-  const ALT_INV_KEYS = ["roten_v1_inv", "roten_v1_inventory", "roten_inv", "inv_v1"];
-  // 露店が使っていそうな seed_tokens キー候補
-  const ALT_SEEDTOKENS_KEYS = ["roten_v1_seedtokens", "roten_seedtokens", "seed_tokens_v1"];
-
-  function _safeParseJSON(raw){
-    try{ return JSON.parse(raw); }catch(e){ return null; }
-  }
-  function _normalizeInvShape(obj){
-    if(!obj || typeof obj !== "object") return null;
-    obj.seed  = obj.seed  || {};
-    obj.water = obj.water || {};
-    obj.fert  = obj.fert  || {};
-    return obj;
-  }
-  function _normStr(s){ return String(s ?? "").trim(); }
 
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
@@ -266,83 +246,22 @@
     FERTS.forEach(x => inv.fert[x.id] = 0);
     return inv;
   }
-
-  // ✅ 露店/畑どっちのキーでも在庫を拾い、畑キーへ同期する
   function loadInv(){
-    // 1) main（畑）
-    const mainRaw = localStorage.getItem(LS_INV);
-    const main = _normalizeInvShape(_safeParseJSON(mainRaw));
-
-    // 2) alt（露店）
-    let alt = null;
-    let altKey = null;
-    for(const k of ALT_INV_KEYS){
-      const raw = localStorage.getItem(k);
-      if(!raw) continue;
-      const obj = _normalizeInvShape(_safeParseJSON(raw));
-      if(obj){
-        alt = obj;
-        altKey = k;
-        break;
-      }
-    }
-
-    // 3) どっちも無し
-    if(!main && !alt) return defaultInv();
-
-    // 4) main無し altあり → alt採用してmainへ同期
-    if(!main && alt){
-      const inv = { ...defaultInv(), ...alt, ver:1 };
+    try{
+      const raw = localStorage.getItem(LS_INV);
+      if(!raw) return defaultInv();
+      const inv = JSON.parse(raw);
+      if(!inv || typeof inv !== "object") return defaultInv();
       inv.seed  = inv.seed  || {};
       inv.water = inv.water || {};
       inv.fert  = inv.fert  || {};
       for(const x of SEEDS)  if(!(x.id in inv.seed))  inv.seed[x.id]=0;
       for(const x of WATERS) if(!(x.id in inv.water)) inv.water[x.id]=0;
       for(const x of FERTS)  if(!(x.id in inv.fert))  inv.fert[x.id]=0;
-
-      saveInv(inv); // ✅ 畑キーへ同期
       return inv;
-    }
-
-    // 5) mainあり → 欠け補完
-    const inv = { ...defaultInv(), ...main, ver:1 };
-    inv.seed  = inv.seed  || {};
-    inv.water = inv.water || {};
-    inv.fert  = inv.fert  || {};
-    for(const x of SEEDS)  if(!(x.id in inv.seed))  inv.seed[x.id]=0;
-    for(const x of WATERS) if(!(x.id in inv.water)) inv.water[x.id]=0;
-    for(const x of FERTS)  if(!(x.id in inv.fert))  inv.fert[x.id]=0;
-
-    // 6) altもある場合は「max統合」（二重加算で増えすぎるのを防ぐ）
-    if(alt){
-      alt.seed  = alt.seed  || {};
-      alt.water = alt.water || {};
-      alt.fert  = alt.fert  || {};
-
-      for(const id of Object.keys(alt.seed)){
-        inv.seed[id] = Math.max(Number(inv.seed[id]||0), Number(alt.seed[id]||0));
-      }
-      for(const id of Object.keys(alt.water)){
-        inv.water[id] = Math.max(Number(inv.water[id]||0), Number(alt.water[id]||0));
-      }
-      for(const id of Object.keys(alt.fert)){
-        inv.fert[id] = Math.max(Number(inv.fert[id]||0), Number(alt.fert[id]||0));
-      }
-
-      // ✅ 統合結果を畑キーへ同期
-      saveInv(inv);
-
-      // （任意）露店キーへも同期して互換維持
-      if(altKey){
-        try{ localStorage.setItem(altKey, JSON.stringify(inv)); }catch(e){}
-      }
-    }
-
-    return inv;
+    }catch(e){ return defaultInv(); }
   }
-
   function saveInv(inv){ localStorage.setItem(LS_INV, JSON.stringify(inv)); }
-
   function invGet(inv, invType, id){
     const box = inv[invType] || {};
     const n = Number(box[id] ?? 0);
@@ -363,78 +282,40 @@
   // =========================================================
   // ✅ seed_token（roten→farm 共有）
   // =========================================================
+  function loadSeedTokens(){
+    try{
+      const raw = localStorage.getItem(LS_SEEDTOKENS);
+      if(!raw) return [];
+      const v = JSON.parse(raw);
+      return Array.isArray(v) ? v : [];
+    }catch(e){
+      return [];
+    }
+  }
+  function saveSeedTokens(arr){
+    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(Array.isArray(arr) ? arr : []));
+  }
   function normTokenEntry(entry){
-    if(typeof entry === "string") return { token: _normStr(entry), collabId: null, status: "ISSUED" };
+    if(typeof entry === "string") return { token: entry, collabId: null, status: "ISSUED" };
     if(entry && typeof entry === "object"){
       return {
-        token: _normStr(entry.token || entry.id || ""),
-        collabId: entry.collabId ? _normStr(entry.collabId) : null,
-        status: entry.status ? _normStr(entry.status) : "ISSUED"
+        token: String(entry.token || entry.id || ""),
+        collabId: entry.collabId ? String(entry.collabId) : null,
+        status: entry.status ? String(entry.status) : "ISSUED"
       };
     }
     return { token:"", collabId:null, status:"ISSUED" };
   }
-
-  // ✅ 露店/畑どっちのキーでもseed_tokensを拾ってユニーク化
-  function loadSeedTokens(){
-    const list = [];
-
-    // main（畑）
-    const rawMain = localStorage.getItem(LS_SEEDTOKENS);
-    if(rawMain){
-      const v = _safeParseJSON(rawMain);
-      if(Array.isArray(v)) list.push(...v);
-    }
-
-    // alt（露店）
-    for(const k of ALT_SEEDTOKENS_KEYS){
-      const raw = localStorage.getItem(k);
-      if(!raw) continue;
-      const v = _safeParseJSON(raw);
-      if(Array.isArray(v)) list.push(...v);
-    }
-
-    // tokenでユニーク化
-    const map = new Map();
-    for(const it of list){
-      const e = normTokenEntry(it);
-      if(!e.token) continue;
-      map.set(e.token, e);
-    }
-
-    return Array.from(map.values());
-  }
-
-  // ✅ 保存は畑キーへ（必要なら露店キーにも反映）
-  function saveSeedTokens(arr){
-    const a = Array.isArray(arr) ? arr.map(normTokenEntry) : [];
-    try{ localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(a)); }catch(e){}
-
-    // （任意）露店側も更新して見た目の齟齬を減らす
-    for(const k of ALT_SEEDTOKENS_KEYS){
-      try{
-        if(localStorage.getItem(k) != null){
-          localStorage.setItem(k, JSON.stringify(a));
-        }
-      }catch(e){}
-    }
-  }
-
   function countIssuedTokensByCollab(collabId){
-    collabId = _normStr(collabId);
     if(!collabId) return 0;
     const list = loadSeedTokens().map(normTokenEntry);
-    return list.filter(x => x.token && _normStr(x.collabId) === collabId && _normStr(x.status) === "ISSUED").length;
+    return list.filter(x => x.token && x.collabId === collabId && x.status === "ISSUED").length;
   }
-
   function takeOneIssuedToken(collabId){
-    collabId = _normStr(collabId);
     if(!collabId) return null;
-
     const list = loadSeedTokens().map(normTokenEntry);
-    const idx = list.findIndex(x => x.token && _normStr(x.collabId) === collabId && _normStr(x.status) === "ISSUED");
+    const idx = list.findIndex(x => x.token && x.collabId === collabId && x.status === "ISSUED");
     if(idx < 0) return null;
-
     const picked = list[idx];
     list[idx] = { ...picked, status: "PLANTED" }; // 表示用（本体はGASが正）
     saveSeedTokens(list);
