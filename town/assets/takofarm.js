@@ -280,76 +280,106 @@
 
   // =========================================================
   // ✅ seed_token（roten→farm 共有）
-  //   ★修正点：roten.js と同じ保存形式「{ tokens: [...] }」を読む
+  // ★修正点：roten.js形式 {tokens:[...]} と旧形式 [...] の両対応
+  //         さらに保存時は「元の形式」を維持して rotem.js を壊さない
   // =========================================================
-  function loadSeedTokens(){
-    // roten.js 側の形式：
-    // { ver?, tokens:[ {token, collabId, issuedAt, ...} ] }
+  function loadSeedTokenStore(){
     try{
       const raw = localStorage.getItem(LS_SEEDTOKENS);
-      if(!raw) return { tokens: [] };
-
+      if(!raw){
+        // デフォは roten 互換のオブジェクト形式にしておく（安全）
+        return { mode:"object", base:{ ver:1 }, tokens:[] };
+      }
       const v = JSON.parse(raw);
 
-      // 既に {tokens:[...]} 形式ならそのまま
-      if(v && typeof v === "object" && Array.isArray(v.tokens)){
-        return { ...v, tokens: v.tokens.slice() };
-      }
-
-      // 旧形式（配列）や壊れた形式でも救済：配列なら tokens に詰め替え
+      // 旧: 配列そのもの
       if(Array.isArray(v)){
-        return { tokens: v.slice() };
+        return { mode:"array", base:null, tokens:v };
       }
 
-      return { tokens: [] };
+      // roten: {tokens:[...]}（他フィールド付きでもOK）
+      if(v && typeof v === "object"){
+        if(Array.isArray(v.tokens)){
+          return { mode:"object", base:v, tokens:v.tokens };
+        }
+        // まれな別名に保険（壊れてても拾う）
+        if(Array.isArray(v.items)){
+          return { mode:"object", base:{ ...v, tokens:v.items }, tokens:v.items };
+        }
+      }
+
+      // 想定外は空
+      return { mode:"object", base:{ ver:1 }, tokens:[] };
     }catch(e){
-      return { tokens: [] };
+      return { mode:"object", base:{ ver:1 }, tokens:[] };
     }
   }
-  function saveSeedTokens(st){
-    const safe = (st && typeof st === "object") ? st : {};
-    const tokens = Array.isArray(safe.tokens) ? safe.tokens : [];
-    // roten.js に戻しても壊れないように {tokens:[...]} で保存
-    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify({ ...safe, tokens }));
+
+  function saveSeedTokenStore(store){
+    const tokens = Array.isArray(store?.tokens) ? store.tokens : [];
+    const mode = store?.mode;
+
+    if(mode === "array"){
+      localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(tokens));
+      return;
+    }
+
+    // object形式（roten互換）で保存
+    const base = (store?.base && typeof store.base === "object") ? { ...store.base } : {};
+    if(!("ver" in base)) base.ver = 1;
+    base.tokens = tokens;
+    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(base));
   }
+
+  // 以降のAPIは「配列を返す」形で既存ロジックを崩さない
+  function loadSeedTokens(){
+    return loadSeedTokenStore().tokens || [];
+  }
+  function saveSeedTokens(arr){
+    // “最後に読んだ形式” を維持して保存したいので、現在ストアを見て mode を踏襲
+    const cur = loadSeedTokenStore();
+    cur.tokens = Array.isArray(arr) ? arr : [];
+    saveSeedTokenStore(cur);
+  }
+
   function normTokenEntry(entry){
-    // roten.js の token 要素は { token, collabId, issuedAt } （status無し）
-    // farm 側は status が無ければ ISSUED 扱いにする
-    if(typeof entry === "string"){
-      return { token: entry, collabId: null, status: "ISSUED" };
-    }
+    // entry が string の旧形式も許容
+    if(typeof entry === "string") return { token: entry, collabId: null, status: "ISSUED" };
+
     if(entry && typeof entry === "object"){
+      // roten.js は {token, collabId, issuedAt} で status を持たないことがある
       const token = String(entry.token || entry.id || "").trim();
-      const collabId = entry.collabId ? String(entry.collabId).trim() : null;
-      const status = entry.status ? String(entry.status) : "ISSUED";
-      return { ...entry, token, collabId, status };
+      const collabId = entry.collabId != null ? String(entry.collabId).trim() : null;
+      const status = entry.status != null ? String(entry.status).trim() : "ISSUED";
+      return { token, collabId: collabId || null, status: status || "ISSUED" };
     }
     return { token:"", collabId:null, status:"ISSUED" };
   }
+
   function countIssuedTokensByCollab(collabId){
     if(!collabId) return 0;
-    const st = loadSeedTokens();
-    const list = (st.tokens || []).map(normTokenEntry);
-
-    // ISSUED のみカウント（status 無しは norm で ISSUED）
+    const list = loadSeedTokens().map(normTokenEntry);
+    // roten側が status 未設定のままでも ISSUED 扱いになるので、ここで拾える
     return list.filter(x => x.token && x.collabId === collabId && x.status === "ISSUED").length;
   }
+
   function takeOneIssuedToken(collabId){
     if(!collabId) return null;
 
-    const st = loadSeedTokens();
-    const list = (st.tokens || []).map(normTokenEntry);
+    // 形式を保持して保存するため、storeを使う
+    const store = loadSeedTokenStore();
+    const list = (store.tokens || []).map(normTokenEntry);
 
     const idx = list.findIndex(x => x.token && x.collabId === collabId && x.status === "ISSUED");
     if(idx < 0) return null;
 
     const picked = list[idx];
+    // ローカルは「表示用」status更新（本体はGASが正）
+    list[idx] = { ...picked, status:"PLANTED" };
 
-    // farm側の表示整合のため、PLANTED に更新して保存（roten.jsは無視してOK）
-    list[idx] = { ...picked, status: "PLANTED", plantedAt: Date.now() };
-
-    st.tokens = list;
-    saveSeedTokens(st);
+    // 保存は元の形式を維持
+    store.tokens = list;
+    saveSeedTokenStore(store);
 
     return picked.token;
   }
