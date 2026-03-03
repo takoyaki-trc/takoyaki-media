@@ -1,15 +1,4 @@
-/* =========================================================
-   takofarm.js（畑 / roten.jsのseed_token方式に完全統一・安定版）
-   ✅ 在庫キー: tf_v1_inv（rotenと共通）
-   ✅ seed_tokenキー: tf_v1_seedtokens（rotenと共通 / {ver,tokens:[{token,collabId,issuedAt,status}]}）
-   ✅ コラボ種IDは roten と同じ: seed_collab
-   ✅ 過去コラボ種(seed_colabo等)は完全撤去（邪魔をしない）
-   ✅ コラボ種は「invの数」ではなく「ISSUED token本数」で表示/消費
-   ✅ 植える：ISSUED token を1本PLANTEDにして plot.seedToken に保持（必要ならGAS plant）
-   ✅ 収穫：GAS harvest(seedToken)でカード確定 → 図鑑保存 → tokenをHARVESTED
-========================================================= */
 (() => {
-  console.log("✅ takofarm.js loaded", new Date().toISOString());
   "use strict";
 
   // =========================
@@ -22,9 +11,9 @@
     GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
     GROW2: "https://ul.h3z.jp/tD4LUB6F.png",
 
-    // ✅ コラボ成長（GIF）
-    COLLAB_GROW1: "https://ul.h3z.jp/cq1soJdm.gif",
-    COLLAB_GROW2: "https://ul.h3z.jp/I6Iu4J32.gif",
+    // ★コラボ（グラタン）専用成長GIF
+    COLABO_GROW1: "https://ul.h3z.jp/cq1soJdm.gif",
+    COLABO_GROW2: "https://ul.h3z.jp/I6Iu4J32.gif",
 
     READY: "https://ul.h3z.jp/AmlnQA1b.png",
     BURN:  "https://ul.h3z.jp/q9hxngx6.png",
@@ -37,28 +26,53 @@
   // =========================
   // LocalStorage Keys
   // =========================
-  const LS = {
-    state:  "tf_v1_state",
-    book:   "tf_v1_book",
-    player: "tf_v1_player",
-    inv:    "tf_v1_inv",
-    loadout:"tf_v1_loadout",
-    octo:   "roten_v1_octo",
-    seedTokens: "tf_v1_seedtokens",
+  const LS_STATE  = "tf_v1_state";
+  const LS_BOOK   = "tf_v1_book";
+  const LS_PLAYER = "tf_v1_player";
+  const LS_INV    = "tf_v1_inv";
+
+  // ✅ 装備（種/水/肥料）
+  const LS_LOADOUT = "tf_v1_loadout";
+
+  // ✅ オクト（露店と共通のキーを使う）
+  const LS_OCTO = "roten_v1_octo";
+
+  // ✅ roten.js が保存してる seed_token 群（ここを畑側で消費する）
+  const LS_SEEDTOKENS = "tf_v1_seedtokens";
+
+  // ✅ あなたのGAS WebApp URL（/execまで）※ここだけ必須変更
+  const GAS_URL = "https://script.google.com/macros/s/XXXXXXXXXXXX/exec";
+
+  // =========================================================
+  // ✅ コラボ種ID（表記ゆれ吸収）
+  // =========================================================
+  const COLLAB_SEED_IDS = new Set([
+    "seed_colabo",
+    "seed_collab",
+    "seed_colabo_gratan",
+    "seed_collab_gratan"
+  ]);
+
+  // ✅ seedId → collabId 対応（表記ゆれ全部OKにしておく）
+  const SEED_TO_COLLAB = {
+    "seed_colabo": "col_gratan_2026",
+    "seed_collab": "col_gratan_2026",
+    "seed_colabo_gratan": "col_gratan_2026",
+    "seed_collab_gratan": "col_gratan_2026",
+
+    // 追加するならここ（例）
+    // "seed_colabo_ghost": "col_ghost_2026",
+    // "seed_collab_ghost": "col_ghost_2026",
   };
 
-  // =========================
-  // GAS（roten.jsと同じにする）
-  // =========================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwFhJjpj0IidOYf95dyANLFYnIYTuPFFaAKOVxmfGmWJW-9AsCGQBsW90uEitpIpcdm/exec";
-  const GAS_KEY = "takopi-serial-2026";
+  function isCollabSeed(seedId){
+    return !!seedId && (COLLAB_SEED_IDS.has(seedId) || !!SEED_TO_COLLAB[seedId]);
+  }
+  function collabIdFromSeed(seedId){
+    return SEED_TO_COLLAB[seedId] || null;
+  }
 
-  // ✅ roten.jsと同じ “コラボ種ID”
-  const SEED_COLLAB_ID = "seed_collab";
-
-  // =========================
   // 育成時間など
-  // =========================
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
   const READY_TO_BURN_MS = 24 * 60 * 60 * 1000; // READYから焦げまで
   const TICK_MS = 1000;
@@ -67,8 +81,7 @@
   const BASE_RARITY_RATE = { N:70, R:20, SR:8, UR:1.8, LR:0.2 };
 
   // =========================================================
-  // ✅ カードプール（あなたの現行のまま）
-  // （※長いのでここは「貼り付けてOK」状態で残します）
+  // カードプール（あなたの現行のまま）
   // =========================================================
   const CARD_POOLS = {
     N: [
@@ -134,19 +147,19 @@
   };
 
   // =========================================================
-  // ✅ 種（roten.jsと合わせる / 旧seed_colabo等は削除）
+  // ★タネ一覧（完全版 2026最新版）
   // =========================================================
   const SEEDS = [
-    { id:"seed_random",  name:"なに出るタネ", desc:"何が育つかは完全ランダム。\n店主も知らない。", factor:1.00, img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
-    { id:"seed_shop",    name:"店頭タネ",     desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", factor:1.00, img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
-    { id:"seed_line",    name:"回線タネ",     desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor:1.00, img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
-    { id:"seed_special", name:"たこぴのタネ", desc:"このタネを植えたら、\n必ず「たこぴ8枚」から出る。", factor:1.00, img:"https://ul.h3z.jp/29OsEvjf.png", fx:"たこぴ専用8枚" },
+    { id:"seed_random", name:"なに出るタネ", desc:"何が育つかは完全ランダム。\n店主も知らない。", factor:1.00, img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
+    { id:"seed_shop",   name:"店頭タネ",     desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", factor:1.00, img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
+    { id:"seed_line",   name:"回線タネ",     desc:"画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor:1.00, img:"https://ul.h3z.jp/AonxB5x7.png", fx:"回線由来" },
+    { id:"seed_special",name:"たこぴのタネ", desc:"このタネを植えたら、\n必ず「たこぴ8枚」から出る。", factor:1.00, img:"https://ul.h3z.jp/29OsEvjf.png", fx:"たこぴ専用8枚" },
 
     { id:"seed_bussasari", name:"ブッ刺さりタネ", desc:"刺さるのは心だけ。\n出るのは5枚だけ（全部N）。", factor:1.05, img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり固定5枚" },
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor:1.08, img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり固定12枚" },
 
-    // ✅ これが “roten.jsのシリアル種” と同じID
-    { id:SEED_COLLAB_ID, name:"【コラボ】シリアルのタネ", desc:"購入不可。\nシリアルで seed_token が増える。\n畑で植えると結果が確定しているカードが出る。", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"サーバー確定" },
+    // ★コラボ（グラタン）：シリアル付与は露店側 / 畑はseed_token消費
+    { id:"seed_colabo", name:"コラボ【ぐらたんのタネ】", desc:"2種類だけ。\n稀にLR / 基本はN", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" }
   ];
 
   const WATERS = [
@@ -159,11 +172,11 @@
 
   // ✅ 肥料は “時短だけ”
   const FERTS = [
-    { id:"fert_agedama", name:"ただの揚げ玉", desc:"時短0。\n（今は見た目だけ）", factor:1.00, fx:"時短 0%", img:"https://ul.h3z.jp/9p5fx53n.png", burnCardUp:0.12, rawCardChance:0.00, skipGrowAnim:false },
-    { id:"fert_feel", name:"気のせい肥料", desc:"早くなった気がする。\n気のせいかもしれない。", factor:0.95, fx:"時短 5%", img:"https://ul.h3z.jp/XqFTb7sw.png", burnCardUp:0.00, rawCardChance:0.00, skipGrowAnim:false },
-    { id:"fert_guts", name:"根性論ぶち込み肥料", desc:"理由はない。\n気合いだ。", factor:0.80, fx:"時短 20%", img:"https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp:0.00, rawCardChance:0.00, skipGrowAnim:false },
-    { id:"fert_skip", name:"工程すっ飛ばし肥料", desc:"途中は、\n見なかったことにした。", factor:0.60, fx:"時短 40%", img:"https://ul.h3z.jp/FqPzx12Q.png", burnCardUp:0.00, rawCardChance:0.01, skipGrowAnim:true },
-    { id:"fert_timeno", name:"時間を信じない肥料", desc:"最終兵器・禁忌。\n（今は時短だけ）", factor:0.10, fx:"時短 90〜100%", img:"https://ul.h3z.jp/l2njWY57.png", burnCardUp:0.00, rawCardChance:0.03, skipGrowAnim:true },
+    { id:"fert_agedama", name:"ただの揚げ玉", desc:"時短0。\n（今は見た目だけ）", factor:1.00, fx:"時短 0%", img:"https://ul.h3z.jp/9p5fx53n.png", burnCardUp:0.12, rawCardChance:0.00, mantra:false, skipGrowAnim:false },
+    { id:"fert_feel", name:"気のせい肥料", desc:"早くなった気がする。\n気のせいかもしれない。", factor:0.95, fx:"時短 5%", img:"https://ul.h3z.jp/XqFTb7sw.png", burnCardUp:0.00, rawCardChance:0.00, mantra:false, skipGrowAnim:false },
+    { id:"fert_guts", name:"根性論ぶち込み肥料", desc:"理由はない。\n気合いだ。", factor:0.80, fx:"時短 20%", img:"https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp:0.00, rawCardChance:0.00, mantra:true, skipGrowAnim:false },
+    { id:"fert_skip", name:"工程すっ飛ばし肥料", desc:"途中は、\n見なかったことにした。", factor:0.60, fx:"時短 40%", img:"https://ul.h3z.jp/FqPzx12Q.png", burnCardUp:0.00, rawCardChance:0.01, mantra:false, skipGrowAnim:true },
+    { id:"fert_timeno", name:"時間を信じない肥料", desc:"最終兵器・禁忌。\n（今は時短だけ）", factor:0.10, fx:"時短 90〜100%", img:"https://ul.h3z.jp/l2njWY57.png", burnCardUp:0.00, rawCardChance:0.03, mantra:false, skipGrowAnim:true },
   ];
 
   // =========================
@@ -180,9 +193,7 @@
     { id:"TP-008", name:"入学たこぴ", img:"https://ul.h3z.jp/DidPdK9b.png", rarity:"UR" },
   ];
 
-  // =========================
   // ✅ ブッ刺さりタネ：専用5種（全部N固定）
-  // =========================
   const BUSSASARI_POOL = [
     { id:"BS-001", name:"たこ焼きダーツインフェルノ《對馬裕佳子》", img:"https://ul.h3z.jp/l5roYZJ4.png", rarity:"N" },
     { id:"BS-002", name:"店主反撃レビュー《佐俣雄一郎》", img:"https://ul.h3z.jp/BtOTLlSo.png", rarity:"N" },
@@ -191,9 +202,7 @@
     { id:"BS-005", name:"白い契約《稲石裕》", img:"https://ul.h3z.jp/nmiaCKae.png", rarity:"N" },
   ];
 
-  // =========================
   // ✅ なまら買わさるタネ：専用12種（レア内訳固定）
-  // =========================
   const NAMARA_POOL = [
     { id:"NK-001", name:"イカさま焼き", img:"https://ul.h3z.jp/1UB3EY1B.png",  rarity:"LR" },
     { id:"NK-002", name:"定番のソース", img:"https://ul.h3z.jp/MBZcFmq9.png",  rarity:"N"  },
@@ -209,12 +218,18 @@
     { id:"NK-012", name:"てりたま", img:"https://ul.h3z.jp/MU6ehdTH.png", rarity:"SR" },
   ];
 
+  // ✅ グラタン：2種固定（※ローカル抽選は使わない：GAS harvestで確定）
+  const GRATIN_POOL = [
+    { id:"col-001", name:"伝説のたこ焼きライバー", img:"https://ul.h3z.jp/CmVTkAd2.png", rarity:"LR" },
+    { id:"col-002", name:"たこ焼き実況者ライバー",  img:"https://ul.h3z.jp/1VQvIP7v.png", rarity:"N"  },
+  ];
+
   // =========================================================
   // レベル・XP
   // =========================================================
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
-  const XP_BY_RARITY = { N:20, R:40, SR:80, UR:160, LR:300, SP:0, COL:0 };
+  const XP_BY_RARITY = { N:20, R:40, SR:80, UR:160, LR:300, SP:0 };
 
   function xpNeedForLevel(level){
     return 120 + (level - 1) * 50 + Math.floor(Math.pow(level - 1, 1.6) * 20);
@@ -223,7 +238,7 @@
 
   function loadPlayer(){
     try{
-      const raw = localStorage.getItem(LS.player);
+      const raw = localStorage.getItem(LS_PLAYER);
       if(!raw) return defaultPlayer();
       const p = JSON.parse(raw);
       if(!p || typeof p !== "object") return defaultPlayer();
@@ -233,177 +248,289 @@
       return { ver:1, level:lvl, xp:xp, unlocked:unl };
     }catch(e){ return defaultPlayer(); }
   }
-  function savePlayer(p){ localStorage.setItem(LS.player, JSON.stringify(p)); }
+  function savePlayer(p){ localStorage.setItem(LS_PLAYER, JSON.stringify(p)); }
   let player = loadPlayer();
 
   // =========================================================
-  // 在庫（tf_v1_inv / rotenと共通）
+  // ★在庫（すべて在庫制）
   // =========================================================
   function defaultInv(){
     const inv = { ver:1, seed:{}, water:{}, fert:{} };
-    for(const x of SEEDS)  inv.seed[x.id]  = 0;
-    for(const x of WATERS) inv.water[x.id] = 0;
-    for(const x of FERTS)  inv.fert[x.id]  = 0;
+    SEEDS.forEach(x => inv.seed[x.id] = 0);
+    WATERS.forEach(x => inv.water[x.id] = 0);
+    FERTS.forEach(x => inv.fert[x.id] = 0);
+
+    // ✅ 互換：別IDで見てる古いコードがいても死なないように
+    if(!("seed_collab" in inv.seed)) inv.seed.seed_collab = 0;
+    if(!("seed_colabo_gratan" in inv.seed)) inv.seed.seed_colabo_gratan = 0;
+    if(!("seed_collab_gratan" in inv.seed)) inv.seed.seed_collab_gratan = 0;
+
     return inv;
   }
   function loadInv(){
     try{
-      const raw = localStorage.getItem(LS.inv);
+      const raw = localStorage.getItem(LS_INV);
       if(!raw) return defaultInv();
-      const obj = JSON.parse(raw);
-      if(!obj || typeof obj !== "object") return defaultInv();
-      obj.seed  = obj.seed  || {};
-      obj.water = obj.water || {};
-      obj.fert  = obj.fert  || {};
-      // キー補完
-      for(const x of SEEDS)  if(!(x.id in obj.seed))  obj.seed[x.id]=0;
-      for(const x of WATERS) if(!(x.id in obj.water)) obj.water[x.id]=0;
-      for(const x of FERTS)  if(!(x.id in obj.fert))  obj.fert[x.id]=0;
-      obj.ver = 1;
-      return obj;
-    }catch(e){
-      return defaultInv();
-    }
-  }
-  function saveInv(inv){ localStorage.setItem(LS.inv, JSON.stringify(inv)); }
+      const inv = JSON.parse(raw);
+      if(!inv || typeof inv !== "object") return defaultInv();
+      inv.seed  = inv.seed  || {};
+      inv.water = inv.water || {};
+      inv.fert  = inv.fert  || {};
+      for(const x of SEEDS)  if(!(x.id in inv.seed))  inv.seed[x.id]=0;
+      for(const x of WATERS) if(!(x.id in inv.water)) inv.water[x.id]=0;
+      for(const x of FERTS)  if(!(x.id in inv.fert))  inv.fert[x.id]=0;
 
-  function invGet(inv, kind, id){
-    const box = inv?.[kind] || {};
+      // ✅ 互換キーも確保
+      if(!("seed_collab" in inv.seed)) inv.seed.seed_collab = 0;
+      if(!("seed_colabo_gratan" in inv.seed)) inv.seed.seed_colabo_gratan = 0;
+      if(!("seed_collab_gratan" in inv.seed)) inv.seed.seed_collab_gratan = 0;
+
+      return inv;
+    }catch(e){ return defaultInv(); }
+  }
+  function saveInv(inv){ localStorage.setItem(LS_INV, JSON.stringify(inv)); }
+  function invGet(inv, invType, id){
+    const box = inv[invType] || {};
     const n = Number(box[id] ?? 0);
     return Number.isFinite(n) ? n : 0;
   }
-  function invAdd(inv, kind, id, delta){
-    if(!inv[kind]) inv[kind] = {};
-    const cur = Number(inv[kind][id] ?? 0);
-    inv[kind][id] = Math.max(0, cur + delta);
+  function invAdd(inv, invType, id, delta){
+    if(!inv[invType]) inv[invType] = {};
+    const cur = Number(inv[invType][id] ?? 0);
+    inv[invType][id] = Math.max(0, cur + delta);
   }
-  function invDec(inv, kind, id){
-    const cur = invGet(inv, kind, id);
+  function invDec(inv, invType, id){
+    const cur = invGet(inv, invType, id);
     if(cur <= 0) return false;
-    invAdd(inv, kind, id, -1);
+    invAdd(inv, invType, id, -1);
     return true;
   }
 
   // =========================================================
-  // ✅ seed_token（roten.jsと同じ構造）
+  // ✅ seed_token（roten→farm 共有）
   // =========================================================
-  function seedTokensDefault(){
-    return { ver:1, tokens:[] }; // tokens: [{token, collabId, issuedAt, status}]
-  }
-  function loadSeedTokensBox(){
+  function loadSeedTokens(){
     try{
-      const raw = localStorage.getItem(LS.seedTokens);
-      if(!raw) return seedTokensDefault();
-      const obj = JSON.parse(raw);
-      if(!obj || typeof obj !== "object") return seedTokensDefault();
-      obj.ver = 1;
-      obj.tokens = Array.isArray(obj.tokens) ? obj.tokens : [];
-      // normalize
-      obj.tokens = obj.tokens.map(t => ({
-        token: String(t?.token || "").trim(),
-        collabId: String(t?.collabId || "").trim() || null,
-        issuedAt: Number(t?.issuedAt || Date.now()),
-        status: String(t?.status || "ISSUED").trim().toUpperCase(),
-      })).filter(x => x.token);
-      // unique
-      const seen = new Set();
-      obj.tokens = obj.tokens.filter(x => (seen.has(x.token) ? false : (seen.add(x.token), true)));
-      return obj;
+      const raw = localStorage.getItem(LS_SEEDTOKENS);
+      if(!raw) return [];
+      const v = JSON.parse(raw);
+      return Array.isArray(v) ? v : [];
     }catch(e){
-      return seedTokensDefault();
+      return [];
     }
   }
-  function saveSeedTokensBox(box){
-    const b = box && typeof box === "object" ? box : seedTokensDefault();
-    b.ver = 1;
-    b.tokens = Array.isArray(b.tokens) ? b.tokens : [];
-    localStorage.setItem(LS.seedTokens, JSON.stringify(b));
+  function saveSeedTokens(arr){
+    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(Array.isArray(arr) ? arr : []));
   }
 
-  function countTokensByStatus(status){
-    status = String(status||"").toUpperCase();
-    const box = loadSeedTokensBox();
-    return box.tokens.filter(t => String(t.status||"").toUpperCase() === status).length;
+  function normStatus(s){
+    const t = String(s || "ISSUED").trim().toUpperCase();
+    // ✅ ついでに変な値を救う
+    if(t === "ISSUE" || t === "NEW") return "ISSUED";
+    if(t === "PLANT") return "PLANTED";
+    if(t === "HARVEST") return "HARVESTED";
+    return t;
   }
-  function countIssuedTokens(){
-    return countTokensByStatus("ISSUED");
-  }
-  function countIssuedTokensByCollab(){
-    const box = loadSeedTokensBox();
-    const map = {};
-    for(const t of box.tokens){
-      if(String(t.status||"").toUpperCase() !== "ISSUED") continue;
-      const c = String(t.collabId || "unknown");
-      map[c] = (map[c]||0) + 1;
+
+  function normTokenEntry(entry){
+    if(typeof entry === "string"){
+      return { token: entry, collabId: null, status: "ISSUED" };
     }
-    return map;
+    if(entry && typeof entry === "object"){
+      const token = String(entry.token || entry.id || entry.seed_token || "").trim();
+      const collabId = entry.collabId ? String(entry.collabId).trim() : (entry.collab || null);
+      const status = normStatus(entry.status);
+      return { token, collabId: collabId ? String(collabId) : null, status };
+    }
+    return { token:"", collabId:null, status:"ISSUED" };
   }
 
-  // ✅ rotenの「沼回避」思想：inv.seed[seed_collab] を token本数で同期
-  // 畑側は「使える本数」を優先し ISSUED本数を採用（rotenに戻ると総数上書きされても、畑はISSUEDで判断する）
-  function syncCollabSeedToInv(){
-    const inv = loadInv();
-    inv.seed = inv.seed || {};
-    inv.seed[SEED_COLLAB_ID] = countIssuedTokens();
-    saveInv(inv);
+  function countIssuedTokensByCollab(collabId){
+    if(!collabId) return 0;
+    const list = loadSeedTokens().map(normTokenEntry);
+    return list.filter(x => x.token && x.collabId === collabId && normStatus(x.status) === "ISSUED").length;
   }
 
-  // ✅ ISSUED token を1本PLANTEDにして plotへ
-  function takeOneIssuedToken(){
-    const box = loadSeedTokensBox();
-    const idx = box.tokens.findIndex(t => String(t.status||"").toUpperCase() === "ISSUED");
+  function takeOneIssuedToken(collabId){
+    if(!collabId) return null;
+    const list = loadSeedTokens().map(normTokenEntry);
+    const idx = list.findIndex(x => x.token && x.collabId === collabId && normStatus(x.status) === "ISSUED");
     if(idx < 0) return null;
-    const picked = box.tokens[idx];
-    box.tokens[idx] = { ...picked, status:"PLANTED" };
-    saveSeedTokensBox(box);
-    syncCollabSeedToInv();
-    return picked; // {token, collabId, ...}
+    const picked = list[idx];
+    list[idx] = { ...picked, status: "PLANTED" }; // 表示/整合用（本体はGASが正）
+    saveSeedTokens(list);
+    return picked.token;
   }
 
-  // ✅ plotに入ってるtokenをHARVESTEDへ
   function markTokenHarvested(token){
-    token = String(token||"").trim();
     if(!token) return;
-    const box = loadSeedTokensBox();
-    const idx = box.tokens.findIndex(t => t.token === token);
-    if(idx >= 0){
-      box.tokens[idx] = { ...box.tokens[idx], status:"HARVESTED" };
-      saveSeedTokensBox(box);
-      syncCollabSeedToInv();
-    }
+    const list = loadSeedTokens().map(normTokenEntry);
+    const idx = list.findIndex(x => x.token === token);
+    if(idx < 0) return;
+    list[idx] = { ...list[idx], status: "HARVESTED" };
+    saveSeedTokens(list);
   }
 
-  // ✅ plotに入ってるtokenをISSUEDへ戻す（植え失敗のロールバック用）
-  function rollbackTokenToIssued(token){
-    token = String(token||"").trim();
-    if(!token) return;
-    const box = loadSeedTokensBox();
-    const idx = box.tokens.findIndex(t => t.token === token);
-    if(idx >= 0){
-      box.tokens[idx] = { ...box.tokens[idx], status:"ISSUED" };
-      saveSeedTokensBox(box);
-      syncCollabSeedToInv();
+  // ✅ コラボの token 本数を inv に同期（互換用）
+  function syncCollabSeedsToInv(inv){
+    let changed = false;
+    // いまはグラタン1種類想定（追加したらここを増やす）
+    const collabId = "col_gratan_2026";
+    const cnt = countIssuedTokensByCollab(collabId);
+
+    const keys = ["seed_colabo","seed_collab","seed_colabo_gratan","seed_collab_gratan"];
+    for(const k of keys){
+      if(!(k in inv.seed)) inv.seed[k] = 0;
+      if(Number(inv.seed[k]) !== cnt){
+        inv.seed[k] = cnt;
+        changed = true;
+      }
     }
+    if(changed) saveInv(inv);
+  }
+
+  function getCollabSeedCount(seedId){
+    const collabId = collabIdFromSeed(seedId);
+    return collabId ? countIssuedTokensByCollab(collabId) : 0;
   }
 
   // =========================================================
   // ✅ オクト
   // =========================================================
   function loadOcto(){
-    const n = Number(localStorage.getItem(LS.octo) ?? 0);
+    const n = Number(localStorage.getItem(LS_OCTO) ?? 0);
     return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
   }
   function saveOcto(n){
-    localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(n) || 0))));
+    localStorage.setItem(LS_OCTO, String(Math.max(0, Math.floor(Number(n) || 0))));
+  }
+  function addOcto(delta){
+    const cur = loadOcto();
+    const next = Math.max(0, cur + Math.floor(Number(delta) || 0));
+    saveOcto(next);
+    return next;
+  }
+  function randInt(min, max){
+    min = Math.floor(min); max = Math.floor(max);
+    if(max < min) [min, max] = [max, min];
+    return min + Math.floor(Math.random() * (max - min + 1));
+  }
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+
+  function octoRewardForLevel(level){
+    const lv = Math.max(1, Math.floor(level));
+    const t = Math.min(1, (lv - 1) / 18);
+    const min = Math.round(3000 + 2500 * t);
+    const max = Math.round(6500 + 3500 * t);
+    return clamp(randInt(min, max), 3000, 10000);
+  }
+
+  function pickWeighted(list){
+    const total = list.reduce((a, x)=> a + (x.w || 0), 0);
+    if(total <= 0) return list[0]?.v;
+    let r = Math.random() * total;
+    for(const x of list){
+      r -= (x.w || 0);
+      if(r <= 0) return x.v;
+    }
+    return list[list.length-1]?.v;
+  }
+
+  function itemRewardForLevel(level){
+    const lv = Math.max(1, Math.floor(level));
+
+    const count =
+      (lv >= 15) ? pickWeighted([{v:2,w:55},{v:3,w:45}]) :
+      (lv >= 8)  ? pickWeighted([{v:1,w:30},{v:2,w:70}]) :
+                   1;
+
+    const cat =
+      (lv >= 12) ? pickWeighted([{v:"seed",w:45},{v:"water",w:30},{v:"fert",w:25}]) :
+      (lv >= 6)  ? pickWeighted([{v:"seed",w:55},{v:"water",w:25},{v:"fert",w:20}]) :
+                   pickWeighted([{v:"seed",w:70},{v:"water",w:20},{v:"fert",w:10}]);
+
+    const seedChoices = SEEDS.filter(x => !isCollabSeed(x.id)); // コラボ種は報酬で出さない
+    const waterChoices = WATERS.slice();
+    const fertChoices = FERTS.slice();
+
+    const rewards = [];
+    for(let k=0;k<count;k++){
+      let picked = null;
+      if(cat === "seed")  picked = pick(seedChoices);
+      if(cat === "water") picked = pick(waterChoices);
+      if(cat === "fert")  picked = pick(fertChoices);
+      if(!picked) picked = pick(seedChoices);
+
+      rewards.push({
+        kind: cat,
+        id: picked.id,
+        name: picked.name,
+        img: picked.img,
+        qty: 1
+      });
+    }
+
+    const map = new Map();
+    for(const r of rewards){
+      const key = `${r.kind}:${r.id}`;
+      const prev = map.get(key);
+      if(prev) prev.qty += r.qty;
+      else map.set(key, { ...r });
+    }
+    return Array.from(map.values());
+  }
+
+  function grantLevelRewards(level){
+    const octo = octoRewardForLevel(level);
+    addOcto(octo);
+
+    const items = itemRewardForLevel(level);
+    const inv = loadInv();
+    syncCollabSeedsToInv(inv);
+
+    for(const it of items){
+      if(it.kind === "seed")  invAdd(inv, "seed",  it.id, it.qty);
+      if(it.kind === "water") invAdd(inv, "water", it.id, it.qty);
+      if(it.kind === "fert")  invAdd(inv, "fert",  it.id, it.qty);
+    }
+    saveInv(inv);
+
+    return { octo, items };
+  }
+
+  function addXP(amount){
+    if(!Number.isFinite(amount) || amount <= 0) return { leveled:false, unlockedDelta:0, rewards:[] };
+    let leveled = false, unlockedDelta = 0;
+    const rewards = [];
+
+    player.xp += Math.floor(amount);
+
+    while(player.xp >= xpNeedForLevel(player.level)){
+      player.xp -= xpNeedForLevel(player.level);
+      player.level += 1;
+      leveled = true;
+
+      const r = grantLevelRewards(player.level);
+      rewards.push({ level: player.level, ...r });
+
+      if(player.unlocked < MAX_PLOTS){
+        player.unlocked += 1;
+        unlockedDelta += 1;
+      }
+    }
+    savePlayer(player);
+    return { leveled, unlockedDelta, rewards };
   }
 
   // =========================================================
-  // ✅ ロードアウト
+  // ✅ 装備（ロードアウト）
   // =========================================================
-  function defaultLoadout(){ return { ver:1, seedId:null, waterId:null, fertId:null }; }
+  function defaultLoadout(){
+    return { ver:1, seedId:null, waterId:null, fertId:null };
+  }
   function loadLoadout(){
     try{
-      const raw = localStorage.getItem(LS.loadout);
+      const raw = localStorage.getItem(LS_LOADOUT);
       if(!raw) return defaultLoadout();
       const obj = JSON.parse(raw);
       if(!obj || typeof obj !== "object") return defaultLoadout();
@@ -411,49 +538,42 @@
         ver:1,
         seedId:  obj.seedId  || null,
         waterId: obj.waterId || null,
-        fertId:  obj.fertId  || null,
+        fertId:  obj.fertId  || null
       };
     }catch(e){
       return defaultLoadout();
     }
   }
-  function saveLoadout(l){ localStorage.setItem(LS.loadout, JSON.stringify(l)); }
+  function saveLoadout(l){
+    localStorage.setItem(LS_LOADOUT, JSON.stringify(l));
+  }
   let loadout = loadLoadout();
 
-  // =========================================================
-  // ✅ state / book
-  // =========================================================
   const defaultPlot  = () => ({ state:"EMPTY" });
   const defaultState = () => ({ ver:1, plots: Array.from({length:MAX_PLOTS}, defaultPlot) });
 
   function loadState(){
     try{
-      const raw = localStorage.getItem(LS.state);
+      const raw = localStorage.getItem(LS_STATE);
       if(!raw) return defaultState();
       const obj = JSON.parse(raw);
       if(!obj || !Array.isArray(obj.plots) || obj.plots.length !== MAX_PLOTS) return defaultState();
-      obj.ver = 1;
       return obj;
     }catch(e){ return defaultState(); }
   }
-  function saveState(s){ localStorage.setItem(LS.state, JSON.stringify(s)); }
+  function saveState(s){ localStorage.setItem(LS_STATE, JSON.stringify(s)); }
 
   function loadBook(){
     try{
-      const raw = localStorage.getItem(LS.book);
+      const raw = localStorage.getItem(LS_BOOK);
       if(!raw) return { ver:1, got:{} };
       const obj = JSON.parse(raw);
       if(!obj || typeof obj.got !== "object") return { ver:1, got:{} };
-      obj.ver = 1;
-      obj.got = obj.got || {};
       return obj;
     }catch(e){ return { ver:1, got:{} }; }
   }
-  function saveBook(b){ localStorage.setItem(LS.book, JSON.stringify(b)); }
+  function saveBook(b){ localStorage.setItem(LS_BOOK, JSON.stringify(b)); }
 
-  // =========================================================
-  // utils
-  // =========================================================
   function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function pad2(n){ return String(n).padStart(2,"0"); }
   function fmtRemain(ms){
@@ -463,49 +583,6 @@
     const mm = Math.floor((s%3600)/60);
     const ss = s%60;
     return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
-  }
-  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
-
-  // =========================================================
-  // ✅ GAS helper（rotenと同じ思想：ヘッダ無しでPOST）
-  // =========================================================
-  async function gasPost(payload){
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
-    if(!res.ok) throw new Error("通信エラー: HTTP " + res.status);
-    const txt = await res.text();
-    let json;
-    try{ json = JSON.parse(txt); }catch(e){ throw new Error("JSON parse failed: " + txt); }
-    return json;
-  }
-
-  async function gasPlant(token){
-    // GAS側がplant APIを持ってる前提（無ければok扱いにして進める）
-    try{
-      const data = await gasPost({ api:"plant", apiKey:GAS_KEY, token, app:"farm", ts:Date.now() });
-      if(data && data.ok === false) throw new Error(data.error || "plant failed");
-      return data || { ok:true };
-    }catch(e){
-      // plantが未実装でも畑は止めない（沼回避）
-      return { ok:true, note:String(e?.message||"") };
-    }
-  }
-
-  async function gasHarvest(token){
-    const data = await gasPost({ api:"harvest", apiKey:GAS_KEY, token, app:"farm", ts:Date.now() });
-    if(!data || data.ok === false) throw new Error(data?.error || "harvest failed");
-    // 期待：{ok:true, card:{cardId,name,img,rarity,collabId?}} もしくは {ok:true, cardId,name,img,rarity}
-    const card = data.card || data;
-    return {
-      collabId: String(card.collabId || data.collabId || "").trim() || null,
-      id: String(card.cardId || card.id || "").trim(),
-      name: String(card.name || "").trim() || "NO NAME",
-      img: String(card.img || card.image || card.photo || "").trim(),
-      rarity: String(card.rarity || "").trim() || "COL",
-    };
   }
 
   // =========================================================
@@ -538,7 +615,7 @@
   }
 
   // =========================================================
-  // 種ごとに「出るTN番号」を制限
+  // ★種ごとに「出るTN番号」を制限
   // =========================================================
   function makeTNSet(from, to){
     const set = new Set();
@@ -573,7 +650,7 @@
   }
 
   // =========================================================
-  // 固定タネ抽選
+  // ✅ 固定タネ抽選
   // =========================================================
   function pickBussasariReward(){
     const c = pick(BUSSASARI_POOL);
@@ -585,7 +662,7 @@
   }
 
   // =========================================================
-  // 肥料SP抽選（植えた瞬間に確定）
+  // ✅ 肥料SP抽選（植えた瞬間に確定）
   // =========================================================
   function pickFertSPIfAny(p){
     if(!p) return null;
@@ -606,10 +683,10 @@
   }
 
   // =========================================================
-  // ✅ 報酬抽選（コラボは “ローカル抽選禁止”：GAS harvestで確定）
+  // ★報酬抽選（※コラボはローカル抽選しない：GAS harvestで確定）
   // =========================================================
-  function drawRewardForPlotLocal(p){
-    // まず肥料SP（最優先）
+  function drawRewardForPlot(p){
+    // ✅ まず肥料SP（最優先）
     const sp = pickFertSPIfAny(p);
     if(sp) return sp;
 
@@ -618,15 +695,18 @@
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
     }
-    if (p && p.seedId === "seed_bussasari") {
-      return pickBussasariReward();
-    }
-    if (p && p.seedId === "seed_namara_kawasar") {
-      return pickNamaraReward();
+
+    if (p && isCollabSeed(p.seedId)) {
+      // 本来ここは通らない運用（念のための保険）
+      const c = pick(GRATIN_POOL);
+      return { id:c.id, name:c.name, img:c.img, rarity:c.rarity };
     }
 
-    // 通常抽選
+    if (p && p.seedId === "seed_bussasari") return pickBussasariReward();
+    if (p && p.seedId === "seed_namara_kawasar") return pickNamaraReward();
+
     const rarity = (p && p.fixedRarity) ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
+
     const seedId = p ? p.seedId : null;
     const filtered = filterPoolBySeed(seedId, getPoolByRarity(rarity));
     const picked = (filtered.length)
@@ -637,24 +717,11 @@
     return { id:c.no, name:c.name, img:c.img, rarity: picked.rarity };
   }
 
-  // =========================================================
-  // XP / レベル報酬（最低限）
-  // =========================================================
-  function addXP(amount){
-    if(!Number.isFinite(amount) || amount <= 0) return;
-    player.xp += Math.floor(amount);
-    while(player.xp >= xpNeedForLevel(player.level)){
-      player.xp -= xpNeedForLevel(player.level);
-      player.level += 1;
-      if(player.unlocked < MAX_PLOTS) player.unlocked += 1;
-      // レベルアップ報酬は“現状維持”したいならここに入れる（今回は崩さない）
-    }
-    savePlayer(player);
-  }
+  function rarityLabel(r){ return r || ""; }
 
-  // =========================================================
-  // DOM（あなたのHTML前提：不足は即エラー）
-  // =========================================================
+  // =========================
+  // DOM
+  // =========================
   const farmEl   = document.getElementById("farm");
   const stBook   = document.getElementById("stBook");
   const stGrow   = document.getElementById("stGrow");
@@ -689,6 +756,7 @@
   const mBody  = document.getElementById("mBody");
   const mClose = document.getElementById("mClose");
 
+  // ✅ 必須DOMが無いと「無反応」になるので即検知
   const __missing = [];
   if(!farmEl) __missing.push("#farm");
   if(!stBook) __missing.push("#stBook");
@@ -729,8 +797,107 @@
     return;
   }
 
+  let state  = loadState();
+  let book   = loadBook();
+  let inv    = loadInv();
+  syncCollabSeedsToInv(inv);
+
   // =========================================================
-  // モーダル（閉じる＝確定できる仕組みは維持）
+  // ✅ モーダル中：背景だけロックして「モーダル内はスクロールOK」
+  // （あなたのレイアウトそのまま）
+  // =========================================================
+  let __scrollY = 0;
+  let __locked = false;
+
+  function isInsideModalContent(target){
+    return !!(target && (target === mBody || mBody.contains(target)));
+  }
+
+  function preventTouchMove(e){
+    if(modal.getAttribute("aria-hidden") !== "false") return;
+    if(isInsideModalContent(e.target)) return;
+    e.preventDefault();
+  }
+
+  function preventWheel(e){
+    if(modal.getAttribute("aria-hidden") !== "false") return;
+    if(isInsideModalContent(e.target)) return;
+    e.preventDefault();
+  }
+
+  function lockScroll(){
+    if(__locked) return;
+    __locked = true;
+
+    __scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${__scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    mBody.style.maxHeight = "72vh";
+    mBody.style.overflowY = "auto";
+    mBody.style.webkitOverflowScrolling = "touch";
+    mBody.style.overscrollBehavior = "contain";
+    mBody.style.touchAction = "pan-y";
+
+    document.addEventListener("touchmove", preventTouchMove, { passive:false });
+    document.addEventListener("wheel", preventWheel, { passive:false });
+  }
+
+  function unlockScroll(){
+    if(!__locked) return;
+    __locked = false;
+
+    document.removeEventListener("touchmove", preventTouchMove, { passive:false });
+    document.removeEventListener("wheel", preventWheel, { passive:false });
+
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+
+    mBody.style.maxHeight = "";
+    mBody.style.overflowY = "";
+    mBody.style.webkitOverflowScrolling = "";
+    mBody.style.overscrollBehavior = "";
+    mBody.style.touchAction = "";
+
+    window.scrollTo(0, __scrollY);
+  }
+
+  function onBackdrop(e){ if(e.target === modal) closeModalOrCommit(); }
+  function onEsc(e){ if(e.key === "Escape") closeModalOrCommit(); }
+
+  function openModal(title, html){
+    modal.removeEventListener("click", onBackdrop);
+    document.removeEventListener("keydown", onEsc);
+
+    mTitle.textContent = title;
+    mBody.innerHTML = html;
+    modal.setAttribute("aria-hidden","false");
+
+    lockScroll();
+
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onEsc);
+  }
+
+  function closeModal(){
+    modal.setAttribute("aria-hidden","true");
+    modal.removeEventListener("click", onBackdrop);
+    document.removeEventListener("keydown", onEsc);
+    mBody.innerHTML = "";
+    unlockScroll();
+  }
+
+  // =========================================================
+  // ✅【最重要】収穫モーダル中だけ「閉じる＝確定」できる仕組み
   // =========================================================
   let __harvestCommitFn = null;
 
@@ -740,6 +907,7 @@
   function clearHarvestCommit(){
     __harvestCommitFn = null;
   }
+
   function closeModalOrCommit(){
     if(__harvestCommitFn){
       const fn = __harvestCommitFn;
@@ -750,35 +918,14 @@
     closeModal();
   }
 
-  function openModal(title, html){
-    mTitle.textContent = title;
-    mBody.innerHTML = html;
-    modal.setAttribute("aria-hidden","false");
-    document.body.style.overflow = "hidden";
-  }
-  function closeModal(){
-    modal.setAttribute("aria-hidden","true");
-    mBody.innerHTML = "";
-    document.body.style.overflow = "";
-    clearHarvestCommit();
-  }
   mClose.addEventListener("click", closeModalOrCommit);
-  modal.addEventListener("click", (e)=>{ if(e.target === modal) closeModalOrCommit(); });
-  document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeModalOrCommit(); });
 
   // =========================================================
-  // 状態
-  // =========================================================
-  let state  = loadState();
-  let book   = loadBook();
-  let inv    = loadInv();
-
-  // =========================================================
-  // 描画：装備表示（コラボはISSUED token本数）
+  // ✅ 装備表示更新（コラボは token 本数を表示）
   // =========================================================
   function renderLoadout(){
-    syncCollabSeedToInv(); // ✅ 先に同期
     inv = loadInv();
+    syncCollabSeedsToInv(inv);
     loadout = loadLoadout();
 
     const seed  = SEEDS.find(x=>x.id===loadout.seedId)  || null;
@@ -788,8 +935,10 @@
     if(seed){
       equipSeedImg.src = seed.img;
       equipSeedName.textContent = seed.name;
-      if(seed.id === SEED_COLLAB_ID){
-        equipSeedCnt.textContent = `×${countIssuedTokens()}`;
+
+      if(isCollabSeed(seed.id)){
+        const cnt = getCollabSeedCount(seed.id);
+        equipSeedCnt.textContent = `×${cnt}`;
       }else{
         equipSeedCnt.textContent = `×${invGet(inv,"seed",seed.id)}`;
       }
@@ -821,11 +970,11 @@
   }
 
   // =========================================================
-  // 装備選択モーダル（コラボ種はISSUED token本数）
+  // ✅ グリッド選択UI（コラボは token 本数を表示）
   // =========================================================
   function openPickGrid(kind){
-    syncCollabSeedToInv();
     inv = loadInv();
+    syncCollabSeedsToInv(inv);
     loadout = loadLoadout();
 
     const isSeed  = (kind === "seed");
@@ -834,11 +983,16 @@
 
     const items = isSeed ? SEEDS : isWater ? WATERS : FERTS;
     const invType = isSeed ? "seed" : isWater ? "water" : "fert";
+
     const title = isSeed ? "種を選ぶ" : isWater ? "水を選ぶ" : "肥料を選ぶ";
 
     const cells = items.map(x => {
       let cnt = invGet(inv, invType, x.id);
-      if(isSeed && x.id === SEED_COLLAB_ID) cnt = countIssuedTokens();
+
+      if(isSeed && isCollabSeed(x.id)){
+        cnt = getCollabSeedCount(x.id);
+      }
+
       const disabled = (cnt <= 0);
       const selected =
         (isSeed && loadout.seedId === x.id) ||
@@ -846,458 +1000,626 @@
         (isFert && loadout.fertId === x.id);
 
       return `
-        <button class="pickCell ${selected ? "is-on":""}" data-id="${x.id}" ${disabled ? "disabled":""}>
-          <img src="${x.img}" alt="">
-          <div class="pickName">${x.name}</div>
-          <div class="pickCnt">×${cnt}</div>
-          <div class="pickFx">${x.fx || ""}</div>
+        <button class="gridCard ${selected ? "isSelected":""}" type="button" data-pick="${x.id}" ${disabled ? "disabled":""}>
+          <div class="gridImg">
+            <img src="${x.img}" alt="${x.name}">
+            <div class="gridCnt">×${cnt}</div>
+            ${selected ? `<div class="gridSel">装備中</div>` : ``}
+            ${disabled ? `<div class="gridEmpty">在庫なし</div>` : ``}
+          </div>
+          <div class="gridName">${x.name}</div>
+          <div class="gridDesc">${(x.desc || "").replace(/\n/g,"<br>")}</div>
+          <div class="gridFx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
         </button>
       `;
     }).join("");
 
     openModal(title, `
-      <div class="pickGrid">${cells}</div>
-      <div class="pickRow">
-        <button class="btn" id="pickClear">外す</button>
-        <button class="btn" id="pickClose">閉じる</button>
+      <div class="step">※すべて在庫制。露店で買って増やす。<br>装備は消費しない（植えた時に消費）。</div>
+      <div class="gridWrap">${cells}</div>
+      <div class="row">
+        <button type="button" id="gridClose">閉じる</button>
       </div>
-      <style>
-        .pickGrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;}
-        .pickCell{border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.18); border-radius:14px; padding:10px; color:#fff; text-align:left}
-        .pickCell.is-on{outline:2px solid rgba(127,208,255,.55);}
-        .pickCell:disabled{opacity:.42}
-        .pickCell img{width:100%; aspect-ratio:1/1; object-fit:contain; image-rendering:auto; border-radius:12px; background:rgba(255,255,255,.04)}
-        .pickName{font-weight:900; margin-top:8px; font-size:14px}
-        .pickCnt{opacity:.8; font-weight:900; margin-top:2px}
-        .pickFx{opacity:.7; font-size:12px; margin-top:6px; line-height:1.3}
-        .pickRow{display:flex; gap:10px; margin-top:12px;}
-        .pickRow .btn{flex:1; height:42px; border-radius:14px;}
-      </style>
     `);
 
-    const root = mBody;
-    root.querySelectorAll(".pickCell").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const id = btn.getAttribute("data-id");
-        if(isSeed) loadout.seedId = id;
-        if(isWater) loadout.waterId = id;
-        if(isFert) loadout.fertId = id;
-        saveLoadout(loadout);
-        closeModal();
+    clearHarvestCommit();
+
+    mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
+      btn.addEventListener("click", () => {
+        if(btn.disabled) return;
+        const id = btn.getAttribute("data-pick");
+        const l = loadLoadout();
+        if(isSeed)  l.seedId = id;
+        if(isWater) l.waterId = id;
+        if(isFert)  l.fertId = id;
+        saveLoadout(l);
         renderLoadout();
-        renderFarm();
+        closeModal();
       });
     });
 
-    root.querySelector("#pickClear")?.addEventListener("click", ()=>{
-      if(isSeed) loadout.seedId = null;
-      if(isWater) loadout.waterId = null;
-      if(isFert) loadout.fertId = null;
-      saveLoadout(loadout);
-      closeModal();
-      renderLoadout();
-      renderFarm();
-    });
-    root.querySelector("#pickClose")?.addEventListener("click", closeModal);
+    document.getElementById("gridClose").addEventListener("click", closeModal);
   }
 
-  equipSeedBtn.addEventListener("click", ()=>openPickGrid("seed"));
-  equipWaterBtn.addEventListener("click", ()=>openPickGrid("water"));
-  equipFertBtn.addEventListener("click", ()=>openPickGrid("fert"));
+  equipSeedBtn.addEventListener("click", ()=> openPickGrid("seed"));
+  equipWaterBtn.addEventListener("click", ()=> openPickGrid("water"));
+  equipFertBtn.addEventListener("click", ()=> openPickGrid("fert"));
 
   // =========================================================
-  // farm 描画
+  // ✅ 描画
   // =========================================================
-  function plotImgFor(p){
-    if(!p || p.state === "EMPTY") return PLOT_IMG.EMPTY;
+  function render(){
+    player = loadPlayer();
+    book = loadBook();
+    inv = loadInv();
+    syncCollabSeedsToInv(inv);
 
-    const isCollab = (p.seedId === SEED_COLLAB_ID);
+    farmEl.innerHTML = "";
+    let grow = 0, ready = 0, burn = 0;
 
-    if(p.state === "GROW1") return isCollab ? PLOT_IMG.COLLAB_GROW1 : PLOT_IMG.GROW1;
-    if(p.state === "GROW2") return isCollab ? PLOT_IMG.COLLAB_GROW2 : PLOT_IMG.GROW2;
-    if(p.state === "READY") return PLOT_IMG.READY;
-    if(p.state === "BURN") return PLOT_IMG.BURN;
-    return PLOT_IMG.EMPTY;
-  }
+    for(let i=0;i<MAX_PLOTS;i++){
+      const p = state.plots[i] || { state:"EMPTY" };
 
-  function calcCounts(){
-    let grow=0, ready=0, burn=0;
-    for(const p of state.plots){
-      if(p.state === "GROW1" || p.state === "GROW2") grow++;
-      if(p.state === "READY") ready++;
-      if(p.state === "BURN") burn++;
+      const d = document.createElement("div");
+      d.className = "plot";
+
+      const locked = (i >= player.unlocked);
+      d.dataset.state = locked ? "LOCK" : (p.state || "EMPTY");
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+
+      if(locked){
+        const b = document.createElement("div");
+        b.className = "badge lock";
+        b.textContent = "LOCK";
+        d.appendChild(b);
+
+        btn.innerHTML = `
+          <img src="${PLOT_IMG.EMPTY}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:14px;display:block;opacity:.55;">
+          <div class="tag" style="position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;">ロック</div>
+        `;
+
+        const overlay = document.createElement("div");
+        overlay.className = "lockOverlay";
+        overlay.innerHTML = `<div class="lk1">🔒</div><div class="lk2">Lvアップで解放</div>`;
+        d.appendChild(overlay);
+
+        btn.addEventListener("click", () => onPlotTap(i));
+        d.appendChild(btn);
+        farmEl.appendChild(d);
+        continue;
+      }
+
+      let img = PLOT_IMG.EMPTY;
+      let label = "植える";
+
+      if (p.state === "GROW") {
+        grow++;
+        const remain = (p.readyAt || 0) - Date.now();
+
+        const start = (typeof p.startAt === "number") ? p.startAt : Date.now();
+        const end   = (typeof p.readyAt === "number") ? p.readyAt : (start + 1);
+        const denom = Math.max(1, end - start);
+        const progress = (Date.now() - start) / denom;
+
+        if (isCollabSeed(p.seedId)) {
+          img = (progress < 0.5) ? PLOT_IMG.COLABO_GROW1 : PLOT_IMG.COLABO_GROW2;
+        } else {
+          if (progress < 0.5) {
+            img = PLOT_IMG.GROW1;
+          } else {
+            if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100;
+            else if (p.srHint === "SR65") img = PLOT_IMG.GROW2_SR65;
+            else img = PLOT_IMG.GROW2;
+          }
+        }
+
+        label = `育成中 ${fmtRemain(remain)}`;
+
+      } else if (p.state === "READY") {
+        ready++;
+        img = PLOT_IMG.READY;
+        label = "収穫";
+
+        const fx = document.createElement("div");
+        fx.className = "plot-fx plot-fx--mild";
+        d.appendChild(fx);
+
+      } else if (p.state === "BURN") {
+        burn++;
+        img = PLOT_IMG.BURN;
+        label = "焦げ";
+      }
+
+      btn.innerHTML = `
+        <img src="${img}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:14px;display:block;">
+        <div class="tag" style="position:absolute; bottom:6px; left:0; right:0;text-align:center; font-size:11px; font-weight:900; color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6); pointer-events:none;">${label}</div>
+      `;
+      btn.addEventListener("click", () => onPlotTap(i));
+      d.appendChild(btn);
+      farmEl.appendChild(d);
     }
-    const got = book?.got || {};
-    let bookCount = 0;
-    for(const k of Object.keys(got)){
-      const c = Number(got[k]?.count || 0);
-      if(c > 0) bookCount += c;
-    }
-    return { grow, ready, burn, bookCount };
-  }
 
-  function renderStats(){
-    const { grow, ready, burn, bookCount } = calcCounts();
-    stBook.textContent  = String(bookCount);
     stGrow.textContent  = String(grow);
     stReady.textContent = String(ready);
     stBurn.textContent  = String(burn);
+    stBook.textContent  = String(Object.keys((book && book.got) ? book.got : {}).length);
 
-    stLevel.textContent = String(player.level);
+    stLevel.textContent  = String(player.level);
+    stXP.textContent     = String(player.xp);
     stUnlock.textContent = String(player.unlocked);
 
     const need = xpNeedForLevel(player.level);
+    const now  = player.xp;
+    const left = Math.max(0, need - now);
+    const pct  = Math.max(0, Math.min(100, Math.floor((now / need) * 100)));
+
+    stXpLeft.textContent = String(left);
     stXpNeed.textContent = String(need);
-    stXP.textContent = String(player.xp);
-    stXpLeft.textContent = String(Math.max(0, need - player.xp));
-    const ratio = need > 0 ? clamp(player.xp / need, 0, 1) : 0;
-    stXpBar.style.width = `${Math.round(ratio*100)}%`;
-  }
+    stXpBar.style.width  = pct + "%";
 
-  function renderFarm(){
-    syncCollabSeedToInv();
-    state = loadState();
-    inv = loadInv();
-    loadout = loadLoadout();
+    const stXpNow = document.getElementById("stXpNow");
+    if (stXpNow) stXpNow.textContent = String(now);
+
     renderLoadout();
-
-    const cells = state.plots.map((p, i) => {
-      const locked = (i >= player.unlocked);
-      const img = locked ? PLOT_IMG.EMPTY : plotImgFor(p);
-      const label =
-        locked ? "LOCK" :
-        (p.state === "EMPTY") ? "空" :
-        (p.state === "GROW1" || p.state === "GROW2") ? "育成中" :
-        (p.state === "READY") ? "収穫" :
-        (p.state === "BURN") ? "焦げ" : "";
-
-      return `
-        <button class="plot ${locked?"is-locked":""}" data-i="${i}" type="button" ${locked?"disabled":""}>
-          <img src="${img}" alt="">
-          <div class="plotLabel">${label}</div>
-        </button>
-      `;
-    }).join("");
-
-    farmEl.innerHTML = `
-      <div class="plots">${cells}</div>
-      <style>
-        .plots{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px;}
-        @media (max-width:520px){ .plots{grid-template-columns:repeat(3,minmax(0,1fr));} }
-        .plot{border:1px solid rgba(255,255,255,.16); background:rgba(0,0,0,.18); border-radius:14px; padding:8px; color:#fff; text-align:center}
-        .plot.is-locked{opacity:.35}
-        .plot img{width:100%; aspect-ratio:1/1; object-fit:contain; border-radius:12px; background:rgba(255,255,255,.04)}
-        .plotLabel{margin-top:6px; font-weight:900; font-size:12px; opacity:.85}
-      </style>
-    `;
-
-    farmEl.querySelectorAll(".plot").forEach(btn=>{
-      btn.addEventListener("click", ()=> onPlotClick(Number(btn.getAttribute("data-i"))));
-    });
-
-    renderStats();
   }
 
   // =========================================================
-  // plot 更新（時間経過）
+  // ✅ 空きマス：ワンタップ植え
   // =========================================================
-  function updatePlotByTime(p, now){
-    if(!p || p.state === "EMPTY") return;
+  function ensureLoadoutOrOpen(){
+    loadout = loadLoadout();
+    if(!loadout.seedId){ openPickGrid("seed"); return false; }
+    if(!loadout.waterId){ openPickGrid("water"); return false; }
+    if(!loadout.fertId){ openPickGrid("fert"); return false; }
+    return true;
+  }
 
-    const plantedAt = Number(p.plantedAt || 0);
-    const readyAt   = Number(p.readyAt || 0);
-    const burnAt    = Number(p.burnAt || 0);
+  function plantAt(index){
+    inv = loadInv();
+    syncCollabSeedsToInv(inv);
+    loadout = loadLoadout();
 
-    if(p.state === "GROW1" || p.state === "GROW2"){
-      if(now >= readyAt){
-        p.state = "READY";
-        return;
-      }
-      const total = Math.max(1, readyAt - plantedAt);
-      const t = clamp((now - plantedAt) / total, 0, 1);
-      p.state = (t < 0.5) ? "GROW1" : "GROW2";
+    const seedId  = loadout.seedId;
+    const waterId = loadout.waterId;
+    const fertId  = loadout.fertId;
+
+    const okSeed  = isCollabSeed(seedId)
+      ? (getCollabSeedCount(seedId) > 0)
+      : (invGet(inv, "seed", seedId) > 0);
+
+    const okWater = invGet(inv, "water", waterId) > 0;
+    const okFert  = invGet(inv, "fert",  fertId)  > 0;
+
+    if(!okSeed || !okWater || !okFert){
+      const lack =
+        (!okSeed) ? (isCollabSeed(seedId) ? "コラボのタネ（seed_token）" : "タネ") :
+        (!okWater) ? "ミズ" :
+        "ヒリョウ";
+
+      const goKind =
+        (!okSeed) ? "seed" :
+        (!okWater) ? "water" :
+        "fert";
+
+      openModal("在庫が足りない", `
+        <div class="step">
+          <b>${lack}</b> の在庫が足りないため植えられない。<br>
+          露店で買うか、装備を変えてね。
+        </div>
+        <div class="row">
+          <button type="button" id="btnChange">装備を変える</button>
+          <button type="button" class="primary" id="btnOk">OK</button>
+        </div>
+      `);
+      clearHarvestCommit();
+
+      document.getElementById("btnChange").addEventListener("click", ()=>{
+        closeModal();
+        openPickGrid(goKind);
+      });
+      document.getElementById("btnOk").addEventListener("click", closeModal);
       return;
     }
 
-    if(p.state === "READY"){
-      if(now >= burnAt){
-        p.state = "BURN";
+    const seed  = SEEDS.find(x=>x.id===seedId);
+    const water = WATERS.find(x=>x.id===waterId);
+    const fert  = FERTS.find(x=>x.id===fertId);
+
+    const factor = clamp(
+      (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
+      0.35, 1.0
+    );
+
+    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000);
+    const now = Date.now();
+
+    // ✅ 消費（コラボだけ token消費 / invの種は減らさない）
+    if(!isCollabSeed(seedId)){
+      invDec(inv, "seed", seedId);
+    }
+    invDec(inv, "water", waterId);
+    invDec(inv, "fert",  fertId);
+    saveInv(inv);
+
+    const isFixedSeed =
+      (seedId === "seed_special") ||
+      (seedId === "seed_bussasari") ||
+      (seedId === "seed_namara_kawasar");
+
+    const fixedRarity = isFixedSeed ? null : pickRarityWithWater(waterId);
+
+    const srHint =
+      (isFixedSeed || isCollabSeed(seedId)) ? "NONE" :
+      (fixedRarity === "LR" || fixedRarity === "UR") ? "SR100" :
+      (fixedRarity === "SR") ? "SR65" :
+      "NONE";
+
+    const plot = {
+      state: "GROW",
+      seedId,
+      waterId,
+      fertId,
+      startAt: now,
+      readyAt: now + growMs,
+      fixedRarity,
+      srHint
+    };
+
+    // ✅ コラボ種：seed_token を1本アサインして「ローカル抽選はしない」
+    if(isCollabSeed(seedId)){
+      const collabId = collabIdFromSeed(seedId);
+      const token = takeOneIssuedToken(collabId);
+      if(!token){
+        openModal("エラー", `
+          <div class="step">seed_token が見つからないため植えられない。</div>
+          <div class="row"><button type="button" id="btnOk" class="primary">OK</button></div>
+        `);
+        clearHarvestCommit();
+        document.getElementById("btnOk").addEventListener("click", closeModal);
+        return;
       }
+      plot.seedToken = token;
+      delete plot.reward;
+      plot.fixedRarity = null;
+      plot.srHint = "NONE";
+    }else{
+      // ✅ それ以外：植えた時点で確定して保存（現状と同じ）
+      plot.reward = drawRewardForPlot(plot);
+
+      // ✅ SPが当たったら演出矛盾を消す
+      if(plot.reward && plot.reward.rarity === "SP"){
+        plot.fixedRarity = null;
+        plot.srHint = "NONE";
+      }
+    }
+
+    state.plots[index] = plot;
+
+    saveState(state);
+    render();
+  }
+
+  // =========================================================
+  // ✅ 収穫確定処理（閉じるでも呼べる）
+  // =========================================================
+  function commitHarvest(i, reward){
+    addToBook(reward);
+
+    const gain = XP_BY_RARITY[reward.rarity] ?? 4;
+    const xpRes = addXP(gain);
+
+    // ✅ コラボなら token を HARVESTED にしておく（再利用防止）
+    const p = state.plots[i] || null;
+    if(p && p.seedToken){
+      markTokenHarvested(p.seedToken);
+    }
+
+    state.plots[i] = { state:"EMPTY" };
+    saveState(state);
+
+    if(xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length){
+      const blocks = xpRes.rewards.map(r => {
+        const itemsHtml = (r.items || []).map(it => {
+          return `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.05);margin-top:8px;">
+              <img src="${it.img}" alt="${it.name}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18)">
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:1000;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name}</div>
+                <div style="font-size:12px;opacity:.8;margin-top:2px;">×${it.qty}</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div style="border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.06);padding:12px;margin-top:10px;">
+            <div style="font-weight:1000;font-size:14px;">Lv ${r.level} 報酬</div>
+            <div style="margin-top:8px;font-size:13px;">
+              ✅ オクト：<b>+${r.octo}</b>
+            </div>
+            ${itemsHtml}
+          </div>
+        `;
+      }).join("");
+
+      openModal("Lvアップ！", `
+        <div class="step">
+          レベルが上がった。<b>オクトは必ず</b>もらえる。<br>
+          ついでにアイテムも勝手に増えた。
+        </div>
+        ${blocks}
+        <div class="row">
+          <button type="button" id="btnGoZukan" class="primary">図鑑へ</button>
+        </div>
+      `);
+      clearHarvestCommit();
+
+      document.getElementById("btnGoZukan").addEventListener("click", () => {
+        closeModal();
+        render();
+        location.href = "./zukan.html";
+      });
+
+      render();
+      return;
+    }
+
+    closeModal();
+    render();
+  }
+
+  // =========================================================
+  // ✅ GAS harvest（コラボ専用）
+  // =========================================================
+  async function gasHarvest(token){
+    const res = await fetch(GAS_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ api:"harvest", token })
+    });
+    let json = null;
+    try{ json = await res.json(); }catch(e){ /* noop */ }
+    if(!json || json.ok !== true){
+      const msg = json?.error || `harvest failed (HTTP ${res.status})`;
+      throw new Error(msg);
+    }
+    return {
+      id: String(json.cardId),
+      name: String(json.name),
+      img: String(json.img),
+      rarity: String(json.rarity || "")
+    };
+  }
+
+  // =========================================================
+  // マス操作
+  // =========================================================
+  function onPlotTap(i){
+    player = loadPlayer();
+
+    if (i >= player.unlocked) {
+      openModal("ロック中", `
+        <div class="step">このマスはまだ使えない。<br>収穫でXPを稼いで <b>Lvアップ</b> すると解放される。</div>
+        <div class="row"><button type="button" id="btnOk">OK</button></div>
+      `);
+      clearHarvestCommit();
+      document.getElementById("btnOk").addEventListener("click", closeModal);
+      return;
+    }
+
+    const p = state.plots[i] || { state:"EMPTY" };
+
+    if (p.state === "EMPTY") {
+      if(!ensureLoadoutOrOpen()) return;
+      plantAt(i);
+      return;
+    }
+
+    if (p.state === "GROW") {
+      const seed = SEEDS.find(x=>x.id===p.seedId);
+      const water = WATERS.find(x=>x.id===p.waterId);
+      const fert = FERTS.find(x=>x.id===p.fertId);
+      const remain = (p.readyAt||0) - Date.now();
+
+      openModal("育成中", `
+        <div class="step">このマスは育成中。収穫まであと <b>${fmtRemain(remain)}</b></div>
+        <div class="reward">
+          <div class="big">設定</div>
+          <div class="mini">
+            種：${seed?seed.name:"-"}<br>
+            水：${water?water.name:"-"}<br>
+            肥料：${fert?fert.name:"-"}<br>
+            ${isCollabSeed(p.seedId) ? `token：<code style="font-size:11px;opacity:.85;">${String(p.seedToken||"")}</code><br>` : ``}
+          </div>
+        </div>
+        <div class="row"><button type="button" id="btnOk">OK</button></div>
+      `);
+      clearHarvestCommit();
+      document.getElementById("btnOk").addEventListener("click", closeModal);
+      return;
+    }
+
+    // =========================================================
+    // ✅ READY：コラボだけGAS harvest
+    // =========================================================
+    if (p.state === "READY") {
+
+      if(isCollabSeed(p.seedId)){
+        if(!p.seedToken){
+          openModal("エラー", `
+            <div class="step">seed_token が無いので収穫できない。</div>
+            <div class="row"><button type="button" id="btnOk" class="primary">OK</button></div>
+          `);
+          clearHarvestCommit();
+          document.getElementById("btnOk").addEventListener("click", closeModal);
+          return;
+        }
+
+        openModal("収穫中…", `<div class="step">GASに問い合わせ中…</div>`);
+        clearHarvestCommit();
+
+        (async () => {
+          try{
+            const reward = await gasHarvest(p.seedToken);
+
+            // plotに保存（再表示対策）
+            p.reward = reward;
+            state.plots[i] = p;
+            saveState(state);
+
+            openModal("収穫！", `
+              <div class="reward">
+                <div class="big">${reward.name}（${reward.id}）</div>
+                <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>この画面を閉じると自動で図鑑に登録されます。</div>
+                <img class="img" src="${reward.img}" alt="${reward.name}">
+              </div>
+              <div class="row">
+                <button type="button" id="btnCancel">閉じる</button>
+                <button type="button" class="primary" id="btnConfirm">図鑑を確認する</button>
+              </div>
+            `);
+
+            setHarvestCommit(() => commitHarvest(i, reward));
+
+            document.getElementById("btnCancel").addEventListener("click", closeModalOrCommit);
+
+            document.getElementById("btnConfirm").addEventListener("click", () => {
+              const fn = __harvestCommitFn;
+              __harvestCommitFn = null;
+              if(fn) fn();
+              location.href = "./zukan.html";
+            });
+
+          }catch(e){
+            openModal("エラー", `
+              <div class="step">収穫に失敗：${String(e?.message || e)}</div>
+              <div class="row"><button id="btnOk" class="primary">OK</button></div>
+            `);
+            clearHarvestCommit();
+            document.getElementById("btnOk").addEventListener("click", closeModal);
+          }
+        })();
+
+        return;
+      }
+
+      // ====== 通常（ローカル確定） ======
+      if (!p.reward) {
+        p.reward = drawRewardForPlot(p);
+        saveState(state);
+      }
+      const reward = p.reward;
+
+      openModal("収穫！", `
+        <div class="reward">
+          <div class="big">${reward.name}（${reward.id}）</div>
+          <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>この画面を閉じると自動で図鑑に登録されます。</div>
+          <img class="img" src="${reward.img}" alt="${reward.name}">
+        </div>
+        <div class="row">
+          <button type="button" id="btnCancel">閉じる</button>
+          <button type="button" class="primary" id="btnConfirm">図鑑を確認する</button>
+        </div>
+      `);
+
+      setHarvestCommit(() => commitHarvest(i, reward));
+
+      document.getElementById("btnCancel").addEventListener("click", closeModalOrCommit);
+
+      document.getElementById("btnConfirm").addEventListener("click", () => {
+        const fn = __harvestCommitFn;
+        __harvestCommitFn = null;
+        if(fn) fn();
+        location.href = "./zukan.html";
+      });
+
+      return;
+    }
+
+    if (p.state === "BURN") {
+      openModal("焼けた…", `
+        <div class="step">放置しすぎて焼けた。回収するとマスが空になる。</div>
+        <div class="row">
+          <button type="button" id="btnBack">戻る</button>
+          <button type="button" class="primary" id="btnClear">回収して空にする</button>
+        </div>
+      `);
+      clearHarvestCommit();
+      document.getElementById("btnBack").addEventListener("click", closeModal);
+      document.getElementById("btnClear").addEventListener("click", () => {
+        state.plots[i] = { state:"EMPTY" };
+        saveState(state);
+        closeModal();
+        render();
+      });
+      return;
     }
   }
 
+  // =========================================================
+  // ✅ 図鑑に追加（countで枚数管理）
+  // =========================================================
+  function addToBook(card){
+    const b = loadBook();
+    if(!b.got) b.got = {};
+
+    const prev = b.got[card.id];
+    if(prev){
+      const curCount = Number.isFinite(prev.count) ? prev.count : 1;
+      prev.count = curCount + 1;
+      prev.name = card.name;
+      prev.img = card.img;
+      prev.rarity = card.rarity || prev.rarity || "";
+      prev.lastAt = Date.now();
+      b.got[card.id] = prev;
+    }else{
+      b.got[card.id] = {
+        id: card.id,
+        name: card.name,
+        img: card.img,
+        rarity: card.rarity || "",
+        count: 1,
+        at: Date.now(),
+        lastAt: Date.now()
+      };
+    }
+    saveBook(b);
+  }
+
+  // =========================================================
+  // ✅ tick（GROW→READY / READY→BURN）
+  // =========================================================
   function tick(){
     const now = Date.now();
     let changed = false;
 
-    for(const p of state.plots){
-      const before = p.state;
-      updatePlotByTime(p, now);
-      if(p.state !== before) changed = true;
-    }
+    for (let i=0;i<MAX_PLOTS;i++){
+      const p = state.plots[i];
+      if(!p) continue;
 
-    if(changed){
-      saveState(state);
-      renderFarm();
-    }else{
-      // statsだけ更新（残り時間を出してないので軽く）
-      renderStats();
-    }
-  }
-
-  // =========================================================
-  // 植える / 収穫
-  // =========================================================
-  function getGrowMs(){
-    const fert = FERTS.find(x => x.id === (loadout.fertId||null));
-    const factor = fert ? Number(fert.factor||1) : 1;
-    const ms = Math.max(5*60*1000, Math.floor(BASE_GROW_MS * factor));
-    return ms;
-  }
-
-  function needLoadoutForPlant(seedId){
-    // コラボはseed_tokenで確定なので、水/肥料は演出用（未装備でも植えられるようにする）
-    if(seedId === SEED_COLLAB_ID) return { needWater:false, needFert:false };
-    // 通常は水が無いと「レア確定」ロジックがズレるので必須、肥料は任意
-    return { needWater:true, needFert:false };
-  }
-
-  async function plantPlot(i){
-    inv = loadInv();
-    loadout = loadLoadout();
-
-    const seedId = loadout.seedId;
-    if(!seedId){
-      alert("種を装備してね");
-      return;
-    }
-
-    const needs = needLoadoutForPlant(seedId);
-    if(needs.needWater && !loadout.waterId){
-      alert("水を装備してね");
-      return;
-    }
-
-    // ✅ コラボ：inv減らさない。tokenを消費する
-    let usedToken = null;
-    if(seedId === SEED_COLLAB_ID){
-      if(countIssuedTokens() <= 0){
-        alert("コラボのタネ（seed_token）が無いよ。\n露店でシリアル発行してね。");
-        return;
-      }
-      usedToken = takeOneIssuedToken(); // {token, collabId}
-      if(!usedToken){
-        alert("使えるseed_tokenが見つからない…");
-        return;
-      }
-    }else{
-      if(!invDec(inv, "seed", seedId)){
-        alert("その種が足りない…");
-        return;
+      if(p.state === "GROW" && typeof p.readyAt === "number"){
+        if(now >= p.readyAt){
+          p.state = "READY";
+          p.burnAt = p.readyAt + READY_TO_BURN_MS;
+          changed = true;
+        }
+      } else if(p.state === "READY" && typeof p.burnAt === "number"){
+        if(now >= p.burnAt){
+          p.state = "BURN";
+          changed = true;
+        }
       }
     }
 
-    // 水/肥料消費（コラボは任意。装備してるなら消費してOK）
-    if(loadout.waterId){
-      if(!invDec(inv, "water", loadout.waterId)){
-        if(usedToken) rollbackTokenToIssued(usedToken.token);
-        alert("水が足りない…");
-        return;
-      }
-    }
-    if(loadout.fertId){
-      if(!invDec(inv, "fert", loadout.fertId)){
-        // 水は戻さない（仕様）だと荒れるので、ここは戻す
-        if(loadout.waterId) invAdd(inv,"water",loadout.waterId,1);
-        if(seedId !== SEED_COLLAB_ID) invAdd(inv,"seed",seedId,1);
-        if(usedToken) rollbackTokenToIssued(usedToken.token);
-        saveInv(inv);
-        alert("肥料が足りない…");
-        return;
-      }
-    }
-
-    // 成長時間
-    const now = Date.now();
-    const growMs = getGrowMs();
-    const readyAt = now + growMs;
-    const burnAt  = readyAt + READY_TO_BURN_MS;
-
-    const fert = FERTS.find(x => x.id === (loadout.fertId||null));
-    const skipAnim = !!fert?.skipGrowAnim;
-
-    const p = state.plots[i];
-    p.state = skipAnim ? "GROW2" : "GROW1";
-    p.plantedAt = now;
-    p.readyAt = readyAt;
-    p.burnAt = burnAt;
-
-    p.seedId = seedId;
-    p.waterId = loadout.waterId || null;
-    p.fertId = loadout.fertId || null;
-
-    // ✅ ローカル確定報酬（通常のみ）
-    p.reward = null;
-    p.fixedRarity = null;
-    if(seedId !== SEED_COLLAB_ID){
-      // “植えた瞬間に確定”を維持
-      p.fixedRarity = pickRarityWithWater(p.waterId);
-      p.reward = drawRewardForPlotLocal(p);
-    }else{
-      // ✅ コラボ：tokenをplotに保持（収穫でGAS確定）
-      p.seedToken = usedToken.token;
-      p.collabId = usedToken.collabId || null;
-      // ✅ 可能ならGASにplant通知（未実装でもOK）
-      await gasPlant(usedToken.token);
-    }
-
-    saveInv(inv);
-    saveState(state);
-    syncCollabSeedToInv();
-    renderFarm();
+    if(changed) saveState(state);
+    render();
   }
 
-  async function harvestPlot(i){
-    const p = state.plots[i];
-    if(!p || (p.state !== "READY" && p.state !== "BURN")){
-      return;
-    }
+  // 初期
+  renderLoadout();
+  render();
+  setInterval(tick, TICK_MS);
 
-    const isBurn = (p.state === "BURN");
-
-    // ✅ 収穫カード（通常は既にp.reward、コラボはここでGAS）
-    let reward = p.reward;
-
-    if(p.seedId === SEED_COLLAB_ID){
-      const token = String(p.seedToken||"").trim();
-      if(!token){
-        alert("seed_tokenが無い…（plot破損）");
-        return;
-      }
-      try{
-        reward = await gasHarvest(token); // {id,name,img,rarity,collabId}
-        p.reward = reward; // キャッシュ（連打で変わらない）
-        saveState(state);
-      }catch(e){
-        alert(e?.message || "収穫に失敗した…");
-        return;
-      }
-    }
-
-    if(!reward){
-      // 念のため（通常でも）
-      reward = drawRewardForPlotLocal(p);
-      p.reward = reward;
-      saveState(state);
-    }
-
-    const rarity = String(reward.rarity||"").toUpperCase() || "N";
-    const xp = XP_BY_RARITY[rarity] ?? 10;
-
-    const tag = (p.seedId === SEED_COLLAB_ID) ? "COLLAB" : "NORMAL";
-    const extra = (p.seedId === SEED_COLLAB_ID && p.collabId) ? `<div class="note">collabId：<b>${p.collabId}</b></div>` : "";
-
-    openModal(isBurn ? "🔥 焦げた…でも回収" : "🎴 収穫！", `
-      <div class="harvWrap">
-        <div class="harvCard">
-          <img class="harvImg" src="${reward.img || ""}" alt="">
-          <div class="harvMeta">
-            <div class="harvR">RARITY：<b>${rarity}</b></div>
-            <div class="harvN">${reward.name || "NO NAME"}</div>
-            <div class="harvId">${reward.id || ""}</div>
-            <div class="harvTag">${tag}</div>
-            ${extra}
-          </div>
-        </div>
-        <div class="note">閉じると図鑑に保存されて畑が空く。</div>
-      </div>
-      <style>
-        .harvWrap{display:flex; flex-direction:column; gap:10px;}
-        .harvCard{display:flex; gap:12px; align-items:flex-start; border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:12px; background:rgba(0,0,0,.18)}
-        .harvImg{width:120px; height:120px; border-radius:12px; object-fit:cover; background:rgba(255,255,255,.04)}
-        .harvMeta{flex:1}
-        .harvR{font-weight:900; opacity:.9}
-        .harvN{font-weight:1000; font-size:16px; margin-top:6px; line-height:1.2}
-        .harvId{opacity:.75; font-weight:900; margin-top:6px}
-        .harvTag{margin-top:10px; display:inline-flex; padding:4px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.16); background:rgba(0,0,0,.20); font-weight:900; font-size:12px; opacity:.9}
-        .note{opacity:.8; line-height:1.35}
-      </style>
-    `);
-
-    // ✅ 閉じる＝確定（図鑑保存・XP・畑を空に・tokenをHARVESTED）
-    setHarvestCommit(() => {
-      // 図鑑
-      book = loadBook();
-      book.got = book.got || {};
-      const key = String(reward.id || reward.cardId || "").trim() || ("UNKNOWN_" + Date.now());
-      if(!book.got[key]) book.got[key] = { count:0, name:reward.name||"", img:reward.img||"", rarity:rarity };
-      book.got[key].count = Number(book.got[key].count||0) + 1;
-      // 更新
-      book.got[key].name = reward.name||book.got[key].name||"";
-      book.got[key].img = reward.img||book.got[key].img||"";
-      book.got[key].rarity = rarity||book.got[key].rarity||"";
-      saveBook(book);
-
-      // XP
-      addXP(xp);
-
-      // ✅ コラボ：tokenをHARVESTED
-      if(p.seedId === SEED_COLLAB_ID){
-        markTokenHarvested(p.seedToken);
-      }
-
-      // plot reset
-      state.plots[i] = defaultPlot();
-      saveState(state);
-
-      closeModal();
-      syncCollabSeedToInv();
-      renderFarm();
-    });
-  }
-
-  function onPlotClick(i){
-    const p = state.plots[i];
-    if(!p) return;
-
-    if(p.state === "EMPTY"){
-      plantPlot(i);
-      return;
-    }
-    if(p.state === "READY" || p.state === "BURN"){
-      harvestPlot(i);
-      return;
-    }
-
-    // 育成中：残り表示
-    const now = Date.now();
-    const remain = Math.max(0, Number(p.readyAt||0) - now);
-    openModal("⏳ 育成中", `
-      <div class="note">残り：<b>${fmtRemain(remain)}</b></div>
-      <div class="note">閉じる：右上× / 画面外タップ / ESC</div>
-    `);
-  }
-
-  // =========================================================
-  // 起動
-  // =========================================================
-  function boot(){
-    // まず同期（ここが最重要）
-    syncCollabSeedToInv();
-
-    // state/book/player/inv
-    state  = loadState();
-    book   = loadBook();
-    inv    = loadInv();
-    player = loadPlayer();
-
-    renderFarm();
-    setInterval(tick, TICK_MS);
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", boot, { once:true });
-  }else{
-    boot();
-  }
 })();
