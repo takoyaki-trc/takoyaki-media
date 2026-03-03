@@ -11,7 +11,7 @@
     GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
     GROW2: "https://ul.h3z.jp/tD4LUB6F.png",
 
-    // ★コラボ（グラタン）専用成長GIF
+    // ★コラボ専用成長GIF（全コラボ共通で使用）
     COLABO_GROW1: "https://ul.h3z.jp/cq1soJdm.gif",
     COLABO_GROW2: "https://ul.h3z.jp/I6Iu4J32.gif",
 
@@ -26,19 +26,13 @@
   // =========================
   // LocalStorage Keys
   // =========================
-  const LS_STATE  = "tf_v1_state";
-  const LS_BOOK   = "tf_v1_book";
-  const LS_PLAYER = "tf_v1_player";
-  const LS_INV    = "tf_v1_inv";
-
-  // ✅ 装備（種/水/肥料）
-  const LS_LOADOUT = "tf_v1_loadout";
-
-  // ✅ オクト（露店と共通のキーを使う）
-  const LS_OCTO = "roten_v1_octo";
-
-  // ✅ roten.js が保存してる seed_token 群（ここを畑側で消費する）
-  const LS_SEEDTOKENS = "tf_v1_seedtokens";
+  const LS_STATE   = "tf_v1_state";
+  const LS_BOOK    = "tf_v1_book";
+  const LS_PLAYER  = "tf_v1_player";
+  const LS_INV     = "tf_v1_inv";
+  const LS_LOADOUT = "tf_v1_loadout";      // ✅ 装備（種/水/肥料）
+  const LS_OCTO    = "roten_v1_octo";      // ✅ オクト（露店と共通）
+  const LS_SEEDTOKENS = "tf_v1_seedtokens";// ✅ roten.js が保存してる seed_token 群
 
   // ✅ あなたのGAS WebApp URL（/execまで）※ここだけ必須変更
   const GAS_URL = "https://script.google.com/macros/s/XXXXXXXXXXXX/exec";
@@ -46,13 +40,19 @@
   // ✅ GASのapiKey（GAS側 CONFIG.API_KEY と同じにする）
   const GAS_API_KEY = "takopi-serial-2026";
 
-  // ✅ seedId → collabId 対応（必要に応じて追加）
-  // ✅ seedId → collabId 対応
-const SEED_TO_COLLAB = {
-  "seed_colabo_gratan": "col_gratan_2026",
-  "seed_colabo_ghost":  "col_ghost_2026",
-  "seed_colabo_hold":   "col_hold_2026",
-};
+  // ✅ seedId → collabId 対応（複数コラボ対応）
+  const SEED_TO_COLLAB = {
+    "seed_colabo_gratan": "col_gratan_2026",
+    "seed_colabo_ghost":  "col_ghost_2026",
+    "seed_colabo_hold":   "col_hold_2026",
+  };
+
+  function isCollabSeed(seedId){
+    return !!(seedId && SEED_TO_COLLAB[String(seedId)]);
+  }
+  function collabIdForSeed(seedId){
+    return seedId ? (SEED_TO_COLLAB[String(seedId)] || null) : null;
+  }
 
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
@@ -140,21 +140,15 @@ const SEED_TO_COLLAB = {
     { id:"seed_bussasari", name:"ブッ刺さりタネ", desc:"刺さるのは心だけ。\n出るのは5枚だけ（全部N）。", factor:1.05, img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり固定5枚" },
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor:1.08, img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり固定12枚" },
 
+    // ★コラボ（グラタン）
+    { id:"seed_colabo_gratan", name:"コラボ【ぐらたんのタネ】", desc:"2種類だけ。\n稀にLR / 基本はN", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" },
 
+    // ★コラボ（ゴースト）※画像は仮。ゴースト用のタネ画像URLに差し替えてOK
+    { id:"seed_colabo_ghost", name:"コラボ【GHOSTのタネ】", desc:"N多め＋SR/LRが混ざる。\nGASで確定。", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" },
 
-
-　　　// ★コラボ（グラタン）
-{ id:"seed_colabo_gratan", name:"コラボ【ぐらたんのタネ】", desc:"2種類だけ。\n稀にLR / 基本はN", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" },
-
-// ★コラボ（ゴースト）※画像は仮。ゴースト用のタネ画像URLに差し替えてOK
-{ id:"seed_colabo_ghost", name:"コラボ【GHOSTのタネ】", desc:"N多め＋SR/LRが混ざる。\nGASで確定。", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" },
-
-// ★コラボ（hold）※必要なら
-{ id:"seed_colabo_hold", name:"コラボ【HOLDのタネ】", desc:"5段階。\nGASで確定。", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" },
-
-
-
-    
+    // ★コラボ（hold）※必要なら
+    { id:"seed_colabo_hold", name:"コラボ【HOLDのタネ】", desc:"5段階。\nGASで確定。", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" },
+  ];
 
   const WATERS = [
     { id:"water_plain_free", name:"ただの水", desc:"無料・UR/LRなし。\n無課金の基準。", factor:1.00, fx:"基準（水）", img:"https://ul.h3z.jp/13XdhuHi.png", rates:{ N:62.5, R:31.2, SR:6.3, UR:0, LR:0 } },
@@ -214,14 +208,6 @@ const SEED_TO_COLLAB = {
     { id:"NK-010", name:"ぶっかけ揚げ玉からしマヨ", img:"https://ul.h3z.jp/CcOw6yLq.png", rarity:"SR" },
     { id:"NK-011", name:"塩マヨペッパー", img:"https://ul.h3z.jp/7UJoTCe7.png", rarity:"R"  },
     { id:"NK-012", name:"てりたま", img:"https://ul.h3z.jp/MU6ehdTH.png", rarity:"SR" },
-  ];
-
-  // =========================
-  // ✅ グラタン：2種固定（※ローカル抽選は使わない：GASで確定）
-  // =========================
-  const GRATIN_POOL = [
-    { id:"col-001", name:"伝説のたこ焼きライバー", img:"https://ul.h3z.jp/CmVTkAd2.png", rarity:"LR" },
-    { id:"col-002", name:"たこ焼き実況者ライバー",  img:"https://ul.h3z.jp/1VQvIP7v.png", rarity:"N"  },
   ];
 
   // =========================================================
@@ -297,10 +283,7 @@ const SEED_TO_COLLAB = {
   // =========================================================
   // ✅ seed_token（roten→farm 共有）
   // =========================================================
-  // ★修正1：roten.js と同じ {ver, tokens} 形式で扱う（互換あり）
-  function defaultSeedTokenStore(){
-    return { ver:1, tokens:[] };
-  }
+  function defaultSeedTokenStore(){ return { ver:1, tokens:[] }; }
 
   function loadSeedTokenStore(){
     try{
@@ -309,9 +292,8 @@ const SEED_TO_COLLAB = {
       const v = JSON.parse(raw);
 
       // 互換：昔の配列保存が来たら store に変換
-      if(Array.isArray(v)){
-        return { ver:1, tokens: v };
-      }
+      if(Array.isArray(v)) return { ver:1, tokens: v };
+
       if(v && typeof v === "object"){
         const tokens = Array.isArray(v.tokens) ? v.tokens : [];
         return { ver: Number(v.ver || 1), tokens };
@@ -350,7 +332,6 @@ const SEED_TO_COLLAB = {
     return list.filter(x => x.token && x.collabId === collabId && x.status === "ISSUED").length;
   }
 
-  // ローカル表示用に ISSUED->PLANTED にする（本体はGASが正）
   function markTokenLocalStatus(token, nextStatus){
     if(!token) return;
     const st = loadSeedTokenStore();
@@ -418,6 +399,8 @@ const SEED_TO_COLLAB = {
     return list[list.length-1]?.v;
   }
 
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
   function itemRewardForLevel(level){
     const lv = Math.max(1, Math.floor(level));
 
@@ -431,23 +414,24 @@ const SEED_TO_COLLAB = {
       (lv >= 6)  ? pickWeighted([{v:"seed",w:55},{v:"water",w:25},{v:"fert",w:20}]) :
                    pickWeighted([{v:"seed",w:70},{v:"water",w:20},{v:"fert",w:10}]);
 
-    const seedChoices = SEEDS.filter(x => x.id !== "seed_colabo"); // コラボ種は報酬で出さない
+    // ✅ コラボ種は報酬で出さない（seed_token専用）
+    const seedChoices  = SEEDS.filter(x => !isCollabSeed(x.id));
     const waterChoices = WATERS.slice();
-    const fertChoices = FERTS.slice();
+    const fertChoices  = FERTS.slice();
 
     const rewards = [];
     for(let k=0;k<count;k++){
-      let picked = null;
-      if(cat === "seed")  picked = pick(seedChoices);
-      if(cat === "water") picked = pick(waterChoices);
-      if(cat === "fert")  picked = pick(fertChoices);
-      if(!picked) picked = pick(seedChoices);
+      let pickedItem = null;
+      if(cat === "seed")  pickedItem = pick(seedChoices);
+      if(cat === "water") pickedItem = pick(waterChoices);
+      if(cat === "fert")  pickedItem = pick(fertChoices);
+      if(!pickedItem) pickedItem = pick(seedChoices);
 
       rewards.push({
         kind: cat,
-        id: picked.id,
-        name: picked.name,
-        img: picked.img,
+        id: pickedItem.id,
+        name: pickedItem.name,
+        img: pickedItem.img,
         qty: 1
       });
     }
@@ -505,28 +489,19 @@ const SEED_TO_COLLAB = {
   // =========================================================
   // ✅ 装備（ロードアウト）
   // =========================================================
-  function defaultLoadout(){
-    return { ver:1, seedId:null, waterId:null, fertId:null };
-  }
+  function defaultLoadout(){ return { ver:1, seedId:null, waterId:null, fertId:null }; }
   function loadLoadout(){
     try{
       const raw = localStorage.getItem(LS_LOADOUT);
       if(!raw) return defaultLoadout();
       const obj = JSON.parse(raw);
       if(!obj || typeof obj !== "object") return defaultLoadout();
-      return {
-        ver:1,
-        seedId:  obj.seedId  || null,
-        waterId: obj.waterId || null,
-        fertId:  obj.fertId  || null
-      };
+      return { ver:1, seedId: obj.seedId || null, waterId: obj.waterId || null, fertId: obj.fertId || null };
     }catch(e){
       return defaultLoadout();
     }
   }
-  function saveLoadout(l){
-    localStorage.setItem(LS_LOADOUT, JSON.stringify(l));
-  }
+  function saveLoadout(l){ localStorage.setItem(LS_LOADOUT, JSON.stringify(l)); }
   let loadout = loadLoadout();
 
   const defaultPlot  = () => ({ state:"EMPTY" });
@@ -554,7 +529,6 @@ const SEED_TO_COLLAB = {
   }
   function saveBook(b){ localStorage.setItem(LS_BOOK, JSON.stringify(b)); }
 
-  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function pad2(n){ return String(n).padStart(2,"0"); }
   function fmtRemain(ms){
     if(ms <= 0) return "00:00:00";
@@ -663,7 +637,7 @@ const SEED_TO_COLLAB = {
   }
 
   // =========================================================
-  // ★報酬抽選（※seed_colaboはローカル抽選しない：GAS harvestで確定）
+  // ★報酬抽選（コラボ種はローカル抽選しない：GAS harvestで確定）
   // =========================================================
   function drawRewardForPlot(p){
     // ✅ まず肥料SP（最優先）
@@ -675,18 +649,12 @@ const SEED_TO_COLLAB = {
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
     }
+    if (p && p.seedId === "seed_bussasari") return pickBussasariReward();
+    if (p && p.seedId === "seed_namara_kawasar") return pickNamaraReward();
 
-    // ✅ コラボ種はローカルで確定しない（ここには来ない運用）
-    if (p && p.seedId === "seed_colabo") {
-      const c = pick(GRATIN_POOL);
-      return { id:c.id, name:c.name, img:c.img, rarity:c.rarity };
-    }
-
-    if (p && p.seedId === "seed_bussasari") {
-      return pickBussasariReward();
-    }
-    if (p && p.seedId === "seed_namara_kawasar") {
-      return pickNamaraReward();
+    // ✅ コラボはここに来ない設計（plantAt側でGASへ）
+    if(p && isCollabSeed(p.seedId)){
+      return { id:"COL-000", name:"コラボ収穫（GAS確定）", img:PLOT_IMG.EMPTY, rarity:"" };
     }
 
     const rarity = (p && p.fixedRarity) ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
@@ -883,12 +851,8 @@ const SEED_TO_COLLAB = {
   // =========================================================
   let __harvestCommitFn = null;
 
-  function setHarvestCommit(fn){
-    __harvestCommitFn = (typeof fn === "function") ? fn : null;
-  }
-  function clearHarvestCommit(){
-    __harvestCommitFn = null;
-  }
+  function setHarvestCommit(fn){ __harvestCommitFn = (typeof fn === "function") ? fn : null; }
+  function clearHarvestCommit(){ __harvestCommitFn = null; }
 
   function closeModalOrCommit(){
     if(__harvestCommitFn){
@@ -917,15 +881,14 @@ const SEED_TO_COLLAB = {
       equipSeedImg.src = seed.img;
       equipSeedName.textContent = seed.name;
 
-      // ✅ seed_colaboだけ seed_token 本数で表示（GAS連携）
-      if(seed.id === "seed_colabo"){
-        const collabId = SEED_TO_COLLAB[seed.id];
+      // ✅ コラボ種は token本数表示
+      if(isCollabSeed(seed.id)){
+        const collabId = collabIdForSeed(seed.id);
         const cnt = collabId ? countIssuedTokensByCollab(collabId) : 0;
         equipSeedCnt.textContent = `×${cnt}`;
       }else{
         equipSeedCnt.textContent = `×${invGet(inv,"seed",seed.id)}`;
       }
-
     }else{
       equipSeedImg.src = PLOT_IMG.EMPTY;
       equipSeedName.textContent = "未装備";
@@ -972,9 +935,9 @@ const SEED_TO_COLLAB = {
     const cells = items.map(x => {
       let cnt = invGet(inv, invType, x.id);
 
-      // ✅ seed_colaboだけ token本数
-      if(isSeed && x.id === "seed_colabo"){
-        const collabId = SEED_TO_COLLAB[x.id];
+      // ✅ コラボ種は token本数
+      if(isSeed && isCollabSeed(x.id)){
+        const collabId = collabIdForSeed(x.id);
         cnt = collabId ? countIssuedTokensByCollab(collabId) : 0;
       }
 
@@ -1086,7 +1049,8 @@ const SEED_TO_COLLAB = {
         const denom = Math.max(1, end - start);
         const progress = (Date.now() - start) / denom;
 
-        if (p.seedId === "seed_colabo") {
+        // ✅ コラボ種は成長GIF
+        if (isCollabSeed(p.seedId)) {
           img = (progress < 0.5) ? PLOT_IMG.COLABO_GROW1 : PLOT_IMG.COLABO_GROW2;
         } else {
           if (progress < 0.5) {
@@ -1159,7 +1123,7 @@ const SEED_TO_COLLAB = {
     return true;
   }
 
-  // ★修正2：seed_colabo の植え付け時に GAS plant を呼ぶ
+  // ✅ GAS plant
   async function gasPlant(token){
     const res = await fetch(GAS_URL, {
       method:"POST",
@@ -1183,16 +1147,19 @@ const SEED_TO_COLLAB = {
     const waterId = loadout.waterId;
     const fertId  = loadout.fertId;
 
-    const okSeed  = (seedId === "seed_colabo")
-      ? (countIssuedTokensByCollab(SEED_TO_COLLAB[seedId]) > 0)
-      : (invGet(inv, "seed",  seedId)  > 0);
+    const isCollab = isCollabSeed(seedId);
+    const collabId = isCollab ? collabIdForSeed(seedId) : null;
+
+    const okSeed  = isCollab
+      ? (countIssuedTokensByCollab(collabId) > 0)
+      : (invGet(inv, "seed", seedId) > 0);
 
     const okWater = invGet(inv, "water", waterId) > 0;
     const okFert  = invGet(inv, "fert",  fertId)  > 0;
 
     if(!okSeed || !okWater || !okFert){
       const lack =
-        (!okSeed) ? (seedId === "seed_colabo" ? "コラボのタネ（seed_token）" : "タネ") :
+        (!okSeed) ? (isCollab ? "コラボのタネ（seed_token）" : "タネ") :
         (!okWater) ? "ミズ" :
         "ヒリョウ";
 
@@ -1233,8 +1200,8 @@ const SEED_TO_COLLAB = {
     const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000);
     const now = Date.now();
 
-    // ✅ 消費（seed_colaboだけ token消費 / invの種は減らさない）
-    if(seedId !== "seed_colabo"){
+    // ✅ 消費（コラボ種だけ token消費 / invの種は減らさない）
+    if(!isCollab){
       invDec(inv, "seed", seedId);
     }
     invDec(inv, "water", waterId);
@@ -1246,10 +1213,10 @@ const SEED_TO_COLLAB = {
       (seedId === "seed_bussasari") ||
       (seedId === "seed_namara_kawasar");
 
-    const fixedRarity = isFixedSeed ? null : pickRarityWithWater(waterId);
+    const fixedRarity = (isFixedSeed || isCollab) ? null : pickRarityWithWater(waterId);
 
     const srHint =
-      (isFixedSeed || seedId === "seed_colabo") ? "NONE" :
+      (isFixedSeed || isCollab) ? "NONE" :
       (fixedRarity === "LR" || fixedRarity === "UR") ? "SR100" :
       (fixedRarity === "SR") ? "SR65" :
       "NONE";
@@ -1265,9 +1232,8 @@ const SEED_TO_COLLAB = {
       srHint
     };
 
-    // ✅ seed_colabo：seed_token を1本アサインして「ローカル抽選はしない」
-    if(seedId === "seed_colabo"){
-      const collabId = SEED_TO_COLLAB[seedId];
+    // ✅ コラボ：seed_token を1本アサインして GAS plant
+    if(isCollab){
       const token = takeOneIssuedToken(collabId);
       if(!token){
         openModal("エラー", `
@@ -1284,15 +1250,12 @@ const SEED_TO_COLLAB = {
       plot.fixedRarity = null;
       plot.srHint = "NONE";
 
-      // ★GASへ plant（PLANTEDにする）
-      // 失敗したらローカルをISSUEDに戻して中断
       openModal("植え付け中…", `<div class="step">GASに登録中…</div>`);
       clearHarvestCommit();
 
       (async () => {
         try{
           await gasPlant(token);
-          // 成功：状態保存して描画
           state.plots[index] = plot;
           saveState(state);
           closeModal();
@@ -1307,24 +1270,23 @@ const SEED_TO_COLLAB = {
           `);
           clearHarvestCommit();
           document.getElementById("btnOk").addEventListener("click", closeModal);
-          render(); // 装備カウント更新
+          render();
         }
       })();
 
-      return; // ★ここで返す（GAS plant完了後に保存）
-    }else{
-      // ✅ それ以外：植えた時点で確定して保存（現状と同じ）
-      plot.reward = drawRewardForPlot(plot);
+      return; // GAS plant完了後に保存
+    }
 
-      // ✅ SPが当たったら演出矛盾を消す
-      if(plot.reward && plot.reward.rarity === "SP"){
-        plot.fixedRarity = null;
-        plot.srHint = "NONE";
-      }
+    // ✅ 通常：植えた時点で確定して保存
+    plot.reward = drawRewardForPlot(plot);
+
+    // ✅ SPが当たったら演出矛盾を消す
+    if(plot.reward && plot.reward.rarity === "SP"){
+      plot.fixedRarity = null;
+      plot.srHint = "NONE";
     }
 
     state.plots[index] = plot;
-
     saveState(state);
     render();
   }
@@ -1393,9 +1355,8 @@ const SEED_TO_COLLAB = {
   }
 
   // =========================================================
-  // ✅ GAS harvest（seed_colabo専用）
+  // ✅ GAS harvest（コラボ専用）
   // =========================================================
-  // ★修正3：apiKey付与 + 返却形式 {ok:true, token, card:{...}} に対応
   async function gasHarvest(token){
     const res = await fetch(GAS_URL, {
       method:"POST",
@@ -1458,7 +1419,7 @@ const SEED_TO_COLLAB = {
             種：${seed?seed.name:"-"}<br>
             水：${water?water.name:"-"}<br>
             肥料：${fert?fert.name:"-"}<br>
-            ${p.seedId==="seed_colabo" ? `token：<code style="font-size:11px;opacity:.85;">${String(p.seedToken||"")}</code><br>` : ``}
+            ${isCollabSeed(p.seedId) ? `token：<code style="font-size:11px;opacity:.85;">${String(p.seedToken||"")}</code><br>` : ``}
           </div>
         </div>
         <div class="row"><button type="button" id="btnOk">OK</button></div>
@@ -1469,12 +1430,11 @@ const SEED_TO_COLLAB = {
     }
 
     // =========================================================
-    // ✅ READY：seed_colaboだけGAS harvest
+    // ✅ READY：コラボだけGAS harvest
     // =========================================================
     if (p.state === "READY") {
 
-      // ✅ コラボはGASで確定
-      if(p.seedId === "seed_colabo"){
+      if(isCollabSeed(p.seedId)){
         if(!p.seedToken){
           openModal("エラー", `
             <div class="step">seed_token が無いので収穫できない。</div>
