@@ -1,13 +1,13 @@
 /* =========================================================
    roten.js（たこぴのお店 / 新GAS seed_token方式・安定版）
-   ✅ 資材在庫: tf_v1_inv（seed/water/fert）= ファームと完全共通
+   ✅ 資材在庫: tf_v1_inv（seed/water/fert）= ファームと共通
    ✅ オクト: roten_v1_octo
    ✅ みくじ/公開記念：既存維持
-   ✅ シリアル：新GAS方式
+   ✅ シリアル：新GAS方式（seed_token）
       - redeem -> seed_token（UUID）を受け取り localStorage(tf_v1_seedtokens) に保存
       - roten では「コラボのタネ」所持数として seedtokens の本数を表示
-      - inv.seed に増やさない（植える時 token が必要だから）
-   ✅ gratan専用テストは完全削除（旧REDEEM_ENDPOINT/旧API_KEY/reward方式を排除）
+      - ★沼回避：inv.seed["seed_collab"] を “tokens数で自動同期（互換/表示）”
+        → takofarm.js が inv側を見てても反映される
 ========================================================= */
 (() => {
   "use strict";
@@ -20,7 +20,7 @@
     launchGift: "roten_v1_launch_gift_claimed",
     log: "roten_v1_log",
 
-    // ✅ 新：seed_token保管（redeemで増える）
+    // ✅ seed_token保管（redeemで増える）
     seedTokens: "tf_v1_seedtokens",
 
     // 端末識別（必要なら将来使う）
@@ -28,8 +28,11 @@
   };
 
   // ✅ 新GAS（あなたの確定版）
-  const GAS_URL   = "https://script.google.com/macros/s/AKfycbwFhJjpj0IidOYf95dyANLFYnIYTuPFFaAKOVxmfGmWJW-9AsCGQBsW90uEitpIpcdm/exec";
-  const GAS_KEY   = "takopi-serial-2026";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwFhJjpj0IidOYf95dyANLFYnIYTuPFFaAKOVxmfGmWJW-9AsCGQBsW90uEitpIpcdm/exec";
+  const GAS_KEY = "takopi-serial-2026";
+
+  // ✅ コラボ種ID（inv側互換用）
+  const SEED_COLLAB_ID = "seed_collab";
 
   // ---------- utils ----------
   const $  = (sel, root=document) => root.querySelector(sel);
@@ -123,8 +126,18 @@
     return map;
   }
 
+  // ✅ ★沼回避：inv.seed["seed_collab"] を token本数で同期（表示/互換）
+  function syncCollabSeedToInv(){
+    const inv = loadInv();
+    inv.seed = inv.seed || {};
+    const n = countSeedTokens();
+    // ここを “常に上書き” するのが沼回避（ズレが固定化しない）
+    inv.seed[SEED_COLLAB_ID] = n;
+    saveInv(inv);
+    return n;
+  }
+
   // ---------- MASTER DATA ----------
-  // ✅ seed_colabo を「固定ぐらたん」ではなく「コラボのタネ（シリアル）」として扱う
   const SEEDS = [
     { id:"seed_random",  name:"なに出るタネ", desc:"何が育つかは完全ランダム。\n店主も知らない。", img:"https://ul.h3z.jp/gnyvP580.png", fx:"完全ランダム" },
     { id:"seed_shop",    name:"店頭タネ", desc:"店で生まれたタネ。\n店頭ナンバーを宿している。", img:"https://ul.h3z.jp/IjvuhWoY.png", fx:"店頭の気配" },
@@ -177,7 +190,7 @@
   function buildGoods(){
     const goods = [];
     for(const s of SEEDS){
-      const isSerialOnly = (s.id === "seed_collab");
+      const isSerialOnly = (s.id === SEED_COLLAB_ID);
       goods.push({
         kind:"seed",
         id:s.id,
@@ -208,7 +221,7 @@
   ];
 
   // =========================================================
-  // ✅ modal（既存維持）
+  // ✅ modal
   // =========================================================
   function getModalEls(){
     return {
@@ -282,11 +295,14 @@
     inv.seed  = inv.seed  || {};
     inv.water = inv.water || {};
     inv.fert  = inv.fert  || {};
+
+    // ✅ 全商品キーをinvに生やす（seed_collabも 0 を持つ）
     for(const g of GOODS){
-      if(!(g.id in inv[g.kind]) && g.id !== "seed_collab"){
+      if(!(g.id in inv[g.kind])){
         inv[g.kind][g.id] = 0;
       }
     }
+
     saveInv(inv);
     return inv;
   }
@@ -298,19 +314,17 @@
   }
 
   function refreshHUD(){
-    const inv = ensureInvKeys();
+    // ✅ 先に同期（ここが沼回避）
+    syncCollabSeedToInv();
 
+    const inv = ensureInvKeys();
     $("#octoNow") && ($("#octoNow").textContent = String(getOcto()));
 
-    // ✅ seedは通常種の合計 + seed_token本数（コラボのタネ）
-    const normalSeedTotal = totalKind(inv, "seed");
-    const collabTokens = countSeedTokens();
-    $("#chipSeed") && ($("#chipSeed").textContent = String(normalSeedTotal + collabTokens));
-
+    // ✅ seedは inv.seed 合計（seed_collabは同期で含まれる）
+    $("#chipSeed") && ($("#chipSeed").textContent = String(totalKind(inv, "seed")));
     $("#chipWater") && ($("#chipWater").textContent = String(totalKind(inv, "water")));
     $("#chipFert")  && ($("#chipFert").textContent  = String(totalKind(inv, "fert")));
 
-    // 図鑑UIは非表示化（値更新は残す）
     $("#chipBookOwned") && ($("#chipBookOwned").textContent = String(calcBookOwned()));
     $("#chipBookDup")   && ($("#chipBookDup").textContent   = "0");
 
@@ -330,7 +344,7 @@
   }
 
   // =========================================================
-  // ✅ toast（既存維持）
+  // ✅ toast
   // =========================================================
   function ensureToast(){
     let el = $("#toast");
@@ -393,7 +407,7 @@
   }
 
   // =========================================================
-  // ✅ CSS注入（既存維持 + seed_collabの表示対応）
+  // ✅ CSS注入（既存 + seed_collabの表示対応）
   // =========================================================
   function injectBuyRowCSS(){
     if($("#_roten_buyrow_css")) return;
@@ -514,28 +528,23 @@
   let currentKind = "seed";
 
   function renderGoods(){
+    // ✅ 表示前にも同期（ズレ固定を防ぐ）
+    syncCollabSeedToInv();
+
     const inv = ensureInvKeys();
     const grid = $("#goodsGrid");
     if(!grid) return;
 
     const list = GOODS.filter(g => g.kind === currentKind);
-
     const tokenCountBy = countSeedTokensByCollab();
 
     grid.innerHTML = list.map(g => {
-      // ✅ 所持表示
-      let own = 0;
-      if(g.id === "seed_collab"){
-        own = countSeedTokens();
-      }else{
-        own = ownedCount(inv, g.kind, g.id);
-      }
-
+      const own = ownedCount(inv, g.kind, g.id);
       const badge = g.tag ? `<span class="miniTag">${g.tag}</span>` : "";
 
       // ✅ シリアルタネの補足（内訳）
       let serialNote = "";
-      if(g.id === "seed_collab"){
+      if(g.id === SEED_COLLAB_ID){
         const keys = Object.keys(tokenCountBy);
         serialNote = keys.length
           ? `<div style="margin-top:6px; font-size:12px; opacity:.78; line-height:1.4;">
@@ -640,19 +649,16 @@
   // ✅ 内訳モーダル（seedは通常+コラボtokenも表示）
   // =========================================================
   function openBreakdownModal(kindKey){
+    // ✅ 先に同期
+    syncCollabSeedToInv();
+
     const inv = ensureInvKeys();
     const titleMap = { seed:"🌱 種の内訳", water:"💧 水の内訳", fert:"🧪 肥料の内訳" };
     const items = GOODS.filter(g => g.kind === kindKey);
 
     let rows = items.map(g => {
-      let c = 0;
-      let memo = "";
-      if(g.id === "seed_collab"){
-        c = countSeedTokens();
-        memo = "（シリアル限定 / seed_token）";
-      }else{
-        c = ownedCount(inv, g.kind, g.id);
-      }
+      const c = ownedCount(inv, g.kind, g.id);
+      const memo = (g.id === SEED_COLLAB_ID) ? "（シリアル限定 / seed_token）" : "";
       return `
         <div class="inv-row">
           <div class="inv-left">
@@ -664,7 +670,6 @@
       `;
     }).join("");
 
-    // seed_collab の collabId内訳も追記
     if(kindKey === "seed"){
       const map = countSeedTokensByCollab();
       const keys = Object.keys(map);
@@ -709,9 +714,9 @@
   }
 
   async function gasPost(payload){
+    // ✅ CORSプリフライト回避（ヘッダ無し・POSTのみ）
     const res = await fetch(GAS_URL, {
       method: "POST",
-      // ✅ CORSプリフライト回避（ヘッダ無し）
       body: JSON.stringify(payload),
       cache: "no-store",
     });
@@ -733,17 +738,20 @@
     });
   }
 
-  // ✅ redeem結果（tokens）を seedTokens に追加保存
+  // ✅ redeem結果（tokens）を seedTokens に追加保存（重複排除つき）
   function applyRedeemTokens(tokens){
     const st = loadSeedTokens();
     const now = Date.now();
+    const before = st.tokens.length;
+
     for(const t of (tokens || [])){
       const token = String(t?.token || "").trim();
       const collabId = String(t?.collabId || "").trim();
       if(!token) continue;
       st.tokens.push({ token, collabId, issuedAt: now });
     }
-    // 念のため重複排除（同tokenが2回入らないように）
+
+    // 重複排除
     const seen = new Set();
     st.tokens = st.tokens.filter(x=>{
       if(!x || !x.token) return false;
@@ -751,8 +759,15 @@
       seen.add(x.token);
       return true;
     });
+
     saveSeedTokens(st);
-    return st.tokens.length;
+
+    const added = st.tokens.length - before;
+
+    // ✅ ★ここが重要：inv側も同期して “必ず反映される” 状態にする
+    syncCollabSeedToInv();
+
+    return { total: st.tokens.length, added };
   }
 
   function openSerialModal(){
@@ -777,17 +792,23 @@
     const root = document.getElementById("modalBody") || document;
     $("#serialClose", root)?.addEventListener("click", closeModal);
 
-    $("#redeemBtn", root)?.addEventListener("click", async () => {
-      const code = ($("#redeemCode", root)?.value || "").trim().toUpperCase();
+    const input = $("#redeemCode", root);
+    const btn = $("#redeemBtn", root);
+
+    async function runRedeem(){
+      const code = (input?.value || "").trim().toUpperCase();
       if(!code){ alert("コードを入力してね"); return; }
 
-      const btn = $("#redeemBtn", root);
-      if(btn){ btn.disabled = true; btn.textContent = "確認中…"; }
+      if(btn){
+        btn.disabled = true;
+        btn.textContent = "確認中…";
+      }
 
       try{
         const data = await redeemOnServer(code);
 
         if(!data.ok){
+          // ✅ 失敗でも “状態を壊さない”
           alert(data.error || "無効なコードです。");
           return;
         }
@@ -798,19 +819,28 @@
           return;
         }
 
-        applyRedeemTokens(tokens);
+        const r = applyRedeemTokens(tokens);
+
         pushLog(`シリアル：${code}（seed_token +${tokens.length} / ${data.collabId}）`);
 
-        toastHype(`✨ 成功！seed_token +${tokens.length}（${data.collabId}）✨`, {kind:"good"});
+        // ✅ 反映を強制（沼回避）
         refreshHUD();
         renderGoods();
+
+        toastHype(`✨ 成功！seed_token +${tokens.length}（${data.collabId}）✨`, {kind:"good"});
         closeModal();
       }catch(err){
         alert(err?.message || "通信に失敗した…たこ。時間を置いてもう一度。");
       }finally{
-        if(btn){ btn.disabled = false; btn.textContent = "発行"; }
+        if(btn){
+          btn.disabled = false;
+          btn.textContent = "発行";
+        }
       }
-    });
+    }
+
+    btn?.addEventListener("click", runRedeem);
+    input?.addEventListener("keydown", (e)=>{ if(e.key === "Enter") runRedeem(); });
   }
 
   // （もしHTMLにインライン入力がある場合だけ活かす：無ければ何もしない）
@@ -851,7 +881,7 @@
   }
 
   // =========================================================
-  // ✅ 《タネ、ミズ、ヒリョウについて》モーダル（既存ほぼ維持）
+  // ✅ 《タネ、ミズ、ヒリョウについて》モーダル
   // =========================================================
   function openAboutModal(){
     openModal("📘 タネ/ミズ/ヒリョウについて", `
@@ -1168,6 +1198,9 @@
     ensureToast();
     injectBuyRowCSS();
     ensureInvKeys();
+
+    // ✅ 起動時に必ず同期（これで “反映されない” が起きにくい）
+    syncCollabSeedToInv();
 
     placeAboutButton();
 
