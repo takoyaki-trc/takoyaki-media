@@ -43,6 +43,9 @@
   // ✅ あなたのGAS WebApp URL（/execまで）※ここだけ必須変更
   const GAS_URL = "https://script.google.com/macros/s/XXXXXXXXXXXX/exec";
 
+  // ✅ GASのapiKey（GAS側 CONFIG.API_KEY と同じにする）
+  const GAS_API_KEY = "takopi-serial-2026";
+
   // ✅ seedId → collabId 対応（必要に応じて追加）
   const SEED_TO_COLLAB = {
     "seed_colabo": "col_gratan_2026"
@@ -280,107 +283,83 @@
 
   // =========================================================
   // ✅ seed_token（roten→farm 共有）
-  // ★修正点：roten.js形式 {tokens:[...]} と旧形式 [...] の両対応
-  //         さらに保存時は「元の形式」を維持して rotem.js を壊さない
   // =========================================================
+  // ★修正1：roten.js と同じ {ver, tokens} 形式で扱う（互換あり）
+  function defaultSeedTokenStore(){
+    return { ver:1, tokens:[] };
+  }
+
   function loadSeedTokenStore(){
     try{
       const raw = localStorage.getItem(LS_SEEDTOKENS);
-      if(!raw){
-        // デフォは roten 互換のオブジェクト形式にしておく（安全）
-        return { mode:"object", base:{ ver:1 }, tokens:[] };
-      }
+      if(!raw) return defaultSeedTokenStore();
       const v = JSON.parse(raw);
 
-      // 旧: 配列そのもの
+      // 互換：昔の配列保存が来たら store に変換
       if(Array.isArray(v)){
-        return { mode:"array", base:null, tokens:v };
+        return { ver:1, tokens: v };
       }
-
-      // roten: {tokens:[...]}（他フィールド付きでもOK）
       if(v && typeof v === "object"){
-        if(Array.isArray(v.tokens)){
-          return { mode:"object", base:v, tokens:v.tokens };
-        }
-        // まれな別名に保険（壊れてても拾う）
-        if(Array.isArray(v.items)){
-          return { mode:"object", base:{ ...v, tokens:v.items }, tokens:v.items };
-        }
+        const tokens = Array.isArray(v.tokens) ? v.tokens : [];
+        return { ver: Number(v.ver || 1), tokens };
       }
-
-      // 想定外は空
-      return { mode:"object", base:{ ver:1 }, tokens:[] };
+      return defaultSeedTokenStore();
     }catch(e){
-      return { mode:"object", base:{ ver:1 }, tokens:[] };
+      return defaultSeedTokenStore();
     }
   }
 
   function saveSeedTokenStore(store){
-    const tokens = Array.isArray(store?.tokens) ? store.tokens : [];
-    const mode = store?.mode;
-
-    if(mode === "array"){
-      localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(tokens));
-      return;
-    }
-
-    // object形式（roten互換）で保存
-    const base = (store?.base && typeof store.base === "object") ? { ...store.base } : {};
-    if(!("ver" in base)) base.ver = 1;
-    base.tokens = tokens;
-    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(base));
-  }
-
-  // 以降のAPIは「配列を返す」形で既存ロジックを崩さない
-  function loadSeedTokens(){
-    return loadSeedTokenStore().tokens || [];
-  }
-  function saveSeedTokens(arr){
-    // “最後に読んだ形式” を維持して保存したいので、現在ストアを見て mode を踏襲
-    const cur = loadSeedTokenStore();
-    cur.tokens = Array.isArray(arr) ? arr : [];
-    saveSeedTokenStore(cur);
+    const s = (store && typeof store === "object") ? store : defaultSeedTokenStore();
+    if(!Array.isArray(s.tokens)) s.tokens = [];
+    if(!Number.isFinite(Number(s.ver))) s.ver = 1;
+    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(s));
   }
 
   function normTokenEntry(entry){
-    // entry が string の旧形式も許容
+    // roten.js: {token, collabId, issuedAt} を想定 + 互換
     if(typeof entry === "string") return { token: entry, collabId: null, status: "ISSUED" };
-
     if(entry && typeof entry === "object"){
-      // roten.js は {token, collabId, issuedAt} で status を持たないことがある
-      const token = String(entry.token || entry.id || "").trim();
-      const collabId = entry.collabId != null ? String(entry.collabId).trim() : null;
-      const status = entry.status != null ? String(entry.status).trim() : "ISSUED";
-      return { token, collabId: collabId || null, status: status || "ISSUED" };
+      return {
+        token: String(entry.token || entry.id || "").trim(),
+        collabId: entry.collabId ? String(entry.collabId).trim() : null,
+        status: entry.status ? String(entry.status).trim() : "ISSUED",
+        issuedAt: entry.issuedAt || entry.at || null
+      };
     }
     return { token:"", collabId:null, status:"ISSUED" };
   }
 
   function countIssuedTokensByCollab(collabId){
     if(!collabId) return 0;
-    const list = loadSeedTokens().map(normTokenEntry);
-    // roten側が status 未設定のままでも ISSUED 扱いになるので、ここで拾える
+    const st = loadSeedTokenStore();
+    const list = (st.tokens || []).map(normTokenEntry);
     return list.filter(x => x.token && x.collabId === collabId && x.status === "ISSUED").length;
+  }
+
+  // ローカル表示用に ISSUED->PLANTED にする（本体はGASが正）
+  function markTokenLocalStatus(token, nextStatus){
+    if(!token) return;
+    const st = loadSeedTokenStore();
+    const list = (st.tokens || []).map(normTokenEntry);
+    const idx = list.findIndex(x => x.token === token);
+    if(idx >= 0){
+      list[idx] = { ...list[idx], status: String(nextStatus || "PLANTED") };
+      st.tokens = list;
+      saveSeedTokenStore(st);
+    }
   }
 
   function takeOneIssuedToken(collabId){
     if(!collabId) return null;
-
-    // 形式を保持して保存するため、storeを使う
-    const store = loadSeedTokenStore();
-    const list = (store.tokens || []).map(normTokenEntry);
-
+    const st = loadSeedTokenStore();
+    const list = (st.tokens || []).map(normTokenEntry);
     const idx = list.findIndex(x => x.token && x.collabId === collabId && x.status === "ISSUED");
     if(idx < 0) return null;
-
     const picked = list[idx];
-    // ローカルは「表示用」status更新（本体はGASが正）
-    list[idx] = { ...picked, status:"PLANTED" };
-
-    // 保存は元の形式を維持
-    store.tokens = list;
-    saveSeedTokenStore(store);
-
+    list[idx] = { ...picked, status: "PLANTED" }; // 表示用（本体はGASが正）
+    st.tokens = list;
+    saveSeedTokenStore(st);
     return picked.token;
   }
 
@@ -925,7 +904,7 @@
       equipSeedImg.src = seed.img;
       equipSeedName.textContent = seed.name;
 
-      // ✅ seed_colaboだけ seed_token 本数で表示
+      // ✅ seed_colaboだけ seed_token 本数で表示（GAS連携）
       if(seed.id === "seed_colabo"){
         const collabId = SEED_TO_COLLAB[seed.id];
         const cnt = collabId ? countIssuedTokensByCollab(collabId) : 0;
@@ -1167,6 +1146,22 @@
     return true;
   }
 
+  // ★修正2：seed_colabo の植え付け時に GAS plant を呼ぶ
+  async function gasPlant(token){
+    const res = await fetch(GAS_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ apiKey: GAS_API_KEY, api:"plant", token })
+    });
+    let json = null;
+    try{ json = await res.json(); }catch(e){ /* noop */ }
+    if(!json || json.ok !== true){
+      const msg = json?.error || `plant failed (HTTP ${res.status})`;
+      throw new Error(msg);
+    }
+    return true;
+  }
+
   function plantAt(index){
     inv = loadInv();
     loadout = loadLoadout();
@@ -1270,10 +1265,40 @@
         document.getElementById("btnOk").addEventListener("click", closeModal);
         return;
       }
+
       plot.seedToken = token;
       delete plot.reward;
       plot.fixedRarity = null;
       plot.srHint = "NONE";
+
+      // ★GASへ plant（PLANTEDにする）
+      // 失敗したらローカルをISSUEDに戻して中断
+      openModal("植え付け中…", `<div class="step">GASに登録中…</div>`);
+      clearHarvestCommit();
+
+      (async () => {
+        try{
+          await gasPlant(token);
+          // 成功：状態保存して描画
+          state.plots[index] = plot;
+          saveState(state);
+          closeModal();
+          render();
+        }catch(e){
+          // 失敗：ローカルのstatusをISSUEDに戻す
+          markTokenLocalStatus(token, "ISSUED");
+
+          openModal("エラー", `
+            <div class="step">植え付けに失敗：${String(e?.message || e)}</div>
+            <div class="row"><button type="button" id="btnOk" class="primary">OK</button></div>
+          `);
+          clearHarvestCommit();
+          document.getElementById("btnOk").addEventListener("click", closeModal);
+          render(); // 装備カウント更新
+        }
+      })();
+
+      return; // ★ここで返す（GAS plant完了後に保存）
     }else{
       // ✅ それ以外：植えた時点で確定して保存（現状と同じ）
       plot.reward = drawRewardForPlot(plot);
@@ -1357,11 +1382,12 @@
   // =========================================================
   // ✅ GAS harvest（seed_colabo専用）
   // =========================================================
+  // ★修正3：apiKey付与 + 返却形式 {ok:true, token, card:{...}} に対応
   async function gasHarvest(token){
     const res = await fetch(GAS_URL, {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ api:"harvest", token })
+      body: JSON.stringify({ apiKey: GAS_API_KEY, api:"harvest", token })
     });
     let json = null;
     try{ json = await res.json(); }catch(e){ /* noop */ }
@@ -1369,12 +1395,15 @@
       const msg = json?.error || `harvest failed (HTTP ${res.status})`;
       throw new Error(msg);
     }
-    // ✅ GASの返却に合わせる（想定：cardId/name/img/rarity）
+
+    const card = json.card || null;
+    if(!card) throw new Error("card missing in harvest response");
+
     return {
-      id: String(json.cardId),
-      name: String(json.name),
-      img: String(json.img),
-      rarity: String(json.rarity || "")
+      id: String(card.cardId || ""),
+      name: String(card.name || ""),
+      img: String(card.img || ""),
+      rarity: String(card.rarity || "")
     };
   }
 
