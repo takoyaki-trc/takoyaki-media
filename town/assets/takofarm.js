@@ -37,9 +37,22 @@
   // ✅ オクト（露店と共通のキーを使う）
   const LS_OCTO = "roten_v1_octo";
 
+  // ✅ roten.js が保存してる seed_token 群（ここを畑側で消費する）
+  const LS_SEEDTOKENS = "tf_v1_seedtokens";
+
+  // ✅ あなたのGAS WebApp URL（/execまで）※ここだけ必須変更
+  const GAS_URL = "https://script.google.com/macros/s/XXXXXXXXXXXX/exec";
+
+  // ✅ seedId → collabId 対応（必要に応じて追加）
+  const SEED_TO_COLLAB = {
+    "seed_colabo": "col_gratan_2026"
+    // "seed_colabo_ghost": "col_ghost_2026",
+    // "seed_colabo_hold": "col_hold_2026",
+  };
+
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
-  const READY_TO_BURN_MS = 24 * 60 * 60 * 1000;  // READYから8時間で焦げ（※コメントと違うなら値を調整してOK）
+  const READY_TO_BURN_MS = 24 * 60 * 60 * 1000; // READYから焦げまで
   const TICK_MS = 1000;
 
   // ベース（使わないなら水ratesが優先）
@@ -123,8 +136,8 @@
     { id:"seed_bussasari", name:"ブッ刺さりタネ", desc:"刺さるのは心だけ。\n出るのは5枚だけ（全部N）。", factor:1.05, img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり固定5枚" },
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor:1.08, img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり固定12枚" },
 
-    // ★コラボ（グラタン）：シリアル付与は露店側
-    { id:"seed_colabo", name:"コラボ【ぐらたんのタネ】", desc:"2種類だけ。\n稀にLR / 基本はN", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"露店で入手" }
+    // ★コラボ（グラタン）：シリアル付与は露店側 / 畑はseed_token消費
+    { id:"seed_colabo", name:"コラボ【ぐらたんのタネ】", desc:"2種類だけ。\n稀にLR / 基本はN", factor:1.00, img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"seed_token制" }
   ];
 
   const WATERS = [
@@ -188,20 +201,19 @@
   ];
 
   // =========================
-  // ✅ グラタン：2種固定（①LR / ②N）
+  // ✅ グラタン：2種固定（※ローカル抽選は使わない：GASで確定）
   // =========================
   const GRATIN_POOL = [
     { id:"col-001", name:"伝説のたこ焼きライバー", img:"https://ul.h3z.jp/CmVTkAd2.png", rarity:"LR" },
     { id:"col-002", name:"たこ焼き実況者ライバー",  img:"https://ul.h3z.jp/1VQvIP7v.png", rarity:"N"  },
   ];
-  const GRATIN_LR_CHANCE = 0.05;
 
   // =========================================================
   // レベル・XP
   // =========================================================
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
-  const XP_BY_RARITY = { N:20, R:40, SR:80, UR:160, LR:300, SP:0 }; // ✅ SPがXP欲しいならここを調整
+  const XP_BY_RARITY = { N:20, R:40, SR:80, UR:160, LR:300, SP:0 };
 
   function xpNeedForLevel(level){
     return 120 + (level - 1) * 50 + Math.floor(Math.pow(level - 1, 1.6) * 20);
@@ -267,6 +279,49 @@
   }
 
   // =========================================================
+  // ✅ seed_token（roten→farm 共有）
+  // =========================================================
+  function loadSeedTokens(){
+    try{
+      const raw = localStorage.getItem(LS_SEEDTOKENS);
+      if(!raw) return [];
+      const v = JSON.parse(raw);
+      return Array.isArray(v) ? v : [];
+    }catch(e){
+      return [];
+    }
+  }
+  function saveSeedTokens(arr){
+    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(Array.isArray(arr) ? arr : []));
+  }
+  function normTokenEntry(entry){
+    if(typeof entry === "string") return { token: entry, collabId: null, status: "ISSUED" };
+    if(entry && typeof entry === "object"){
+      return {
+        token: String(entry.token || entry.id || ""),
+        collabId: entry.collabId ? String(entry.collabId) : null,
+        status: entry.status ? String(entry.status) : "ISSUED"
+      };
+    }
+    return { token:"", collabId:null, status:"ISSUED" };
+  }
+  function countIssuedTokensByCollab(collabId){
+    if(!collabId) return 0;
+    const list = loadSeedTokens().map(normTokenEntry);
+    return list.filter(x => x.token && x.collabId === collabId && x.status === "ISSUED").length;
+  }
+  function takeOneIssuedToken(collabId){
+    if(!collabId) return null;
+    const list = loadSeedTokens().map(normTokenEntry);
+    const idx = list.findIndex(x => x.token && x.collabId === collabId && x.status === "ISSUED");
+    if(idx < 0) return null;
+    const picked = list[idx];
+    list[idx] = { ...picked, status: "PLANTED" }; // 表示用（本体はGASが正）
+    saveSeedTokens(list);
+    return picked.token;
+  }
+
+  // =========================================================
   // ✅ オクト
   // =========================================================
   function loadOcto(){
@@ -321,7 +376,7 @@
       (lv >= 6)  ? pickWeighted([{v:"seed",w:55},{v:"water",w:25},{v:"fert",w:20}]) :
                    pickWeighted([{v:"seed",w:70},{v:"water",w:20},{v:"fert",w:10}]);
 
-    const seedChoices = SEEDS.filter(x => x.id !== "seed_colabo");
+    const seedChoices = SEEDS.filter(x => x.id !== "seed_colabo"); // コラボ種は報酬で出さない
     const waterChoices = WATERS.slice();
     const fertChoices = FERTS.slice();
 
@@ -530,15 +585,9 @@
     const c = pick(NAMARA_POOL);
     return { id:c.id, name:c.name, img:c.img, rarity:c.rarity };
   }
-  function pickGratinReward(){
-    const isLR = (Math.random() < GRATIN_LR_CHANCE);
-    const c = isLR ? GRATIN_POOL.find(x=>x.rarity==="LR") : GRATIN_POOL.find(x=>x.rarity==="N");
-    return { id:c.id, name:c.name, img:c.img, rarity:c.rarity };
-  }
 
   // =========================================================
-  // ✅【追加】肥料SP抽選（B案：植えた瞬間に確定）
-  // ※固定タネ/コラボでも抽選します（スキップ無し）
+  // ✅ 肥料SP抽選（植えた瞬間に確定）
   // =========================================================
   function pickFertSPIfAny(p){
     if(!p) return null;
@@ -559,7 +608,7 @@
   }
 
   // =========================================================
-  // ★報酬抽選
+  // ★報酬抽選（※seed_colaboはローカル抽選しない：GAS harvestで確定）
   // =========================================================
   function drawRewardForPlot(p){
     // ✅ まず肥料SP（最優先）
@@ -571,9 +620,13 @@
       const c = pick(TAKOPI_SEED_POOL);
       return { id:c.id, name:c.name, img:c.img, rarity:(c.rarity || "N") };
     }
+
+    // ✅ コラボ種はローカルで確定しない（ここには来ない運用）
     if (p && p.seedId === "seed_colabo") {
-      return pickGratinReward();
+      const c = pick(GRATIN_POOL);
+      return { id:c.id, name:c.name, img:c.img, rarity:c.rarity };
     }
+
     if (p && p.seedId === "seed_bussasari") {
       return pickBussasariReward();
     }
@@ -745,8 +798,8 @@
     window.scrollTo(0, __scrollY);
   }
 
-  function onBackdrop(e){ if(e.target === modal) closeModalOrCommit(); } // ★収穫中は確定させたいので OrCommit に
-  function onEsc(e){ if(e.key === "Escape") closeModalOrCommit(); }      // ★同上
+  function onBackdrop(e){ if(e.target === modal) closeModalOrCommit(); }
+  function onEsc(e){ if(e.key === "Escape") closeModalOrCommit(); }
 
   function openModal(title, html){
     modal.removeEventListener("click", onBackdrop);
@@ -784,7 +837,7 @@
 
   function closeModalOrCommit(){
     if(__harvestCommitFn){
-      const fn = __harvestCommitFn; // 二重実行防止
+      const fn = __harvestCommitFn;
       __harvestCommitFn = null;
       fn();
       return;
@@ -792,7 +845,6 @@
     closeModal();
   }
 
-  // 既存：mClose は closeModal だった → 修正：closeModalOrCommit
   mClose.addEventListener("click", closeModalOrCommit);
 
   // =========================================================
@@ -809,7 +861,16 @@
     if(seed){
       equipSeedImg.src = seed.img;
       equipSeedName.textContent = seed.name;
-      equipSeedCnt.textContent = `×${invGet(inv,"seed",seed.id)}`;
+
+      // ✅ seed_colaboだけ seed_token 本数で表示
+      if(seed.id === "seed_colabo"){
+        const collabId = SEED_TO_COLLAB[seed.id];
+        const cnt = collabId ? countIssuedTokensByCollab(collabId) : 0;
+        equipSeedCnt.textContent = `×${cnt}`;
+      }else{
+        equipSeedCnt.textContent = `×${invGet(inv,"seed",seed.id)}`;
+      }
+
     }else{
       equipSeedImg.src = PLOT_IMG.EMPTY;
       equipSeedName.textContent = "未装備";
@@ -854,7 +915,14 @@
     const title = isSeed ? "種を選ぶ" : isWater ? "水を選ぶ" : "肥料を選ぶ";
 
     const cells = items.map(x => {
-      const cnt = invGet(inv, invType, x.id);
+      let cnt = invGet(inv, invType, x.id);
+
+      // ✅ seed_colaboだけ token本数
+      if(isSeed && x.id === "seed_colabo"){
+        const collabId = SEED_TO_COLLAB[x.id];
+        cnt = collabId ? countIssuedTokensByCollab(collabId) : 0;
+      }
+
       const disabled = (cnt <= 0);
       const selected =
         (isSeed && loadout.seedId === x.id) ||
@@ -884,7 +952,6 @@
       </div>
     `);
 
-    // グリッド系モーダルでは harvestCommit は無効
     clearHarvestCommit();
 
     mBody.querySelectorAll("button[data-pick]").forEach(btn=>{
@@ -1045,13 +1112,24 @@
     const waterId = loadout.waterId;
     const fertId  = loadout.fertId;
 
-    const okSeed  = invGet(inv, "seed",  seedId)  > 0;
+    const okSeed  = (seedId === "seed_colabo")
+      ? (countIssuedTokensByCollab(SEED_TO_COLLAB[seedId]) > 0)
+      : (invGet(inv, "seed",  seedId)  > 0);
+
     const okWater = invGet(inv, "water", waterId) > 0;
     const okFert  = invGet(inv, "fert",  fertId)  > 0;
 
     if(!okSeed || !okWater || !okFert){
-      const lack = (!okSeed) ? "タネ" : (!okWater) ? "ミズ" : "ヒリョウ";
-      const goKind = (!okSeed) ? "seed" : (!okWater) ? "water" : "fert";
+      const lack =
+        (!okSeed) ? (seedId === "seed_colabo" ? "コラボのタネ（seed_token）" : "タネ") :
+        (!okWater) ? "ミズ" :
+        "ヒリョウ";
+
+      const goKind =
+        (!okSeed) ? "seed" :
+        (!okWater) ? "water" :
+        "fert";
+
       openModal("在庫が足りない", `
         <div class="step">
           <b>${lack}</b> の在庫が足りないため植えられない。<br>
@@ -1084,13 +1162,15 @@
     const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000);
     const now = Date.now();
 
-    invDec(inv, "seed",  seedId);
+    // ✅ 消費（seed_colaboだけ token消費 / invの種は減らさない）
+    if(seedId !== "seed_colabo"){
+      invDec(inv, "seed", seedId);
+    }
     invDec(inv, "water", waterId);
     invDec(inv, "fert",  fertId);
     saveInv(inv);
 
     const isFixedSeed =
-      (seedId === "seed_colabo") ||
       (seedId === "seed_special") ||
       (seedId === "seed_bussasari") ||
       (seedId === "seed_namara_kawasar");
@@ -1098,12 +1178,11 @@
     const fixedRarity = isFixedSeed ? null : pickRarityWithWater(waterId);
 
     const srHint =
-      (isFixedSeed) ? "NONE" :
+      (isFixedSeed || seedId === "seed_colabo") ? "NONE" :
       (fixedRarity === "LR" || fixedRarity === "UR") ? "SR100" :
       (fixedRarity === "SR") ? "SR65" :
       "NONE";
 
-    // ✅ まず plot を作る（ここまでは現状と同じ情報）
     const plot = {
       state: "GROW",
       seedId,
@@ -1115,13 +1194,32 @@
       srHint
     };
 
-    // ✅【B案】植えた時点で「SP抽選まで」確定して保存
-    plot.reward = drawRewardForPlot(plot);
-
-    // ✅ SPが当たったら、育成演出のSR hintと矛盾させない
-    if(plot.reward && plot.reward.rarity === "SP"){
+    // ✅ seed_colabo：seed_token を1本アサインして「ローカル抽選はしない」
+    if(seedId === "seed_colabo"){
+      const collabId = SEED_TO_COLLAB[seedId];
+      const token = takeOneIssuedToken(collabId);
+      if(!token){
+        openModal("エラー", `
+          <div class="step">seed_token が見つからないため植えられない。</div>
+          <div class="row"><button type="button" id="btnOk" class="primary">OK</button></div>
+        `);
+        clearHarvestCommit();
+        document.getElementById("btnOk").addEventListener("click", closeModal);
+        return;
+      }
+      plot.seedToken = token;
+      delete plot.reward;
       plot.fixedRarity = null;
       plot.srHint = "NONE";
+    }else{
+      // ✅ それ以外：植えた時点で確定して保存（現状と同じ）
+      plot.reward = drawRewardForPlot(plot);
+
+      // ✅ SPが当たったら演出矛盾を消す
+      if(plot.reward && plot.reward.rarity === "SP"){
+        plot.fixedRarity = null;
+        plot.srHint = "NONE";
+      }
     }
 
     state.plots[index] = plot;
@@ -1131,21 +1229,17 @@
   }
 
   // =========================================================
-  // ✅【追加】収穫確定処理を関数化（閉じるでも呼べる）
+  // ✅ 収穫確定処理（閉じるでも呼べる）
   // =========================================================
   function commitHarvest(i, reward){
-    // 図鑑加算
     addToBook(reward);
 
-    // XP
     const gain = XP_BY_RARITY[reward.rarity] ?? 4;
     const xpRes = addXP(gain);
 
-    // マスを空に
     state.plots[i] = { state:"EMPTY" };
     saveState(state);
 
-    // レベルアップ報酬があれば演出
     if(xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length){
       const blocks = xpRes.rewards.map(r => {
         const itemsHtml = (r.items || []).map(it => {
@@ -1193,9 +1287,32 @@
       return;
     }
 
-    // 通常：閉じて畑に戻る
     closeModal();
     render();
+  }
+
+  // =========================================================
+  // ✅ GAS harvest（seed_colabo専用）
+  // =========================================================
+  async function gasHarvest(token){
+    const res = await fetch(GAS_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ api:"harvest", token })
+    });
+    let json = null;
+    try{ json = await res.json(); }catch(e){ /* noop */ }
+    if(!json || json.ok !== true){
+      const msg = json?.error || `harvest failed (HTTP ${res.status})`;
+      throw new Error(msg);
+    }
+    // ✅ GASの返却に合わせる（想定：cardId/name/img/rarity）
+    return {
+      id: String(json.cardId),
+      name: String(json.name),
+      img: String(json.img),
+      rarity: String(json.rarity || "")
+    };
   }
 
   // =========================================================
@@ -1228,7 +1345,6 @@
       const fert = FERTS.find(x=>x.id===p.fertId);
       const remain = (p.readyAt||0) - Date.now();
 
-      // ✅ 修正：確定レア表示を削除（p.fixedRarity を出さない）
       openModal("育成中", `
         <div class="step">このマスは育成中。収穫まであと <b>${fmtRemain(remain)}</b></div>
         <div class="reward">
@@ -1237,6 +1353,7 @@
             種：${seed?seed.name:"-"}<br>
             水：${water?water.name:"-"}<br>
             肥料：${fert?fert.name:"-"}<br>
+            ${p.seedId==="seed_colabo" ? `token：<code style="font-size:11px;opacity:.85;">${String(p.seedToken||"")}</code><br>` : ``}
           </div>
         </div>
         <div class="row"><button type="button" id="btnOk">OK</button></div>
@@ -1247,12 +1364,72 @@
     }
 
     // =========================================================
-    // ✅ READY：閉じるでも確定→図鑑に収録→畑へ戻る
-    // （B案：基本は植えた時点で p.reward が入っている）
+    // ✅ READY：seed_colaboだけGAS harvest
     // =========================================================
     if (p.state === "READY") {
+
+      // ✅ コラボはGASで確定
+      if(p.seedId === "seed_colabo"){
+        if(!p.seedToken){
+          openModal("エラー", `
+            <div class="step">seed_token が無いので収穫できない。</div>
+            <div class="row"><button type="button" id="btnOk" class="primary">OK</button></div>
+          `);
+          clearHarvestCommit();
+          document.getElementById("btnOk").addEventListener("click", closeModal);
+          return;
+        }
+
+        openModal("収穫中…", `<div class="step">GASに問い合わせ中…</div>`);
+        clearHarvestCommit();
+
+        (async () => {
+          try{
+            const reward = await gasHarvest(p.seedToken);
+
+            // plotに保存（再表示対策）
+            p.reward = reward;
+            state.plots[i] = p;
+            saveState(state);
+
+            openModal("収穫！", `
+              <div class="reward">
+                <div class="big">${reward.name}（${reward.id}）</div>
+                <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>この画面を閉じると自動で図鑑に登録されます。</div>
+                <img class="img" src="${reward.img}" alt="${reward.name}">
+              </div>
+              <div class="row">
+                <button type="button" id="btnCancel">閉じる</button>
+                <button type="button" class="primary" id="btnConfirm">図鑑を確認する</button>
+              </div>
+            `);
+
+            setHarvestCommit(() => commitHarvest(i, reward));
+
+            document.getElementById("btnCancel").addEventListener("click", closeModalOrCommit);
+
+            document.getElementById("btnConfirm").addEventListener("click", () => {
+              const fn = __harvestCommitFn;
+              __harvestCommitFn = null;
+              if(fn) fn();
+              location.href = "./zukan.html";
+            });
+
+          }catch(e){
+            openModal("エラー", `
+              <div class="step">収穫に失敗：${String(e?.message || e)}</div>
+              <div class="row"><button id="btnOk" class="primary">OK</button></div>
+            `);
+            clearHarvestCommit();
+            document.getElementById("btnOk").addEventListener("click", closeModal);
+          }
+        })();
+
+        return;
+      }
+
+      // ====== 通常（ローカル確定） ======
       if (!p.reward) {
-        // データ欠損救済（基本はここ通らない）
         p.reward = drawRewardForPlot(p);
         saveState(state);
       }
@@ -1270,7 +1447,6 @@
         </div>
       `);
 
-      // ★収穫モーダル中は「閉じる＝確定」にする
       setHarvestCommit(() => commitHarvest(i, reward));
 
       document.getElementById("btnCancel").addEventListener("click", closeModalOrCommit);
@@ -1369,8 +1545,4 @@
   render();
   setInterval(tick, TICK_MS);
 
-  // =========================================================
-  // ✅ イベントをグローバルに生やさないため：必要ならここで onPlotTap を呼ぶ
-  // （あなたのHTML側で plotボタンを作っているので onPlotTap は render() 内で紐付いてます）
-  // =========================================================
 })();
