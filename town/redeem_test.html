@@ -1,0 +1,90 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Takoyaki Serial Test</title>
+<style>
+  body{ font-family: system-ui, -apple-system, "Noto Sans JP", sans-serif; padding:12px; }
+  input,button{ font-size:16px; padding:10px; }
+  button{ margin-right:8px; margin-top:6px; }
+  pre{ white-space:pre-wrap; background:#111; color:#0f0; padding:10px; border-radius:8px; }
+  .row{ margin:10px 0; }
+</style>
+
+<h2>Takoyaki Serial Test</h2>
+
+<div class="row">
+  GAS URL:<br>
+  <input id="api" style="width:100%" value="https://script.google.com/macros/s/AKfycbwFhJjpj0IidOYf95dyANLFYnIYTuPFFaAKOVxmfGmWJW-9AsCGQBsW90uEitpIpcdm/exec">
+</div>
+
+<div class="row">
+  apiKey:<br>
+  <input id="key" style="width:100%" value="takopi-serial-2026">
+</div>
+
+<div class="row">
+  シリアルコード（codesのcode）:<br>
+  <input id="code" style="width:100%" value="TEST-ANN-001">
+</div>
+
+<div class="row">
+  <button onclick="redeem()">① redeem</button>
+  <button onclick="plant()">② plant</button>
+  <button onclick="harvest()">③ harvest</button>
+</div>
+
+<div class="row">
+  token（redeemで自動入力）:<br>
+  <input id="token" style="width:100%" placeholder="redeemで返ったtoken">
+</div>
+
+<pre id="out">---</pre>
+
+<script>
+  const out = (x)=>document.getElementById("out").textContent = x;
+
+  async function post(payload){
+    const url = document.getElementById("api").value.trim();
+    const res = await fetch(url, { method:"POST", body: JSON.stringify(payload) });
+    const txt = await res.text();
+    let json;
+    try{ json = JSON.parse(txt); }catch(e){ throw new Error("JSON parse failed: " + txt); }
+    return json;
+  }
+
+  async function redeem(){
+    try{
+      const apiKey = document.getElementById("key").value.trim();
+      const code = document.getElementById("code").value.trim();
+      const json = await post({ api:"redeem", apiKey, code });
+      out(JSON.stringify(json, null, 2));
+      if(json.ok && json.tokens && json.tokens[0]){
+        document.getElementById("token").value = json.tokens[0].token;
+      }
+    }catch(err){
+      out(String(err));
+    }
+  }
+
+  async function plant(){
+    try{
+      const apiKey = document.getElementById("key").value.trim();
+      const token = document.getElementById("token").value.trim();
+      const json = await post({ api:"plant", apiKey, token });
+      out(JSON.stringify(json, null, 2));
+    }catch(err){
+      out(String(err));
+    }
+  }
+
+  async function harvest(){
+    try{
+      const apiKey = document.getElementById("key").value.trim();
+      const token = document.getElementById("token").value.trim();
+      const json = await post({ api:"harvest", apiKey, token });
+      out(JSON.stringify(json, null, 2));
+    }catch(err){
+      out(String(err));
+    }
+  }
+</script>
