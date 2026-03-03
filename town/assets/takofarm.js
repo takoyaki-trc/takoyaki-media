@@ -280,44 +280,109 @@
 
   // =========================================================
   // ✅ seed_token（roten→farm 共有）
+  // ★修正ポイント：roten.js の保存形式 {tokens:[...]} と、旧形式 [] の両対応
   // =========================================================
-  function loadSeedTokens(){
+
+  // ✅ 読み取り：常に { ver, tokens:[...] } を返す
+  function loadSeedTokenStore(){
     try{
       const raw = localStorage.getItem(LS_SEEDTOKENS);
-      if(!raw) return [];
+      if(!raw) return { ver:1, tokens:[] };
+
       const v = JSON.parse(raw);
-      return Array.isArray(v) ? v : [];
+
+      // 旧形式：配列（["uuid", ...] or [{token,collabId}, ...]）
+      if(Array.isArray(v)){
+        return { ver:1, tokens: v };
+      }
+
+      // 新形式：{ tokens:[...] }（roten.js の applyRedeemTokens がこの形式）
+      if(v && typeof v === "object"){
+        const arr = Array.isArray(v.tokens) ? v.tokens : [];
+        return { ver: Number(v.ver||1) || 1, tokens: arr };
+      }
+
+      return { ver:1, tokens:[] };
     }catch(e){
-      return [];
+      return { ver:1, tokens:[] };
     }
+  }
+
+  // ✅ 書き込み：必ず {tokens:[...]} 形式で保存（roten と揃える）
+  function saveSeedTokenStore(store){
+    const safe = (store && typeof store === "object") ? store : {};
+    const tokens = Array.isArray(safe.tokens) ? safe.tokens : [];
+    const ver = Number(safe.ver || 1) || 1;
+    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify({ ver, tokens }));
+  }
+
+  // 互換維持：このファイル内の既存関数名はそのまま
+  function loadSeedTokens(){
+    return loadSeedTokenStore().tokens;
   }
   function saveSeedTokens(arr){
-    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(Array.isArray(arr) ? arr : []));
+    const st = loadSeedTokenStore();
+    st.tokens = Array.isArray(arr) ? arr : [];
+    saveSeedTokenStore(st);
   }
+
   function normTokenEntry(entry){
-    if(typeof entry === "string") return { token: entry, collabId: null, status: "ISSUED" };
-    if(entry && typeof entry === "object"){
+    // 文字列だけ入ってる旧形式
+    if(typeof entry === "string"){
       return {
-        token: String(entry.token || entry.id || ""),
-        collabId: entry.collabId ? String(entry.collabId) : null,
-        status: entry.status ? String(entry.status) : "ISSUED"
+        token: entry.trim(),
+        collabId: null,
+        status: "ISSUED",
+        issuedAt: null
       };
     }
-    return { token:"", collabId:null, status:"ISSUED" };
+    // オブジェクト形式（roten.js: {token, collabId, issuedAt}）
+    if(entry && typeof entry === "object"){
+      const token = String(entry.token || entry.id || "").trim();
+      const collabId = entry.collabId ? String(entry.collabId).trim() : null;
+      const status = entry.status ? String(entry.status).trim() : "ISSUED";
+      const issuedAt = (entry.issuedAt != null) ? Number(entry.issuedAt) : null;
+
+      return {
+        token,
+        collabId: collabId || null,
+        status: status || "ISSUED",
+        issuedAt: Number.isFinite(issuedAt) ? issuedAt : null
+      };
+    }
+    return { token:"", collabId:null, status:"ISSUED", issuedAt:null };
   }
+
   function countIssuedTokensByCollab(collabId){
     if(!collabId) return 0;
     const list = loadSeedTokens().map(normTokenEntry);
-    return list.filter(x => x.token && x.collabId === collabId && x.status === "ISSUED").length;
+    return list.filter(x => x.token && x.collabId === collabId && (x.status === "ISSUED")).length;
   }
+
   function takeOneIssuedToken(collabId){
     if(!collabId) return null;
-    const list = loadSeedTokens().map(normTokenEntry);
+
+    // ここだけ「store」を直接扱って、形式を壊さず status を反映
+    const st = loadSeedTokenStore();
+    const list = (st.tokens || []).map(normTokenEntry);
+
     const idx = list.findIndex(x => x.token && x.collabId === collabId && x.status === "ISSUED");
     if(idx < 0) return null;
+
     const picked = list[idx];
-    list[idx] = { ...picked, status: "PLANTED" }; // 表示用（本体はGASが正）
-    saveSeedTokens(list);
+
+    // ローカル表記用：PLANTED にする（本体はGASが正）
+    list[idx] = { ...picked, status: "PLANTED" };
+
+    // st.tokens は「元要素の形」ではなくてもOK（畑/露店は読み取り互換済み）
+    st.tokens = list.map(x => ({
+      token: x.token,
+      collabId: x.collabId,
+      issuedAt: x.issuedAt,
+      status: x.status
+    }));
+
+    saveSeedTokenStore(st);
     return picked.token;
   }
 
