@@ -47,11 +47,12 @@
   const GAS_API_KEY = "takopi-serial-2026";
 
   // ✅ seedId → collabId 対応（必要に応じて追加）
-  const SEED_TO_COLLAB = {
-    "seed_colabo": "col_gratan_2026"
-    // "seed_colabo_ghost": "col_ghost_2026",
-    // "seed_colabo_hold": "col_hold_2026",
-  };
+  // ✅ seedId → collabId 対応
+const SEED_TO_COLLAB = {
+  "seed_colabo_gratan": "col_gratan_2026",
+  "seed_colabo_ghost":  "col_ghost_2026",
+  "seed_colabo_hold":   "col_hold_2026",
+};
 
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000;      // 5時間
