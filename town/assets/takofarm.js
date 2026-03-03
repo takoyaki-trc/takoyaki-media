@@ -1,4 +1,5 @@
 (() => {
+  console.log("✅ takofarm.js loaded", new Date().toISOString());
   "use strict";
 
   // =========================
