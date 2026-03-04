@@ -846,6 +846,24 @@
   }
 
   // =========================================================
+  // 便利関数（URL補正/HTMLエスケープ）
+  // =========================================================
+  function toAbsUrl(u){
+    const s = String(u || "").trim();
+    if(!s) return "";
+    if(/^https?:\/\//i.test(s)) return s;
+    try{ return new URL(s, location.href).href; }catch(e){ return s; }
+  }
+  function escapeHtml(str){
+    return String(str || "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#39;");
+  }
+
+  // =========================================================
   // モーダル（背景ロック＋モーダル内スクロールOK）
   // =========================================================
   let __scrollY = 0;
@@ -1363,15 +1381,17 @@
 
   function openHarvestModal(card, onCommit){
     const rarity = String(card.rarity || "");
+    const img = card.img ? toAbsUrl(card.img) : PLOT_IMG.EMPTY;
+
     openModal("収穫！", `
       <div class="harvWrap">
         <div class="harvCard">
-          <img src="${card.img || PLOT_IMG.EMPTY}" alt="">
+          <img src="${img}" alt="" onerror="this.onerror=null;this.src='${PLOT_IMG.EMPTY}'">
         </div>
         <div class="harvMeta">
-          <div class="harvR">${rarity}</div>
-          <div class="harvName">${card.name || "NO NAME"}</div>
-          <div class="harvId">${card.id || ""}</div>
+          <div class="harvR">${escapeHtml(rarity)}</div>
+          <div class="harvName">${escapeHtml(card.name || "NO NAME")}</div>
+          <div class="harvId">${escapeHtml(card.id || "")}</div>
         </div>
         <div class="row">
           <button type="button" class="primary" id="harvOk">閉じる（確定）</button>
@@ -1387,28 +1407,48 @@
     document.getElementById("harvOk").addEventListener("click", closeModalOrCommit);
   }
 
+  // ✅ GAS通信（失敗時に「返ってきた本文」も出す）
   async function gasPost(payload){
     const res = await fetch(GAS_URL, {
       method: "POST",
-      headers: { "Content-Type":"text/plain;charset=utf-8" }, // GASはtext/plainが安定
+      // ★ここを application/json に（GAS側 doPost が JSON を parse してる前提）
+      headers: { "Content-Type":"application/json; charset=utf-8" },
       body: JSON.stringify(payload),
       cache: "no-store",
     });
-    if(!res.ok) throw new Error("HTTP " + res.status);
     const txt = await res.text();
-    let json;
-    try{ json = JSON.parse(txt); }catch(e){ throw new Error("JSON parse failed"); }
-    return json;
+    if(!res.ok){
+      throw new Error(`HTTP ${res.status}\n\n${txt.slice(0, 1200)}`);
+    }
+    try{
+      return JSON.parse(txt);
+    }catch(e){
+      throw new Error(`JSON parse failed\n\n${txt.slice(0, 1200)}`);
+    }
   }
 
   async function harvestCollabOnServer(seedToken){
-    // GAS側の実装に合わせて api 名を変えてOK（あなたの設計メモでは harvest）
     return await gasPost({
       api: "harvest",
       token: String(seedToken || ""),
       ts: Date.now(),
       app: "farm"
     });
+  }
+
+  function normalizeCardFromAny(data){
+    const root = data?.card ?? data?.result ?? data?.data ?? data?.payload ?? data?.item ?? null;
+    const card = root || data || {};
+    const rawImg =
+      card.img ?? card.image ?? card.url ?? card.photo ?? card.imageUrl ?? card.imgUrl ?? card.picture ?? card.icon ?? "";
+
+    return {
+      id: String(card.cardId ?? card.id ?? card.no ?? card.card_no ?? "").trim(),
+      name: String(card.name ?? card.title ?? card.cardName ?? "").trim(),
+      img: toAbsUrl(String(rawImg || "").trim()),
+      rarity: String(card.rarity ?? card.rank ?? card.r ?? "").trim(),
+      _raw: card,
+    };
   }
 
   async function doHarvest(index){
@@ -1428,48 +1468,79 @@
 
       try{
         const data = await harvestCollabOnServer(token);
-        if(!data?.ok){
-          openModal("収穫失敗", `<div class="step">${data?.error || "サーバーが拒否した"}</div><div class="row"><button type="button" id="ok">OK</button></div>`);
-          document.getElementById("ok").addEventListener("click", closeModal);
-          return;
-        }
 
-        const card = data.card || data.result || null;
-        if(!card){
-          openModal("収穫失敗", `<div class="step">カード情報が返ってこなかった</div><div class="row"><button type="button" id="ok">OK</button></div>`);
-          document.getElementById("ok").addEventListener("click", closeModal);
-          return;
-        }
+        // ✅ デバッグ：返却JSONを“画面に表示”（コンソール不要）
+        // 何も表示されない/画像が出ない場合、ここを見ると100%原因が分かる
+        openModal("GAS応答（デバッグ）", `
+          <div class="step">返ってきたJSONを表示します（そのまま貼れば即直せる）</div>
+          <pre style="white-space:pre-wrap; font-size:12px; opacity:.92; line-height:1.35; max-height:52vh; overflow:auto; border:1px solid rgba(255,255,255,.18); padding:10px; border-radius:12px;">${escapeHtml(JSON.stringify(data, null, 2))}</pre>
+          <div class="row">
+            <button type="button" class="primary" id="dbgNext">続行（解析して収穫へ）</button>
+            <button type="button" id="dbgClose">閉じる</button>
+          </div>
+        `);
+        document.getElementById("dbgClose").addEventListener("click", closeModal);
 
-        const gotCard = {
-          id: String(card.cardId || card.id || ""),
-          name: String(card.name || ""),
-          img: String(card.img || card.image || ""),
-          rarity: String(card.rarity || ""),
-        };
+        document.getElementById("dbgNext").addEventListener("click", () => {
+          closeModal();
 
-        // 表示 → 閉じるで確定
-        openHarvestModal(gotCard, () => {
-          addToBook(gotCard);
+          if(!data?.ok){
+            openModal("収穫失敗", `<div class="step">${escapeHtml(data?.error || "サーバーが拒否した")}</div><div class="row"><button type="button" id="ok">OK</button></div>`);
+            document.getElementById("ok").addEventListener("click", closeModal);
+            return;
+          }
 
-          // tokenをHARVESTEDへ
-          markTokenStatus(token, "HARVESTED");
+          const got = normalizeCardFromAny(data);
 
-          // XP
-          const xp = XP_BY_RARITY[gotCard.rarity] ?? 20;
-          addXP(xp);
+          if(!got.id && !got.name && !got.img){
+            openModal("収穫失敗", `
+              <div class="step">カード情報が取れない（キー名が想定外）</div>
+              <pre style="white-space:pre-wrap; font-size:12px; opacity:.92; max-height:52vh; overflow:auto; border:1px solid rgba(255,255,255,.18); padding:10px; border-radius:12px;">${escapeHtml(JSON.stringify(data, null, 2))}</pre>
+              <div class="row"><button type="button" class="primary" id="ok">OK</button></div>
+            `);
+            document.getElementById("ok").addEventListener("click", closeModal);
+            return;
+          }
 
-          // マスを空に
-          state.plots[index] = { state:"EMPTY" };
-          saveState(state);
+          if(!got.img){
+            openModal("画像URLが取れない", `
+              <div class="step">img/url/photo などのキーが見つからない</div>
+              <pre style="white-space:pre-wrap; font-size:12px; opacity:.92; max-height:52vh; overflow:auto; border:1px solid rgba(255,255,255,.18); padding:10px; border-radius:12px;">${escapeHtml(JSON.stringify(got._raw, null, 2))}</pre>
+              <div class="row"><button type="button" class="primary" id="ok">OK</button></div>
+            `);
+            document.getElementById("ok").addEventListener("click", closeModal);
+            return;
+          }
 
-          // 同期
-          syncCollabSeedsToInv();
-          render();
+          const gotCard = { id: got.id || "(NO-ID)", name: got.name || "(NO-NAME)", img: got.img, rarity: got.rarity || "" };
+
+          // 表示 → 閉じるで確定
+          openHarvestModal(gotCard, () => {
+            addToBook(gotCard);
+
+            // tokenをHARVESTEDへ
+            markTokenStatus(token, "HARVESTED");
+
+            // XP
+            const xp = XP_BY_RARITY[gotCard.rarity] ?? 20;
+            addXP(xp);
+
+            // マスを空に
+            state.plots[index] = { state:"EMPTY" };
+            saveState(state);
+
+            // 同期
+            syncCollabSeedsToInv();
+            render();
+          });
         });
 
       }catch(e){
-        openModal("通信失敗", `<div class="step">通信に失敗した…</div><div class="row"><button type="button" id="ok">OK</button></div>`);
+        openModal("通信失敗（詳細）", `
+          <div class="step">通信/JSONで失敗</div>
+          <pre style="white-space:pre-wrap; font-size:12px; opacity:.92; max-height:52vh; overflow:auto; border:1px solid rgba(255,255,255,.18); padding:10px; border-radius:12px;">${escapeHtml(String(e && (e.stack || e.message || e)))}</pre>
+          <div class="row"><button type="button" class="primary" id="ok">OK</button></div>
+        `);
         document.getElementById("ok").addEventListener("click", closeModal);
       }
       return;
