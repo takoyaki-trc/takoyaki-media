@@ -222,9 +222,9 @@
     .map(c => ({
       id:   String(c.seedId),
       name: String(c.name),
-      desc: "購入不可。\n上のシリアル入力で seed_token が増える。\n畑で植えるとサーバー確定カードが出る。",
+      desc: "購入不可。\n上のシリアル入力でタネが増える。\n畑で植えるとカードが出る。",
       img:  String(c.img),
-      fx:   "サーバー確定",
+      fx:   "限定カード確定",
       tag:  "シリアル限定",
       buyable: false,
     }));
