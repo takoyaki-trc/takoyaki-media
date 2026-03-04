@@ -41,25 +41,20 @@
       collabId: "col_gratan_2026",
       seedId:   "seed_col_gratan_2026",
       name:     "【コラボ】グラタンのタネ",
-      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col1/", // ←あなたの画像に差し替えOK
+      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col1.png", // ←あなたの画像に差し替えOK
     },
     {
       collabId: "col_ghost_2026",
       seedId:   "seed_col_ghost_2026",
       name:     "【コラボ】GHOSTのタネ",
-      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col2/", // ←あなたの画像に差し替えOK
+      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col2.ping", // ←あなたの画像に差し替えOK
     },
-    {
-      collabId: "col_hold_2026",
-      seedId:   "seed_col_hold_2026",
-      name:     "【コラボ】HOLDのタネ",
-      img:      "https://ul.h3z.jp/wbnwoTzm.png", // ←あなたの画像に差し替えOK
-    },
+    
     {
       collabId: "ann_2026",
       seedId:   "seed_ann_2026",
       name:     "【SP】アニバーサリーのタネ",
-      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/anv1/", // ←あなたの画像に差し替えOK
+      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/anv1.png", // ←あなたの画像に差し替えOK
     },
   ];
 
@@ -70,6 +65,12 @@
   function isBlockedCollabId(collabId){
     return false;
   }
+   {
+      collabId: "col_hold_2026",
+      seedId:   "seed_col_hold_2026",
+      name:     "【コラボ】HOLDのタネ",
+      img:      "https://ul.h3z.jp/wbnwoTzm.png", // ←あなたの画像に差し替えOK
+    },
 
   // =========================================================
   // ✅ 互換用（古い takofarm.js / 古い表示が seed_collab を見る場合に備える）
