@@ -134,9 +134,9 @@
   ========================= */
   const EVENT_POOL = [
     { id:"craft_001", name:"職人ナンバー01", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/syokunin/01.png", desc:"職人カード" },
-    { id:"craft_002", name:"職人ナンバー02", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/syokunin/02.png", desc:"職人カード" },
-    { id:"craft_003", name:"職人ナンバー03", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/syokunin/03.png", desc:"職人カード" },
-    { id:"craft_004", name:"職人ナンバー04", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/syokunin/01.png", desc:"職人カード" },
+    { id:"craft_002", name:"職人ナンバー02", url:"https://share.google/8HvtVSCcfQi6NNjPl", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/syokunin/02.png", desc:"職人カード" },
+    { id:"craft_003", name:"職人ナンバー03", url:"https://www.instagram.com/takoyaki_hachibe/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/syokunin/03.png", desc:"職人カード" },
+    { id:"craft_004", name:"職人ナンバー04", url:"https://share.google/Dx06ORWtKpUmkPBP5", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/syokunin/04.png", desc:"職人カード" },
     { id:"craft_005", name:"職人ナンバー05", url:"https://takoyakinana.1net.jp/", icon:"https://ul.h3z.jp/Quyt1TAt.png", photo:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/syokunin/01.png", desc:"職人カード" }
   ];
 
