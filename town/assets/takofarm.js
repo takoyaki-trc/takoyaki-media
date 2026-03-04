@@ -1283,9 +1283,28 @@
     const water = WATERS.find(x=>x.id===waterId);
     const fert  = FERTS.find(x=>x.id===fertId);
 
-    const factor = clamp((seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1), 0.35, 1.0);
-    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60*60*1000); // 最低1時間
+    
+     
+     
+   const baseFactor = (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1);
+const isTimeNo = (fertId === "fert_timeno");
+const factor = clamp(baseFactor, 0.01, 1.0);
 
+// ✅ テスト用：時間を信じない肥料だけ“最低時間”制限を外して即テスト可能にする
+const growMs = isTimeNo
+  ? Math.max(10_000, Math.floor(BASE_GROW_MS * factor))   // 最短10秒（好みで変更OK）
+  : Math.max(60*60*1000, Math.floor(BASE_GROW_MS * factor)); // それ以外は最低1時間維持  
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+    
     const startAt = Date.now();
     const readyAt = startAt + growMs;
 
