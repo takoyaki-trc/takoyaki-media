@@ -6,8 +6,12 @@
    ✅ シリアル：新GAS方式（seed_token）
       - redeem -> seed_token（UUID）を受け取り localStorage(tf_v1_seedtokens) に保存
       - roten では「コラボ別のタネ」所持数として seedtokens の “未使用(ISSUED)” 本数を表示 ✅
-      - ★沼回避：inv.seed[各seedId] を “未使用tokens数で自動同期（互換/表示）” ✅
+      - ★沼回避：inv.seed[各seedId] を “未使用tokens数で自動同期（表示/互換）” ✅
         → takofarm.js が inv側を見てても反映される（コラボ別に反映）
+   ✅ 今回の要望
+      - 【互換】seed_collab は完全削除（表示も同期も無し）
+      - 各コラボ種の「シリアル」ボタンを削除（上部のシリアル入力だけで完結）
+      - HOLDのタネは今は表示しない（同期待機＝カウントも0固定）
 ========================================================= */
 (() => {
   "use strict";
@@ -41,38 +45,41 @@
       collabId: "col_gratan_2026",
       seedId:   "seed_col_gratan_2026",
       name:     "【コラボ】グラタンのタネ",
-      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col1.png", // ←あなたの画像に差し替えOK
+      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col1.png",
+      hidden:   false,
     },
     {
       collabId: "col_ghost_2026",
       seedId:   "seed_col_ghost_2026",
       name:     "【コラボ】GHOSTのタネ",
-      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col2.png", // ←あなたの画像に差し替えOK
+      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col2.png",
+      hidden:   false,
     },
-    
+
+    // ✅ HOLD：今は表示しない（＆同期待機＝0固定）
+    {
+      collabId: "col_hold_2026",
+      seedId:   "seed_col_hold_2026",
+      name:     "【コラボ】HOLDのタネ",
+      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/hold.png",
+      hidden:   true,
+    },
+
     {
       collabId: "ann_2026",
       seedId:   "seed_ann_2026",
       name:     "【SP】アニバーサリーのタネ",
-      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/anv1.png", // ←あなたの画像に差し替えOK
+      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/anv1.png",
+      hidden:   false,
     },
   ];
 
   const COLLAB_BY_ID = Object.fromEntries(COLLAB_SEEDS.map(x => [String(x.collabId), x]));
 
-  // ✅ 今月はまだ止めたいコラボがあるならここでブロックできる
-  // 例：return collabId === "col_hold_2026";
+  // ✅ 今は止めたいコラボがあるならここでブロック（＝同期0固定 + token内訳にも出さない）
   function isBlockedCollabId(collabId){
-    return false;
+    return String(collabId) === "col_hold_2026"; // ✅ HOLDは今は止める
   }
-   
-  // =========================================================
-  // ✅ 互換用（古い takofarm.js / 古い表示が seed_collab を見る場合に備える）
-  // - “1種類にまとめるseed_collab” を残しておく（表示はしてもいいし消してもOK）
-  // - 同期は「合計未使用tokens数」を入れる
-  // =========================================================
-  const LEGACY_SEED_COLLAB_ID = "seed_collab";
-  const KEEP_LEGACY_SEED = true; // false にすると seed_collab を商品一覧から消す
 
   // ---------- utils ----------
   const $  = (sel, root=document) => root.querySelector(sel);
@@ -164,11 +171,6 @@
     return !s || s === "ISSUED";
   }
 
-  function countSeedTokens(){
-    const st = loadSeedTokens();
-    return st.tokens.filter(isIssuedToken).length;
-  }
-
   function countSeedTokensByCollab(){
     const st = loadSeedTokens();
     const map = {};
@@ -192,16 +194,12 @@
     for(const def of COLLAB_SEEDS){
       const cid = String(def.collabId);
       const sid = String(def.seedId);
+
       if(isBlockedCollabId(cid)){
-        inv.seed[sid] = 0;
+        inv.seed[sid] = 0;     // ✅ 今は0固定
         continue;
       }
       inv.seed[sid] = Number(by[cid] || 0);
-    }
-
-    // ✅ 互換：合計（古い farm が seed_collab を見ても反映される）
-    if(KEEP_LEGACY_SEED){
-      inv.seed[LEGACY_SEED_COLLAB_ID] = countSeedTokens();
     }
 
     saveInv(inv);
@@ -218,31 +216,22 @@
   ];
 
   // ✅ コラボ別タネ（購入不可 / シリアル限定）
-  const SEEDS_COLLAB = COLLAB_SEEDS.map(c => ({
-    id:   String(c.seedId),
-    name: String(c.name),
-    desc: "購入不可。\nシリアルで seed_token が増える。\n畑で植えるとサーバー確定カードが出る。",
-    img:  String(c.img),
-    fx:   "サーバー確定",
-    tag:  "シリアル限定",
-    buyable: false,
-  }));
-
-  // ✅ 互換用 seed_collab（合計表示・古いfarm用）
-  const SEED_LEGACY = {
-    id: LEGACY_SEED_COLLAB_ID,
-    name:"【互換】シリアル合計のタネ",
-    desc:"（古い互換用）\nコラボ別タネに移行済。\nこれは合計本数の表示だけ。",
-    img:"https://ul.h3z.jp/wbnwoTzm.png",
-    fx:"互換",
-    tag:"互換",
-    buyable:false,
-  };
+  // ✅ HOLDは「hidden:true & blocked」なので表示から外す
+  const SEEDS_COLLAB = COLLAB_SEEDS
+    .filter(c => !c.hidden && !isBlockedCollabId(c.collabId))
+    .map(c => ({
+      id:   String(c.seedId),
+      name: String(c.name),
+      desc: "購入不可。\n上のシリアル入力で seed_token が増える。\n畑で植えるとサーバー確定カードが出る。",
+      img:  String(c.img),
+      fx:   "サーバー確定",
+      tag:  "シリアル限定",
+      buyable: false,
+    }));
 
   const SEEDS = [
     ...SEEDS_BASE,
     ...SEEDS_COLLAB,
-    ...(KEEP_LEGACY_SEED ? [SEED_LEGACY] : []),
   ];
 
   const WATERS = [
@@ -392,11 +381,17 @@
     inv.water = inv.water || {};
     inv.fert  = inv.fert  || {};
 
-    // ✅ 全商品キーをinvに生やす
+    // ✅ 全商品キーをinvに生やす（表示してる分）
     for(const g of GOODS){
       if(!(g.id in inv[g.kind])){
         inv[g.kind][g.id] = 0;
       }
+    }
+
+    // ✅ 表示しない（hidden/blocked）コラボseedもinvにキーだけは生やす（ただし同期で0固定）
+    for(const def of COLLAB_SEEDS){
+      const sid = String(def.seedId);
+      if(!(sid in inv.seed)) inv.seed[sid] = 0;
     }
 
     saveInv(inv);
@@ -416,8 +411,7 @@
     const inv = ensureInvKeys();
     $("#octoNow") && ($("#octoNow").textContent = String(getOcto()));
 
-    // ✅ seedは inv.seed 合計（コラボ別seedも同期で含まれる）
-    $("#chipSeed") && ($("#chipSeed").textContent = String(totalKind(inv, "seed")));
+    $("#chipSeed")  && ($("#chipSeed").textContent  = String(totalKind(inv, "seed")));
     $("#chipWater") && ($("#chipWater").textContent = String(totalKind(inv, "water")));
     $("#chipFert")  && ($("#chipFert").textContent  = String(totalKind(inv, "fert")));
 
@@ -503,7 +497,7 @@
   }
 
   // =========================================================
-  // ✅ CSS注入（既存 + コラボ別タネ表示）
+  // ✅ CSS注入
   // =========================================================
   function injectBuyRowCSS(){
     if($("#_roten_buyrow_css")) return;
@@ -638,10 +632,12 @@
       const badge = g.tag ? `<span class="miniTag">${g.tag}</span>` : "";
 
       const canBuy = !!g.buyable;
+
       const priceLine = canBuy
         ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>`
         : `<div class="priceline">単価 <b>—</b>（シリアル）</div>`;
 
+      // ✅ コラボ種の「シリアルボタン」を完全削除（上部の入力だけで完結）
       const buyBar = canBuy ? `
         <div class="buybar">
           <div class="qty">
@@ -655,9 +651,8 @@
       ` : `
         <div class="buybar">
           <div style="opacity:.78; font-size:12px; text-align:right; flex:1; white-space:nowrap;">
-            シリアルで増える…たこ。
+            上のシリアル入力で増える…たこ。
           </div>
-          <button class="btn buybtn" type="button">シリアル</button>
         </div>
         ${priceLine}
       `;
@@ -688,6 +683,9 @@
       const item = GOODS.find(x => x.kind===kind && x.id===id);
       if(!item) return;
 
+      // ✅ 非売品（コラボ種）はボタン類が無いので購入配線もしない
+      if(!item.buyable) return;
+
       const btn   = $(".buybtn", card);
       const minus = $(".qtyminus", card);
       const plus  = $(".qtyplus", card);
@@ -709,12 +707,6 @@
       btn?.addEventListener("click", (e)=>{
         e.preventDefault(); e.stopPropagation();
 
-        if(!item.buyable){
-          openSerialModal();
-          setTakopiSayRandom();
-          return;
-        }
-
         const qty = getQty();
         const r = buyMany(item, qty);
         if(!r.ok){
@@ -727,10 +719,10 @@
   }
 
   // =========================================================
-  // ✅ 内訳モーダル（seedはコラボ別タネもそのまま表示）
+  // ✅ 内訳モーダル（seedは表示中のタネだけ）
+  // - HOLDは hidden/blocked なので一覧にも内訳にも出ない
   // =========================================================
   function openBreakdownModal(kindKey){
-    // ✅ 先に同期
     syncCollabSeedsToInv();
 
     const inv = ensureInvKeys();
@@ -740,11 +732,9 @@
     let rows = items.map(g => {
       const c = ownedCount(inv, g.kind, g.id);
 
-      // コラボseedの説明を少し付ける
       let memo = "";
       const def = Object.values(COLLAB_BY_ID).find(x => x.seedId === g.id);
       if(def) memo = `（${def.collabId} / seed_token）`;
-      if(g.id === LEGACY_SEED_COLLAB_ID) memo = "（互換：合計）";
 
       return `
         <div class="inv-row">
@@ -790,6 +780,7 @@
 
   // =========================================================
   // ✅ シリアル（新GAS方式）
+  // - 上部の入力（#serialInlineInput/#serialInlineBtn）で完結
   // =========================================================
   function getDeviceId(){
     let id = localStorage.getItem(LS.deviceId);
@@ -801,7 +792,6 @@
   }
 
   async function gasPost(payload){
-    // ✅ CORSプリフライト回避（ヘッダ無し・POSTのみ）
     const res = await fetch(GAS_URL, {
       method: "POST",
       body: JSON.stringify(payload),
@@ -851,86 +841,13 @@
 
     const added = st.tokens.length - before;
 
-    // ✅ ★ここが重要：inv側も同期して “必ず反映される” 状態にする
+    // ✅ inv側も同期して “必ず反映される” 状態にする
     syncCollabSeedsToInv();
 
     return { total: st.tokens.length, added };
   }
 
-  function openSerialModal(){
-    openModal("🔑 シリアル入力（seed_token発行）", `
-      <div class="pop-wrap">
-        <div class="note">
-          シリアルを入力すると <b>seed_token</b> が発行される…たこ。<br>
-          その token は畑で植えるときに使われる…たこ。<br>
-          ※コラボ別にタネが増える…たこ。
-        </div>
-
-        <div class="serial-row">
-          <input id="redeemCode" class="serial-in" type="text" placeholder="例：TEST-ANN-001" autocomplete="off">
-          <button id="redeemBtn" class="btn big" type="button">発行</button>
-        </div>
-
-        <div class="row">
-          <button class="btn btn-ghost" id="serialClose" type="button">閉じる</button>
-        </div>
-      </div>
-    `);
-
-    const root = document.getElementById("modalBody") || document;
-    $("#serialClose", root)?.addEventListener("click", closeModal);
-
-    const input = $("#redeemCode", root);
-    const btn = $("#redeemBtn", root);
-
-    async function runRedeem(){
-      const code = (input?.value || "").trim().toUpperCase();
-      if(!code){ alert("コードを入力してね"); return; }
-
-      if(btn){
-        btn.disabled = true;
-        btn.textContent = "確認中…";
-      }
-
-      try{
-        const data = await redeemOnServer(code);
-
-        if(!data.ok){
-          alert(data.error || "無効なコードです。");
-          return;
-        }
-
-        const tokens = data.tokens || [];
-        if(!Array.isArray(tokens) || tokens.length === 0){
-          alert("トークンが発行されなかった…たこ。");
-          return;
-        }
-
-        const r = applyRedeemTokens(tokens);
-
-        pushLog(`シリアル：${code}（seed_token +${tokens.length} / ${data.collabId}）`);
-
-        // ✅ 反映を強制
-        refreshHUD();
-        renderGoods();
-
-        toastHype(`✨ 成功！seed_token +${tokens.length}（${data.collabId}）✨`, {kind:"good"});
-        closeModal();
-      }catch(err){
-        alert(err?.message || "通信に失敗した…たこ。時間を置いてもう一度。");
-      }finally{
-        if(btn){
-          btn.disabled = false;
-          btn.textContent = "発行";
-        }
-      }
-    }
-
-    btn?.addEventListener("click", runRedeem);
-    input?.addEventListener("keydown", (e)=>{ if(e.key === "Enter") runRedeem(); });
-  }
-
-  // （もしHTMLにインライン入力がある場合だけ活かす：無ければ何もしない）
+  // （HTMLにインライン入力がある場合だけ活かす：無ければ何もしない）
   function wireSerialInline(){
     const input = $("#serialInlineInput");
     const btn   = $("#serialInlineBtn");
@@ -944,10 +861,17 @@
 
       try{
         const data = await redeemOnServer(code);
-        if(!data.ok) return;
+
+        if(!data?.ok){
+          toastHype(`💥 ${data?.error || "無効なコード…たこ。"}`, {kind:"bad"});
+          return;
+        }
 
         const tokens = data.tokens || [];
-        if(!Array.isArray(tokens) || tokens.length === 0) return;
+        if(!Array.isArray(tokens) || tokens.length === 0){
+          toastHype("💥 トークンが発行されなかった…たこ。", {kind:"bad"});
+          return;
+        }
 
         applyRedeemTokens(tokens);
         input.value = "";
@@ -957,7 +881,7 @@
         renderGoods();
         toastHype(`✨ 成功！seed_token +${tokens.length}（${data.collabId}）✨`, {kind:"good"});
       }catch(e){
-        // noop
+        toastHype("💥 通信に失敗した…たこ。", {kind:"bad"});
       }finally{
         btn.disabled = false;
       }
@@ -982,7 +906,7 @@
           <div class="inv-title">🌱 タネ</div>
           <div class="note">
             通常タネは「候補（プール）」に影響…たこ。<br>
-            <b>【コラボ】各タネ</b>は、<b>seed_token</b>を発行して畑で使う…たこ。
+            <b>【コラボ】各タネ</b>は、上の<b>シリアル入力</b>でseed_tokenを増やして、畑で使う…たこ。
           </div>
         </div>
 
@@ -1309,4 +1233,3 @@
     boot();
   }
 })();
-
