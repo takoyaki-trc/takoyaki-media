@@ -9,8 +9,13 @@
       - ★沼回避：inv.seed[各seedId] を “未使用tokens数で自動同期（表示/互換）” ✅
         → takofarm.js が inv側を見てても反映される（コラボ別に反映）
 
-   ✅ 今回の要望（反映済）
+   ✅ 今回の要望（反映）
+      - コラボ期間がタネごとに違う（表示）
+        * ぐらたん：2026/03/20〜2026/04/19
+        * GHOST ：2026/04/20〜2026/05/19
+        * アニバーサリー：2026/03/10〜2026/05/31
       - 非売品（シリアル限定）の右横に「BOOTH」小ボタン（赤背景・タグと同サイズ）
+        * 期間外は「BOOTH終了」にしてタップ不可（誤タップ防止）
       - 説明の「購入不可」の横にコラボ期間を目立つ色で表示
       - 「BOOTHでカード購入→シリアルがもらえる」案内を表示（親切）
 ========================================================= */
@@ -40,19 +45,22 @@
   // ✅✅✅ コラボが複数ある前提：collabIdごとにタネを分ける
   // - collabId（GASが返すID）と、inv側のseedIdを対応させる
   // - ここに追記するだけで露店表示 & 同期が増える
-  // - ✅ boothUrl / period を追加（表示に使用）
+  // - ✅ boothUrl / periodStart / periodEnd を追加（表示と期限判定に使用）
   // =========================================================
+  const BOOTH_SHOP_URL = "https://takoyaki-toreka.booth.pm/";
+
   const COLLAB_SEEDS = [
     {
       collabId: "col_gratan_2026",
       seedId:   "seed_col_gratan_2026",
-      name:     "【コラボ】グラタンのタネ",
+      name:     "【コラボ】ぐらたんのタネ",
       img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col1.png",
       hidden:   false,
 
-      // ✅ 追加：BOOTHリンク & 期間（任意）
-      boothUrl: "https://takoyaki-toreka.booth.pm/",
-      period:   "（例）2026/03/01〜2026/03/31",
+      boothUrl: BOOTH_SHOP_URL,
+      // ✅ ぐらたん：3/20〜4/19
+      periodStart: "2026-03-20",
+      periodEnd:   "2026-04-19",
     },
     {
       collabId: "col_ghost_2026",
@@ -61,9 +69,10 @@
       img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col2.png",
       hidden:   false,
 
-      // ✅ 追加
-      boothUrl: "https://takoyaki-toreka.booth.pm/",
-      period:   "（例）2026/03/01〜2026/03/31",
+      boothUrl: BOOTH_SHOP_URL,
+      // ✅ GHOST：4/20〜5/19
+      periodStart: "2026-04-20",
+      periodEnd:   "2026-05-19",
     },
 
     // ✅ HOLD：今は表示しない（＆同期待機＝0固定）
@@ -75,7 +84,8 @@
       hidden:   true,
 
       boothUrl: "",
-      period:   "",
+      periodStart: "",
+      periodEnd:   "",
     },
 
     {
@@ -85,8 +95,10 @@
       img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/anv1.png",
       hidden:   false,
 
-      boothUrl: "https://takoyaki-toreka.booth.pm/",
-      period:   "（例）2026/03/01〜2026/03/31",
+      boothUrl: BOOTH_SHOP_URL,
+      // ✅ アニバーサリー：3/10〜5/31
+      periodStart: "2026-03-10",
+      periodEnd:   "2026-05-31",
     },
   ];
 
@@ -178,6 +190,38 @@
   }
 
   // =========================================================
+  // ✅ コラボ期間判定
+  // - start/end は YYYY-MM-DD
+  // - end は「当日いっぱい」まで有効（23:59:59.999）
+  // =========================================================
+  function parseYMDToLocalDate(ymd){
+    const m = String(ymd||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return null;
+    const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+    return new Date(y, mo-1, d, 0,0,0,0);
+  }
+  function endOfDay(dt){
+    if(!dt) return null;
+    return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23,59,59,999);
+  }
+  function fmtYMDSlash(ymd){
+    const m = String(ymd||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return String(ymd||"");
+    return `${m[1]}/${m[2]}/${m[3]}`;
+  }
+  function getCollabWindow(collabId){
+    const def = COLLAB_BY_ID[String(collabId||"")];
+    if(!def) return { ok:false, active:false, label:"", start:null, end:null };
+    const s = parseYMDToLocalDate(def.periodStart);
+    const e = endOfDay(parseYMDToLocalDate(def.periodEnd));
+    const label = (def.periodStart && def.periodEnd) ? `${fmtYMDSlash(def.periodStart)}〜${fmtYMDSlash(def.periodEnd)}` : "";
+    if(!s || !e) return { ok:true, active:true, label, start:s, end:e }; // 期間未設定は常時扱い
+    const now = new Date();
+    const active = (now >= s && now <= e);
+    return { ok:true, active, label, start:s, end:e };
+  }
+
+  // =========================================================
   // ✅✅✅ 所持数＝未使用(ISSUED)だけ数える
   // - takofarm.js が token.status を "PLANTED" / "HARVESTED" にする前提
   // - statusが無い古いtokenは "ISSUED" 扱いにして互換維持
@@ -233,26 +277,26 @@
 
   // ✅ コラボ別タネ（購入不可 / シリアル限定）
   // ✅ HOLDは「hidden:true & blocked」なので表示から外す
-  // ✅ boothUrl / period を持たせる
+  // ✅ boothUrl / periodLabel / collabId を持たせる
   const SEEDS_COLLAB = COLLAB_SEEDS
     .filter(c => !c.hidden && !isBlockedCollabId(c.collabId))
-    .map(c => ({
-      id:   String(c.seedId),
-      name: String(c.name),
+    .map(c => {
+      const win = getCollabWindow(c.collabId);
+      return {
+        id:   String(c.seedId),
+        name: String(c.name),
+        desc: "購入不可。\n上のシリアル入力でタネが増える。\n畑で植えるとカードが出る。",
+        img:  String(c.img),
+        fx:   "限定カード確定",
+        tag:  "シリアル限定",
+        buyable: false,
 
-      // ✅ 「購入不可」＋「BOOTH購入でシリアル」案内は表示側で整形する（ここは元のままでもOK）
-      desc: "購入不可。\n上のシリアル入力でタネが増える。\n畑で植えるとカードが出る。",
-
-      img:  String(c.img),
-      fx:   "限定カード確定",
-      tag:  "シリアル限定",
-      buyable: false,
-
-      // ✅ 追加
-      boothUrl: String(c.boothUrl || ""),
-      period:   String(c.period || ""),
-      collabId: String(c.collabId || ""),
-    }));
+        boothUrl: String(c.boothUrl || ""),
+        period:   String(win.label || ""),
+        active:   !!win.active,
+        collabId: String(c.collabId || ""),
+      };
+    });
 
   const SEEDS = [
     ...SEEDS_BASE,
@@ -313,6 +357,7 @@
         boothUrl: s.boothUrl || "",
         period: s.period || "",
         collabId: s.collabId || "",
+        active: (s.active !== false), // コラボ以外はtrue扱い
 
         price: isBuyable ? (PRICE[s.id] ?? 18) : null,
         buyable: !!isBuyable,
@@ -528,7 +573,7 @@
   }
 
   // =========================================================
-  // ✅ CSS注入（ここに BOOTHボタン / 期間表示 も追加）
+  // ✅ CSS注入（BOOTHボタン / 期間表示 / 期限切れ見た目）
   // =========================================================
   function injectBuyRowCSS(){
     if($("#_roten_buyrow_css")) return;
@@ -559,9 +604,22 @@
         text-decoration: none;
         white-space: nowrap;
         transform: translateY(-.5px);
+        pointer-events: auto; /* ←タップできるように明示 */
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
       }
       .boothBtn:active{ transform: translateY(0); }
       .boothBtn:hover{ filter: brightness(1.02); }
+
+      /* ✅ 期間外：見た目だけグレー + タップ不可 */
+      .boothBtn.is-disabled{
+        background: rgba(255,255,255,.16);
+        border-color: rgba(255,255,255,.18);
+        color: rgba(255,255,255,.72);
+        pointer-events: none;
+        cursor: default;
+        filter: none;
+      }
 
       /* ✅ 期間表示：目立つ色（購入不可の横に置く） */
       .periodChip{
@@ -576,6 +634,11 @@
         font-size: 11px;
         white-space: nowrap;
       }
+      .periodChip.is-off{
+        border-color: rgba(255,154,165,.35);
+        background: rgba(255,154,165,.10);
+        color: rgba(255,154,165,.95);
+      }
 
       /* ✅ 親切案内（BOOTH→シリアル） */
       .serialHint{
@@ -589,6 +652,14 @@
       .serialHint small{
         font-weight: 900;
         color: rgba(255,255,255,.72);
+      }
+
+      /* ✅ 期限外カード：全体ちょい薄く（所持トークンが残ってても見つけやすく） */
+      .good.is-expired{
+        opacity: .78;
+      }
+      .good.is-expired .good-desc{
+        opacity: .95;
       }
 
       .good .good-img{ position: relative !important; }
@@ -708,12 +779,26 @@
 
     grid.innerHTML = list.map(g => {
       const own = ownedCount(inv, g.kind, g.id);
+      const badge = g.tag ? `<span class="miniTag">${escapeHTML(g.tag)}</span>` : "";
 
-      const badge = g.tag ? `<span class="miniTag">${g.tag}</span>` : "";
+      // ✅ コラボ期間判定（collabIdがあるseedのみ）
+      let active = true;
+      let periodLabel = "";
+      if(!g.buyable && g.collabId){
+        const win = getCollabWindow(g.collabId);
+        active = !!win.active;
+        periodLabel = g.period || win.label || "";
+      }
 
       // ✅ 非売品（シリアル限定）なら BOOTHボタンをタグの右に出す
+      // - 期間内：通常BOOTH
+      // - 期間外：BOOTH終了（タップ不可）
       const boothBtn = (!g.buyable && g.boothUrl)
-        ? `<a class="boothBtn" href="${g.boothUrl}" target="_blank" rel="noopener">BOOTH</a>`
+        ? (
+          active
+            ? `<a class="boothBtn" href="${escapeAttr(g.boothUrl)}" target="_blank" rel="noopener">BOOTH</a>`
+            : `<span class="boothBtn is-disabled" aria-disabled="true">BOOTH終了</span>`
+        )
         : "";
 
       const canBuy = !!g.buyable;
@@ -722,10 +807,9 @@
         ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>`
         : `<div class="priceline">単価 <b>—</b>（シリアル）</div>`;
 
-      // ✅ 期間表示（購入不可の横に出したい）
-      // 「desc 1行目が購入不可。」が前提なら、見た目だけここで整える
-      const periodChip = (!canBuy && g.period)
-        ? `<span class="periodChip">コラボ期間：${escapeHTML(g.period)}</span>`
+      // ✅ 期間表示（購入不可の横に出す）
+      const periodChip = (!canBuy && periodLabel)
+        ? `<span class="periodChip ${active ? "" : "is-off"}">コラボ期間：${escapeHTML(periodLabel)}${active ? "" : "（期間外）"}</span>`
         : "";
 
       const descHtml = (() => {
@@ -740,7 +824,7 @@
         return escapeHTML(raw).replace(/\n/g,"<br>");
       })();
 
-      // ✅ コラボ種の「シリアルボタン」を完全削除（上部の入力だけで完結）
+      // ✅ コラボ種の「シリアルボタン」は無し（上部入力のみ）
       const buyBar = canBuy ? `
         <div class="buybar">
           <div class="qty">
@@ -767,11 +851,11 @@
       `;
 
       return `
-        <article class="good" data-kind="${g.kind}" data-id="${g.id}">
+        <article class="good ${(!canBuy && !active) ? "is-expired" : ""}" data-kind="${escapeAttr(g.kind)}" data-id="${escapeAttr(g.id)}">
           <div class="good-top">
             <div class="good-img">
               <span class="ownBadge">×<b>${String(own)}</b></span>
-              <img src="${g.img}" alt="${escapeHTML(g.name)}" loading="lazy">
+              <img src="${escapeAttr(g.img)}" alt="${escapeHTML(g.name)}" loading="lazy">
             </div>
             <div class="good-meta">
               <div class="good-name">${escapeHTML(g.name)} ${badge}${boothBtn}</div>
@@ -837,6 +921,10 @@
       "\"":"&quot;",
       "'":"&#39;",
     }[c]));
+  }
+  function escapeAttr(s){
+    // 属性向け（かなり雑でOK：最低限）
+    return escapeHTML(String(s ?? "")).replace(/`/g, "&#96;");
   }
 
   // =========================================================
@@ -1028,7 +1116,10 @@
           <div class="note">
             通常タネは「候補（プール）」に影響…たこ。<br>
             <b>【コラボ】各タネ</b>は、上の<b>シリアル入力</b>でseed_tokenを増やして、畑で使う…たこ。<br>
-            <b>BOOTHでカード購入 → シリアルが付く</b>タイプなら、ここが入口…たこ。
+            <b>BOOTHでカード購入 → シリアルが付く</b>なら、ここが入口…たこ。
+          </div>
+          <div style="margin-top:10px; text-align:right;">
+            <a class="boothBtn" href="${escapeAttr(BOOTH_SHOP_URL)}" target="_blank" rel="noopener">BOOTHへ</a>
           </div>
         </div>
 
