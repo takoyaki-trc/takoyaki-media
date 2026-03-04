@@ -6,6 +6,7 @@
    ✅ コラボ種：
       - 所持数＝seedtokens の未使用(ISSUED)本数
       - 植える：ISSUEDを1本PLANTEDにして plot.seedToken に保持
+      - ★植えた瞬間にGASへ plant（ISSUED→PLANTED）【重要】
       - 収穫：GAS harvest に token を渡しサーバー確定カードを受け取る
       - 収穫完了：tokenをHARVESTEDに更新
    ✅ 互換：
@@ -54,6 +55,9 @@
 
   // ✅ GAS WebApp URL（/execまで）
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwFhJjpj0IidOYf95dyANLFYnIYTuPFFaAKOVxmfGmWJW-9AsCGQBsW90uEitpIpcdm/exec";
+
+  // ✅ GAS API KEY（あなたのGAS側 CONFIG.API_KEY と同じにする）
+  const GAS_API_KEY = "PUT_YOUR_API_KEY_HERE";
 
   // ✅ テスト用：fert_timeno の成長時間（10秒）
   // ここを 30_000（30秒）等に変えるだけでOK
@@ -981,6 +985,51 @@
   }
 
   // =========================================================
+  // GAS通信（失敗時に「返ってきた本文」も出す）
+  // =========================================================
+  async function gasPost(payload){
+    const body = {
+      apiKey: GAS_API_KEY,
+      ...payload,
+    };
+
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type":"application/json; charset=utf-8" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+
+    const txt = await res.text();
+    if(!res.ok){
+      throw new Error(`HTTP ${res.status}\n\n${txt.slice(0, 1200)}`);
+    }
+    try{
+      return JSON.parse(txt);
+    }catch(e){
+      throw new Error(`JSON parse failed\n\n${txt.slice(0, 1200)}`);
+    }
+  }
+
+  async function plantCollabOnServer(seedToken){
+    return await gasPost({
+      api: "plant",
+      token: String(seedToken || ""),
+      ts: Date.now(),
+      app: "farm"
+    });
+  }
+
+  async function harvestCollabOnServer(seedToken){
+    return await gasPost({
+      api: "harvest",
+      token: String(seedToken || ""),
+      ts: Date.now(),
+      app: "farm"
+    });
+  }
+
+  // =========================================================
   // 装備表示更新（コラボは token本数）
   // =========================================================
   function renderLoadout(){
@@ -1231,7 +1280,7 @@
     return true;
   }
 
-  function plantAt(index){
+  async function plantAt(index){
     syncCollabSeedsToInv();
     inv = loadInv();
     loadout = loadLoadout();
@@ -1280,8 +1329,12 @@
       return;
     }
 
-    // 消費（コラボは token を消費、通常は inv を消費）
+    // -------------------------
+    // ✅ 消費（コラボは token、通常は inv）
+    // 重要：コラボは plant 成功が確定してから water/fert を消費する
+    // -------------------------
     let usedSeedToken = null;
+
     if(isCollab){
       usedSeedToken = takeOneIssuedToken(collabId);
       if(!usedSeedToken){
@@ -1289,17 +1342,57 @@
         document.getElementById("ok").addEventListener("click", closeModal);
         return;
       }
+
+      // ✅ 重要：植えた瞬間にGASへ plant（ISSUED→PLANTED）
+      openModal("通信中…", `<div class="step">植え付けをサーバーに登録中…</div>`);
+      try{
+        const planted = await plantCollabOnServer(usedSeedToken);
+        if(!planted?.ok){
+          // ローカルだけPLANTEDになっちゃったのを戻す
+          markTokenStatus(usedSeedToken, "ISSUED");
+          openModal("植え付け失敗", `
+            <div class="step">
+              サーバー側でPLANTEDにできなかった。<br>
+              ${escapeHtml(planted?.error || "unknown error")}
+            </div>
+            <div class="row"><button type="button" id="ok">OK</button></div>
+          `);
+          document.getElementById("ok").addEventListener("click", closeModal);
+          return;
+        }
+      }catch(e){
+        markTokenStatus(usedSeedToken, "ISSUED");
+        openModal("植え付け通信失敗", `
+          <div class="step">
+            plant通信に失敗した…（回線/URL/権限/apiKey）<br>
+            もう一度試してね。
+          </div>
+          <pre style="white-space:pre-wrap; font-size:12px; opacity:.92; line-height:1.35; max-height:40vh; overflow:auto; border:1px solid rgba(255,255,255,.18); padding:10px; border-radius:12px;">${escapeHtml(String(e && (e.stack || e.message || e)))}</pre>
+          <div class="row"><button type="button" id="ok">OK</button></div>
+        `);
+        document.getElementById("ok").addEventListener("click", closeModal);
+        return;
+      }
+
+      // plant 成功後に water/fert を消費
+      invDec(inv, "water", waterId);
+      invDec(inv, "fert",  fertId);
+      saveInv(inv);
+
+      closeModal(); // 通信中モーダルを閉じる
+
     }else{
       if(!invDec(inv, "seed", seedId)){
         openModal("タネ不足", `<div class="step">タネが足りない。</div><div class="row"><button type="button" id="ok">OK</button></div>`);
         document.getElementById("ok").addEventListener("click", closeModal);
         return;
       }
-    }
 
-    invDec(inv, "water", waterId);
-    invDec(inv, "fert",  fertId);
-    saveInv(inv);
+      // ✅ 通常はここで water/fert 消費
+      invDec(inv, "water", waterId);
+      invDec(inv, "fert",  fertId);
+      saveInv(inv);
+    }
 
     const seed  = [...SEEDS_BASE, ...SEEDS_COLLAB].find(x=>x.id===seedId);
     const water = WATERS.find(x=>x.id===waterId);
@@ -1309,7 +1402,7 @@
     const isTimeNo = (fertId === "fert_timeno");
     const factor = clamp(baseFactor, 0.01, 1.0);
 
-    // ✅ テスト用：時間を信じない肥料は 10秒固定（上の TEST_TIMENO_GROW_MS を変更）
+    // ✅ テスト用：時間を信じない肥料は固定
     const growMs = isTimeNo
       ? TEST_TIMENO_GROW_MS
       : Math.max(60*60*1000, Math.floor(BASE_GROW_MS * factor)); // それ以外は最低1時間維持
@@ -1407,35 +1500,6 @@
     document.getElementById("harvOk").addEventListener("click", closeModalOrCommit);
   }
 
-  // ✅ GAS通信（失敗時に「返ってきた本文」も出す）
-  async function gasPost(payload){
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      // ★ここを application/json に（GAS側 doPost が JSON を parse してる前提）
-      headers: { "Content-Type":"application/json; charset=utf-8" },
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
-    const txt = await res.text();
-    if(!res.ok){
-      throw new Error(`HTTP ${res.status}\n\n${txt.slice(0, 1200)}`);
-    }
-    try{
-      return JSON.parse(txt);
-    }catch(e){
-      throw new Error(`JSON parse failed\n\n${txt.slice(0, 1200)}`);
-    }
-  }
-
-  async function harvestCollabOnServer(seedToken){
-    return await gasPost({
-      api: "harvest",
-      token: String(seedToken || ""),
-      ts: Date.now(),
-      app: "farm"
-    });
-  }
-
   function normalizeCardFromAny(data){
     const root = data?.card ?? data?.result ?? data?.data ?? data?.payload ?? data?.item ?? null;
     const card = root || data || {};
@@ -1469,8 +1533,7 @@
       try{
         const data = await harvestCollabOnServer(token);
 
-        // ✅ デバッグ：返却JSONを“画面に表示”（コンソール不要）
-        // 何も表示されない/画像が出ない場合、ここを見ると100%原因が分かる
+        // ✅ デバッグ：返却JSONを“画面に表示”
         openModal("GAS応答（デバッグ）", `
           <div class="step">返ってきたJSONを表示します（そのまま貼れば即直せる）</div>
           <pre style="white-space:pre-wrap; font-size:12px; opacity:.92; line-height:1.35; max-height:52vh; overflow:auto; border:1px solid rgba(255,255,255,.18); padding:10px; border-radius:12px;">${escapeHtml(JSON.stringify(data, null, 2))}</pre>
@@ -1591,7 +1654,7 @@
   // =========================================================
   // マスタップ
   // =========================================================
-  function onPlotTap(index){
+  async function onPlotTap(index){
     player = loadPlayer();
     const locked = (index >= player.unlocked);
     if(locked){
@@ -1604,7 +1667,7 @@
 
     if(p.state === "EMPTY"){
       if(!ensureLoadoutOrOpen()) return;
-      plantAt(index);
+      await plantAt(index);
       return;
     }
     if(p.state === "GROW"){
@@ -1617,7 +1680,7 @@
       return;
     }
     if(p.state === "READY"){
-      doHarvest(index);
+      await doHarvest(index);
       return;
     }
     if(p.state === "BURN"){
@@ -1656,7 +1719,6 @@
       saveState(state);
       render();
     }else{
-      // 表示更新だけ（残り時間が動く）
       render();
     }
   }
