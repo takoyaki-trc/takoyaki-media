@@ -55,6 +55,10 @@
   // ✅ GAS WebApp URL（/execまで）
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwFhJjpj0IidOYf95dyANLFYnIYTuPFFaAKOVxmfGmWJW-9AsCGQBsW90uEitpIpcdm/exec";
 
+  // ✅ テスト用：fert_timeno の成長時間（10秒）
+  // ここを 30_000（30秒）等に変えるだけでOK
+  const TEST_TIMENO_GROW_MS = 10_000;
+
   // =========================================================
   // ✅ roten.js と同じ「コラボ定義」
   // =========================================================
@@ -243,7 +247,7 @@
     { id:"TP-004", name:"クリスマスたこぴ", img:"https://ul.h3z.jp/FGEKvxhK.png", rarity:"N" },
     { id:"TP-005", name:"お年玉たこぴ", img:"https://ul.h3z.jp/OPz58Wt6.png", rarity:"N" },
     { id:"TP-006", name:"バレンタインたこぴ", img:"https://ul.h3z.jp/J0kj3CLb.png", rarity:"N" },
-    { id:"TP-007", name:"花見たこぴ", img:"https://ul.h3z.jp/KrCy4WQb.png", rarity:"UR" },
+    { id:"TP-007", name:"花見たこぴ", img:"https://ul.h3z.jp/G05m1hbT.png", rarity:"UR" },
     { id:"TP-008", name:"入学たこぴ", img:"https://ul.h3z.jp/DidPdK9b.png", rarity:"UR" },
   ];
 
@@ -1283,28 +1287,15 @@
     const water = WATERS.find(x=>x.id===waterId);
     const fert  = FERTS.find(x=>x.id===fertId);
 
-    
-     
-     
- const baseFactor = (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1);
-const isTimeNo = (fertId === "fert_timeno");
-const factor = clamp(baseFactor, 0.01, 1.0);
+    const baseFactor = (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1);
+    const isTimeNo = (fertId === "fert_timeno");
+    const factor = clamp(baseFactor, 0.01, 1.0);
 
-// ✅ テスト用：時間を信じない肥料は10秒固定
-const growMs = isTimeNo
-  ? 10_000
-  : Math.max(60*60*1000, Math.floor(BASE_GROW_MS * factor));
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-    
+    // ✅ テスト用：時間を信じない肥料は 10秒固定（上の TEST_TIMENO_GROW_MS を変更）
+    const growMs = isTimeNo
+      ? TEST_TIMENO_GROW_MS
+      : Math.max(60*60*1000, Math.floor(BASE_GROW_MS * factor)); // それ以外は最低1時間維持
+
     const startAt = Date.now();
     const readyAt = startAt + growMs;
 
@@ -1399,6 +1390,7 @@ const growMs = isTimeNo
   async function gasPost(payload){
     const res = await fetch(GAS_URL, {
       method: "POST",
+      headers: { "Content-Type":"text/plain;charset=utf-8" }, // GASはtext/plainが安定
       body: JSON.stringify(payload),
       cache: "no-store",
     });
@@ -1410,8 +1402,7 @@ const growMs = isTimeNo
   }
 
   async function harvestCollabOnServer(seedToken){
-    // GAS側の実装に合わせて api 名を変えてOK
-    // （あなたの設計メモでは harvest）
+    // GAS側の実装に合わせて api 名を変えてOK（あなたの設計メモでは harvest）
     return await gasPost({
       api: "harvest",
       token: String(seedToken || ""),
