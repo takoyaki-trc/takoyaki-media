@@ -297,22 +297,46 @@
 
   // =========================================================
   // ✅ seed_token（roten→farm 共有）
+  //   ★修正点：保存形式が
+  //     ①配列 ②{ver, tokens:[...]} の両方あり得るので両対応
   // =========================================================
-  function loadSeedTokens(){
+  function loadSeedTokenStore(){
     try{
       const raw = localStorage.getItem(LS_SEEDTOKENS);
-      if(!raw) return [];
+      if(!raw) return { ver:1, tokens:[] };
+
       const v = JSON.parse(raw);
-      return Array.isArray(v) ? v : [];
+
+      // 旧: 配列だけで保存されている場合
+      if(Array.isArray(v)){
+        return { ver:1, tokens: v };
+      }
+
+      // 新: {ver, tokens:[...]} の場合
+      if(v && typeof v === "object"){
+        const tokens = Array.isArray(v.tokens) ? v.tokens : [];
+        const ver = Number(v.ver || 1);
+        return { ver: Number.isFinite(ver) ? ver : 1, tokens };
+      }
+
+      return { ver:1, tokens:[] };
     }catch(e){
-      return [];
+      return { ver:1, tokens:[] };
     }
   }
-  function saveSeedTokens(arr){
-    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(Array.isArray(arr) ? arr : []));
+
+  function saveSeedTokenStore(store){
+    const safe = {
+      ver: Number.isFinite(Number(store?.ver)) ? Number(store.ver) : 1,
+      tokens: Array.isArray(store?.tokens) ? store.tokens : []
+    };
+    localStorage.setItem(LS_SEEDTOKENS, JSON.stringify(safe));
   }
+
   function normTokenEntry(entry){
-    if(typeof entry === "string") return { token: entry, collabId: null, status: "ISSUED" };
+    if(typeof entry === "string"){
+      return { token: entry, collabId: null, status: "ISSUED" };
+    }
     if(entry && typeof entry === "object"){
       return {
         token: String(entry.token || entry.id || ""),
@@ -322,19 +346,29 @@
     }
     return { token:"", collabId:null, status:"ISSUED" };
   }
+
   function countIssuedTokensByCollab(collabId){
     if(!collabId) return 0;
-    const list = loadSeedTokens().map(normTokenEntry);
+    const store = loadSeedTokenStore();
+    const list = (store.tokens || []).map(normTokenEntry);
     return list.filter(x => x.token && x.collabId === collabId && x.status === "ISSUED").length;
   }
+
   function takeOneIssuedToken(collabId){
     if(!collabId) return null;
-    const list = loadSeedTokens().map(normTokenEntry);
+
+    const store = loadSeedTokenStore();
+    const list = (store.tokens || []).map(normTokenEntry);
+
     const idx = list.findIndex(x => x.token && x.collabId === collabId && x.status === "ISSUED");
     if(idx < 0) return null;
+
     const picked = list[idx];
     list[idx] = { ...picked, status: "PLANTED" }; // 表示用（本体はGASが正）
-    saveSeedTokens(list);
+
+    store.tokens = list;
+    saveSeedTokenStore(store);
+
     return picked.token;
   }
 
@@ -401,13 +435,13 @@
 
     const rewards = [];
     for(let k=0;k<count;k++){
-      let picked = null;
-      if(cat === "seed")  picked = pick(seedChoices);
-      if(cat === "water") picked = pick(waterChoices);
-      if(cat === "fert")  picked = pick(fertChoices);
-      if(!picked) picked = pick(seedChoices);
+      let pickedItem = null;
+      if(cat === "seed")  pickedItem = pick(seedChoices);
+      if(cat === "water") pickedItem = pick(waterChoices);
+      if(cat === "fert")  pickedItem = pick(fertChoices);
+      if(!pickedItem) pickedItem = pick(seedChoices);
 
-      rewards.push({ kind: cat, id: picked.id, name: picked.name, img: picked.img, qty: 1 });
+      rewards.push({ kind: cat, id: pickedItem.id, name: pickedItem.name, img: pickedItem.img, qty: 1 });
     }
 
     const map = new Map();
@@ -425,13 +459,13 @@
     addOcto(octo);
 
     const items = itemRewardForLevel(level);
-    const inv = loadInv();
+    const inv2 = loadInv();
     for(const it of items){
-      if(it.kind === "seed")  invAdd(inv, "seed",  it.id, it.qty);
-      if(it.kind === "water") invAdd(inv, "water", it.id, it.qty);
-      if(it.kind === "fert")  invAdd(inv, "fert",  it.id, it.qty);
+      if(it.kind === "seed")  invAdd(inv2, "seed",  it.id, it.qty);
+      if(it.kind === "water") invAdd(inv2, "water", it.id, it.qty);
+      if(it.kind === "fert")  invAdd(inv2, "fert",  it.id, it.qty);
     }
-    saveInv(inv);
+    saveInv(inv2);
 
     return { octo, items };
   }
