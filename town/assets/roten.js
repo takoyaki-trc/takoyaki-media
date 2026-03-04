@@ -65,13 +65,7 @@
   function isBlockedCollabId(collabId){
     return false;
   }
-   {
-      collabId: "col_hold_2026",
-      seedId:   "seed_col_hold_2026",
-      name:     "【コラボ】HOLDのタネ",
-      img:      "https://ul.h3z.jp/wbnwoTzm.png", // ←あなたの画像に差し替えOK
-    },
-
+   
   // =========================================================
   // ✅ 互換用（古い takofarm.js / 古い表示が seed_collab を見る場合に備える）
   // - “1種類にまとめるseed_collab” を残しておく（表示はしてもいいし消してもOK）
