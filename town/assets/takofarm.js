@@ -57,7 +57,7 @@
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwFhJjpj0IidOYf95dyANLFYnIYTuPFFaAKOVxmfGmWJW-9AsCGQBsW90uEitpIpcdm/exec";
 
   // ✅ GAS API KEY（あなたのGAS側 CONFIG.API_KEY と同じにする）
-  const GAS_API_KEY = "PUT_YOUR_API_KEY_HERE";
+  const GAS_API_KEY = "takopi-serial-2026";
 
   // ✅ テスト用：fert_timeno の成長時間（10秒）
   // ここを 30_000（30秒）等に変えるだけでOK
