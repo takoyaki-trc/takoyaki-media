@@ -185,15 +185,30 @@ h1{
 .lockOverlay .lk1{font-weight:1000;font-size:12px}
 .lockOverlay .lk2{font-size:10px;opacity:.85}
 
-/* ====== Modal ====== */
+/* ====== Modal ======
+   ✅ 中央寄せに統一（焦げ回収の「上寄り」を解消）
+   ✅ safe-area 考慮
+========================================================= */
 .modal{
-  position:fixed;inset:0;display:none;
+  position:fixed;
+  inset:0;
+  display:none;
   background:rgba(0,0,0,.55);
-  align-items:flex-end;justify-content:center;
-  padding:14px;
+
+  /* ★ここが重要：常に中央 */
+  align-items:center;
+  justify-content:center;
+
+  padding:
+    max(12px, env(safe-area-inset-top))
+    14px
+    max(12px, env(safe-area-inset-bottom));
+
   z-index:9999;
 }
 .modal[aria-hidden="false"]{display:flex}
+
+/* モーダル本体：高さを画面内に収める + Head固定/Bodyスクロール */
 .sheet{
   width:min(520px, 100%);
   border:1px solid var(--line);
@@ -201,12 +216,18 @@ h1{
   border-radius:18px;
   overflow:hidden;
   box-shadow:0 10px 30px rgba(0,0,0,.35);
+
+  /* ✅ 高さ制限＆縦レイアウト安定 */
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
 }
 .sheetHead{
   padding:12px 14px;
   display:flex;align-items:center;justify-content:space-between;
   border-bottom:1px solid var(--line);
   background:rgba(255,255,255,.04);
+  flex:0 0 auto;
 }
 .sheetHead .ttl{font-weight:900}
 .sheetHead button{
@@ -217,14 +238,16 @@ h1{
   font-weight:900;
 }
 
-/* ★ここは「伸びすぎ防止」だけ。スクロールは #mBody に任せる */
+/* 本文はスクロール領域（JSロックと噛み合う） */
 .sheetBody{
   padding:12px 14px 14px;
+  flex:1 1 auto;
+  overflow:hidden;
 }
 
 .step{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5}
 
-/* ✅ モーダル本文は縦スクロールOK（JSロックと噛み合う） */
+/* ✅ モーダル本文は縦スクロールOK */
 #mBody{
   max-height: 72vh;
   overflow-y: auto;
@@ -304,20 +327,28 @@ h1{
 }
 .row button.primary{background:rgba(159,255,168,.14);}
 
-/* ====== Harvest card ====== */
+/* ====== Harvest card（旧reward UI互換） ====== */
 .reward{
   border:1px solid var(--line);
   background:rgba(255,255,255,.05);
   border-radius:16px;
   padding:12px;
+
+  /* ✅ 画像が無い/短文でも “中央寄り” に見えるように */
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
 }
 .reward .big{font-weight:1000;font-size:16px;margin-bottom:6px}
 .reward .mini{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ✅ ここは “はみ出し防止” を最優先 */
 .reward .img{
   width:100%;
   max-width:300px;
   height:auto;
-  max-height:56vh;
+  max-height:52vh;
   object-fit:contain;
   display:block;
   margin:10px auto 0;
@@ -327,7 +358,87 @@ h1{
   image-rendering:auto;
 }
 
+/* =========================================================
+   ✅ 新：収穫モーダル（takofarm.js の .harvWrap）対策
+   - 今のJSは .harvWrap/.harvCard/.harvMeta を生成する
+   - ここで画像サイズ・中央揃え・はみ出し防止を確実にする
+========================================================= */
+.harvWrap{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 
+  /* ✅ 画像が無い場合も中央に見える */
+  align-items:center;
+  text-align:center;
+}
+
+/* 画像枠（カードがはみ出るのを止める） */
+.harvCard{
+  width:100%;
+  max-width:320px;
+
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.05);
+  border-radius:16px;
+  padding:10px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  /* ✅ 念のため：中身のはみ出し禁止 */
+  overflow:hidden;
+}
+
+/* ✅ はみ出しの根本対策：imgに上限を付ける */
+.harvCard img{
+  display:block;
+  width:100%;
+  height:auto;
+
+  /* “でかすぎ”を確実に抑える */
+  max-width:100%;
+  max-height:52vh;
+
+  object-fit:contain;
+  border-radius:12px;
+}
+
+/* メタ情報 */
+.harvMeta{
+  width:100%;
+  max-width:360px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  align-items:center;
+}
+.harvR{
+  font-weight:1000;
+  letter-spacing:.08em;
+  padding:5px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(0,0,0,.20);
+  display:inline-block;
+}
+.harvName{
+  font-weight:1000;
+  font-size:14px;
+  line-height:1.25;
+}
+.harvId{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* 注釈 */
+.note{
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.45;
+}
 
 /* ====== READY エフェクト ====== */
 .plot-fx{
@@ -468,7 +579,6 @@ h1{
 /* =========================
    ✅ 選択グリッド（モーダル内スクロール＋サイズ統一＋画像見た目統一）
 ========================= */
-
 .gridWrap{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
@@ -486,7 +596,6 @@ h1{
   align-items: stretch;
   grid-auto-rows: 1fr;
 
-  /* ✅ スクロールバーが出ても幅がブレにくい（対応ブラウザのみ） */
   scrollbar-gutter: stable;
 }
 
@@ -503,12 +612,10 @@ h1{
   display:flex;
   flex-direction:column;
 
-  /* ✅ 選択ハイライトを「内側」に入れる前提 */
   outline: none;
 }
 .gridCard:disabled{ opacity: .55; }
 
-/* ✅ ここが重要：outlineをやめて “inset” で同サイズのまま光らせる */
 .gridCard.isSelected{
   outline: none;
   box-shadow:
@@ -529,7 +636,6 @@ h1{
   display:grid;
   place-items:center;
 
-  /* ✅ 統一：余白も一定に */
   padding: 8px;
 }
 
@@ -620,44 +726,9 @@ h1{
   .gridDesc{ display:none; }
 }
 
-/* =========================================================
-   ✅ 収穫モーダル：下切れ防止（上寄せ＋安全余白＋中身スクロール）
-   ※ 既存 .modal の align-items:flex-end を上書きします
-========================================================= */
-
-/* 背景(オーバーレイ)を上寄せに */
-.modal{
-  align-items:flex-start; /* ★flex-end → flex-start に上書き */
-  padding-top: max(10px, env(safe-area-inset-top));
-  padding-bottom: max(10px, env(safe-area-inset-bottom));
-}
-
-/* モーダル本体の最大高さを「画面内」に収める */
-.sheet{
-  max-height: calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  display:flex;
-  flex-direction:column; /* Head固定＋Bodyだけスクロールにしやすい */
-}
-
-/* 本文スクロール領域（あなたは #mBody を使ってるのでここを強化） */
-#mBody{
-  max-height: calc(100dvh - 180px); /* ★ヘッダー＋余白ぶん差し引き（ざっくりでOK） */
-  overflow-y:auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
-
-/* 収穫カード画像の最大高さを少し下げて切れにくく */
-.reward .img{
-  max-height: 52vh; /* 62vh→52vh でスマホの下切れを減らす */
-}
-
-
 /* =========================
    ✅ ワクワク・ヘッダー改造
 ========================= */
-
 .topbar{
   display:flex;
   align-items:center;
@@ -796,4 +867,3 @@ h1{
   margin:6px 0 0;
   border-radius:16px;
 }
-
