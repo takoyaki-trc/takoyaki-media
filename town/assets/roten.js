@@ -47,7 +47,7 @@
       collabId: "col_ghost_2026",
       seedId:   "seed_col_ghost_2026",
       name:     "【コラボ】GHOSTのタネ",
-      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col2.ping", // ←あなたの画像に差し替えOK
+      img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col2.png", // ←あなたの画像に差し替えOK
     },
     
     {
