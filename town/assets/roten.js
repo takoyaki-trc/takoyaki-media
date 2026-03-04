@@ -57,7 +57,7 @@
       img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col1.png",
       hidden:   false,
 
-      boothUrl: BOOTH_SHOP_URL,
+      boothUrl:"https://takoyaki-toreka.booth.pm/item_lists/m7YToKe5",
       // ✅ ぐらたん：3/20〜4/19
       periodStart: "2026-03-20",
       periodEnd:   "2026-04-19",
@@ -69,7 +69,7 @@
       img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col2.png",
       hidden:   false,
 
-      boothUrl: BOOTH_SHOP_URL,
+      boothUrl:"https://takoyaki-toreka.booth.pm/item_lists/m7YToKe5",
       // ✅ GHOST：4/20〜5/19
       periodStart: "2026-04-20",
       periodEnd:   "2026-05-19",
@@ -95,7 +95,7 @@
       img:      "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/anv1.png",
       hidden:   false,
 
-      boothUrl: BOOTH_SHOP_URL,
+      boothUrl:"https://takoyaki-toreka.booth.pm/item_lists/m7YToKe5",
       // ✅ アニバーサリー：3/10〜5/31
       periodStart: "2026-03-10",
       periodEnd:   "2026-05-31",
@@ -285,7 +285,7 @@
       return {
         id:   String(c.seedId),
         name: String(c.name),
-        desc: "購入不可。\n上のシリアル入力でタネが増える。\n畑で植えるとカードが出る。",
+        desc: "上のシリアル入力でタネが増える。\n畑で植えるとカードが出る。",
         img:  String(c.img),
         fx:   "限定カード確定",
         tag:  "シリアル限定",
