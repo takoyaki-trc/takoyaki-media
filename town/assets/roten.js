@@ -5,8 +5,8 @@
    ✅ みくじ/公開記念：既存維持
    ✅ シリアル：新GAS方式（seed_token）
       - redeem -> seed_token（UUID）を受け取り localStorage(tf_v1_seedtokens) に保存
-      - roten では「コラボのタネ」所持数として seedtokens の本数を表示
-      - ★沼回避：inv.seed["seed_collab"] を “tokens数で自動同期（互換/表示）”
+      - roten では「コラボのタネ」所持数として seedtokens の “未使用(ISSUED)” 本数を表示 ✅
+      - ★沼回避：inv.seed["seed_collab"] を “未使用tokens数で自動同期（互換/表示）” ✅
         → takofarm.js が inv側を見てても反映される
 ========================================================= */
 (() => {
@@ -102,7 +102,7 @@
 
   // ✅ seed_token保管（redeemで増える）
   function seedTokensDefault(){
-    return { ver:1, tokens:[] }; // tokens: [{token, collabId, issuedAt}]
+    return { ver:1, tokens:[] }; // tokens: [{token, collabId, issuedAt, status?}]
   }
   function loadSeedTokens(){
     const st = loadJSON(LS.seedTokens, seedTokensDefault());
@@ -113,24 +113,38 @@
   function saveSeedTokens(st){
     saveJSON(LS.seedTokens, st);
   }
-  function countSeedTokens(){
-    return loadSeedTokens().tokens.length;
+
+  // =========================================================
+  // ✅✅✅ ここが今回の修正点（所持数＝未使用(ISSUED)だけ数える）
+  // - takofarm.js が token.status を "PLANTED" / "HARVESTED" にする前提
+  // - statusが無い古いtokenは "ISSUED" 扱いにして互換維持
+  // =========================================================
+  function isIssuedToken(t){
+    const s = String(t?.status || "").toUpperCase();
+    return !s || s === "ISSUED";
   }
+
+  function countSeedTokens(){
+    const st = loadSeedTokens();
+    return st.tokens.filter(isIssuedToken).length;
+  }
+
   function countSeedTokensByCollab(){
     const st = loadSeedTokens();
     const map = {};
     for(const t of st.tokens){
+      if(!isIssuedToken(t)) continue; // ✅ 未使用だけ内訳に入れる
       const c = String(t?.collabId || "unknown");
       map[c] = (map[c]||0) + 1;
     }
     return map;
   }
 
-  // ✅ ★沼回避：inv.seed["seed_collab"] を token本数で同期（表示/互換）
+  // ✅ ★沼回避：inv.seed["seed_collab"] を “未使用token本数”で同期（表示/互換）
   function syncCollabSeedToInv(){
     const inv = loadInv();
     inv.seed = inv.seed || {};
-    const n = countSeedTokens();
+    const n = countSeedTokens(); // ✅ 未使用本数
     // ここを “常に上書き” するのが沼回避（ズレが固定化しない）
     inv.seed[SEED_COLLAB_ID] = n;
     saveInv(inv);
@@ -1222,5 +1236,4 @@
     boot();
   }
 })();
-
 
