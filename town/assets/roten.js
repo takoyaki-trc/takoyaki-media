@@ -18,6 +18,10 @@
         * 期間外は「BOOTH終了」にしてタップ不可（誤タップ防止）
       - 説明の「購入不可」の横にコラボ期間を目立つ色で表示
       - 「BOOTHでカード購入→シリアルがもらえる」案内を表示（親切）
+      - ✅スマホ崩れ修正：
+        * 右側テキストが潰れて切れる問題を解消（min-width:0 / wrap）
+        * BOOTHボタンが消える問題を強制表示（overflow回避）
+        * さらにスマホで押しやすいBOOTH CTA（大ボタン）も表示
 ========================================================= */
 (() => {
   "use strict";
@@ -573,58 +577,86 @@
   }
 
   // =========================================================
-  // ✅ CSS注入（BOOTHボタン / 期間表示 / 期限切れ見た目）
+  // ✅ CSS注入（BOOTHボタン / 期間表示 / 期限切れ見た目 / スマホ崩れ修正）
   // =========================================================
   function injectBuyRowCSS(){
     if($("#_roten_buyrow_css")) return;
     const style = document.createElement("style");
     style.id = "_roten_buyrow_css";
     style.textContent = `
+      /* ===== スマホ崩れの根本原因（min-width / overflow）対策 ===== */
+      .good-top{ min-width:0 !important; }
+      .good-meta{ min-width:0 !important; overflow: visible !important; }
+      .good-name{
+        min-width:0 !important;
+        display:flex !important;
+        flex-wrap:wrap !important;
+        align-items:center !important;
+        gap:6px !important;
+        line-height:1.25 !important;
+        overflow: visible !important;
+      }
+      .good-desc{
+        min-width:0 !important;
+        overflow-wrap:anywhere !important;
+        word-break:break-word !important;
+        line-height:1.4 !important;
+      }
+      .good-fx{
+        min-width:0 !important;
+        overflow-wrap:anywhere !important;
+        word-break:break-word !important;
+      }
+
       .miniTag{
         display:inline-flex; align-items:center;
         padding: 3px 8px; border-radius: 999px;
         border:1px solid rgba(255,255,255,.14);
         background: rgba(0,0,0,.16);
-        font-size: 11px; opacity:.9; margin-left: 6px;
+        font-size: 11px; opacity:.9;
         white-space: nowrap;
       }
 
       /* ✅ BOOTHリンク（タグと同サイズ / 赤背景） */
       .boothBtn{
-        display:inline-flex; align-items:center; justify-content:center;
-        padding: 3px 8px;
-        border-radius: 999px;
-        border: 1px solid rgba(255,255,255,.18);
-        background: #ff2e2e;
-        color: #fff;
-        font-size: 11px;
-        font-weight: 1000;
-        letter-spacing: .02em;
-        margin-left: 6px;
-        text-decoration: none;
-        white-space: nowrap;
-        transform: translateY(-.5px);
-        pointer-events: auto; /* ←タップできるように明示 */
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
+        display:inline-flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+        padding: 3px 10px !important;
+        border-radius: 999px !important;
+        border: 1px solid rgba(255,255,255,.18) !important;
+        background: #ff2e2e !important;
+        color: #fff !important;
+        font-size: 11px !important;
+        font-weight: 1000 !important;
+        letter-spacing: .02em !important;
+        text-decoration: none !important;
+        white-space: nowrap !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+        -webkit-tap-highlight-color: transparent !important;
+        position: relative !important;
+        z-index: 5 !important;
       }
-      .boothBtn:active{ transform: translateY(0); }
-      .boothBtn:hover{ filter: brightness(1.02); }
+      .boothBtn:active{ transform: translateY(1px); }
 
       /* ✅ 期間外：見た目だけグレー + タップ不可 */
       .boothBtn.is-disabled{
-        background: rgba(255,255,255,.16);
-        border-color: rgba(255,255,255,.18);
-        color: rgba(255,255,255,.72);
-        pointer-events: none;
-        cursor: default;
-        filter: none;
+        background: rgba(255,255,255,.16) !important;
+        border-color: rgba(255,255,255,.18) !important;
+        color: rgba(255,255,255,.72) !important;
+        pointer-events: none !important;
+        cursor: default !important;
+        filter: none !important;
       }
 
       /* ✅ 期間表示：目立つ色（購入不可の横に置く） */
       .periodChip{
         display:inline-flex;
         margin-left: 8px;
+        margin-top: 4px;
         padding: 2px 8px;
         border-radius: 999px;
         border: 1px solid rgba(255,211,138,.35);
@@ -632,7 +664,7 @@
         color: rgba(255,211,138,.95);
         font-weight: 1000;
         font-size: 11px;
-        white-space: nowrap;
+        white-space: normal;
       }
       .periodChip.is-off{
         border-color: rgba(255,154,165,.35);
@@ -640,27 +672,45 @@
         color: rgba(255,154,165,.95);
       }
 
-      /* ✅ 親切案内（BOOTH→シリアル） */
+      /* ✅ 親切案内（BOOTH→シリアル）※nowrap禁止（切れ防止） */
       .serialHint{
-        margin-top: 6px;
+        margin-top: 8px;
         font-size: 12px;
         font-weight: 900;
         color: rgba(255,154,165,.95);
-        text-align: right;
-        white-space: nowrap;
+        text-align: left;
+        white-space: normal;
+        overflow-wrap:anywhere;
+        word-break:break-word;
       }
       .serialHint small{
         font-weight: 900;
         color: rgba(255,255,255,.72);
       }
 
-      /* ✅ 期限外カード：全体ちょい薄く（所持トークンが残ってても見つけやすく） */
-      .good.is-expired{
-        opacity: .78;
+      /* ✅ スマホで確実に押せるBOOTH CTA（本文側） */
+      .boothCta{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+        width:100%;
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,.18);
+        background: rgba(255,46,46,.92);
+        color:#fff;
+        font-weight: 1000;
+        text-decoration:none;
+        letter-spacing:.02em;
+        -webkit-tap-highlight-color: transparent;
       }
-      .good.is-expired .good-desc{
-        opacity: .95;
-      }
+      .boothCta small{ opacity:.9; font-weight:900; }
+
+      /* ✅ 期限外カード：全体ちょい薄く */
+      .good.is-expired{ opacity: .78; }
+      .good.is-expired .good-desc{ opacity: .95; }
 
       .good .good-img{ position: relative !important; }
       .good .ownBadge{
@@ -677,11 +727,16 @@
       }
       .good .ownBadge b{ color:#fff; }
 
+      /* buybar：スマホで折り返しOK（崩れにくい） */
       .good .buybar{
-        display:flex !important; flex-direction:row !important;
-        align-items:center !important; justify-content:flex-end !important;
-        gap:8px !important; flex-wrap:nowrap !important;
+        display:flex !important;
+        flex-direction:row !important;
+        align-items:center !important;
+        justify-content:flex-end !important;
+        gap:8px !important;
+        flex-wrap:wrap !important;
       }
+
       .good .qty{ display:flex !important; align-items:center !important; gap:6px !important; flex: 0 0 auto !important; }
       .good .qty .qtybtn{
         min-width: 38px !important; height: 38px !important;
@@ -701,12 +756,16 @@
         white-space:nowrap !important; font-weight: 900 !important;
         font-size: 13px !important; padding: 0 12px !important;
       }
+
       .good .priceline{
         margin-top: 6px; font-size: 12px;
         color: rgba(255,255,255,.72);
-        text-align:right; white-space: nowrap;
+        text-align:left;
+        white-space: normal;
+        overflow-wrap:anywhere;
       }
       .good .priceline b{ color: rgba(255,255,255,.92); }
+
       .good .buyhint{ display:none !important; }
 
       #btnOpenInv{ display:none !important; }
@@ -723,6 +782,20 @@
         height: 36px !important; padding: 0 12px !important;
         border-radius: 12px !important; font-weight: 900 !important;
         font-size: 12px !important; white-space: nowrap !important;
+      }
+
+      /* ✅ スマホで「画像 + 説明」を読みやすい比率に固定 */
+      @media (max-width: 520px){
+        .good-top{
+          display:grid !important;
+          grid-template-columns: 92px 1fr !important;
+          gap: 10px !important;
+          align-items:start !important;
+        }
+        .good-img img{
+          width: 92px !important;
+          height: auto !important;
+        }
       }
 
       @media (max-width: 420px){
@@ -816,7 +889,7 @@
         const raw = String(g.desc || "");
         const lines = raw.split("\n");
         if(!canBuy && lines.length){
-          // 1行目（購入不可…）の後ろに期間を差し込む
+          // 1行目の後ろに期間を差し込む
           const first = escapeHTML(lines[0]);
           const rest = lines.slice(1).map(x => escapeHTML(x)).join("<br>");
           return `${first}${periodChip}${rest ? "<br>"+rest : ""}`;
@@ -824,7 +897,7 @@
         return escapeHTML(raw).replace(/\n/g,"<br>");
       })();
 
-      // ✅ コラボ種の「シリアルボタン」は無し（上部入力のみ）
+      // ✅ 非売品（コラボ種）の buyBar：スマホでも読めて、BOOTH CTAを確実に出す
       const buyBar = canBuy ? `
         <div class="buybar">
           <div class="qty">
@@ -837,7 +910,7 @@
         ${priceLine}
       ` : `
         <div class="buybar">
-          <div style="opacity:.78; font-size:12px; text-align:right; flex:1; white-space:nowrap;">
+          <div style="opacity:.88; font-size:12px; flex:1; text-align:left;">
             上のシリアル入力で増える…たこ。
           </div>
         </div>
@@ -846,6 +919,12 @@
           ✅ BOOTHでカードを購入すると <b>シリアルコード</b> がもらえるよ
           <small>（入力 → タネ増える）</small>
         </div>
+
+        ${g.boothUrl ? (
+          active
+            ? `<a class="boothCta" href="${escapeAttr(g.boothUrl)}" target="_blank" rel="noopener">🛒 BOOTHでカード購入する <small>→ シリアルGET</small></a>`
+            : `<div class="serialHint" style="margin-top:10px; color: rgba(255,211,138,.95);">※このタネのBOOTHは期間外…たこ。</div>`
+        ) : ""}
 
         ${priceLine}
       `;
@@ -876,7 +955,7 @@
       const item = GOODS.find(x => x.kind===kind && x.id===id);
       if(!item) return;
 
-      // ✅ 非売品（コラボ種）はボタン類が無いので購入配線もしない
+      // ✅ 非売品（コラボ種）は購入配線しない
       if(!item.buyable) return;
 
       const btn   = $(".buybtn", card);
@@ -923,7 +1002,7 @@
     }[c]));
   }
   function escapeAttr(s){
-    // 属性向け（かなり雑でOK：最低限）
+    // 属性向け（最低限）
     return escapeHTML(String(s ?? "")).replace(/`/g, "&#96;");
   }
 
