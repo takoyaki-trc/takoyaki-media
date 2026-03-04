@@ -1286,14 +1286,14 @@
     
      
      
-   const baseFactor = (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1);
+ const baseFactor = (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1);
 const isTimeNo = (fertId === "fert_timeno");
 const factor = clamp(baseFactor, 0.01, 1.0);
 
-// ✅ テスト用：時間を信じない肥料だけ“最低時間”制限を外して即テスト可能にする
+// ✅ テスト用：時間を信じない肥料は10秒固定
 const growMs = isTimeNo
-  ? Math.max(10_000, Math.floor(BASE_GROW_MS * factor))   // 最短10秒（好みで変更OK）
-  : Math.max(60*60*1000, Math.floor(BASE_GROW_MS * factor)); // それ以外は最低1時間維持  
+  ? 10_000
+  : Math.max(60*60*1000, Math.floor(BASE_GROW_MS * factor));
      
      
      
