@@ -16,16 +16,15 @@
    ✅ おみくじオクト：大凶1 / 凶500 / 末吉1000 / 中吉3000 / 大吉7777
 
    ✅ 今回の修正（依頼内容）
-   1) 露店（roten.js）上部の「シリアル入力」テキストボックスの “下” に
-      「ぐらたん」「ハーフアニバーサリー」選択ボタンを追加し、
-      その “同じ入力欄” で両方のシリアルに対応させる（送信先/キー/使用済み記録も切替）
-   2) タネ一覧内の
-      ・【コラボ】ぐらたんのタネ
-      ・【コラボ】アニバーサリーのタネ
-      の「名前の下」を “期間〇月〇日〜〇日まで” 表記に変更
-   3) タネ一覧側にあった「シリアル」ボタンは削除（上の入力欄で完結）
-      代わりに BOOTH リンクを表示
-   4) 右の「単価 —（シリアル）」の表示は削除（シリアル限定品は単価行ごと出さない）
+   1) 上部の共通シリアル入力欄は “見えないように隠す”
+   2) シリアル限定タネ（ぐらたん/アニバーサリー）のカード内に
+      「BOOTHへ」ボタン（幅は今のまま）＋ 右隣に“専用シリアル入力＋送信”を追加
+      - ぐらたん：REDEEM_ENDPOINT / REDEEM_API_KEY
+      - アニバーサリー：ANNIV_REDEEM_ENDPOINT / ANNIV_REDEEM_API_KEY
+   3) スマホでテキストボックス幅が原因でレイアウトが崩れないよう配慮
+      - ある程度までは横並び維持
+      - かなり狭い端末では “入力欄だけ下に回す” （BOOTHボタン幅は維持）
+   4) 「BOOTHへ」ボタンに色を付ける（幅は維持）
 
    ⚠️注意：
    ・アニバーサリーGAS側の apiKey は下の ANNIV_REDEEM_API_KEY と一致させてね。
@@ -42,22 +41,21 @@
     log: "roten_v1_log",
     codesUsed: "tf_v1_codes_used",
     deviceId: "tf_v1_device_id",
-    serialPick: "roten_v1_serial_pick" // ✅ 追加：インライン選択状態
+    serialPick: "roten_v1_serial_pick" // 既存：インライン選択状態（今回はUIを隠す）
   };
 
-  // ✅ シリアル（GAS Webアプリ）— ぐらたん（既存維持）
+  // ✅ シリアル（GAS Webアプリ）— ぐらたん
   const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbyzqkzkmGYU8oKv_IWy2lVGOYPwhIDrlmPYx14w3aeNLaPds2o2B7e5X3hzINkWaA4K/exec";
   const REDEEM_API_KEY  = "takopi-gratan-2026";
 
-  // ✅ シリアル（GAS Webアプリ）— アニバーサリー（追加）
+  // ✅ シリアル（GAS Webアプリ）— アニバーサリー
   const ANNIV_REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbwiAq999UzbVOFYs265xk_9YGgPcIDqA_jGoU1g9V_nCJCEtB5EVJY9kXGZ4ruEEBbg_A/exec";
   const ANNIV_REDEEM_API_KEY  = "takopi-anniv-2026";
 
   // ✅ BOOTHリンク（シリアル限定タネの代替導線）
   const BOOTH_URL = "https://takoyaki-toreka.booth.pm/";
 
-  // ✅ 表示したい期間文（指定どおり “〇月〇日〜〇日まで” 表記）
-  // ※実日付が決まったらここを差し替えればOK
+  // ✅ 表示したい期間文（“〇月〇日〜〇日まで” 表記）
   const COLLAB_PERIOD = {
     seed_colabo: "期間：〇月〇日〜〇日まで",
     seed_anniv:  "期間：〇月〇日〜〇日まで"
@@ -147,11 +145,11 @@
     { id:"seed_bussasari",      name:"ブッ刺さりタネ", desc:"心に刺さる。\n財布にも刺さる。", img:"https://ul.h3z.jp/MjWkTaU3.png", fx:"刺さり補正" },
     { id:"seed_namara_kawasar", name:"なまら買わさるタネ", desc:"気付いたら買ってる。\nレジ前の魔物。", img:"https://ul.h3z.jp/yiqHzfi0.png", fx:"買わさり圧" },
 
-    // ★既存：ぐらたん（維持）
+    // ★ぐらたん
     { id:"seed_colabo",  name:"【コラボ】ぐらたんのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" },
 
-    // ★追加：アニバーサリー（画像：assets/images/anniversary/anv1.png）
-    { id:"seed_anniv",   name:"【コラボ】アニバーサリーのタネ", desc:"アニバーサリーコラボ。\nシリアルでのみ増える。", img: absAssetUrl("assets/images/anniversary/anv1.png"), fx:"シリアル解放" },
+    // ★アニバーサリー
+    { id:"seed_anniv",   name:"ハーフアニバーサリーのタネ", desc:"アニバーサリーコラボ。\nシリアルでのみ増える。", img: absAssetUrl("assets/images/anniversary/anv1.png"), fx:"シリアル解放" },
   ];
 
   const WATERS = [
@@ -197,7 +195,6 @@
     const goods = [];
     for(const s of SEEDS){
       const isSerialOnly = SERIAL_ONLY_SEEDS.has(s.id);
-
       goods.push({
         kind:"seed",
         id:s.id,
@@ -566,13 +563,16 @@
         letter-spacing: .01em;
       }
 
-      /* ✅ BOOTH導線（カード内ボタン） */
+      /* ✅ BOOTH導線（カード内） */
       .good .boothRow{
         display:flex;
         justify-content:flex-end;
         align-items:center;
         gap:8px;
+        flex-wrap:nowrap; /* 基本は横並び */
       }
+
+      /* ✅ BOOTHボタン：幅は今のまま / 色を付ける */
       .good .boothLink{
         display:inline-flex;
         align-items:center;
@@ -582,40 +582,61 @@
         padding: 0 12px;
         border-radius: 12px;
         border:1px solid rgba(255,255,255,.18);
-        background: rgba(255,255,255,.08);
-        color: rgba(255,255,255,.95);
+        background: linear-gradient(135deg, rgba(127,208,255,.30), rgba(166,120,255,.24));
+        color: rgba(255,255,255,.98);
         text-decoration: none;
         font-weight: 1000;
         white-space: nowrap;
+        box-shadow: 0 10px 26px rgba(0,0,0,.35), 0 0 18px rgba(127,208,255,.08);
       }
-      .good .boothLink:active{
-        transform: translateY(1px);
-      }
+      .good .boothLink:active{ transform: translateY(1px); }
+      .good .boothLink:hover{ filter: brightness(1.03); }
 
-      /* ✅ シリアル選択（インライン：テキストボックスの下に置く） */
-      .serial-inline-pick{
+      /* ✅ カード内：シリアルミニ入力（BOOTH右隣） */
+      .good .serialMini{
         display:flex;
-        gap:8px;
-        flex-wrap:wrap;
         align-items:center;
-        justify-content:flex-start;
-        margin: 10px 0 6px;
+        justify-content:flex-end;
+        gap:6px;
+        flex: 1 1 auto;
+        min-width: 140px;
       }
-      .serial-inline-btn{
-        appearance:none;
+      .good .serialMiniInput{
+        height: 38px;
+        border-radius: 12px;
         border:1px solid rgba(255,255,255,.18);
-        background: rgba(0,0,0,.18);
-        color: rgba(255,255,255,.92);
-        border-radius: 999px;
-        padding: 8px 12px;
-        font-weight: 1000;
-        font-size: 12px;
-        cursor:pointer;
-        user-select:none;
+        background: rgba(0,0,0,.22);
+        color:#fff;
+        font-weight: 900;
+        letter-spacing: .02em;
+        padding: 0 10px;
+        width: clamp(120px, 34vw, 190px); /* ✅ 幅が原因で崩れにくい */
+        max-width: 190px;
+        outline: none;
       }
-      .serial-inline-btn.is-on{
-        border-color: rgba(127,208,255,.55);
-        box-shadow: 0 0 0 2px rgba(127,208,255,.12) inset, 0 0 18px rgba(127,208,255,.10);
+      .good .serialMiniInput::placeholder{
+        color: rgba(255,255,255,.55);
+        font-weight: 800;
+      }
+      .good .serialMiniBtn{
+        height: 38px;
+        min-width: 64px;
+        padding: 0 10px;
+        border-radius: 12px;
+        border:1px solid rgba(255,255,255,.18);
+        background: rgba(255,255,255,.10);
+        color: rgba(255,255,255,.95);
+        font-weight: 1000;
+        white-space: nowrap;
+      }
+      .good .serialMiniBtn:active{ transform: translateY(1px); }
+      .good .serialMiniBtn[disabled]{ opacity:.55; }
+
+      /* ✅ 上部の共通シリアル入力欄は隠す（要望） */
+      #serialInlineInput,
+      #serialInlineBtn,
+      #_serialInlinePickWrap{
+        display:none !important;
       }
 
       @media (max-width: 420px){
@@ -623,7 +644,26 @@
         .good .buybar .buybtn{ min-width: 86px !important; }
         .good .qty .qtyin{ width: 52px !important; }
         .roten-about-btn{ font-size: 12px !important; }
-        .good .boothLink{ min-width: 110px; }
+        .good .boothLink{ min-width: 120px; } /* 幅維持 */
+
+        /* 420px程度は横並び優先（入力はclampで縮む） */
+        .good .serialMiniInput{ width: clamp(110px, 34vw, 180px); max-width: 180px; }
+      }
+
+      /* ✅ かなり狭い端末だけ “入力欄を下に回す” → 崩れ防止 */
+      @media (max-width: 360px){
+        .good .boothRow{
+          flex-wrap:wrap;
+          justify-content:flex-end;
+        }
+        .good .serialMini{
+          flex: 1 1 100%;
+          justify-content:flex-end;
+        }
+        .good .serialMiniInput{
+          width: 100%;
+          max-width: 999px;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -680,9 +720,9 @@
 
       const priceLine = canBuy
         ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>`
-        : ``; // ✅ シリアル限定は単価行を出さない（依頼）
+        : ``; // シリアル限定は単価行を出さない
 
-      // ✅ 購入欄：シリアル限定タネは “BOOTHリンク” のみにする（シリアルボタン削除）
+      // ✅ シリアル限定タネ：BOOTHへ + 右隣に“専用シリアル入力”
       const buyBar = canBuy ? `
         <div class="buybar">
           <div class="qty">
@@ -693,11 +733,23 @@
           <button class="btn buybtn" type="button">買う</button>
         </div>
         ${priceLine}
+      ` : (isSerialSeed ? `
+        <div class="boothRow">
+          <a class="boothLink" href="${BOOTH_URL}" target="_blank" rel="noopener">BOOTHへ</a>
+
+          <div class="serialMini">
+            <input class="serialMiniInput" type="text" inputmode="text" autocapitalize="characters" autocomplete="off"
+              spellcheck="false"
+              placeholder="${g.id === "seed_anniv" ? "ANNIV-XXXX-XXXX" : "GRATAN-XXXX-XXXX"}">
+            <button class="serialMiniBtn" type="button"
+              data-pick="${g.id === "seed_anniv" ? "anniv" : "gratan"}">送信</button>
+          </div>
+        </div>
       ` : `
         <div class="boothRow">
           <a class="boothLink" href="${BOOTH_URL}" target="_blank" rel="noopener">BOOTHへ</a>
         </div>
-      `;
+      `);
 
       return `
         <article class="good" data-kind="${g.kind}" data-id="${g.id}">
@@ -721,15 +773,22 @@
       `;
     }).join("");
 
+    // クリック配線
     $$(".good", grid).forEach(card => {
       const kind = card.getAttribute("data-kind");
       const id   = card.getAttribute("data-id");
       const item = GOODS.find(x => x.kind===kind && x.id===id);
       if(!item) return;
 
-      // ✅ シリアル限定はクリックしても何もしない（上の入力欄で完結）
-      if(!item.buyable) return;
+      // ✅ シリアル限定タネ：カード内入力の配線
+      if(!item.buyable){
+        if(item.kind === "seed" && SERIAL_ONLY_SEEDS.has(item.id)){
+          wireCardSerialInput(card, item);
+        }
+        return;
+      }
 
+      // ✅ 通常商品：購入配線
       const btn   = $(".buybtn", card);
       const minus = $(".qtyminus", card);
       const plus  = $(".qtyplus", card);
@@ -752,9 +811,7 @@
         e.preventDefault(); e.stopPropagation();
         setQty(getQty() + 1);
       });
-      qtyIn?.addEventListener("input", ()=>{
-        setQty(getQty());
-      });
+      qtyIn?.addEventListener("input", ()=>{ setQty(getQty()); });
 
       btn?.addEventListener("click", (e)=>{
         e.preventDefault(); e.stopPropagation();
@@ -765,7 +822,6 @@
           toastHype("💥 オクトが足りない…たこ。", {kind:"bad"});
           return;
         }
-
         toastHype(`✨ 購入完了！「${item.name}」×${r.qty}（-${r.total}オクト）✨`, {kind:"good"});
       });
     });
@@ -818,7 +874,7 @@
   }
 
   // =========================================================
-  // ✅ シリアル（共通）
+  // ✅ シリアル共通（使用済み/端末ID/GAS通信）
   // =========================================================
   function loadUsedCodes(){
     const obj = loadJSON(LS.codesUsed, {});
@@ -881,132 +937,81 @@
   }
 
   // =========================================================
-  // ✅ インライン：シリアル入力（1つの入力欄で両対応）
-  // 仕様：テキストボックスの “下” に
-  //      [ぐらたん] [ハーフアニバーサリー] の選択ボタンを出す
+  // ✅ カード内シリアル（BOOTH右隣）— 専用入力
   // =========================================================
-  function getInlinePick(){
-    const v = (localStorage.getItem(LS.serialPick) || "gratan").trim();
-    return (v === "anniv") ? "anniv" : "gratan";
-  }
-  function setInlinePick(v){
-    const pick = (v === "anniv") ? "anniv" : "gratan";
-    localStorage.setItem(LS.serialPick, pick);
-    syncInlinePickUI();
-  }
-
-  function ensureSerialInlinePickUI(){
-    const input = $("#serialInlineInput");
-    const btn   = $("#serialInlineBtn");
-    if(!input || !btn) return;
-
-    // 既にあるならOK
-    if($("#_serialInlinePickWrap")) return;
-
-    const wrap = document.createElement("div");
-    wrap.id = "_serialInlinePickWrap";
-    wrap.className = "serial-inline-pick";
-    wrap.innerHTML = `
-      <button type="button" class="serial-inline-btn" data-pick="gratan">ぐらたん</button>
-      <button type="button" class="serial-inline-btn" data-pick="anniv">ハーフアニバーサリー</button>
-    `;
-
-    // ✅ “テキストボックスの下” に挿入（入力欄の直後が最優先）
-    // HTML構造が違っても壊れにくいよう、inputの親要素に合わせて差し込む
-    const host = input.parentElement || btn.parentElement || input.closest("section") || input.closest("div") || document.body;
-    if(host){
-      // inputの次に入れる（できるだけ近い位置に）
-      if(input.nextSibling){
-        host.insertBefore(wrap, input.nextSibling);
-      }else{
-        host.appendChild(wrap);
-      }
-    }else{
-      document.body.appendChild(wrap);
+  async function runRedeemWithPick(pick, code, btnEl, inputEl){
+    const c = String(code || "").trim().toUpperCase();
+    if(!c){
+      toastHype("シリアルが空…たこ。", {kind:"bad"});
+      return;
     }
 
-    // イベント
-    $$(".serial-inline-btn", wrap).forEach(b => {
-      b.addEventListener("click", () => {
-        setInlinePick(b.getAttribute("data-pick"));
-        setTakopiSayRandom();
-      });
-    });
+    const used = loadUsedCodes();
+    const usedKey = `${pick}:${c}`;
+    if(used[usedKey]){
+      toastHype("このコードは（この端末では）使用済み…たこ。", {kind:"bad"});
+      return;
+    }
 
-    syncInlinePickUI();
-  }
+    if(btnEl) btnEl.disabled = true;
 
-  function syncInlinePickUI(){
-    const wrap = $("#_serialInlinePickWrap");
-    if(!wrap) return;
-    const pick = getInlinePick();
-    $$(".serial-inline-btn", wrap).forEach(b => {
-      const p = b.getAttribute("data-pick");
-      b.classList.toggle("is-on", p === pick);
-    });
-  }
+    try{
+      const endpoint = (pick === "anniv") ? ANNIV_REDEEM_ENDPOINT : REDEEM_ENDPOINT;
+      const apiKey   = (pick === "anniv") ? ANNIV_REDEEM_API_KEY  : REDEEM_API_KEY;
 
-  function wireSerialInline(){
-    const input = $("#serialInlineInput");
-    const btn   = $("#serialInlineBtn");
-    if(!input || !btn) return;
-
-    // ✅ 追加UIを作る
-    ensureSerialInlinePickUI();
-
-    const run = async () => {
-      const code = (input.value || "").trim().toUpperCase();
-      if(!code) return;
-
-      const pick = getInlinePick(); // "gratan" | "anniv"
-      const used = loadUsedCodes();
-      const usedKey = `${pick}:${code}`; // ✅ コラボ別に使用済み管理
-
-      if(used[usedKey]){
-        toastHype("このコードは（この端末では）使用済み…たこ。", {kind:"bad"});
+      const data = await redeemOnServer(endpoint, apiKey, c);
+      if(!data.ok){
+        toastHype(data.message || data.error || "無効なコード…たこ。", {kind:"bad"});
         return;
       }
 
-      btn.disabled = true;
+      const reward = data.reward || data.grant || {};
+      const applied = applyRedeemReward(reward);
 
-      try{
-        const endpoint = (pick === "anniv") ? ANNIV_REDEEM_ENDPOINT : REDEEM_ENDPOINT;
-        const apiKey   = (pick === "anniv") ? ANNIV_REDEEM_API_KEY  : REDEEM_API_KEY;
+      used[usedKey] = { at: Date.now(), payload: reward };
+      saveUsedCodes(used);
 
-        const data = await redeemOnServer(endpoint, apiKey, code);
-        if(!data.ok){
-          toastHype(data.message || data.error || "無効なコード…たこ。", {kind:"bad"});
-          return;
-        }
+      if(inputEl) inputEl.value = "";
 
-        const reward = data.reward || data.grant || {};
-        const applied = applyRedeemReward(reward);
-
-        used[usedKey] = { at: Date.now(), payload: reward };
-        saveUsedCodes(used);
-
-        input.value = "";
-
-        if(pick === "anniv"){
-          pushLog(`シリアル（Anniv）：${code}（アニバーサリーのタネ +${applied.addedSeedAnniv}）`);
-          toastHype(`✨ 成功！アニバーサリーのタネ +${applied.addedSeedAnniv} ✨`, {kind:"good"});
-        }else{
-          pushLog(`シリアル（ぐらたん）：${code}（コラボのタネ +${applied.addedSeedColabo}）`);
-          toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, {kind:"good"});
-        }
-
-        refreshHUD();
-        renderGoods();
-        setTakopiSayRandom();
-      }catch(e){
-        toastHype("通信に失敗した…たこ。時間を置いてもう一度。", {kind:"bad"});
-      }finally{
-        btn.disabled = false;
+      if(pick === "anniv"){
+        pushLog(`シリアル（Anniv）：${c}（アニバーサリーのタネ +${applied.addedSeedAnniv}）`);
+        toastHype(`✨ 成功！アニバーサリーのタネ +${applied.addedSeedAnniv} ✨`, {kind:"good"});
+      }else{
+        pushLog(`シリアル（ぐらたん）：${c}（コラボのタネ +${applied.addedSeedColabo}）`);
+        toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, {kind:"good"});
       }
-    };
 
-    btn.addEventListener("click", run);
-    input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") run(); });
+      refreshHUD();
+      renderGoods();
+      setTakopiSayRandom();
+    }catch(e){
+      toastHype("通信に失敗した…たこ。時間を置いてもう一度。", {kind:"bad"});
+    }finally{
+      if(btnEl) btnEl.disabled = false;
+    }
+  }
+
+  function wireCardSerialInput(card, item){
+    const pick = (item.id === "seed_anniv") ? "anniv" : "gratan";
+    const input = $(".serialMiniInput", card);
+    const btn   = $(".serialMiniBtn", card);
+    if(!input || !btn) return;
+
+    // 既に配線済みっぽいときの二重登録を避ける
+    if(btn.dataset.wired === "1") return;
+    btn.dataset.wired = "1";
+
+    btn.addEventListener("click", (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      runRedeemWithPick(pick, input.value, btn, input);
+    });
+
+    input.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter"){
+        e.preventDefault(); e.stopPropagation();
+        runRedeemWithPick(pick, input.value, btn, input);
+      }
+    });
   }
 
   // =========================================================
@@ -1369,7 +1374,6 @@
     wireModalClose();
     wireTabs();
     wireButtons();
-    wireSerialInline();     // ✅ ここが “両対応” に変わってる
     wireChipBreakdowns();
 
     refreshHUD();
