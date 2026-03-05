@@ -153,11 +153,11 @@
 
   // ✅ 肥料は “時短だけ”
   const FERTS = [
-    { id: "fert_agedama", name: "ただの揚げ玉", desc: "時短0。\nおいしそう…", factor: 1.0, fx: "時短 0%", img: "https://ul.h3z.jp/9p5fx53n.png", burnCardUp: 0.12, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
+    { id: "fert_agedama", name: "ただの揚げ玉", desc: "時短0。\nおいしそう…\nたまに《焼きすぎたカード》", factor: 1.0, fx: "時短 0%", img: "https://ul.h3z.jp/9p5fx53n.png", burnCardUp: 0.12, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
     { id: "fert_feel", name: "気のせい肥料", desc: "早くなった気がする。\n気のせいかもしれない。", factor: 0.95, fx: "時短 5%", img: "https://ul.h3z.jp/XqFTb7sw.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
     { id: "fert_guts", name: "根性論ぶち込み肥料", desc: "理由はない。\n気合いだ。", factor: 0.8, fx: "時短 20%", img: "https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: true, skipGrowAnim: false },
     { id: "fert_skip", name: "工程すっ飛ばし肥料", desc: "途中は、\n見なかったことにした。", factor: 0.6, fx: "時短 40%", img: "https://ul.h3z.jp/FqPzx12Q.png", burnCardUp: 0.0, rawCardChance: 0.01, mantra: false, skipGrowAnim: true },
-    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\nちゃんと焼けてる？", factor: 0.1, fx: "時短 70%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
+    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n焼けてないって？\nたまに《生焼けカード》", factor: 0.1, fx: "時短 70%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
   ];
 
   // =========================
