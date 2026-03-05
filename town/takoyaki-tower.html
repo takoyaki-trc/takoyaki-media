@@ -182,15 +182,9 @@
 <script>
 (() => {
   /* =========================================================
-     ✅ たこ焼きタイミングタワー（完全版：スコア実装）
-     - ✅ 端末差を吸収：delta time(dt)で速度を統一（Chrome体感に寄せる）
-     - 基準点：階数に応じて増える
-     - 早押しボーナス：出現して早く落とすほど加点
-     - PERFECT：倍率＆コンボ加算（×1.2→×1.3→…）
-     - 結果画面：敗因/最後の焼き/履歴は表示しない
-     - 背景：昼→夕→夜（0-20-60）
-     - 角：四隅角丸（下も丸い）
-     - ✅ 画面内に収める：canvas表示サイズを自動縮小
+     ✅ たこ焼きタイミングタワー（完全版：背景フェーズ拡張）
+     - ✅ 背景：朝→昼→夕→夜→宇宙→太陽フレア（0-10-20-30-40-50-51+）
+     - その他ロジックは現状維持
   ========================================================= */
 
   // =========================
@@ -222,8 +216,6 @@
 
   // =========================
   // ✅ 画面内に収める：canvas表示サイズ自動調整
-  // - 内部解像度(420x720)は維持
-  // - 見た目だけ高さを縮める（説明文まで入る）
   // =========================
   const cv = document.getElementById("cv");
   const panel = cv.closest(".panel");
@@ -232,37 +224,26 @@
   const controls = panel.querySelector(".controls");
 
   function fitCanvas(){
-    // 画面の「使える高さ」
     const vh = Math.max(320, window.innerHeight);
-
-    // 上下の余白をざっくり確保（セーフエリア込み）
     const pad = 35;
 
-    // HUD/説明文/ボタンの実寸を引く
     const hudH = hud ? hud.getBoundingClientRect().height : 0;
     const hintH = hint ? hint.getBoundingClientRect().height : 0;
     const ctrlH = controls ? controls.getBoundingClientRect().height : 0;
 
-    // canvasに割り当てられる最大高さ
     const maxCanvasH = Math.max(220, vh - (hudH + hintH + ctrlH + pad));
 
-    // 内部比率（720/420）を保って見た目サイズ決定
     const aspect = 720 / 420;
 
-    // 幅はwrapに合わせて100% → 実幅を取得
     const panelW = panel.getBoundingClientRect().width;
     const byWidthH = panelW * aspect;
 
-    // 幅基準の高さと、画面の許容高さの小さい方を採用
     const displayH = Math.min(byWidthH, maxCanvasH);
-
-    // 高さから逆算した表示幅（ただしpanel幅を超えない）
     const displayW = Math.min(panelW, displayH / aspect);
 
-    // canvasの見た目サイズだけ変更（描画解像度は固定）
     cv.style.width = Math.round(displayW) + "px";
     cv.style.height = Math.round(displayH) + "px";
-    cv.style.margin = "0 auto"; // 中央寄せ
+    cv.style.margin = "0 auto";
   }
 
   window.addEventListener("resize", fitCanvas, { passive:true });
@@ -280,7 +261,6 @@
     minWidth: 34,
     marginX: 16,
 
-    // ※速度は「60fps基準」に合わせる（dtで正規化するので端末差が出にくい）
     speedBase: 2.25,
     speedPerLevel: 0.085,
     perfectPx: 4,
@@ -310,10 +290,6 @@
     COMBO_MUL_ADD: 0.05,
     MUL_CAP: 2.00,
   };
-
-  // 任意：iPhoneは体感「止めづらい」なら判定だけ少し甘くできる
-  // const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  // if (isIOS) CONF.perfectPx = 5;
 
   // =========================
   // 種類テーブル（出現率p / 高さh）
@@ -401,7 +377,6 @@
     lastRunFloors: 0,
     lastRunPoints: 0,
 
-    // ✅ 端末差吸収用（dt）
     lastFrameT: 0,
   };
 
@@ -416,17 +391,157 @@
   }
 
   // =========================
-  // 背景：昼→夕→夜
+  // ✅ 背景：朝→昼→夕→夜→宇宙→太陽フレア
   // =========================
   const SKY_COLORS = {
-    day:    { top:"#a9cfe6", bottom:"#eaf5fb" },
-    sunset: { top:"#f0b38c", bottom:"#6b4e71" },
-    night:  { top:"#0b132b", bottom:"#1c2541" },
+    morning:{ top:"#cfe8ff", bottom:"#fff2d4" }, // 朝（淡い青＋朝焼け）
+    day:    { top:"#a9cfe6", bottom:"#eaf5fb" }, // 昼
+    sunset: { top:"#f0b38c", bottom:"#6b4e71" }, // 夕方
+    night:  { top:"#0b132b", bottom:"#1c2541" }, // 夜
+    space:  { top:"#050710", bottom:"#0a1030" }, // 宇宙
+    flare:  { top:"#05060b", bottom:"#14070b" }, // 太陽フレア（ベースは暗め）
   };
+
+  // ✅ 指定どおり：0-10朝 / 11-20昼 / 21-30夕 / 31-40夜 / 41-50宇宙 / 51+太陽フレア
   function getTimePhase(floors){
-    if (floors < 20) return "day";
-    if (floors < 60) return "sunset";
-    return "night";
+    const f = Math.floor(Number(floors) || 0);
+    if (f <= 10) return "morning";
+    if (f <= 20) return "day";
+    if (f <= 30) return "sunset";
+    if (f <= 40) return "night";
+    if (f <= 50) return "space";
+    return "flare";
+  }
+
+  // ⭐ 星背景（夜/宇宙/フレアで使用）：1回生成して使い回し
+  const STAR_FIELD = (() => {
+    const stars = [];
+    // 星の数（宇宙の方が多く見えるように drawBG で係数を変える）
+    const N = 180;
+    for (let i=0; i<N; i++){
+      const x = Math.random() * CONF.canvasW;
+      const y = Math.random() * CONF.canvasH;
+      const r = (Math.random() < 0.12) ? 2 : 1;
+      const a = 0.25 + Math.random() * 0.55; // alpha
+      const hue = (Math.random() < 0.18) ? (190 + Math.random()*40) : (0 + Math.random()*20); // ほんの少し青白い/暖色
+      stars.push({ x, y, r, a, hue });
+    }
+    return stars;
+  })();
+
+  function drawStars(alpha=1.0, density=1.0){
+    const count = Math.max(0, Math.floor(STAR_FIELD.length * density));
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    for (let i=0; i<count; i++){
+      const s = STAR_FIELD[i];
+      ctx.fillStyle = `hsla(${s.hue}, 80%, 88%, ${s.a})`;
+      ctx.fillRect((s.x|0), (s.y|0), s.r, s.r);
+      if (s.r >= 2){
+        ctx.fillRect((s.x|0)+1, (s.y|0)-1, 1, 1);
+        ctx.fillRect((s.x|0)-1, (s.y|0)+1, 1, 1);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawSolarFlare(){
+    // 太陽（画面下からせり上がる感じ）
+    const cx = CONF.canvasW * 0.52;
+    const cy = CONF.canvasH * 1.12;
+    const R  = CONF.canvasH * 0.85;
+
+    // 太陽本体（グロー）
+    ctx.save();
+    const g0 = ctx.createRadialGradient(cx, cy, R*0.08, cx, cy, R);
+    g0.addColorStop(0.00, "rgba(255,240,200,.95)");
+    g0.addColorStop(0.18, "rgba(255,190,90,.70)");
+    g0.addColorStop(0.42, "rgba(255,120,40,.42)");
+    g0.addColorStop(0.70, "rgba(240,60,30,.18)");
+    g0.addColorStop(1.00, "rgba(0,0,0,0)");
+    ctx.fillStyle = g0;
+    ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
+    ctx.restore();
+
+    // フレア線（放射状の帯）
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.translate(cx, CONF.canvasH * 0.72);
+    const rays = 10;
+    for (let i=0; i<rays; i++){
+      const ang = (-0.55 + i*(1.10/(rays-1))) + (Math.sin((i+1)*3.1)*0.03);
+      ctx.save();
+      ctx.rotate(ang);
+
+      const w = 10 + i*1.2;
+      const h = CONF.canvasH * 0.95;
+      const g = ctx.createLinearGradient(0, 0, 0, -h);
+      g.addColorStop(0.00, "rgba(255,210,120,.35)");
+      g.addColorStop(0.35, "rgba(255,130,60,.14)");
+      g.addColorStop(1.00, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(-w/2, 40, w, -h);
+
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // レンズフレア（上部にうっすら）
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    const gx = ctx.createRadialGradient(CONF.canvasW*0.52, CONF.canvasH*0.22, 0, CONF.canvasW*0.52, CONF.canvasH*0.22, CONF.canvasW*0.55);
+    gx.addColorStop(0.00, "rgba(255,240,220,.10)");
+    gx.addColorStop(0.25, "rgba(255,180,120,.08)");
+    gx.addColorStop(0.55, "rgba(255,80,60,.04)");
+    gx.addColorStop(1.00, "rgba(0,0,0,0)");
+    ctx.fillStyle = gx;
+    ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
+    ctx.restore();
+  }
+
+  function drawBG(){
+    const phase = getTimePhase(S.floors);
+    const sky = SKY_COLORS[phase] || SKY_COLORS.day;
+
+    const grad = ctx.createLinearGradient(0,0,0,CONF.canvasH);
+    grad.addColorStop(0, sky.top);
+    grad.addColorStop(1, sky.bottom);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
+
+    // 夜/宇宙/フレアは星を足す（宇宙は濃度UP）
+    if (phase === "night"){
+      drawStars(0.90, 0.55);
+    } else if (phase === "space"){
+      drawStars(1.00, 0.95);
+      // ほんのり星雲
+      ctx.save();
+      const neb = ctx.createRadialGradient(CONF.canvasW*0.30, CONF.canvasH*0.35, 0, CONF.canvasW*0.30, CONF.canvasH*0.35, CONF.canvasW*0.70);
+      neb.addColorStop(0.00, "rgba(120,160,255,.10)");
+      neb.addColorStop(0.35, "rgba(180,120,255,.06)");
+      neb.addColorStop(1.00, "rgba(0,0,0,0)");
+      ctx.fillStyle = neb;
+      ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
+      ctx.restore();
+    } else if (phase === "flare"){
+      drawStars(0.85, 0.75);
+      drawSolarFlare();
+    }
+
+    // グリッド（現状維持）
+    if (!CONF.grid) return;
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    const step = 30;
+    for (let y=0; y<CONF.canvasH; y+=step){
+      ctx.beginPath();
+      ctx.moveTo(0,y);
+      ctx.lineTo(CONF.canvasW,y);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // =========================
@@ -447,10 +562,10 @@
       { min: 0,   title:"〘未投入〙",                 sub:"まだ鉄板に、こんにちはしてないたこ。" },
       { min: 1,   title:"〘はじめて置いたたこ〙",   sub:"今の音、ちょっと良かったたこ。" },
       { min: 5,   title:"〘返せた気がするたこ〙",   sub:"たぶん合ってた。たぶんたこ。" },
-      { min: 10,  title:"〘湯気みてただけのたこ〙", sub:"見てたら、積めてたたこ。" },
+      { min: 10,  title:"〘湯気みてただけのたこ〙", sub:"見てたら、積めてたこ。" },
       { min: 15,  title:"〘ちいさくなっても気にしないたこ〙", sub:"丸は、心だと思うたこ。" },
       { min: 20,  title:"〘鉄板と仲良くなったたこ〙", sub:"焦げも、友だちたこ。" },
-      { min: 30,  title:"〘タコ民に顔覚えられたたこ〙", sub:"あ、また来たたこ、って言われたたこ。" },
+      { min: 30,  title:"〘タコ民に顔覚えられたたこ〙", sub:"あ、また来たたこ、って言われたこ。" },
       { min: 40,  title:"〘祭壇がチラ見してきたたこ〙", sub:"今、見られた気がしたたこ。" },
       { min: 50,  title:"〘PERFECTっぽいたこ〙",     sub:"ズレてない…気がするたこ。" },
       { min: 70,  title:"〘落ちなかったたこ〙",       sub:"理由は分からないたこ。" },
@@ -834,31 +949,6 @@
   // =========================
   // 描画（メイン）
   // =========================
-  function drawBG(){
-    const phase = getTimePhase(S.floors);
-    const sky = SKY_COLORS[phase];
-
-    const grad = ctx.createLinearGradient(0,0,0,CONF.canvasH);
-    grad.addColorStop(0, sky.top);
-    grad.addColorStop(1, sky.bottom);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
-
-    if (!CONF.grid) return;
-    ctx.save();
-    ctx.globalAlpha = 0.08;
-    const step = 30;
-    for (let y=0; y<CONF.canvasH; y+=step){
-      ctx.beginPath();
-      ctx.moveTo(0,y);
-      ctx.lineTo(CONF.canvasW,y);
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
   function roundedPath(x, y, w, h, r){
     const rr = Math.min(r, w/2, h/2);
     ctx.moveTo(x+rr, y);
@@ -942,7 +1032,6 @@
     S.cameraY = 0;
     S.dir = 1;
 
-    // ✅ dt
     S.lastFrameT = 0;
 
     spawnBase();
@@ -1069,16 +1158,13 @@
   // ✅ dt対応 update（Chrome体感に寄せて統一）
   function update(now){
     if (!S.lastFrameT) S.lastFrameT = now;
-    let dt = (now - S.lastFrameT) / 1000; // sec
+    let dt = (now - S.lastFrameT) / 1000;
     S.lastFrameT = now;
 
-    // タブ復帰/端末負荷で一気に進むのを抑える
-    dt = Math.min(dt, 0.033); // 最大33ms分まで
+    dt = Math.min(dt, 0.033);
 
     if (S.playing && !S.over && S.curr){
       const sp = levelSpeed();
-
-      // ✅ 60fps基準に正規化（いまの値をそのまま使うため×60）
       const step = sp * dt * 60;
 
       S.curr.x += step * S.dir;
@@ -1124,7 +1210,6 @@
   // 初期化
   // =========================
   loadImages().then(() => {
-    // ✅ 先にフィット（説明文が測れるように次フレームでもう一回）
     fitCanvas();
     requestAnimationFrame(fitCanvas);
 
