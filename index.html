@@ -258,7 +258,7 @@ body{
 /* ===== 扉＋キャラ：中央に固定 ===== */
 .selectRow{
   display:flex;
-  justify-content:center;  /* ✅ 中央寄せ */
+  justify-content:center;
   align-items:flex-end;
   margin-top: 12px;
   position:relative;
@@ -268,13 +268,13 @@ body{
 .hero{
   position:relative;
   display:inline-block;
-  width:min(360px, 92vw); /* 扉＋キャラが収まる幅 */
+  width:min(360px, 92vw);
 }
 
 /* ===== 扉（中央） ===== */
 .door{
   display:block;
-  width:min(240px, 64vw); /* 扉単体の幅 */
+  width:min(240px, 64vw);
   margin: 0 auto;
   cursor:pointer;
   transition: transform .22s ease, filter .22s ease;
@@ -331,9 +331,9 @@ body{
 }
 .door:hover::before{ opacity:.60; }
 
-/* 扉ラベル */
+/* ===== 扉ラベル（リンク化） ===== */
 .doorTag{
-  margin-top:8px;
+  margin-top:6px;              /* ✅ 少し上へ */
   display:flex;
   justify-content:center;
   font-weight:900;
@@ -341,6 +341,15 @@ body{
   letter-spacing:.04em;
   opacity:.92;
 }
+
+/* リンクとしての見た目 */
+.doorTag a{
+  color:inherit;
+  text-decoration:none;
+  -webkit-tap-highlight-color: transparent;
+}
+.doorTag a:hover{ filter:brightness(1.08); }
+
 .doorTag .pill{
   display:inline-flex;
   align-items:center;
@@ -359,10 +368,8 @@ body{
 /* ===== キャラ（扉の右端に重ねる） ===== */
 .charWrap{
   position:absolute;
-  /* ✅ 扉の右端に少し被せる */
   right: -22px;
-  /* ✅ 石段の高さに合わせて調整（扉の下辺と合わせる） */
-  bottom: 32px;
+  bottom: 12px;
   width:min(150px, 28vw);
   pointer-events:none;
 }
@@ -448,13 +455,20 @@ body{
 /* ===== モバイル微調整 ===== */
 @media(max-width:600px){
   .logo .jp{ font-size:18px; letter-spacing:.14em; }
+
   .hero{ width:min(340px, 92vw); }
   .door{ width:min(230px, 72vw); }
+
+  /* ✅ スマホだけ：キャラをもう少し上へ */
   .charWrap{
     right: -18px;
-    bottom: 22px;
+    bottom: 22px; /* ★ 10→22 相当（前回より上へ） */
     width:min(132px, 30vw);
   }
+
+  /* ✅ ラベルももう少し上へ（扉に近づける） */
+  .doorTag{ margin-top: 4px; }
+
   .msg .text{ font-size:14px; }
 }
 
@@ -492,7 +506,6 @@ body{
     </div>
     <div class="modalBody">
       <div class="grid">
-        <!-- ▼ URLはあなたの構成に合わせて必要なら変更OK -->
         <a class="linkBtn" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener" data-sfx="open">
           <span class="ico">🛒</span>カード購入（BOOTH）
         </a>
@@ -505,12 +518,10 @@ body{
           <span class="ico">🌱</span>畑
         </a>
 
-        <!-- ✅ 露店とたこぴのお店は同じ：表記統一 -->
         <a class="linkBtn" href="town/roten.html" data-sfx="spark">
           <span class="ico">🐙</span>たこぴのお店（露店）
         </a>
 
-        <!-- ✅ マイ露店：指定URL -->
         <a class="linkBtn" href="https://takoyaki-card.com/town/myshop.html" data-sfx="spark">
           <span class="ico">📦</span>マイ露店
         </a>
@@ -552,7 +563,12 @@ body{
         </div>
       </div>
 
-      <div class="doorTag"><span class="pill"><span class="dot"></span>街へ入る</span></div>
+      <!-- ✅ ラベルもリンク化（扉と同じURL） -->
+      <div class="doorTag">
+        <a href="town/index.html" id="doorTagLink" aria-label="街へ入る（ラベル）" data-sfx="open">
+          <span class="pill"><span class="dot"></span>街へ入る</span>
+        </a>
+      </div>
     </div>
   </div>
 
@@ -561,8 +577,6 @@ body{
     <div class="name" id="speakerName">たこぴ</div>
     <div class="text" id="msgText">読み込み中…</div>
   </div>
-
-  <!-- ✅ 下部の注意文は削除（要求どおり） -->
 
 </div>
 
@@ -574,7 +588,8 @@ body{
      入口：完全版
      ✅ 右上メニュー（モーダル）
      ✅ 扉は中央
-     ✅ たこぴは扉右端に被せ＆石段高さに合わせて配置
+     ✅ スマホ：キャラを上へ調整
+     ✅ 「街へ入る」ラベルを上寄せ＆リンク化（扉と同じ）
      ✅ 粒エフェクト
      ✅ 案内セリフ 30種
      ✅ SE（ホバー/クリック/メニュー）
@@ -587,11 +602,11 @@ body{
   const linesGuide = [
     "ようこそ、焼かれた伝説の入口へ…たこ。<br>扉の先は<strong>たこ焼きトレカの街</strong>だたこ。",
     "ここは入口だたこ。<br>扉をタップすると、街マップに入れるたこ。",
-    "街の中には、畑・露店・図鑑…いろいろあるたこ。<br>まずは扉で入場だたこ。",
+    "街の中には、畑・たこぴのお店（露店）・図鑑…いろいろあるたこ。<br>まずは扉で入場だたこ。",
     "迷子になりそう？大丈夫だたこ。<br>右上の<strong>メニュー</strong>からどこへでも行けるたこ。",
     "世界観は扉から入るのが礼儀だたこ。<br>でも急ぐならメニューでもOKだたこ。",
     "このサイトは“見る”だけじゃないたこ。<br><strong>遊べるホームページ</strong>だたこ。",
-    "畑で育てて、カードを手に入れて、露店で並べる…<br>そういう遊びができるたこ。",
+    "畑で育てて、カードを手に入れて、たこぴのお店（露店）で並べる…<br>そういう遊びができるたこ。",
     "扉の光が強い日は…イベントの匂いがするたこ。<br>たまに覗くと得するたこ。",
     "ここで立ち止まってもいいたこ。<br>でも扉の向こうはもっと騒がしいたこ。",
     "右上メニューは旅人の奥の手だたこ。<br>困ったら押すたこ。",
@@ -699,19 +714,25 @@ body{
     setTimeout(()=>beep({freq: 340, dur: 0.06, type:"triangle", gain:0.035}), 45);
   }
 
-  // 最初のユーザー操作でAudio起動
   window.addEventListener("pointerdown", () => ensureAudio(), { once:true });
 
   // =========================
-  // 扉イベント
+  // 扉イベント（扉＆ラベル）
   // =========================
   const doorJP = document.getElementById("doorJP");
-  doorJP.addEventListener("pointerenter", () => sparkle());
-  doorJP.addEventListener("focus", () => sparkle());
-  doorJP.addEventListener("click", () => {
-    doorOpen();
-    setTimeout(renderMessage, 120);
-  });
+  const doorTagLink = document.getElementById("doorTagLink");
+
+  function bindDoor(el){
+    if(!el) return;
+    el.addEventListener("pointerenter", () => sparkle());
+    el.addEventListener("focus", () => sparkle());
+    el.addEventListener("click", () => {
+      doorOpen();
+      setTimeout(renderMessage, 120);
+    });
+  }
+  bindDoor(doorJP);
+  bindDoor(doorTagLink);
 
   // =========================
   // 右上メニュー（モーダル）
@@ -744,17 +765,14 @@ body{
   openMenuBtn.addEventListener("pointerenter", () => sparkle());
   closeBtn.addEventListener("click", closeMenu);
 
-  // 背景クリックで閉じる
   back.addEventListener("click", (e) => {
     if(e.target === back) closeMenu();
   });
 
-  // ESCで閉じる
   window.addEventListener("keydown", (e) => {
     if(e.key === "Escape" && back.classList.contains("open")) closeMenu();
   });
 
-  // モーダル内リンクの効果音
   back.querySelectorAll("[data-sfx]").forEach(el => {
     el.addEventListener("pointerenter", () => sparkle());
     el.addEventListener("click", () => {
@@ -766,7 +784,7 @@ body{
   });
 
   // =========================
-  // セリフ：控えめ更新（12秒に1回、30%）
+  // セリフ：控えめ更新
   // =========================
   setInterval(() => {
     if(document.visibilityState !== "visible") return;
