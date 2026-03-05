@@ -200,6 +200,9 @@
     .tag.rarity[data-r="SR"]{ background:var(--rarSR-bg); border-color:var(--rarSR-bd); }
     .tag.rarity[data-r="UR"]{ background:var(--rarUR-bg); border-color:var(--rarUR-bd); color:rgba(10,16,26,.92); text-shadow:none; }
     .tag.rarity[data-r="LR"]{ background:var(--rarLR-bg); border-color:var(--rarLR-bd); color:rgba(30,20,0,.92); text-shadow:none; }
+    /* SPやOTHER等を表示する場合の見た目（色分け不要ならN扱いでOK） */
+    .tag.rarity[data-r="SP"]{ background: rgba(140,200,255,.18); border-color: rgba(180,220,255,.35); }
+    .tag.rarity[data-r="OT"]{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
 
     .countBadge{
       position:absolute;right:6px;top:6px;
@@ -457,7 +460,7 @@
           <option value="tp">たこぴプロモ（TP）</option>
           <option value="nk">限定ショップ（NK）</option>
           <option value="bs">ダーツプロ（BS）</option>
-          <option value="sp">スペシャル（SP）</option>
+          <option value="sp">スペシャル（SPカテゴリ）</option>
           <option value="col">コラボ（COL）</option>
           <option value="craft">職人（5分ステージ）</option>
           <option value="all_serial">全カード品番順（おすすめ）</option>
@@ -503,7 +506,11 @@
     // =========================================================
     // 図鑑（count方式 / IDごとに1枚表示）
     // - gate.js 側で追加される職人カード（craft_XXX）も表示・並び替え可能
-    // - ✅ ハーフアニバーサリー系を「SPカテゴリ」として判定強化
+    //
+    // ✅ 変更点（今回）
+    // - ハーフアニバ系は「並び替えSPカテゴリに入れる」判定は維持
+    // - ただし、カードのバッジ表示は「実際のレアリティ（tier優先）」を表示する
+    //   → item.tier があれば tier を表示、無ければ item.rarity を表示
     // =========================================================
 
     const LS_KEY = "tf_v1_book";
@@ -536,6 +543,16 @@
     function safeJSONParse(str){ try { return JSON.parse(str); } catch(e){ return null; } }
     function normalizeText(s){ return (s ?? "").toString().trim().toLowerCase(); }
 
+    // ✅ 表示用レアリティ（tier優先）
+    function displayRarity(item){
+      const t = (item?.tier ?? "").toString().trim();
+      if(t) return t;
+      return (item?.rarity ?? "").toString().trim();
+    }
+    function displayRarityUpper(item){
+      return (displayRarity(item) || "").toString().trim().toUpperCase();
+    }
+
     function parseCardId(id){
       const s = (id ?? "").toString().trim().toUpperCase();
 
@@ -558,16 +575,14 @@
     }
 
     // =========================================================
-    // ✅ SPカテゴリ判定（ここが今回の本題）
-    // - 「SPで始まる」だけだと、ハーフアニバ系が ID: ANV/ANNIV/HALF... 等のとき漏れる
-    // - なので「名前/ID/画像URL」に含まれる特徴語でもSP判定に入れる
+    // ✅ SPカテゴリ判定（並び替え用：ハーフアニバ等もSPカテゴリへ）
+    // - バッジ表示とは別管理（表示は tier/rarity の実値）
     // =========================================================
     function isHalfAnnivLike(item){
       const id   = (item?.id ?? "").toString().trim().toUpperCase();
       const name = (item?.name ?? "").toString().trim().toUpperCase();
       const img  = (item?.img ?? "").toString().trim().toUpperCase();
 
-      // よくある表記ゆれを広めに拾う（必要なら語を追加OK）
       const hits = [
         "ハーフアニバーサリー", "HALFANNIV", "HALF_ANNIV", "HALF-ANNIV", "HALF ANNIV",
         "HALF", "HAFU", "HALFANNIVERSARY",
@@ -576,8 +591,7 @@
       ];
 
       const hay = `${id} ${name} ${img}`;
-      // 画像フォルダで判定（あなたの環境に合わせて追加）
-      // 例: /anniversary/ /halfanniv/ /anv/ など
+
       const urlHints = [
         "/ANNIVERSARY/", "/ANV/", "/ANNIV/", "/HALFANNIV/", "/HALF_ANNIV/", "/HALF-ANNIV/"
       ];
@@ -585,7 +599,6 @@
       if(urlHints.some(k => hay.includes(k))) return true;
       if(hits.some(k => hay.includes(k))) return true;
 
-      // 例: ANNI_2026 / ANN_2026 のような seed/collab名が混ざる場合
       if(id.includes("ANN_") || id.includes("ANV_") || id.includes("ANNIV_")) return true;
 
       return false;
@@ -596,8 +609,7 @@
       const name = (item?.name ?? "").toString().trim();
       const rarity = (item?.rarity ?? "").toString().trim().toUpperCase();
 
-      // 既存SP判定
-      if(id.startsWith("SP")) return true;       // SP-001 / SP001 / SP_001 / SP-ANNIV-001 など
+      if(id.startsWith("SP")) return true;
       if(rarity === "SP") return true;
 
       // ✅ 追加：ハーフアニバ/アニバ系列をSPカテゴリとして扱う
@@ -621,8 +633,9 @@
       return Number.isFinite(p.num) ? p.num : Number.POSITIVE_INFINITY;
     }
 
-    function isSRPlus(rarity){
-      const r = normalizeText(rarity);
+    // ✅ グロー判定も「表示レアリティ（tier優先）」で判定
+    function isSRPlusByItem(item){
+      const r = normalizeText(displayRarity(item));
       if(!r) return false;
       if(r.includes("sr")) return true;
       if(r.includes("ur")) return true;
@@ -632,15 +645,17 @@
       return false;
     }
 
-    function rarityCode(rarityRaw){
-      const r = (rarityRaw ?? "").toString().trim().toUpperCase();
+    // ✅ バッジ色分けも「表示レアリティ（tier優先）」で判定
+    function rarityCodeFromDisplay(displayRaw){
+      const r = (displayRaw ?? "").toString().trim().toUpperCase();
+      if(!r) return "OT";
+      if(r === "SP" || r.includes("SP")) return "SP";
       if(r.includes("LR")) return "LR";
       if(r.includes("UR")) return "UR";
       if(r.includes("SR")) return "SR";
       if(r === "R" || r.includes(" R") || r.endsWith("R")) return "R";
       if(r === "N" || r.includes("N")) return "N";
-      // CRAFT は色が無いので N に寄せる（必要ならCSS増やせる）
-      return "N";
+      return "OT";
     }
 
     function toDate(at){
@@ -730,14 +745,15 @@
       }
 
       // ✅ gate.js が保存する形式（lastAddedAt / photo / desc）にも対応
+      // ✅ 追加：tier（XP方式などで保存している場合）の読込
       all = gotArr.map(x => ({
         id: x?.id ?? "",
         name: x?.name ?? "",
         img: x?.img ?? "",
-        rarity: x?.rarity ?? "",
+        rarity: x?.rarity ?? "",      // 「カテゴリ」や旧データ用
+        tier: x?.tier ?? "",          // ✅ 表示用（存在すればこちら優先）
         at: x?.at ?? "",
         lastAt: x?.lastAt ?? "",
-        // gate.js: lastAddedAt を使う
         lastAddedAt: x?.lastAddedAt ?? "",
         count: x?.count ?? 1
       }));
@@ -752,7 +768,13 @@
 
       view = all.filter(item => {
         if(!q) return true;
-        const hay = [ item.id, item.name, item.rarity ].map(normalizeText).join(" ");
+        // ✅ 検索は「表示レアリティ（tier）」もヒット対象にする
+        const hay = [
+          item.id,
+          item.name,
+          item.rarity,
+          displayRarity(item)
+        ].map(normalizeText).join(" ");
         return hay.includes(q);
       });
 
@@ -806,7 +828,6 @@
                      const A0 = parseCardId(a.id);
                      const B0 = parseCardId(b.id);
 
-                     // SPっぽい番号が取れるものは番号優先、それ以外は入手順
                      if(A0.prefix === "SP" && B0.prefix === "SP" && A0.num !== B0.num){
                        return A0.num - B0.num;
                      }
@@ -818,7 +839,6 @@
                    .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
       }else if(sort === "craft"){
-        // ✅ 職人（5分ステージ）だけ
         view = view.filter(c=> isCraftCard(c))
                    .sort((a,b)=>{
                      const A = parseCardId(a.id);
@@ -868,7 +888,7 @@
 
       for(const item of view){
         const card = document.createElement("div");
-        const glow = isSRPlus(item.rarity);
+        const glow = isSRPlusByItem(item);
         card.className = "card" + (glow ? " is-glow" : "");
         card.setAttribute("role","button");
         card.setAttribute("tabindex","0");
@@ -907,10 +927,12 @@
         tag.innerHTML = `<span class="id">#${escapeHTML(item.id || "-")}</span>`;
 
         const rar = document.createElement("div");
-        const rcode = rarityCode(item.rarity);
+        const dispR = displayRarity(item) || "-";
+        const rcode = rarityCodeFromDisplay(dispR);
         rar.className = "tag rarity";
         rar.dataset.r = rcode; /* ✅ 色分け */
-        rar.innerHTML = `<b>${escapeHTML(item.rarity || "-")}</b>`;
+        // ✅ バッジ表示は「実際のレア（tier優先）」を表示
+        rar.innerHTML = `<b>${escapeHTML(dispR)}</b>`;
 
         mini.appendChild(tag);
         mini.appendChild(rar);
@@ -959,13 +981,16 @@
     }
 
     function openModal(item){
+      const dispR = displayRarity(item) || "-";
+
       mImg.src = item.img || "";
       mImg.alt = item.name || item.id || "card";
       mTitle.textContent = item.name || "(no name)";
       mId.textContent = item.id || "-";
-      mRarity.textContent = item.rarity || "-";
+      // ✅ モーダルの「レア」も表示レア（tier優先）に統一
+      mRarity.textContent = dispR;
       mAt.textContent = formatAt(item.lastAt || item.lastAddedAt || item.at);
-      mGlow.style.display = isSRPlus(item.rarity) ? "inline-flex" : "none";
+      mGlow.style.display = isSRPlusByItem(item) ? "inline-flex" : "none";
       mCount.textContent = `${getCount(item.id)} 枚`;
 
       modal.setAttribute("aria-hidden","false");
