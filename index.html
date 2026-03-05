@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>焼かれた伝説｜入口</title>
-<meta name="description" content="焼かれた伝説 / たこ焼きトレカ 入口。日本語の扉を選び、街（town）へ進めます。">
+<meta name="description" content="焼かれた伝説 / たこ焼きトレカ 入口。扉から街へ。右上メニューからショートカットも可能。">
 
 <style>
 :root{
@@ -68,6 +68,155 @@ body{
   100% { transform: translate3d(calc(var(--x) + var(--dx)), -40px, 0) scale(var(--s)); opacity:0; }
 }
 
+/* ===== 右上メニュー（固定） ===== */
+.topUI{
+  position:fixed;
+  top: calc(10px + var(--safeT));
+  right: calc(10px + var(--safeR));
+  z-index:30;
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.menuBtn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  color:#fff;
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-weight:1000;
+  letter-spacing:.06em;
+  cursor:pointer;
+  backdrop-filter: blur(8px);
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 10px 26px rgba(0,0,0,.35);
+  display:inline-flex;
+  gap:10px;
+  align-items:center;
+}
+.menuBtn .bars{
+  width:18px; height:14px; position:relative; display:inline-block;
+}
+.menuBtn .bars::before,
+.menuBtn .bars::after,
+.menuBtn .bars i{
+  content:"";
+  position:absolute;
+  left:0; right:0;
+  height:2px;
+  border-radius:999px;
+  background: rgba(255,255,255,.9);
+  opacity:.9;
+}
+.menuBtn .bars::before{ top:0; }
+.menuBtn .bars i{ top:6px; }
+.menuBtn .bars::after{ bottom:0; }
+.menuBtn:hover{ filter:brightness(1.08); }
+.menuBtn:active{ transform: translateY(1px); }
+
+/* ===== モーダル ===== */
+.modalBack{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.58);
+  backdrop-filter: blur(6px);
+  z-index:40;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding: calc(16px + var(--safeT)) calc(14px + var(--safeR)) calc(16px + var(--safeB)) calc(14px + var(--safeL));
+}
+.modalBack.open{ display:flex; }
+.modal{
+  width:min(560px, 92vw);
+  background: rgba(10,12,24,.82);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius: 18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.65);
+  overflow:hidden;
+  transform: translateY(6px);
+  animation: pop .16s ease-out forwards;
+}
+@keyframes pop{ to{ transform: translateY(0px); } }
+.modalHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+.modalTitle{
+  font-weight:1000;
+  letter-spacing:.08em;
+  font-size:13px;
+  opacity:.92;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.modalTitle .tag{
+  font-size:11px;
+  padding:4px 10px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:999px;
+  background: rgba(255,255,255,.06);
+  opacity:.9;
+}
+.modalClose{
+  appearance:none;
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color:#fff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-weight:1000;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.modalClose:hover{ filter:brightness(1.08); }
+
+.modalBody{ padding: 12px 14px 14px; }
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:10px;
+}
+@media(min-width:520px){
+  .grid{ grid-template-columns: 1fr 1fr; }
+}
+.linkBtn{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:flex-start;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color:#fff;
+  text-decoration:none;
+  font-weight:1000;
+  letter-spacing:.02em;
+}
+.linkBtn:hover{ filter:brightness(1.08); }
+.linkBtn .ico{
+  width:34px;
+  height:34px;
+  border-radius: 12px;
+  display:grid;
+  place-items:center;
+  background: rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+}
+.smallNote{
+  margin-top: 12px;
+  font-size: 12px;
+  opacity: .78;
+  line-height: 1.6;
+}
+
 /* ===== メイン ===== */
 .stage{
   width:min(900px,92vw);
@@ -76,7 +225,7 @@ body{
   z-index:1;
 }
 
-/* ===== タイトルロゴ（ドット風） ===== */
+/* ===== タイトルロゴ ===== */
 .logo{
   display:flex;
   flex-direction:column;
@@ -111,15 +260,15 @@ body{
   display:flex;
   justify-content:center;
   align-items:flex-end;
-  gap:min(4vw,28px);
+  gap:min(4vw,26px);
   margin-top: 12px;
   position:relative;
 }
 
-/* ===== 扉（ぽわーッ発光） ===== */
+/* ===== 扉（ぽわー発光） ===== */
 .door{
   display:block;
-  width:min(230px, 40vw);
+  width:min(230px, 52vw);
   cursor:pointer;
   transition: transform .22s ease, filter .22s ease;
   position:relative;
@@ -134,8 +283,6 @@ body{
   display:block;
   border-radius:18px;
 }
-
-/* 発光レイヤー（脈動） */
 .door::before{
   content:"";
   position:absolute;
@@ -149,8 +296,6 @@ body{
   z-index:-1;
   animation: doorGlow 2.2s ease-in-out infinite;
 }
-
-/* 薄い粒キラ（ふわっと） */
 .door::after{
   content:"";
   position:absolute;
@@ -179,11 +324,9 @@ body{
   transform: translateY(-5px) scale(1.03);
   filter: brightness(1.06);
 }
-.door:hover::before{
-  opacity:.60;
-}
+.door:hover::before{ opacity:.60; }
 
-/* 扉ラベル（小さく） */
+/* 扉ラベル */
 .doorTag{
   margin-top:8px;
   display:inline-flex;
@@ -210,9 +353,10 @@ body{
   box-shadow:0 0 0 2px rgba(255,231,160,.18);
 }
 
-/* ===== 中央キャラ（足踏み）===== */
+/* ===== キャラ（足踏み）===== */
 .charWrap{
-  width:min(200px, 34vw);      /* ✅ もっと大きく */
+  /* ✅ 大きすぎたので少し小さく */
+  width:min(160px, 26vw);
   pointer-events:none;
   position:relative;
 }
@@ -238,7 +382,7 @@ body{
   100% { transform: rotate(-1.2deg); }
 }
 
-/* 足元の影 */
+/* 影 */
 .shadow{
   position:absolute;
   left:50%;
@@ -256,7 +400,7 @@ body{
   50%    { transform: translateX(-50%) scale(0.92); opacity:.45; }
 }
 
-/* ===== RPGメッセージBOX（吹き出し枠そのまま）===== */
+/* ===== RPGメッセージBOX ===== */
 .msg{
   margin: 18px auto 0;
   width:min(760px,92vw);
@@ -272,8 +416,6 @@ body{
   position:relative;
   overflow:hidden;
 }
-
-/* “カーソル”っぽい点滅（DQ風） */
 .msg::after{
   content:"";
   position:absolute;
@@ -290,35 +432,12 @@ body{
   0%,49%{ opacity:0; }
   50%,100%{ opacity:.65; }
 }
-
 .msg .name{
   font-size:13px;
   opacity:.65;
   margin-bottom:6px;
 }
-.msg .text{
-  font-size:15px;
-}
-
-/* リンク群（住民票を削除→街へ/畑へ/露店へ） */
-.links{
-  margin-top: 10px;
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  width:min(760px,92vw);
-  flex-wrap:wrap;
-}
-.links a{
-  color:rgba(255,255,255,.86);
-  text-decoration:none;
-  font-size:12px;
-  padding:9px 10px;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:10px;
-  background:rgba(255,255,255,.06);
-}
-.links a:hover{ filter:brightness(1.08); }
+.msg .text{ font-size:15px; }
 
 /* 小さい注意 */
 .hint{
@@ -331,9 +450,16 @@ body{
 @media(max-width:600px){
   .logo .jp{ font-size:18px; letter-spacing:.14em; }
   .selectRow{ gap:14px; }
-  .door{ width:52vw; max-width:210px; }
-  .charWrap{ width:40vw; max-width:170px; } /* ✅ モバイルでも大きめ */
+  .door{ width:58vw; max-width:220px; }
+  .charWrap{ width:28vw; max-width:140px; } /* ✅ さらにちょい小さめ */
   .msg .text{ font-size:14px; }
+}
+
+/* ===== 動き軽減（アクセシビリティ） ===== */
+@media (prefers-reduced-motion: reduce){
+  .fx i, .door::before, .door::after, .char, .char img, .shadow, .msg::after{
+    animation: none !important;
+  }
 }
 </style>
 </head>
@@ -342,6 +468,64 @@ body{
 
 <!-- 背景エフェクト -->
 <div class="fx" id="fx" aria-hidden="true"></div>
+
+<!-- 右上メニュー -->
+<div class="topUI" aria-label="トップメニュー">
+  <button class="menuBtn" id="openMenu" type="button" aria-haspopup="dialog" aria-controls="menuModal" aria-expanded="false">
+    <span class="bars"><i></i></span>
+    メニュー
+  </button>
+</div>
+
+<!-- メニューモーダル -->
+<div class="modalBack" id="menuBack" role="dialog" aria-modal="true" aria-label="ショートカットメニュー" style="display:none;">
+  <div class="modal" id="menuModal">
+    <div class="modalHead">
+      <div class="modalTitle">
+        ショートカット
+        <span class="tag">入口</span>
+      </div>
+      <button class="modalClose" id="closeMenu" type="button" aria-label="閉じる">閉じる</button>
+    </div>
+    <div class="modalBody">
+      <div class="grid">
+        <!-- ▼ URLはあなたの構成に合わせて必要なら変更OK -->
+        <a class="linkBtn" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener" data-sfx="open">
+          <span class="ico">🛒</span>カード購入（BOOTH）
+        </a>
+
+        <a class="linkBtn" href="town/index.html" data-sfx="spark">
+          <span class="ico">🗺️</span>街マップ
+        </a>
+
+        <a class="linkBtn" href="town/farm.html" data-sfx="spark">
+          <span class="ico">🌱</span>畑
+        </a>
+
+        <a class="linkBtn" href="town/roten.html" data-sfx="spark">
+          <span class="ico">🏪</span>露店（公開）
+        </a>
+
+        <a class="linkBtn" href="town/takopi.html" data-sfx="spark">
+          <span class="ico">🐙</span>たこぴのお店
+        </a>
+
+        <a class="linkBtn" href="town/myroten.html" data-sfx="spark">
+          <span class="ico">📦</span>マイ露店
+        </a>
+
+        <a class="linkBtn" href="town/zukan.html" data-sfx="spark">
+          <span class="ico">📖</span>図鑑
+        </a>
+      </div>
+
+      <div class="smallNote">
+        ※ 入口は世界観の扉。迷ったらここから一発で移動できるたこ。<br>
+        ※ BOOTHは別タブで開くたこ。
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="stage">
 
@@ -352,10 +536,9 @@ body{
     <div class="line"></div>
   </div>
 
-  <!-- 扉＋キャラ（英語扉は削除） -->
+  <!-- 扉＋キャラ -->
   <div class="selectRow">
 
-    <!-- 左：日本語（街へ） -->
     <div>
       <a class="door" id="doorJP" href="town/index.html" aria-label="街へ入る">
         <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="入口（扉）">
@@ -363,7 +546,6 @@ body{
       <div class="doorTag"><span class="pill"><span class="dot"></span>街へ入る</span></div>
     </div>
 
-    <!-- 中央：キャラ（足踏み） -->
     <div class="charWrap" aria-hidden="true">
       <div class="shadow"></div>
       <div class="char">
@@ -373,20 +555,13 @@ body{
 
   </div>
 
-  <!-- セリフ（枠はそのまま / 文だけ案内に変更） -->
+  <!-- セリフ -->
   <div class="msg" role="group" aria-label="メッセージ">
     <div class="name" id="speakerName">たこぴ</div>
     <div class="text" id="msgText">読み込み中…</div>
   </div>
 
-  <!-- リンク（住民票を削除して、案内リンクに変更） -->
-  <div class="links" aria-label="リンク">
-    <a href="town/index.html" id="linkTown">街マップへ</a>
-    <a href="town/farm.html" id="linkFarm">畑（たこ焼きファーム）へ</a>
-    <a href="town/roten.html" id="linkRoten">露店へ</a>
-  </div>
-
-  <div class="hint" id="hintLine">※ 扉に触れると、光と音が反応します。</div>
+  <div class="hint" id="hintLine">※ 扉に触れると、光と音が反応します。右上メニューからも移動できます。</div>
 
 </div>
 
@@ -395,35 +570,63 @@ body{
   "use strict";
 
   /* =========================================================
-     入口：住民票なし版（全部入り）
+     入口：完全版
+     ✅ 右上メニュー（モーダル）
      ✅ 足踏みキャラ（CSS）
      ✅ 扉ぽわー発光（CSS）
      ✅ 粒エフェクト（JS生成）
-     ✅ 案内セリフ（ランダム）
-     ✅ SE（クリック/ホバー）
+     ✅ 案内セリフ 30種（ランダム）
+     ✅ SE（ホバー/クリック/メニュー）
      ========================================================= */
 
+  // =========================
+  // ランダム案内セリフ（30種）
+  // =========================
   const msgText = document.getElementById("msgText");
-
-  // ===== ランダム案内セリフ（たこぴが喋ってる風）=====
-  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
   const linesGuide = [
-    "ようこそ、焼かれた伝説の入口へ…たこ。<br>このサイトは<strong>たこ焼きトレカの街</strong>だたこ。<br>扉の先に、ゲームみたいな世界が広がってるたこ。",
-    "まずは扉をタップだたこ。<br>中に入ると<strong>街マップ</strong>があって、いろんな場所に行けるたこ。<br>迷ったら上のリンクからも行けるたこ。",
-    "ここはただのホームページじゃないたこ。<br><strong>畑</strong>で育てて、<strong>カード</strong>を手に入れて、<strong>露店</strong>で並べる…<br>そんな遊び方ができるたこ。",
-    "扉の向こうでは、イベントが起きたり、噂が流れたりするたこ。<br>たまに何かが増えるから…たまに覗くと得するたこ。",
-    "音が鳴るのは仕様だたこ。<br>入口は静かでも、中はにぎやかかもしれないたこ。<br>さぁ、入ってみるたこ。"
+    "ようこそ、焼かれた伝説の入口へ…たこ。<br>扉の先は<strong>たこ焼きトレカの街</strong>だたこ。",
+    "ここは入口だたこ。<br>扉をタップすると、街マップに入れるたこ。",
+    "街の中には、畑・露店・図鑑…いろいろあるたこ。<br>まずは扉で入場だたこ。",
+    "迷子になりそう？大丈夫だたこ。<br>右上の<strong>メニュー</strong>からどこへでも行けるたこ。",
+    "世界観は扉から入るのが礼儀だたこ。<br>でも急ぐならメニューでもOKだたこ。",
+    "このサイトは“見る”だけじゃないたこ。<br><strong>遊べるホームページ</strong>だたこ。",
+    "畑で育てて、カードを手に入れて、露店で並べる…<br>そういう遊びができるたこ。",
+    "扉の光が強い日は…イベントの匂いがするたこ。<br>たまに覗くと得するたこ。",
+    "ここで立ち止まってもいいたこ。<br>でも扉の向こうはもっと騒がしいたこ。",
+    "右上メニューは旅人の奥の手だたこ。<br>困ったら押すたこ。",
+    "街マップは“移動の本体”だたこ。<br>建物をタップして冒険するたこ。",
+    "畑はコツコツ型だたこ。<br>露店はドキドキ型だたこ。",
+    "図鑑は集めるほど気持ちよくなるたこ。<br>コレクター魂、燃やすたこ。",
+    "カード購入はBOOTHだたこ。<br>現実世界の扉は別タブで開くたこ。",
+    "入口で音が鳴るのは仕様だたこ。<br>静かに入ろうとしても無理だたこ。",
+    "扉を開けると、たこぴが案内役になるたこ。<br>…たぶん。",
+    "ここは“焼かれた伝説”のスタート地点だたこ。<br>開始ボタンは扉だたこ。",
+    "メニューでワープもできるたこ。<br>でも初めてなら街マップを見てほしいたこ。",
+    "街には、たこ民の気配がするたこ。<br>あちこちで何かが起きてるたこ。",
+    "たこ焼きがカードになる？…なるたこ。<br>常識は扉の外に置いていくたこ。",
+    "扉の先で、君の“コレクション”が始まるたこ。<br>まずは一歩だたこ。",
+    "畑が好きならコツコツ。露店が好きならワクワク。<br>どっちも欲張るたこ。",
+    "今日の気分は、育てる？売る？集める？<br>選べるのがこの世界だたこ。",
+    "入口は世界観の緩衝材だたこ。<br>いきなり露店に行くと脳が焼けるたこ。",
+    "メニューは便利だけど、扉はロマンだたこ。<br>ロマンは大事だたこ。",
+    "街マップに入ったら、まずは建物をタップしてみるたこ。<br>反応があったら当たりだたこ。",
+    "何があるか分からないのが楽しいたこ。<br>分かった瞬間、また増えるたこ。",
+    "入口のたこぴは見張り役だたこ。<br>勝手に帰ろうとすると、少し寂しがるたこ。",
+    "扉の先は“たこ焼きトレカの世界”。<br>現実の疲れはここで少し焼いていくたこ。",
+    "準備はいい？<br>扉をタップして、街へ行くたこ。"
   ];
 
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function renderMessage(){
     msgText.innerHTML = pick(linesGuide);
   }
   renderMessage();
 
-  // ===== 粒エフェクト生成 =====
+  // =========================
+  // 粒エフェクト生成
+  // =========================
   const fx = document.getElementById("fx");
-  const COUNT = 34; // 粒の数（軽め）
+  const COUNT = 34;
   for(let i=0;i<COUNT;i++){
     const p = document.createElement("i");
     const r = Math.random();
@@ -444,13 +647,13 @@ body{
     p.style.setProperty("--o", o);
     p.style.animationDuration = dur;
     p.style.animationDelay = delay;
-
     fx.appendChild(p);
   }
 
-  // ===== SE（WebAudio）=====
+  // =========================
+  // SE（WebAudio）
+  // =========================
   let audioCtx = null;
-
   function ensureAudio(){
     if(audioCtx) return audioCtx;
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -462,14 +665,10 @@ body{
   function beep({freq=880, dur=0.07, type="square", gain=0.06} = {}){
     const ctx = ensureAudio();
     if(!ctx) return;
-
-    if(ctx.state === "suspended"){
-      ctx.resume().catch(()=>{});
-    }
+    if(ctx.state === "suspended"){ ctx.resume().catch(()=>{}); }
 
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
-
     osc.type = type;
     osc.frequency.setValueAtTime(freq, ctx.currentTime);
 
@@ -488,30 +687,90 @@ body{
     beep({freq: 1040, dur: 0.06, type:"triangle", gain:0.05});
     setTimeout(()=>beep({freq: 1560, dur: 0.05, type:"triangle", gain:0.045}), 35);
   }
-
   function doorOpen(){
     beep({freq: 220, dur: 0.08, type:"square", gain:0.05});
     setTimeout(()=>beep({freq: 740, dur: 0.06, type:"triangle", gain:0.05}), 60);
   }
-
-  function wakeAudioOnce(){
-    ensureAudio();
-    window.removeEventListener("pointerdown", wakeAudioOnce);
+  function menuOpenSfx(){
+    beep({freq: 660, dur: 0.06, type:"triangle", gain:0.045});
+    setTimeout(()=>beep({freq: 990, dur: 0.05, type:"triangle", gain:0.04}), 45);
   }
-  window.addEventListener("pointerdown", wakeAudioOnce, { once:true });
+  function menuCloseSfx(){
+    beep({freq: 520, dur: 0.06, type:"triangle", gain:0.04});
+    setTimeout(()=>beep({freq: 340, dur: 0.06, type:"triangle", gain:0.035}), 45);
+  }
 
-  // 扉イベント（日本語扉のみ）
+  // 最初のユーザー操作でAudio起動
+  window.addEventListener("pointerdown", () => ensureAudio(), { once:true });
+
+  // =========================
+  // 扉イベント
+  // =========================
   const doorJP = document.getElementById("doorJP");
   doorJP.addEventListener("pointerenter", () => sparkle());
   doorJP.addEventListener("focus", () => sparkle());
   doorJP.addEventListener("click", () => {
     doorOpen();
-    // クリックで案内セリフも少し変える（控えめ演出）
     setTimeout(renderMessage, 120);
   });
 
-  // セリフ：たまに切り替え（入口で雰囲気）
-  // 12秒に1回 30%で更新
+  // =========================
+  // 右上メニュー（モーダル）
+  // =========================
+  const openMenuBtn = document.getElementById("openMenu");
+  const back = document.getElementById("menuBack");
+  const closeBtn = document.getElementById("closeMenu");
+
+  let lastFocus = null;
+
+  function openMenu(){
+    lastFocus = document.activeElement;
+    back.style.display = "flex";
+    back.classList.add("open");
+    openMenuBtn.setAttribute("aria-expanded", "true");
+    menuOpenSfx();
+    // ちょい遅らせてフォーカス
+    setTimeout(() => closeBtn.focus(), 30);
+    document.body.style.overflow = "hidden";
+  }
+  function closeMenu(){
+    back.classList.remove("open");
+    back.style.display = "none";
+    openMenuBtn.setAttribute("aria-expanded", "false");
+    menuCloseSfx();
+    document.body.style.overflow = "";
+    if(lastFocus && typeof lastFocus.focus === "function") lastFocus.focus();
+  }
+
+  openMenuBtn.addEventListener("click", openMenu);
+  openMenuBtn.addEventListener("pointerenter", () => sparkle());
+  closeBtn.addEventListener("click", closeMenu);
+
+  // 背景クリックで閉じる
+  back.addEventListener("click", (e) => {
+    if(e.target === back) closeMenu();
+  });
+
+  // ESCで閉じる
+  window.addEventListener("keydown", (e) => {
+    if(e.key === "Escape" && back.classList.contains("open")) closeMenu();
+  });
+
+  // モーダル内リンクの効果音（BOOTHと内部で少し違い）
+  back.querySelectorAll("[data-sfx]").forEach(el => {
+    el.addEventListener("pointerenter", () => sparkle());
+    el.addEventListener("click", () => {
+      const kind = el.getAttribute("data-sfx");
+      if(kind === "open") doorOpen();
+      else sparkle();
+      // モーダルは閉じる（外部リンクも含めて閉じてOK）
+      setTimeout(() => closeMenu(), 60);
+    });
+  });
+
+  // =========================
+  // セリフ：控えめ更新（12秒に1回、30%）
+  // =========================
   setInterval(() => {
     if(document.visibilityState !== "visible") return;
     if(Math.random() < 0.30) renderMessage();
