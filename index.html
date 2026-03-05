@@ -268,7 +268,7 @@ body{
   position:relative;
   display:inline-block;
   width:min(360px, 92vw);
-  padding-bottom: 34px; /* doorTagをabsoluteで重ねても潰れないよう余白 */
+  padding-bottom: 36px; /* doorTag用の余白 */
 }
 
 /* ===== 扉（中央） ===== */
@@ -331,11 +331,11 @@ body{
 }
 .door:hover::before{ opacity:.60; }
 
-/* ===== 扉ラベル（リンク）：確実に動く（absolute固定） ===== */
+/* ===== 扉ラベル（リンク）：absolute固定 ===== */
 .doorTag{
   position:absolute;
   left:50%;
-  bottom: 24px;              /* ★上げたいなら増やす（例：30px） */
+  bottom: 22px;              /* ★上へ：増やす / 下へ：減らす */
   transform: translateX(-50%);
   display:flex;
   justify-content:center;
@@ -365,37 +365,60 @@ body{
   box-shadow:0 0 0 2px rgba(255,231,160,.18);
 }
 
-/* ===== キャラ（確実に左へ動く：left基準） =====
+/* ===== キャラ（確実に左右が動く：left基準） =====
    ★ left: calc(50% + ???px) の ??? を小さくすると左へ寄る
 */
 .charWrap{
   position:absolute;
-  left: calc(50% + 92px);    /* ★左へ：92→80 / もっと右へ：92→110 */
-  bottom:90px;
+  left: calc(50% + 92px);    /* ★左へ：92→80 / 右へ：92→110 */
+  bottom:78px;               /* ✅ 以前より“少し下”へ（90→78） */
   width:130px;
   transform: translateX(-50%);
   pointer-events:none;
+
+  /* ✅ 背景と区別：発光（ふわ） */
+  filter:
+    drop-shadow(0 0 10px rgba(127,208,255,.18))
+    drop-shadow(0 0 16px rgba(255,231,160,.10));
+  animation: charGlow 2.2s ease-in-out infinite;
 }
+@keyframes charGlow{
+  0%,100%{
+    filter:
+      drop-shadow(0 0 8px rgba(127,208,255,.16))
+      drop-shadow(0 0 14px rgba(255,231,160,.08));
+  }
+  50%{
+    filter:
+      drop-shadow(0 0 12px rgba(127,208,255,.28))
+      drop-shadow(0 0 20px rgba(255,231,160,.14));
+  }
+}
+
+/* ✅ トコトコ足踏み（左右微振り＋上下＋足音っぽい） */
 .char{
   width:100%;
   transform-origin:50% 100%;
-  animation: stepBounce .5s ease-in-out infinite;
+  animation: walkBob .36s steps(2,end) infinite;
 }
 .char img{
   width:100%;
   height:auto;
   image-rendering:pixelated;
   display:block;
-  animation: stepTilt .5s ease-in-out infinite;
+  transform-origin:50% 100%;
+  animation: walkWiggle .36s steps(2,end) infinite;
 }
-@keyframes stepBounce{
-  0%,100%{ transform: translateY(0px); }
-  50%    { transform: translateY(-3px); }
+
+@keyframes walkBob{
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-2px); }
+  100% { transform: translateY(0px); }
 }
-@keyframes stepTilt{
-  0%   { transform: rotate(-1.2deg); }
-  50%  { transform: rotate( 1.2deg); }
-  100% { transform: rotate(-1.2deg); }
+@keyframes walkWiggle{
+  0%   { transform: translateX(-1px) rotate(-1.2deg); }
+  50%  { transform: translateX( 1px) rotate( 1.2deg); }
+  100% { transform: translateX(-1px) rotate(-1.2deg); }
 }
 
 /* 影（キャラ足元） */
@@ -409,11 +432,12 @@ body{
   background: radial-gradient(ellipse at center, rgba(0,0,0,.45), rgba(0,0,0,0) 70%);
   filter: blur(1px);
   opacity:.7;
-  animation: shadowStep .5s ease-in-out infinite;
+  animation: shadowWalk .36s steps(2,end) infinite;
 }
-@keyframes shadowStep{
-  0%,100%{ transform: translateX(-50%) scale(1.0); opacity:.65; }
-  50%    { transform: translateX(-50%) scale(0.92); opacity:.45; }
+@keyframes shadowWalk{
+  0%   { transform: translateX(-50%) scale(1.02); opacity:.62; }
+  50%  { transform: translateX(-50%) scale(0.92); opacity:.40; }
+  100% { transform: translateX(-50%) scale(1.02); opacity:.62; }
 }
 
 /* ===== RPGメッセージBOX ===== */
@@ -464,19 +488,20 @@ body{
 
   .charWrap{
     left: calc(50% + 82px);  /* ★スマホ：左へ寄せたいなら 82→72 */
-    bottom:110px;
+    bottom:92px;             /* ✅ スマホも“少し下”へ（110→92） */
     width:110px;
     transform: translateX(-50%);
   }
 
-  .doorTag{ bottom: 22px; } /* ★スマホ：上げたいなら増やす */
+  .doorTag{ bottom: 20px; } /* ★上へ：増やす */
 
   .msg .text{ font-size:14px; }
 }
 
 /* ===== 動き軽減 ===== */
 @media (prefers-reduced-motion: reduce){
-  .fx i, .door::before, .door::after, .char, .char img, .shadow, .msg::after{
+  .fx i, .door::before, .door::after,
+  .charWrap, .char, .char img, .shadow, .msg::after{
     animation: none !important;
   }
 }
@@ -534,8 +559,8 @@ body{
       </div>
 
       <div class="smallNote">
-        ※ 迷ったらここから一発で移動できる。<br>
-        ※ BOOTHは別タブで開く。
+        ※ 迷ったらここから一発で移動できるたこ。<br>
+        ※ BOOTHは別タブで開くたこ。
       </div>
     </div>
   </div>
@@ -589,50 +614,51 @@ body{
   "use strict";
 
   /* =========================================================
-     入口：完全版（確実に動く配置）
-     ✅ キャラ：left基準（確実に左右が変わる）
-     ✅ 扉ラベル：absolute基準（確実に上下が変わる）
+     入口：完全版
+     ✅ セリフ：門番（中身は“たこぴ風”）
+     ✅ キャラ：少し下へ
+     ✅ トコトコ足踏み（歩いてる感）
+     ✅ 発光で背景から分離
      ✅ 右上メニュー（モーダル）
      ✅ 粒エフェクト
-     ✅ 案内セリフ 30種（話者：門番）
-     ✅ SE（ホバー/クリック/メニュー）
+     ✅ SE
      ========================================================= */
 
   // =========================
-  // ランダム案内セリフ（30種）
+  // ランダム案内セリフ（30種・たこぴ風）
   // =========================
   const msgText = document.getElementById("msgText");
   const linesGuide = [
-    "ここは《焼かれた伝説》の入口。<br>扉の先は<strong>たこ焼きトレカの街</strong>だ。",
-    "門番だ。通行するなら扉をタップしろ。<br>街マップへ案内する。",
-    "街の中には畑・露店・図鑑がある。<br>初めてなら街マップから回れ。",
-    "迷ったら右上の<strong>メニュー</strong>を使え。<br>最短で目的地へ飛べる。",
-    "このホームページは“見るだけ”ではない。<br>遊ぶこともできる。",
-    "畑で育てて、カードを手に入れ、露店で並べる。<br>それが基本の流れだ。",
-    "図鑑は集めるほど面白くなる。<br>収集癖のある者ほど向いている。",
-    "カード購入はBOOTHへ。<br>現実世界の入口は別タブで開く。",
-    "扉は中央にある。<br>迷うことはない。",
-    "通行の規則は簡単だ。<br>扉を押せ。それだけ。",
-    "街マップは移動の起点だ。<br>建物をタップして進め。",
-    "畑はコツコツ。露店はドキドキ。<br>両方やると世界が回る。",
-    "右上メニューは便利だが、扉は儀式だ。<br>好きに選べ。",
-    "ここで立ち止まっても構わない。<br>だが扉の先はもっと賑やかだ。",
-    "扉の光が強い日は、何かが起きやすい。<br>時々覗くといい。",
-    "入口で音が鳴るのは仕様だ。<br>驚くな。",
-    "図鑑が埋まっていく快感は危険だ。<br>だが止めはしない。",
-    "畑でカードを増やし、露店で並べ、図鑑で眺める。<br>それがこの街の遊び方だ。",
-    "今日の気分はどれだ？<br>育てる、売る、集める。",
-    "門番として忠告する。<br>常識は扉の外に置け。",
-    "この入口は、物語の開始地点。<br>進めば進むほど増える。",
-    "扉を押しても戻って来られる。<br>だから安心して入れ。",
-    "急ぐ者はメニューでワープしろ。<br>迷子になるよりマシだ。",
-    "街マップに入ったら建物をタップしてみろ。<br>反応があれば当たりだ。",
-    "ここは“たこ焼きがカードになる”世界。<br>理解は後回しでいい。",
-    "入口の役目は案内だ。<br>面倒はメニューが解決する。",
-    "君のコレクションは扉の先で始まる。<br>まずは一歩だ。",
-    "静かに入りたい？<br>無理だ。ここは賑やかになる。",
-    "扉の先は《たこ焼きトレカの世界》。<br>退屈は焼かれて消える。",
-    "準備ができたら扉をタップしろ。<br>通行を許可する。"
+    "ここが《焼かれた伝説》の入口だたこ。<br>扉の先は<strong>たこ焼きトレカの街</strong>だたこ！",
+    "門番だけど…実は案内係だたこ。<br>扉をタップして街へ入るたこ。",
+    "右上の<strong>メニュー</strong>、便利すぎてズルいけど使っていいたこ。",
+    "街マップに入ったら、建物をタップしてみるたこ。<br>反応したら“当たり”だたこ。",
+    "畑はコツコツ型だたこ。<br>育てて、収穫して、集めるたこ。",
+    "たこぴのお店（露店）はワクワク型だたこ。<br>並べて眺めてニヤけるたこ。",
+    "図鑑は危険だたこ。<br>埋めたくなって止まらなくなるたこ。",
+    "カード購入はBOOTHだたこ。<br>現実世界の扉は別タブで開くたこ。",
+    "このホームページは“見るだけ”じゃないたこ。<br><strong>遊べる</strong>たこ。",
+    "扉は中央にあるたこ。<br>迷わせないやさしさ、たこ。",
+    "門番はここで見張ってるたこ。<br>でも、だいたい喋ってるたこ。",
+    "扉の先で“集める日常”が始まるたこ。<br>まずは一歩だたこ。",
+    "急ぐならメニューでワープだたこ。<br>ロマン派は扉だたこ。",
+    "今日の気分はどれたこ？<br>育てる？売る？集める？全部？",
+    "街は静かそうに見えて…だいぶ騒がしいたこ。<br>ようこそだたこ。",
+    "入口で音が鳴るのは仕様だたこ。<br>静かに入るのは無理だたこ。",
+    "畑→収穫→図鑑→露店。<br>このループが気持ちいいたこ。",
+    "メニュー押したら迷子卒業だたこ。<br>門番の出番が減るたこ。",
+    "扉の光が強い日は…イベントの匂いがするたこ。<br>たぶん。",
+    "入口は世界観のクッションだたこ。<br>いきなり露店行くと脳が焼けるたこ。",
+    "常識は扉の外に置いていくたこ。<br>軽くなって入るたこ。",
+    "街マップは移動の本体だたこ。<br>困ったらまず戻るたこ。",
+    "図鑑が埋まるほど、君の伝説も焼かれていくたこ。",
+    "門番は通すだけじゃないたこ。<br>ちょっとだけ煽るたこ。",
+    "扉をタップすると…君の物語が開始だたこ。",
+    "BOOTHは別タブで開くたこ。<br>現実世界で財布が焼けないように気をつけるたこ。",
+    "畑は焦らないのがコツだたこ。<br>焦ると焼きムラになるたこ。",
+    "露店は眺めるだけでも楽しいたこ。<br>でも売れたらもっと楽しいたこ。",
+    "入口で深呼吸するたこ。<br>はい、準備できた？扉だたこ。",
+    "さぁ、行くたこ。<br>扉の先で会おうたこ。"
   ];
 
   function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
@@ -737,7 +763,7 @@ body{
   bindDoor(doorJP);
   bindDoor(doorTagLink);
 
-   // =========================
+  // =========================
   // 右上メニュー（モーダル）
   // =========================
   const openMenuBtn = document.getElementById("openMenu");
