@@ -218,11 +218,11 @@
   // XPは tier（N/R/SR/UR/LR）で入る
   // =========================
   const ANNIV_POOL = [
-    { id: "SP-ANV-001", name: "会話トリガー:店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/1.png", rarity: "SP", tier: "N" },
-    { id: "SP-ANV-002", name: "定型ループNPC", img: "https://takoyaki-card.com/town/assets/images/anniversary/2.png", rarity: "SP", tier: "R" },
-    { id: "SP-ANV-003", name: "始まりの合図", img: "https://takoyaki-card.com/town/assets/images/anniversary/3.png", rarity: "SP", tier: "SR" },
-    { id: "SP-ANV-004", name: "ここにいる店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/4a.jpg", rarity: "SP", tier: "UR" },
-    { id: "SP-ANV-005", name: "物語の外側", img: "https://takoyaki-card.com/town/assets/images/anniversary/4b.jpg", rarity: "SP", tier: "LR" },
+    { id: "SP-ANV-001", name: "会話トリガー:店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/1.png", rarity: "N", tier: "N" },
+    { id: "SP-ANV-002", name: "定型ループNPC", img: "https://takoyaki-card.com/town/assets/images/anniversary/2.png", rarity: "R", tier: "R" },
+    { id: "SP-ANV-003", name: "始まりの合図", img: "https://takoyaki-card.com/town/assets/images/anniversary/3.png", rarity: "SR", tier: "SR" },
+    { id: "SP-ANV-004", name: "ここにいる店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/4a.jpg", rarity: "UR", tier: "UR" },
+    { id: "SP-ANV-005", name: "物語の外側", img: "https://takoyaki-card.com/town/assets/images/anniversary/4b.jpg", rarity: "LR", tier: "LR" },
   ];
 
   // 抽選は「段階（tier）」の確率で引く（ここを調整）
