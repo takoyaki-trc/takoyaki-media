@@ -25,8 +25,8 @@
     // ★コラボ（アニバーサリー）専用成長GIF（2段階）
     // 例：town/assets/images/anniversary/xxx.gif を置いた場合は
     // "assets/images/anniversary/anniv_grow1.gif" のように書けばOK（town基準の相対パス）
-    ANNIV_GROW1: "assets/images/anniversary/anniv_grow1.gif",
-    ANNIV_GROW2: "assets/images/anniversary/anniv_grow2.gif",
+    ANNIV_GROW1: "https://takofarm.jp/town/assets/images/anniversary/tane1.gif",
+    ANNIV_GROW2: "https://takofarm.jp/town/assets/images/anniversary/tane2.gif",
 
     READY: "https://ul.h3z.jp/AmlnQA1b.png",
     BURN: "https://ul.h3z.jp/q9hxngx6.png",
@@ -219,11 +219,11 @@
   // =========================
   const ANNIV_POOL = [
     // ✅ town/assets/images/anniversary/1.png を使うなら： "assets/images/anniversary/1.png"
-    { id: "SP-ANV-001", name: "アニバーサリー", img: "assets/images/anniversary/1.png", rarity: "SP", tier: "N" },
-    { id: "SP-ANV-002", name: "アニバーサリー", img: "assets/images/anniversary/2.png", rarity: "SP", tier: "R" },
-    { id: "SP-ANV-003", name: "アニバーサリー", img: "assets/images/anniversary/3.png", rarity: "SP", tier: "SR" },
-    { id: "SP-ANV-004", name: "アニバーサリー", img: "assets/images/anniversary/4.png", rarity: "SP", tier: "UR" },
-    { id: "SP-ANV-005", name: "アニバーサリー", img: "assets/images/anniversary/5.png", rarity: "SP", tier: "LR" },
+    { id: "SP-ANV-001", name: "会話トリガー:店主", img: "https://takofarm.jp/town/assets/images/anniversary/1.png", rarity: "SP", tier: "N" },
+    { id: "SP-ANV-002", name: "定型ループNPC", img: "https://takofarm.jp/town/assets/images/anniversary/1.png", rarity: "SP", tier: "R" },
+    { id: "SP-ANV-003", name: "始まりの合図", img: "https://takofarm.jp/town/assets/images/anniversary/1.png", rarity: "SP", tier: "SR" },
+    { id: "SP-ANV-004", name: "ここにいる店主", img: "https://takofarm.jp/town/assets/images/anniversary/4a.jpg", rarity: "SP", tier: "UR" },
+    { id: "SP-ANV-005", name: "物語の外側", img: "https://takofarm.jp/town/assets/images/anniversary/4b.jpg", rarity: "SP", tier: "LR" },
   ];
 
   // 抽選は「段階（tier）」の確率で引く（ここを調整）
