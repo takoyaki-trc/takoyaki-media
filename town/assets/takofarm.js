@@ -137,10 +137,10 @@
     { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "買わさり固定12枚" },
 
     // ★コラボ（グラタン）
-    { id: "seed_colabo", name: "コラボ【ぐらたんのタネ】", desc: "全2種類ランダム収穫。\n《N/LR》", factor: 1.0, img: "https://ul.h3z.jp/wbnwoTzm.png", fx: "露店で入手" },
+    { id: "seed_colabo", name: "【ｺﾗﾎﾞ】ぐらたん\nのタネ", desc: "全2種ランダム収穫\n《N/LR》", factor: 1.0, img: "https://ul.h3z.jp/wbnwoTzm.png", },
 
     // ★コラボ（アニバーサリー）
-    { id: "seed_anniv", name: "コラボ【アニバーサリーのタネ】", desc: "全5種類ランダム収穫。\n《N/R/SR/UR/LR》", factor: 1.0, img: "https://takoyaki-card.com/town/assets/images/anniversary/anv1.png", fx: "アニバ固定5枚" },
+    { id: "seed_anniv", name: "ﾊｰﾌｱﾆﾊﾞｰｻﾘｰ\nのタネ", desc: "全5種ランダム収穫\n《N/R/SR/UR/LR》", factor: 1.0, img: "https://takoyaki-card.com/town/assets/images/anniversary/anv1.png", },
   ];
 
   const WATERS = [
