@@ -25,8 +25,8 @@
     // ★コラボ（アニバーサリー）専用成長GIF（2段階）
     // 例：town/assets/images/anniversary/xxx.gif を置いた場合は
     // "assets/images/anniversary/anniv_grow1.gif" のように書けばOK（town基準の相対パス）
-    ANNIV_GROW1: "https://takofarm.jp/town/assets/images/anniversary/tane1.gif",
-    ANNIV_GROW2: "https://takofarm.jp/town/assets/images/anniversary/tane2.gif",
+    ANNIV_GROW1: "https://takoyaki-card.com/town/assets/images/anniversary/tane1.gif",
+    ANNIV_GROW2: "https://takoyaki-card.com/town/assets/images/anniversary/tane2.gif",
 
     READY: "https://ul.h3z.jp/AmlnQA1b.png",
     BURN: "https://ul.h3z.jp/q9hxngx6.png",
