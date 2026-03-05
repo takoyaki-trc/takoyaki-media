@@ -1,6 +1,13 @@
 (() => {
   "use strict";
 
+  // =========================================================
+  // takofarm.js（完全版）
+  // ✅ アニバーサリー：図鑑ではSP扱い（rarity="SP"固定）
+  // ✅ XP：rarityではなく tier（N/R/SR/UR/LR）に沿って入る（tier優先）
+  // ✅ 図鑑：tierも保存
+  // =========================================================
+
   // =========================
   // マス画像（状態ごと）
   // =========================
@@ -16,9 +23,10 @@
     COLABO_GROW2: "https://ul.h3z.jp/I6Iu4J32.gif",
 
     // ★コラボ（アニバーサリー）専用成長GIF（2段階）
-    // ※ここだけあなたのアニバーサリー用の2枚（or GIF）URLに差し替えてください
-    ANNIV_GROW1: "assets/images/anniv/anniv_grow1.gif",
-    ANNIV_GROW2: "assets/images/anniv/anniv_grow2.gif",
+    // 例：town/assets/images/anniversary/xxx.gif を置いた場合は
+    // "assets/images/anniversary/anniv_grow1.gif" のように書けばOK（town基準の相対パス）
+    ANNIV_GROW1: "assets/images/anniversary/anniv_grow1.gif",
+    ANNIV_GROW2: "assets/images/anniversary/anniv_grow2.gif",
 
     READY: "https://ul.h3z.jp/AmlnQA1b.png",
     BURN: "https://ul.h3z.jp/q9hxngx6.png",
@@ -44,7 +52,7 @@
 
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000; // 5時間
-  const READY_TO_BURN_MS = 24 * 60 * 60 * 1000; // READYから24時間で焦げ（必要なら調整）
+  const READY_TO_BURN_MS = 24 * 60 * 60 * 1000; // READYから24時間で焦げ
   const TICK_MS = 1000;
 
   // ベース（使わないなら水ratesが優先）
@@ -128,11 +136,11 @@
     { id: "seed_bussasari", name: "ブッ刺さりタネ", desc: "刺さるのは心だけ。\n出るのは5枚だけ（全部N）。", factor: 1.05, img: "https://ul.h3z.jp/MjWkTaU3.png", fx: "刺さり固定5枚" },
     { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "買わさり固定12枚" },
 
-    // ★コラボ（グラタン）：シリアル付与は露店側
+    // ★コラボ（グラタン）
     { id: "seed_colabo", name: "コラボ【ぐらたんのタネ】", desc: "2種類だけ。\n稀にLR / 基本はN", factor: 1.0, img: "https://ul.h3z.jp/wbnwoTzm.png", fx: "露店で入手" },
 
-    // ★コラボ（アニバーサリー）：シリアル付与は露店側
-    { id: "seed_anniv", name: "コラボ【アニバーサリーのタネ】", desc: "全5種類（N/R/SR/UR/LR 各1）。\n抽選はコラボ方式（固定プール）。", factor: 1.0, img: "assets/images/anniv/seed_anniv.png", fx: "アニバ固定5枚" },
+    // ★コラボ（アニバーサリー）
+    { id: "seed_anniv", name: "コラボ【アニバーサリーのタネ】", desc: "全5種類（段階：N/R/SR/UR/LR 各1）。\n図鑑ではSP扱い。XPは段階で入る。", factor: 1.0, img: "assets/images/anniversary/seed_anniv.png", fx: "アニバ固定5枚" },
   ];
 
   const WATERS = [
@@ -205,25 +213,31 @@
   const GRATIN_LR_CHANCE = 0.05;
 
   // =========================
-  // ✅ アニバーサリー：全5種（N/R/SR/UR/LR 各1）
-  // 抽選は「コラボ方式」＝水ratesを使わず、コラボ専用確率で決める（ぐらたんと同じ考え方）
-  // ※確率は必要なら調整OK（今は BASE_RARITY_RATE を採用）
+  // ✅ アニバーサリー：全5種
+  // 図鑑では rarity="SP" 固定
+  // XPは tier（N/R/SR/UR/LR）で入る
   // =========================
   const ANNIV_POOL = [
-    { id: "anniv-N", name: "アニバーサリーN", img: "assets/images/anniv/anniv_n.png", rarity: "N" },
-    { id: "anniv-R", name: "アニバーサリーR", img: "assets/images/anniv/anniv_r.png", rarity: "R" },
-    { id: "anniv-SR", name: "アニバーサリーSR", img: "assets/images/anniv/anniv_sr.png", rarity: "SR" },
-    { id: "anniv-UR", name: "アニバーサリーUR", img: "assets/images/anniv/anniv_ur.png", rarity: "UR" },
-    { id: "anniv-LR", name: "アニバーサリーLR", img: "assets/images/anniv/anniv_lr.png", rarity: "LR" },
+    // ✅ town/assets/images/anniversary/1.png を使うなら： "assets/images/anniversary/1.png"
+    { id: "SP-ANV-001", name: "アニバーサリー", img: "assets/images/anniversary/1.png", rarity: "SP", tier: "N" },
+    { id: "SP-ANV-002", name: "アニバーサリー", img: "assets/images/anniversary/2.png", rarity: "SP", tier: "R" },
+    { id: "SP-ANV-003", name: "アニバーサリー", img: "assets/images/anniversary/3.png", rarity: "SP", tier: "SR" },
+    { id: "SP-ANV-004", name: "アニバーサリー", img: "assets/images/anniversary/4.png", rarity: "SP", tier: "UR" },
+    { id: "SP-ANV-005", name: "アニバーサリー", img: "assets/images/anniversary/5.png", rarity: "SP", tier: "LR" },
   ];
-  const ANNIV_RATES = { ...BASE_RARITY_RATE }; // ←「水準」はここで一括調整できる
+
+  // 抽選は「段階（tier）」の確率で引く（ここを調整）
+  const ANNIV_RATES = { ...BASE_RARITY_RATE };
 
   // =========================================================
   // レベル・XP
   // =========================================================
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
-  const XP_BY_RARITY = { N: 20, R: 40, SR: 80, UR: 160, LR: 300, SP: 0 }; // ✅ SPがXP欲しいならここを調整
+
+  // ✅ XPは基本「段階（N/R/SR/UR/LR）」で入れる。
+  // ただし、他のSP（焼きすぎ/生焼け）にXPを入れたいなら SP を数値にしてもOK。
+  const XP_BY_RARITY = { N: 20, R: 40, SR: 80, UR: 160, LR: 300, SP: 0 };
 
   function xpNeedForLevel(level) {
     return 120 + (level - 1) * 50 + Math.floor(Math.pow(level - 1, 1.6) * 20);
@@ -584,8 +598,8 @@
     return { id: c.id, name: c.name, img: c.img, rarity: c.rarity };
   }
 
-  // ✅ アニバーサリー（コラボ方式の確率抽選 → レアに対応する1枚を返す）
-  function pickAnnivRarity() {
+  // ✅ アニバーサリー：段階（tier）を確率で引いて、そのtierの1枚を返す
+  function pickAnnivTier() {
     const keys = ["N", "R", "SR", "UR", "LR"];
     let total = 0;
     for (const k of keys) total += Math.max(0, Number(ANNIV_RATES[k] ?? 0));
@@ -598,14 +612,18 @@
     return "N";
   }
   function pickAnnivReward() {
-    const rar = pickAnnivRarity();
-    const c = ANNIV_POOL.find((x) => String(x.rarity).toUpperCase() === rar) || ANNIV_POOL.find((x) => x.rarity === "N") || ANNIV_POOL[0];
-    return { id: c.id, name: c.name, img: c.img, rarity: c.rarity };
+    const tier = pickAnnivTier();
+    const c =
+      ANNIV_POOL.find((x) => String(x.tier || "").toUpperCase() === tier) ||
+      ANNIV_POOL.find((x) => String(x.tier || "").toUpperCase() === "N") ||
+      ANNIV_POOL[0];
+
+    // ✅ rarityはSP固定、tierに段階を入れて返す
+    return { id: c.id, name: c.name, img: c.img, rarity: "SP", tier: c.tier || tier };
   }
 
   // =========================================================
   // ✅【追加】肥料SP抽選（B案：植えた瞬間に確定）
-  // ※固定タネ/コラボでも抽選します（スキップ無し）
   // =========================================================
   function pickFertSPIfAny(p) {
     if (!p) return null;
@@ -661,7 +679,11 @@
     return { id: c.no, name: c.name, img: c.img, rarity: picked.rarity };
   }
 
-  function rarityLabel(r) {
+  // ✅ 表示用ラベル（SPはtierも出す）
+  function rarityLabel(r, tier) {
+    const R = String(r || "").toUpperCase();
+    const T = String(tier || "").toUpperCase();
+    if (R === "SP" && T) return `SP（${T}）`;
     return r || "";
   }
 
@@ -1200,7 +1222,7 @@
     plot.reward = drawRewardForPlot(plot);
 
     // ✅ SPが当たったら、育成演出のSR hintと矛盾させない
-    if (plot.reward && plot.reward.rarity === "SP") {
+    if (plot.reward && String(plot.reward.rarity || "").toUpperCase() === "SP") {
       plot.fixedRarity = null;
       plot.srHint = "NONE";
     }
@@ -1212,12 +1234,17 @@
   }
 
   // =========================================================
-  // ✅【追加】収穫確定処理を関数化（閉じるでも呼べる）
+  // ✅【最重要】収穫確定処理（tier優先でXP）
   // =========================================================
   function commitHarvest(i, reward) {
     addToBook(reward);
 
-    const gain = XP_BY_RARITY[reward.rarity] ?? 4;
+    // ✅ XP：tierがあればtier優先、なければrarity
+    const xpKey = (reward && reward.tier)
+      ? String(reward.tier).toUpperCase()
+      : String(reward.rarity || "").toUpperCase();
+
+    const gain = XP_BY_RARITY[xpKey] ?? 4;
     const xpRes = addXP(gain);
 
     state.plots[i] = { state: "EMPTY" };
@@ -1331,7 +1358,10 @@
       openModal("収穫！", `
         <div class="reward">
           <div class="big">${reward.name}（${reward.id}）</div>
-          <div class="mini">レア：<b>${rarityLabel(reward.rarity)}</b><br>この画面を閉じると自動で図鑑に登録されます。</div>
+          <div class="mini">
+            レア：<b>${rarityLabel(reward.rarity, reward.tier)}</b><br>
+            この画面を閉じると自動で図鑑に登録されます。
+          </div>
           <img class="img" src="${reward.img}" alt="${reward.name}">
         </div>
         <div class="row">
@@ -1375,7 +1405,7 @@
   }
 
   // =========================================================
-  // ✅ 図鑑に追加（countで枚数管理）
+  // ✅ 図鑑に追加（countで枚数管理） + tier保存
   // =========================================================
   function addToBook(card) {
     const b = loadBook();
@@ -1388,6 +1418,7 @@
       prev.name = card.name;
       prev.img = card.img;
       prev.rarity = card.rarity || prev.rarity || "";
+      prev.tier = card.tier || prev.tier || ""; // ✅追加
       prev.lastAt = Date.now();
       b.got[card.id] = prev;
     } else {
@@ -1396,6 +1427,7 @@
         name: card.name,
         img: card.img,
         rarity: card.rarity || "",
+        tier: card.tier || "", // ✅追加
         count: 1,
         at: Date.now(),
         lastAt: Date.now(),
@@ -1437,4 +1469,8 @@
   renderLoadout();
   render();
   setInterval(tick, TICK_MS);
+
+  // ※ onPlotTap は render() 内のボタンにバインドされる
+  // （ファイル末尾で関数が見えなくなるのを避けるため）
+  window.__takofarm_onPlotTap = onPlotTap; // デバッグ用（不要なら削除）
 })();
