@@ -128,19 +128,19 @@
   // ★タネ一覧（完全版 2026最新版）
   // =========================================================
   const SEEDS = [
-    { id: "seed_random", name: "なに出るタネ", desc: "何が育つかは完全ランダム。\n店主も知らない。", factor: 1.0, img: "https://ul.h3z.jp/gnyvP580.png", fx: "完全ランダム" },
-    { id: "seed_shop", name: "店頭タネ", desc: "店で生まれたタネ。\n店頭ナンバーを宿している。", factor: 1.0, img: "https://ul.h3z.jp/IjvuhWoY.png", fx: "店頭の気配" },
-    { id: "seed_line", name: "回線タネ", desc: "画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor: 1.0, img: "https://ul.h3z.jp/AonxB5x7.png", fx: "回線由来" },
-    { id: "seed_special", name: "たこぴのタネ", desc: "このタネを植えたら、\n必ず「たこぴ8枚」から出る。", factor: 1.0, img: "https://ul.h3z.jp/29OsEvjf.png", fx: "たこぴ専用8枚" },
+    { id: "seed_random", name: "なに出るタネ", desc: "何が育つかは完全ランダム。\n店主も知らない。", factor: 1.0, img: "https://ul.h3z.jp/gnyvP580.png", fx: "第一弾全50種" },
+    { id: "seed_shop", name: "店頭タネ", desc: "店で生まれたタネ。\n店頭ナンバーを宿している。", factor: 1.0, img: "https://ul.h3z.jp/IjvuhWoY.png", fx: "店頭全25種" },
+    { id: "seed_line", name: "回線タネ", desc: "画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor: 1.0, img: "https://ul.h3z.jp/AonxB5x7.png", fx: "BOOTH全25種" },
+    { id: "seed_special", name: "たこぴのタネ", desc: "このタネを植えたら、\n必ずたこぴが出る。", factor: 1.0, img: "https://ul.h3z.jp/29OsEvjf.png", fx: "たこぴカード8種" },
 
-    { id: "seed_bussasari", name: "ブッ刺さりタネ", desc: "刺さるのは心だけ。\n出るのは5枚だけ（全部N）。", factor: 1.05, img: "https://ul.h3z.jp/MjWkTaU3.png", fx: "刺さり固定5枚" },
-    { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "買わさり固定12枚" },
+    { id: "seed_bussasari", name: "ブッ刺さりタネ", desc: "刺さるのは心だけ。\n出るのは5枚だけ", factor: 1.05, img: "https://ul.h3z.jp/MjWkTaU3.png", fx: "ダーツプロ全5種" },
+    { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "これがｼｮｯﾌﾟｶｰﾄﾞ\nってやつなのか", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全12種" },
 
     // ★コラボ（グラタン）
-    { id: "seed_colabo", name: "【ｺﾗﾎﾞ】ぐらたん\nのタネ", desc: "全2種ランダム収穫\n《N/LR》", factor: 1.0, img: "https://ul.h3z.jp/wbnwoTzm.png", },
+    { id: "seed_colabo", name: "【ｺﾗﾎﾞ】ぐらたん\nのタネ", desc: "全2種ランダム収穫\n《N/LR》", factor: 1.0, img: "https://ul.h3z.jp/wbnwoTzm.png" },
 
     // ★コラボ（アニバーサリー）
-    { id: "seed_anniv", name: "ﾊｰﾌｱﾆﾊﾞｰｻﾘｰ\nのタネ", desc: "全5種ランダム収穫\n《N/R/SR/UR/LR》", factor: 1.0, img: "https://takoyaki-card.com/town/assets/images/anniversary/anv1.png", },
+    { id: "seed_anniv", name: "ﾊｰﾌｱﾆﾊﾞｰｻﾘｰ\nのタネ", desc: "全5種ランダム収穫\n《N/R/SR/UR/LR》", factor: 1.0, img: "https://takoyaki-card.com/town/assets/images/anniversary/anv1.png" },
   ];
 
   const WATERS = [
@@ -153,11 +153,11 @@
 
   // ✅ 肥料は “時短だけ”
   const FERTS = [
-    { id: "fert_agedama", name: "ただの揚げ玉", desc: "時短0。\n（今は見た目だけ）", factor: 1.0, fx: "時短 0%", img: "https://ul.h3z.jp/9p5fx53n.png", burnCardUp: 0.12, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
+    { id: "fert_agedama", name: "ただの揚げ玉", desc: "時短0。\nおいしそう…", factor: 1.0, fx: "時短 0%", img: "https://ul.h3z.jp/9p5fx53n.png", burnCardUp: 0.12, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
     { id: "fert_feel", name: "気のせい肥料", desc: "早くなった気がする。\n気のせいかもしれない。", factor: 0.95, fx: "時短 5%", img: "https://ul.h3z.jp/XqFTb7sw.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
     { id: "fert_guts", name: "根性論ぶち込み肥料", desc: "理由はない。\n気合いだ。", factor: 0.8, fx: "時短 20%", img: "https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: true, skipGrowAnim: false },
     { id: "fert_skip", name: "工程すっ飛ばし肥料", desc: "途中は、\n見なかったことにした。", factor: 0.6, fx: "時短 40%", img: "https://ul.h3z.jp/FqPzx12Q.png", burnCardUp: 0.0, rawCardChance: 0.01, mantra: false, skipGrowAnim: true },
-    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n（今は時短だけ）", factor: 0.1, fx: "時短 70%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
+    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\nちゃんと焼けてる？", factor: 0.1, fx: "時短 70%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
   ];
 
   // =========================
@@ -218,7 +218,6 @@
   // XPは tier（N/R/SR/UR/LR）で入る
   // =========================
   const ANNIV_POOL = [
-    // ✅ town/assets/images/anniversary/1.png を使うなら： "assets/images/anniversary/1.png"
     { id: "SP-ANV-001", name: "会話トリガー:店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/1.png", rarity: "SP", tier: "N" },
     { id: "SP-ANV-002", name: "定型ループNPC", img: "https://takoyaki-card.com/town/assets/images/anniversary/2.png", rarity: "SP", tier: "R" },
     { id: "SP-ANV-003", name: "始まりの合図", img: "https://takoyaki-card.com/town/assets/images/anniversary/3.png", rarity: "SP", tier: "SR" },
@@ -1470,7 +1469,6 @@
   render();
   setInterval(tick, TICK_MS);
 
-  // ※ onPlotTap は render() 内のボタンにバインドされる
-  // （ファイル末尾で関数が見えなくなるのを避けるため）
-  window.__takofarm_onPlotTap = onPlotTap; // デバッグ用（不要なら削除）
+  // デバッグ用（不要なら削除OK）
+  window.__takofarm_onPlotTap = onPlotTap;
 })();
