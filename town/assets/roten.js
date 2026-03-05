@@ -25,6 +25,9 @@
       - ある程度までは横並び維持
       - かなり狭い端末では “入力欄だけ下に回す” （BOOTHボタン幅は維持）
    4) 「BOOTHへ」ボタンに色を付ける（幅は維持）
+   5) コラボ期間をタネごとに別日付で表示
+      - ぐらたん：3月20日～4月19日まで
+      - ハーフアニバーサリー：3月12日～5月19日まで
 
    ⚠️注意：
    ・アニバーサリーGAS側の apiKey は下の ANNIV_REDEEM_API_KEY と一致させてね。
@@ -55,10 +58,10 @@
   // ✅ BOOTHリンク（シリアル限定タネの代替導線）
   const BOOTH_URL = "https://takoyaki-toreka.booth.pm/";
 
-  // ✅ 表示したい期間文（“〇月〇日〜〇日まで” 表記）
+  // ✅ 表示したい期間文（タネごとに別日付）
   const COLLAB_PERIOD = {
-    seed_colabo: "期間：〇月〇日〜〇日まで",
-    seed_anniv:  "期間：〇月〇日〜〇日まで"
+    seed_colabo: "期間：3月20日～4月19日まで",
+    seed_anniv:  "期間：3月12日～5月19日まで"
   };
 
   // ---------- utils ----------
@@ -715,7 +718,7 @@
       const badge = g.tag ? `<span class="miniTag">${g.tag}</span>` : "";
       const isSerialSeed = (g.kind === "seed" && SERIAL_ONLY_SEEDS.has(g.id));
       const periodLine = isSerialSeed
-        ? `<div class="good-period">${COLLAB_PERIOD[g.id] || "期間：〇月〇日〜〇日まで"}</div>`
+        ? `<div class="good-period">${COLLAB_PERIOD[g.id] || ""}</div>`
         : "";
 
       const priceLine = canBuy
