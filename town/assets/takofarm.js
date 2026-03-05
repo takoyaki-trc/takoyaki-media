@@ -137,10 +137,10 @@
     { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "気付いたら買ってる。\n12枚固定（内訳：LR/UR/SR/R/N）。", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "買わさり固定12枚" },
 
     // ★コラボ（グラタン）
-    { id: "seed_colabo", name: "コラボ【ぐらたんのタネ】", desc: "2種類だけ。\n稀にLR / 基本はN", factor: 1.0, img: "https://ul.h3z.jp/wbnwoTzm.png", fx: "露店で入手" },
+    { id: "seed_colabo", name: "コラボ【ぐらたんのタネ】", desc: "全2種類ランダム収穫。\n《N/LR》", factor: 1.0, img: "https://ul.h3z.jp/wbnwoTzm.png", fx: "露店で入手" },
 
     // ★コラボ（アニバーサリー）
-    { id: "seed_anniv", name: "コラボ【アニバーサリーのタネ】", desc: "全5種類（段階：N/R/SR/UR/LR 各1）。\n図鑑ではSP扱い。XPは段階で入る。", factor: 1.0, img: "assets/images/anniversary/seed_anniv.png", fx: "アニバ固定5枚" },
+    { id: "seed_anniv", name: "コラボ【アニバーサリーのタネ】", desc: "全5種類ランダム収穫。\n《N/R/SR/UR/LR》", factor: 1.0, img: "https://takofarm.jp/town/assets/images/anniversary/anv1.png", fx: "アニバ固定5枚" },
   ];
 
   const WATERS = [
@@ -157,7 +157,7 @@
     { id: "fert_feel", name: "気のせい肥料", desc: "早くなった気がする。\n気のせいかもしれない。", factor: 0.95, fx: "時短 5%", img: "https://ul.h3z.jp/XqFTb7sw.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
     { id: "fert_guts", name: "根性論ぶち込み肥料", desc: "理由はない。\n気合いだ。", factor: 0.8, fx: "時短 20%", img: "https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: true, skipGrowAnim: false },
     { id: "fert_skip", name: "工程すっ飛ばし肥料", desc: "途中は、\n見なかったことにした。", factor: 0.6, fx: "時短 40%", img: "https://ul.h3z.jp/FqPzx12Q.png", burnCardUp: 0.0, rawCardChance: 0.01, mantra: false, skipGrowAnim: true },
-    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n（今は時短だけ）", factor: 0.1, fx: "時短 90〜100%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
+    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n（今は時短だけ）", factor: 0.1, fx: "時短 70%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
   ];
 
   // =========================
