@@ -19,19 +19,19 @@
       --thumbPad:5px;
 
       /* ✅ レアリティ色（枠/背景） */
-      --rarN-bg: rgba(60, 170, 255, .30);     /* 濃い水色（深め） */
+      --rarN-bg: rgba(60, 170, 255, .30);
       --rarN-bd: rgba(60, 170, 255, .55);
 
-      --rarR-bg: rgba(255, 80, 90, .22);      /* 赤 */
+      --rarR-bg: rgba(255, 80, 90, .22);
       --rarR-bd: rgba(255, 110, 120, .50);
 
-      --rarSR-bg: rgba(205, 127, 50, .22);    /* ブロンズ */
+      --rarSR-bg: rgba(205, 127, 50, .22);
       --rarSR-bd: rgba(205, 127, 50, .52);
 
-      --rarUR-bg: rgba(210, 220, 235, .18);   /* シルバー */
+      --rarUR-bg: rgba(210, 220, 235, .18);
       --rarUR-bd: rgba(220, 230, 245, .42);
 
-      --rarLR-bg: rgba(255, 205, 85, .22);    /* ゴールド */
+      --rarLR-bg: rgba(255, 205, 85, .22);
       --rarLR-bd: rgba(255, 215, 120, .52);
     }
     *{box-sizing:border-box}
@@ -415,20 +415,11 @@
     #trcBackupFloat .trcBtnPrimary:hover{ filter: brightness(1.06) !important; }
     #trcBackupFloat .trcBtnPrimary:active{ transform: translateY(1px) !important; }
 
-
-
-
     .controls select{
-  font-size:13px;
-  transform: scale(.92);
-  transform-origin: left center;
-}
-
-
-
-
-    
-    
+      font-size:13px;
+      transform: scale(.92);
+      transform-origin: left center;
+    }
   </style>
 </head>
 
@@ -512,6 +503,7 @@
     // =========================================================
     // 図鑑（count方式 / IDごとに1枚表示）
     // - gate.js 側で追加される職人カード（craft_XXX）も表示・並び替え可能
+    // - ✅ ハーフアニバーサリー系を「SPカテゴリ」として判定強化
     // =========================================================
 
     const LS_KEY = "tf_v1_book";
@@ -546,13 +538,15 @@
 
     function parseCardId(id){
       const s = (id ?? "").toString().trim().toUpperCase();
-      // TN-001, TP-001 など
+
+      // ✅ 例: TN-001 / TP-001 / SP-001 / COL-001
       let m = s.match(/^([A-Z]+)[-_]?(\d+)$/);
       if(m) return { prefix:m[1], num:Number(m[2] || 0) };
 
-      // craft_001 など
-      m = s.match(/^([A-Z]+)[-_]?(\d+)$/i);
-      if(m) return { prefix:m[1].toUpperCase(), num:Number(m[2] || 0) };
+      // ✅ 例: SP-ANNIV-001 のような「先頭プレフィックス」だけ拾う
+      //    → prefix=SP, num=001 が取れるなら取る（末尾数字がある場合）
+      m = s.match(/^([A-Z]+)[-_].*?(\d+)$/);
+      if(m) return { prefix:m[1], num:Number(m[2] || 0) };
 
       // craft_001 の prefix を CRAFT に寄せたい
       if(s.startsWith("CRAFT_") || s.startsWith("CRAFT-")){
@@ -563,15 +557,56 @@
       return { prefix:"ZZ", num:9999 };
     }
 
+    // =========================================================
+    // ✅ SPカテゴリ判定（ここが今回の本題）
+    // - 「SPで始まる」だけだと、ハーフアニバ系が ID: ANV/ANNIV/HALF... 等のとき漏れる
+    // - なので「名前/ID/画像URL」に含まれる特徴語でもSP判定に入れる
+    // =========================================================
+    function isHalfAnnivLike(item){
+      const id   = (item?.id ?? "").toString().trim().toUpperCase();
+      const name = (item?.name ?? "").toString().trim().toUpperCase();
+      const img  = (item?.img ?? "").toString().trim().toUpperCase();
+
+      // よくある表記ゆれを広めに拾う（必要なら語を追加OK）
+      const hits = [
+        "ハーフアニバーサリー", "HALFANNIV", "HALF_ANNIV", "HALF-ANNIV", "HALF ANNIV",
+        "HALF", "HAFU", "HALFANNIVERSARY",
+        "アニバーサリー", "ANNIVERSARY", "ANNIV", "ANV", "ANIV",
+        "HALF-ANNIVERSARY", "HALF_ANNIVERSARY",
+      ];
+
+      const hay = `${id} ${name} ${img}`;
+      // 画像フォルダで判定（あなたの環境に合わせて追加）
+      // 例: /anniversary/ /halfanniv/ /anv/ など
+      const urlHints = [
+        "/ANNIVERSARY/", "/ANV/", "/ANNIV/", "/HALFANNIV/", "/HALF_ANNIV/", "/HALF-ANNIV/"
+      ];
+
+      if(urlHints.some(k => hay.includes(k))) return true;
+      if(hits.some(k => hay.includes(k))) return true;
+
+      // 例: ANNI_2026 / ANN_2026 のような seed/collab名が混ざる場合
+      if(id.includes("ANN_") || id.includes("ANV_") || id.includes("ANNIV_")) return true;
+
+      return false;
+    }
+
     function isSpecialSPCard(item){
       const id = (item?.id ?? "").toString().trim().toUpperCase();
       const name = (item?.name ?? "").toString().trim();
       const rarity = (item?.rarity ?? "").toString().trim().toUpperCase();
 
-      if(id.startsWith("SP")) return true;
+      // 既存SP判定
+      if(id.startsWith("SP")) return true;       // SP-001 / SP001 / SP_001 / SP-ANNIV-001 など
       if(rarity === "SP") return true;
+
+      // ✅ 追加：ハーフアニバ/アニバ系列をSPカテゴリとして扱う
+      if(isHalfAnnivLike(item)) return true;
+
+      // 既存の“ネタSP”判定（必要なら残す）
       if(name.includes("焦げ") || name.includes("生焼け")) return true;
       if(id.includes("BURN") || id.includes("RAW") || id.includes("NAMA") || id.includes("KOGE")) return true;
+
       return false;
     }
 
@@ -765,10 +800,13 @@
                    .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
 
       }else if(sort === "sp"){
+        // ✅ SPカテゴリ（ハーフアニバもここに入る）
         view = view.filter(c=> isSpecialSPCard(c))
                    .sort((a,b)=>{
                      const A0 = parseCardId(a.id);
                      const B0 = parseCardId(b.id);
+
+                     // SPっぽい番号が取れるものは番号優先、それ以外は入手順
                      if(A0.prefix === "SP" && B0.prefix === "SP" && A0.num !== B0.num){
                        return A0.num - B0.num;
                      }
@@ -796,6 +834,7 @@
           const A0 = parseCardId(a.id);
           const B0 = parseCardId(b.id);
 
+          // ✅ SPカテゴリなら prefix を SP 扱いに寄せる（ハーフアニバ等も含む）
           const A = isSpecialSPCard(a) ? { prefix:"SP", num:A0.num } : A0;
           const B = isSpecialSPCard(b) ? { prefix:"SP", num:B0.num } : B0;
 
