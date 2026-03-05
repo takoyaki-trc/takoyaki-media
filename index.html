@@ -269,6 +269,7 @@ body{
   position:relative;
   display:inline-block;
   width:min(360px, 92vw);
+  padding-bottom: 34px; /* ✅ doorTagをabsoluteで重ねても下が潰れないよう余白 */
 }
 
 /* ===== 扉（中央） ===== */
@@ -331,9 +332,15 @@ body{
 }
 .door:hover::before{ opacity:.60; }
 
-/* ===== 扉ラベル（リンク） ===== */
+/* ===== 扉ラベル（リンク） =====
+   ✅ ここを「確実に動く」方式に変更：absoluteで扉に対して固定
+   ✅ “少し上に移動” ＝ bottom を大きくする
+*/
 .doorTag{
-  margin-top:4px;             /* ✅ 扉の下の表示を少し上へ */
+  position:absolute;
+  left:50%;
+  bottom: 24px;              /* ★ここを上げると更に上へ（例：30px） */
+  transform: translateX(-50%);
   display:flex;
   justify-content:center;
   font-weight:900;
@@ -362,11 +369,13 @@ body{
   box-shadow:0 0 0 2px rgba(255,231,160,.18);
 }
 
-/* ===== キャラ（扉右端に被せ） ===== */
+/* ===== キャラ（扉右端に被せ） =====
+   ✅ “少し左へ移動” ＝ right をもっとマイナスに
+*/
 .charWrap{
   position:absolute;
-  right:-10px;
-  bottom:90px;               /* ✅ 基本位置（PC/広め） */
+  right:-32px;               /* ★左へ：-10 → -32 */
+  bottom:90px;
   width:130px;
   pointer-events:none;
 }
@@ -456,15 +465,15 @@ body{
   .hero{ width:min(340px, 92vw); }
   .door{ width:min(230px, 72vw); }
 
-  /* ✅ スマホ：キャラを“もう少し上”へ */
   .charWrap{
-    right:-6px;
-    bottom:110px;            /* ★ここを上げるほど上に行く */
+    right:-22px;             /* ✅ スマホでも少し左へ */
+    bottom:110px;
     width:110px;
   }
 
-  /* ✅ ラベルも扉に寄せる（上へ） */
-  .doorTag{ margin-top:2px; }
+  .doorTag{
+    bottom: 22px;            /* ✅ スマホ：少し上（必要なら 26/30） */
+  }
 
   .msg .text{ font-size:14px; }
 }
