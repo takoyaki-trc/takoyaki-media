@@ -6,6 +6,10 @@
   // ✅ アニバーサリー：図鑑ではSP扱い（rarity="SP"固定）
   // ✅ XP：rarityではなく tier（N/R/SR/UR/LR）に沿って入る（tier優先）
   // ✅ 図鑑：tierも保存
+  // ✅ 追加：タネ選択モーダルで
+  //        seed_colabo → 「コラボ」(赤)
+  //        seed_anniv  → 「期間限定」(目立つ色)
+  //        ※CSSいじらず、JSのinline styleで“カード一番下”に表示
   // =========================================================
 
   // =========================
@@ -23,8 +27,6 @@
     COLABO_GROW2: "https://ul.h3z.jp/I6Iu4J32.gif",
 
     // ★コラボ（アニバーサリー）専用成長GIF（2段階）
-    // 例：town/assets/images/anniversary/xxx.gif を置いた場合は
-    // "assets/images/anniversary/anniv_grow1.gif" のように書けばOK（town基準の相対パス）
     ANNIV_GROW1: "https://takoyaki-card.com/town/assets/images/anniversary/tane1.gif",
     ANNIV_GROW2: "https://takoyaki-card.com/town/assets/images/anniversary/tane2.gif",
 
@@ -218,11 +220,11 @@
   // XPは tier（N/R/SR/UR/LR）で入る
   // =========================
   const ANNIV_POOL = [
-    { id: "SP-ANV-001", name: "会話トリガー:店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/1.png", rarity: "N", tier: "N" },
-    { id: "SP-ANV-002", name: "定型ループNPC", img: "https://takoyaki-card.com/town/assets/images/anniversary/2.png", rarity: "R", tier: "R" },
-    { id: "SP-ANV-003", name: "始まりの合図", img: "https://takoyaki-card.com/town/assets/images/anniversary/3.png", rarity: "SR", tier: "SR" },
-    { id: "SP-ANV-004", name: "ここにいる店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/4a.jpg", rarity: "UR", tier: "UR" },
-    { id: "SP-ANV-005", name: "物語の外側", img: "https://takoyaki-card.com/town/assets/images/anniversary/4b.jpg", rarity: "LR", tier: "LR" },
+    { id: "SP-ANV-001", name: "会話トリガー:店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/1.png", rarity: "SP", tier: "N" },
+    { id: "SP-ANV-002", name: "定型ループNPC", img: "https://takoyaki-card.com/town/assets/images/anniversary/2.png", rarity: "SP", tier: "R" },
+    { id: "SP-ANV-003", name: "始まりの合図", img: "https://takoyaki-card.com/town/assets/images/anniversary/3.png", rarity: "SP", tier: "SR" },
+    { id: "SP-ANV-004", name: "ここにいる店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/4a.jpg", rarity: "SP", tier: "UR" },
+    { id: "SP-ANV-005", name: "物語の外側", img: "https://takoyaki-card.com/town/assets/images/anniversary/4b.jpg", rarity: "SP", tier: "LR" },
   ];
 
   // 抽選は「段階（tier）」の確率で引く（ここを調整）
@@ -234,8 +236,6 @@
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
 
-  // ✅ XPは基本「段階（N/R/SR/UR/LR）」で入れる。
-  // ただし、他のSP（焼きすぎ/生焼け）にXPを入れたいなら SP を数値にしてもOK。
   const XP_BY_RARITY = { N: 20, R: 40, SR: 80, UR: 160, LR: 300, SP: 0 };
 
   function xpNeedForLevel(level) {
@@ -597,7 +597,6 @@
     return { id: c.id, name: c.name, img: c.img, rarity: c.rarity };
   }
 
-  // ✅ アニバーサリー：段階（tier）を確率で引いて、そのtierの1枚を返す
   function pickAnnivTier() {
     const keys = ["N", "R", "SR", "UR", "LR"];
     let total = 0;
@@ -616,8 +615,6 @@
       ANNIV_POOL.find((x) => String(x.tier || "").toUpperCase() === tier) ||
       ANNIV_POOL.find((x) => String(x.tier || "").toUpperCase() === "N") ||
       ANNIV_POOL[0];
-
-    // ✅ rarityはSP固定、tierに段階を入れて返す
     return { id: c.id, name: c.name, img: c.img, rarity: "SP", tier: c.tier || tier };
   }
 
@@ -646,11 +643,9 @@
   // ★報酬抽選
   // =========================================================
   function drawRewardForPlot(p) {
-    // ✅ まず肥料SP（最優先）
     const sp = pickFertSPIfAny(p);
     if (sp) return sp;
 
-    // 固定タネ
     if (p && p.seedId === "seed_special") {
       const c = pick(TAKOPI_SEED_POOL);
       return { id: c.id, name: c.name, img: c.img, rarity: c.rarity || "N" };
@@ -678,7 +673,6 @@
     return { id: c.no, name: c.name, img: c.img, rarity: picked.rarity };
   }
 
-  // ✅ 表示用ラベル（SPはtierも出す）
   function rarityLabel(r, tier) {
     const R = String(r || "").toUpperCase();
     const T = String(tier || "").toUpperCase();
@@ -723,7 +717,6 @@
   const mBody = document.getElementById("mBody");
   const mClose = document.getElementById("mClose");
 
-  // ✅ 必須DOMが無いと「無反応」になるので即検知
   const __missing = [];
   if (!farmEl) __missing.push("#farm");
   if (!stBook) __missing.push("#stBook");
@@ -879,7 +872,7 @@
 
   function closeModalOrCommit() {
     if (__harvestCommitFn) {
-      const fn = __harvestCommitFn; // 二重実行防止
+      const fn = __harvestCommitFn;
       __harvestCommitFn = null;
       fn();
       return;
@@ -956,6 +949,42 @@
           (isWater && loadout.waterId === x.id) ||
           (isFert && loadout.fertId === x.id);
 
+        // ✅ タネだけ：特別ラベル（カード一番下に出す / CSSいじらずinline）
+        let specialTag = "";
+        if (isSeed && x.id === "seed_colabo") {
+          specialTag = `
+            <div style="
+              margin-top:8px;
+              width:100%;
+              text-align:center;
+              padding:8px 10px;
+              border-radius:12px;
+              font-weight:1000;
+              letter-spacing:.06em;
+              background:rgba(255,70,90,.92);
+              border:1px solid rgba(255,70,90,.95);
+              color:#fff;
+              box-shadow:0 8px 18px rgba(0,0,0,.25);
+            ">コラボ</div>
+          `;
+        } else if (isSeed && x.id === "seed_anniv") {
+          specialTag = `
+            <div style="
+              margin-top:8px;
+              width:100%;
+              text-align:center;
+              padding:8px 10px;
+              border-radius:12px;
+              font-weight:1000;
+              letter-spacing:.06em;
+              background:rgba(255,195,80,.92);
+              border:1px solid rgba(255,195,80,.95);
+              color:#0b0d17;
+              box-shadow:0 8px 18px rgba(0,0,0,.22);
+            ">期間限定</div>
+          `;
+        }
+
         return `
         <button class="gridCard ${selected ? "isSelected" : ""}" type="button" data-pick="${x.id}" ${disabled ? "disabled" : ""}>
           <div class="gridImg">
@@ -967,6 +996,8 @@
           <div class="gridName">${x.name}</div>
           <div class="gridDesc">${(x.desc || "").replace(/\n/g, "<br>")}</div>
           <div class="gridFx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
+
+          ${specialTag}
         </button>
       `;
       })
@@ -983,7 +1014,6 @@
     `
     );
 
-    // グリッド系モーダルでは harvestCommit は無効
     clearHarvestCommit();
 
     mBody.querySelectorAll("button[data-pick]").forEach((btn) => {
@@ -1063,7 +1093,6 @@
         const denom = Math.max(1, end - start);
         const progress = (Date.now() - start) / denom;
 
-        // ✅ コラボごとの成長画像
         if (p.seedId === "seed_colabo") {
           img = progress < 0.5 ? PLOT_IMG.COLABO_GROW1 : PLOT_IMG.COLABO_GROW2;
         } else if (p.seedId === "seed_anniv") {
@@ -1189,7 +1218,6 @@
     invDec(inv, "fert", fertId);
     saveInv(inv);
 
-    // ✅ 固定タネ（コラボ含む）
     const isFixedSeed =
       (seedId === "seed_colabo") ||
       (seedId === "seed_anniv") ||
@@ -1197,7 +1225,6 @@
       (seedId === "seed_bussasari") ||
       (seedId === "seed_namara_kawasar");
 
-    // 固定タネは water で固定レアを決めない（= コラボ方式）
     const fixedRarity = isFixedSeed ? null : pickRarityWithWater(waterId);
 
     const srHint =
@@ -1217,10 +1244,8 @@
       srHint,
     };
 
-    // ✅【B案】植えた時点で「SP抽選まで」確定して保存
     plot.reward = drawRewardForPlot(plot);
 
-    // ✅ SPが当たったら、育成演出のSR hintと矛盾させない
     if (plot.reward && String(plot.reward.rarity || "").toUpperCase() === "SP") {
       plot.fixedRarity = null;
       plot.srHint = "NONE";
@@ -1238,7 +1263,6 @@
   function commitHarvest(i, reward) {
     addToBook(reward);
 
-    // ✅ XP：tierがあればtier優先、なければrarity
     const xpKey = (reward && reward.tier)
       ? String(reward.tier).toUpperCase()
       : String(reward.rarity || "").toUpperCase();
@@ -1417,7 +1441,7 @@
       prev.name = card.name;
       prev.img = card.img;
       prev.rarity = card.rarity || prev.rarity || "";
-      prev.tier = card.tier || prev.tier || ""; // ✅追加
+      prev.tier = card.tier || prev.tier || "";
       prev.lastAt = Date.now();
       b.got[card.id] = prev;
     } else {
@@ -1426,7 +1450,7 @@
         name: card.name,
         img: card.img,
         rarity: card.rarity || "",
-        tier: card.tier || "", // ✅追加
+        tier: card.tier || "",
         count: 1,
         at: Date.now(),
         lastAt: Date.now(),
