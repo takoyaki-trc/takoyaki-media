@@ -255,20 +255,27 @@ body{
   margin-top:6px;
 }
 
-/* ===== 扉｜キャラ ===== */
+/* ===== 扉＋キャラ：中央に固定 ===== */
 .selectRow{
   display:flex;
-  justify-content:center;
+  justify-content:center;  /* ✅ 中央寄せ */
   align-items:flex-end;
-  gap:min(4vw,26px);
   margin-top: 12px;
   position:relative;
 }
 
-/* ===== 扉（ぽわー発光） ===== */
+/* 扉とキャラを重ねるコンテナ */
+.hero{
+  position:relative;
+  display:inline-block;
+  width:min(360px, 92vw); /* 扉＋キャラが収まる幅 */
+}
+
+/* ===== 扉（中央） ===== */
 .door{
   display:block;
-  width:min(230px, 52vw);
+  width:min(240px, 64vw); /* 扉単体の幅 */
+  margin: 0 auto;
   cursor:pointer;
   transition: transform .22s ease, filter .22s ease;
   position:relative;
@@ -310,7 +317,6 @@ body{
   animation: doorSpark 2.8s ease-in-out infinite;
   pointer-events:none;
 }
-
 @keyframes doorGlow{
   0%,100%{ opacity:.18; transform: scale(1); }
   50%    { opacity:.42; transform: scale(1.02); }
@@ -319,7 +325,6 @@ body{
   0%,100%{ opacity:.06; }
   50%    { opacity:.22; }
 }
-
 .door:hover{
   transform: translateY(-5px) scale(1.03);
   filter: brightness(1.06);
@@ -329,9 +334,7 @@ body{
 /* 扉ラベル */
 .doorTag{
   margin-top:8px;
-  display:inline-flex;
-  gap:8px;
-  align-items:center;
+  display:flex;
   justify-content:center;
   font-weight:900;
   font-size:12px;
@@ -353,12 +356,15 @@ body{
   box-shadow:0 0 0 2px rgba(255,231,160,.18);
 }
 
-/* ===== キャラ（足踏み）===== */
+/* ===== キャラ（扉の右端に重ねる） ===== */
 .charWrap{
-  /* ✅ 大きすぎたので少し小さく */
-  width:min(160px, 26vw);
+  position:absolute;
+  /* ✅ 扉の右端に少し被せる */
+  right: -22px;
+  /* ✅ 石段の高さに合わせて調整（扉の下辺と合わせる） */
+  bottom: 12px;
+  width:min(150px, 28vw);
   pointer-events:none;
-  position:relative;
 }
 .char{
   width:100%;
@@ -382,7 +388,7 @@ body{
   100% { transform: rotate(-1.2deg); }
 }
 
-/* 影 */
+/* 影（キャラ足元） */
 .shadow{
   position:absolute;
   left:50%;
@@ -439,23 +445,20 @@ body{
 }
 .msg .text{ font-size:15px; }
 
-/* 小さい注意 */
-.hint{
-  margin-top:10px;
-  font-size:12px;
-  opacity:.75;
-}
-
-/* ===== モバイル ===== */
+/* ===== モバイル微調整 ===== */
 @media(max-width:600px){
   .logo .jp{ font-size:18px; letter-spacing:.14em; }
-  .selectRow{ gap:14px; }
-  .door{ width:58vw; max-width:220px; }
-  .charWrap{ width:28vw; max-width:140px; } /* ✅ さらにちょい小さめ */
+  .hero{ width:min(340px, 92vw); }
+  .door{ width:min(230px, 72vw); }
+  .charWrap{
+    right: -18px;
+    bottom: 10px;
+    width:min(132px, 30vw);
+  }
   .msg .text{ font-size:14px; }
 }
 
-/* ===== 動き軽減（アクセシビリティ） ===== */
+/* ===== 動き軽減 ===== */
 @media (prefers-reduced-motion: reduce){
   .fx i, .door::before, .door::after, .char, .char img, .shadow, .msg::after{
     animation: none !important;
@@ -502,15 +505,13 @@ body{
           <span class="ico">🌱</span>畑
         </a>
 
+        <!-- ✅ 露店とたこぴのお店は同じ：表記統一 -->
         <a class="linkBtn" href="town/roten.html" data-sfx="spark">
-          <span class="ico">🏪</span>露店（公開）
+          <span class="ico">🐙</span>たこぴのお店（露店）
         </a>
 
-        <a class="linkBtn" href="town/takopi.html" data-sfx="spark">
-          <span class="ico">🐙</span>たこぴのお店
-        </a>
-
-        <a class="linkBtn" href="town/myroten.html" data-sfx="spark">
+        <!-- ✅ マイ露店：指定URL -->
+        <a class="linkBtn" href="https://takoyaki-card.com/town/myshop.html" data-sfx="spark">
           <span class="ico">📦</span>マイ露店
         </a>
 
@@ -520,7 +521,7 @@ body{
       </div>
 
       <div class="smallNote">
-        ※ 入口は世界観の扉。迷ったらここから一発で移動できるたこ。<br>
+        ※ 迷ったらここから一発で移動できるたこ。<br>
         ※ BOOTHは別タブで開くたこ。
       </div>
     </div>
@@ -536,23 +537,23 @@ body{
     <div class="line"></div>
   </div>
 
-  <!-- 扉＋キャラ -->
+  <!-- 扉（中央）＋キャラ（右端に被せ） -->
   <div class="selectRow">
-
-    <div>
+    <div class="hero">
       <a class="door" id="doorJP" href="town/index.html" aria-label="街へ入る">
         <img src="https://ul.h3z.jp/v0hjoXZ3.png" alt="入口（扉）">
       </a>
+
+      <!-- キャラ（扉右端に少し被せ） -->
+      <div class="charWrap" aria-hidden="true">
+        <div class="shadow"></div>
+        <div class="char">
+          <img src="https://ul.h3z.jp/X8jPVkhD.png" alt="たこぴ">
+        </div>
+      </div>
+
       <div class="doorTag"><span class="pill"><span class="dot"></span>街へ入る</span></div>
     </div>
-
-    <div class="charWrap" aria-hidden="true">
-      <div class="shadow"></div>
-      <div class="char">
-        <img src="https://ul.h3z.jp/X8jPVkhD.png" alt="たこぴ">
-      </div>
-    </div>
-
   </div>
 
   <!-- セリフ -->
@@ -561,7 +562,7 @@ body{
     <div class="text" id="msgText">読み込み中…</div>
   </div>
 
-  <div class="hint" id="hintLine">※ 扉に触れると、光と音が反応します。右上メニューからも移動できます。</div>
+  <!-- ✅ 下部の注意文は削除（要求どおり） -->
 
 </div>
 
@@ -572,10 +573,10 @@ body{
   /* =========================================================
      入口：完全版
      ✅ 右上メニュー（モーダル）
-     ✅ 足踏みキャラ（CSS）
-     ✅ 扉ぽわー発光（CSS）
-     ✅ 粒エフェクト（JS生成）
-     ✅ 案内セリフ 30種（ランダム）
+     ✅ 扉は中央
+     ✅ たこぴは扉右端に被せ＆石段高さに合わせて配置
+     ✅ 粒エフェクト
+     ✅ 案内セリフ 30種
      ✅ SE（ホバー/クリック/メニュー）
      ========================================================= */
 
@@ -595,7 +596,7 @@ body{
     "ここで立ち止まってもいいたこ。<br>でも扉の向こうはもっと騒がしいたこ。",
     "右上メニューは旅人の奥の手だたこ。<br>困ったら押すたこ。",
     "街マップは“移動の本体”だたこ。<br>建物をタップして冒険するたこ。",
-    "畑はコツコツ型だたこ。<br>露店はドキドキ型だたこ。",
+    "畑はコツコツ型だたこ。<br>たこぴのお店（露店）はドキドキ型だたこ。",
     "図鑑は集めるほど気持ちよくなるたこ。<br>コレクター魂、燃やすたこ。",
     "カード購入はBOOTHだたこ。<br>現実世界の扉は別タブで開くたこ。",
     "入口で音が鳴るのは仕様だたこ。<br>静かに入ろうとしても無理だたこ。",
@@ -617,9 +618,7 @@ body{
   ];
 
   function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-  function renderMessage(){
-    msgText.innerHTML = pick(linesGuide);
-  }
+  function renderMessage(){ msgText.innerHTML = pick(linesGuide); }
   renderMessage();
 
   // =========================
@@ -729,7 +728,6 @@ body{
     back.classList.add("open");
     openMenuBtn.setAttribute("aria-expanded", "true");
     menuOpenSfx();
-    // ちょい遅らせてフォーカス
     setTimeout(() => closeBtn.focus(), 30);
     document.body.style.overflow = "hidden";
   }
@@ -756,14 +754,13 @@ body{
     if(e.key === "Escape" && back.classList.contains("open")) closeMenu();
   });
 
-  // モーダル内リンクの効果音（BOOTHと内部で少し違い）
+  // モーダル内リンクの効果音
   back.querySelectorAll("[data-sfx]").forEach(el => {
     el.addEventListener("pointerenter", () => sparkle());
     el.addEventListener("click", () => {
       const kind = el.getAttribute("data-sfx");
       if(kind === "open") doorOpen();
       else sparkle();
-      // モーダルは閉じる（外部リンクも含めて閉じてOK）
       setTimeout(() => closeMenu(), 60);
     });
   });
