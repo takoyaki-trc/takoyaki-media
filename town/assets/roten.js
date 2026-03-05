@@ -15,19 +15,20 @@
    ✅ オクト不足の常時ヒント表示を削除（押下時Toastのみ）
    ✅ おみくじオクト：大凶1 / 凶500 / 末吉1000 / 中吉3000 / 大吉7777
 
-   ✅ 変更点（今回：アニバーサリー追加）
-   ・ぐらたんコラボは一切変更せず維持
-   ・アニバーサリー用のGASを追加（別エンドポイント）
-   ・タネ一覧に「seed_anniv（アニバーサリーのタネ）」を追加（購入不可／シリアル限定）
-   ・アニバーサリーのタネ画像：
-       town/assets/images/anniversary/anv1.png を URL化して使用
-     （このJSは town 配下で動く想定なので、location から自動で絶対URL化する）
-   ・シリアル入力モーダルで「どのコラボのシリアルか」を選べるようにした
-     （使用済み記録も “コラボ別” に分離して衝突しない）
+   ✅ 今回の修正（依頼内容）
+   1) 露店（roten.js）上部の「シリアル入力」テキストボックスの “下” に
+      「ぐらたん」「ハーフアニバーサリー」選択ボタンを追加し、
+      その “同じ入力欄” で両方のシリアルに対応させる（送信先/キー/使用済み記録も切替）
+   2) タネ一覧内の
+      ・【コラボ】ぐらたんのタネ
+      ・【コラボ】アニバーサリーのタネ
+      の「名前の下」を “期間〇月〇日〜〇日まで” 表記に変更
+   3) タネ一覧側にあった「シリアル」ボタンは削除（上の入力欄で完結）
+      代わりに BOOTH リンクを表示
+   4) 右の「単価 —（シリアル）」の表示は削除（シリアル限定品は単価行ごと出さない）
 
    ⚠️注意：
-   ・アニバーサリーのGAS側の apiKey は下の ANNIV_REDEEM_API_KEY と一致させてね。
-     もし違う場合は、ここだけ変更すればOK（ぐらたん側は触ってない）
+   ・アニバーサリーGAS側の apiKey は下の ANNIV_REDEEM_API_KEY と一致させてね。
 ========================================================= */
 (() => {
   "use strict";
@@ -40,7 +41,8 @@
     launchGift: "roten_v1_launch_gift_claimed",
     log: "roten_v1_log",
     codesUsed: "tf_v1_codes_used",
-    deviceId: "tf_v1_device_id"
+    deviceId: "tf_v1_device_id",
+    serialPick: "roten_v1_serial_pick" // ✅ 追加：インライン選択状態
   };
 
   // ✅ シリアル（GAS Webアプリ）— ぐらたん（既存維持）
@@ -49,8 +51,17 @@
 
   // ✅ シリアル（GAS Webアプリ）— アニバーサリー（追加）
   const ANNIV_REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbwiAq999UzbVOFYs265xk_9YGgPcIDqA_jGoU1g9V_nCJCEtB5EVJY9kXGZ4ruEEBbg_A/exec";
-  // ここはアニバーサリーGAS側の CONFIG.API_KEY と一致させる
   const ANNIV_REDEEM_API_KEY  = "takopi-anniv-2026";
+
+  // ✅ BOOTHリンク（シリアル限定タネの代替導線）
+  const BOOTH_URL = "https://takoyaki-toreka.booth.pm/";
+
+  // ✅ 表示したい期間文（指定どおり “〇月〇日〜〇日まで” 表記）
+  // ※実日付が決まったらここを差し替えればOK
+  const COLLAB_PERIOD = {
+    seed_colabo: "期間：〇月〇日〜〇日まで",
+    seed_anniv:  "期間：〇月〇日〜〇日まで"
+  };
 
   // ---------- utils ----------
   const $  = (sel, root=document) => root.querySelector(sel);
@@ -119,7 +130,6 @@
   }
 
   // ✅ town/assets/images/... を “今開いてるページ基準” で絶対URL化
-  // 例: town/index.html でも town/roten.html でも壊れにくい
   function absAssetUrl(path){
     try{
       return new URL(path, location.href).toString();
@@ -140,8 +150,7 @@
     // ★既存：ぐらたん（維持）
     { id:"seed_colabo",  name:"【コラボ】ぐらたんのタネ", desc:"今はまだ何も起きない。\nそのうち何か起きる。", img:"https://ul.h3z.jp/wbnwoTzm.png", fx:"シリアル解放" },
 
-    // ★追加：アニバーサリー（仮置き画像：town/assets/images/anniversary/anv1.png）
-    // 指定：town/assets/images/anniversary/anv1.png をURL化して使用
+    // ★追加：アニバーサリー（画像：assets/images/anniversary/anv1.png）
     { id:"seed_anniv",   name:"【コラボ】アニバーサリーのタネ", desc:"アニバーサリーコラボ。\nシリアルでのみ増える。", img: absAssetUrl("assets/images/anniversary/anv1.png"), fx:"シリアル解放" },
   ];
 
@@ -188,10 +197,6 @@
     const goods = [];
     for(const s of SEEDS){
       const isSerialOnly = SERIAL_ONLY_SEEDS.has(s.id);
-      const tagText =
-        (s.id === "seed_colabo") ? "ぐらたん / シリアル限定"
-      : (s.id === "seed_anniv")  ? "Anniv / シリアル限定"
-      : null;
 
       goods.push({
         kind:"seed",
@@ -202,7 +207,7 @@
         img:s.img,
         price: isSerialOnly ? null : (PRICE[s.id] ?? 18),
         buyable: !isSerialOnly,
-        tag: isSerialOnly ? tagText : "販売"
+        tag: isSerialOnly ? null : "販売"
       });
     }
     for(const w of WATERS){
@@ -553,33 +558,72 @@
         white-space: nowrap !important;
       }
 
-      /* ✅ シリアル選択UI（追加） */
-      .serial-pick{
+      /* ✅ コラボ期間表示（名前の下） */
+      .good .good-period{
+        margin-top: 6px;
+        font-size: 12px;
+        color: rgba(255,255,255,.75);
+        letter-spacing: .01em;
+      }
+
+      /* ✅ BOOTH導線（カード内ボタン） */
+      .good .boothRow{
+        display:flex;
+        justify-content:flex-end;
+        align-items:center;
+        gap:8px;
+      }
+      .good .boothLink{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        height: 38px;
+        min-width: 120px;
+        padding: 0 12px;
+        border-radius: 12px;
+        border:1px solid rgba(255,255,255,.18);
+        background: rgba(255,255,255,.08);
+        color: rgba(255,255,255,.95);
+        text-decoration: none;
+        font-weight: 1000;
+        white-space: nowrap;
+      }
+      .good .boothLink:active{
+        transform: translateY(1px);
+      }
+
+      /* ✅ シリアル選択（インライン：テキストボックスの下に置く） */
+      .serial-inline-pick{
         display:flex;
         gap:8px;
         flex-wrap:wrap;
         align-items:center;
         justify-content:flex-start;
-        margin: 10px 0 10px;
+        margin: 10px 0 6px;
       }
-      .serial-pill{
-        display:inline-flex;
-        align-items:center;
-        gap:8px;
-        padding: 8px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255,255,255,.18);
+      .serial-inline-btn{
+        appearance:none;
+        border:1px solid rgba(255,255,255,.18);
         background: rgba(0,0,0,.18);
+        color: rgba(255,255,255,.92);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-weight: 1000;
+        font-size: 12px;
         cursor:pointer;
         user-select:none;
       }
-      .serial-pill input{ transform: scale(1.05); }
+      .serial-inline-btn.is-on{
+        border-color: rgba(127,208,255,.55);
+        box-shadow: 0 0 0 2px rgba(127,208,255,.12) inset, 0 0 18px rgba(127,208,255,.10);
+      }
 
       @media (max-width: 420px){
         .good .buybar{ gap:7px !important; }
         .good .buybar .buybtn{ min-width: 86px !important; }
         .good .qty .qtyin{ width: 52px !important; }
         .roten-about-btn{ font-size: 12px !important; }
+        .good .boothLink{ min-width: 110px; }
       }
     `;
     document.head.appendChild(style);
@@ -627,12 +671,18 @@
     grid.innerHTML = list.map(g => {
       const own = String(ownedCount(inv, g.kind, g.id));
       const canBuy = !!g.buyable;
+
       const badge = g.tag ? `<span class="miniTag">${g.tag}</span>` : "";
+      const isSerialSeed = (g.kind === "seed" && SERIAL_ONLY_SEEDS.has(g.id));
+      const periodLine = isSerialSeed
+        ? `<div class="good-period">${COLLAB_PERIOD[g.id] || "期間：〇月〇日〜〇日まで"}</div>`
+        : "";
 
       const priceLine = canBuy
         ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>`
-        : `<div class="priceline">単価 <b>—</b>（シリアル）</div>`;
+        : ``; // ✅ シリアル限定は単価行を出さない（依頼）
 
+      // ✅ 購入欄：シリアル限定タネは “BOOTHリンク” のみにする（シリアルボタン削除）
       const buyBar = canBuy ? `
         <div class="buybar">
           <div class="qty">
@@ -644,13 +694,9 @@
         </div>
         ${priceLine}
       ` : `
-        <div class="buybar">
-          <div style="opacity:.78; font-size:12px; text-align:right; flex:1; white-space:nowrap;">
-            シリアルで増える…たこ。
-          </div>
-          <button class="btn buybtn" type="button">シリアル</button>
+        <div class="boothRow">
+          <a class="boothLink" href="${BOOTH_URL}" target="_blank" rel="noopener">BOOTHへ</a>
         </div>
-        ${priceLine}
       `;
 
       return `
@@ -662,6 +708,7 @@
             </div>
             <div class="good-meta">
               <div class="good-name">${g.name} ${badge}</div>
+              ${periodLine}
               <div class="good-desc">${(g.desc||"").replace(/\\n/g,"<br>")}</div>
               <div class="good-fx">${g.fx ? `効果：<b>${g.fx}</b>` : ""}</div>
             </div>
@@ -679,6 +726,9 @@
       const id   = card.getAttribute("data-id");
       const item = GOODS.find(x => x.kind===kind && x.id===id);
       if(!item) return;
+
+      // ✅ シリアル限定はクリックしても何もしない（上の入力欄で完結）
+      if(!item.buyable) return;
 
       const btn   = $(".buybtn", card);
       const minus = $(".qtyminus", card);
@@ -709,12 +759,6 @@
       btn?.addEventListener("click", (e)=>{
         e.preventDefault(); e.stopPropagation();
 
-        if(!item.buyable){
-          openSerialModal(); // ✅ 複数コラボ対応モーダル
-          setTakopiSayRandom();
-          return;
-        }
-
         const qty = getQty();
         const r = buyMany(item, qty);
         if(!r.ok){
@@ -739,7 +783,7 @@
       const c = String(ownedCount(inv, g.kind, g.id));
       let memo = "";
       if(!g.buyable && g.id==="seed_colabo") memo = "（ぐらたん／シリアル限定）";
-      if(!g.buyable && g.id==="seed_anniv")  memo = "（アニバーサリー／シリアル限定）";
+      if(!g.buyable && g.id==="seed_anniv")  memo = "（ハーフアニバーサリー／シリアル限定）";
       return `
         <div class="inv-row">
           <div class="inv-left">
@@ -774,7 +818,7 @@
   }
 
   // =========================================================
-  // ✅ シリアル（複数コラボ対応）
+  // ✅ シリアル（共通）
   // =========================================================
   function loadUsedCodes(){
     const obj = loadJSON(LS.codesUsed, {});
@@ -792,7 +836,6 @@
     return id;
   }
 
-  // ✅ エンドポイント＆キーを引数化（ぐらたんを一切壊さず、追加だけ）
   async function redeemOnServer(endpoint, apiKey, code){
     const body = {
       apiKey,
@@ -804,8 +847,7 @@
 
     const res = await fetch(endpoint, {
       method: "POST",
-      // ✅ application/json をやめる（CORSプリフライト回避）
-      // headers: { "Content-Type":"application/json" },
+      // headers: { "Content-Type":"application/json" }, // ✅ CORSプリフライト回避
       body: JSON.stringify(body),
       cache: "no-store",
     });
@@ -821,7 +863,6 @@
     return data;
   }
 
-  // ✅ ぐらたん(seed_colabo) ＆ アニバーサリー(seed_anniv) 両対応
   function applyRedeemReward(reward){
     const inv = ensureInvKeys();
 
@@ -839,66 +880,102 @@
     return { addedSeedColabo: addColabo, addedSeedAnniv: addAnniv };
   }
 
-  // ✅ シリアルモーダル：どのコラボか選ぶ（デフォ：ぐらたん）
-  function openSerialModal(){
-    openModal("🔑 シリアル入力（コラボのタネ）", `
-      <div class="pop-wrap">
-        <div class="note">
-          「コラボのタネ」は <b>購入できない</b>。<br>
-          シリアルを入力すると在庫が増える…たこ。
-        </div>
+  // =========================================================
+  // ✅ インライン：シリアル入力（1つの入力欄で両対応）
+  // 仕様：テキストボックスの “下” に
+  //      [ぐらたん] [ハーフアニバーサリー] の選択ボタンを出す
+  // =========================================================
+  function getInlinePick(){
+    const v = (localStorage.getItem(LS.serialPick) || "gratan").trim();
+    return (v === "anniv") ? "anniv" : "gratan";
+  }
+  function setInlinePick(v){
+    const pick = (v === "anniv") ? "anniv" : "gratan";
+    localStorage.setItem(LS.serialPick, pick);
+    syncInlinePickUI();
+  }
 
-        <div class="serial-pick" role="radiogroup" aria-label="コラボ選択">
-          <label class="serial-pill">
-            <input type="radio" name="serialPick" value="gratan" checked>
-            <span>ぐらたん</span>
-          </label>
-          <label class="serial-pill">
-            <input type="radio" name="serialPick" value="anniv">
-            <span>アニバーサリー</span>
-          </label>
-        </div>
+  function ensureSerialInlinePickUI(){
+    const input = $("#serialInlineInput");
+    const btn   = $("#serialInlineBtn");
+    if(!input || !btn) return;
 
-        <div class="serial-row">
-          <input id="redeemCode" class="serial-in" type="text" placeholder="例：TC-XXXX-XXXX" autocomplete="off">
-          <button id="redeemBtn" class="btn big" type="button">使う</button>
-        </div>
+    // 既にあるならOK
+    if($("#_serialInlinePickWrap")) return;
 
-        <div class="row">
-          <button class="btn btn-ghost" id="serialClose" type="button">閉じる</button>
-        </div>
-      </div>
-    `);
+    const wrap = document.createElement("div");
+    wrap.id = "_serialInlinePickWrap";
+    wrap.className = "serial-inline-pick";
+    wrap.innerHTML = `
+      <button type="button" class="serial-inline-btn" data-pick="gratan">ぐらたん</button>
+      <button type="button" class="serial-inline-btn" data-pick="anniv">ハーフアニバーサリー</button>
+    `;
 
-    const root = document.getElementById("modalBody") || document;
-    $("#serialClose", root)?.addEventListener("click", closeModal);
+    // ✅ “テキストボックスの下” に挿入（入力欄の直後が最優先）
+    // HTML構造が違っても壊れにくいよう、inputの親要素に合わせて差し込む
+    const host = input.parentElement || btn.parentElement || input.closest("section") || input.closest("div") || document.body;
+    if(host){
+      // inputの次に入れる（できるだけ近い位置に）
+      if(input.nextSibling){
+        host.insertBefore(wrap, input.nextSibling);
+      }else{
+        host.appendChild(wrap);
+      }
+    }else{
+      document.body.appendChild(wrap);
+    }
 
-    const getPick = ()=>{
-      const v = ($("input[name='serialPick']:checked", root)?.value || "gratan").trim();
-      return (v === "anniv") ? "anniv" : "gratan";
-    };
+    // イベント
+    $$(".serial-inline-btn", wrap).forEach(b => {
+      b.addEventListener("click", () => {
+        setInlinePick(b.getAttribute("data-pick"));
+        setTakopiSayRandom();
+      });
+    });
 
-    $("#redeemBtn", root)?.addEventListener("click", async () => {
-      const code = ($("#redeemCode", root)?.value || "").trim().toUpperCase();
-      if(!code){ alert("コードを入力してね"); return; }
+    syncInlinePickUI();
+  }
 
-      const pick = getPick(); // "gratan" | "anniv"
-      const usedKey = `${pick}:${code}`; // ✅ コラボ別に使用済み記録
+  function syncInlinePickUI(){
+    const wrap = $("#_serialInlinePickWrap");
+    if(!wrap) return;
+    const pick = getInlinePick();
+    $$(".serial-inline-btn", wrap).forEach(b => {
+      const p = b.getAttribute("data-pick");
+      b.classList.toggle("is-on", p === pick);
+    });
+  }
 
+  function wireSerialInline(){
+    const input = $("#serialInlineInput");
+    const btn   = $("#serialInlineBtn");
+    if(!input || !btn) return;
+
+    // ✅ 追加UIを作る
+    ensureSerialInlinePickUI();
+
+    const run = async () => {
+      const code = (input.value || "").trim().toUpperCase();
+      if(!code) return;
+
+      const pick = getInlinePick(); // "gratan" | "anniv"
       const used = loadUsedCodes();
-      if(used[usedKey]){ alert("このコードは（この端末では）使用済み。"); return; }
+      const usedKey = `${pick}:${code}`; // ✅ コラボ別に使用済み管理
 
-      const btn = $("#redeemBtn", root);
-      if(btn){ btn.disabled = true; btn.textContent = "確認中…"; }
+      if(used[usedKey]){
+        toastHype("このコードは（この端末では）使用済み…たこ。", {kind:"bad"});
+        return;
+      }
+
+      btn.disabled = true;
 
       try{
-        // ✅ 送信先を切り替え
         const endpoint = (pick === "anniv") ? ANNIV_REDEEM_ENDPOINT : REDEEM_ENDPOINT;
         const apiKey   = (pick === "anniv") ? ANNIV_REDEEM_API_KEY  : REDEEM_API_KEY;
 
         const data = await redeemOnServer(endpoint, apiKey, code);
         if(!data.ok){
-          alert(data.message || data.error || "無効なコードです。");
+          toastHype(data.message || data.error || "無効なコード…たこ。", {kind:"bad"});
           return;
         }
 
@@ -908,7 +985,8 @@
         used[usedKey] = { at: Date.now(), payload: reward };
         saveUsedCodes(used);
 
-        // ログ & トースト
+        input.value = "";
+
         if(pick === "anniv"){
           pushLog(`シリアル（Anniv）：${code}（アニバーサリーのタネ +${applied.addedSeedAnniv}）`);
           toastHype(`✨ 成功！アニバーサリーのタネ +${applied.addedSeedAnniv} ✨`, {kind:"good"});
@@ -919,49 +997,9 @@
 
         refreshHUD();
         renderGoods();
-        closeModal();
-      }catch(err){
-        alert(err?.message || "通信に失敗した…たこ。時間を置いてもう一度。");
-      }finally{
-        if(btn){ btn.disabled = false; btn.textContent = "使う"; }
-      }
-    });
-  }
-
-  // ✅ 既存のインライン入力は “ぐらたん専用” のまま維持（壊さない）
-  function wireSerialInline(){
-    const input = $("#serialInlineInput");
-    const btn   = $("#serialInlineBtn");
-    if(!input || !btn) return;
-
-    const run = async () => {
-      const code = (input.value || "").trim().toUpperCase();
-      if(!code) return;
-
-      const used = loadUsedCodes();
-      const usedKey = `gratan:${code}`; // 既存はぐらたん扱いで固定
-      if(used[usedKey]) return;
-
-      btn.disabled = true;
-
-      try{
-        const data = await redeemOnServer(REDEEM_ENDPOINT, REDEEM_API_KEY, code);
-        if(!data.ok) return;
-
-        const reward = data.reward || data.grant || {};
-        const applied = applyRedeemReward(reward);
-
-        used[usedKey] = { at: Date.now(), payload: reward };
-        saveUsedCodes(used);
-
-        input.value = "";
-        pushLog(`シリアル（ぐらたん）：${code}（コラボのタネ +${applied.addedSeedColabo}）`);
-
-        refreshHUD();
-        renderGoods();
-        toastHype(`✨ 成功！コラボのタネ +${applied.addedSeedColabo} ✨`, {kind:"good"});
+        setTakopiSayRandom();
       }catch(e){
-        // noop
+        toastHype("通信に失敗した…たこ。時間を置いてもう一度。", {kind:"bad"});
       }finally{
         btn.disabled = false;
       }
@@ -1031,11 +1069,10 @@
     $("#okAbout", root)?.addEventListener("click", closeModal);
   }
 
-  // ✅ ボタンを「購入（タップで買う）」の右横へ（HTML変更なしで寄せる）
+  // ✅ ボタンを「購入」付近へ（HTML変更なしで寄せる）
   function placeAboutButton(){
     let btn = $("#btnOpenRates");
     if(!btn){
-      // 無ければ作る（壊れにくい）
       btn = document.createElement("button");
       btn.id = "btnOpenRates";
       btn.className = "btn roten-about-btn";
@@ -1044,11 +1081,9 @@
       document.body.appendChild(btn);
     }
 
-    // 表示名を更新
     btn.textContent = "タネ/ミズ/ヒリョウについて";
     btn.classList.add("roten-about-btn");
 
-    // 置き場候補：「購入（タップで買う）」を含む要素の近く（最後の候補へ）
     const candidates = $$("h1,h2,h3,h4,div,section,p,span").filter(el => {
       const t = (el.textContent || "").replace(/\s+/g,"");
       return t.includes("購入") || t.includes("タップで買う");
@@ -1056,7 +1091,6 @@
 
     const anchor = candidates.length ? candidates[candidates.length - 1] : null;
 
-    // 右寄せの器
     let wrap = $("#_roten_about_wrap");
     if(!wrap){
       wrap = document.createElement("div");
@@ -1067,10 +1101,8 @@
     wrap.appendChild(btn);
 
     if(anchor && anchor.parentElement){
-      // なるべく“購入見出しの直後”へ
       anchor.parentElement.insertBefore(wrap, anchor.nextSibling);
     }else{
-      // 無理ならアプリ先頭へ
       const app = $("#rotenApp") || document.body;
       app.insertBefore(wrap, app.firstChild);
     }
@@ -1337,7 +1369,7 @@
     wireModalClose();
     wireTabs();
     wireButtons();
-    wireSerialInline();
+    wireSerialInline();     // ✅ ここが “両対応” に変わってる
     wireChipBreakdowns();
 
     refreshHUD();
