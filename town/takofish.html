@@ -187,14 +187,12 @@
       vertical-align: middle;
     }
 
-    /* ✅ 追加：結果日時表示 */
     .resultDate{
       margin-top: 6px;
       font-size: 12px;
       opacity: .72;
     }
 
-    /* ===== ルール画面：海の模様（グルグルしない） ===== */
     .rulesSea{
       background:
         linear-gradient(120deg,
@@ -218,7 +216,6 @@
         linear-gradient(180deg, rgba(0,40,70,.62), rgba(0,18,40,.78));
     }
 
-    /* ===== SP表示ブロック ===== */
     .spBox{
       margin-top: 12px;
       padding: 10px;
@@ -290,7 +287,6 @@
           <div class="canvasbox">
             <canvas id="tfCanvas" width="360" height="520"></canvas>
 
-            <!-- Rules Overlay -->
             <div id="rulesOverlay" class="overlay show" role="dialog" aria-modal="true" aria-label="ルール">
               <div class="panel">
                 <div class="panel-head">
@@ -337,7 +333,6 @@
               </div>
             </div>
 
-            <!-- Result Overlay -->
             <div id="resultOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="結果">
               <div class="panel">
                 <div class="panel-head">
@@ -347,10 +342,8 @@
                 <div class="panel-body" id="resultBody">
                   <div class="resultMain" id="resultMain"></div>
                   <div class="resultLines" id="resultLines"></div>
-                  <!-- ✅ 追加：結果日時 -->
                   <div class="resultDate" id="resultDate"></div>
 
-                  <!-- SP Surprise block (shown only if won) -->
                   <div id="spBlock" class="spBox" style="display:none;">
                     <div class="spImg"><img id="spImgEl" alt="SPカード" /></div>
                     <div class="spQ">図鑑にいれますか？</div>
@@ -385,6 +378,7 @@
      ✅ 変更点（今回）
      - SPカード画像だけ「town/assets/images/sp/」から読む（他の画像に影響なし）
      - 結果画面に「日時」を表示（resultDate）
+     - 月間記録 ttc_monthly_stats_v1 に fishing の最高点を反映
   ========================================================= */
 
   /* =========================
@@ -396,6 +390,7 @@
     playedAt: "takoyakiFishing_last_played",
     compat: "fish_v1_state",
     zukan: "tf_v1_book",
+    monthlyStats: "ttc_monthly_stats_v1",
   };
 
   function readIntLS(key, def=0){
@@ -408,7 +403,6 @@
     if (el) el.textContent = String(v);
   }
 
-  // ✅ 日時フォーマット（日本のローカル表示）
   function formatLocal(dt){
     const y = dt.getFullYear();
     const m = String(dt.getMonth()+1).padStart(2,"0");
@@ -416,6 +410,76 @@
     const hh = String(dt.getHours()).padStart(2,"0");
     const mm = String(dt.getMinutes()).padStart(2,"0");
     return `${y}/${m}/${d} ${hh}:${mm}`;
+  }
+
+  /* =========================
+     0.5) 月間記録ユーティリティ
+     fishing は「今月の最高点」で保存
+  ========================= */
+  function getMonthKey(date = new Date()){
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
+  }
+
+  function defaultMonthlyStats(){
+    return {
+      monthKey: getMonthKey(),
+      harvest: 0,
+      sales: 0,
+      fishing: 0,
+      tower: 0,
+    };
+  }
+
+  function normalizeMonthlyStats(raw){
+    const curMonth = getMonthKey();
+
+    if (!raw || typeof raw !== "object"){
+      return defaultMonthlyStats();
+    }
+
+    const monthKey = String(raw.monthKey || "");
+    if (monthKey !== curMonth){
+      return defaultMonthlyStats();
+    }
+
+    return {
+      monthKey: curMonth,
+      harvest: Number(raw.harvest || 0),
+      sales: Number(raw.sales || 0),
+      fishing: Number(raw.fishing || 0),
+      tower: Number(raw.tower || 0),
+    };
+  }
+
+  function loadMonthlyStats(){
+    try{
+      const raw = localStorage.getItem(FISH_LS.monthlyStats);
+      if (!raw){
+        const def = defaultMonthlyStats();
+        localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(def));
+        return def;
+      }
+      const parsed = JSON.parse(raw);
+      const norm = normalizeMonthlyStats(parsed);
+      localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(norm));
+      return norm;
+    }catch(_){
+      const def = defaultMonthlyStats();
+      localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(def));
+      return def;
+    }
+  }
+
+  function saveMonthlyStats(stats){
+    const norm = normalizeMonthlyStats(stats);
+    localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(norm));
+  }
+
+  function updateMonthlyFishingHigh(score = 0){
+    const s = loadMonthlyStats();
+    s.monthKey = getMonthKey();
+    s.fishing = Math.max(Number(s.fishing || 0), Math.floor(Number(score || 0)));
+    saveMonthlyStats(s);
   }
 
   function saveFishingRecord(score){
@@ -437,19 +501,16 @@
       localStorage.setItem(FISH_LS.compat, JSON.stringify(st));
     }catch(_){}
 
+    // ✅ 月間釣り最高点も更新
+    updateMonthlyFishingHigh(score);
+
     return { best: newBest, isNew };
   }
 
   /* =========================
      1) SP Surprise
-     ✅ SP画像だけローカルから読む
-     - town/assets/images/sp/ に入れる
-     - このHTMLが town/ 直下にある前提で ./assets/images/sp/
-       （違う階層なら "../assets/images/sp/" などに変更）
   ========================= */
   const V = "1";
-
-  // ✅ ここが今回の本題（SPだけ別フォルダ）
   const SP_BASE = "./assets/images/sp/";
 
   const SP_CFG = {
@@ -500,7 +561,6 @@
 
   /* =========================
      2) Images (game assets)
-     ※ゲーム素材は従来通りCDNのまま（SPだけ別）
   ========================= */
   const CDN_BASE = "https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/assets/takofish/";
 
@@ -549,7 +609,6 @@
     ONI_FREEZE_MS: 300,
     ONI_SPEED_MUL: 2.2,
 
-    // 糸（落下/巻き上げ）
     HOOK_DROP_BASE: 620,
     HOOK_REEL_BASE: 280,
 
@@ -894,7 +953,6 @@
     const rec = saveFishingRecord(score);
     refreshBestUI();
 
-    // ✅ 結果の日時
     const iso = localStorage.getItem(FISH_LS.playedAt);
     const dt = iso ? new Date(iso) : new Date();
     els.resultDate.textContent = `日時：${formatLocal(dt)}`;
@@ -1485,9 +1543,12 @@
   }
 
   /* =========================
-     11) Init: load images, build rule UI
+     11) Init
   ========================= */
   async function init(){
+    // ✅ 月間記録箱を必ず作成
+    loadMonthlyStats();
+
     const ctx = els.canvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = "#081425";
