@@ -20,7 +20,6 @@
     justify-content:center;
   }
 
-  /* ✅ 画面内に収めるため、wrapを縦flexに */
   .wrap{
     width:min(var(--w), 100vw);
     min-height:100svh;
@@ -43,7 +42,6 @@
   }
   .hud b{ font-size:16px; }
 
-  /* ✅ panelを「余った高さ」に収める */
   .panel{
     background:#141824;
     border:1px solid rgba(255,255,255,.08);
@@ -54,10 +52,9 @@
     flex: 1 1 auto;
     display:flex;
     flex-direction:column;
-    min-height: 0; /* ← flex内で縮められるように必須 */
+    min-height: 0;
   }
 
-  /* ✅ canvasは見た目サイズをJSで調整する（内部解像度は420x720固定） */
   canvas{
     display:block;
     width:100%;
@@ -116,7 +113,6 @@
     transform:translateX(-50%) translateY(-2px);
   }
 
-  /* ✅ 下の説明文は必ず見えるように */
   .hint{
     font-size:12px;
     opacity:.75;
@@ -124,10 +120,6 @@
     margin:0;
     flex:0 0 auto;
   }
-
-  /* =========================
-     ✅ リザルト：ボタンを画面下に固定（誤タップ防止）
-  ========================= */
 
   #takoyakiResultOverlay{
     align-items: flex-start !important;
@@ -184,19 +176,90 @@
   /* =========================================================
      ✅ たこ焼きタイミングタワー（完全版：背景フェーズ拡張）
      - ✅ 背景：朝→昼→夕→夜→宇宙→太陽フレア（0-10-20-30-40-50-51+）
-     - その他ロジックは現状維持
+     - ✅ 月間記録 ttc_monthly_stats_v1 に tower の最高階数を反映
   ========================================================= */
+
+  // =========================
+  // 月間記録
+  // =========================
+  const LS_MONTHLY_STATS = "ttc_monthly_stats_v1";
+
+  function getMonthKey(date = new Date()){
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
+  }
+
+  function defaultMonthlyStats(){
+    return {
+      monthKey: getMonthKey(),
+      harvest: 0,
+      sales: 0,
+      fishing: 0,
+      tower: 0
+    };
+  }
+
+  function normalizeMonthlyStats(raw){
+    const curMonth = getMonthKey();
+
+    if (!raw || typeof raw !== "object"){
+      return defaultMonthlyStats();
+    }
+
+    const monthKey = String(raw.monthKey || "");
+    if (monthKey !== curMonth){
+      return defaultMonthlyStats();
+    }
+
+    return {
+      monthKey: curMonth,
+      harvest: Number(raw.harvest || 0),
+      sales: Number(raw.sales || 0),
+      fishing: Number(raw.fishing || 0),
+      tower: Number(raw.tower || 0)
+    };
+  }
+
+  function loadMonthlyStats(){
+    try{
+      const raw = localStorage.getItem(LS_MONTHLY_STATS);
+      if (!raw){
+        const def = defaultMonthlyStats();
+        localStorage.setItem(LS_MONTHLY_STATS, JSON.stringify(def));
+        return def;
+      }
+      const parsed = JSON.parse(raw);
+      const norm = normalizeMonthlyStats(parsed);
+      localStorage.setItem(LS_MONTHLY_STATS, JSON.stringify(norm));
+      return norm;
+    }catch(_){
+      const def = defaultMonthlyStats();
+      localStorage.setItem(LS_MONTHLY_STATS, JSON.stringify(def));
+      return def;
+    }
+  }
+
+  function saveMonthlyStats(stats){
+    const norm = normalizeMonthlyStats(stats);
+    localStorage.setItem(LS_MONTHLY_STATS, JSON.stringify(norm));
+  }
+
+  function updateMonthlyTowerHigh(floor = 0){
+    const s = loadMonthlyStats();
+    s.monthKey = getMonthKey();
+    s.tower = Math.max(Number(s.tower || 0), Math.floor(Number(floor || 0)));
+    saveMonthlyStats(s);
+  }
 
   // =========================
   // 画像URL（ここだけ差し替え）
   // =========================
   const SPR = {
-    takoA: "https://ul.h3z.jp/OPpiBayk.png", // 素焼き
-    takoB: "https://ul.h3z.jp/8lVPkSPJ.png", // イカさま焼き
-    takoC: "https://ul.h3z.jp/rbG1ovxG.png", // 生焼け
-    takoG: "https://ul.h3z.jp/XPTM8m5U.png", // 金焼き
-    takoR: "https://ul.h3z.jp/dXRcAx01.png", // 激辛
-    takoX: "https://ul.h3z.jp/Uia1oOpk.png", // 虹伝説
+    takoA: "https://ul.h3z.jp/OPpiBayk.png",
+    takoB: "https://ul.h3z.jp/8lVPkSPJ.png",
+    takoC: "https://ul.h3z.jp/rbG1ovxG.png",
+    takoG: "https://ul.h3z.jp/XPTM8m5U.png",
+    takoR: "https://ul.h3z.jp/dXRcAx01.png",
+    takoX: "https://ul.h3z.jp/Uia1oOpk.png",
   };
 
   const IMG = {};
@@ -215,7 +278,7 @@
   }
 
   // =========================
-  // ✅ 画面内に収める：canvas表示サイズ自動調整
+  // 画面内に収める：canvas表示サイズ自動調整
   // =========================
   const cv = document.getElementById("cv");
   const panel = cv.closest(".panel");
@@ -250,7 +313,7 @@
   window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 80), { passive:true });
 
   // =========================
-  // 設定（バランス調整込み）
+  // 設定
   // =========================
   const CONF = {
     canvasW: 420,
@@ -292,7 +355,7 @@
   };
 
   // =========================
-  // 種類テーブル（出現率p / 高さh）
+  // 種類テーブル
   // =========================
   const BLOCK_TABLE = [
     { key:"takoA", p: 44, h: 64, label:"素焼き（薄）", speedMul: 1.05 },
@@ -391,18 +454,17 @@
   }
 
   // =========================
-  // ✅ 背景：朝→昼→夕→夜→宇宙→太陽フレア
+  // 背景：朝→昼→夕→夜→宇宙→太陽フレア
   // =========================
   const SKY_COLORS = {
-    morning:{ top:"#cfe8ff", bottom:"#fff2d4" }, // 朝（淡い青＋朝焼け）
-    day:    { top:"#a9cfe6", bottom:"#eaf5fb" }, // 昼
-    sunset: { top:"#f0b38c", bottom:"#6b4e71" }, // 夕方
-    night:  { top:"#0b132b", bottom:"#1c2541" }, // 夜
-    space:  { top:"#050710", bottom:"#0a1030" }, // 宇宙
-    flare:  { top:"#05060b", bottom:"#14070b" }, // 太陽フレア（ベースは暗め）
+    morning:{ top:"#cfe8ff", bottom:"#fff2d4" },
+    day:    { top:"#a9cfe6", bottom:"#eaf5fb" },
+    sunset: { top:"#f0b38c", bottom:"#6b4e71" },
+    night:  { top:"#0b132b", bottom:"#1c2541" },
+    space:  { top:"#050710", bottom:"#0a1030" },
+    flare:  { top:"#05060b", bottom:"#14070b" },
   };
 
-  // ✅ 指定どおり：0-10朝 / 11-20昼 / 21-30夕 / 31-40夜 / 41-50宇宙 / 51+太陽フレア
   function getTimePhase(floors){
     const f = Math.floor(Number(floors) || 0);
     if (f <= 10) return "morning";
@@ -413,17 +475,15 @@
     return "flare";
   }
 
-  // ⭐ 星背景（夜/宇宙/フレアで使用）：1回生成して使い回し
   const STAR_FIELD = (() => {
     const stars = [];
-    // 星の数（宇宙の方が多く見えるように drawBG で係数を変える）
     const N = 180;
     for (let i=0; i<N; i++){
       const x = Math.random() * CONF.canvasW;
       const y = Math.random() * CONF.canvasH;
       const r = (Math.random() < 0.12) ? 2 : 1;
-      const a = 0.25 + Math.random() * 0.55; // alpha
-      const hue = (Math.random() < 0.18) ? (190 + Math.random()*40) : (0 + Math.random()*20); // ほんの少し青白い/暖色
+      const a = 0.25 + Math.random() * 0.55;
+      const hue = (Math.random() < 0.18) ? (190 + Math.random()*40) : (0 + Math.random()*20);
       stars.push({ x, y, r, a, hue });
     }
     return stars;
@@ -446,12 +506,10 @@
   }
 
   function drawSolarFlare(){
-    // 太陽（画面下からせり上がる感じ）
     const cx = CONF.canvasW * 0.52;
     const cy = CONF.canvasH * 1.12;
     const R  = CONF.canvasH * 0.85;
 
-    // 太陽本体（グロー）
     ctx.save();
     const g0 = ctx.createRadialGradient(cx, cy, R*0.08, cx, cy, R);
     g0.addColorStop(0.00, "rgba(255,240,200,.95)");
@@ -463,7 +521,6 @@
     ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
     ctx.restore();
 
-    // フレア線（放射状の帯）
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
     ctx.translate(cx, CONF.canvasH * 0.72);
@@ -486,7 +543,6 @@
     }
     ctx.restore();
 
-    // レンズフレア（上部にうっすら）
     ctx.save();
     ctx.globalCompositeOperation = "screen";
     const gx = ctx.createRadialGradient(CONF.canvasW*0.52, CONF.canvasH*0.22, 0, CONF.canvasW*0.52, CONF.canvasH*0.22, CONF.canvasW*0.55);
@@ -509,12 +565,10 @@
     ctx.fillStyle = grad;
     ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
 
-    // 夜/宇宙/フレアは星を足す（宇宙は濃度UP）
     if (phase === "night"){
       drawStars(0.90, 0.55);
     } else if (phase === "space"){
       drawStars(1.00, 0.95);
-      // ほんのり星雲
       ctx.save();
       const neb = ctx.createRadialGradient(CONF.canvasW*0.30, CONF.canvasH*0.35, 0, CONF.canvasW*0.30, CONF.canvasH*0.35, CONF.canvasW*0.70);
       neb.addColorStop(0.00, "rgba(120,160,255,.10)");
@@ -528,7 +582,6 @@
       drawSolarFlare();
     }
 
-    // グリッド（現状維持）
     if (!CONF.grid) return;
     ctx.save();
     ctx.globalAlpha = 0.08;
@@ -554,7 +607,7 @@
   }
 
   // =========================
-  // 称号（たこぴ口調・ギャグ版）
+  // 称号
   // =========================
   function getTakoyakiTitle(floors){
     const p = Math.floor(floors);
@@ -667,13 +720,6 @@
     const anchorY = CONF.canvasH * CONF.CAMERA_ANCHOR_Y;
     const target = Math.max(CONF.CAMERA_MIN, anchorY - topY);
     S.cameraY += (target - S.cameraY) * CONF.CAMERA_SMOOTH;
-  }
-
-  // =========================
-  // スコア計算
-  // =========================
-  function clampMul(m){
-    return Math.min(CONF.MUL_CAP, Math.max(1.0, m));
   }
 
   // =========================
@@ -867,7 +913,7 @@
   }
 
   // =========================
-  // ミニタワー（縮小再現）
+  // ミニタワー
   // =========================
   function drawImageCover(g, img, x, y, w, h){
     const iw = img.naturalWidth || img.width;
@@ -1066,6 +1112,9 @@
       saveBestPoints(S.bestPoints);
     }
 
+    // ✅ 月間タワー最高階数を保存
+    updateMonthlyTowerHigh(S.floors);
+
     setResultDatetime();
     setHUD();
     showResultOverlay();
@@ -1125,10 +1174,10 @@
 
     if (isPerfect){
       S.comboPerfect++;
-      S.mul = clampMul(CONF.PERFECT_MUL + S.comboPerfect * CONF.COMBO_MUL_ADD);
+      S.mul = Math.min(CONF.MUL_CAP, Math.max(1.0, CONF.PERFECT_MUL + S.comboPerfect * CONF.COMBO_MUL_ADD));
     } else if (nearPerfect){
       S.comboPerfect = 0;
-      S.mul = clampMul(CONF.NEAR_MUL);
+      S.mul = Math.min(CONF.MUL_CAP, Math.max(1.0, CONF.NEAR_MUL));
     } else {
       S.comboPerfect = 0;
       S.mul = 1.0;
@@ -1155,7 +1204,9 @@
     setHUD();
   }
 
-  // ✅ dt対応 update（Chrome体感に寄せて統一）
+  // =========================
+  // update
+  // =========================
   function update(now){
     if (!S.lastFrameT) S.lastFrameT = now;
     let dt = (now - S.lastFrameT) / 1000;
@@ -1210,6 +1261,9 @@
   // 初期化
   // =========================
   loadImages().then(() => {
+    // ✅ 月間記録箱を必ず作っておく
+    loadMonthlyStats();
+
     fitCanvas();
     requestAnimationFrame(fitCanvas);
 
