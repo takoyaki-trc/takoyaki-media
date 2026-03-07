@@ -29,6 +29,8 @@
       - ぐらたん：3月20日～4月19日まで
       - ハーフアニバーサリー：3月12日～5月19日まで
 
+   ✅ 追加：月間記録 ttc_monthly_stats_v1 に sales を自動反映
+
    ⚠️注意：
    ・アニバーサリーGAS側の apiKey は下の ANNIV_REDEEM_API_KEY と一致させてね。
 ========================================================= */
@@ -44,7 +46,8 @@
     log: "roten_v1_log",
     codesUsed: "tf_v1_codes_used",
     deviceId: "tf_v1_device_id",
-    serialPick: "roten_v1_serial_pick" // 既存：インライン選択状態（今回はUIを隠す）
+    serialPick: "roten_v1_serial_pick", // 既存：インライン選択状態（今回はUIを隠す）
+    monthlyStats: "ttc_monthly_stats_v1"
   };
 
   // ✅ シリアル（GAS Webアプリ）— ぐらたん
@@ -137,6 +140,76 @@
     }catch(_){
       return path;
     }
+  }
+
+  // =========================================================
+  // ✅ 月間記録ユーティリティ
+  // sales をここで加算
+  // =========================================================
+  function getMonthKey(date = new Date()){
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
+  }
+
+  function defaultMonthlyStats(){
+    return {
+      monthKey: getMonthKey(),
+      harvest: 0,
+      sales: 0,
+      fishing: 0,
+      tower: 0
+    };
+  }
+
+  function normalizeMonthlyStats(raw){
+    const curMonth = getMonthKey();
+
+    if(!raw || typeof raw !== "object"){
+      return defaultMonthlyStats();
+    }
+
+    const monthKey = String(raw.monthKey || "");
+    if(monthKey !== curMonth){
+      return defaultMonthlyStats();
+    }
+
+    return {
+      monthKey: curMonth,
+      harvest: Number(raw.harvest || 0),
+      sales: Number(raw.sales || 0),
+      fishing: Number(raw.fishing || 0),
+      tower: Number(raw.tower || 0)
+    };
+  }
+
+  function loadMonthlyStats(){
+    try{
+      const raw = localStorage.getItem(LS.monthlyStats);
+      if(!raw){
+        const def = defaultMonthlyStats();
+        localStorage.setItem(LS.monthlyStats, JSON.stringify(def));
+        return def;
+      }
+      const parsed = JSON.parse(raw);
+      const norm = normalizeMonthlyStats(parsed);
+      localStorage.setItem(LS.monthlyStats, JSON.stringify(norm));
+      return norm;
+    }catch(e){
+      const def = defaultMonthlyStats();
+      localStorage.setItem(LS.monthlyStats, JSON.stringify(def));
+      return def;
+    }
+  }
+
+  function saveMonthlyStats(stats){
+    const norm = normalizeMonthlyStats(stats);
+    localStorage.setItem(LS.monthlyStats, JSON.stringify(norm));
+  }
+
+  function addMonthlySales(amount = 0){
+    const s = loadMonthlyStats();
+    s.monthKey = getMonthKey();
+    s.sales = Number(s.sales || 0) + Math.max(0, Number(amount || 0));
+    saveMonthlyStats(s);
   }
 
   // ---------- MASTER DATA ----------
@@ -693,6 +766,10 @@
     saveInv(inv);
 
     setOcto(octo - total);
+
+    // ✅ 月間売上を反映
+    addMonthlySales(total);
+
     pushLog(`購入：${item.name} ×${qty} -${total}オクト`);
 
     refreshHUD();
@@ -723,9 +800,8 @@
 
       const priceLine = canBuy
         ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>`
-        : ``; // シリアル限定は単価行を出さない
+        : ``;
 
-      // ✅ シリアル限定タネ：BOOTHへ + 右隣に“専用シリアル入力”
       const buyBar = canBuy ? `
         <div class="buybar">
           <div class="qty">
@@ -776,14 +852,12 @@
       `;
     }).join("");
 
-    // クリック配線
     $$(".good", grid).forEach(card => {
       const kind = card.getAttribute("data-kind");
       const id   = card.getAttribute("data-id");
       const item = GOODS.find(x => x.kind===kind && x.id===id);
       if(!item) return;
 
-      // ✅ シリアル限定タネ：カード内入力の配線
       if(!item.buyable){
         if(item.kind === "seed" && SERIAL_ONLY_SEEDS.has(item.id)){
           wireCardSerialInput(card, item);
@@ -791,7 +865,6 @@
         return;
       }
 
-      // ✅ 通常商品：購入配線
       const btn   = $(".buybtn", card);
       const minus = $(".qtyminus", card);
       const plus  = $(".qtyplus", card);
@@ -906,7 +979,6 @@
 
     const res = await fetch(endpoint, {
       method: "POST",
-      // headers: { "Content-Type":"application/json" }, // ✅ CORSプリフライト回避
       body: JSON.stringify(body),
       cache: "no-store",
     });
@@ -1000,7 +1072,6 @@
     const btn   = $(".serialMiniBtn", card);
     if(!input || !btn) return;
 
-    // 既に配線済みっぽいときの二重登録を避ける
     if(btn.dataset.wired === "1") return;
     btn.dataset.wired = "1";
 
@@ -1077,7 +1148,6 @@
     $("#okAbout", root)?.addEventListener("click", closeModal);
   }
 
-  // ✅ ボタンを「購入」付近へ（HTML変更なしで寄せる）
   function placeAboutButton(){
     let btn = $("#btnOpenRates");
     if(!btn){
@@ -1318,7 +1388,6 @@
   }
 
   function wireButtons(){
-    // ✅ デバッグ：+100000
     $("#btnDebugPlus100000")?.addEventListener("click", () => {
       addOcto(100000);
       pushLog("デバッグ：オクト +100000");
@@ -1327,14 +1396,12 @@
       toastHype("🧪 オクト +100000！", {kind:"good"});
     });
 
-    // ✅ 所持資材ボタンは削除（存在しても無効化）
     $("#btnOpenInv")?.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       toastHype("📦 所持内訳は、上の 🌱/💧/🧪 をタップ…たこ。", {kind:"info"});
     });
 
-    // ✅ 新：説明ボタン
     $("#btnOpenRates")?.addEventListener("click", () => {
       openAboutModal();
       setTakopiSayRandom();
@@ -1355,7 +1422,6 @@
       setTakopiSayRandom();
     });
 
-    // ✅ 戻るボタン（HTMLに #rotenBackBtn があれば動く）
     $("#rotenBackBtn")?.addEventListener("click", () => {
       if(history.length > 1){
         history.back();
@@ -1366,11 +1432,13 @@
   }
 
   function boot(){
+    // ✅ 月間記録箱を必ず作っておく
+    loadMonthlyStats();
+
     ensureToast();
     injectBuyRowCSS();
     ensureInvKeys();
 
-    // ✅ ボタン移動＆名称変更（HTML触らない）
     placeAboutButton();
 
     setTakopiSayRandom();
