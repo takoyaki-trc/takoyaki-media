@@ -295,7 +295,6 @@
       pointer-events:none;
     }
 
-    /* 棚グリッド（棚自体は2列） */
     .shelves{
       position:relative;
       display:grid;
@@ -319,7 +318,6 @@
     }
     .shelf.locked{opacity:.62;filter:saturate(.75)}
 
-    /* ✅ 祀り棚（棚6）専用の見た目 */
     .shelf.shrine{
       border-color: var(--shrineLine);
       box-shadow:
@@ -397,7 +395,6 @@
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
     }
 
-    /* ✅ 切れ対策：内部は“縦積み＋余白”で安定 */
     .shelf-body{
       padding: var(--shelfPad);
       display:grid;
@@ -500,9 +497,7 @@
       .mini{ flex: 1 1 100%; }
     }
 
-    /* =========================================================
-       ✅ モーダル（カード選択）
-    ========================================================= */
+    /* modal */
     .modal{
       position:fixed; inset:0;
       background:rgba(0,0,0,.65);
@@ -640,7 +635,6 @@
     }
     .csub .tagmini b{color:var(--text);font-weight:800}
 
-    /* toast */
     .toast{
       position:fixed;
       left:12px;
@@ -662,6 +656,7 @@
       box-shadow: var(--shadow);
       pointer-events:none;
       display:none;
+      white-space:pre-line;
     }
     .toast .box.show{display:block;animation: popIn .18s ease-out;}
     @keyframes popIn{
@@ -697,7 +692,6 @@
       color:rgba(255,255,255,.96);
     }
 
-    /* ✅ 契約イベント用トースト（祀り棚） */
     .toast .box.toast--contract{
       border-color: rgba(180,255,240,.78);
       background:
@@ -729,7 +723,6 @@
       100%{ opacity:0; }
     }
 
-    /* ✅ 契約フラッシュ */
     .contract-flash{
       position:fixed; inset:0;
       pointer-events:none;
@@ -780,7 +773,6 @@
   <div class="wrap">
     <div class="stats" id="stats"></div>
 
-    <!-- 来店ステージ -->
     <div class="card stage-card">
       <div class="card-h">
         <div>
@@ -811,7 +803,6 @@
       </div>
     </div>
 
-    <!-- 棚（出品） -->
     <div class="grid">
       <div class="card">
         <div class="card-h">
@@ -835,7 +826,6 @@
     </div>
   </div>
 
-  <!-- 出品カード選択モーダル -->
   <div class="modal" id="pickModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-label="出品するカードを選ぶ">
       <div class="sheet-h">
@@ -857,7 +847,6 @@
     </div>
   </div>
 
-  <!-- ヘルプ -->
   <div class="modal" id="helpModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-label="ヘルプ">
       <div class="sheet-h">
@@ -872,8 +861,7 @@
           ・来客だけでも EXP +1（育つ）<br>
           ・売れたら EXP 追加 +4（合計+5）<br>
           ・王様が買うと評判UP / 転売が買うと評判DOWN<br>
-          ・「呼び込み」は60秒に1回、<b>通常スケジュール（次：xxx）は変えずに</b>、呼び込んだ客だけ先に来る<br>
-          ・もし通常の来客タイミングと被ったら、通常の方は<b>待機</b>して、呼び込み客が帰ったら来る<br><br>
+          ・「呼び込み」は60秒に1回、<b>出品中の棚からランダム</b>でお客を先に呼ぶ<br><br>
 
           <b>棚解放</b><br>
           Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5 / <b>Lv5: 棚6（祀り棚）</b><br><br>
@@ -916,7 +904,7 @@
   "use strict";
 
   /* =========================================================
-     ✅ localStorage 安全ラッパ（壊れても落ちない）
+     ✅ localStorage 安全ラッパ
   ========================================================= */
   const __memStore = Object.create(null);
   function safeStorageAvailable(){
@@ -952,9 +940,6 @@
     showErr(e && e.reason ? (e.reason.stack || e.reason.message || String(e.reason)) : "promise rejection");
   });
 
-  /* =========================================================
-     ✅ 職人カード（CRAFT）判定＆ルール
-  ========================================================= */
   const CRAFT_CAN_LIST_LAST_ONE = true;
   function isCraftCard(obj){
     const id = String(obj?.id || obj?._key || "").toUpperCase();
@@ -964,64 +949,60 @@
 
   function bulkUnlockLevelForSlot(idx){ return 6 + (idx * 2); }
   function isBulkUnlocked(idx, lv){
-    // 棚6（祀り棚）はまとめ不可
     if(idx === 5) return false;
     return lv >= bulkUnlockLevelForSlot(idx);
   }
 
-  /* =========================================================
-     ✅ 画像（現状のまま）
-  ========================================================= */
   const ASSETS = {
     bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
     bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
     visitors: [
-      { id:"v01", name:"つぶやきタコ民", type:"careful", url:"https://ul.h3z.jp/RpLPCRTc.png" },
-      { id:"v02", name:"即決タコ民", type:"impulse", url:"https://ul.h3z.jp/TMXU9ztW.png" },
-      { id:"v03", name:"冷やかしタコ民", type:"looker", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku16.png" },
-      { id:"v04", name:"見えないタコ民", type:"picky",   url:"https://ul.h3z.jp/MZYfusKm.png" },
-      { id:"v05", name:"王様タコ民",   type:"king",    url:"https://ul.h3z.jp/wMM8PrcP.png" },
-      { id:"v06", name:"よっぱらいタコ民",   type:"flipper", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku20.png" },
-      { id:"v07", name:"札束タコ民",     type:"rich",     url:"https://ul.h3z.jp/pZKu3lSE.png" },
-      { id:"v08", name:"踏破タコ民",     type:"climber",  url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku2.png" },
-      { id:"v09", name:"ナビタコ民",     type:"guide",    url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku3.png" },
-      { id:"v10", name:"ほぐしタコ民",   type:"relax",    url:"https://ul.h3z.jp/dbBbLypa.png" },
-      { id:"v11", name:"返し職人タコ民", type:"artisan",  url:"https://ul.h3z.jp/OA5StkvT.png" },
-      { id:"v12", name:"ゼロ理論タコ民", type:"diet",     url:"https://ul.h3z.jp/KVImBYZ8.png" },
-      { id:"v13", name:"枠外タコ民",     type:"overflow", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku72.png" },
-      { id:"v14", name:"未開封保護タコ民",type:"collector",url:"https://ul.h3z.jp/zSvGyVq9.png" },
-      { id:"v15", name:"防水タコ民",     type:"shadow",   url:"https://ul.h3z.jp/IBKDrVAm.png" },
-      { id:"v16", name:"替え玉タコ民",   type:"ramen",    url:"https://ul.h3z.jp/NViRwhdj.png" },
-      { id:"v17", name:"投げ銭タコ民",   type:"streamer", url:"https://ul.h3z.jp/8PukOegd.png" },
-      { id:"v18", name:"舌判定タコ民",   type:"gourmet",  url:"https://ul.h3z.jp/We4UXFSI.png" },
-      { id:"v19", name:"即バリタコ民",   type:"opener",   url:"https://ul.h3z.jp/9usFHTdU.png" },
-      { id:"v20", name:"宴タコ民",       type:"party",    url:"https://ul.h3z.jp/pByCAUMC.png" },
-      { id:"v21", name:"覚悟タコ民",     type:"pilgrim",  url:"https://ul.h3z.jp/eW2dluw2.png" },
- ]
+      { id:"v01", name:"つぶやきタコ民", type:"careful",   url:"https://ul.h3z.jp/RpLPCRTc.png" },
+      { id:"v02", name:"即決タコ民",     type:"impulse",   url:"https://ul.h3z.jp/TMXU9ztW.png" },
+      { id:"v03", name:"冷やかしタコ民", type:"looker",    url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku16.png" },
+      { id:"v04", name:"見えないタコ民", type:"picky",     url:"https://ul.h3z.jp/MZYfusKm.png" },
+      { id:"v05", name:"王様タコ民",     type:"king",      url:"https://ul.h3z.jp/wMM8PrcP.png" },
+      { id:"v06", name:"よっぱらいタコ民", type:"flipper", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku20.png" },
+      { id:"v07", name:"札束タコ民",     type:"rich",      url:"https://ul.h3z.jp/pZKu3lSE.png" },
+      { id:"v08", name:"踏破タコ民",     type:"climber",   url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku2.png" },
+      { id:"v09", name:"ナビタコ民",     type:"guide",     url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku3.png" },
+      { id:"v10", name:"ほぐしタコ民",   type:"relax",     url:"https://ul.h3z.jp/dbBbLypa.png" },
+      { id:"v11", name:"返し職人タコ民", type:"artisan",   url:"https://ul.h3z.jp/OA5StkvT.png" },
+      { id:"v12", name:"ゼロ理論タコ民", type:"diet",      url:"https://ul.h3z.jp/KVImBYZ8.png" },
+      { id:"v13", name:"枠外タコ民",     type:"overflow",  url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku72.png" },
+      { id:"v14", name:"未開封保護タコ民", type:"collector", url:"https://ul.h3z.jp/zSvGyVq9.png" },
+      { id:"v15", name:"防水タコ民",     type:"shadow",    url:"https://ul.h3z.jp/IBKDrVAm.png" },
+      { id:"v16", name:"替え玉タコ民",   type:"ramen",     url:"https://ul.h3z.jp/NViRwhdj.png" },
+      { id:"v17", name:"投げ銭タコ民",   type:"streamer",  url:"https://ul.h3z.jp/8PukOegd.png" },
+      { id:"v18", name:"舌判定タコ民",   type:"gourmet",   url:"https://ul.h3z.jp/We4UXFSI.png" },
+      { id:"v19", name:"即バリタコ民",   type:"opener",    url:"https://ul.h3z.jp/9usFHTdU.png" },
+      { id:"v20", name:"宴タコ民",       type:"party",     url:"https://ul.h3z.jp/pByCAUMC.png" },
+      { id:"v21", name:"覚悟タコ民",     type:"pilgrim",   url:"https://ul.h3z.jp/eW2dluw2.png" }
+    ]
   };
 
   const VISITOR_LINES = {
-    careful: ["どうしようかな…","もう少し見てから…","今日は買うべきか…","財布に相談中…（既読スルー）"],
-    impulse: ["おっ、いいじゃん","今が買い時かも！","これいっとく？","勢いで買う！…たぶん！"],
-    looker:  ["ふーん","見るだけ見よ","賑やかだなあ","撮って帰るわ（買わない）"],
-    picky:   ["匂いは悪くない…","焼きのムラは…？","慎重に選びたい","今日は“普通”が強い日…"],
-    king:    ["よい。","余は迷わぬ。","この棚…格がある。","買う。異論はない。"],
-    flipper: ["回るか…？","これは動く。","利益の匂いがする","買う。評判は知らん。"],
-    rich: ["値段？ ああ、雰囲気代だろう","高い？ それは“希少”という意味だ","棚ごと欲しいが…今日は我慢する","焼きの格が違う"],
-    climber:["この棚…登れるな","酸素が薄い。レアの高度だ","頂上（UR）は近い…気がする","ここで撤退は恥だ"],
-    guide:["こちらが“後悔ゾーン”です","右を見ると財布、左を見ると欲望","今買うと“語れる思い出”になります","出口は…あ、閉まりました"],
-    relax:["肩の力、抜いて…買いな？","悩みは筋肉に出る","この棚、ツボ押してくる","物欲リンパ流れてる"],
-    artisan:["焼き面…美しい","これは返しが神","手が勝手に回転を想像する","…買う理由が多すぎる"],
-    diet:["これはカード。つまり0カロリー","買っても太らない。むしろ痩せる","罪悪感が焼かれている","理論上、無限に買える"],
-    overflow:["あ、俺ちょっとはみ出てる？","棚から出てるのが味","規格外が一番うまい","枠に収まらない人生でね"],
-    collector:["触らない。眺める","買うか…保存か…","これは2枚必要なやつ","未所持の匂いがする"],
-    shadow:["この街、防御力は高いな。カードの話だが","水は止められる。でも収集欲は止まらん","濡れたら終わり？だから二重スリーブだ","現場終わりの一枚が、今日の報酬だ"],
-    ramen:["これは…濃い","替え玉（追加購入）できる？","スープは無いが深みはある","〆に1枚、いっとくか"],
-    streamer:["みんな見てる〜？","今から運試しするよ〜","当たったら神回","外れても“美味しい”"],
-    gourmet:["香りが語りかけてくる","焼きの思想がある","これは“食後に語れる”","軽率には買えない"],
-    opener:["開けたい","今すぐ開けたい","結果より“音”","我慢？ なにそれ？"],
-    party:["今日は全部祭り","財布？ 酔ってる","景気よく焼こう","買う理由しかない"],
-    pilgrim:["ここまで6時間","買わない選択肢は無い","帰りも6時間","記念になるやつ頼む"]
+    careful:   ["どうしようかな…","もう少し見てから…","今日は買うべきか…","財布に相談中…（既読スルー）"],
+    impulse:   ["おっ、いいじゃん","今が買い時かも！","これいっとく？","勢いで買う！…たぶん！"],
+    looker:    ["ふーん","見るだけ見よ","賑やかだなあ","撮って帰るわ（買わない）"],
+    picky:     ["匂いは悪くない…","焼きのムラは…？","慎重に選びたい","今日は“普通”が強い日…"],
+    king:      ["よい。","余は迷わぬ。","この棚…格がある。","買う。異論はない。"],
+    flipper:   ["回るか…？","これは動く。","利益の匂いがする","買う。評判は知らん。"],
+    rich:      ["値段？ ああ、雰囲気代だろう","高い？ それは“希少”という意味だ","棚ごと欲しいが…今日は我慢する","焼きの格が違う"],
+    climber:   ["この棚…登れるな","酸素が薄い。レアの高度だ","頂上（UR）は近い…気がする","ここで撤退は恥だ"],
+    guide:     ["こちらが“後悔ゾーン”です","右を見ると財布、左を見ると欲望","今買うと“語れる思い出”になります","出口は…あ、閉まりました"],
+    relax:     ["肩の力、抜いて…買いな？","悩みは筋肉に出る","この棚、ツボ押してくる","物欲リンパ流れてる"],
+    artisan:   ["焼き面…美しい","これは返しが神","手が勝手に回転を想像する","…買う理由が多すぎる"],
+    diet:      ["これはカード。つまり0カロリー","買っても太らない。むしろ痩せる","罪悪感が焼かれている","理論上、無限に買える"],
+    overflow:  ["あ、俺ちょっとはみ出てる？","棚から出てるのが味","規格外が一番うまい","枠に収まらない人生でね"],
+    collector: ["触らない。眺める","買うか…保存か…","これは2枚必要なやつ","未所持の匂いがする"],
+    shadow:    ["この街、防御力は高いな。カードの話だが","水は止められる。でも収集欲は止まらん","濡れたら終わり？だから二重スリーブだ","現場終わりの一枚が、今日の報酬だ"],
+    ramen:     ["これは…濃い","替え玉（追加購入）できる？","スープは無いが深みはある","〆に1枚、いっとくか"],
+    streamer:  ["みんな見てる〜？","今から運試しするよ〜","当たったら神回","外れても“美味しい”"],
+    gourmet:   ["香りが語りかけてくる","焼きの思想がある","これは“食後に語れる”","軽率には買えない"],
+    opener:    ["開けたい","今すぐ開けたい","結果より“音”","我慢？ なにそれ？"],
+    party:     ["今日は全部祭り","財布？ 酔ってる","景気よく焼こう","買う理由しかない"],
+    pilgrim:   ["ここまで6時間","買わない選択肢は無い","帰りも6時間","記念になるやつ頼む"]
   };
 
   const LEAVE_LINES = [
@@ -1037,20 +1018,15 @@
   const NEG_TYPES = new Set(["looker","picky","flipper"]);
   const isNegativeType = (t) => NEG_TYPES.has(String(t||""));
 
-  /* =========================================================
-     ✅ 祀り棚（棚6）＋契約イベント
-     - 棚6は「値段固定」「切替なし」「取り下げは儀式」
-     - 売れた瞬間に契約成立 → ボーナス
-  ========================================================= */
-  const SHRINE_SLOT = 5;                // 0-based: 棚6
-  const SHRINE_UNLOCK_LEVEL = 5;        // Lv5で解放
-  const SHRINE_PRICE_MULT = 1.15;       // 祀り棚は少し高く
-  const CONTRACT_COOLDOWN_HOURS = 8;    // 同一契約の“連続成立”抑制（演出用）
+  const SHRINE_SLOT = 5;
+  const SHRINE_UNLOCK_LEVEL = 5;
+  const SHRINE_PRICE_MULT = 1.15;
+  const CONTRACT_COOLDOWN_HOURS = 8;
   const CONTRACT_BONUS = {
     octoMin: 600,
     octoMax: 1600,
-    repMin:  6,
-    repMax:  14,
+    repMin:  4,
+    repMax:  10,
     exp:     6
   };
   const CONTRACT_LINES = [
@@ -1071,7 +1047,8 @@
     farmBook: "tf_v1_book",
     stage:    "roten_v1_stage",
     queue:    "roten_v1_queue",
-    contract: "roten_v1_contract"  // ✅追加
+    contract: "roten_v1_contract",
+    recentVisitors: "roten_v1_recent_visitors"
   };
 
   const $ = (q, el=document) => el.querySelector(q);
@@ -1372,14 +1349,11 @@
     return arr;
   }
 
-  /* =========================================================
-     ✅ 契約状態（棚6）
-  ========================================================= */
   const CONTRACT_DEFAULT = {
     ver:1,
     active: false,
     offeredAt: 0,
-    offered: null,        // {id,name,img,rarity}
+    offered: null,
     lastSuccessAt: 0
   };
   function loadContract(){
@@ -1425,7 +1399,6 @@
       { item:null, qty:0, priceTier:"普通", createdAt:0 },
       { item:null, qty:0, priceTier:"普通", createdAt:0 },
       { item:null, qty:0, priceTier:"普通", createdAt:0 },
-      // ✅ 棚6（祀り棚）：priceTierは固定（内部的には"奉納"扱い）
       { item:null, qty:0, priceTier:"奉納", createdAt:0 }
     ]
   };
@@ -1451,7 +1424,7 @@
     s.slots = s.slots.map((x, idx)=>{
       if(x.item && (!x.qty || x.qty<1)) x.qty = 1;
       if(!x.item) x.qty = 0;
-      if(idx===SHRINE_SLOT && x.qty > 1) x.qty = 1; // ✅ 祀り棚は常に1
+      if(idx===SHRINE_SLOT && x.qty > 1) x.qty = 1;
       if(idx===SHRINE_SLOT) x.priceTier = "奉納";
       return x;
     });
@@ -1469,7 +1442,6 @@
 
   function nextVisitDelayMs(){ return (180 + Math.floor(Math.random()*121)) * 1000; }
 
-  // ✅ 棚解放：棚6はLv5
   const SHELF_UNLOCK = [1,1,2,3,4,SHRINE_UNLOCK_LEVEL];
   function canUseSlot(idx, lv){ return lv >= (SHELF_UNLOCK[idx] || 99); }
 
@@ -1529,51 +1501,104 @@
   }
 
   function basePriceFor(card){
-  const r = String(card?.rarity || "").toUpperCase().trim();
-
-  // ✅ 指定の基本価格
-  const map = {
-    "N":  500,
-    "R":  800,
-    "SR": 1500,
-    "UR": 3000,
-    "LR": 5000
-  };
-
-  // 1) 完全一致を最優先
-  if(map[r] != null) return map[r];
-
-  // 2) 含む表記（例: "SR+" "UR確定" "LR(限定)"）は “長いキーから” 判定
-  const keys = Object.keys(map).sort((a,b)=> b.length - a.length);
-  for(const k of keys){
-    if(r.includes(k)) return map[k];
+    const r = String(card?.rarity || "").toUpperCase().trim();
+    const map = {
+      "N":  500,
+      "R":  800,
+      "SR": 1500,
+      "UR": 3000,
+      "LR": 5000
+    };
+    if(map[r] != null) return map[r];
+    const keys = Object.keys(map).sort((a,b)=> b.length - a.length);
+    for(const k of keys){
+      if(r.includes(k)) return map[k];
+    }
+    return 1000;
   }
 
-  // 3) その他
-  return 1000;
-}
   function tierMult(tier){
     if(tier === "安い") return 0.80;
     if(tier === "高い") return 1.30;
     return 1.00;
   }
   function repFactor(rep){
-    return 0.5 + (rep/100)*1.5;
+    return 0.65 + (rep/100)*1.10;
   }
 
+  /* =========================================================
+     ✅ 客の種類を大幅追加
+     ✅ 評判上昇を少し緩やかに調整
+  ========================================================= */
   const CUSTOMER_TYPES = [
-    { id:"impulse",  name:"即決タコ民",       repDeltaOnBuy:+7, baseBuy:0.42 },
-    { id:"picky",    name:"見えないタコ民",   repDeltaOnBuy:-2, baseBuy:0.30 },
-    { id:"king",     name:"王様タコ民",       repDeltaOnBuy:+20, baseBuy:0.55 },
-    { id:"flipper",  name:"よっぱらいタコ民", repDeltaOnBuy:-3, baseBuy:0.34 },
-    { id:"careful",  name:"つぶやきタコ民",   repDeltaOnBuy:+5, baseBuy:0.38 },
-    { id:"looker",   name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.22 }
+    { id:"impulse",   name:"即決タコ民",       repDeltaOnBuy:+3, baseBuy:0.42, weight:10 },
+    { id:"picky",     name:"見えないタコ民",   repDeltaOnBuy:-1, baseBuy:0.28, weight:8  },
+    { id:"king",      name:"王様タコ民",       repDeltaOnBuy:+8, baseBuy:0.56, weight:3  },
+    { id:"flipper",   name:"よっぱらいタコ民", repDeltaOnBuy:-2, baseBuy:0.33, weight:5  },
+    { id:"careful",   name:"つぶやきタコ民",   repDeltaOnBuy:+2, baseBuy:0.35, weight:9  },
+    { id:"looker",    name:"冷やかしタコ民",   repDeltaOnBuy:-1, baseBuy:0.20, weight:8  },
+
+    { id:"rich",      name:"札束タコ民",       repDeltaOnBuy:+4, baseBuy:0.52, weight:4  },
+    { id:"climber",   name:"踏破タコ民",       repDeltaOnBuy:+2, baseBuy:0.38, weight:5  },
+    { id:"guide",     name:"ナビタコ民",       repDeltaOnBuy:+1, baseBuy:0.34, weight:5  },
+    { id:"relax",     name:"ほぐしタコ民",     repDeltaOnBuy:+1, baseBuy:0.36, weight:5  },
+    { id:"artisan",   name:"返し職人タコ民",   repDeltaOnBuy:+3, baseBuy:0.43, weight:4  },
+    { id:"diet",      name:"ゼロ理論タコ民",   repDeltaOnBuy:+1, baseBuy:0.31, weight:4  },
+    { id:"overflow",  name:"枠外タコ民",       repDeltaOnBuy: 0, baseBuy:0.32, weight:4  },
+    { id:"collector", name:"未開封保護タコ民", repDeltaOnBuy:+2, baseBuy:0.45, weight:6  },
+    { id:"shadow",    name:"防水タコ民",       repDeltaOnBuy:+1, baseBuy:0.37, weight:4  },
+    { id:"ramen",     name:"替え玉タコ民",     repDeltaOnBuy: 0, baseBuy:0.39, weight:4  },
+    { id:"streamer",  name:"投げ銭タコ民",     repDeltaOnBuy:+2, baseBuy:0.35, weight:4  },
+    { id:"gourmet",   name:"舌判定タコ民",     repDeltaOnBuy:+2, baseBuy:0.34, weight:4  },
+    { id:"opener",    name:"即バリタコ民",     repDeltaOnBuy:+1, baseBuy:0.46, weight:5  },
+    { id:"party",     name:"宴タコ民",         repDeltaOnBuy:+2, baseBuy:0.48, weight:4  },
+    { id:"pilgrim",   name:"覚悟タコ民",       repDeltaOnBuy:+4, baseBuy:0.50, weight:3  }
   ];
-  const pickCustomer = () => CUSTOMER_TYPES[Math.floor(Math.random()*CUSTOMER_TYPES.length)];
+
+  function loadRecentVisitors(){
+    const v = lsGet(LS.recentVisitors, { ver:1, ids:[] });
+    v.ids = Array.isArray(v.ids) ? v.ids : [];
+    return v;
+  }
+  function saveRecentVisitors(v){
+    lsSet(LS.recentVisitors, v);
+  }
+  function rememberVisitorType(type){
+    const r = loadRecentVisitors();
+    r.ids.unshift(String(type || ""));
+    r.ids = r.ids.filter(Boolean).slice(0, 4);
+    saveRecentVisitors(r);
+  }
+
+  function weightedPick(list){
+    const total = list.reduce((sum, x)=> sum + Math.max(1, Number(x.weight||1)), 0);
+    let n = Math.random() * total;
+    for(const x of list){
+      n -= Math.max(1, Number(x.weight||1));
+      if(n <= 0) return x;
+    }
+    return list[list.length - 1];
+  }
+
+  function pickCustomer(){
+    const recent = loadRecentVisitors().ids || [];
+    let pool = CUSTOMER_TYPES.filter(x => !recent.includes(x.id));
+
+    if(pool.length < 6){
+      pool = CUSTOMER_TYPES.slice();
+    }
+
+    if(Math.random() < 0.18){
+      pool = CUSTOMER_TYPES.slice();
+    }
+
+    return weightedPick(pool);
+  }
 
   function pickVisitorAsset(customerId){
-    const v = ASSETS.visitors.find(x=>x.type===customerId);
-    return v || ASSETS.visitors[Math.floor(Math.random()*ASSETS.visitors.length)];
+    const matched = ASSETS.visitors.filter(x=>x.type===customerId);
+    if(matched.length) return pick(matched);
+    return ASSETS.visitors[Math.floor(Math.random()*ASSETS.visitors.length)];
   }
 
   function countListedById(){
@@ -1608,7 +1633,7 @@
           rarity: c.rarity,
           spare,
           count: c.count,
-          raw: c.raw,
+          raw: c,
           craft
         });
       }
@@ -1702,7 +1727,6 @@
       let price = 0;
       if(slot.item){
         if(isShrine){
-          // ✅ 祀り棚：値段固定（評判影響は乗せつつ、少し高め固定）
           price = Math.max(1, Math.floor(base * repFactor(rep) * SHRINE_PRICE_MULT));
         }else{
           price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
@@ -1751,7 +1775,6 @@
         if(isShrine){
           const ok = confirm("棚6（祀り棚）から取り下げます。\n※契約の気配が消えます。\n本当に実行しますか？");
           if(!ok) return;
-          // “儀式”：二段階
           const word = prompt("儀式の合言葉を入力：『やきなおし』");
           if((word||"").trim() !== "やきなおし"){
             toast("儀式失敗", "合言葉が違う。棚は沈黙した。", "");
@@ -1940,7 +1963,6 @@
 
     const isShrine = (slotIdx === SHRINE_SLOT);
 
-    // 既存があれば戻す（棚6なら契約も消す）
     if(slot.item){
       const qBack = Math.max(1, Number(slot.qty||1));
       incrementBookCountById(slot.item.id, slot.item.raw || slot.item, qBack);
@@ -1950,7 +1972,6 @@
     const lv = loadLevel().lv;
     const bulkOK = isBulkUnlocked(slotIdx, lv);
 
-    // ✅ 祀り棚は常に1枚
     const maxQty = isShrine ? 1 : (bulkOK ? Math.max(1, Number(pickedCard.spare||1)) : 1);
     const qty = isShrine ? 1 : (bulkOK ? askBulkQty(slotIdx, maxQty) : 1);
     if(qty === null){
@@ -2020,7 +2041,6 @@
     const rep = loadRep().rep;
     const cust = CUSTOMER_TYPES.find(x=>x.id===st.vType) || CUSTOMER_TYPES[0];
     const base = basePriceFor(slot.item);
-
     const isShrine = (slotIdx === SHRINE_SLOT);
 
     let price = 0;
@@ -2030,10 +2050,17 @@
       price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
     }
 
-    let buyP = clamp(cust.baseBuy, 0.12, 0.94);
+    let buyP = clamp(cust.baseBuy, 0.10, 0.90);
 
-    // ✅ 祀り棚は“買う気”が少し上がる（神棚の圧）
-    if(isShrine) buyP = clamp(buyP + 0.10, 0.12, 0.96);
+    if(isShrine) buyP = clamp(buyP + 0.10, 0.10, 0.95);
+
+    if(slot.priceTier === "高い" && !isShrine) buyP -= 0.05;
+    if(slot.priceTier === "安い" && !isShrine) buyP += 0.05;
+
+    if(rep >= 80) buyP += 0.04;
+    else if(rep <= 25) buyP -= 0.04;
+
+    buyP = clamp(buyP, 0.10, 0.95);
 
     const willBuy = Math.random() < buyP;
     if(!willBuy){
@@ -2044,20 +2071,16 @@
       return;
     }
 
-    // 在庫減
     const beforeQty = Math.max(1, Number(slot.qty||1));
     const afterQty = beforeQty - 1;
 
-    // 売上
     saveOcto(loadOcto() + price);
 
-    // 通常EXP/評判
     const lv = addExp(4);
     addRep(cust.repDeltaOnBuy);
 
     const soldItem = slot.item;
 
-    // ✅ 祀り棚：必ず1枚なので完売→空
     if(afterQty <= 0){
       shop.slots[slotIdx].item = null;
       shop.slots[slotIdx].qty = 0;
@@ -2068,7 +2091,6 @@
     }
     saveMyShop(shop);
 
-    // 次来店
     const t = loadTick();
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(slotIdx)] = now() + nextVisitDelayMs();
@@ -2078,9 +2100,7 @@
     pushLog("売れた！", `${soldItem.name||soldItem.id} が ${fmt(price)} OCTOで売れた ${leftText}`, `棚${slotIdx+1}`);
     toast("🔥 売れた！！ 🔥", `${soldItem.name||soldItem.id} ／ +${fmt(price)} OCTO ${leftText}`, "sale");
 
-    // ✅ 契約イベント（棚6で売れた瞬間）
     if(isShrine){
-      // 契約成立ボーナス（クールダウン中なら演出だけ）
       const bonusOk = canTriggerContractBonus();
       const bonusOcto = bonusOk ? rand(CONTRACT_BONUS.octoMin, CONTRACT_BONUS.octoMax) : 0;
       const bonusRep  = bonusOk ? rand(CONTRACT_BONUS.repMin,  CONTRACT_BONUS.repMax)  : 0;
@@ -2094,7 +2114,6 @@
         toast("📜 契約成立", `${pick(CONTRACT_LINES)}\n+${fmt(bonusOcto)} OCTO / 評判+${bonusRep} / EXP+${CONTRACT_BONUS.exp}`, "contract");
         markContractSuccess();
       }else{
-        // 連続成立抑制：演出のみ
         pushLog("契約（小）", "契約は成立したが、深い報酬は静かに眠っている（クールダウン）", soldItem.id);
         toast("📜 契約成立", "……契約は通った。\n（報酬は少し時間を置くと濃くなる）", "contract");
         clearContract();
@@ -2161,6 +2180,7 @@
       s.targetSlot = targetSlot;
       s.source = (type==="shout") ? "shout" : "normal";
       saveStage(s);
+      rememberVisitorType(cust.id);
       renderStage();
 
       pushLog("来客", `${s.vName} が棚${targetSlot+1}を見ている`, `${typeLabel}`);
@@ -2267,7 +2287,9 @@
     saveShout(cd);
     updateShoutUI();
 
-    const target = active[0];
+    /* ✅ 呼び込みでもランダムな棚を見る */
+    const target = active[Math.floor(Math.random() * active.length)];
+
     toast("呼び込み！", `棚${target+1}｜${pickShoutLine()}`, "");
     pushLog("呼び込み", `棚${target+1} に客の気配が集まった`, "");
 
