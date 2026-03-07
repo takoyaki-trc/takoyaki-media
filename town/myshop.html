@@ -20,22 +20,18 @@
       --radius:14px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-      /* ✅ モーダルカード一覧（見やすさ最大） */
       --tile:112px;
       --thumbPad:4px;
       --gap:10px;
 
-      /* ✅ 棚（出品カード） */
       --shelfPad:10px;
       --cardAR: 3 / 4;
 
-      /* 木目 */
       --woodA:#6b4a2d;
       --woodB:#4b2f1a;
       --woodC:#7a5736;
       --woodD:#3a2414;
 
-      /* 祀り棚（棚6） */
       --shrineLine: rgba(180,255,240,.35);
       --shrineGlow: rgba(0,255,204,.22);
       --shrineGlow2: rgba(64,160,255,.16);
@@ -75,7 +71,6 @@
     .btn.ghost{background:transparent}
     .btn[disabled]{opacity:.55;cursor:not-allowed}
 
-    /* header */
     .header{
       position:sticky; top:0; z-index:20;
       background:linear-gradient(to bottom, rgba(15,18,32,.95), rgba(15,18,32,.55));
@@ -96,7 +91,6 @@
     .title{font-size:16px;font-weight:950;letter-spacing:.02em}
     .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex:0 0 auto}
 
-    /* cards */
     .card{
       border:1px solid var(--line);
       background:var(--panel);
@@ -113,7 +107,6 @@
     .card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
     .card-b{padding:12px}
 
-    /* stats */
     .stats{
       display:grid;
       grid-template-columns: repeat(4, minmax(0,1fr));
@@ -147,7 +140,6 @@
     .stat .v small{font-size:11px;color:var(--muted);font-weight:800}
     .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
 
-    /* stage */
     .stage-card{margin-bottom:12px}
     .stage{
       position:relative;
@@ -249,9 +241,6 @@
 
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
 
-    /* =========================================================
-       ✅ 棚（出品）全体：木目ボード
-    ========================================================= */
     .shelf-board{
       position:relative;
       border-radius:16px;
@@ -497,7 +486,6 @@
       .mini{ flex: 1 1 100%; }
     }
 
-    /* modal */
     .modal{
       position:fixed; inset:0;
       background:rgba(0,0,0,.65);
@@ -861,7 +849,8 @@
           ・来客だけでも EXP +1（育つ）<br>
           ・売れたら EXP 追加 +4（合計+5）<br>
           ・王様が買うと評判UP / 転売が買うと評判DOWN<br>
-          ・「呼び込み」は60秒に1回、<b>出品中の棚からランダム</b>でお客を先に呼ぶ<br><br>
+          ・「呼び込み」は60秒に1回、<b>出品中の棚からランダム</b>でお客を先に呼ぶ<br>
+          ・客が帰ったあと、<b>少し待機時間</b>が入るので連続来店しにくいです<br><br>
 
           <b>棚解放</b><br>
           Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5 / <b>Lv5: 棚6（祀り棚）</b><br><br>
@@ -903,9 +892,6 @@
 (() => {
   "use strict";
 
-  /* =========================================================
-     ✅ localStorage 安全ラッパ
-  ========================================================= */
   const __memStore = Object.create(null);
   function safeStorageAvailable(){
     try{ const k="__t"; localStorage.setItem(k,"1"); localStorage.removeItem(k); return true; }
@@ -1036,6 +1022,13 @@
     "📜 契約が通った。……次の客の足音が軽い。"
   ];
 
+  /* =========================================================
+     ✅ 追加：連続来店防止
+  ========================================================= */
+  const GLOBAL_VISITOR_COOLDOWN_MS = 15000; // 客が帰ったあと最低15秒空ける
+  const POST_VISIT_SHIFT_MIN_MS = 12000;    // 他棚の期限切れを少し後ろへ
+  const POST_VISIT_SHIFT_MAX_MS = 22000;
+
   const LS = {
     octo:     "roten_v1_octo",
     myshop:   "roten_v1_myshop",
@@ -1048,7 +1041,13 @@
     stage:    "roten_v1_stage",
     queue:    "roten_v1_queue",
     contract: "roten_v1_contract",
-    recentVisitors: "roten_v1_recent_visitors"
+    recentVisitors: "roten_v1_recent_visitors",
+    flow:     "roten_v1_flow"
+  };
+
+  const FLOW_DEFAULT = {
+    ver:1,
+    nextSpawnAllowedAt: 0
   };
 
   const $ = (q, el=document) => el.querySelector(q);
@@ -1102,6 +1101,38 @@
   function lsSet(key, val){
     try{ Storage.setItem(key, JSON.stringify(val)); }
     catch(e){ showErr("lsSet failed: " + (e?.message||e)); }
+  }
+
+  function loadFlow(){
+    const f = lsGet(LS.flow, FLOW_DEFAULT);
+    return { ...FLOW_DEFAULT, ...f };
+  }
+  function saveFlow(f){
+    lsSet(LS.flow, f);
+  }
+  function setGlobalSpawnCooldown(ms = GLOBAL_VISITOR_COOLDOWN_MS){
+    const f = loadFlow();
+    f.nextSpawnAllowedAt = now() + Math.max(0, Number(ms||0));
+    saveFlow(f);
+  }
+  function getGlobalSpawnCooldownRemainMs(){
+    const f = loadFlow();
+    return Math.max(0, Number(f.nextSpawnAllowedAt||0) - now());
+  }
+  function shiftOtherDueTimers(exceptSlot){
+    const t = loadTick();
+    const n = now();
+    const next = { ...(t.nextAtBySlot || {}) };
+    Object.keys(next).forEach(k=>{
+      const idx = Number(k);
+      if(idx === exceptSlot) return;
+      const at = Number(next[k] || 0);
+      if(at <= n + 2000){
+        next[k] = n + rand(POST_VISIT_SHIFT_MIN_MS, POST_VISIT_SHIFT_MAX_MS);
+      }
+    });
+    t.nextAtBySlot = next;
+    saveTick(t);
   }
 
   function escapeHTML(s){
@@ -1219,9 +1250,15 @@
   function beginLeave(msg){
     const s = loadStage();
     if(!s.hasVisitor) return;
+    const leavingSlot = Number(s.targetSlot ?? -1);
+
     s.leaving = true;
     saveStage(s);
     renderStage();
+
+    setGlobalSpawnCooldown(GLOBAL_VISITOR_COOLDOWN_MS);
+    if(leavingSlot >= 0) shiftOtherDueTimers(leavingSlot);
+
     setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
   }
 
@@ -1472,6 +1509,14 @@
     const t = loadTick();
     const nowMs = now();
     const list = Object.values(t.nextAtBySlot || {}).map(v=>Number(v||0)).filter(v=>v>0);
+
+    const coolRemain = getGlobalSpawnCooldownRemainMs();
+    if(coolRemain > 0){
+      const sec = Math.max(0, Math.ceil(coolRemain/1000));
+      stageNextTag.textContent = `次：待機 ${sec}s`;
+      return;
+    }
+
     if(list.length === 0){
       stageNextTag.textContent = "次：—";
       return;
@@ -1526,10 +1571,6 @@
     return 0.65 + (rep/100)*1.10;
   }
 
-  /* =========================================================
-     ✅ 客の種類を大幅追加
-     ✅ 評判上昇を少し緩やかに調整
-  ========================================================= */
   const CUSTOMER_TYPES = [
     { id:"impulse",   name:"即決タコ民",       repDeltaOnBuy:+3, baseBuy:0.42, weight:10 },
     { id:"picky",     name:"見えないタコ民",   repDeltaOnBuy:-1, baseBuy:0.28, weight:8  },
@@ -1587,7 +1628,6 @@
     if(pool.length < 6){
       pool = CUSTOMER_TYPES.slice();
     }
-
     if(Math.random() < 0.18){
       pool = CUSTOMER_TYPES.slice();
     }
@@ -2053,10 +2093,8 @@
     let buyP = clamp(cust.baseBuy, 0.10, 0.90);
 
     if(isShrine) buyP = clamp(buyP + 0.10, 0.10, 0.95);
-
     if(slot.priceTier === "高い" && !isShrine) buyP -= 0.05;
     if(slot.priceTier === "安い" && !isShrine) buyP += 0.05;
-
     if(rep >= 80) buyP += 0.04;
     else if(rep <= 25) buyP -= 0.04;
 
@@ -2163,6 +2201,11 @@
       const st2 = loadStage();
       if(st2.hasVisitor) return;
 
+      const flowRemain = getGlobalSpawnCooldownRemainMs();
+      if(flowRemain > 0 && type !== "shout"){
+        return;
+      }
+
       const cust = pickCustomer();
       const asset = pickVisitorAsset(cust.id);
 
@@ -2221,6 +2264,7 @@
 
     if(st.hasVisitor) return;
     if(nowMs < spawnLockUntil) return;
+    if(getGlobalSpawnCooldownRemainMs() > 0) return;
 
     const lv = loadLevel().lv;
     const shop = loadMyShop();
@@ -2287,12 +2331,12 @@
     saveShout(cd);
     updateShoutUI();
 
-    /* ✅ 呼び込みでもランダムな棚を見る */
     const target = active[Math.floor(Math.random() * active.length)];
 
     toast("呼び込み！", `棚${target+1}｜${pickShoutLine()}`, "");
     pushLog("呼び込み", `棚${target+1} に客の気配が集まった`, "");
 
+    /* 呼び込みは特別扱い：待機中でも呼べる */
     spawnVisitorSoon(target, "shout");
   }
 
@@ -2338,6 +2382,7 @@
     }));
     Storage.removeItem(LS.tick);
     lsSet(LS.queue, { ver:1, shoutPending:false, shoutTargetSlot:null, shoutSpawnAt:0, normalPending:false, normalTargetSlot:null, queuedAt:0 });
+    lsSet(LS.flow, { ver:1, nextSpawnAllowedAt: 0 });
 
     alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
     location.reload();
