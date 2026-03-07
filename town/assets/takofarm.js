@@ -10,6 +10,7 @@
   //        seed_colabo → 「コラボ」(赤)
   //        seed_anniv  → 「期間限定」(目立つ色)
   //        ※CSSいじらず、JSのinline styleで“カード一番下”に表示
+  // ✅ 追加：月間記録 ttc_monthly_stats_v1 に harvest を自動反映
   // =========================================================
 
   // =========================
@@ -52,6 +53,9 @@
   // ✅ オクト（露店と共通のキーを使う）
   const LS_OCTO = "roten_v1_octo";
 
+  // ✅ 月間記録
+  const LS_MONTHLY_STATS = "ttc_monthly_stats_v1";
+
   // 育成時間など
   const BASE_GROW_MS = 5 * 60 * 60 * 1000; // 5時間
   const READY_TO_BURN_MS = 24 * 60 * 60 * 1000; // READYから24時間で焦げ
@@ -59,6 +63,78 @@
 
   // ベース（使わないなら水ratesが優先）
   const BASE_RARITY_RATE = { N: 70, R: 20, SR: 8, UR: 1.8, LR: 0.2 };
+
+  // =========================================================
+  // ✅ 月間記録ユーティリティ
+  // harvest / sales / fishing / tower を同じ箱で管理
+  // 月が変わったら今月用に自動リセット
+  // =========================================================
+  function getMonthKey(date = new Date()) {
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
+  }
+
+  function defaultMonthlyStats() {
+    return {
+      monthKey: getMonthKey(),
+      harvest: 0,
+      sales: 0,
+      fishing: 0,
+      tower: 0,
+    };
+  }
+
+  function normalizeMonthlyStats(raw) {
+    const curMonth = getMonthKey();
+
+    if (!raw || typeof raw !== "object") {
+      return defaultMonthlyStats();
+    }
+
+    const monthKey = String(raw.monthKey || "");
+    if (monthKey !== curMonth) {
+      // 月が切り替わったら、今月用に初期化
+      return defaultMonthlyStats();
+    }
+
+    return {
+      monthKey: curMonth,
+      harvest: Number(raw.harvest || 0),
+      sales: Number(raw.sales || 0),
+      fishing: Number(raw.fishing || 0),
+      tower: Number(raw.tower || 0),
+    };
+  }
+
+  function loadMonthlyStats() {
+    try {
+      const raw = localStorage.getItem(LS_MONTHLY_STATS);
+      if (!raw) {
+        const def = defaultMonthlyStats();
+        localStorage.setItem(LS_MONTHLY_STATS, JSON.stringify(def));
+        return def;
+      }
+      const parsed = JSON.parse(raw);
+      const norm = normalizeMonthlyStats(parsed);
+      localStorage.setItem(LS_MONTHLY_STATS, JSON.stringify(norm));
+      return norm;
+    } catch (e) {
+      const def = defaultMonthlyStats();
+      localStorage.setItem(LS_MONTHLY_STATS, JSON.stringify(def));
+      return def;
+    }
+  }
+
+  function saveMonthlyStats(stats) {
+    const norm = normalizeMonthlyStats(stats);
+    localStorage.setItem(LS_MONTHLY_STATS, JSON.stringify(norm));
+  }
+
+  function addMonthlyHarvest(count = 1) {
+    const s = loadMonthlyStats();
+    s.monthKey = getMonthKey();
+    s.harvest = Number(s.harvest || 0) + Math.max(0, Number(count || 0));
+    saveMonthlyStats(s);
+  }
 
   // =========================================================
   // カードプール（あなたの現行のまま）
@@ -229,12 +305,12 @@
 
   // 抽選は「段階（tier）」の確率で引く（ここを調整）
   const ANNIV_RATES = {
-  N: 66,
-  R: 20,
-  SR: 10,
-  UR: 3,
-  LR: 1
-};
+    N: 66,
+    R: 20,
+    SR: 10,
+    UR: 3,
+    LR: 1
+  };
 
   // =========================================================
   // レベル・XP
@@ -955,7 +1031,6 @@
           (isWater && loadout.waterId === x.id) ||
           (isFert && loadout.fertId === x.id);
 
-        // ✅ タネだけ：特別ラベル（カード一番下に出す / CSSいじらずinline）
         let specialTag = "";
         if (isSeed && x.id === "seed_colabo") {
           specialTag = `
@@ -1002,7 +1077,6 @@
           <div class="gridName">${x.name}</div>
           <div class="gridDesc">${(x.desc || "").replace(/\n/g, "<br>")}</div>
           <div class="gridFx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
-
           ${specialTag}
         </button>
       `;
@@ -1265,9 +1339,13 @@
 
   // =========================================================
   // ✅【最重要】収穫確定処理（tier優先でXP）
+  // ✅ 月間収穫数もここで +1
   // =========================================================
   function commitHarvest(i, reward) {
     addToBook(reward);
+
+    // ✅ 月間収穫数を反映
+    addMonthlyHarvest(1);
 
     const xpKey = (reward && reward.tier)
       ? String(reward.tier).toUpperCase()
@@ -1495,6 +1573,7 @@
   }
 
   // 初期
+  loadMonthlyStats(); // ✅ 月間記録箱を必ず作っておく
   renderLoadout();
   render();
   setInterval(tick, TICK_MS);
