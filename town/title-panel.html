@@ -1,1 +1,744 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>称号の頂 - 月間記録パネル</title>
 
+  <style>
+    :root{
+      --bg1:#12071f;
+      --bg2:#24103d;
+      --gold1:#ffe8a3;
+      --gold2:#f5c85e;
+      --gold3:#b77b1f;
+      --panel:#2a1450;
+      --panel2:#1c0f37;
+      --line:rgba(255,232,163,.28);
+      --text:#fff8e8;
+      --muted:#dbcfae;
+      --danger1:#d31721;
+      --danger2:#7e0f15;
+      --btn:#f5edd7;
+      --btnText:#2d220f;
+      --shadow:0 14px 30px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:
+        "Press Start 2P",
+        "DotGothic16",
+        "MS Gothic",
+        "Hiragino Sans",
+        sans-serif;
+      background:
+        radial-gradient(circle at 50% 18%, #4b2484 0%, #2a124c 30%, #160925 58%, #09040f 100%);
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      overflow:hidden;
+    }
+
+    /* 背景のキラキラ */
+    body::before,
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+    }
+    body::before{
+      background:
+        radial-gradient(circle at 18% 26%, rgba(255,216,120,.18) 0 2px, transparent 3px),
+        radial-gradient(circle at 73% 19%, rgba(255,216,120,.16) 0 2px, transparent 3px),
+        radial-gradient(circle at 31% 78%, rgba(255,216,120,.12) 0 2px, transparent 3px),
+        radial-gradient(circle at 84% 67%, rgba(255,216,120,.14) 0 2px, transparent 3px),
+        radial-gradient(circle at 56% 43%, rgba(147,105,255,.18) 0 2px, transparent 3px);
+      opacity:.9;
+    }
+    body::after{
+      background:
+        linear-gradient(transparent 0 97%, rgba(255,255,255,.04) 97% 100%);
+      background-size:100% 3px;
+      mix-blend-mode:soft-light;
+      opacity:.28;
+    }
+
+    .wrap{
+      width:min(100%, 440px);
+      position:relative;
+    }
+
+    .card{
+      position:relative;
+      border-radius:22px;
+      background:
+        linear-gradient(180deg, rgba(126,63,198,.35), rgba(29,13,58,.96)),
+        linear-gradient(180deg, var(--panel), var(--panel2));
+      border:2px solid rgba(247,213,118,.48);
+      box-shadow:
+        0 0 0 2px rgba(95,49,154,.55) inset,
+        0 0 0 6px rgba(255,219,130,.06) inset,
+        0 18px 40px rgba(0,0,0,.5);
+      overflow:hidden;
+    }
+
+    .ornament-top,
+    .ornament-bottom{
+      position:absolute;
+      left:12px;
+      right:12px;
+      height:18px;
+      pointer-events:none;
+      opacity:.9;
+    }
+    .ornament-top{ top:10px; }
+    .ornament-bottom{ bottom:10px; }
+
+    .ornament-top::before,
+    .ornament-top::after,
+    .ornament-bottom::before,
+    .ornament-bottom::after{
+      content:"";
+      position:absolute;
+      top:50%;
+      width:18px;
+      height:18px;
+      border:2px solid rgba(255,222,145,.8);
+      transform:translateY(-50%) rotate(45deg);
+      opacity:.75;
+    }
+    .ornament-top::before,
+    .ornament-bottom::before{ left:0; }
+    .ornament-top::after,
+    .ornament-bottom::after{ right:0; }
+
+    .ornament-top .line,
+    .ornament-bottom .line{
+      position:absolute;
+      left:24px;
+      right:24px;
+      top:50%;
+      height:2px;
+      transform:translateY(-50%);
+      background:linear-gradient(90deg, transparent, rgba(255,223,150,.65), transparent);
+    }
+
+    .head{
+      padding:24px 20px 12px;
+      text-align:center;
+    }
+
+    .head-title{
+      display:inline-block;
+      padding:8px 16px;
+      border-radius:999px;
+      background:
+        linear-gradient(180deg, rgba(255,221,143,.20), rgba(255,221,143,.08));
+      border:1px solid rgba(255,221,143,.35);
+      color:var(--gold1);
+      font-size:13px;
+      letter-spacing:.06em;
+      text-shadow:0 1px 0 rgba(0,0,0,.4);
+      box-shadow:0 0 18px rgba(255,202,96,.12) inset;
+    }
+
+    .record-panel{
+      margin:8px 14px 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.98), rgba(244,237,220,.96));
+      color:#271d11;
+      border-radius:16px;
+      border:2px solid rgba(136,101,42,.55);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.85),
+        0 8px 20px rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+
+    .record-header{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:48px;
+      padding:12px 16px;
+      background:
+        linear-gradient(180deg, #36205c, #241043);
+      color:#fff3ce;
+      border-bottom:2px solid rgba(88,56,133,.55);
+      font-size:18px;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-shadow:0 2px 0 rgba(0,0,0,.35);
+    }
+
+    .rows{
+      padding:8px 10px 10px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items:center;
+      gap:10px;
+      min-height:52px;
+      padding:8px 6px;
+      border-bottom:1px dashed rgba(76,51,12,.18);
+    }
+    .row:last-child{ border-bottom:none; }
+
+    .icon{
+      width:28px;
+      height:28px;
+      display:grid;
+      place-items:center;
+      border-radius:8px;
+      background:
+        linear-gradient(180deg, #ffe6a6, #dca947);
+      border:1px solid rgba(108,73,15,.35);
+      font-size:16px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.65);
+    }
+
+    .label{
+      font-size:15px;
+      font-weight:700;
+      letter-spacing:.02em;
+      color:#2d2214;
+      text-shadow:none;
+    }
+
+    .value{
+      font-size:18px;
+      font-weight:900;
+      color:#120d07;
+      letter-spacing:.03em;
+      white-space:nowrap;
+    }
+
+    .title-cap{
+      margin:14px 14px 8px;
+      text-align:center;
+      font-size:20px;
+      font-weight:900;
+      color:#ffe8b0;
+      letter-spacing:.10em;
+      text-shadow:0 2px 0 rgba(0,0,0,.32);
+    }
+
+    .main-title{
+      margin:0 14px;
+      padding:16px 14px;
+      border-radius:16px;
+      text-align:center;
+      font-size:24px;
+      font-weight:900;
+      letter-spacing:.06em;
+      line-height:1.25;
+      color:#fff4ef;
+      background:
+        linear-gradient(180deg, #e0242e 0%, #b2131d 58%, #780d13 100%);
+      border:2px solid rgba(255,215,164,.42);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.34),
+        0 10px 22px rgba(0,0,0,.32);
+      text-shadow:
+        0 2px 0 rgba(0,0,0,.28),
+        0 0 12px rgba(255,170,170,.10);
+    }
+
+    .stars{
+      display:flex;
+      justify-content:center;
+      gap:8px;
+      padding:10px 0 8px;
+      color:#ffd770;
+      font-size:14px;
+      text-shadow:0 1px 0 rgba(0,0,0,.35);
+    }
+
+    .actions{
+      padding:0 14px 22px;
+    }
+
+    .history-btn{
+      width:100%;
+      min-height:56px;
+      border:0;
+      border-radius:16px;
+      cursor:pointer;
+      font-size:22px;
+      font-weight:900;
+      letter-spacing:.08em;
+      color:var(--btnText);
+      background:
+        linear-gradient(180deg, #fffef8 0%, #efe7d0 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.95),
+        0 8px 18px rgba(0,0,0,.22);
+      border:2px solid rgba(120,93,45,.42);
+    }
+    .history-btn:active{
+      transform:translateY(1px);
+    }
+
+    .subinfo{
+      padding:0 16px 18px;
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.8;
+    }
+
+    /* モーダル */
+    .modal{
+      position:fixed;
+      inset:0;
+      background:rgba(6,3,14,.72);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:50;
+      backdrop-filter:blur(4px);
+    }
+    .modal.show{ display:flex; }
+
+    .modal-card{
+      width:min(100%, 520px);
+      max-height:min(85vh, 760px);
+      overflow:auto;
+      border-radius:20px;
+      background:
+        linear-gradient(180deg, rgba(63,29,111,.98), rgba(24,12,46,.98));
+      border:2px solid rgba(255,223,140,.45);
+      box-shadow:0 24px 44px rgba(0,0,0,.52);
+      padding:16px;
+    }
+
+    .modal-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+
+    .modal-title{
+      font-size:20px;
+      font-weight:900;
+      color:#ffeab2;
+      letter-spacing:.08em;
+    }
+
+    .close-btn{
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      border:0;
+      cursor:pointer;
+      font-size:20px;
+      font-weight:900;
+      color:#2a1d0a;
+      background:linear-gradient(180deg, #fffef7, #e8dcc0);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    .history-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .history-item{
+      display:grid;
+      grid-template-columns: 96px 1fr;
+      gap:10px;
+      align-items:center;
+      padding:14px 12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,223,140,.16);
+    }
+
+    .history-month{
+      font-size:14px;
+      font-weight:800;
+      color:#ffe0a0;
+    }
+
+    .history-title{
+      font-size:16px;
+      font-weight:800;
+      color:#fff8ea;
+    }
+
+    .empty{
+      padding:20px 14px;
+      border-radius:14px;
+      text-align:center;
+      color:#dbcfae;
+      background:rgba(255,255,255,.05);
+      border:1px dashed rgba(255,223,140,.22);
+      line-height:1.8;
+      font-size:14px;
+    }
+
+    @media (max-width: 480px){
+      .wrap{ width:min(100%, 390px); }
+      .record-header{ font-size:16px; }
+      .label{ font-size:14px; }
+      .value{ font-size:16px; }
+      .title-cap{ font-size:17px; }
+      .main-title{ font-size:21px; }
+      .history-btn{ font-size:19px; min-height:52px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <section class="card" aria-label="称号の頂 月間記録パネル">
+      <div class="ornament-top"><div class="line"></div></div>
+
+      <div class="head">
+        <div class="head-title">MONTHLY RECORD</div>
+      </div>
+
+      <div class="record-panel">
+        <div class="record-header">今月の記録</div>
+
+        <div class="rows">
+          <div class="row">
+            <div class="icon">🔥</div>
+            <div class="label">収穫数</div>
+            <div class="value" id="harvestValue">0 枚</div>
+          </div>
+
+          <div class="row">
+            <div class="icon">🪙</div>
+            <div class="label">露店売上</div>
+            <div class="value" id="salesValue">0 oct</div>
+          </div>
+
+          <div class="row">
+            <div class="icon">🎣</div>
+            <div class="label">釣り</div>
+            <div class="value" id="fishingValue">0 点</div>
+          </div>
+
+          <div class="row">
+            <div class="icon">🗼</div>
+            <div class="label">タワー</div>
+            <div class="value" id="towerValue">0 F</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="title-cap">TITLE</div>
+
+      <div class="main-title" id="mainTitle">タコ民</div>
+
+      <div class="stars" aria-hidden="true">
+        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+      </div>
+
+      <div class="actions">
+        <button class="history-btn" id="openHistoryBtn" type="button">HISTORY</button>
+      </div>
+
+      <div class="subinfo" id="monthInfo">
+        今月の収穫数・露店売上・釣り・タワーの記録から称号を表示します
+      </div>
+
+      <div class="ornament-bottom"><div class="line"></div></div>
+    </section>
+  </div>
+
+  <!-- 履歴モーダル -->
+  <div class="modal" id="historyModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+      <div class="modal-head">
+        <div class="modal-title" id="historyTitle">称号履歴</div>
+        <button class="close-btn" id="closeHistoryBtn" type="button" aria-label="閉じる">×</button>
+      </div>
+
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      /* =========================================================
+         localStorage キー
+      ========================================================= */
+      const LS_MONTHLY = "ttc_monthly_stats_v1";
+      const LS_HISTORY = "ttc_monthly_history_v1";
+
+      /* =========================================================
+         初期データ
+      ========================================================= */
+      function getMonthKey(date = new Date()){
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        return `${y}-${m}`;
+      }
+
+      function createDefaultMonthly(){
+        return {
+          monthKey: getMonthKey(),
+          harvest: 132,
+          sales: 9500,
+          fishing: 842,
+          tower: 55
+        };
+      }
+
+      function getMonthly(){
+        try{
+          const raw = localStorage.getItem(LS_MONTHLY);
+          if(!raw){
+            const def = createDefaultMonthly();
+            localStorage.setItem(LS_MONTHLY, JSON.stringify(def));
+            return def;
+          }
+          const parsed = JSON.parse(raw);
+          if(!parsed || typeof parsed !== "object"){
+            const def = createDefaultMonthly();
+            localStorage.setItem(LS_MONTHLY, JSON.stringify(def));
+            return def;
+          }
+          return {
+            monthKey: parsed.monthKey || getMonthKey(),
+            harvest: Number(parsed.harvest || 0),
+            sales: Number(parsed.sales || 0),
+            fishing: Number(parsed.fishing || 0),
+            tower: Number(parsed.tower || 0)
+          };
+        }catch(e){
+          const def = createDefaultMonthly();
+          localStorage.setItem(LS_MONTHLY, JSON.stringify(def));
+          return def;
+        }
+      }
+
+      function saveMonthly(data){
+        localStorage.setItem(LS_MONTHLY, JSON.stringify(data));
+      }
+
+      function getHistory(){
+        try{
+          const raw = localStorage.getItem(LS_HISTORY);
+          if(!raw){
+            const sample = [
+              { monthKey: "2026-03", title: "焼きの達人" },
+              { monthKey: "2026-02", title: "露店王" },
+              { monthKey: "2026-01", title: "タコ民長" },
+              { monthKey: "2025-12", title: "釣り神" }
+            ];
+            localStorage.setItem(LS_HISTORY, JSON.stringify(sample));
+            return sample;
+          }
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        }catch(e){
+          return [];
+        }
+      }
+
+      function saveHistory(list){
+        localStorage.setItem(LS_HISTORY, JSON.stringify(list));
+      }
+
+      /* =========================================================
+         月切り替え
+      ========================================================= */
+      function rolloverIfNeeded(){
+        const currentKey = getMonthKey();
+        const monthly = getMonthly();
+
+        if(monthly.monthKey === currentKey) return monthly;
+
+        const oldTitle = getTitleFromStats(monthly);
+        const history = getHistory();
+
+        history.unshift({
+          monthKey: monthly.monthKey,
+          title: oldTitle
+        });
+
+        saveHistory(history.slice(0, 24));
+
+        const fresh = {
+          monthKey: currentKey,
+          harvest: 0,
+          sales: 0,
+          fishing: 0,
+          tower: 0
+        };
+        saveMonthly(fresh);
+        return fresh;
+      }
+
+      /* =========================================================
+         数字整形
+      ========================================================= */
+      function fmtNum(n){
+        return Number(n || 0).toLocaleString("ja-JP");
+      }
+
+      /* =========================================================
+         称号判定
+         ※あとで好きに基準を増やせます
+      ========================================================= */
+      function getTitleFromStats(stats){
+        const harvest = Number(stats.harvest || 0);
+        const sales = Number(stats.sales || 0);
+        const fishing = Number(stats.fishing || 0);
+        const tower = Number(stats.tower || 0);
+
+        if(harvest >= 300) return "神焼きの極";
+        if(sales >= 30000) return "黄金露店王";
+        if(fishing >= 1500) return "深海の釣神";
+        if(tower >= 100) return "積み上げの神";
+        if(harvest >= 100) return "焼きの達人";
+        if(sales >= 5000) return "露店王";
+        if(fishing >= 800) return "釣り神";
+        if(tower >= 50) return "塔の覇者";
+        return "タコ民";
+      }
+
+      /* =========================================================
+         画面反映
+      ========================================================= */
+      const harvestValue = document.getElementById("harvestValue");
+      const salesValue   = document.getElementById("salesValue");
+      const fishingValue = document.getElementById("fishingValue");
+      const towerValue   = document.getElementById("towerValue");
+      const mainTitle    = document.getElementById("mainTitle");
+      const monthInfo    = document.getElementById("monthInfo");
+
+      function render(){
+        const stats = rolloverIfNeeded();
+
+        harvestValue.textContent = `${fmtNum(stats.harvest)} 枚`;
+        salesValue.textContent   = `${fmtNum(stats.sales)} oct`;
+        fishingValue.textContent = `${fmtNum(stats.fishing)} 点`;
+        towerValue.textContent   = `${fmtNum(stats.tower)} F`;
+        mainTitle.textContent    = getTitleFromStats(stats);
+
+        const [y, m] = stats.monthKey.split("-");
+        monthInfo.textContent = `${y}年${Number(m)}月の記録から称号を判定しています`;
+      }
+
+      /* =========================================================
+         履歴モーダル
+      ========================================================= */
+      const modal = document.getElementById("historyModal");
+      const openBtn = document.getElementById("openHistoryBtn");
+      const closeBtn = document.getElementById("closeHistoryBtn");
+      const historyList = document.getElementById("historyList");
+
+      function renderHistory(){
+        const list = getHistory();
+        historyList.innerHTML = "";
+
+        if(!list.length){
+          historyList.innerHTML = `
+            <div class="empty">
+              まだ履歴はありません
+            </div>
+          `;
+          return;
+        }
+
+        list.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "history-item";
+          row.innerHTML = `
+            <div class="history-month">${escapeHtml(item.monthKey)}</div>
+            <div class="history-title">${escapeHtml(item.title || "タコ民")}</div>
+          `;
+          historyList.appendChild(row);
+        });
+      }
+
+      function openHistory(){
+        renderHistory();
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeHistory(){
+        modal.classList.remove("show");
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+      }
+
+      openBtn.addEventListener("click", openHistory);
+      closeBtn.addEventListener("click", closeHistory);
+
+      modal.addEventListener("click", (e) => {
+        if(e.target === modal) closeHistory();
+      });
+
+      window.addEventListener("keydown", (e) => {
+        if(e.key === "Escape" && modal.classList.contains("show")){
+          closeHistory();
+        }
+      });
+
+      /* =========================================================
+         HTMLエスケープ
+      ========================================================= */
+      function escapeHtml(str){
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      /* =========================================================
+         開発用：コンソールから試せる関数
+         例:
+         ttcSetMonthly({ harvest: 210, sales: 12000, fishing: 930, tower: 61 })
+      ========================================================= */
+      window.ttcSetMonthly = function(data){
+        const current = getMonthly();
+        const next = {
+          monthKey: current.monthKey,
+          harvest: Number(data.harvest ?? current.harvest ?? 0),
+          sales: Number(data.sales ?? current.sales ?? 0),
+          fishing: Number(data.fishing ?? current.fishing ?? 0),
+          tower: Number(data.tower ?? current.tower ?? 0)
+        };
+        saveMonthly(next);
+        render();
+      };
+
+      window.ttcAddHistory = function(monthKey, title){
+        const list = getHistory();
+        list.unshift({ monthKey, title });
+        saveHistory(list);
+        renderHistory();
+      };
+
+      /* =========================================================
+         初期描画
+      ========================================================= */
+      render();
+    })();
+  </script>
+
+</body>
+</html>
