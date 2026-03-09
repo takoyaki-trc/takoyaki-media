@@ -1,12 +1,16 @@
 /* =========================================================
-   assets/trc-backup-float.js  (門番モーダル付き)
+   assets/trc-backup-float.js  (門番モーダル付き / 完全版)
    TRC 共通：バックアップ / 復元（固定フローティングUI）
+
    - どのページでも <script src="assets/trc-backup-float.js"></script> だけでOK
    - 復元は「門番の確認モーダル」でワンクッション（誤タップ防止）
-   - ✅ 住民票（紙プロフィール版）もバックアップ対象に追加
-      - trc_v1_resident_paper（今回の住民票ページ）
-      - trc_v1_resident（旧/入口側が使ってる場合）
-      - trc_v1_last_login（旧）
+   - 旧バックアップ形式(keys) / 新バックアップ形式(storage) の両方に対応
+   - ✅ 住民票（旧 / 紙プロフィール）を保存
+   - ✅ 称号の頂 を保存
+      - ttc_monthly_stats_v1
+      - ttc_monthly_history_v1
+      - ttc_godfarm_v1
+      - ttc_god_bonus_v1
    ========================================================= */
 (() => {
   "use strict";
@@ -18,7 +22,7 @@
     position: "top-right",     // "top-right" | "top-left" | "bottom-right" | "bottom-left"
     zIndex: 9999,
     compactOnMobile: true,
-    showRestore: true,         // 入口だけ復元にしたいなら false にして、入口だけ別UI運用も可
+    showRestore: true,
     reloadAfterRestore: true,
 
     // UIラベル
@@ -35,32 +39,33 @@
     guardBtnCancel: "今を選ぶ",
     guardBtnProceed: "過去へ戻る",
 
-    // 復元確認のあと、ファイル選択へ進むか？
-    // true: 確認OK→ファイル選択ダイアログ
-    // false: まずファイルを選ばせてから最終確認
+    // true: 確認OK→ファイル選択
     confirmThenPickFile: true,
-
-    // ページ側で無効化したい場合：id="trcBackupFloatDisable" があれば出さない
   };
 
   // =========================
-  // 保存対象キー（✅住民票を追加）
+  // 保存対象キー
   // =========================
   const KEY = {
-    // 旧（入口側などが使う）
+    // 住民票
     resident: "trc_v1_resident",
     lastLogin: "trc_v1_last_login",
-
-    // ✅ 新（紙プロフィール住民票ページが使う）
     residentPaper: "trc_v1_resident_paper",
   };
 
   const EXIST = {
-    farmBook: "tf_v1_book",
-    farmInv:  "tf_v1_inv",
-    rotenOcto:"roten_v1_octo",
-    tower: "tower_v1_state",
-    fish:  "fish_v1_state",
+    // 基本
+    farmBook:   "tf_v1_book",
+    farmInv:    "tf_v1_inv",
+    rotenOcto:  "roten_v1_octo",
+    tower:      "tower_v1_state",
+    fish:       "fish_v1_state",
+
+    // 称号の頂
+    monthly:    "ttc_monthly_stats_v1",
+    history:    "ttc_monthly_history_v1",
+    godfarm:    "ttc_godfarm_v1",
+    godbonus:   "ttc_god_bonus_v1",
   };
 
   // =========================
@@ -69,13 +74,16 @@
   function safeJSONParse(raw, fallback) {
     try { return JSON.parse(raw); } catch (_) { return fallback; }
   }
+
   function safeStringify(obj) {
     try { return JSON.stringify(obj); } catch (_) { return "null"; }
   }
+
   const getRaw = (k) => {
     const v = localStorage.getItem(k);
     return (v === null || v === undefined) ? null : String(v);
   };
+
   function listKeysByRegex(re) {
     const out = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -84,6 +92,15 @@
       if (re.test(k)) out.push(k);
     }
     return out;
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
   }
 
   // =========================
@@ -98,6 +115,7 @@
 
     const got = (book.got && typeof book.got === "object") ? book.got : {};
     const outGot = {};
+
     for (const id of Object.keys(got)) {
       const node = got[id] || {};
       const c = Number(node.count || 0);
@@ -116,6 +134,9 @@
     return safeStringify(slim);
   }
 
+  // =========================
+  // 進行キー探索
+  // =========================
   function findFarmProgressKeys() {
     const out = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -126,7 +147,15 @@
       if (k === EXIST.farmBook || k === EXIST.farmInv) continue;
       out.push(k);
     }
-    const prefer = ["tf_v1_state", "tf_v1_level", "tf_v1_xp", "tf_v1_farm", "tf_v1_progress"];
+
+    const prefer = [
+      "tf_v1_state",
+      "tf_v1_level",
+      "tf_v1_xp",
+      "tf_v1_farm",
+      "tf_v1_progress"
+    ];
+
     const ordered = [];
     for (const p of prefer) {
       if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
@@ -134,6 +163,7 @@
     for (const k of out) {
       if (!ordered.includes(k)) ordered.push(k);
     }
+
     return ordered.slice(0, 40);
   }
 
@@ -146,10 +176,18 @@
       if (/log|history|debug/i.test(k)) continue;
       out.push(k);
     }
+
     const prefer = [
-      "roten_v1_level","roten_v1_rep","roten_v1_myshop","roten_v1_inventory",
-      "roten_v1_market","roten_v1_state","roten_v1_shelves","roten_v1_octo"
+      "roten_v1_level",
+      "roten_v1_rep",
+      "roten_v1_myshop",
+      "roten_v1_inventory",
+      "roten_v1_market",
+      "roten_v1_state",
+      "roten_v1_shelves",
+      "roten_v1_octo"
     ];
+
     const ordered = [];
     for (const p of prefer) {
       if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
@@ -157,16 +195,17 @@
     for (const k of out) {
       if (!ordered.includes(k)) ordered.push(k);
     }
+
     return ordered.slice(0, 90);
   }
 
   // =========================
-  // payload & backup
+  // payload 作成
   // =========================
   function buildSlimBackupPayload() {
     const keys = {};
 
-    // ✅ 住民票：旧 + 新（紙プロフィール）
+    // 住民票
     keys[KEY.resident] = getRaw(KEY.resident);
     keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
     keys[KEY.residentPaper] = getRaw(KEY.residentPaper);
@@ -174,8 +213,6 @@
     // 基本
     keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
     keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
-
-    // 図鑑は slim
     keys[EXIST.farmBook]  = slimBookRawKeepImg();
 
     // 畑進行
@@ -204,6 +241,12 @@
       if (v != null) keys[k] = v;
     }
 
+    // 称号の頂
+    if (getRaw(EXIST.monthly)  != null) keys[EXIST.monthly]  = getRaw(EXIST.monthly);
+    if (getRaw(EXIST.history)  != null) keys[EXIST.history]  = getRaw(EXIST.history);
+    if (getRaw(EXIST.godfarm)  != null) keys[EXIST.godfarm]  = getRaw(EXIST.godfarm);
+    if (getRaw(EXIST.godbonus) != null) keys[EXIST.godbonus] = getRaw(EXIST.godbonus);
+
     // null削除
     for (const k of Object.keys(keys)) {
       if (keys[k] === null || keys[k] === undefined) delete keys[k];
@@ -211,14 +254,17 @@
 
     return {
       app: "takoyaki-trc",
-      ver: 6, // ✅ 住民票追加でver更新
-      kind: "slim+roten+residentPaper",
+      ver: 7,
+      kind: "slim+roten+residentPaper+title-compatible",
       exportedAt: new Date().toISOString(),
-      note: "住民票(旧/新)/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り を保存。ログは保存しない。",
+      note: "住民票(旧/新)/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り/称号の頂 を保存。復元は旧keys形式・新storage形式の両方に対応。",
       keys
     };
   }
 
+  // =========================
+  // backup
+  // =========================
   function downloadJson(obj, filename) {
     const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -238,29 +284,49 @@
     return payload;
   }
 
+  // =========================
+  // restore
+  // 旧形式: data.keys
+  // 新形式: data.storage
+  // =========================
   async function restoreFromFile(file) {
     const text = await file.text();
     const data = safeJSONParse(text, null);
 
-    if (!data || !data.keys || typeof data.keys !== "object") {
+    if (!data || typeof data !== "object") {
       alert("このファイルはバックアップ形式ではありません。");
       return false;
     }
 
-    const keys = Object.keys(data.keys);
+    const source =
+      (data.keys && typeof data.keys === "object") ? data.keys :
+      (data.storage && typeof data.storage === "object") ? data.storage :
+      null;
+
+    if (!source) {
+      alert("このファイルはバックアップ形式ではありません。");
+      return false;
+    }
+
+    const restoreKeys = Object.keys(source);
+    const exportedAt = String(data.exportedAt || data.exported || "");
+
     const ok = confirm(
       "バックアップから復元します。\n" +
       "現在のデータは上書きされます（元に戻せません）。\n\n" +
-      `復元キー数: ${keys.length}\n` +
-      `書き出し日時: ${String(data.exportedAt || "")}\n\n` +
+      `復元キー数: ${restoreKeys.length}\n` +
+      `書き出し日時: ${exportedAt}\n\n` +
       "続行しますか？"
     );
     if (!ok) return false;
 
-    for (const k of keys) {
-      const v = data.keys[k];
-      if (v === null || v === undefined) localStorage.removeItem(k);
-      else localStorage.setItem(k, String(v));
+    for (const k of restoreKeys) {
+      const v = source[k];
+      if (v === null || v === undefined) {
+        localStorage.removeItem(k);
+      } else {
+        localStorage.setItem(k, String(v));
+      }
     }
 
     alert("復元しました。" + (CONFIG.reloadAfterRestore ? " ページを再読み込みします。" : ""));
@@ -274,6 +340,7 @@
   function alreadyDisabledByPage() {
     return !!document.getElementById("trcBackupFloatDisable");
   }
+
   function alreadyExists() {
     return !!document.getElementById("trcBackupFloat");
   }
@@ -448,11 +515,18 @@
     if (CONFIG.position === "top-left") return `top: calc(${pad} + ${safeT}); left: calc(${pad} + ${safeL});`;
     if (CONFIG.position === "bottom-left") return `bottom: calc(${pad} + ${safeB}); left: calc(${pad} + ${safeL});`;
     if (CONFIG.position === "bottom-right") return `bottom: calc(${pad} + ${safeB}); right: calc(${pad} + ${safeR});`;
-    return `top: calc(${pad} + ${safeT}); right: calc(${pad} + ${safeR});`; // top-right default
+    return `top: calc(${pad} + ${safeT}); right: calc(${pad} + ${safeR});`;
   }
 
-  function openModal(modal){ modal.classList.add("on"); }
-  function closeModal(modal){ modal.classList.remove("on"); }
+  function openModal(modal) {
+    modal.classList.add("on");
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeModal(modal) {
+    modal.classList.remove("on");
+    modal.setAttribute("aria-hidden", "true");
+  }
 
   function ensureGuardModal() {
     let m = document.getElementById("trcGuardModal");
@@ -482,12 +556,10 @@
 
     document.body.appendChild(m);
 
-    // 背景クリックで閉じる
     m.addEventListener("click", (e) => {
       if (e.target === m) closeModal(m);
     });
 
-    // ボタン（close/cancel）
     m.addEventListener("click", (e) => {
       const btn = e.target.closest("button");
       if (!btn) return;
@@ -495,21 +567,11 @@
       if (act === "close" || act === "cancel") closeModal(m);
     });
 
-    // ESC
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && m.classList.contains("on")) closeModal(m);
     });
 
     return m;
-  }
-
-  function escapeHtml(s){
-    return String(s || "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
   }
 
   function injectUI() {
@@ -563,16 +625,18 @@
       const normal = CONFIG.labelBackup;
       btnBackup.disabled = true;
       btnBackup.textContent = CONFIG.labelWorking;
+
       setTimeout(() => {
-        try { backupSlim(); }
-        finally {
+        try {
+          backupSlim();
+        } finally {
           btnBackup.disabled = false;
           btnBackup.textContent = normal;
         }
       }, 60);
     });
 
-    // restore: 門番モーダルでワンクッション
+    // restore
     if (CONFIG.showRestore) {
       const modal = ensureGuardModal();
 
@@ -586,7 +650,6 @@
       btnRestore.addEventListener("click", () => {
         openModal(modal);
 
-        // proceed のワンショット（多重登録防止）
         const onProceed = (e) => {
           const b = e.target.closest("button");
           if (!b) return;
@@ -595,10 +658,10 @@
             proceed();
           }
         };
+
         modal.addEventListener("click", onProceed);
       });
 
-      // ファイル選択→復元
       inp.addEventListener("change", async () => {
         const f = inp.files && inp.files[0];
         inp.value = "";
@@ -608,8 +671,9 @@
         btnRestore.disabled = true;
         btnRestore.textContent = CONFIG.labelReading;
 
-        try { await restoreFromFile(f); }
-        finally {
+        try {
+          await restoreFromFile(f);
+        } finally {
           if (!CONFIG.reloadAfterRestore) {
             btnRestore.disabled = false;
             btnRestore.textContent = normal;
@@ -619,13 +683,17 @@
     }
   }
 
+  // =========================
   // ready
+  // =========================
   function ready(fn) {
     if (document.readyState === "complete" || document.readyState === "interactive") fn();
     else document.addEventListener("DOMContentLoaded", fn, { once: true });
   }
 
-  // 外部からも呼べるように（任意）
+  // =========================
+  // 外部公開
+  // =========================
   window.TRCBackupFloat = {
     backup: () => backupSlim(),
     build: () => buildSlimBackupPayload(),
