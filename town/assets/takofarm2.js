@@ -984,8 +984,11 @@
     return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
   }
 
-  // =========================================================
-  // GAS通信（失敗時に「返ってきた本文」も出す）
+    // =========================================================
+  // GAS通信（CORS安定版）
+  // ✅ Content-Type を付けない
+  // ✅ mode:"cors" を明示
+  // ✅ GAS側は e.postData.contents を読む
   // =========================================================
   async function gasPost(payload){
     const body = {
@@ -995,22 +998,25 @@
 
     const res = await fetch(GAS_URL, {
       method: "POST",
-      headers: { "Content-Type":"application/json; charset=utf-8" },
+      mode: "cors",
+      // ★重要：Content-Type を付けない（プリフライト回避）
+      // headers: { "Content-Type":"application/json; charset=utf-8" },
       body: JSON.stringify(body),
       cache: "no-store",
     });
 
     const txt = await res.text();
+
     if(!res.ok){
       throw new Error(`HTTP ${res.status}\n\n${txt.slice(0, 1200)}`);
     }
+
     try{
       return JSON.parse(txt);
     }catch(e){
       throw new Error(`JSON parse failed\n\n${txt.slice(0, 1200)}`);
     }
   }
-
   async function plantCollabOnServer(seedToken){
     return await gasPost({
       api: "plant",
