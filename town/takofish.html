@@ -18,6 +18,7 @@
       --shadow: 0 14px 40px rgba(0,0,0,.55);
       --radius: 16px;
       --cyan:#7fd0ff;
+      --gold:#ffd979;
     }
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
@@ -124,33 +125,41 @@
       display:none;
       align-items:center;
       justify-content:center;
-      background: rgba(0,0,0,.28);
-      z-index: 20;
+      z-index:20;
       pointer-events:none;
+      background: transparent;
     }
     .countOverlay.show{ display:flex; }
     .countInner{
-      min-width: 180px;
+      min-width: 200px;
       text-align:center;
-      padding: 18px 20px;
-      border-radius: 18px;
-      background: rgba(5,12,25,.58);
-      border: 1px solid rgba(255,255,255,.18);
-      box-shadow: 0 14px 40px rgba(0,0,0,.45);
-      backdrop-filter: blur(8px);
+      padding: 18px 22px;
+      border-radius: 20px;
+      background: rgba(8,15,28,.28);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 10px 34px rgba(0,0,0,.28);
+      backdrop-filter: blur(3px);
     }
     .countLabel{
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 1000;
-      letter-spacing: .08em;
-      color: rgba(255,255,255,.82);
+      letter-spacing: .14em;
+      color: rgba(255,255,255,.86);
       margin-bottom: 8px;
     }
     .countNum{
-      font-size: 72px;
+      font-size: 76px;
       line-height: 1;
       font-weight: 1000;
-      text-shadow: 0 0 18px rgba(127,208,255,.45);
+      text-shadow:
+        0 0 10px rgba(127,208,255,.38),
+        0 0 24px rgba(127,208,255,.18);
+    }
+    .countHelp{
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 900;
+      color: rgba(255,255,255,.82);
     }
 
     .panel{
@@ -190,14 +199,6 @@
     .panel-foot .btn{ flex:1; padding: 12px 12px; }
     .ghost{ background: transparent; }
 
-    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .mini{
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 14px;
-      padding: 10px;
-    }
-    .mini .k{ font-weight: 1000; margin-bottom: 6px; }
     .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .chip{
       display:inline-flex; align-items:center; gap:8px;
@@ -208,6 +209,58 @@
     }
     .iconimg{ width: 26px; height: 26px; image-rendering: pixelated; display:block; }
     .muted{ color: rgba(255,255,255,.72); }
+
+    .ruleIntro{
+      margin-bottom: 10px;
+      color: rgba(255,255,255,.9);
+    }
+    .rulesStack{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top: 10px;
+    }
+    .ruleCard{
+      display:grid;
+      grid-template-columns: 58px 1fr;
+      gap:10px;
+      align-items:center;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .ruleIcon{
+      width: 58px;
+      height: 58px;
+      border-radius: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .ruleIcon img{
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      display:block;
+    }
+    .ruleMain{
+      min-width:0;
+    }
+    .ruleTitle{
+      font-weight: 1000;
+      font-size: 13px;
+      margin-bottom: 3px;
+      letter-spacing: .02em;
+    }
+    .ruleText{
+      color: rgba(255,255,255,.88);
+      font-size: 12px;
+      line-height: 1.6;
+    }
 
     .resultMain{ font-weight:1000; font-size:18px; line-height:1.35; margin: 10px 0 8px; }
     .resultLines > div{ margin: 2px 0; }
@@ -290,8 +343,10 @@
     .spBtns .btn{ flex:1; }
 
     @media (max-width: 560px){
-      .grid2{ grid-template-columns: 1fr; }
-      .countNum{ font-size: 58px; }
+      .countNum{ font-size: 60px; }
+      .ruleCard{ grid-template-columns: 52px 1fr; }
+      .ruleIcon{ width:52px; height:52px; }
+      .ruleIcon img{ width:38px; height:38px; }
     }
   </style>
 </head>
@@ -331,6 +386,7 @@
               <div class="countInner">
                 <div class="countLabel">START IN</div>
                 <div id="countNum" class="countNum">3</div>
+                <div class="countHelp">落とす位置を考えてね</div>
               </div>
             </div>
 
@@ -341,49 +397,12 @@
                   <button id="rulesCloseX" class="btn ghost" type="button" aria-label="閉じる">×</button>
                 </div>
                 <div class="panel-body rulesSea">
-                  <div class="muted" style="margin-bottom:10px;">
+                  <div class="ruleIntro">
                     タップした場所に糸（ピック）を垂らして、たこ焼きに当てて釣り上げよう。<br>
                     天敵にぶつかると奪われる。生焼けはマイナス。
                   </div>
 
-                  <div class="grid2">
-                    <div class="mini">
-                      <div class="k">サイズ（基本点）</div>
-                      <div class="row" id="sizeRow"></div>
-                      <div class="muted" style="margin-top:8px;">
-                        ※小さいほど高い。巨大は途中で落ちることがある。
-                      </div>
-                    </div>
-
-                    <div class="mini">
-                      <div class="k">種類（倍率 / マイナス）</div>
-                      <div class="row" id="typeRow"></div>
-                      <div class="muted" style="margin-top:8px;">
-                        例：普通70点 × ゴールド2.80 = 196点
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="mini" style="margin-top:10px;">
-                    <div class="k">連続ボーナス</div>
-                    <div>
-                      連続で釣り上げると、<b>2連続目から加点</b>。<br>
-                      1匹ごとに <b id="comboStepTxt">+12</b> 点ずつ増え、最大 <b id="comboMaxTxt">+180</b> 点まで。
-                      <br>
-                      例：3連続目なら <b>+24</b> 点、10連続目以降は最大ボーナス。
-                    </div>
-                  </div>
-
-                  <div class="mini" style="margin-top:10px;">
-                    <div class="k">時間</div>
-                    <div>
-                      まず<b>30秒</b>。30秒時点でスコアが <b id="unlockTxt">600</b> 点以上なら <b>60秒</b> まで延長。
-                      <br>
-                      延長できた場合、<b>45秒</b>から<b>鬼モード</b>（突入時に一瞬停止・天敵強化）。
-                      <br>
-                      スタートを押すと、<b>3・2・1</b> のカウントダウン後に開始。
-                    </div>
-                  </div>
+                  <div class="rulesStack" id="rulesStack"></div>
                 </div>
                 <div class="panel-foot">
                   <button id="startBtn" class="btn" type="button">スタート</button>
@@ -434,14 +453,12 @@
   "use strict";
 
   /* =========================================================
-     ✅ 変更点（今回）
+     ✅ 今回の変更
+     - ルール画面を「たこ焼き画像が縦に並ぶ」レイアウトに戻した
+     - スタート後は暗転せず、動いているゲーム画面の上に3・2・1・GO!を重ねる
+     - カウントダウン中はゲーム画面だけ先に動き、操作とタイマーはまだ開始しない
      - 結果画面の称号の二重カッコを修正
-     - ルール画面のスタート後に3秒カウントダウン追加
-     - 連続釣りボーナスを正式追加（2連続目から加点）
-     - ルール画面にも連続ボーナス説明を追加
-     - SPカード画像だけ「town/assets/images/sp/」から読む（他の画像に影響なし）
-     - 結果画面に「日時」を表示（resultDate）
-     - 月間記録 ttc_monthly_stats_v1 に fishing の最高点を反映
+     - 連続ボーナスを正式実装し、ルールにも記載
   ========================================================= */
 
   /* =========================
@@ -465,7 +482,6 @@
     const el = document.getElementById(id);
     if (el) el.textContent = String(v);
   }
-
   function formatLocal(dt){
     const y = dt.getFullYear();
     const m = String(dt.getMonth()+1).padStart(2,"0");
@@ -476,35 +492,19 @@
   }
 
   /* =========================
-     0.5) 月間記録ユーティリティ
-     fishing は「今月の最高点」で保存
+     0.5) 月間記録
   ========================= */
   function getMonthKey(date = new Date()){
     return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
   }
-
   function defaultMonthlyStats(){
-    return {
-      monthKey: getMonthKey(),
-      harvest: 0,
-      sales: 0,
-      fishing: 0,
-      tower: 0,
-    };
+    return { monthKey: getMonthKey(), harvest: 0, sales: 0, fishing: 0, tower: 0 };
   }
-
   function normalizeMonthlyStats(raw){
     const curMonth = getMonthKey();
-
-    if (!raw || typeof raw !== "object"){
-      return defaultMonthlyStats();
-    }
-
+    if (!raw || typeof raw !== "object") return defaultMonthlyStats();
     const monthKey = String(raw.monthKey || "");
-    if (monthKey !== curMonth){
-      return defaultMonthlyStats();
-    }
-
+    if (monthKey !== curMonth) return defaultMonthlyStats();
     return {
       monthKey: curMonth,
       harvest: Number(raw.harvest || 0),
@@ -513,7 +513,6 @@
       tower: Number(raw.tower || 0),
     };
   }
-
   function loadMonthlyStats(){
     try{
       const raw = localStorage.getItem(FISH_LS.monthlyStats);
@@ -532,19 +531,16 @@
       return def;
     }
   }
-
   function saveMonthlyStats(stats){
     const norm = normalizeMonthlyStats(stats);
     localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(norm));
   }
-
   function updateMonthlyFishingHigh(score = 0){
     const s = loadMonthlyStats();
     s.monthKey = getMonthKey();
     s.fishing = Math.max(Number(s.fishing || 0), Math.floor(Number(score || 0)));
     saveMonthlyStats(s);
   }
-
   function saveFishingRecord(score){
     score = Math.floor(Number(score) || 0);
     localStorage.setItem(FISH_LS.last, String(score));
@@ -573,7 +569,6 @@
   ========================= */
   const V = "1";
   const SP_BASE = "./assets/images/sp/";
-
   const SP_CFG = {
     chance: 0.10,
     ids: { sp03: "sp_03", sp04: "sp_04", sp05: "sp_05", sp06: "sp_06" },
@@ -584,7 +579,6 @@
       sp06: `${SP_BASE}sp_06.png?v=${V}`,
     }
   };
-
   function getSPBucket(score){
     score = Math.floor(Number(score)||0);
     if (score <= -500 && score >= -2999) return "sp03";
@@ -621,10 +615,9 @@
   }
 
   /* =========================
-     2) Images (game assets)
+     2) Images
   ========================= */
   const CDN_BASE = "https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/assets/takofish/";
-
   const IMG_URLS = {
     pick:          `${CDN_BASE}pick.png?v=${V}`,
     sauce:         `${CDN_BASE}tako_sauce.png?v=${V}`,
@@ -657,7 +650,7 @@
   }
 
   /* =========================
-     3) Game config
+     3) Config
   ========================= */
   const CFG = {
     W: 360,
@@ -673,15 +666,10 @@
     HOOK_DROP_BASE: 620,
     HOOK_REEL_BASE: 280,
 
-    HOOK_HIT_R: 10,
     TOP_Y: 18,
     FLOOR_Y_RATIO: 0.86,
-    PICK_DRAW: 24,
 
     ITEM_COUNT: 7,
-    ITEM_BASE_SPEED: 45,
-    ITEM_MAX_SPEED: 130,
-    ITEM_ACCEL: 240,
 
     GIANT_DROP_CHANCE: 0.18,
     GIANT_DROP_START_Y_RATIO: 0.62,
@@ -724,7 +712,6 @@
     SQUID: { w: 58, h: 58, speed: 18, ampX: 10, ampY: 16, freq: 0.55 },
 
     DASH: {
-      yBias: -12,
       w: 54, h: 10,
       speed: 950,
       minS: 10, maxS: 15,
@@ -805,7 +792,7 @@
   }
 
   /* =========================
-     5) Helpers / Physics
+     5) Helpers
   ========================= */
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
   function rand(a,b){ return a + Math.random()*(b-a); }
@@ -837,11 +824,9 @@
     const typeKey = pickByWeight(CFG.TYPE_WEIGHTS);
     const size = CFG.SIZE[sizeKey];
     const type = CFG.TYPE[typeKey];
-
     let points = 0;
     if (type.kind === "minus") points = type.penalty;
     else points = Math.round(size.base * type.mult);
-
     return { sizeKey, size, type, points };
   }
 
@@ -853,22 +838,18 @@
 
   function hookDropSpeed(hy, floorY){
     const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
-    const mul = 1.02 + 0.62 * t;
-    return CFG.HOOK_DROP_BASE * mul;
+    return CFG.HOOK_DROP_BASE * (1.02 + 0.62 * t);
   }
   function hookReelSpeed(hy, floorY, hasCatch){
     const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
-    const mul = (1.24 + 0.74 * (1 - t));
-    const catchMul = hasCatch ? 1.16 : 1.03;
-    return CFG.HOOK_REEL_BASE * mul * catchMul;
+    return CFG.HOOK_REEL_BASE * (1.24 + 0.74 * (1 - t)) * (hasCatch ? 1.16 : 1.03);
   }
-
   function calcComboBonus(comboCount){
     return Math.min(CFG.COMBO_BONUS_MAX, Math.max(0, (comboCount - 1) * CFG.COMBO_BONUS_STEP));
   }
 
   /* =========================
-     6) UI Wiring
+     6) UI
   ========================= */
   const els = {
     backBtn: document.getElementById("backBtn"),
@@ -897,11 +878,7 @@
     countNum: document.getElementById("countNum"),
 
     canvas: document.getElementById("tfCanvas"),
-    sizeRow: document.getElementById("sizeRow"),
-    typeRow: document.getElementById("typeRow"),
-    unlockTxt: document.getElementById("unlockTxt"),
-    comboStepTxt: document.getElementById("comboStepTxt"),
-    comboMaxTxt: document.getElementById("comboMaxTxt"),
+    rulesStack: document.getElementById("rulesStack"),
   };
 
   function refreshBestUI(){
@@ -934,50 +911,75 @@
   els.rulesBtn.addEventListener("click", showRules);
   els.rulesCloseX.addEventListener("click", hideRules);
   els.closeBtn.addEventListener("click", hideRules);
-
   els.resultCloseX.addEventListener("click", () => { hideResult(); showRules(); });
   els.resultCloseBtn.addEventListener("click", () => { hideResult(); showRules(); });
 
   /* =========================
-     7) Build rule visuals using SAME game images
+     7) Rule visuals
   ========================= */
   let IMGS = null;
   let countdownTimer = null;
   let countdownRunning = false;
 
-  function buildRuleVisuals(){
-    els.unlockTxt.textContent = String(CFG.EXT_SCORE);
-    els.comboStepTxt.textContent = `+${CFG.COMBO_BONUS_STEP}`;
-    els.comboMaxTxt.textContent = `+${CFG.COMBO_BONUS_MAX}`;
-
-    els.sizeRow.innerHTML = `
-      <span class="chip">極小：<b>${CFG.SIZE.tiny.base}</b></span>
-      <span class="chip">普通：<b>${CFG.SIZE.normal.base}</b></span>
-      <span class="chip">巨大：<b>${CFG.SIZE.giant.base}</b></span>
+  function ruleRow(title, text, imgSrc, alt){
+    return `
+      <div class="ruleCard">
+        <div class="ruleIcon"><img src="${imgSrc}" alt="${alt}"></div>
+        <div class="ruleMain">
+          <div class="ruleTitle">${title}</div>
+          <div class="ruleText">${text}</div>
+        </div>
+      </div>
     `;
+  }
 
-    const makeType = (key, txt) => {
-      const imgKey = CFG.TYPE[key].imgKey;
-      const src = IMG_URLS[imgKey];
-      return `
-        <span class="chip">
-          <img class="iconimg" src="${src}" alt="${CFG.TYPE[key].label}">
-          ${txt}
-        </span>
-      `;
-    };
+  function buildRuleVisuals(){
+    const combo2 = calcComboBonus(2);
+    const combo3 = calcComboBonus(3);
+    const combo10 = calcComboBonus(10);
 
-    els.typeRow.innerHTML = [
-      makeType("sauce", `ソース ×<b>${CFG.TYPE.sauce.mult.toFixed(2)}</b>`),
-      makeType("ika", `いかさま ×<b>${CFG.TYPE.ika.mult.toFixed(2)}</b>`),
-      makeType("gold", `ゴールド ×<b>${CFG.TYPE.gold.mult.toFixed(2)}</b>`),
-      makeType("rainbow", `レインボー ×<b>${CFG.TYPE.rainbow.mult.toFixed(2)}</b>`),
-      makeType("raw", `生焼け <b>${CFG.TYPE.raw.penalty}</b>`),
+    els.rulesStack.innerHTML = [
+      ruleRow(
+        "サイズで基本点が変わる",
+        `極小 ${CFG.SIZE.tiny.base}点 / 普通 ${CFG.SIZE.normal.base}点 / 巨大 ${CFG.SIZE.giant.base}点。小さいほど高得点。巨大は途中で落ちることがある。`,
+        IMG_URLS.sauce,
+        "サイズ例"
+      ),
+      ruleRow(
+        "種類で倍率が変わる",
+        `ソース×1.00 / いかさま×1.40 / ゴールド×2.80 / レインボー×5.50。生焼けは ${CFG.TYPE.raw.penalty} 点。`,
+        IMG_URLS.gold,
+        "倍率例"
+      ),
+      ruleRow(
+        "連続で釣るとボーナス",
+        `2連続目から加点。2連続目で+${combo2}、3連続目で+${combo3}。最大は+${combo10}。空振り・横取り・生焼けで連続は途切れる。`,
+        IMG_URLS.rainbow,
+        "連続ボーナス"
+      ),
+      ruleRow(
+        "天敵に注意",
+        "観光客やイカにぶつかると、釣ったたこ焼きを奪われる。流れ（ダッシュ）でも横取りされることがある。",
+        IMG_URLS.squid,
+        "天敵"
+      ),
+      ruleRow(
+        "時間と延長",
+        `まず30秒。30秒時点で${CFG.EXT_SCORE}点以上なら60秒まで延長。45秒から鬼モード。`,
+        IMG_URLS.ika_tako,
+        "時間"
+      ),
+      ruleRow(
+        "スタート後は3・2・1",
+        "スタートを押すと、動いている画面の上にカウントダウン表示。最初に釣り竿を落とす位置を見ながら考えられる。",
+        IMG_URLS.pick,
+        "スタート"
+      )
     ].join("");
   }
 
   /* =========================
-     8) Game runtime state
+     8) Runtime state
   ========================= */
   let rafId = null;
   let timerId = null;
@@ -996,18 +998,21 @@
     hideCountdown();
   }
 
+  function detachPointer(){
+    const cvs = els.canvas;
+    if (cvs && onPointer){
+      cvs.removeEventListener("pointerdown", onPointer);
+      onPointer = null;
+    }
+  }
+
   function stopGame(){
     stopCountdown();
-
     if (timerId) clearInterval(timerId);
     timerId = null;
     if (rafId) cancelAnimationFrame(rafId);
     rafId = null;
-
-    const cvs = els.canvas;
-    if (cvs && onPointer) cvs.removeEventListener("pointerdown", onPointer);
-    onPointer = null;
-
+    detachPointer();
     STATE = null;
   }
 
@@ -1022,7 +1027,7 @@
   }
 
   /* =========================
-     9) Result render
+     9) Result
   ========================= */
   function resetSPUI(){
     SP_PENDING = null;
@@ -1042,7 +1047,6 @@
     if (SP_PENDING) saveSPToZukan(SP_PENDING);
     els.spBlock.style.display = "none";
   });
-
   els.spNoBtn.addEventListener("click", () => {
     if (SP_DECIDED) return;
     SP_DECIDED = true;
@@ -1088,22 +1092,25 @@
   }
 
   /* =========================
-     10) Countdown start
+     10) Game start / countdown
   ========================= */
   function startGameWithCountdown(){
     if (countdownRunning) return;
+    startGame({ withCountdown: true });
+  }
 
-    stopGame();
-    hideResult();
-    hideRules();
-    resetSPUI();
-
+  function startCountdownPhase(){
+    if (!STATE) return;
     countdownRunning = true;
+    STATE.phase = "countdown";
+    STATE.inputEnabled = false;
+    STATE.timerStarted = false;
+
     let n = CFG.COUNTDOWN_SEC;
     showCountdownNum(n);
 
     function tick(){
-      if (!countdownRunning) return;
+      if (!STATE || !countdownRunning) return;
 
       if (n > 1){
         n--;
@@ -1114,8 +1121,13 @@
 
       els.countNum.textContent = "GO!";
       countdownTimer = setTimeout(() => {
+        if (!STATE) return;
         stopCountdown();
-        startGame();
+        STATE.phase = "play";
+        STATE.inputEnabled = true;
+        STATE.timerStarted = true;
+        startTimerLoop();
+        flashText("START!", 650);
       }, 420);
     }
 
@@ -1123,12 +1135,14 @@
   }
 
   /* =========================
-     11) Game start
+     11) Main game
   ========================= */
-  function startGame(){
+  function startGame(opts = {}){
+    const withCountdown = !!opts.withCountdown;
+
     stopGame();
     hideResult();
-    hideRules();
+    if (withCountdown) hideRules();
     resetSPUI();
 
     const cvs = els.canvas;
@@ -1138,7 +1152,6 @@
     const W = CFG.W, H = CFG.H;
     const FLOOR_Y = Math.floor(H * CFG.FLOOR_Y_RATIO);
     const GIANT_DROP_START_Y = Math.floor(H * CFG.GIANT_DROP_START_Y_RATIO);
-
     const ENEMY_CENTER_Y = Math.floor(H * CFG.ENEMY_CENTER_Y_RATIO);
     const TOURIST_Y = ENEMY_CENTER_Y - Math.floor(CFG.ENEMY_GAP * 0.55);
     const SQUID_Y   = ENEMY_CENTER_Y + Math.floor(CFG.ENEMY_GAP * 0.55);
@@ -1166,9 +1179,15 @@
       dashTrail: [],
 
       ended: false,
+
+      phase: withCountdown ? "countdown" : "play",
+      inputEnabled: !withCountdown,
+      timerStarted: !withCountdown,
     };
 
-    function remaining(){ return Math.max(0, STATE.limit - STATE.elapsed); }
+    function remaining(){
+      return Math.max(0, STATE.limit - STATE.elapsed);
+    }
 
     for (let i=0; i<CFG.ITEM_COUNT; i++){
       const spec = buildTakoyakiSpec();
@@ -1179,8 +1198,8 @@
         y: baseY,
         alive: true,
         spec,
-        vx: (Math.random()<0.5?-1:1) * (CFG.ITEM_BASE_SPEED + rand(0,22)),
-        vxTarget: (Math.random()<0.5?-1:1) * (CFG.ITEM_BASE_SPEED + rand(0,50)),
+        vx: (Math.random()<0.5?-1:1) * (45 + rand(0,22)),
+        vxTarget: (Math.random()<0.5?-1:1) * (45 + rand(0,50)),
         bobAmp: rand(0.6,2.4),
         bobSpd: rand(3.0,7.8),
         bobPhase: rand(0, Math.PI*2),
@@ -1196,8 +1215,8 @@
       it.baseY = baseY;
       it.y = baseY;
       it.alive = true;
-      it.vx = (Math.random()<0.5?-1:1) * (CFG.ITEM_BASE_SPEED + rand(0,22));
-      it.vxTarget = (Math.random()<0.5?-1:1) * (CFG.ITEM_BASE_SPEED + rand(0,50));
+      it.vx = (Math.random()<0.5?-1:1) * (45 + rand(0,22));
+      it.vxTarget = (Math.random()<0.5?-1:1) * (45 + rand(0,50));
       it.bobAmp = rand(0.6,2.4);
       it.bobSpd = rand(3.0,7.8);
       it.bobPhase = rand(0,Math.PI*2);
@@ -1209,7 +1228,6 @@
       x: W*0.5,
       y: 18,
       phase: "idle",
-      hitR: 10,
       hasCatch: false,
       caught: null,
       giantDropArmed: false,
@@ -1237,20 +1255,26 @@
     };
 
     const dashY = Math.floor((TOURIST_Y + SQUID_Y) * 0.5) - 12;
-    STATE.dash = { active:false, x: W + 60, y: dashY, w: 54, h: 10, vx: -950, nextAt: nowMs() + (10*1000 + Math.random()*(15-10)*1000) };
+    STATE.dash = {
+      active:false,
+      x: W + 60,
+      y: dashY,
+      w: 54,
+      h: 10,
+      vx: -950,
+      nextAt: nowMs() + (10*1000 + Math.random()*(15-10)*1000)
+    };
 
     function spawnDash(now){
       const d = STATE.dash;
       d.active = true;
       d.x = W + d.w + 10;
       d.vx = -950 * (STATE.oni ? 1.15 : 1.0);
-
       const minS = STATE.oni ? 4 : 10;
       const maxS = STATE.oni ? 7 : 15;
       d.nextAt = now + (minS*1000 + Math.random()*(maxS-minS)*1000);
-
       STATE.dashTrail.length = 0;
-      flashText("⚠ 流れが来た", 520);
+      if (STATE.phase === "play") flashText("⚠ 流れが来た", 520);
     }
     function despawnDash(){
       const d = STATE.dash;
@@ -1259,6 +1283,7 @@
     }
 
     function startDropAt(x){
+      if (!STATE || !STATE.inputEnabled) return;
       if (remaining() <= 0) return;
       const h = STATE.hook;
       if (h.phase !== "idle") return;
@@ -1271,8 +1296,49 @@
       h.giantWillDrop = false;
     }
 
-    onPointer = (e) => { e.preventDefault(); startDropAt(pointerToCanvasX(e, cvs)); };
+    onPointer = (e) => {
+      e.preventDefault();
+      startDropAt(pointerToCanvasX(e, cvs));
+    };
     cvs.addEventListener("pointerdown", onPointer, { passive:false });
+
+    function startTimerLoop(){
+      if (timerId) clearInterval(timerId);
+      timerId = setInterval(() => {
+        if (!STATE || !STATE.timerStarted) return;
+        if (remaining() <= 0) return;
+
+        STATE.elapsed++;
+
+        if (STATE.elapsed === 30){
+          if (STATE.score >= CFG.EXT_SCORE){
+            STATE.extended = true;
+            STATE.limit = CFG.EXT_LIMIT;
+            flashText(`延長解放！${CFG.EXT_LIMIT}秒へ`, 1100);
+          } else {
+            STATE.limit = CFG.BASE_LIMIT;
+            flashText("終了！", 900);
+          }
+        }
+
+        if (STATE.extended && STATE.elapsed === CFG.ONI_AT){
+          STATE.oni = true;
+          STATE.oniReached = true;
+          STATE.freezeUntil = nowMs() + CFG.ONI_FREEZE_MS;
+          flashText("鬼モード突入！！", 1000);
+        }
+
+        setText("tfTime", Math.max(0, STATE.limit - STATE.elapsed));
+        setText("tfScore", STATE.score);
+        setText("tfCombo", STATE.combo);
+        setText("tfMiss", STATE.miss);
+
+        if (remaining() <= 0 && !STATE.ended){
+          STATE.ended = true;
+          setTimeout(() => showResultScreen(STATE.score, STATE.extended, STATE.oniReached), 120);
+        }
+      }, 1000);
+    }
 
     function drawBackground(now){
       const isOni = STATE.oni;
@@ -1336,7 +1402,6 @@
         const alpha = 0.12 + 0.22 * (1 - a);
         const wid = d.w + i * 14;
         const hi  = d.h + i * 2;
-
         const x = trail[i].x - i * 10;
         const y = d.y;
 
@@ -1363,7 +1428,7 @@
 
       if (h.hasCatch && h.caught){
         const s = h.caught.size.draw;
-        const ty = h.y + (24/2) + (s/2) - 2;
+        const ty = h.y + 12 + (s/2) - 2;
         const img = IMGS[h.caught.type.imgKey];
         drawImageCentered(ctx, img, h.x, ty, s);
       }
@@ -1374,9 +1439,15 @@
       ctx.font = "13px system-ui";
 
       const h = STATE.hook;
-      if (h.phase === "idle") ctx.fillText("タップ：好きな位置に糸を垂らす", 10, 18);
-      else if (h.phase === "drop") ctx.fillText("落下中…当てろ！", 10, 18);
-      else ctx.fillText("巻き上げ中！天敵に注意！", 10, 18);
+      if (STATE.phase === "countdown"){
+        ctx.fillText("開始前：落とす位置を見定めよう", 10, 18);
+      } else if (h.phase === "idle"){
+        ctx.fillText("タップ：好きな位置に糸を垂らす", 10, 18);
+      } else if (h.phase === "drop"){
+        ctx.fillText("落下中…当てろ！", 10, 18);
+      } else {
+        ctx.fillText("巻き上げ中！天敵に注意！", 10, 18);
+      }
 
       if (STATE.extended){
         ctx.fillStyle = "rgba(255,255,255,.75)";
@@ -1388,7 +1459,6 @@
         ctx.font = "12px system-ui";
         ctx.fillText("鬼モード", 60, 36);
       }
-
       if (STATE.combo >= 2){
         const cBonus = calcComboBonus(STATE.combo);
         ctx.fillStyle = "rgba(255,220,120,.95)";
@@ -1412,7 +1482,7 @@
         ctx.fillText("鬼モード突入", 110, 230);
       }
 
-      if (remaining() <= 0){
+      if (remaining() <= 0 && STATE.phase === "play"){
         ctx.fillStyle = "rgba(0,0,0,.65)";
         ctx.fillRect(0,0,W,H);
         ctx.fillStyle = "#fff";
@@ -1431,54 +1501,16 @@
       drawHUD(now);
     }
 
-    timerId = setInterval(() => {
-      if (remaining() <= 0) return;
-      STATE.elapsed++;
-
-      if (STATE.elapsed === 30){
-        if (STATE.score >= CFG.EXT_SCORE){
-          STATE.extended = true;
-          STATE.limit = CFG.EXT_LIMIT;
-          flashText(`延長解放！${CFG.EXT_LIMIT}秒へ`, 1100);
-        } else {
-          STATE.limit = CFG.BASE_LIMIT;
-          flashText("終了！", 900);
-        }
-      }
-
-      if (STATE.extended && STATE.elapsed === CFG.ONI_AT){
-        STATE.oni = true;
-        STATE.oniReached = true;
-        STATE.freezeUntil = nowMs() + CFG.ONI_FREEZE_MS;
-        flashText("鬼モード突入！！", 1000);
-      }
-
-      setText("tfTime", Math.max(0, STATE.limit - STATE.elapsed));
-      setText("tfScore", STATE.score);
-      setText("tfCombo", STATE.combo);
-      setText("tfMiss", STATE.miss);
-
-      if (remaining() <= 0 && !STATE.ended){
-        STATE.ended = true;
-        setTimeout(() => showResultScreen(STATE.score, STATE.extended, STATE.oniReached), 120);
-      }
-    }, 1000);
-
     let last = nowMs();
 
     function step(now){
+      if (!STATE) return;
       const dt = Math.min(0.033, (now - last) / 1000);
       last = now;
 
-      if (remaining() > 0){
-        if (STATE.freezeUntil && now < STATE.freezeUntil){
-          render(now);
-          rafId = requestAnimationFrame(step);
-          return;
-        }
+      const mul = STATE.oni ? CFG.ONI_SPEED_MUL : 1.0;
 
-        const mul = STATE.oni ? CFG.ONI_SPEED_MUL : 1.0;
-
+      if (!(STATE.freezeUntil && now < STATE.freezeUntil)){
         for (const it of STATE.items){
           if (!it.alive) continue;
 
@@ -1490,15 +1522,13 @@
               const flip = (Math.random() < 0.18) ? -1 : 1;
               const spd = 45 + rand(-18, 60);
               it.vxTarget = clamp(flip * (Math.random()<0.5?-1:1) * spd, -130, 130);
-
               it.bobAmp = clamp(it.bobAmp + rand(-0.6, 0.9), 0.5, 3.4);
               it.bobSpd = clamp(it.bobSpd + rand(-1.2, 1.4), 2.0, 9.0);
               it.nextMind = now + rand(350, 1300);
             }
 
             const dv = it.vxTarget - it.vx;
-            const stepV = clamp(dv, -240*dt, 240*dt);
-            it.vx += stepV;
+            it.vx += clamp(dv, -240*dt, 240*dt);
             it.vx += rand(-6, 6) * dt;
             it.vx = clamp(it.vx, -130, 130);
           }
@@ -1542,7 +1572,9 @@
           d.x += d.vx * dt;
           if (d.x + d.w < -40) despawnDash();
         }
+      }
 
+      if (STATE.phase === "play" && !STATE.ended){
         const h = STATE.hook;
 
         if (h.phase === "drop"){
@@ -1557,11 +1589,9 @@
                 h.hasCatch = true;
                 h.phase = "reel";
                 h.caught = it.spec;
-
                 h.giantDropArmed = (it.spec.sizeKey === "giant");
                 h.giantDropRolled = false;
                 h.giantWillDrop = false;
-
                 it.alive = false;
                 flashText(`HIT!（${it.spec.size.label}/${it.spec.type.label}）`, 750);
                 break;
@@ -1591,10 +1621,8 @@
             if (h.giantWillDrop && h.y < (GIANT_DROP_START_Y - 40)){
               const dead = STATE.items.find(v => !v.alive);
               if (dead) resetItem(dead);
-
               h.hasCatch = false;
               h.caught = null;
-
               STATE.combo = 0;
               STATE.miss++;
               flashText("巨大たこ焼き、落ちた！！", 950);
@@ -1606,13 +1634,18 @@
             const fishSize = h.caught.size.draw;
             const fishR = fishSize * 0.38;
             const fishX = h.x;
-            const fishY = h.y + (24/2) + (fishSize/2) - 2;
+            const fishY = h.y + 12 + (fishSize/2) - 2;
+
+            const t = STATE.tourist;
+            const s = STATE.squid;
+            const d = STATE.dash;
 
             if (circleRectHit(fishX, fishY, fishR, t.x, t.y - t.h/2, t.w, t.h)){
               const dead = STATE.items.find(v => !v.alive);
               if (dead) resetItem(dead);
               h.hasCatch = false; h.caught = null;
-              STATE.combo = 0; STATE.miss++; flashText("観光客に横取りされた！", 850);
+              STATE.combo = 0; STATE.miss++;
+              flashText("観光客に横取りされた！", 850);
               setHookIdle();
             }
 
@@ -1620,19 +1653,19 @@
               const dead = STATE.items.find(v => !v.alive);
               if (dead) resetItem(dead);
               h.hasCatch = false; h.caught = null;
-              STATE.combo = 0; STATE.miss++; STATE.score -= 40; flashText("イカに奪われた… -40", 950);
+              STATE.combo = 0; STATE.miss++; STATE.score -= 40;
+              flashText("イカに奪われた… -40", 950);
               setHookIdle();
             }
 
-            if (h.hasCatch && d.active){
-              if (circleRectHit(fishX, fishY, fishR, d.x, d.y - d.h/2, d.w, d.h)){
-                const dead = STATE.items.find(v => !v.alive);
-                if (dead) resetItem(dead);
-                h.hasCatch = false; h.caught = null;
-                STATE.combo = 0; STATE.miss++; flashText("観光客に横取りされた！", 850);
-                setHookIdle();
-                despawnDash();
-              }
+            if (h.hasCatch && d.active && circleRectHit(fishX, fishY, fishR, d.x, d.y - d.h/2, d.w, d.h)){
+              const dead = STATE.items.find(v => !v.alive);
+              if (dead) resetItem(dead);
+              h.hasCatch = false; h.caught = null;
+              STATE.combo = 0; STATE.miss++;
+              flashText("観光客に横取りされた！", 850);
+              setHookIdle();
+              despawnDash();
             }
           }
 
@@ -1680,14 +1713,18 @@
     }
 
     setHookIdle();
-    flashText("", 0);
-
     setText("tfScore", 0);
     setText("tfCombo", 0);
     setText("tfMiss", 0);
     setText("tfTime", CFG.BASE_LIMIT);
 
     rafId = requestAnimationFrame(step);
+
+    if (withCountdown){
+      startCountdownPhase();
+    } else {
+      startTimerLoop();
+    }
   }
 
   /* =========================
@@ -1725,6 +1762,19 @@
     IMGS = images;
     buildRuleVisuals();
     showRules();
+
+    // 初期背景として待機画面も動かしておく
+    startGame({ withCountdown: false });
+    stopGame();
+
+    // 静止ではなく、最初から海の画だけ描いておく
+    const c2 = els.canvas.getContext("2d");
+    c2.imageSmoothingEnabled = false;
+    c2.fillStyle = "#081425";
+    c2.fillRect(0,0,CFG.W,CFG.H);
+    c2.fillStyle = "#fff";
+    c2.font = "14px system-ui";
+    c2.fillText("スタートでゲーム開始", 110, 260);
   }
 
   /* =========================
@@ -1737,6 +1787,10 @@
     showRules();
     stopGame();
     resetSPUI();
+    setText("tfScore", 0);
+    setText("tfCombo", 0);
+    setText("tfMiss", 0);
+    setText("tfTime", "--");
   });
 
   els.againBtn.addEventListener("click", () => {
@@ -1744,6 +1798,10 @@
     showRules();
     stopGame();
     resetSPUI();
+    setText("tfScore", 0);
+    setText("tfCombo", 0);
+    setText("tfMiss", 0);
+    setText("tfTime", "--");
   });
 
   els.rulesOverlay.addEventListener("click", (e) => {
