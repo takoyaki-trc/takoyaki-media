@@ -54,7 +54,7 @@
   };
 
   // ✅ GAS WebApp URL（/execまで）
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzomUorzSZoN8NWzNOrihLHvYu8ugqgP2RlRQuq5NA2Hww-0axAJmmAPaaQgmMFBjGT/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbw3FShwFkw5mdlUUBcnZXjcqIBmB-OoNEAf-XoYdDqhJjMS0CtcxVa57FURofzdeoZ1/exec";
 
   // ✅ GAS API KEY（あなたのGAS側 CONFIG.API_KEY と同じにする）
   const GAS_API_KEY = "takopi-serial-2026";
