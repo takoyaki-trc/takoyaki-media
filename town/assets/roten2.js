@@ -1,20 +1,15 @@
 /* =========================================================
-   roten.js（たこぴのお店 / 新GAS seed_token方式・安定版）
+   roten.js（たこぴのお店 / collabs.js分離対応・完全版）
    ✅ 資材在庫: tf_v1_inv（seed/water/fert）= ファームと共通
    ✅ オクト: roten_v1_octo
    ✅ みくじ/公開記念：既存維持
    ✅ シリアル：新GAS方式（seed_token）
       - redeem -> seed_token（UUID）を受け取り localStorage(tf_v1_seedtokens) に保存
-      - roten では「コラボ別のタネ」所持数として seedtokens の “未使用(ISSUED)” 本数を表示 ✅
-      - ★沼回避：inv.seed[各seedId] を “未使用tokens数で自動同期（表示/互換）” ✅
-        → takofarm.js が inv側を見てても反映される（コラボ別に反映）
-
-   ✅ 今回の要望（反映）
-      - タネ右の「単価ー（シリアル）」は削除
-      - コラボ期間の末尾「（期間外）」は削除（期間は表示OK）
-      - 「BOOTH終了」表記は廃止 → 期間外でもBOOTHリンクボタンを表示
-      - 効果：限定カード確定 は削除
-      - それ以外は変更しない
+      - roten では「コラボ別のタネ」所持数として seedtokens の “未使用(ISSUED)” 本数を表示
+      - inv.seed[各seedId] を “未使用tokens数で自動同期”
+   ✅ collabs.js からコラボ定義を読む
+   ✅ コラボ商品カード内のシリアル入力欄は表示しない
+   ✅ 上部の共通シリアル入力だけを使う
 ========================================================= */
 (() => {
   "use strict";
@@ -26,87 +21,30 @@
     mikujiDate: "roten_v1_mikuji_date",
     launchGift: "roten_v1_launch_gift_claimed",
     log: "roten_v1_log",
-
-    // ✅ seed_token保管（redeemで増える）
     seedTokens: "tf_v1_seedtokens",
-
-    // 端末識別（必要なら将来使う）
     deviceId: "tf_v1_device_id",
   };
 
-  // ✅ 新GAS（あなたの確定版）
   const GAS_URL =
     "https://script.google.com/macros/s/AKfycbw3FShwFkw5mdlUUBcnZXjcqIBmB-OoNEAf-XoYdDqhJjMS0CtcxVa57FURofzdeoZ1/exec";
   const GAS_KEY = "takopi-serial-2026";
 
-  // =========================================================
-  // ✅✅✅ コラボが複数ある前提：collabIdごとにタネを分ける
-  // - collabId（GASが返すID）と、inv側のseedIdを対応させる
-  // - ここに追記するだけで露店表示 & 同期が増える
-  // - ✅ boothUrl / periodStart / periodEnd を追加（表示と期限判定に使用）
-  // =========================================================
   const BOOTH_SHOP_URL = "https://takoyaki-toreka.booth.pm/";
 
-  const COLLAB_SEEDS = [
-    {
-      collabId: "col_gratan_2026",
-      seedId: "seed_col_gratan_2026",
-      name: "【コラボ】ぐらたんのタネ",
-      img: "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col1.png",
-      hidden: false,
-
-      boothUrl: "https://takoyaki-toreka.booth.pm/item_lists/m7YToKe5",
-      // ✅ ぐらたん：3/20〜4/19
-      periodStart: "2026-03-20",
-      periodEnd: "2026-04-19",
-    },
-    {
-      collabId: "col_ghost_2026",
-      seedId: "seed_col_ghost_2026",
-      name: "【コラボ】GHOSTのタネ",
-      img: "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/col2.png",
-      hidden: false,
-
-      boothUrl: "https://takoyaki-toreka.booth.pm/item_lists/m7YToKe5",
-      // ✅ GHOST：4/20〜5/19
-      periodStart: "2026-04-20",
-      periodEnd: "2026-05-19",
-    },
-
-    // ✅ HOLD：今は表示しない（＆同期待機＝0固定）
-    {
-      collabId: "col_hold_2026",
-      seedId: "seed_col_hold_2026",
-      name: "【コラボ】HOLDのタネ",
-      img: "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/hold.png",
-      hidden: true,
-
-      boothUrl: "",
-      periodStart: "",
-      periodEnd: "",
-    },
-
-    {
-      collabId: "ann_2026",
-      seedId: "seed_ann_2026",
-      name: "【SP】アニバーサリーのタネ",
-      img: "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/tane/anv1.png",
-      hidden: false,
-
-      boothUrl: "https://takoyaki-toreka.booth.pm/item_lists/m7YToKe5",
-      // ✅ アニバーサリー：3/10〜5/31
-      periodStart: "2026-03-10",
-      periodEnd: "2026-05-31",
-    },
-  ];
+  // =========================================================
+  // ✅ collabs.js から読む
+  // =========================================================
+  const COLLAB_SEEDS = Array.isArray(window.TAKOYAKI_COLLABS)
+    ? window.TAKOYAKI_COLLABS.slice()
+    : [];
 
   const COLLAB_BY_ID = Object.fromEntries(
     COLLAB_SEEDS.map((x) => [String(x.collabId), x])
   );
 
-  // ✅ 今は止めたいコラボがあるならここでブロック（＝同期0固定 + token内訳にも出さない）
   function isBlockedCollabId(collabId) {
-    return String(collabId) === "col_hold_2026"; // ✅ HOLDは今は止める
+    const def = COLLAB_BY_ID[String(collabId || "")];
+    return !!def?.blocked;
   }
 
   // ---------- utils ----------
@@ -130,6 +68,7 @@
       return fallback;
     }
   }
+
   function saveJSON(key, obj) {
     localStorage.setItem(key, JSON.stringify(obj));
   }
@@ -137,9 +76,11 @@
   function getOcto() {
     return Number(localStorage.getItem(LS.octo) || 0);
   }
+
   function setOcto(v) {
     localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v) || 0))));
   }
+
   function addOcto(delta) {
     setOcto(getOcto() + Number(delta || 0));
   }
@@ -147,6 +88,7 @@
   function invDefault() {
     return { ver: 1, seed: {}, water: {}, fert: {} };
   }
+
   function loadInv() {
     const inv = loadJSON(LS.inv, invDefault());
     inv.seed = inv.seed || {};
@@ -154,6 +96,7 @@
     inv.fert = inv.fert || {};
     return inv;
   }
+
   function saveInv(inv) {
     saveJSON(LS.inv, inv);
   }
@@ -175,61 +118,69 @@
     saveJSON(LS.log, a.slice(0, 80));
   }
 
-  // ✅ seed_token保管（redeemで増える）
+  // =========================================================
+  // ✅ seed_token保管
+  // =========================================================
   function seedTokensDefault() {
-    return { ver: 1, tokens: [] }; // tokens: [{token, collabId, issuedAt, status?}]
+    return { ver: 1, tokens: [] };
   }
+
   function loadSeedTokens() {
     const st = loadJSON(LS.seedTokens, seedTokensDefault());
     if (!st || typeof st !== "object") return seedTokensDefault();
     st.tokens = Array.isArray(st.tokens) ? st.tokens : [];
     return st;
   }
+
   function saveSeedTokens(st) {
     saveJSON(LS.seedTokens, st);
   }
 
   // =========================================================
   // ✅ コラボ期間判定
-  // - start/end は YYYY-MM-DD
-  // - end は「当日いっぱい」まで有効（23:59:59.999）
   // =========================================================
   function parseYMDToLocalDate(ymd) {
     const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return null;
-    const y = Number(m[1]),
-      mo = Number(m[2]),
-      d = Number(m[3]);
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
     return new Date(y, mo - 1, d, 0, 0, 0, 0);
   }
+
   function endOfDay(dt) {
     if (!dt) return null;
     return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999);
   }
+
   function fmtYMDSlash(ymd) {
     const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return String(ymd || "");
     return `${m[1]}/${m[2]}/${m[3]}`;
   }
+
   function getCollabWindow(collabId) {
     const def = COLLAB_BY_ID[String(collabId || "")];
     if (!def) return { ok: false, active: false, label: "", start: null, end: null };
+
     const s = parseYMDToLocalDate(def.periodStart);
     const e = endOfDay(parseYMDToLocalDate(def.periodEnd));
     const label =
       def.periodStart && def.periodEnd
         ? `${fmtYMDSlash(def.periodStart)}〜${fmtYMDSlash(def.periodEnd)}`
         : "";
-    if (!s || !e) return { ok: true, active: true, label, start: s, end: e }; // 期間未設定は常時扱い
+
+    if (!s || !e) {
+      return { ok: true, active: true, label, start: s, end: e };
+    }
+
     const now = new Date();
     const active = now >= s && now <= e;
     return { ok: true, active, label, start: s, end: e };
   }
 
   // =========================================================
-  // ✅✅✅ 所持数＝未使用(ISSUED)だけ数える
-  // - takofarm.js が token.status を "PLANTED" / "HARVESTED" にする前提
-  // - statusが無い古いtokenは "ISSUED" 扱いにして互換維持
+  // ✅ 未使用 token 集計
   // =========================================================
   function isIssuedToken(t) {
     const s = String(t?.status || "").toUpperCase();
@@ -245,23 +196,21 @@
       if (isBlockedCollabId(c)) continue;
       map[c] = (map[c] || 0) + 1;
     }
-    return map; // { collabId: count }
+    return map;
   }
 
-  // ✅ ★沼回避：inv.seed[各コラボseedId] を “未使用token本数”で同期（表示/互換）
   function syncCollabSeedsToInv() {
     const inv = loadInv();
     inv.seed = inv.seed || {};
 
     const by = countSeedTokensByCollab();
 
-    // ✅ コラボ定義している分は必ずキー生やし＆上書き同期（ズレ固定化防止）
     for (const def of COLLAB_SEEDS) {
       const cid = String(def.collabId);
       const sid = String(def.seedId);
 
       if (isBlockedCollabId(cid)) {
-        inv.seed[sid] = 0; // ✅ 今は0固定
+        inv.seed[sid] = 0;
         continue;
       }
       inv.seed[sid] = Number(by[cid] || 0);
@@ -316,10 +265,6 @@
     },
   ];
 
-  // ✅ コラボ別タネ（購入不可 / シリアル限定）
-  // ✅ HOLDは「hidden:true & blocked」なので表示から外す
-  // ✅ boothUrl / periodLabel / collabId を持たせる
-  // ✅ fx（効果）は空にする（表示も消える）
   const SEEDS_COLLAB = COLLAB_SEEDS.filter(
     (c) => !c.hidden && !isBlockedCollabId(c.collabId)
   ).map((c) => {
@@ -329,10 +274,9 @@
       name: String(c.name),
       desc: "上のシリアル入力でタネが増える。\n畑で植えるとカードが出る。",
       img: String(c.img),
-      fx: "", // ✅ 効果：限定カード確定 → 削除
+      fx: "",
       tag: "シリアル限定",
       buyable: false,
-
       boothUrl: String(c.boothUrl || ""),
       period: String(win.label || ""),
       active: !!win.active,
@@ -451,18 +395,16 @@
         desc: s.desc,
         fx: s.fx,
         img: s.img,
-
-        // ✅ 追加（コラボ表示用）
         boothUrl: s.boothUrl || "",
         period: s.period || "",
         collabId: s.collabId || "",
-        active: s.active !== false, // コラボ以外はtrue扱い
-
+        active: s.active !== false,
         price: isBuyable ? PRICE[s.id] ?? 18 : null,
         buyable: !!isBuyable,
         tag: s.tag ? s.tag : isBuyable ? "販売" : "シリアル限定",
       });
     }
+
     for (const w of WATERS) {
       goods.push({
         kind: "water",
@@ -476,6 +418,7 @@
         tag: "販売",
       });
     }
+
     for (const f of FERTS) {
       goods.push({
         kind: "fert",
@@ -489,8 +432,10 @@
         tag: "販売",
       });
     }
+
     return goods;
   }
+
   const GOODS = buildGoods();
 
   const SAY = [
@@ -501,7 +446,7 @@
   ];
 
   // =========================================================
-  // ✅ modal
+  // modal
   // =========================================================
   function getModalEls() {
     return {
@@ -512,6 +457,7 @@
       body: document.getElementById("modalBody"),
     };
   }
+
   function forceModalStyle(modal) {
     if (!modal) return;
     modal.style.setProperty("position", "fixed", "important");
@@ -520,6 +466,7 @@
     modal.style.setProperty("display", "block", "important");
     modal.style.setProperty("pointer-events", "auto", "important");
   }
+
   function openModal(title, html) {
     const { modal, title: ttl, body } = getModalEls();
     if (!modal || !ttl || !body) {
@@ -538,6 +485,7 @@
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
   }
+
   function closeModal() {
     const { modal, body } = getModalEls();
     if (!modal) return;
@@ -552,6 +500,7 @@
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
   }
+
   function wireModalClose() {
     const { bg, x } = getModalEls();
     bg?.addEventListener("click", closeModal);
@@ -565,6 +514,7 @@
   function ownedCount(inv, kind, id) {
     return Number((inv[kind] || {})[id] || 0);
   }
+
   function totalKind(inv, kind) {
     const bucket = inv[kind] || {};
     let total = 0;
@@ -578,14 +528,12 @@
     inv.water = inv.water || {};
     inv.fert = inv.fert || {};
 
-    // ✅ 全商品キーをinvに生やす（表示してる分）
     for (const g of GOODS) {
       if (!(g.id in inv[g.kind])) {
         inv[g.kind][g.id] = 0;
       }
     }
 
-    // ✅ 表示しない（hidden/blocked）コラボseedもinvにキーだけは生やす（ただし同期で0固定）
     for (const def of COLLAB_SEEDS) {
       const sid = String(def.seedId);
       if (!(sid in inv.seed)) inv.seed[sid] = 0;
@@ -602,7 +550,6 @@
   }
 
   function refreshHUD() {
-    // ✅ 先に同期（これが沼回避）
     syncCollabSeedsToInv();
 
     const inv = ensureInvKeys();
@@ -631,7 +578,7 @@
   }
 
   // =========================================================
-  // ✅ toast
+  // toast
   // =========================================================
   function ensureToast() {
     let el = $("#toast");
@@ -643,6 +590,7 @@
     }
     return el;
   }
+
   function forceToastStyle(el) {
     el.style.setProperty("position", "fixed", "important");
     el.style.setProperty("left", "12px", "important");
@@ -662,11 +610,13 @@
     el.style.setProperty("backdrop-filter", "blur(6px)", "important");
     el.style.setProperty("-webkit-backdrop-filter", "blur(6px)", "important");
   }
+
   function toastHype(text, opt = {}) {
     const el = ensureToast();
     forceToastStyle(el);
     const kind = opt.kind || "info";
     el.textContent = text || "";
+
     if (kind === "good") {
       el.style.setProperty("border", "1px solid rgba(159,255,168,.35)", "important");
       el.style.setProperty(
@@ -685,16 +635,19 @@
       el.style.setProperty("border", "1px solid rgba(255,255,255,.16)", "important");
       el.style.setProperty("box-shadow", "0 18px 44px rgba(0,0,0,.55)", "important");
     }
+
     clearTimeout(toastHype._t);
     el.style.setProperty("transition", "none", "important");
     el.style.setProperty("opacity", "0", "important");
     el.style.setProperty("transform", "translateY(10px) scale(.98)", "important");
     void el.offsetHeight;
+
     requestAnimationFrame(() => {
       el.style.setProperty("transition", "opacity .16s ease, transform .18s ease", "important");
       el.style.setProperty("opacity", "1", "important");
       el.style.setProperty("transform", "translateY(0) scale(1)", "important");
     });
+
     toastHype._t = setTimeout(() => {
       el.style.setProperty("opacity", "0", "important");
       el.style.setProperty("transform", "translateY(10px) scale(.98)", "important");
@@ -702,7 +655,7 @@
   }
 
   // =========================================================
-  // ✅ CSS注入（BOOTHボタン / 期間表示 / 期限切れ見た目）
+  // CSS注入
   // =========================================================
   function injectBuyRowCSS() {
     if ($("#_roten_buyrow_css")) return;
@@ -718,7 +671,6 @@
         white-space: nowrap;
       }
 
-      /* ✅ BOOTHリンク（タグと同サイズ / 赤背景） */
       .boothBtn{
         display:inline-flex; align-items:center; justify-content:center;
         padding: 3px 8px;
@@ -740,17 +692,6 @@
       .boothBtn:active{ transform: translateY(0); }
       .boothBtn:hover{ filter: brightness(1.02); }
 
-      /* （互換のため残すが、今回“BOOTH終了”は使わない） */
-      .boothBtn.is-disabled{
-        background: rgba(255,255,255,.16);
-        border-color: rgba(255,255,255,.18);
-        color: rgba(255,255,255,.72);
-        pointer-events: none;
-        cursor: default;
-        filter: none;
-      }
-
-      /* ✅ 期間表示：目立つ色（購入不可の横に置く） */
       .periodChip{
         display:inline-flex;
         margin-left: 8px;
@@ -769,21 +710,6 @@
         color: rgba(255,154,165,.95);
       }
 
-      /* ✅ 親切案内（BOOTH→シリアル） */
-      .serialHint{
-        margin-top: 6px;
-        font-size: 12px;
-        font-weight: 900;
-        color: rgba(255,154,165,.95);
-        text-align: right;
-        white-space: nowrap;
-      }
-      .serialHint small{
-        font-weight: 900;
-        color: rgba(255,255,255,.72);
-      }
-
-      /* ✅ 期限外カード：全体ちょい薄く（所持トークンが残ってても見つけやすく） */
       .good.is-expired{
         opacity: .78;
       }
@@ -836,12 +762,13 @@
         text-align:right; white-space: nowrap;
       }
       .good .priceline b{ color: rgba(255,255,255,.92); }
-      .good .buyhint{ display:none !important; }
 
       #btnOpenInv{ display:none !important; }
       #chipBookOwned, #chipBookDup{ display:none !important; }
 
-      #chipSeed, #chipWater, #chipFert{ cursor:pointer; user-select:none; -webkit-tap-highlight-color: transparent; }
+      #chipSeed, #chipWater, #chipFert{
+        cursor:pointer; user-select:none; -webkit-tap-highlight-color: transparent;
+      }
       #chipSeed:active, #chipWater:active, #chipFert:active{ transform: translateY(1px); }
 
       .roten-about-wrap{
@@ -896,8 +823,7 @@
   // ---------- render goods ----------
   let currentKind = "seed";
 
-    function renderGoods() {
-    // ✅ 表示前にも同期
+  function renderGoods() {
     syncCollabSeedsToInv();
 
     const inv = ensureInvKeys();
@@ -911,7 +837,6 @@
         const own = ownedCount(inv, g.kind, g.id);
         const badge = g.tag ? `<span class="miniTag">${escapeHTML(g.tag)}</span>` : "";
 
-        // ✅ コラボ期間判定（collabIdがあるseedのみ）
         let active = true;
         let periodLabel = "";
         if (!g.buyable && g.collabId) {
@@ -920,18 +845,14 @@
           periodLabel = g.period || win.label || "";
         }
 
-        // ✅ 非売品（シリアル限定）なら BOOTHリンクボタンをタイトル横に出す
         const boothBtn =
           !g.buyable && g.boothUrl
             ? `<a class="boothBtn" href="${escapeAttr(g.boothUrl)}" target="_blank" rel="noopener">BOOTHへ</a>`
             : "";
 
         const canBuy = !!g.buyable;
-
-        // ✅ 価格表示：販売品だけ
         const priceLine = canBuy ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>` : "";
 
-        // ✅ 期間表示
         const periodChip =
           !canBuy && periodLabel
             ? `<span class="periodChip ${active ? "" : "is-off"}">期間：${escapeHTML(periodLabel)}</span>`
@@ -953,7 +874,6 @@
           return escapeHTML(raw).replace(/\n/g, "<br>");
         })();
 
-        // ✅ 通常商品だけ購入UIを出す
         const buyBar = canBuy
           ? `
         <div class="buybar">
@@ -968,7 +888,6 @@
       `
           : ``;
 
-        // ✅ 非売品（コラボ）は下段そのものを出さない
         const bottomRow = canBuy
           ? `
         <div class="good-row">
@@ -1003,8 +922,6 @@
       const id = card.getAttribute("data-id");
       const item = GOODS.find((x) => x.kind === kind && x.id === id);
       if (!item) return;
-
-      // ✅ 非売品（コラボ種）は購入配線しない
       if (!item.buyable) return;
 
       const btn = $(".buybtn", card);
@@ -1055,7 +972,8 @@
       });
     });
   }
-  // ✅ XSS対策（innerHTML用の最低限）
+
+  // ✅ XSS対策
   function escapeHTML(s) {
     s = String(s ?? "");
     return s.replace(/[&<>"']/g, (c) =>
@@ -1068,14 +986,13 @@
       }[c])
     );
   }
+
   function escapeAttr(s) {
-    // 属性向け（かなり雑でOK：最低限）
     return escapeHTML(String(s ?? "")).replace(/`/g, "&#96;");
   }
 
   // =========================================================
-  // ✅ 内訳モーダル（seedは表示中のタネだけ）
-  // - HOLDは hidden/blocked なので一覧にも内訳にも出ない
+  // 内訳モーダル
   // =========================================================
   function openBreakdownModal(kindKey) {
     syncCollabSeedsToInv();
@@ -1150,8 +1067,7 @@
   }
 
   // =========================================================
-  // ✅ シリアル（新GAS方式）
-  // - 上部の入力（#serialInlineInput/#serialInlineBtn）で完結
+  // シリアル
   // =========================================================
   function getDeviceId() {
     let id = localStorage.getItem(LS.deviceId);
@@ -1169,6 +1085,7 @@
       cache: "no-store",
     });
     if (!res.ok) throw new Error("通信エラー: HTTP " + res.status);
+
     const txt = await res.text();
     let json;
     try {
@@ -1190,7 +1107,6 @@
     });
   }
 
-  // ✅ redeem結果（tokens）を seedTokens に追加保存（重複排除つき）
   function applyRedeemTokens(tokens) {
     const st = loadSeedTokens();
     const now = Date.now();
@@ -1203,7 +1119,6 @@
       st.tokens.push({ token, collabId, issuedAt: now, status: "ISSUED" });
     }
 
-    // 重複排除
     const seen = new Set();
     st.tokens = st.tokens.filter((x) => {
       if (!x || !x.token) return false;
@@ -1213,16 +1128,11 @@
     });
 
     saveSeedTokens(st);
-
     const added = st.tokens.length - before;
-
-    // ✅ inv側も同期して “必ず反映される” 状態にする
     syncCollabSeedsToInv();
-
     return { total: st.tokens.length, added };
   }
 
-  // （HTMLにインライン入力がある場合だけ活かす：無ければ何もしない）
   function wireSerialInline() {
     const input = $("#serialInlineInput");
     const btn = $("#serialInlineBtn");
@@ -1269,7 +1179,7 @@
   }
 
   // =========================================================
-  // ✅ 《タネ、ミズ、ヒリョウについて》モーダル
+  // 説明モーダル
   // =========================================================
   function openAboutModal() {
     openModal(
@@ -1330,6 +1240,7 @@
       btn.textContent = "タネ/ミズ/ヒリョウについて";
       document.body.appendChild(btn);
     }
+
     btn.textContent = "タネ/ミズ/ヒリョウについて";
     btn.classList.add("roten-about-btn");
 
@@ -1345,6 +1256,7 @@
       wrap.id = "_roten_about_wrap";
       wrap.className = "roten-about-wrap";
     }
+
     wrap.innerHTML = "";
     wrap.appendChild(btn);
 
@@ -1354,11 +1266,12 @@
       const app = $("#rotenApp") || document.body;
       app.insertBefore(wrap, app.firstChild);
     }
+
     wrap.style.setProperty("margin-top", "0", "important");
   }
 
   // =========================================================
-  // ✅ たこ焼きみくじ（既存そのまま）
+  // たこ焼きみくじ
   // =========================================================
   const OMKUJI = [
     {
@@ -1518,7 +1431,7 @@
   }
 
   // =========================================================
-  // ✅ 公開記念プレゼント（既存そのまま）
+  // 公開記念プレゼント
   // =========================================================
   function openLaunchPresent() {
     const claimed = localStorage.getItem(LS.launchGift) === "1";
@@ -1594,7 +1507,7 @@
   }
 
   // =========================================================
-  // ✅ タブ/ボタン配線
+  // タブ/ボタン配線
   // =========================================================
   function wireTabs() {
     $$(".goods-tab").forEach((btn) => {
@@ -1652,10 +1565,7 @@
     ensureToast();
     injectBuyRowCSS();
     ensureInvKeys();
-
-    // ✅ 起動時に必ず同期（これで “反映されない” が起きにくい）
     syncCollabSeedsToInv();
-
     placeAboutButton();
 
     setTakopiSayRandom();
