@@ -896,8 +896,8 @@
   // ---------- render goods ----------
   let currentKind = "seed";
 
-  function renderGoods() {
-    // ✅ 表示前にも同期（ズレ固定を防ぐ）
+    function renderGoods() {
+    // ✅ 表示前にも同期
     syncCollabSeedsToInv();
 
     const inv = ensureInvKeys();
@@ -920,29 +920,28 @@
           periodLabel = g.period || win.label || "";
         }
 
-        // ✅ 非売品（シリアル限定）なら BOOTHリンクボタンをタグの右に出す
-        // ✅ 期間外でもリンクボタン表示OK（= BOOTH終了は使わない）
+        // ✅ 非売品（シリアル限定）なら BOOTHリンクボタンをタイトル横に出す
         const boothBtn =
           !g.buyable && g.boothUrl
-            ? `<a class="boothBtn" href="${escapeAttr(g.boothUrl)}" target="_blank" rel="noopener">BOOTH</a>`
+            ? `<a class="boothBtn" href="${escapeAttr(g.boothUrl)}" target="_blank" rel="noopener">BOOTHへ</a>`
             : "";
 
         const canBuy = !!g.buyable;
 
-        // ✅ 価格表示：販売品だけ出す（シリアル品の「単価—（シリアル）」は削除）
+        // ✅ 価格表示：販売品だけ
         const priceLine = canBuy ? `<div class="priceline">単価 <b>${g.price}</b> オクト</div>` : "";
 
-        // ✅ 期間表示（末尾の「（期間外）」は付けない）
+        // ✅ 期間表示
         const periodChip =
           !canBuy && periodLabel
-            ? `<span class="periodChip ${active ? "" : "is-off"}">コラボ期間：${escapeHTML(periodLabel)}</span>`
+            ? `<span class="periodChip ${active ? "" : "is-off"}">期間：${escapeHTML(periodLabel)}</span>`
             : "";
 
         const descHtml = (() => {
           const raw = String(g.desc || "");
           const lines = raw.split("\n");
+
           if (!canBuy && lines.length) {
-            // 1行目（購入不可…）の後ろに期間を差し込む
             const first = escapeHTML(lines[0]);
             const rest = lines
               .slice(1)
@@ -950,10 +949,11 @@
               .join("<br>");
             return `${first}${periodChip}${rest ? "<br>" + rest : ""}`;
           }
+
           return escapeHTML(raw).replace(/\n/g, "<br>");
         })();
 
-        // ✅ コラボ種の「シリアルボタン」は無し（上部入力のみ）
+        // ✅ 通常商品だけ購入UIを出す
         const buyBar = canBuy
           ? `
         <div class="buybar">
@@ -966,20 +966,16 @@
         </div>
         ${priceLine}
       `
-          : `
-        <div class="buybar">
-          <div style="opacity:.78; font-size:12px; text-align:right; flex:1; white-space:nowrap;">
-            上のシリアル入力で増える…たこ。
-          </div>
-        </div>
+          : ``;
 
-        <div class="serialHint">
-          ✅ BOOTHでカードを購入すると <b>シリアルコード</b> がもらえるよ
-          <small>（入力 → タネ増える）</small>
+        // ✅ 非売品（コラボ）は下段そのものを出さない
+        const bottomRow = canBuy
+          ? `
+        <div class="good-row">
+          <div class="good-buy">${buyBar}</div>
         </div>
-
-        ${priceLine}
-      `;
+      `
+          : ``;
 
         return `
         <article class="good ${!canBuy && !active ? "is-expired" : ""}" data-kind="${escapeAttr(
@@ -996,9 +992,7 @@
               <div class="good-fx">${g.fx ? `効果：<b>${escapeHTML(g.fx)}</b>` : ""}</div>
             </div>
           </div>
-          <div class="good-row">
-            <div class="good-buy">${buyBar}</div>
-          </div>
+          ${bottomRow}
         </article>
       `;
       })
@@ -1010,7 +1004,7 @@
       const item = GOODS.find((x) => x.kind === kind && x.id === id);
       if (!item) return;
 
-      // ✅ 非売品（コラボ種）はボタン類が無いので購入配線もしない
+      // ✅ 非売品（コラボ種）は購入配線しない
       if (!item.buyable) return;
 
       const btn = $(".buybtn", card);
@@ -1022,6 +1016,7 @@
         const v = qtyIn ? Number(qtyIn.value || 1) : 1;
         return clamp(v, 1, 99);
       }
+
       function setQty(v) {
         if (!qtyIn) return;
         qtyIn.value = String(clamp(v, 1, 99));
@@ -1032,11 +1027,13 @@
         e.stopPropagation();
         setQty(getQty() - 1);
       });
+
       plus?.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
         setQty(getQty() + 1);
       });
+
       qtyIn?.addEventListener("input", () => {
         setQty(getQty());
       });
@@ -1051,13 +1048,13 @@
           toastHype("💥 オクトが足りない…たこ。", { kind: "bad" });
           return;
         }
+
         toastHype(`✨ 購入完了！「${item.name}」×${r.qty}（-${r.total}オクト）✨`, {
           kind: "good",
         });
       });
     });
   }
-
   // ✅ XSS対策（innerHTML用の最低限）
   function escapeHTML(s) {
     s = String(s ?? "");
