@@ -35,6 +35,7 @@
 
   *{ box-sizing:border-box; }
   html,body{ min-height:100%; }
+
   body{
     margin:0;
     font-family:"DotGothic16","MS Gothic",sans-serif;
@@ -350,18 +351,18 @@
       inset 0 0 0 2px rgba(255,248,210,.32),
       0 12px 24px rgba(0,0,0,.20);
     background:
-    url("https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/kami.png") center/cover no-repeat;
-}
+      url("https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/kami.png") center/cover no-repeat;
+  }
 
   .god-plot::before{
     content:"";
     position:absolute;
     inset:0;
     background:
-      radial-gradient(circle at 50% 46%, rgba(255,255,230,.45) 0 8%, transparent 18%),
-      linear-gradient(transparent 0 94%, rgba(255,255,255,.15) 94% 100%);
+      radial-gradient(circle at 50% 46%, rgba(255,255,230,.35) 0 8%, transparent 18%),
+      linear-gradient(transparent 0 94%, rgba(255,255,255,.12) 94% 100%);
     background-size:100% 100%, 100% 4px;
-    opacity:.55;
+    opacity:.38;
     pointer-events:none;
   }
 
@@ -377,6 +378,9 @@
     font-size:18px;
     font-weight:900;
     color:#4b2f03;
+    text-shadow:
+      0 1px 0 rgba(255,255,255,.35),
+      0 0 10px rgba(255,248,210,.18);
   }
 
   .god-plot-inner.ready{
@@ -1006,7 +1010,7 @@
       <div class="panel-header">神の畑</div>
       <div class="god-body">
         <div class="god-note">
-          月間称号によって授かった神のタネだけを植えられます。<br>
+          月間報酬で授かった神のタネだけを植えられます。<br>
           この畑は枯れません。
         </div>
 
@@ -1049,7 +1053,7 @@
     </div>
 
     <div class="subinfo" id="monthInfo">
-      月が変わった最初のアクセス時に前月の称号を確定します
+      月が変わった最初のアクセス時に前月の報酬を確定します
     </div>
 
     <div class="ornament-bottom"><div class="line"></div></div>
@@ -1120,15 +1124,32 @@
   const HISTORY_LIMIT = 24;
 
   /* =========================================================
+     threshold
+  ========================================================= */
+  const NORMAL_THRESHOLDS = {
+    harvest: 500,
+    sales: 50000,
+    fishing: 2000,
+    tower: 30
+  };
+
+  const GOD_THRESHOLDS = {
+    harvest: 3000,
+    sales: 300000,
+    fishing: 5000,
+    tower: 50
+  };
+
+  /* =========================================================
      data
   ========================================================= */
   const IMG_BASE = "./assets/images/god/";
 
   const GOD_SEEDS = [
-    { id:"seed_god_yaki",  name:"焼き神のタネ", short:"焼き神", icon:"🔥" },
-    { id:"seed_god_shop",  name:"露店神のタネ", short:"露店神", icon:"🪙" },
-    { id:"seed_god_fish",  name:"釣り神のタネ", short:"釣り神", icon:"🎣" },
-    { id:"seed_god_tower", name:"塔神のタネ",   short:"塔神",   icon:"🗼" }
+    { id:"seed_god_yaki",  name:"焼き神のタネ", short:"焼き神", icon:"🔥", statKey:"harvest" },
+    { id:"seed_god_shop",  name:"露店神のタネ", short:"露店神", icon:"🪙", statKey:"sales" },
+    { id:"seed_god_fish",  name:"釣り神のタネ", short:"釣り神", icon:"🎣", statKey:"fishing" },
+    { id:"seed_god_tower", name:"塔神のタネ",   short:"塔神",   icon:"🗼", statKey:"tower" }
   ];
 
   const TITLE_TO_SEED = {
@@ -1155,9 +1176,9 @@
       { id:"SP-GOD-FISH-03", name:"伝説の大ダコ", rarity:"SP-UR", group:"fish",  img: IMG_BASE + "fish_003.png" }
     ],
     seed_god_tower: [
-      { id:"SP-GOD-TOWER-01", name:"積み上げの神",   rarity:"SP-N",  group:"tower", img: IMG_BASE + "tower_001.png" },
-      { id:"SP-GOD-TOWER-02", name:"天空の塔神",     rarity:"SP-SR", group:"tower", img: IMG_BASE + "tower_002.png" },
-      { id:"SP-GOD-TOWER-03", name:"無限積層の王",   rarity:"SP-UR", group:"tower", img: IMG_BASE + "tower_003.png" }
+      { id:"SP-GOD-TOWER-01", name:"積み上げの神",  rarity:"SP-N",  group:"tower", img: IMG_BASE + "tower_001.png" },
+      { id:"SP-GOD-TOWER-02", name:"天空の塔神",    rarity:"SP-SR", group:"tower", img: IMG_BASE + "tower_002.png" },
+      { id:"SP-GOD-TOWER-03", name:"無限積層の王",  rarity:"SP-UR", group:"tower", img: IMG_BASE + "tower_003.png" }
     ]
   };
 
@@ -1226,7 +1247,7 @@
     clearTimeout(toast._t);
     toast._t = setTimeout(() => {
       toastEl.classList.remove("show");
-    }, 1800);
+    }, 2200);
   }
 
   function escapeHtml(str){
@@ -1285,13 +1306,10 @@
     if (total <= 0) return "N";
 
     let r = Math.random() * total;
-
     r -= Number(rates.UR || 0);
     if (r <= 0) return "UR";
-
     r -= Number(rates.SR || 0);
     if (r <= 0) return "SR";
-
     return "N";
   }
 
@@ -1313,6 +1331,71 @@
 
   function cardById(id){
     return allGodCards().find(v => v.id === id) || (id === GOD_BONUS_CARD.id ? GOD_BONUS_CARD : null);
+  }
+
+  function normalizeGrantedSeeds(value, legacyId = "", legacyName = ""){
+    let arr = [];
+
+    if (Array.isArray(value)) {
+      arr = value.map(v => ({
+        id: String(v?.id || ""),
+        name: String(v?.name || "")
+      })).filter(v => v.id);
+    } else if (legacyId) {
+      arr = [{ id:String(legacyId), name:String(legacyName || seedName(legacyId)) }];
+    }
+
+    return arr;
+  }
+
+  function getGrantedSeedsFromStats(stats){
+    const seeds = [];
+
+    if (Number(stats.harvest || 0) >= GOD_THRESHOLDS.harvest) {
+      seeds.push({ id:"seed_god_yaki", name:seedName("seed_god_yaki") });
+    }
+    if (Number(stats.sales || 0) >= GOD_THRESHOLDS.sales) {
+      seeds.push({ id:"seed_god_shop", name:seedName("seed_god_shop") });
+    }
+    if (Number(stats.fishing || 0) >= GOD_THRESHOLDS.fishing) {
+      seeds.push({ id:"seed_god_fish", name:seedName("seed_god_fish") });
+    }
+    if (Number(stats.tower || 0) >= GOD_THRESHOLDS.tower) {
+      seeds.push({ id:"seed_god_tower", name:seedName("seed_god_tower") });
+    }
+
+    return seeds;
+  }
+
+  function getMainTitleFromStats(stats){
+    const harvest = Number(stats.harvest || 0);
+    const sales   = Number(stats.sales || 0);
+    const fishing = Number(stats.fishing || 0);
+    const tower   = Number(stats.tower || 0);
+
+    const godCount =
+      (harvest >= GOD_THRESHOLDS.harvest ? 1 : 0) +
+      (sales   >= GOD_THRESHOLDS.sales   ? 1 : 0) +
+      (fishing >= GOD_THRESHOLDS.fishing ? 1 : 0) +
+      (tower   >= GOD_THRESHOLDS.tower   ? 1 : 0);
+
+    if (godCount >= 4) return "四神到達者";
+    if (harvest >= GOD_THRESHOLDS.harvest) return "神焼きの極";
+    if (sales   >= GOD_THRESHOLDS.sales)   return "黄金露店王";
+    if (fishing >= GOD_THRESHOLDS.fishing) return "深海の釣神";
+    if (tower   >= GOD_THRESHOLDS.tower)   return "積み上げの神";
+
+    if (harvest >= NORMAL_THRESHOLDS.harvest) return "焼きの達人";
+    if (sales   >= NORMAL_THRESHOLDS.sales)   return "露店王";
+    if (fishing >= NORMAL_THRESHOLDS.fishing) return "釣り神";
+    if (tower   >= NORMAL_THRESHOLDS.tower)   return "塔の覇者";
+
+    return "タコ民";
+  }
+
+  function formatGrantedSeedsText(grantedSeeds){
+    if (!grantedSeeds || !grantedSeeds.length) return "🌱 なし";
+    return "🌱 " + grantedSeeds.map(v => v.name).join(" / ");
   }
 
   /* =========================================================
@@ -1374,8 +1457,7 @@
       sales: Number(item.sales || 0),
       fishing: Number(item.fishing || 0),
       tower: Number(item.tower || 0),
-      grantedSeedId: String(item.grantedSeedId || ""),
-      grantedSeedName: String(item.grantedSeedName || "")
+      grantedSeeds: normalizeGrantedSeeds(item.grantedSeeds, item.grantedSeedId, item.grantedSeedName)
     };
   }
 
@@ -1581,34 +1663,10 @@
   }
 
   /* =========================================================
-     title calc
-  =========================================================
-     優先順位固定:
-     収穫 > 売上 > 釣り > タワー
+     month rollover + auto grant
+     月が変わった最初のアクセス時に前月を確定
+     ★ 部門ごと最大4個付与
   ========================================================= */
-  function getTitleFromStats(stats){
-    const harvest = Number(stats.harvest || 0);
-    const sales   = Number(stats.sales || 0);
-    const fishing = Number(stats.fishing || 0);
-    const tower   = Number(stats.tower || 0);
-
-    if (harvest >= 300) return "神焼きの極";
-    if (sales >= 30000) return "黄金露店王";
-    if (fishing >= 1500) return "深海の釣神";
-    if (tower >= 100) return "積み上げの神";
-
-    if (harvest >= 100) return "焼きの達人";
-    if (sales >= 5000) return "露店王";
-    if (fishing >= 800) return "釣り神";
-    if (tower >= 50) return "塔の覇者";
-
-    return "タコ民";
-  }
-
-  function titleToSeedId(title){
-    return TITLE_TO_SEED[title] || "";
-  }
-
   function isMeaningfulMonth(stats){
     return (
       Number(stats.harvest || 0) > 0 ||
@@ -1618,10 +1676,6 @@
     );
   }
 
-  /* =========================================================
-     month rollover + auto grant
-     月が変わった最初のアクセス時に前月を確定
-  ========================================================= */
   function rolloverIfNeeded(){
     const currentKey = getMonthKey();
     const monthly = loadMonthly();
@@ -1635,13 +1689,10 @@
       isMeaningfulMonth(monthly) &&
       !history.some(v => v.monthKey === monthly.monthKey)
     ) {
-      const title = getTitleFromStats(monthly);
-      const grantedSeedId = titleToSeedId(title);
-      const grantedSeedName = grantedSeedId ? seedName(grantedSeedId) : "";
+      const title = getMainTitleFromStats(monthly);
+      const grantedSeeds = getGrantedSeedsFromStats(monthly);
 
-      if (grantedSeedId) {
-        addSeed(grantedSeedId, 1);
-      }
+      grantedSeeds.forEach(seed => addSeed(seed.id, 1));
 
       history.unshift({
         monthKey: monthly.monthKey,
@@ -1650,16 +1701,15 @@
         sales: Number(monthly.sales || 0),
         fishing: Number(monthly.fishing || 0),
         tower: Number(monthly.tower || 0),
-        grantedSeedId,
-        grantedSeedName
+        grantedSeeds
       });
 
       saveHistory(history);
 
-      if (grantedSeedId) {
-        toast(`${monthly.monthKey} の称号確定：${grantedSeedName} を授かりました`);
+      if (grantedSeeds.length) {
+        toast(`${monthly.monthKey} 報酬確定：${grantedSeeds.map(v => v.name).join(" / ")} を授かりました`);
       } else {
-        toast(`${monthly.monthKey} の称号を確定しました`);
+        toast(`${monthly.monthKey} の月間結果を確定しました`);
       }
     }
 
@@ -1768,12 +1818,11 @@
     fishingValue.textContent = `${fmtNum(stats.fishing)} 点`;
     towerValue.textContent   = `${fmtNum(stats.tower)} F`;
 
-    const title = getTitleFromStats(stats);
-    mainTitle.textContent = title;
+    mainTitle.textContent = getMainTitleFromStats(stats);
 
     const [y,m] = String(stats.monthKey || getMonthKey()).split("-");
     monthInfo.textContent =
-      `${y}年${Number(m)}月の記録を表示中 / 月が変わった最初のアクセス時に前月称号を確定`;
+      `${y}年${Number(m)}月の記録を表示中 / 月替わり初回アクセス時に最大4種の神のタネを判定`;
   }
 
   function renderSeedGrid(){
@@ -1799,7 +1848,6 @@
     harvestBtn.disabled = false;
     plantBtn.disabled = false;
     clearBtn.disabled = false;
-
     godPlotInner.className = "god-plot-inner";
 
     if (plot.state === "EMPTY") {
@@ -1900,9 +1948,7 @@
     }
 
     list.forEach(item => {
-      const grant = item.grantedSeedName
-        ? `🌱 ${escapeHtml(item.grantedSeedName)}`
-        : `🌱 なし`;
+      const grant = formatGrantedSeedsText(item.grantedSeeds);
 
       const row = document.createElement("div");
       row.className = "history-item";
@@ -1915,7 +1961,7 @@
             <div>🪙 売上 ${fmtNum(item.sales)} oct</div>
             <div>🎣 釣り ${fmtNum(item.fishing)} 点</div>
             <div>🗼 タワー ${fmtNum(item.tower)} F</div>
-            <div>${grant}</div>
+            <div style="grid-column:1 / -1;">${escapeHtml(grant)}</div>
           </div>
         </div>
       `;
@@ -1955,7 +2001,7 @@
       <button class="seed-select-btn" type="button" data-seed-id="${escapeHtml(seed.id)}">
         <div>
           <div class="seed-select-name">${escapeHtml(seed.icon)} ${escapeHtml(seed.name)}</div>
-          <div class="seed-select-sub">月間称号で授かった特別なタネ</div>
+          <div class="seed-select-sub">月間報酬で獲得した特別なタネ</div>
         </div>
         <div class="seed-select-count">×${seed.count}</div>
       </button>
@@ -2360,6 +2406,19 @@
       sales: Number(cur.sales || 0) + Number(data?.sales || 0),
       fishing: Number(cur.fishing || 0) + Number(data?.fishing || 0),
       tower: Number(cur.tower || 0) + Number(data?.tower || 0)
+    };
+    saveMonthly(next);
+    renderAll();
+  };
+
+  window.ttcSetTowerBest = function(floor){
+    const cur = loadMonthly();
+    const next = {
+      monthKey: cur.monthKey || getMonthKey(),
+      harvest: Number(cur.harvest || 0),
+      sales: Number(cur.sales || 0),
+      fishing: Number(cur.fishing || 0),
+      tower: Math.max(Number(cur.tower || 0), Number(floor || 0))
     };
     saveMonthly(next);
     renderAll();
