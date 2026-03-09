@@ -199,6 +199,14 @@
     .panel-foot .btn{ flex:1; padding: 12px 12px; }
     .ghost{ background: transparent; }
 
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .mini{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .mini .k{ font-weight: 1000; margin-bottom: 6px; }
     .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .chip{
       display:inline-flex; align-items:center; gap:8px;
@@ -211,55 +219,56 @@
     .muted{ color: rgba(255,255,255,.72); }
 
     .ruleIntro{
-      margin-bottom: 10px;
+      margin-bottom:10px;
       color: rgba(255,255,255,.9);
     }
-    .rulesStack{
+
+    .ruleList{
       display:flex;
       flex-direction:column;
       gap:10px;
-      margin-top: 10px;
+      margin-top:10px;
     }
-    .ruleCard{
-      display:grid;
-      grid-template-columns: 58px 1fr;
+    .ruleItem{
+      display:flex;
       gap:10px;
-      align-items:center;
-      padding: 10px;
-      border-radius: 14px;
+      align-items:flex-start;
       background: rgba(255,255,255,.06);
       border: 1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:10px;
     }
-    .ruleIcon{
-      width: 58px;
-      height: 58px;
-      border-radius: 12px;
+    .ruleIconWrap{
+      width:52px;
+      min-width:52px;
+      height:52px;
+      border-radius:12px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
       display:flex;
       align-items:center;
       justify-content:center;
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.10);
     }
-    .ruleIcon img{
-      width: 42px;
-      height: 42px;
-      object-fit: contain;
+    .ruleIconWrap img{
+      width:38px;
+      height:38px;
+      object-fit:contain;
       image-rendering: pixelated;
       display:block;
     }
-    .ruleMain{
+    .ruleBody{
       min-width:0;
+      flex:1;
     }
     .ruleTitle{
-      font-weight: 1000;
-      font-size: 13px;
-      margin-bottom: 3px;
-      letter-spacing: .02em;
+      font-weight:1000;
+      font-size:13px;
+      margin-bottom:4px;
+      letter-spacing:.02em;
     }
     .ruleText{
       color: rgba(255,255,255,.88);
-      font-size: 12px;
-      line-height: 1.6;
+      line-height:1.6;
     }
 
     .resultMain{ font-weight:1000; font-size:18px; line-height:1.35; margin: 10px 0 8px; }
@@ -344,9 +353,7 @@
 
     @media (max-width: 560px){
       .countNum{ font-size: 60px; }
-      .ruleCard{ grid-template-columns: 52px 1fr; }
-      .ruleIcon{ width:52px; height:52px; }
-      .ruleIcon img{ width:38px; height:38px; }
+      .grid2{ grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -402,7 +409,34 @@
                     天敵にぶつかると奪われる。生焼けはマイナス。
                   </div>
 
-                  <div class="rulesStack" id="rulesStack"></div>
+                  <div class="grid2">
+                    <div class="mini">
+                      <div class="k">サイズ（基本点）</div>
+                      <div class="row" id="sizeRow"></div>
+                      <div class="muted" style="margin-top:8px;">
+                        ※小さいほど高い。巨大は途中で落ちることがある。
+                      </div>
+                    </div>
+
+                    <div class="mini">
+                      <div class="k">種類（倍率 / マイナス）</div>
+                      <div class="row" id="typeRow"></div>
+                      <div class="muted" style="margin-top:8px;">
+                        例：普通70点 × ゴールド2.80 = 196点（＋連続ボーナス）
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mini" style="margin-top:10px;">
+                    <div class="k">時間</div>
+                    <div>
+                      まず<b>30秒</b>。30秒時点でスコアが <b id="unlockTxt">600</b> 点以上なら <b>60秒</b> まで延長。
+                      <br>
+                      延長できた場合、<b>45秒</b>から<b>鬼モード</b>（突入時に一瞬停止・天敵強化）。
+                    </div>
+                  </div>
+
+                  <div class="ruleList" id="ruleList"></div>
                 </div>
                 <div class="panel-foot">
                   <button id="startBtn" class="btn" type="button">スタート</button>
@@ -452,18 +486,6 @@
 (() => {
   "use strict";
 
-  /* =========================================================
-     ✅ 今回の変更
-     - ルール画面を「たこ焼き画像が縦に並ぶ」レイアウトに戻した
-     - スタート後は暗転せず、動いているゲーム画面の上に3・2・1・GO!を重ねる
-     - カウントダウン中はゲーム画面だけ先に動き、操作とタイマーはまだ開始しない
-     - 結果画面の称号の二重カッコを修正
-     - 連続ボーナスを正式実装し、ルールにも記載
-  ========================================================= */
-
-  /* =========================
-     0) Storage keys
-  ========================= */
   const FISH_LS = {
     best: "takoyakiFishing_best_points",
     last: "takoyakiFishing_last_points",
@@ -491,9 +513,6 @@
     return `${y}/${m}/${d} ${hh}:${mm}`;
   }
 
-  /* =========================
-     0.5) 月間記録
-  ========================= */
   function getMonthKey(date = new Date()){
     return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
   }
@@ -564,9 +583,6 @@
     return { best: newBest, isNew };
   }
 
-  /* =========================
-     1) SP Surprise
-  ========================= */
   const V = "1";
   const SP_BASE = "./assets/images/sp/";
   const SP_CFG = {
@@ -614,9 +630,6 @@
     }
   }
 
-  /* =========================
-     2) Images
-  ========================= */
   const CDN_BASE = "https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/assets/takofish/";
   const IMG_URLS = {
     pick:          `${CDN_BASE}pick.png?v=${V}`,
@@ -649,9 +662,6 @@
     return { images, failed };
   }
 
-  /* =========================
-     3) Config
-  ========================= */
   const CFG = {
     W: 360,
     H: 520,
@@ -722,9 +732,6 @@
     MARGIN_X: 10,
   };
 
-  /* =========================
-     4) Ranks
-  ========================= */
   const RANKS_MINUS = [
     { min: -1000, max: -1000, name: "〘未投入〙", line: "鉄板に、置かれていない。" },
     { min: -999,  max: -900,  name: "〘焼かれていない存在〙", line: "まだ、始まってすらいない。" },
@@ -791,9 +798,6 @@
     return list[list.length - 1];
   }
 
-  /* =========================
-     5) Helpers
-  ========================= */
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
   function rand(a,b){ return a + Math.random()*(b-a); }
   function pickByWeight(list){
@@ -848,9 +852,6 @@
     return Math.min(CFG.COMBO_BONUS_MAX, Math.max(0, (comboCount - 1) * CFG.COMBO_BONUS_STEP));
   }
 
-  /* =========================
-     6) UI
-  ========================= */
   const els = {
     backBtn: document.getElementById("backBtn"),
     retryBtn: document.getElementById("retryBtn"),
@@ -878,7 +879,10 @@
     countNum: document.getElementById("countNum"),
 
     canvas: document.getElementById("tfCanvas"),
-    rulesStack: document.getElementById("rulesStack"),
+    sizeRow: document.getElementById("sizeRow"),
+    typeRow: document.getElementById("typeRow"),
+    unlockTxt: document.getElementById("unlockTxt"),
+    ruleList: document.getElementById("ruleList"),
   };
 
   function refreshBestUI(){
@@ -909,28 +913,22 @@
   }
 
   els.rulesBtn.addEventListener("click", showRules);
-els.rulesCloseX.addEventListener("click", hideRules);
+  els.rulesCloseX.addEventListener("click", hideRules);
+  els.closeBtn.addEventListener("click", () => {
+    location.href = "../town/";
+  });
+  els.resultCloseX.addEventListener("click", () => { hideResult(); showRules(); });
+  els.resultCloseBtn.addEventListener("click", () => { hideResult(); showRules(); });
 
-// ✅ ルール画面の「閉じる」はトップページへ戻る
-els.closeBtn.addEventListener("click", () => {
-  location.href = "../town/";
-});
-
-els.resultCloseX.addEventListener("click", () => { hideResult(); showRules(); });
-els.resultCloseBtn.addEventListener("click", () => { hideResult(); showRules(); });
-
-  /* =========================
-     7) Rule visuals
-  ========================= */
   let IMGS = null;
   let countdownTimer = null;
   let countdownRunning = false;
 
   function ruleRow(title, text, imgSrc, alt){
     return `
-      <div class="ruleCard">
-        <div class="ruleIcon"><img src="${imgSrc}" alt="${alt}"></div>
-        <div class="ruleMain">
+      <div class="ruleItem">
+        <div class="ruleIconWrap"><img src="${imgSrc}" alt="${alt}"></div>
+        <div class="ruleBody">
           <div class="ruleTitle">${title}</div>
           <div class="ruleText">${text}</div>
         </div>
@@ -943,49 +941,55 @@ els.resultCloseBtn.addEventListener("click", () => { hideResult(); showRules(); 
     const combo3 = calcComboBonus(3);
     const combo10 = calcComboBonus(10);
 
-    els.rulesStack.innerHTML = [
+    els.unlockTxt.textContent = String(CFG.EXT_SCORE);
+
+    els.sizeRow.innerHTML = `
+      <span class="chip">極小：<b>${CFG.SIZE.tiny.base}</b></span>
+      <span class="chip">普通：<b>${CFG.SIZE.normal.base}</b></span>
+      <span class="chip">巨大：<b>${CFG.SIZE.giant.base}</b></span>
+    `;
+
+    const makeType = (key, txt) => {
+      const imgKey = CFG.TYPE[key].imgKey;
+      const src = IMG_URLS[imgKey];
+      return `
+        <span class="chip">
+          <img class="iconimg" src="${src}" alt="${CFG.TYPE[key].label}">
+          ${txt}
+        </span>
+      `;
+    };
+
+    els.typeRow.innerHTML = [
+      makeType("sauce", `ソース ×<b>${CFG.TYPE.sauce.mult.toFixed(2)}</b>`),
+      makeType("ika", `いかさま ×<b>${CFG.TYPE.ika.mult.toFixed(2)}</b>`),
+      makeType("gold", `ゴールド ×<b>${CFG.TYPE.gold.mult.toFixed(2)}</b>`),
+      makeType("rainbow", `レインボー ×<b>${CFG.TYPE.rainbow.mult.toFixed(2)}</b>`),
+      makeType("raw", `生焼け <b>${CFG.TYPE.raw.penalty}</b>`),
+    ].join("");
+
+    els.ruleList.innerHTML = [
       ruleRow(
-        "サイズで基本点が変わる",
-        `極小 ${CFG.SIZE.tiny.base}点 / 普通 ${CFG.SIZE.normal.base}点 / 巨大 ${CFG.SIZE.giant.base}点。小さいほど高得点。巨大は途中で落ちることがある。`,
-        IMG_URLS.sauce,
-        "サイズ例"
-      ),
-      ruleRow(
-        "種類で倍率が変わる",
-        `ソース×1.00 / いかさま×1.40 / ゴールド×2.80 / レインボー×5.50。生焼けは ${CFG.TYPE.raw.penalty} 点。`,
-        IMG_URLS.gold,
-        "倍率例"
-      ),
-      ruleRow(
-        "連続で釣るとボーナス",
-        `2連続目から加点。2連続目で+${combo2}、3連続目で+${combo3}。最大は+${combo10}。空振り・横取り・生焼けで連続は途切れる。`,
+        "連続ボーナス",
+        `2連続目から加点。2連続目で +${combo2}、3連続目で +${combo3}。最大は +${combo10}。空振り・横取り・生焼けで連続は途切れる。`,
         IMG_URLS.rainbow,
         "連続ボーナス"
       ),
       ruleRow(
-        "天敵に注意",
+        "天敵",
         "観光客やイカにぶつかると、釣ったたこ焼きを奪われる。流れ（ダッシュ）でも横取りされることがある。",
         IMG_URLS.squid,
         "天敵"
       ),
       ruleRow(
-        "時間と延長",
-        `まず30秒。30秒時点で${CFG.EXT_SCORE}点以上なら60秒まで延長。45秒から鬼モード。`,
-        IMG_URLS.ika_tako,
-        "時間"
-      ),
-      ruleRow(
-        "スタート後は3・2・1",
-        "スタートを押すと、動いている画面の上にカウントダウン表示。最初に釣り竿を落とす位置を見ながら考えられる。",
+        "スタートの流れ",
+        "スタートを押すと、動いているゲーム画面の上に 3・2・1・GO! を表示。その間に最初の狙い位置を見て考えられる。",
         IMG_URLS.pick,
         "スタート"
       )
     ].join("");
   }
 
-  /* =========================
-     8) Runtime state
-  ========================= */
   let rafId = null;
   let timerId = null;
   let onPointer = null;
@@ -1031,9 +1035,6 @@ els.resultCloseBtn.addEventListener("click", () => { hideResult(); showRules(); 
     ctx.drawImage(img, Math.round(x - size/2), Math.round(y - size/2), size, size);
   }
 
-  /* =========================
-     9) Result
-  ========================= */
   function resetSPUI(){
     SP_PENDING = null;
     SP_DECIDED = false;
@@ -1096,9 +1097,6 @@ els.resultCloseBtn.addEventListener("click", () => { hideResult(); showRules(); 
     showResult();
   }
 
-  /* =========================
-     10) Game start / countdown
-  ========================= */
   function startGameWithCountdown(){
     if (countdownRunning) return;
     startGame({ withCountdown: true });
@@ -1139,9 +1137,6 @@ els.resultCloseBtn.addEventListener("click", () => { hideResult(); showRules(); 
     countdownTimer = setTimeout(tick, 1000);
   }
 
-  /* =========================
-     11) Main game
-  ========================= */
   function startGame(opts = {}){
     const withCountdown = !!opts.withCountdown;
 
@@ -1732,9 +1727,6 @@ els.resultCloseBtn.addEventListener("click", () => { hideResult(); showRules(); 
     }
   }
 
-  /* =========================
-     12) Init
-  ========================= */
   async function init(){
     loadMonthlyStats();
 
@@ -1768,11 +1760,9 @@ els.resultCloseBtn.addEventListener("click", () => { hideResult(); showRules(); 
     buildRuleVisuals();
     showRules();
 
-    // 初期背景として待機画面も動かしておく
     startGame({ withCountdown: false });
     stopGame();
 
-    // 静止ではなく、最初から海の画だけ描いておく
     const c2 = els.canvas.getContext("2d");
     c2.imageSmoothingEnabled = false;
     c2.fillStyle = "#081425";
@@ -1782,9 +1772,6 @@ els.resultCloseBtn.addEventListener("click", () => { hideResult(); showRules(); 
     c2.fillText("スタートでゲーム開始", 110, 260);
   }
 
-  /* =========================
-     13) Buttons
-  ========================= */
   els.startBtn.addEventListener("click", startGameWithCountdown);
 
   els.retryBtn.addEventListener("click", () => {
