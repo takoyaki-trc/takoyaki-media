@@ -129,7 +129,16 @@
   #takoyakiResultOverlay > div:last-child{
     margin-top: 8px;
   }
-  #takoyakiResultOverlay button{
+  #takoyakiResultOverlay #resTitle{
+    margin-bottom: 6px;
+  }
+  #takoyakiResultOverlay > div:last-child{
+    padding-bottom: 92px !important;
+    box-sizing: border-box;
+  }
+
+  /* ✅ 結果画面の2ボタン対応 */
+  #takoyakiResultOverlay .result-actions{
     position: fixed;
     left: 50%;
     bottom: 18px;
@@ -137,13 +146,21 @@
     width: min(92vw, 440px);
     max-width: 440px;
     z-index: 10000;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
-  #takoyakiResultOverlay #resTitle{
-    margin-bottom: 6px;
+  #takoyakiResultOverlay .result-actions button{
+    width: 100%;
+    min-width: 0;
+  }
+  #takoyakiResultOverlay .result-actions .quit-btn{
+    background:#2a3147;
+    color:#fff;
+    font-weight:700;
   }
   #takoyakiResultOverlay > div:last-child{
-    padding-bottom: 92px !important;
-    box-sizing: border-box;
+    padding-bottom: 110px !important;
   }
 </style>
 </head>
@@ -174,10 +191,22 @@
 <script>
 (() => {
   /* =========================================================
-     ✅ たこ焼きタイミングタワー（完全版：背景フェーズ拡張）
+     ✅ たこ焼きタイミングタワー（完全版：やめるボタン追加版）
      - ✅ 背景：朝→昼→夕→夜→宇宙→太陽フレア（0-10-20-30-40-50-51+）
      - ✅ 月間記録 ttc_monthly_stats_v1 に tower の最高階数を反映
+     - ✅ 結果画面に「もう一回」「やめる」2ボタン追加
+     - ✅ やめるボタンでトップページへ戻れる
+     - ✅ TOP_URL だけ変えれば戻り先を自由に変更可能
   ========================================================= */
+
+  // =========================
+  // トップページURL（ここだけ必要なら変更）
+  // =========================
+  const TOP_URL = "index.html";
+  // 例:
+  // const TOP_URL = "../index.html";
+  // const TOP_URL = "/town/";
+  // const TOP_URL = "https://takoyaki-card.com/town/";
 
   // =========================
   // 月間記録
@@ -251,7 +280,7 @@
   }
 
   // =========================
-  // 画像URL（ここだけ差し替え）
+  // 画像URL
   // =========================
   const SPR = {
     takoA: "https://ul.h3z.jp/OPpiBayk.png",
@@ -723,6 +752,13 @@
   }
 
   // =========================
+  // トップへ戻る
+  // =========================
+  function goTopPage(){
+    location.href = TOP_URL;
+  }
+
+  // =========================
   // 結果オーバーレイ
   // =========================
   let resultOverlay = null;
@@ -841,28 +877,30 @@
     stats.appendChild(statB);
 
     const row = document.createElement("div");
-    row.style.display = "flex";
-    row.style.gap = "10px";
+    row.className = "result-actions";
     card.appendChild(row);
 
     const againBtn = document.createElement("button");
     againBtn.type = "button";
     againBtn.textContent = "もう一回";
-    againBtn.style.flex = "1";
-    againBtn.style.border = "0";
-    againBtn.style.borderRadius = "14px";
-    againBtn.style.padding = "14px 12px";
-    againBtn.style.fontWeight = "900";
-    againBtn.style.background = "#ffd34d";
-    againBtn.style.color = "#111";
-    againBtn.style.cursor = "pointer";
     row.appendChild(againBtn);
+
+    const quitBtn = document.createElement("button");
+    quitBtn.type = "button";
+    quitBtn.textContent = "やめる";
+    quitBtn.className = "quit-btn";
+    row.appendChild(quitBtn);
 
     againBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       hideResultOverlay();
       reset();
       start();
+    });
+
+    quitBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      goTopPage();
     });
 
     bg.addEventListener("click", (e) => e.stopPropagation());
@@ -1112,7 +1150,6 @@
       saveBestPoints(S.bestPoints);
     }
 
-    // ✅ 月間タワー最高階数を保存
     updateMonthlyTowerHigh(S.floors);
 
     setResultDatetime();
@@ -1261,7 +1298,6 @@
   // 初期化
   // =========================
   loadImages().then(() => {
-    // ✅ 月間記録箱を必ず作っておく
     loadMonthlyStats();
 
     fitCanvas();
