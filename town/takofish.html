@@ -118,6 +118,41 @@
     }
     .overlay.show{ display:flex; }
 
+    .countOverlay{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.28);
+      z-index: 20;
+      pointer-events:none;
+    }
+    .countOverlay.show{ display:flex; }
+    .countInner{
+      min-width: 180px;
+      text-align:center;
+      padding: 18px 20px;
+      border-radius: 18px;
+      background: rgba(5,12,25,.58);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      backdrop-filter: blur(8px);
+    }
+    .countLabel{
+      font-size: 13px;
+      font-weight: 1000;
+      letter-spacing: .08em;
+      color: rgba(255,255,255,.82);
+      margin-bottom: 8px;
+    }
+    .countNum{
+      font-size: 72px;
+      line-height: 1;
+      font-weight: 1000;
+      text-shadow: 0 0 18px rgba(127,208,255,.45);
+    }
+
     .panel{
       width: min(520px, 100%);
       background: #0b0f18;
@@ -253,6 +288,11 @@
       gap:10px;
     }
     .spBtns .btn{ flex:1; }
+
+    @media (max-width: 560px){
+      .grid2{ grid-template-columns: 1fr; }
+      .countNum{ font-size: 58px; }
+    }
   </style>
 </head>
 
@@ -287,6 +327,13 @@
           <div class="canvasbox">
             <canvas id="tfCanvas" width="360" height="520"></canvas>
 
+            <div id="countOverlay" class="countOverlay" aria-hidden="true">
+              <div class="countInner">
+                <div class="countLabel">START IN</div>
+                <div id="countNum" class="countNum">3</div>
+              </div>
+            </div>
+
             <div id="rulesOverlay" class="overlay show" role="dialog" aria-modal="true" aria-label="ルール">
               <div class="panel">
                 <div class="panel-head">
@@ -312,8 +359,18 @@
                       <div class="k">種類（倍率 / マイナス）</div>
                       <div class="row" id="typeRow"></div>
                       <div class="muted" style="margin-top:8px;">
-                        例：普通70点 × ゴールド2.80 = 196点（＋連続ボーナス）
+                        例：普通70点 × ゴールド2.80 = 196点
                       </div>
+                    </div>
+                  </div>
+
+                  <div class="mini" style="margin-top:10px;">
+                    <div class="k">連続ボーナス</div>
+                    <div>
+                      連続で釣り上げると、<b>2連続目から加点</b>。<br>
+                      1匹ごとに <b id="comboStepTxt">+12</b> 点ずつ増え、最大 <b id="comboMaxTxt">+180</b> 点まで。
+                      <br>
+                      例：3連続目なら <b>+24</b> 点、10連続目以降は最大ボーナス。
                     </div>
                   </div>
 
@@ -323,6 +380,8 @@
                       まず<b>30秒</b>。30秒時点でスコアが <b id="unlockTxt">600</b> 点以上なら <b>60秒</b> まで延長。
                       <br>
                       延長できた場合、<b>45秒</b>から<b>鬼モード</b>（突入時に一瞬停止・天敵強化）。
+                      <br>
+                      スタートを押すと、<b>3・2・1</b> のカウントダウン後に開始。
                     </div>
                   </div>
                 </div>
@@ -376,6 +435,10 @@
 
   /* =========================================================
      ✅ 変更点（今回）
+     - 結果画面の称号の二重カッコを修正
+     - ルール画面のスタート後に3秒カウントダウン追加
+     - 連続釣りボーナスを正式追加（2連続目から加点）
+     - ルール画面にも連続ボーナス説明を追加
      - SPカード画像だけ「town/assets/images/sp/」から読む（他の画像に影響なし）
      - 結果画面に「日時」を表示（resultDate）
      - 月間記録 ttc_monthly_stats_v1 に fishing の最高点を反映
@@ -501,9 +564,7 @@
       localStorage.setItem(FISH_LS.compat, JSON.stringify(st));
     }catch(_){}
 
-    // ✅ 月間釣り最高点も更新
     updateMonthlyFishingHigh(score);
-
     return { best: newBest, isNew };
   }
 
@@ -624,6 +685,11 @@
 
     GIANT_DROP_CHANCE: 0.18,
     GIANT_DROP_START_Y_RATIO: 0.62,
+
+    COMBO_BONUS_STEP: 12,
+    COMBO_BONUS_MAX: 180,
+
+    COUNTDOWN_SEC: 3,
 
     SIZE: {
       tiny:   { label: "極小",  draw: 24, base: 120 },
@@ -797,6 +863,10 @@
     return CFG.HOOK_REEL_BASE * mul * catchMul;
   }
 
+  function calcComboBonus(comboCount){
+    return Math.min(CFG.COMBO_BONUS_MAX, Math.max(0, (comboCount - 1) * CFG.COMBO_BONUS_STEP));
+  }
+
   /* =========================
      6) UI Wiring
   ========================= */
@@ -823,10 +893,15 @@
     spYesBtn: document.getElementById("spYesBtn"),
     spNoBtn: document.getElementById("spNoBtn"),
 
+    countOverlay: document.getElementById("countOverlay"),
+    countNum: document.getElementById("countNum"),
+
     canvas: document.getElementById("tfCanvas"),
     sizeRow: document.getElementById("sizeRow"),
     typeRow: document.getElementById("typeRow"),
     unlockTxt: document.getElementById("unlockTxt"),
+    comboStepTxt: document.getElementById("comboStepTxt"),
+    comboMaxTxt: document.getElementById("comboMaxTxt"),
   };
 
   function refreshBestUI(){
@@ -848,6 +923,14 @@
   function showResult(){ els.resultOverlay.classList.add("show"); }
   function hideResult(){ els.resultOverlay.classList.remove("show"); }
 
+  function showCountdownNum(v){
+    els.countNum.textContent = String(v);
+    els.countOverlay.classList.add("show");
+  }
+  function hideCountdown(){
+    els.countOverlay.classList.remove("show");
+  }
+
   els.rulesBtn.addEventListener("click", showRules);
   els.rulesCloseX.addEventListener("click", hideRules);
   els.closeBtn.addEventListener("click", hideRules);
@@ -859,8 +942,14 @@
      7) Build rule visuals using SAME game images
   ========================= */
   let IMGS = null;
+  let countdownTimer = null;
+  let countdownRunning = false;
+
   function buildRuleVisuals(){
     els.unlockTxt.textContent = String(CFG.EXT_SCORE);
+    els.comboStepTxt.textContent = `+${CFG.COMBO_BONUS_STEP}`;
+    els.comboMaxTxt.textContent = `+${CFG.COMBO_BONUS_MAX}`;
+
     els.sizeRow.innerHTML = `
       <span class="chip">極小：<b>${CFG.SIZE.tiny.base}</b></span>
       <span class="chip">普通：<b>${CFG.SIZE.normal.base}</b></span>
@@ -898,7 +987,18 @@
   let SP_PENDING = null;
   let SP_DECIDED = false;
 
+  function stopCountdown(){
+    countdownRunning = false;
+    if (countdownTimer){
+      clearTimeout(countdownTimer);
+      countdownTimer = null;
+    }
+    hideCountdown();
+  }
+
   function stopGame(){
+    stopCountdown();
+
     if (timerId) clearInterval(timerId);
     timerId = null;
     if (rafId) cancelAnimationFrame(rafId);
@@ -974,7 +1074,7 @@
     }
 
     const r = getRank(score);
-    els.resultMain.textContent = `［ ${r.name} ］`;
+    els.resultMain.textContent = r.name;
     els.resultLines.innerHTML = `
       <div>${r.line}</div>
       <div>Score：<b>${score}</b></div>
@@ -988,7 +1088,42 @@
   }
 
   /* =========================
-     10) Game start
+     10) Countdown start
+  ========================= */
+  function startGameWithCountdown(){
+    if (countdownRunning) return;
+
+    stopGame();
+    hideResult();
+    hideRules();
+    resetSPUI();
+
+    countdownRunning = true;
+    let n = CFG.COUNTDOWN_SEC;
+    showCountdownNum(n);
+
+    function tick(){
+      if (!countdownRunning) return;
+
+      if (n > 1){
+        n--;
+        showCountdownNum(n);
+        countdownTimer = setTimeout(tick, 1000);
+        return;
+      }
+
+      els.countNum.textContent = "GO!";
+      countdownTimer = setTimeout(() => {
+        stopCountdown();
+        startGame();
+      }, 420);
+    }
+
+    countdownTimer = setTimeout(tick, 1000);
+  }
+
+  /* =========================
+     11) Game start
   ========================= */
   function startGame(){
     stopGame();
@@ -1254,6 +1389,13 @@
         ctx.fillText("鬼モード", 60, 36);
       }
 
+      if (STATE.combo >= 2){
+        const cBonus = calcComboBonus(STATE.combo);
+        ctx.fillStyle = "rgba(255,220,120,.95)";
+        ctx.font = "12px system-ui";
+        ctx.fillText(`連続ボーナス +${cBonus}`, 130, 36);
+      }
+
       if (now < STATE.flashUntil && STATE.flashMsg){
         ctx.fillStyle = "rgba(0,0,0,.55)";
         ctx.fillRect(0, 44, W, 26);
@@ -1294,20 +1436,20 @@
       STATE.elapsed++;
 
       if (STATE.elapsed === 30){
-        if (STATE.score >= 600){
+        if (STATE.score >= CFG.EXT_SCORE){
           STATE.extended = true;
-          STATE.limit = 60;
-          flashText(`延長解放！60秒へ`, 1100);
+          STATE.limit = CFG.EXT_LIMIT;
+          flashText(`延長解放！${CFG.EXT_LIMIT}秒へ`, 1100);
         } else {
-          STATE.limit = 30;
-          flashText(`終了！`, 900);
+          STATE.limit = CFG.BASE_LIMIT;
+          flashText("終了！", 900);
         }
       }
 
-      if (STATE.extended && STATE.elapsed === 45){
+      if (STATE.extended && STATE.elapsed === CFG.ONI_AT){
         STATE.oni = true;
         STATE.oniReached = true;
-        STATE.freezeUntil = nowMs() + 300;
+        STATE.freezeUntil = nowMs() + CFG.ONI_FREEZE_MS;
         flashText("鬼モード突入！！", 1000);
       }
 
@@ -1335,7 +1477,7 @@
           return;
         }
 
-        const mul = STATE.oni ? 2.2 : 1.0;
+        const mul = STATE.oni ? CFG.ONI_SPEED_MUL : 1.0;
 
         for (const it of STATE.items){
           if (!it.alive) continue;
@@ -1444,7 +1586,7 @@
           if (h.hasCatch && h.caught && h.giantDropArmed){
             if (!h.giantDropRolled && h.y < GIANT_DROP_START_Y){
               h.giantDropRolled = true;
-              h.giantWillDrop = (Math.random() < 0.18);
+              h.giantWillDrop = (Math.random() < CFG.GIANT_DROP_CHANCE);
             }
             if (h.giantWillDrop && h.y < (GIANT_DROP_START_Y - 40)){
               const dead = STATE.items.find(v => !v.alive);
@@ -1507,9 +1649,15 @@
                 flashText(`ハズレ！${h.caught.type.label} ${h.caught.points}`, 900);
               } else {
                 STATE.combo++;
-                const comboBonus = Math.min(120, STATE.combo * 6);
-                STATE.score += h.caught.points + comboBonus;
-                flashText(`GET! +${h.caught.points}（${h.caught.size.label}/${h.caught.type.label}）`, 850);
+                const comboBonus = calcComboBonus(STATE.combo);
+                const gained = h.caught.points + comboBonus;
+                STATE.score += gained;
+
+                if (comboBonus > 0){
+                  flashText(`GET! +${h.caught.points} ＋連続${comboBonus}`, 900);
+                } else {
+                  flashText(`GET! +${h.caught.points}（${h.caught.size.label}/${h.caught.type.label}）`, 850);
+                }
               }
 
               h.hasCatch = false;
@@ -1537,16 +1685,15 @@
     setText("tfScore", 0);
     setText("tfCombo", 0);
     setText("tfMiss", 0);
-    setText("tfTime", 30);
+    setText("tfTime", CFG.BASE_LIMIT);
 
     rafId = requestAnimationFrame(step);
   }
 
   /* =========================
-     11) Init
+     12) Init
   ========================= */
   async function init(){
-    // ✅ 月間記録箱を必ず作成
     loadMonthlyStats();
 
     const ctx = els.canvas.getContext("2d");
@@ -1581,9 +1728,9 @@
   }
 
   /* =========================
-     12) Buttons
+     13) Buttons
   ========================= */
-  els.startBtn.addEventListener("click", startGame);
+  els.startBtn.addEventListener("click", startGameWithCountdown);
 
   els.retryBtn.addEventListener("click", () => {
     hideResult();
