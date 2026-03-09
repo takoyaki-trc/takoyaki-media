@@ -1437,239 +1437,131 @@ html.is-night .boss-gate{
     © たこ焼き菜々 / 焼かれた伝説 たこ焼きトレーディングカード
   </div>
 </footer>
-
 <script>
 (() => {
-  "use strict";
+"use strict";
 
-  // ===== 主要キー（必要ならここだけ増やせる） =====
-  const KEY = {
-    resident: "trc_v1_resident",
-    lastLogin: "trc_v1_last_login",
+/* =========================
+   完全バックアップ
+   localStorageを丸ごと保存
+   ========================= */
+
+function createBackup(){
+
+  const data = {
+    app: "takoyaki-trc",
+    type: "FULL_BACKUP",
+    exported: new Date().toISOString(),
+    storage: {}
   };
-  const EXIST = {
-    farmBook: "tf_v1_book",
-    farmInv:  "tf_v1_inv",
-    rotenOcto:"roten_v1_octo",
-    tower: "tower_v1_state",
-    fish:  "fish_v1_state",
-  };
 
-  // ===== utils =====
-  const getRaw = (k) => {
-    const v = localStorage.getItem(k);
-    return (v === null || v === undefined) ? null : String(v);
-  };
-  const safeJSONParse = (raw, fallback) => { try { return JSON.parse(raw); } catch (_) { return fallback; } };
-  const safeStringify = (obj) => { try { return JSON.stringify(obj); } catch (_) { return "null"; } };
-
-  function listKeysByRegex(re) {
-    const out = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (re.test(k)) out.push(k);
-    }
-    return out;
+  for(let i=0;i<localStorage.length;i++){
+    const key = localStorage.key(i);
+    data.storage[key] = localStorage.getItem(key);
   }
 
-  // ===== 図鑑slim（count+img等） =====
-  function slimBookRawKeepImg() {
-    const raw = getRaw(EXIST.farmBook);
-    if (!raw) return null;
+  const blob = new Blob(
+    [JSON.stringify(data,null,2)],
+    {type:"application/json"}
+  );
 
-    const book = safeJSONParse(raw, null);
-    if (!book || typeof book !== "object") return raw;
+  const url = URL.createObjectURL(blob);
 
-    const got = (book.got && typeof book.got === "object") ? book.got : {};
-    const outGot = {};
-    for (const id of Object.keys(got)) {
-      const node = got[id] || {};
-      const c = Number(node.count || 0);
-      if (c > 0) {
-        const out = { id, count: c };
-        if (typeof node.img === "string" && node.img.trim()) out.img = node.img.trim();
-        if (typeof node.name === "string" && node.name.trim()) out.name = node.name.trim();
-        if (typeof node.rarity === "string" && node.rarity.trim()) out.rarity = node.rarity.trim();
-        if (node.at != null && String(node.at).trim()) out.at = node.at;
-        if (node.lastAt != null && String(node.lastAt).trim()) out.lastAt = node.lastAt;
-        outGot[id] = out;
-      }
-    }
-    const slim = { ver: book.ver ?? 1, got: outGot };
-    return safeStringify(slim);
+  const a = document.createElement("a");
+  a.href = url;
+
+  const stamp = new Date()
+  .toISOString()
+  .replace(/[:.]/g,"-");
+
+  a.download = `takoyaki-trc_FULL_${stamp}.json`;
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+/* =========================
+   復元
+   ========================= */
+
+async function restoreBackup(file){
+
+  const text = await file.text();
+
+  let data;
+
+  try{
+    data = JSON.parse(text);
+  }catch(e){
+    alert("バックアップファイルが壊れています");
+    return;
   }
 
-  function findFarmProgressKeys() {
-    const out = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (!/^tf_v1_/i.test(k)) continue;
-      if (/log|history|debug/i.test(k)) continue;
-      if (k === EXIST.farmBook || k === EXIST.farmInv) continue;
-      out.push(k);
-    }
-    const prefer = ["tf_v1_state","tf_v1_level","tf_v1_xp","tf_v1_farm","tf_v1_progress"];
-    const ordered = [];
-    for (const p of prefer) {
-      if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
-    }
-    for (const k of out) if (!ordered.includes(k)) ordered.push(k);
-    return ordered.slice(0, 40);
+  if(!data.storage){
+    alert("これはバックアップファイルではありません");
+    return;
   }
 
-  function findRotenProgressKeys() {
-    const out = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (!/^roten_v1_/i.test(k)) continue;
-      if (/log|history|debug/i.test(k)) continue;
-      out.push(k);
+  const ok = confirm(
+`バックアップから復元します。
+
+現在のデータは
+すべて上書きされます。
+
+続行しますか？`
+  );
+
+  if(!ok) return;
+
+  const keys = Object.keys(data.storage);
+
+  for(const k of keys){
+
+    const v = data.storage[k];
+
+    if(v === null){
+      localStorage.removeItem(k);
+    }else{
+      localStorage.setItem(k,v);
     }
-    const prefer = [
-      "roten_v1_level","roten_v1_rep","roten_v1_myshop","roten_v1_inventory",
-      "roten_v1_market","roten_v1_state","roten_v1_shelves","roten_v1_octo"
-    ];
-    const ordered = [];
-    for (const p of prefer) {
-      if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
-    }
-    for (const k of out) if (!ordered.includes(k)) ordered.push(k);
-    return ordered.slice(0, 90);
+
   }
 
-  function buildSlimBackupPayload() {
-    const keys = {};
+  alert("復元が完了しました\nページを再読み込みします");
 
-    keys[KEY.resident] = getRaw(KEY.resident);
-    keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
+  location.reload();
+}
 
-    keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
-    keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
-    keys[EXIST.farmBook]  = slimBookRawKeepImg();
+/* =========================
+   UI接続
+   ========================= */
 
-    for (const k of findFarmProgressKeys()) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
-    for (const k of findRotenProgressKeys()) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
+const btnBackup  = document.getElementById("trcFooterBackup");
+const btnRestore = document.getElementById("trcFooterRestore");
+const fileInput  = document.getElementById("trcFooterRestoreFile");
 
-    if (getRaw(EXIST.tower) != null) keys[EXIST.tower] = getRaw(EXIST.tower);
-    for (const k of listKeysByRegex(/tower/i)) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
+if(!btnBackup || !btnRestore || !fileInput) return;
 
-    if (getRaw(EXIST.fish) != null) keys[EXIST.fish] = getRaw(EXIST.fish);
-    for (const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
+btnBackup.addEventListener("click",createBackup);
 
-    for (const k of Object.keys(keys)) {
-      if (keys[k] === null || keys[k] === undefined) delete keys[k];
-    }
+btnRestore.addEventListener("click",()=>{
+  fileInput.click();
+});
 
-    return {
-      app: "takoyaki-trc",
-      ver: 5,
-      kind: "slim+roten",
-      exportedAt: new Date().toISOString(),
-      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り を保存。ログは保存しない。",
-      keys
-    };
-  }
+fileInput.addEventListener("change",async ()=>{
 
-  function downloadJson(obj, filename) {
-    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
+  const f = fileInput.files[0];
 
-  function backupSlim() {
-    const payload = buildSlimBackupPayload();
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    downloadJson(payload, `takoyaki-trc-backup_${stamp}.json`);
-  }
+  fileInput.value="";
 
-  async function restoreFromFile(file) {
-    const text = await file.text();
-    const data = safeJSONParse(text, null);
+  if(!f) return;
 
-    if (!data || !data.keys || typeof data.keys !== "object") {
-      alert("このファイルはバックアップ形式ではありません。");
-      return;
-    }
+  await restoreBackup(f);
 
-    const keys = Object.keys(data.keys);
-    const ok = confirm(
-      "バックアップから復元します。\n" +
-      "現在のデータは上書きされます（元に戻せません）。\n\n" +
-      `復元キー数: ${keys.length}\n` +
-      `書き出し日時: ${String(data.exportedAt || "")}\n\n` +
-      "続行しますか？"
-    );
-    if (!ok) return;
-
-    for (const k of keys) {
-      const v = data.keys[k];
-      if (v === null || v === undefined) localStorage.removeItem(k);
-      else localStorage.setItem(k, String(v));
-    }
-
-    alert("復元しました。ページを再読み込みします。");
-    location.reload();
-  }
-
-  // ===== UI wiring（フッター版） =====
-  const btnBackup  = document.getElementById("trcFooterBackup");
-  const btnRestore = document.getElementById("trcFooterRestore");
-  const inp        = document.getElementById("trcFooterRestoreFile");
-
-  if (!btnBackup || !btnRestore || !inp) return;
-
-  btnBackup.addEventListener("click", () => {
-    const normal = btnBackup.textContent;
-    btnBackup.disabled = true;
-    btnBackup.textContent = "作成中…";
-    setTimeout(() => {
-      try { backupSlim(); }
-      finally {
-        btnBackup.disabled = false;
-        btnBackup.textContent = normal;
-      }
-    }, 50);
-  });
-
-  btnRestore.addEventListener("click", () => {
-    inp.click();
-  });
-
-  inp.addEventListener("change", async () => {
-    const f = inp.files && inp.files[0];
-    inp.value = "";
-    if (!f) return;
-
-    const normal = btnRestore.textContent;
-    btnRestore.disabled = true;
-    btnRestore.textContent = "読込中…";
-    try { await restoreFromFile(f); }
-    finally {
-      btnRestore.disabled = false;
-      btnRestore.textContent = normal;
-    }
-  });
+});
 
 })();
 </script>
