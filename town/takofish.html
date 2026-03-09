@@ -422,7 +422,7 @@
                       <div class="k">種類（倍率 / マイナス）</div>
                       <div class="row" id="typeRow"></div>
                       <div class="muted" style="margin-top:8px;">
-                        例：普通70点 × ゴールド2.80 = 196点（＋連続ボーナス）
+                        例：普通70点 × ゴールド2.80 × 2連続1.20 = 235点
                       </div>
                     </div>
                   </div>
@@ -684,9 +684,6 @@
     GIANT_DROP_CHANCE: 0.18,
     GIANT_DROP_START_Y_RATIO: 0.62,
 
-    COMBO_BONUS_STEP: 12,
-    COMBO_BONUS_MAX: 180,
-
     COUNTDOWN_SEC: 3,
 
     SIZE: {
@@ -701,11 +698,11 @@
     ],
 
     TYPE: {
-      sauce:   { label: "ソース",     mult: 1.00, kind: "plus",  imgKey: "sauce" },
-      ika:     { label: "いかさま",   mult: 1.40, kind: "plus",  imgKey: "ika_tako" },
-      gold:    { label: "ゴールド",   mult: 2.80, kind: "plus",  imgKey: "gold" },
-      rainbow: { label: "レインボー", mult: 5.50, kind: "plus",  imgKey: "rainbow" },
-      raw:     { label: "生焼け",     mult: 0.00, kind: "minus", imgKey: "raw", penalty: -120 },
+      sauce:   { label: "ソース",     mult:  1.00, imgKey: "sauce" },
+      ika:     { label: "いかさま",   mult:  1.40, imgKey: "ika_tako" },
+      gold:    { label: "ゴールド",   mult:  2.80, imgKey: "gold" },
+      rainbow: { label: "レインボー", mult:  5.50, imgKey: "rainbow" },
+      raw:     { label: "生焼け",     mult: -1.50, imgKey: "raw" },
     },
     TYPE_WEIGHTS: [
       { key: "sauce",   w: 55 },
@@ -823,15 +820,25 @@
   }
   function nowMs(){ return performance.now(); }
 
+  function getComboMultiplier(comboCount){
+    if (comboCount >= 5) return 2.0;
+    if (comboCount === 4) return 1.6;
+    if (comboCount === 3) return 1.4;
+    if (comboCount === 2) return 1.2;
+    return 1.0;
+  }
+
+  function calcCatchScore(spec, comboAfterCatch){
+    return Math.round(spec.size.base * spec.type.mult * getComboMultiplier(comboAfterCatch));
+  }
+
   function buildTakoyakiSpec(){
     const sizeKey = pickByWeight(CFG.SIZE_WEIGHTS);
     const typeKey = pickByWeight(CFG.TYPE_WEIGHTS);
     const size = CFG.SIZE[sizeKey];
     const type = CFG.TYPE[typeKey];
-    let points = 0;
-    if (type.kind === "minus") points = type.penalty;
-    else points = Math.round(size.base * type.mult);
-    return { sizeKey, size, type, points };
+    const previewPoints = Math.round(size.base * type.mult);
+    return { sizeKey, size, type, points: previewPoints };
   }
 
   function pointerToCanvasX(e, cvs){
@@ -847,9 +854,6 @@
   function hookReelSpeed(hy, floorY, hasCatch){
     const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
     return CFG.HOOK_REEL_BASE * (1.24 + 0.74 * (1 - t)) * (hasCatch ? 1.16 : 1.03);
-  }
-  function calcComboBonus(comboCount){
-    return Math.min(CFG.COMBO_BONUS_MAX, Math.max(0, (comboCount - 1) * CFG.COMBO_BONUS_STEP));
   }
 
   const els = {
@@ -923,6 +927,12 @@
   let IMGS = null;
   let countdownTimer = null;
   let countdownRunning = false;
+  let rafId = null;
+  let timerId = null;
+  let onPointer = null;
+  let STATE = null;
+  let SP_PENDING = null;
+  let SP_DECIDED = false;
 
   function ruleRow(title, text, imgSrc, alt){
     return `
@@ -937,10 +947,6 @@
   }
 
   function buildRuleVisuals(){
-    const combo2 = calcComboBonus(2);
-    const combo3 = calcComboBonus(3);
-    const combo10 = calcComboBonus(10);
-
     els.unlockTxt.textContent = String(CFG.EXT_SCORE);
 
     els.sizeRow.innerHTML = `
@@ -950,8 +956,7 @@
     `;
 
     const makeType = (key, txt) => {
-      const imgKey = CFG.TYPE[key].imgKey;
-      const src = IMG_URLS[imgKey];
+      const src = IMG_URLS[CFG.TYPE[key].imgKey];
       return `
         <span class="chip">
           <img class="iconimg" src="${src}" alt="${CFG.TYPE[key].label}">
@@ -965,15 +970,21 @@
       makeType("ika", `いかさま ×<b>${CFG.TYPE.ika.mult.toFixed(2)}</b>`),
       makeType("gold", `ゴールド ×<b>${CFG.TYPE.gold.mult.toFixed(2)}</b>`),
       makeType("rainbow", `レインボー ×<b>${CFG.TYPE.rainbow.mult.toFixed(2)}</b>`),
-      makeType("raw", `生焼け <b>${CFG.TYPE.raw.penalty}</b>`),
+      makeType("raw", `生焼け ×<b>${CFG.TYPE.raw.mult.toFixed(2)}</b>`),
     ].join("");
 
     els.ruleList.innerHTML = [
       ruleRow(
-        "連続ボーナス",
-        `2連続目から加点。2連続目で +${combo2}、3連続目で +${combo3}。最大は +${combo10}。空振り・横取り・生焼けで連続は途切れる。`,
+        "連続ボーナスは倍率",
+        "1連続×1.00 / 2連続×1.20 / 3連続×1.40 / 4連続×1.60 / 5連続以上×2.00。空振り・横取り・生焼けで連続は途切れる。",
         IMG_URLS.rainbow,
         "連続ボーナス"
+      ),
+      ruleRow(
+        "生焼けはサイズ別で重いマイナス",
+        "極小 -180 / 普通 -105 / 巨大 -60。生焼けもサイズ基本点×倍率で計算される。",
+        IMG_URLS.raw,
+        "生焼け"
       ),
       ruleRow(
         "天敵",
@@ -989,14 +1000,6 @@
       )
     ].join("");
   }
-
-  let rafId = null;
-  let timerId = null;
-  let onPointer = null;
-  let STATE = null;
-
-  let SP_PENDING = null;
-  let SP_DECIDED = false;
 
   function stopCountdown(){
     countdownRunning = false;
@@ -1095,6 +1098,50 @@
 
     if (SP_PENDING) showSPPrompt(SP_PENDING);
     showResult();
+  }
+
+  function getRemainingTime(){
+    if (!STATE) return 0;
+    return Math.max(0, STATE.limit - STATE.elapsed);
+  }
+
+  function startTimerLoop(){
+    if (timerId) clearInterval(timerId);
+
+    timerId = setInterval(() => {
+      if (!STATE || !STATE.timerStarted) return;
+      if (getRemainingTime() <= 0) return;
+
+      STATE.elapsed++;
+
+      if (STATE.elapsed === 30){
+        if (STATE.score >= CFG.EXT_SCORE){
+          STATE.extended = true;
+          STATE.limit = CFG.EXT_LIMIT;
+          flashText(`延長解放！${CFG.EXT_LIMIT}秒へ`, 1100);
+        } else {
+          STATE.limit = CFG.BASE_LIMIT;
+          flashText("終了！", 900);
+        }
+      }
+
+      if (STATE.extended && STATE.elapsed === CFG.ONI_AT){
+        STATE.oni = true;
+        STATE.oniReached = true;
+        STATE.freezeUntil = nowMs() + CFG.ONI_FREEZE_MS;
+        flashText("鬼モード突入！！", 1000);
+      }
+
+      setText("tfTime", Math.max(0, STATE.limit - STATE.elapsed));
+      setText("tfScore", STATE.score);
+      setText("tfCombo", STATE.combo);
+      setText("tfMiss", STATE.miss);
+
+      if (getRemainingTime() <= 0 && !STATE.ended){
+        STATE.ended = true;
+        setTimeout(() => showResultScreen(STATE.score, STATE.extended, STATE.oniReached), 120);
+      }
+    }, 1000);
   }
 
   function startGameWithCountdown(){
@@ -1302,44 +1349,6 @@
     };
     cvs.addEventListener("pointerdown", onPointer, { passive:false });
 
-    function startTimerLoop(){
-      if (timerId) clearInterval(timerId);
-      timerId = setInterval(() => {
-        if (!STATE || !STATE.timerStarted) return;
-        if (remaining() <= 0) return;
-
-        STATE.elapsed++;
-
-        if (STATE.elapsed === 30){
-          if (STATE.score >= CFG.EXT_SCORE){
-            STATE.extended = true;
-            STATE.limit = CFG.EXT_LIMIT;
-            flashText(`延長解放！${CFG.EXT_LIMIT}秒へ`, 1100);
-          } else {
-            STATE.limit = CFG.BASE_LIMIT;
-            flashText("終了！", 900);
-          }
-        }
-
-        if (STATE.extended && STATE.elapsed === CFG.ONI_AT){
-          STATE.oni = true;
-          STATE.oniReached = true;
-          STATE.freezeUntil = nowMs() + CFG.ONI_FREEZE_MS;
-          flashText("鬼モード突入！！", 1000);
-        }
-
-        setText("tfTime", Math.max(0, STATE.limit - STATE.elapsed));
-        setText("tfScore", STATE.score);
-        setText("tfCombo", STATE.combo);
-        setText("tfMiss", STATE.miss);
-
-        if (remaining() <= 0 && !STATE.ended){
-          STATE.ended = true;
-          setTimeout(() => showResultScreen(STATE.score, STATE.extended, STATE.oniReached), 120);
-        }
-      }, 1000);
-    }
-
     function drawBackground(now){
       const isOni = STATE.oni;
       ctx.fillStyle = isOni ? "#060819" : "#081425";
@@ -1460,10 +1469,10 @@
         ctx.fillText("鬼モード", 60, 36);
       }
       if (STATE.combo >= 2){
-        const cBonus = calcComboBonus(STATE.combo);
+        const comboMult = getComboMultiplier(STATE.combo).toFixed(2);
         ctx.fillStyle = "rgba(255,220,120,.95)";
         ctx.font = "12px system-ui";
-        ctx.fillText(`連続ボーナス +${cBonus}`, 130, 36);
+        ctx.fillText(`連続倍率 ×${comboMult}`, 130, 36);
       }
 
       if (now < STATE.flashUntil && STATE.flashMsg){
@@ -1653,7 +1662,8 @@
               const dead = STATE.items.find(v => !v.alive);
               if (dead) resetItem(dead);
               h.hasCatch = false; h.caught = null;
-              STATE.combo = 0; STATE.miss++; STATE.score -= 40;
+              STATE.combo = 0; STATE.miss++;
+              STATE.score -= 40;
               flashText("イカに奪われた… -40", 950);
               setHookIdle();
             }
@@ -1675,22 +1685,19 @@
               const dead = STATE.items.find(v => !v.alive);
               if (dead) resetItem(dead);
 
-              if (h.caught.type.kind === "minus"){
-                STATE.score += h.caught.points;
+              const nextCombo = (h.caught.type.mult < 0) ? 0 : (STATE.combo + 1);
+              const gained = calcCatchScore(h.caught, nextCombo);
+
+              if (h.caught.type.mult < 0){
+                STATE.score += gained;
                 STATE.combo = 0;
                 STATE.miss++;
-                flashText(`ハズレ！${h.caught.type.label} ${h.caught.points}`, 900);
+                flashText(`生焼け！ ${gained}`, 900);
               } else {
-                STATE.combo++;
-                const comboBonus = calcComboBonus(STATE.combo);
-                const gained = h.caught.points + comboBonus;
+                STATE.combo = nextCombo;
                 STATE.score += gained;
-
-                if (comboBonus > 0){
-                  flashText(`GET! +${h.caught.points} ＋連続${comboBonus}`, 900);
-                } else {
-                  flashText(`GET! +${h.caught.points}（${h.caught.size.label}/${h.caught.type.label}）`, 850);
-                }
+                const comboMult = getComboMultiplier(STATE.combo).toFixed(2);
+                flashText(`GET! ${gained > 0 ? "+" : ""}${gained}（×${comboMult}）`, 900);
               }
 
               h.hasCatch = false;
@@ -1759,9 +1766,6 @@
     IMGS = images;
     buildRuleVisuals();
     showRules();
-
-    startGame({ withCountdown: false });
-    stopGame();
 
     const c2 = els.canvas.getContext("2d");
     c2.imageSmoothingEnabled = false;
