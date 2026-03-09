@@ -36,7 +36,7 @@
 
   // ✅ 新GAS（あなたの確定版）
   const GAS_URL =
-    "https://script.google.com/macros/s/AKfycbzomUorzSZoN8NWzNOrihLHvYu8ugqgP2RlRQuq5NA2Hww-0axAJmmAPaaQgmMFBjGT/exec";
+    "https://script.google.com/macros/s/AKfycbw3FShwFkw5mdlUUBcnZXjcqIBmB-OoNEAf-XoYdDqhJjMS0CtcxVa57FURofzdeoZ1/exec";
   const GAS_KEY = "takopi-serial-2026";
 
   // =========================================================
