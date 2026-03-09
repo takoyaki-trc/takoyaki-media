@@ -1,893 +1,3 @@
-<!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>マイ露店</title>
-
-  <style>
-    :root{
-      --bg:#0f1220;
-      --panel:rgba(255,255,255,.08);
-      --line:rgba(255,255,255,.14);
-      --text:#fff;
-      --muted:rgba(255,255,255,.72);
-      --good:#9fffa8;
-      --warn:#ffd38a;
-      --bad:#ff9aa5;
-      --btn:rgba(255,255,255,.12);
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius:14px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-
-      --tile:112px;
-      --thumbPad:4px;
-      --gap:10px;
-
-      --shelfPad:10px;
-      --cardAR: 3 / 4;
-
-      --woodA:#6b4a2d;
-      --woodB:#4b2f1a;
-      --woodC:#7a5736;
-      --woodD:#3a2414;
-
-      --shrineLine: rgba(180,255,240,.35);
-      --shrineGlow: rgba(0,255,204,.22);
-      --shrineGlow2: rgba(64,160,255,.16);
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(circle at 50% 20%, #1a2040 0%, #070812 60%),
-        linear-gradient(#07060b,#0c0b12);
-      min-height:100svh;
-    }
-    body.noscroll{ overflow:hidden; touch-action:none; }
-
-    .mono{font-family:var(--mono)}
-    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 140px}
-
-    .btn{
-      appearance:none;
-      border:1px solid var(--line);
-      background:var(--btn);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:900;
-      white-space:nowrap;
-      -webkit-tap-highlight-color: transparent;
-      min-width:0;
-    }
-    .btn:active{transform:translateY(1px)}
-    .btn.warn{background:linear-gradient(180deg, rgba(255,211,138,.18), rgba(255,255,255,.10));}
-    .btn.ghost{background:transparent}
-    .btn[disabled]{opacity:.55;cursor:not-allowed}
-
-    .header{
-      position:sticky; top:0; z-index:20;
-      background:linear-gradient(to bottom, rgba(15,18,32,.95), rgba(15,18,32,.55));
-      backdrop-filter: blur(6px);
-      border-bottom:1px solid var(--line);
-    }
-    .head-inner{
-      max-width:980px;margin:0 auto;padding:10px 12px;
-      display:flex;align-items:center;gap:10px;
-    }
-    .back{
-      width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
-      background:var(--btn); color:var(--text); font-size:18px; cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-      flex:0 0 auto;
-    }
-    .titlebox{flex:1;min-width:0}
-    .title{font-size:16px;font-weight:950;letter-spacing:.02em}
-    .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex:0 0 auto}
-
-    .card{
-      border:1px solid var(--line);
-      background:var(--panel);
-      border-radius:var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .card-h{
-      padding:12px 12px 10px;
-      border-bottom:1px solid var(--line);
-      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
-    }
-    .card-title{font-weight:950;font-size:14px}
-    .card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
-    .card-b{padding:12px}
-
-    .stats{
-      display:grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      gap:8px;
-      margin-bottom:12px;
-    }
-    @media (max-width: 680px){
-      .stats{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-    }
-    .stat{
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.14);
-      border-radius:12px;
-      padding:8px 10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      min-width:0;
-    }
-    .stat .k{font-size:11px;color:var(--muted);white-space:nowrap}
-    .stat .v{
-      font-size:14px;
-      font-weight:950;
-      display:flex;
-      align-items:baseline;
-      gap:6px;
-      white-space:nowrap;
-      min-width:0;
-    }
-    .stat .v small{font-size:11px;color:var(--muted);font-weight:800}
-    .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
-
-    .stage-card{margin-bottom:12px}
-    .stage{
-      position:relative;
-      width:100%;
-      max-width:980px;
-      border-radius:14px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.18);
-    }
-    .stage-media{
-      position:relative;
-      width:100%;
-      aspect-ratio: 16 / 9;
-      background: rgba(0,0,0,.22);
-      border-bottom:1px solid rgba(255,255,255,.12);
-      overflow:hidden;
-    }
-    @media (max-width: 520px){
-      .stage-media{ aspect-ratio: 16 / 10; }
-    }
-    .stage-bg{
-      position:absolute; inset:0;
-      width:100%; height:100%;
-      object-fit:contain; object-position:center;
-      image-rendering:pixelated;
-      display:block;
-      background: rgba(0,0,0,.22);
-    }
-    .stage-visitor{
-      position:absolute;
-      left:50%;
-      bottom:51px;
-      height:150px;
-      image-rendering: pixelated;
-      pointer-events:none;
-      opacity:0;
-      transform:translateX(-50%) translateY(8px);
-      transition: opacity .45s ease, transform .45s ease;
-      will-change: opacity, transform;
-      filter: drop-shadow(0 10px 22px rgba(0,0,0,.55));
-    }
-    .stage-visitor.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    .stage-overlay{
-      position:absolute;
-      right:10px;
-      top:10px;
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-      pointer-events:none;
-      z-index:5;
-    }
-    .stage-overlay .tag{
-      border:1px solid rgba(255,255,255,.22);
-      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.78));
-      border-radius:999px;
-      padding:7px 10px;
-      font-size:12px;
-      color:rgba(255,255,255,.92);
-      white-space:nowrap;
-      box-shadow: 0 12px 30px rgba(0,0,0,.45);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      text-shadow: 0 2px 0 rgba(0,0,0,.35);
-    }
-    .stage-ui{
-      position:relative;
-      display:flex;
-      align-items:flex-start;
-      justify-content:flex-start;
-      gap:10px;
-      padding:12px;
-      pointer-events:auto;
-      background: transparent;
-    }
-    .bubble{
-      width:100%;
-      border:1px solid rgba(120,255,235,.38);
-      background:
-        radial-gradient(circle at 18% 20%, rgba(0,255,204,.20), rgba(0,0,0,0) 52%),
-        radial-gradient(circle at 82% 30%, rgba(64,160,255,.16), rgba(0,0,0,0) 55%),
-        linear-gradient(180deg, rgba(0,170,160,.18), rgba(0,0,0,.62));
-      border-radius:14px;
-      padding:12px 14px;
-      line-height:1.35;
-      box-shadow:
-        0 18px 45px rgba(0,0,0,.45),
-        0 0 0 1px rgba(255,255,255,.06) inset,
-        0 0 34px rgba(0,255,204,.18);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      min-width:0;
-    }
-    .bubble .n{font-weight:950;font-size:16px;letter-spacing:.02em;text-shadow: 0 2px 0 rgba(0,0,0,.35);}
-    .bubble .n.neg{ color: var(--bad); }
-    .bubble .m{color:rgba(255,255,255,.94);font-size:14px;margin-top:6px;line-height:1.55;text-shadow: 0 2px 0 rgba(0,0,0,.25);}
-
-    .grid{display:grid;grid-template-columns:1fr;gap:12px}
-
-    .shelf-board{
-      position:relative;
-      border-radius:16px;
-      padding:12px;
-      border:1px solid rgba(255,255,255,.18);
-      box-shadow: 0 18px 55px rgba(0,0,0,.55);
-      overflow:hidden;
-      background:
-        repeating-linear-gradient(
-          90deg,
-          rgba(255,255,255,.035) 0px,
-          rgba(255,255,255,.035) 8px,
-          rgba(0,0,0,.02) 8px,
-          rgba(0,0,0,.02) 18px
-        ),
-        repeating-linear-gradient(
-          180deg,
-          rgba(0,0,0,.10) 0px,
-          rgba(0,0,0,.10) 2px,
-          rgba(255,255,255,.06) 2px,
-          rgba(255,255,255,.06) 36px
-        ),
-        linear-gradient(180deg, rgba(122,87,54,.92), rgba(58,36,20,.92));
-    }
-    .shelf-board:before{
-      content:"";
-      position:absolute; inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(circle at 50% 20%, rgba(255,255,255,.10), rgba(0,0,0,0) 55%),
-        radial-gradient(circle at 50% 90%, rgba(0,0,0,.20), rgba(0,0,0,0) 60%);
-      mix-blend-mode: overlay;
-      opacity:.9;
-    }
-    .shelf-board:after{
-      content:"";
-      position:absolute; inset:8px;
-      border-radius:12px;
-      border:1px solid rgba(0,0,0,.18);
-      box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset;
-      pointer-events:none;
-    }
-
-    .shelves{
-      position:relative;
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap:10px;
-      z-index:1;
-    }
-    @media (min-width: 940px){
-      .shelves{ grid-template-columns: repeat(3, minmax(0,1fr)); }
-    }
-
-    .shelf{
-      border:1px solid rgba(255,255,255,.18);
-      border-radius:14px;
-      overflow:hidden;
-      min-width:0;
-      background: linear-gradient(180deg, rgba(0,0,0,.14), rgba(0,0,0,.28));
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-      position:relative;
-    }
-    .shelf.locked{opacity:.62;filter:saturate(.75)}
-
-    .shelf.shrine{
-      border-color: var(--shrineLine);
-      box-shadow:
-        0 18px 55px rgba(0,0,0,.55),
-        0 0 0 1px rgba(255,255,255,.06) inset,
-        0 0 34px rgba(0,255,204,.12);
-    }
-    .shelf.shrine:before{
-      content:"";
-      position:absolute; inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(circle at 18% 18%, var(--shrineGlow), rgba(0,0,0,0) 52%),
-        radial-gradient(circle at 82% 26%, var(--shrineGlow2), rgba(0,0,0,0) 55%),
-        linear-gradient(180deg, rgba(0,170,160,.10), rgba(0,0,0,.25));
-      opacity:.9;
-    }
-    .shelf.shrine .shelf-top{
-      border-bottom:1px dashed rgba(180,255,240,.25);
-    }
-
-    .shelf-top{
-      padding:10px 10px 8px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border-bottom:1px dashed rgba(255,255,255,.16);
-      min-width:0;
-      position:relative;
-      z-index:1;
-    }
-    .shelf-title{
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .shelf-name{
-      font-weight:950;
-      font-size:13px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .shelf-tag{
-      font-size:11px;
-      color:rgba(255,255,255,.78);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width:100%;
-    }
-
-    .tierPill{
-      flex:0 0 auto;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.20);
-      background:rgba(0,0,0,.25);
-      font-size:12px;
-      font-weight:950;
-      line-height:1;
-      white-space:nowrap;
-      position:relative;
-      z-index:1;
-    }
-    .tier--high{ color: var(--bad); border-color: rgba(255,154,165,.38); }
-    .tier--mid { color: var(--warn); border-color: rgba(255,211,138,.34); }
-    .tier--low { color: var(--good); border-color: rgba(159,255,168,.30); }
-    .tier--shrine{
-      color: rgba(200,255,240,.96);
-      border-color: rgba(180,255,240,.38);
-      background: rgba(0,0,0,.35);
-      text-shadow: 0 2px 0 rgba(0,0,0,.35);
-    }
-
-    .shelf-body{
-      padding: var(--shelfPad);
-      display:grid;
-      gap:10px;
-      min-width:0;
-      position:relative;
-      z-index:1;
-    }
-
-    .slot{
-      width:100%;
-      aspect-ratio: var(--cardAR);
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(0,0,0,.22);
-      overflow:hidden;
-      position:relative;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .slot img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      padding:5px;
-      image-rendering:pixelated;
-      display:block;
-    }
-    .slot .ph{
-      width:100%;
-      height:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:rgba(255,255,255,.70);
-      font-size:12px;
-      text-align:center;
-      padding:10px;
-      line-height:1.25;
-    }
-    .slot .qty{
-      position:absolute; right:8px; bottom:8px;
-      font-size:12px; font-weight:950;
-      background:rgba(0,0,0,.62);
-      border:1px solid rgba(255,255,255,.18);
-      padding:3px 9px;border-radius:999px;
-      font-family:var(--mono);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-
-    .shelf-info{
-      min-width:0;
-      display:grid;
-      gap:6px;
-    }
-
-    .line{
-      font-size:12px;
-      color:rgba(255,255,255,.80);
-      line-height:1.35;
-      min-width:0;
-      overflow-wrap:anywhere;
-      word-break:break-word;
-    }
-    .line b{color:var(--text)}
-
-    .line.titleLine{
-      font-size:14px;
-      font-weight:950;
-      color:var(--text);
-      line-height:1.25;
-      display:-webkit-box;
-      -webkit-line-clamp:3;
-      -webkit-box-orient:vertical;
-      overflow:hidden;
-    }
-
-    .priceLine b{font-size:16px}
-    .subNote{color:rgba(255,255,255,.68);font-size:11px}
-
-    .shelf-actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:4px;
-      min-width:0;
-    }
-    .mini{
-      padding:10px 10px;
-      border-radius:12px;
-      font-size:12px;
-      font-weight:950;
-      flex: 1 1 120px;
-      min-width:0;
-    }
-    @media (max-width: 420px){
-      .line.titleLine{ font-size:13px; -webkit-line-clamp:3; }
-      .priceLine b{ font-size:15px; }
-      .mini{ flex: 1 1 100%; }
-    }
-
-    .modal{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.65);
-      display:none;
-      align-items:flex-end;
-      justify-content:center;
-      z-index:100;
-      padding:14px 12px;
-      overscroll-behavior: contain;
-    }
-    .modal.show{display:flex}
-    .sheet{
-      width:min(980px, 100%);
-      border:1px solid var(--line);
-      background:rgba(15,18,32,.98);
-      border-radius:16px;
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      max-height: 86vh;
-      display:flex;
-      flex-direction:column;
-    }
-    .sheet-h{
-      padding:12px; border-bottom:1px solid var(--line);
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      flex:0 0 auto;
-      min-width:0;
-    }
-    .sheet-h b{font-size:14px}
-    .sheet-b{
-      padding:12px;
-      overflow:auto;
-      -webkit-overflow-scrolling: touch;
-      flex: 1 1 auto;
-      touch-action: pan-y;
-    }
-    .sheet-actions{
-      display:flex;gap:8px;justify-content:flex-end;
-      padding:12px;border-top:1px solid var(--line);flex:0 0 auto
-    }
-    .close{width:40px;height:40px;border-radius:12px}
-
-    .cards{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap:var(--gap);
-      align-items:stretch;
-    }
-    @media (max-width: 340px){
-      .cards{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-    }
-    @media (min-width: 920px){
-      .cards{ grid-template-columns: repeat(4, minmax(0,1fr)); }
-    }
-
-    .citem{
-      position:relative;
-      border:1px solid rgba(255,255,255,.14);
-      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.14));
-      border-radius:14px;
-      overflow:hidden;
-      cursor:pointer;
-      user-select:none;
-      -webkit-tap-highlight-color:transparent;
-      transition:transform .12s ease, filter .12s ease;
-      display:flex;
-      flex-direction:column;
-      min-width:0;
-    }
-    .citem:active{transform:scale(.985)}
-    .cimg{
-      width:100%;
-      height:var(--tile);
-      display:block;
-      background:rgba(0,0,0,.14);
-      position:relative;
-    }
-    .cimg img{
-      width:100%;height:100%;
-      object-fit:contain;
-      padding:var(--thumbPad);
-      image-rendering:pixelated;
-      image-rendering:crisp-edges;
-      display:block;
-    }
-    .cimg .ph{
-      width:100%;height:100%;
-      display:flex;align-items:center;justify-content:center;
-      color:rgba(255,255,255,.6);
-      font-size:11px;text-align:center;padding:8px;line-height:1.2;
-    }
-    .cimg .cnt{
-      position:absolute; right:6px; top:6px;
-      font-size:11px; font-weight:950;
-      background:rgba(0,0,0,.62);
-      border:1px solid rgba(255,255,255,.18);
-      padding:3px 8px;border-radius:999px;
-      font-family:var(--mono);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .cmeta{
-      padding:7px 8px 9px;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      min-width:0;
-    }
-    .cname{
-      font-size:12px;
-      font-weight:950;
-      line-height:1.25;
-      display:-webkit-box;
-      -webkit-line-clamp:2;
-      -webkit-box-orient:vertical;
-      overflow:hidden;
-      overflow-wrap:anywhere;
-      word-break:break-word;
-    }
-    .csub{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:6px;
-      color:var(--muted);
-      font-size:11px;
-      min-width:0;
-    }
-    .csub .tagmini{
-      display:inline-flex;align-items:center;gap:6px;
-      padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.18);color:var(--muted);max-width:100%;
-      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-      min-width:0;
-    }
-    .csub .tagmini b{color:var(--text);font-weight:800}
-
-    .toast{
-      position:fixed;
-      left:12px;
-      right:12px;
-      bottom:50%;
-      transform: translateY(50%);
-      display:flex;
-      justify-content:center;
-      pointer-events:none;
-      z-index:200;
-    }
-    .toast .box{
-      width:min(680px, 100%);
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(0,0,0,.65);
-      color:var(--text);
-      border-radius:14px;
-      padding:10px 12px;
-      box-shadow: var(--shadow);
-      pointer-events:none;
-      display:none;
-      white-space:pre-line;
-    }
-    .toast .box.show{display:block;animation: popIn .18s ease-out;}
-    @keyframes popIn{
-      from{ transform: translateY(8px) scale(.98); opacity: 0; }
-      to  { transform: translateY(0)   scale(1);   opacity: 1; }
-    }
-
-    .toast .box.toast--sale{
-      border-color: rgba(255,211,138,.90);
-      background: linear-gradient(180deg, rgba(255,211,138,.28), rgba(0,0,0,.80));
-      box-shadow:
-        0 22px 70px rgba(0,0,0,.70),
-        0 0 0 1px rgba(255,211,138,.25) inset,
-        0 0 40px rgba(255,211,138,.20);
-      transform-origin:center;
-      animation: salePop .20s ease-out, salePulse 1.2s ease-in-out infinite;
-    }
-    @keyframes salePop{
-      from{ transform: translateY(16px) scale(.92); opacity:0; }
-      to  { transform: translateY(0)    scale(1);   opacity:1; }
-    }
-    @keyframes salePulse{
-      0%,100%{ filter: drop-shadow(0 0 0 rgba(255,211,138,0)); }
-      50%{ filter: drop-shadow(0 0 14px rgba(255,211,138,.35)); }
-    }
-    .toast .box.toast--sale b{
-      font-size:18px;
-      letter-spacing:.02em;
-      text-shadow: 0 2px 0 rgba(0,0,0,.25);
-    }
-    .toast .box.toast--sale .small{
-      font-size:14px;
-      color:rgba(255,255,255,.96);
-    }
-
-    .toast .box.toast--contract{
-      border-color: rgba(180,255,240,.78);
-      background:
-        radial-gradient(circle at 18% 20%, rgba(0,255,204,.22), rgba(0,0,0,0) 52%),
-        radial-gradient(circle at 82% 26%, rgba(64,160,255,.16), rgba(0,0,0,0) 55%),
-        linear-gradient(180deg, rgba(0,170,160,.18), rgba(0,0,0,.84));
-      box-shadow:
-        0 22px 80px rgba(0,0,0,.72),
-        0 0 0 1px rgba(180,255,240,.18) inset,
-        0 0 44px rgba(0,255,204,.18);
-      animation: salePop .20s ease-out, contractPulse 1.4s ease-in-out infinite;
-    }
-    @keyframes contractPulse{
-      0%,100%{ filter: drop-shadow(0 0 0 rgba(0,255,204,0)); }
-      50%{ filter: drop-shadow(0 0 16px rgba(0,255,204,.28)); }
-    }
-
-    .sale-flash{
-      position:fixed; inset:0;
-      pointer-events:none;
-      background: radial-gradient(circle at 50% 55%, rgba(255,211,138,.22), rgba(0,0,0,0) 55%);
-      opacity:0;
-      z-index:190;
-    }
-    .sale-flash.show{ animation: flash .55s ease-out; }
-    @keyframes flash{
-      0%{ opacity:0; }
-      18%{ opacity:1; }
-      100%{ opacity:0; }
-    }
-
-    .contract-flash{
-      position:fixed; inset:0;
-      pointer-events:none;
-      background: radial-gradient(circle at 50% 55%, rgba(0,255,204,.20), rgba(0,0,0,0) 58%);
-      opacity:0;
-      z-index:191;
-    }
-    .contract-flash.show{ animation: flash .60s ease-out; }
-
-    .cd{font-size:11px;color:var(--muted);margin-left:8px;align-self:center;}
-    .head-actions-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;min-width:0;}
-
-    .errbar{
-      position:fixed;
-      left:10px; right:10px;
-      bottom:10px;
-      z-index:9999;
-      display:none;
-    }
-    .errbar.show{display:block}
-    .errbar .box{
-      border:1px solid rgba(255,154,165,.55);
-      background:rgba(0,0,0,.78);
-      border-radius:14px;
-      padding:10px 12px;
-      box-shadow: 0 14px 50px rgba(0,0,0,.55);
-      font-size:12px;
-      line-height:1.5;
-    }
-    .errbar .t{font-weight:950;color:var(--bad)}
-    .errbar .m{margin-top:4px;color:rgba(255,255,255,.92);white-space:pre-wrap;font-family:var(--mono)}
-  </style>
-</head>
-
-<body>
-  <div class="header">
-    <div class="head-inner">
-      <button class="back" id="backBtn" type="button" aria-label="戻る">←</button>
-      <div class="titlebox">
-        <div class="title">マイ露店</div>
-      </div>
-      <div class="top-actions">
-        <button class="btn ghost" id="helpBtn" type="button">？</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="wrap">
-    <div class="stats" id="stats"></div>
-
-    <div class="card stage-card">
-      <div class="card-h">
-        <div>
-          <div class="card-title">来店ステージ</div>
-          <div class="card-desc">👉お客さんが帰らなくなったら押してね👉</div>
-        </div>
-        <button class="btn ghost" id="fixBtn" type="button">さよなら～</button>
-      </div>
-
-      <div class="card-b">
-        <div class="stage" id="stage">
-          <div class="stage-media">
-            <img id="stageBg" class="stage-bg" alt="" src="">
-            <img id="stageVisitor" class="stage-visitor" alt="" src="">
-            <div class="stage-overlay" aria-hidden="true">
-              <div class="tag" id="stageTimeTag">—</div>
-              <div class="tag" id="stageNextTag">次：—</div>
-            </div>
-          </div>
-
-          <div class="stage-ui">
-            <div class="bubble">
-              <div class="n" id="stageName">—</div>
-              <div class="m" id="stageMsg">まだ誰も来ていない。</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <div class="card-h">
-          <div>
-            <div class="card-title">棚（出品）</div>
-            <div class="card-desc">棚にカードを置くとお客さんが買いに来るよ♪（棚6は「祀り棚」＝契約イベント発動）</div>
-          </div>
-
-          <div class="head-actions-row">
-            <button class="btn warn" id="shoutBtn" type="button">呼び込み</button>
-            <div class="cd mono" id="shoutCd">—</div>
-          </div>
-        </div>
-
-        <div class="card-b">
-          <div class="shelf-board">
-            <div class="shelves" id="shelves"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="pickModal" aria-hidden="true">
-    <div class="sheet" role="dialog" aria-label="出品するカードを選ぶ">
-      <div class="sheet-h">
-        <div style="min-width:0">
-          <b id="pickTitle">出品するカード</b>
-          <div style="margin-top:4px;font-size:12px;color:rgba(255,255,255,.72)" id="pickHint">棚を選んでからカードを選択。</div>
-        </div>
-        <button class="btn close" id="pickClose" type="button" aria-label="閉じる">×</button>
-      </div>
-      <div class="sheet-b">
-        <div class="cards" id="pickCards"></div>
-        <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.72);display:none" id="pickEmpty">
-          出品できるカードがありません。
-        </div>
-      </div>
-      <div class="sheet-actions">
-        <button class="btn" id="pickCancel" type="button">キャンセル</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="helpModal" aria-hidden="true">
-    <div class="sheet" role="dialog" aria-label="ヘルプ">
-      <div class="sheet-h">
-        <b>露店の遊び方</b>
-        <button class="btn close" id="helpClose" type="button" aria-label="閉じる">×</button>
-      </div>
-      <div class="sheet-b">
-        <div style="font-size:12px;color:rgba(255,255,255,.86);line-height:1.65">
-          ・棚をタップ → 「図鑑に1枚残しても余る分」から出品<br>
-          ・<b>職人カード（CRAFT）は例外で、最後の1枚でも出品OK</b><br>
-          ・売買は「来店ステージ」でのみ発生<br>
-          ・来客だけでも EXP +1（育つ）<br>
-          ・売れたら EXP 追加 +4（合計+5）<br>
-          ・王様が買うと評判UP / 転売が買うと評判DOWN<br>
-          ・「呼び込み」は60秒に1回、<b>出品中の棚からランダム</b>でお客を先に呼ぶ<br>
-          ・客が帰ったあと、<b>少し待機時間</b>が入るので連続来店しにくいです<br><br>
-
-          <b>棚解放</b><br>
-          Lv1: 棚1-2 / Lv2: 棚3 / Lv3: 棚4 / Lv4: 棚5 / <b>Lv5: 棚6（祀り棚）</b><br><br>
-
-          <b>まとめ陳列（まとめ売り）</b><br>
-          Lv6: 棚1 / Lv8: 棚2 / Lv10: 棚3 / Lv12: 棚4 / Lv14: 棚5<br>
-          ※棚6（祀り棚）はまとめ不可（常に1枚奉納）<br><br>
-
-          <b>棚6：祀り棚（契約イベント）</b><br>
-          ・棚6に置いたカードは「奉納」扱い（値段固定/切替なし）<br>
-          ・売れた瞬間、契約が成立して<b>ボーナス報酬</b>が発生（OCTO/評判/EXP など）<br>
-          ・取り下げは“儀式”（確認が必要）<br>
-        </div>
-      </div>
-      <div class="sheet-actions">
-        <button class="btn" id="helpOk" type="button">OK</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="sale-flash" id="saleFlash" aria-hidden="true"></div>
-  <div class="contract-flash" id="contractFlash" aria-hidden="true"></div>
-
-  <div class="toast" aria-live="polite" aria-atomic="true">
-    <div class="box" id="toastBox">
-      <b id="toastTitle">—</b>
-      <div class="small" id="toastSub">—</div>
-    </div>
-  </div>
-
-  <div class="errbar" id="errBar" aria-hidden="true">
-    <div class="box">
-      <div class="t">JSエラー（ここが出たら教えて）</div>
-      <div class="m" id="errMsg">—</div>
-    </div>
-  </div>
-
 <script>
 (() => {
   "use strict";
@@ -1025,8 +135,8 @@
   /* =========================================================
      ✅ 追加：連続来店防止
   ========================================================= */
-  const GLOBAL_VISITOR_COOLDOWN_MS = 15000; // 客が帰ったあと最低15秒空ける
-  const POST_VISIT_SHIFT_MIN_MS = 12000;    // 他棚の期限切れを少し後ろへ
+  const GLOBAL_VISITOR_COOLDOWN_MS = 15000;
+  const POST_VISIT_SHIFT_MIN_MS = 12000;
   const POST_VISIT_SHIFT_MAX_MS = 22000;
 
   const LS = {
@@ -1042,7 +152,10 @@
     queue:    "roten_v1_queue",
     contract: "roten_v1_contract",
     recentVisitors: "roten_v1_recent_visitors",
-    flow:     "roten_v1_flow"
+    flow:     "roten_v1_flow",
+
+    /* ✅ 月間称号用 */
+    monthly:  "ttc_monthly_stats_v1"
   };
 
   const FLOW_DEFAULT = {
@@ -1101,6 +214,67 @@
   function lsSet(key, val){
     try{ Storage.setItem(key, JSON.stringify(val)); }
     catch(e){ showErr("lsSet failed: " + (e?.message||e)); }
+  }
+
+  /* =========================================================
+     ✅ 月間称号データ（マイ露店売上反映）
+  ========================================================= */
+  function getMonthKey(date = new Date()){
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    return `${y}-${m}`;
+  }
+
+  function loadMonthlyStats(){
+    const currentKey = getMonthKey();
+    const s = lsGet(LS.monthly, null);
+
+    if(!s || typeof s !== "object"){
+      return {
+        monthKey: currentKey,
+        harvest: 0,
+        sales: 0,
+        fishing: 0,
+        tower: 0
+      };
+    }
+
+    if(String(s.monthKey || "") !== currentKey){
+      return {
+        monthKey: currentKey,
+        harvest: 0,
+        sales: 0,
+        fishing: 0,
+        tower: 0
+      };
+    }
+
+    return {
+      monthKey: currentKey,
+      harvest: Number(s.harvest || 0),
+      sales: Number(s.sales || 0),
+      fishing: Number(s.fishing || 0),
+      tower: Number(s.tower || 0)
+    };
+  }
+
+  function saveMonthlyStats(stats){
+    lsSet(LS.monthly, {
+      monthKey: String(stats.monthKey || getMonthKey()),
+      harvest: Number(stats.harvest || 0),
+      sales: Number(stats.sales || 0),
+      fishing: Number(stats.fishing || 0),
+      tower: Number(stats.tower || 0)
+    });
+  }
+
+  function addMonthlyMyShopSales(amount){
+    const add = Math.max(0, Math.floor(Number(amount || 0)));
+    if(add <= 0) return;
+
+    const s = loadMonthlyStats();
+    s.sales = Number(s.sales || 0) + add;
+    saveMonthlyStats(s);
   }
 
   function loadFlow(){
@@ -2036,6 +1210,8 @@
       return;
     }
 
+    const oldQty = Math.max(1, Number(slot.qty||1));
+
     slot.item = {
       id: pickedCard.id,
       name: pickedCard.name,
@@ -2112,7 +1288,11 @@
     const beforeQty = Math.max(1, Number(slot.qty||1));
     const afterQty = beforeQty - 1;
 
+    /* ✅ 売上確定：オクト加算 */
     saveOcto(loadOcto() + price);
+
+    /* ✅ 売上確定：称号の頂の月間売上へ加算 */
+    addMonthlyMyShopSales(price);
 
     const lv = addExp(4);
     addRep(cust.repDeltaOnBuy);
@@ -2147,6 +1327,11 @@
         saveOcto(loadOcto() + bonusOcto);
         addRep(bonusRep);
         addExp(CONTRACT_BONUS.exp);
+
+        /* ✅ 注意：
+           契約ボーナスは「マイ露店売上」ではなくボーナス報酬なので
+           月間 sales には加算しない
+        */
 
         pushLog("契約成立", `棚6の契約が成立：+${fmt(bonusOcto)} OCTO / 評判 +${bonusRep} / EXP +${CONTRACT_BONUS.exp}`, soldItem.id);
         toast("📜 契約成立", `${pick(CONTRACT_LINES)}\n+${fmt(bonusOcto)} OCTO / 評判+${bonusRep} / EXP+${CONTRACT_BONUS.exp}`, "contract");
@@ -2336,7 +1521,6 @@
     toast("呼び込み！", `棚${target+1}｜${pickShoutLine()}`, "");
     pushLog("呼び込み", `棚${target+1} に客の気配が集まった`, "");
 
-    /* 呼び込みは特別扱い：待機中でも呼べる */
     spawnVisitorSoon(target, "shout");
   }
 
