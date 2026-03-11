@@ -1,1 +1,950 @@
+(() => {
+  "use strict";
 
+  const LS_KEY = "roten_v1_guest_affection";
+
+  const GUEST_LABELS = {
+    impulse:   { min:0,  text:"まだ勢いだけで来ている。", mid:"ノリが合う店だと思い始めている。", max:"勢いで来て、愛着で帰る常連。" },
+    picky:     { min:0,  text:"まだ厳しく見定めている。", mid:"少しずつ認め始めている。", max:"うるさいけど、かなり気に入っている。" },
+    king:      { min:0,  text:"まだ試す目で見ている。", mid:"店の格を認め始めている。", max:"王が認めた棚。かなり強い。" },
+    flipper:   { min:0,  text:"利益しか見ていない。", mid:"数字以外の価値も少し見えてきた。", max:"打算から始まったのに、なぜか情がある。" },
+    careful:   { min:0,  text:"まだ警戒しながら様子見。", mid:"少しずつ安心してきている。", max:"かなり信頼している常連候補。" },
+    looker:    { min:0,  text:"まだ“見るだけ”の距離感。", mid:"眺めるだけでは済まなくなってきた。", max:"口では軽いが、かなり好き。" },
+    rich:      { min:0,  text:"金で測っている。", mid:"値段以外の面白さも認め始めた。", max:"財布より先に心が動いている。" },
+    climber:   { min:0,  text:"まだ試練の棚だと思っている。", mid:"登る価値のある店だと思い始めた。", max:"景色の見える常連ポジション。" },
+    guide:     { min:0,  text:"まだ外から案内している。", mid:"語りたくなる場所になってきた。", max:"もう半分この店の広報。" },
+    relax:     { min:0,  text:"まだ様子見で空気を読んでいる。", mid:"居心地の良さを感じ始めている。", max:"癒やし目的でも来ている。" },
+    artisan:   { min:0,  text:"仕事として見ている。", mid:"腕前を認めてきている。", max:"技術も空気も含めて評価している。" },
+    diet:      { min:0,  text:"理屈で距離を取っている。", mid:"理論の中に好意が混ざり始めた。", max:"もはや理屈を超えて好き。" },
+    overflow:  { min:0,  text:"まだ枠外から見ている。", mid:"ズレた会話を楽しみ始めている。", max:"規格外どうしで相性が良い。" },
+    collector: { min:0,  text:"まだ管理対象として見ている。", mid:"保存以上の感情が生まれ始めた。", max:"かなり大切な棚認定。" },
+    shadow:    { min:0,  text:"まだ慎重に距離を測っている。", mid:"守れる価値を感じ始めている。", max:"信用しているから買う側に寄っている。" },
+    ramen:     { min:0,  text:"まだ濃さだけ見ている。", mid:"味わうように通い始めている。", max:"締めに寄りたくなる店になった。" },
+    streamer:  { min:0,  text:"まだネタとして見ている。", mid:"映え以上の面白さを感じている。", max:"本気で推したくなっている。" },
+    gourmet:   { min:0,  text:"まだ厳しく品定めしている。", mid:"余韻のある店だと感じ始めた。", max:"かなり深く気に入っている。" },
+    opener:    { min:0,  text:"まだ勢いだけで近づいている。", mid:"開封以上に店も楽しみ始めた。", max:"テンション込みでかなり好き。" },
+    party:     { min:0,  text:"まだ祭りのノリで来ている。", mid:"ノリ以上の居場所感が出てきた。", max:"騒がしいけど本気で好き。" },
+    pilgrim:   { min:0,  text:"まだ巡礼先のひとつ。", mid:"来た意味がある場所だと思い始めた。", max:"わざわざ来る価値があると確信している。" }
+  };
+
+  const TALK_POOLS = {
+    careful: [
+      {
+        mood: "慎重に棚を見ながら、そっと聞いてきた。",
+        ask: "……これ、買ったあと後悔しないやつ？",
+        choices: [
+          { text: "後悔しても、それ込みで思い出です。", delta: +3, reply: "……その言い方、ずるいな。ちょっと好き。", stage: "……少し肩の力が抜けたみたいだ。", log: "思い出として背中を押した" },
+          { text: "人によります。慎重にどうぞ。", delta: +1, reply: "……うん、それが一番信用できる。", stage: "……誠実さは伝わったらしい。", log: "慎重派に誠実対応した" },
+          { text: "後悔する前にもう一枚どうですか。", delta: -2, reply: "……急に怖くなってきた。", stage: "……少し引かれた。", log: "慎重派に圧をかけた" }
+        ]
+      },
+      {
+        mood: "財布を握りしめて小声で話してきた。",
+        ask: "……勢いで買うと危ないかな。",
+        choices: [
+          { text: "危ない。でもたまに正解です。", delta: +2, reply: "……危ないって言いながら肯定するんだ。", stage: "……危なさごと受け入れたようだ。", log: "慎重派に本音で返した" },
+          { text: "今日は見るだけでも大丈夫です。", delta: +2, reply: "……そう言われると逆に安心する。", stage: "……安心感が少し増した。", log: "慎重派を安心させた" },
+          { text: "勢いがないと人生つまらないです。", delta: -1, reply: "……今それを言われると困る。", stage: "……押しが強すぎたかもしれない。", log: "慎重派に勢い論をぶつけた" }
+        ]
+      }
+    ],
+
+    impulse: [
+      {
+        mood: "目を輝かせて身を乗り出してきた。",
+        ask: "これ、今いっといた方がいい感じ？",
+        choices: [
+          { text: "今いかないと、未来の自分がうるさいです。", delta: +3, reply: "そういうの好き！ 未来の自分はあとで謝らせる！", stage: "……完全にテンションが上がった。", log: "即決派の勢いを肯定した" },
+          { text: "深呼吸してからでも遅くないです。", delta: +1, reply: "それもそう。でも多分もう遅い気もする！", stage: "……少し理性が戻った。", log: "即決派を少し落ち着かせた" },
+          { text: "迷うなら今日はやめましょう。", delta: -2, reply: "えっ、そこは背中押してよ！？", stage: "……勢いを止められて少し不満そうだ。", log: "即決派を止めた" }
+        ]
+      },
+      {
+        mood: "すでに買う顔をしながら確認してきた。",
+        ask: "ねえ、こういうのって“出会い”でしょ？",
+        choices: [
+          { text: "はい。しかもだいぶ危険な出会いです。", delta: +3, reply: "危険って言われると余計に好き！", stage: "……危険ワードが刺さった。", log: "即決派に危険な出会い認定した" },
+          { text: "出会いだけど、財布とは相談です。", delta: +1, reply: "現実！ でも嫌いじゃない！", stage: "……現実も飲み込んだようだ。", log: "即決派に現実を添えた" },
+          { text: "たまたま目に入っただけです。", delta: -3, reply: "うわ、急にロマン消さないで！？", stage: "……明らかにしょんぼりした。", log: "即決派のロマンを折った" }
+        ]
+      }
+    ],
+
+    looker: [
+      {
+        mood: "見るだけの顔で話しかけてきた。",
+        ask: "……見るだけでも、なんか言われない？",
+        choices: [
+          { text: "見るだけ勢も立派なお客さんです。", delta: +3, reply: "……そういう言い方されると弱いな。", stage: "……“見るだけ”の防御が少し剥がれた。", log: "冷やかし客を肯定した" },
+          { text: "今日は下見でも全然OKです。", delta: +2, reply: "……じゃあ今日はそういうことにする。", stage: "……居やすくなったようだ。", log: "冷やかし客に逃げ道を作った" },
+          { text: "見るだけは、まあ、ほどほどに。", delta: -2, reply: "……あ、やっぱそういう空気あるんだ。", stage: "……少し距離を取られた。", log: "冷やかし客にプレッシャーを与えた" }
+        ]
+      }
+    ],
+
+    picky: [
+      {
+        mood: "かなり細かい目で棚を見ながら聞いてきた。",
+        ask: "これ、“なんとなく良い”で済ませてない？",
+        choices: [
+          { text: "済ませてません。ちゃんと危ない良さです。", delta: +3, reply: "……危ない良さ、嫌いじゃない。", stage: "……厳しい顔のまま、ちょっとだけ口元がゆるんだ。", log: "うるさめ客に言葉で返した" },
+          { text: "その目で見てもらえるの、むしろ嬉しいです。", delta: +2, reply: "……へえ、嫌がらないんだ。", stage: "……少し評価された。", log: "うるさめ客の厳しさを歓迎した" },
+          { text: "なんとなくも大事ですよ。", delta: -2, reply: "……雑にまとめられた気がする。", stage: "……納得していない。", log: "うるさめ客を雑に流した" }
+        ]
+      }
+    ],
+
+    king: [
+      {
+        mood: "王の余裕で問いを投げてきた。",
+        ask: "余に買う理由をひとつ述べよ。",
+        choices: [
+          { text: "王が買えば、それが理由になります。", delta: +4, reply: "よい。話が早い。", stage: "……王様はかなり機嫌が良い。", log: "王様を持ち上げた" },
+          { text: "理由なら棚にあります。あとは王の目で。", delta: +2, reply: "ふむ。余に委ねるか。悪くない。", stage: "……少し試すような顔になった。", log: "王様に判断を委ねた" },
+          { text: "理由がないなら無理に買わなくていいです。", delta: -3, reply: "余を試しているのか？", stage: "……王の機嫌を損ねた。", log: "王様を突き放した" }
+        ]
+      }
+    ],
+
+    flipper: [
+      {
+        mood: "数字を弾く目で低く聞いてきた。",
+        ask: "で、これ、回ると思う？",
+        choices: [
+          { text: "回るかも。でも“残したくなる”方が危険です。", delta: +2, reply: "……数字じゃない言い方、ちょっと面白いな。", stage: "……計算以外の価値を少し考え始めた。", log: "転売寄り客に情緒を返した" },
+          { text: "利益は保証できません。面白さはあります。", delta: +1, reply: "正直だな。嫌いじゃない。", stage: "……正直さは通った。", log: "転売寄り客に正直に答えた" },
+          { text: "回る前提で来るなら合わないかも。", delta: -3, reply: "……へえ、そう来るんだ。", stage: "……空気が少し冷えた。", log: "転売寄り客を牽制した" }
+        ]
+      }
+    ],
+
+    rich: [
+      {
+        mood: "余裕の笑みで値段を眺めている。",
+        ask: "高いものには理由がある。で、これは？",
+        choices: [
+          { text: "理由より先に、刺さる人だけ刺さるやつです。", delta: +3, reply: "いいね。万人向けじゃない顔をしてる。", stage: "……“選ばれた感”が刺さったようだ。", log: "札束客に希少感を返した" },
+          { text: "値段じゃなく、後から話したくなるタイプです。", delta: +2, reply: "それはわかる。悪くない。", stage: "……会話の余韻を評価している。", log: "札束客に余韻を売った" },
+          { text: "雰囲気です。ほぼ雰囲気です。", delta: -2, reply: "正直すぎるのも考えものだな。", stage: "……ちょっと引かれた。", log: "札束客に雑すぎる説明をした" }
+        ]
+      }
+    ],
+
+    climber: [
+      {
+        mood: "高みを見る目で話しかけてきた。",
+        ask: "これ、登る価値ある？",
+        choices: [
+          { text: "登った先で、ちょっと景色が変わります。", delta: +3, reply: "……それなら行く意味はあるな。", stage: "……“景色”の言葉が効いた。", log: "踏破客に景色を見せた" },
+          { text: "楽ではないけど、だから残ります。", delta: +2, reply: "苦労の分だけ覚えるやつか。嫌いじゃない。", stage: "……納得したようだ。", log: "踏破客に難しさを肯定した" },
+          { text: "平坦な道が好きなら向かないです。", delta: -1, reply: "……言い方は嫌いじゃないが、ちょっと刺さる。", stage: "……少しだけ棘が残った。", log: "踏破客に煽り気味に返した" }
+        ]
+      }
+    ],
+
+    guide: [
+      {
+        mood: "案内人の顔でこちらを見ている。",
+        ask: "初見の人にも、この棚は通じると思う？",
+        choices: [
+          { text: "通じる人には一発で通じます。", delta: +3, reply: "その言い方、案内しがいがあるね。", stage: "……広めたくなってきた顔だ。", log: "ナビ客に語りやすさを渡した" },
+          { text: "説明したくなる棚だと思います。", delta: +2, reply: "ああ、それはわかる。", stage: "……少しうれしそうだ。", log: "ナビ客に紹介しやすさを返した" },
+          { text: "分かる人だけで十分です。", delta: -2, reply: "……入口を閉じる言い方は惜しいな。", stage: "……少し残念そうだ。", log: "ナビ客に閉じた返しをした" }
+        ]
+      }
+    ],
+
+    relax: [
+      {
+        mood: "やわらかい空気で話しかけてきた。",
+        ask: "ここ、なんか落ち着くね。わざと？",
+        choices: [
+          { text: "たぶん、焼かれる前の静けさです。", delta: +3, reply: "ふふ、落ち着くのに物騒なの好き。", stage: "……かなり空気を気に入ったようだ。", log: "ほぐし客に世界観で返した" },
+          { text: "落ち着いて見えて、中身はだいぶ危ないです。", delta: +2, reply: "そのギャップ、いいね。", stage: "……ギャップが刺さった。", log: "ほぐし客にギャップを見せた" },
+          { text: "特に考えてないです。偶然です。", delta: -2, reply: "……急に夢がほどけた。", stage: "……ちょっとしぼんだ。", log: "ほぐし客の気分を壊した" }
+        ]
+      }
+    ],
+
+    artisan: [
+      {
+        mood: "手元を見るような目で尋ねてきた。",
+        ask: "これ、ちゃんと手が入ってる顔してるね。意識してる？",
+        choices: [
+          { text: "雑に見せないことだけは意地です。", delta: +3, reply: "……いい意地だ。そういうのは出る。", stage: "……職人同士の会話になった。", log: "職人気質に意地で返した" },
+          { text: "細かい所ほど見られると思ってます。", delta: +2, reply: "その感覚は信用できる。", stage: "……かなり納得したようだ。", log: "職人気質に細部意識を返した" },
+          { text: "雰囲気でごまかしてます。", delta: -3, reply: "……それを言うのはもったいない。", stage: "……一気に評価が下がった。", log: "職人気質に雑な返しをした" }
+        ]
+      }
+    ],
+
+    diet: [
+      {
+        mood: "理屈っぽい顔で真面目に聞いてきた。",
+        ask: "これって実質0カロリーの買い物だよね？",
+        choices: [
+          { text: "体には入らないので、理論上かなり安全です。", delta: +3, reply: "そう！ それを聞きたかった！", stage: "……理論武装が完成した。", log: "ゼロ理論客の理屈を肯定した" },
+          { text: "体重は増えないけど、欲は増えます。", delta: +2, reply: "うわ、それは認めざるを得ない。", stage: "……理論に少し感情が混ざった。", log: "ゼロ理論客に真実を混ぜた" },
+          { text: "財布のカロリーは高いです。", delta: -1, reply: "……現実を差し込むのやめて。", stage: "……少ししょんぼりした。", log: "ゼロ理論客に財布現実をぶつけた" }
+        ]
+      }
+    ],
+
+    overflow: [
+      {
+        mood: "少しズレた角度から話しかけてきた。",
+        ask: "普通じゃない方が、逆に信用できる時あるよね？",
+        choices: [
+          { text: "あります。まともすぎると逆に怖いです。", delta: +3, reply: "いいね、その感覚。話が早い。", stage: "……波長が合ったらしい。", log: "枠外客にズレ感で返した" },
+          { text: "ズレてても芯があれば強いです。", delta: +2, reply: "あ、それは好きな言い方。", stage: "……かなり納得している。", log: "枠外客に芯の話をした" },
+          { text: "普通が一番です。", delta: -3, reply: "……じゃあ今日は話が合わない日だ。", stage: "……露骨に距離を取られた。", log: "枠外客を真っ向否定した" }
+        ]
+      }
+    ],
+
+    collector: [
+      {
+        mood: "管理する目で静かに聞いてきた。",
+        ask: "これ、開ける用と守る用、どっちが正解だと思う？",
+        choices: [
+          { text: "正解は、悩んだ時点で2枚です。", delta: +4, reply: "……やっぱりそれか。わかってる。", stage: "……完全に刺さった。", log: "コレクターに2枚理論を返した" },
+          { text: "まずは手元に置く用が大事です。", delta: +2, reply: "それもわかる。距離感ってあるよね。", stage: "……かなり共感された。", log: "コレクターに距離感で返した" },
+          { text: "開けたら開けたでいいんじゃないですか。", delta: -2, reply: "……雑に触られた感じがする。", stage: "……少し機嫌を損ねた。", log: "コレクターの管理感覚を雑に扱った" }
+        ]
+      }
+    ],
+
+    shadow: [
+      {
+        mood: "慎重な声で確認してきた。",
+        ask: "こういうのって、守る価値ある？",
+        choices: [
+          { text: "ある。だから持つ前から気を遣うやつです。", delta: +3, reply: "……それなら、ちゃんと守りたい。", stage: "……かなり信用された。", log: "防水客に守る価値を認めた" },
+          { text: "守れる人の手にある方が強いです。", delta: +2, reply: "その言い方は好きだ。", stage: "……責任感がくすぐられたようだ。", log: "防水客に任せる言い方をした" },
+          { text: "汚れたらそれも味です。", delta: -3, reply: "……今のは聞かなかったことにする。", stage: "……かなり引かれた。", log: "防水客に地雷を踏んだ" }
+        ]
+      }
+    ],
+
+    ramen: [
+      {
+        mood: "濃いものを前にした顔で聞いてきた。",
+        ask: "これ、一枚で終わる気しないんだけど。",
+        choices: [
+          { text: "だいたいその予感は当たります。", delta: +3, reply: "だよね。そういう顔してるもん。", stage: "……追加購入の気配が強い。", log: "替え玉客の予感を肯定した" },
+          { text: "最初の一枚が一番危ないです。", delta: +2, reply: "危ないって言い方、好きだな。", stage: "……危険ワードが効いた。", log: "替え玉客に危険性を伝えた" },
+          { text: "一枚で十分だと思います。", delta: -2, reply: "……その言葉は信用できない。", stage: "……空気を読まれていない顔だ。", log: "替え玉客のノリを切った" }
+        ]
+      }
+    ],
+
+    streamer: [
+      {
+        mood: "撮れ高を探すように笑っている。",
+        ask: "これ、ハズしてもおいしい？",
+        choices: [
+          { text: "当たりでもハズレでも、だいたい話になります。", delta: +3, reply: "それそれ！ そういうの大事！", stage: "……撮れ高の匂いを感じている。", log: "配信客に撮れ高を返した" },
+          { text: "むしろリアクション次第です。", delta: +2, reply: "それはわかる。腕が試されるやつだ。", stage: "……少し燃えている。", log: "配信客に腕勝負を返した" },
+          { text: "結果だけ見ればいいと思います。", delta: -2, reply: "……いや、そこじゃないんだよな。", stage: "……温度差が出た。", log: "配信客に結果論で返した" }
+        ]
+      }
+    ],
+
+    gourmet: [
+      {
+        mood: "余韻を見るような顔で尋ねてきた。",
+        ask: "これ、買ったあとに“残る”タイプ？",
+        choices: [
+          { text: "残ります。静かにあとから効く方です。", delta: +3, reply: "……いいね、その言い方。", stage: "……かなり上品に刺さった。", log: "舌判定客に余韻で返した" },
+          { text: "派手じゃないけど、忘れにくいです。", delta: +2, reply: "それが一番危ないんだよね。", stage: "……深く納得している。", log: "舌判定客に忘れにくさを返した" },
+          { text: "その場の勢いだけです。", delta: -3, reply: "……急に浅くなった。", stage: "……評価がだいぶ下がった。", log: "舌判定客に浅い返しをした" }
+        ]
+      }
+    ],
+
+    opener: [
+      {
+        mood: "今すぐ触りたい顔で話しかけてきた。",
+        ask: "これ、帰るまで待てると思う？",
+        choices: [
+          { text: "無理です。たぶん数分で限界です。", delta: +3, reply: "わかる！ それを認めてほしかった！", stage: "……完全に同意を得て満足そうだ。", log: "即バリ客の衝動を認めた" },
+          { text: "我慢できたら偉いです。でも多分無理です。", delta: +2, reply: "その“多分無理”好き。", stage: "……かなり楽しそうだ。", log: "即バリ客に半分止めた" },
+          { text: "家まで待ちましょう。", delta: -2, reply: "……正論だけど今じゃない。", stage: "……少し勢いを削いだ。", log: "即バリ客に正論で返した" }
+        ]
+      }
+    ],
+
+    party: [
+      {
+        mood: "祭りのテンションで笑っている。",
+        ask: "今日くらい、財布も踊ってよくない？",
+        choices: [
+          { text: "今日は財布も祭りに参加です。", delta: +3, reply: "そうそう！ そういう話！", stage: "……だいぶ気分が上がった。", log: "宴客のテンションを肯定した" },
+          { text: "明日の自分が泣いても、今日は景気で。", delta: +2, reply: "明日は明日！ 今日は今日！", stage: "……完全に祭りモードだ。", log: "宴客に明日を捨てさせた" },
+          { text: "財布は踊らせない方が平和です。", delta: -2, reply: "……急に冷静さを入れないで。", stage: "……祭りの空気がしぼんだ。", log: "宴客を冷静にしすぎた" }
+        ]
+      }
+    ],
+
+    pilgrim: [
+      {
+        mood: "少し遠くを見たまま口を開いた。",
+        ask: "ここまで来た意味、ちゃんとあるかな。",
+        choices: [
+          { text: "あります。来た人だけが持ち帰れる温度です。", delta: +4, reply: "……それなら来た甲斐がある。", stage: "……旅路ごと受け止められた顔だ。", log: "巡礼客の旅を肯定した" },
+          { text: "意味は、帰る時にじわっと分かるやつです。", delta: +2, reply: "……遅れて効くの、嫌いじゃない。", stage: "……静かに納得している。", log: "巡礼客に余韻で返した" },
+          { text: "意味は自分で決めるものです。", delta: -1, reply: "……正しいけど、今は少し冷たいな。", stage: "……少しだけ距離ができた。", log: "巡礼客に突き放した返しをした" }
+        ]
+      }
+    ]
+  };
+
+  const GENERIC_POOL = [
+    {
+      mood: "少し気になった顔でこちらを見ている。",
+      ask: "この棚って、なんでこんなに気になるんだろう。",
+      choices: [
+        { text: "たぶん、見た目より中身が危ないからです。", delta: +2, reply: "……その言い方、嫌いじゃない。", stage: "……“危ない”の一言が刺さったようだ。", log: "汎用会話で危険さを伝えた" },
+        { text: "気になる時点で、もう片足入ってます。", delta: +2, reply: "……それ、ちょっと認めたくないな。", stage: "……図星っぽい。", log: "汎用会話で図星を刺した" },
+        { text: "気のせいかもしれません。", delta: -2, reply: "……急に興ざめした。", stage: "……空気が少ししぼんだ。", log: "汎用会話で気のせい扱いした" }
+      ]
+    }
+  ];
+
+  const IGNORE_LINES_COMMON = [
+    "……無視しないでください……。",
+    "……返事、ちょっと待ってたんだけどな。",
+    "……あ、いま話しかける流れじゃなかった？",
+    "……なるほど、空気だけ吸って帰るやつですね。",
+    "……返事がないの、ちょっと刺さる。",
+    "……こっちは勇気を出したんですが……。",
+    "……黙るなら黙るで、先に言ってほしかった。",
+    "……棚より、こっちの心が焼けたかも。",
+    "……いまの沈黙、だいぶ長くない？",
+    "……気まずさだけ置いて帰る感じになってきた。",
+    "……話しかけた側のライフも見てください。",
+    "……返事なし、いちばん効くやつです。",
+    "……会話のボール、海まで転がっていった。",
+    "……潮風より冷たい沈黙だな……。",
+    "……せめて目だけでも合わせてほしかった。",
+    "……今の無音、函館の夜景より染みる。",
+    "……無視されると、さすがに帰りたくなる。",
+    "……こっそり傷ついてます。かなり。",
+    "……答えがないのが、一番こわい。",
+    "……もう少し会話できると思ってた。"
+  ];
+
+  const IGNORE_LINES_BY_TYPE = {
+    careful: [
+      "……返事がないと、余計に不安になるな……。",
+      "……慎重に聞いたつもりだったんだけど。",
+      "……やっぱり聞かない方がよかったかな。"
+    ],
+    impulse: [
+      "えっ、いま乗るとこじゃなかった！？",
+      "うわ、勢いだけ置いていかれた！",
+      "テンションの着地に失敗した！"
+    ],
+    looker: [
+      "……あ、見るだけどころか会話もスルーなんだ。",
+      "……まあ、そういう距離感もあるか。",
+      "……軽い気持ちで話しかけたら重傷だった。"
+    ],
+    picky: [
+      "……雑に流された感じがする。",
+      "……答えがないのも評価対象なんだけどな。",
+      "……なるほど、そういう店か。"
+    ],
+    king: [
+      "余を待たせるだけでなく、黙らせるか。",
+      "……王の問いに沈黙とは、大胆だな。",
+      "……面白い。だが減点だ。"
+    ],
+    flipper: [
+      "……返答コストすら払わないタイプか。",
+      "……数字より先に無視が来るとは。",
+      "……会話の利回り、最悪だな。"
+    ],
+    rich: [
+      "……返事まで節約しなくてもいいだろうに。",
+      "……なるほど、そういう温度感か。",
+      "……空気代だけ払って帰る気分だ。"
+    ],
+    climber: [
+      "……ここ、登る前に置いていかれた感じがする。",
+      "……返事なしは、ちょっと足場が悪いな。",
+      "……登頂前に撤退だ。"
+    ],
+    guide: [
+      "……案内する前に道が閉じたな。",
+      "……この沈黙、紹介しづらいぞ。",
+      "……会話の入口が見当たらなかった。"
+    ],
+    relax: [
+      "……あれ、ちょっと心がほぐれすぎて消えた？",
+      "……沈黙がいちばん肩にくるな。",
+      "……やさしく無視されるのも地味に痛い。"
+    ],
+    artisan: [
+      "……返しが来ないのは、さすがに寂しい。",
+      "……仕事の話、嫌いじゃないと思ったんだが。",
+      "……会話の焼き加減、失敗したな。"
+    ],
+    diet: [
+      "……返事は0カロリーじゃなかったか。",
+      "……理論上、今の沈黙はかなり重い。",
+      "……無視の摂取量が多い。"
+    ],
+    overflow: [
+      "……ズレてるのは好きだけど、消えるのは困る。",
+      "……会話の枠ごと外れたな。",
+      "……ちょっと好きなズレじゃなかった。"
+    ],
+    collector: [
+      "……会話ログだけが未回収になった。",
+      "……このやり取り、保存したかったのに。",
+      "……管理不能の沈黙だった。"
+    ],
+    shadow: [
+      "……返事がないと、守りようがないな。",
+      "……静かすぎる現場は逆に怖い。",
+      "……撤収した方がよさそうだ。"
+    ],
+    ramen: [
+      "……湯気だけ出て会話がない感じだ。",
+      "……濃い返しを期待しすぎたか。",
+      "……あっさり終わったな……。"
+    ],
+    streamer: [
+      "……これ、無音回としては弱いな。",
+      "……コメント欄でももう少し返ってくるよ？",
+      "……撮れ高ゼロで帰るのしんどいな。"
+    ],
+    gourmet: [
+      "……余韻どころか沈黙だけ残った。",
+      "……無返答は、少し雑味がある。",
+      "……会話の後味が薄すぎた。"
+    ],
+    opener: [
+      "……開ける前に心が閉じた。",
+      "……反応ゼロは逆にきつい！",
+      "……この沈黙、袋より固いな。"
+    ],
+    party: [
+      "……祭りの太鼓、急に止まった感じ。",
+      "……盛り上がる前に終わるの悲しい！",
+      "……テンションの置き場がない！"
+    ],
+    pilgrim: [
+      "……ここまで来て、沈黙で終わるのは少し寂しい。",
+      "……旅の途中で立ち止まりすぎたか。",
+      "……返事がないと、道の意味がぼやけるな。"
+    ]
+  };
+
+  let els = {
+    modal: null,
+    guestName: null,
+    guestMood: null,
+    timer: null,
+    message: null,
+    c1: null,
+    c2: null,
+    c3: null,
+    guestList: null,
+    guestEmpty: null
+  };
+
+  let activeTalk = null;
+  let countdownTimer = null;
+  let onStateChangeGlobal = null;
+  let onResultGlobal = null;
+  let helpersGlobal = null;
+
+  function safeJSON(raw, fallback){
+    try{ return JSON.parse(raw); }
+    catch(e){ return fallback; }
+  }
+
+  function loadState(){
+    const raw = localStorage.getItem(LS_KEY);
+    const parsed = safeJSON(raw, null);
+    if(!parsed || typeof parsed !== "object"){
+      return { ver:1, guests:{} };
+    }
+    if(!parsed.guests || typeof parsed.guests !== "object"){
+      parsed.guests = {};
+    }
+    return parsed;
+  }
+
+  function saveState(state){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+
+  function ensureGuest(id){
+    const state = loadState();
+    if(!state.guests[id]){
+      state.guests[id] = {
+        love: 0,
+        talkCount: 0,
+        buyCount: 0,
+        ignoreCount: 0,
+        lastTalkAt: 0,
+        lastSeenAt: 0
+      };
+      saveState(state);
+    }
+    return state.guests[id];
+  }
+
+  function getGuestState(id){
+    const state = loadState();
+    if(!state.guests[id]){
+      return {
+        love: 0,
+        talkCount: 0,
+        buyCount: 0,
+        ignoreCount: 0,
+        lastTalkAt: 0,
+        lastSeenAt: 0
+      };
+    }
+    return state.guests[id];
+  }
+
+  function patchGuest(id, patch){
+    const state = loadState();
+    if(!state.guests[id]){
+      state.guests[id] = {
+        love: 0,
+        talkCount: 0,
+        buyCount: 0,
+        ignoreCount: 0,
+        lastTalkAt: 0,
+        lastSeenAt: 0
+      };
+    }
+    Object.assign(state.guests[id], patch || {});
+    if(typeof state.guests[id].love === "number"){
+      state.guests[id].love = clamp(state.guests[id].love, 0, 100);
+    }
+    saveState(state);
+    return state.guests[id];
+  }
+
+  function clamp(n, min, max){
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function pick(arr){
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function guestDisplayName(id, fallback){
+    if(activeTalk && activeTalk.guestId === id && activeTalk.guestName) return activeTalk.guestName;
+    return fallback || id || "来店客";
+  }
+
+  function heartsFromLove(love){
+    if(love >= 80) return 5;
+    if(love >= 60) return 4;
+    if(love >= 40) return 3;
+    if(love >= 20) return 2;
+    if(love >= 8)  return 1;
+    return 0;
+  }
+
+  function labelFromLove(id, love){
+    const row = GUEST_LABELS[id];
+    if(!row){
+      if(love >= 80) return "かなり気に入っている。";
+      if(love >= 40) return "少しずつ距離が縮んでいる。";
+      return "まだ距離を測っている。";
+    }
+    if(love >= 80) return row.max;
+    if(love >= 40) return row.mid;
+    return row.text;
+  }
+
+  function getAffinityRows(){
+    const state = loadState();
+    const rows = Object.keys(state.guests).map(id => {
+      const g = state.guests[id];
+      const love = Number(g.love || 0);
+      return {
+        id,
+        name: guestDisplayName(id, CUSTOMER_NAME_MAP[id] || id),
+        love,
+        hearts: heartsFromLove(love),
+        talkCount: Number(g.talkCount || 0),
+        buyCount: Number(g.buyCount || 0),
+        label: labelFromLove(id, love),
+        lastSeenAt: Number(g.lastSeenAt || 0)
+      };
+    });
+
+    rows.sort((a, b) =>
+      (b.love - a.love) ||
+      (b.talkCount - a.talkCount) ||
+      (b.lastSeenAt - a.lastSeenAt) ||
+      String(a.name).localeCompare(String(b.name), "ja")
+    );
+
+    return rows.slice(0, 12);
+  }
+
+  const CUSTOMER_NAME_MAP = {
+    impulse: "即決タコ民",
+    picky: "見えないタコ民",
+    king: "王様タコ民",
+    flipper: "よっぱらいタコ民",
+    careful: "つぶやきタコ民",
+    looker: "冷やかしタコ民",
+    rich: "札束タコ民",
+    climber: "踏破タコ民",
+    guide: "ナビタコ民",
+    relax: "ほぐしタコ民",
+    artisan: "返し職人タコ民",
+    diet: "ゼロ理論タコ民",
+    overflow: "枠外タコ民",
+    collector: "未開封保護タコ民",
+    shadow: "防水タコ民",
+    ramen: "替え玉タコ民",
+    streamer: "投げ銭タコ民",
+    gourmet: "舌判定タコ民",
+    opener: "即バリタコ民",
+    party: "宴タコ民",
+    pilgrim: "覚悟タコ民"
+  };
+
+  function bindEls(){
+    els.modal = document.getElementById("talkModal");
+    els.guestName = document.getElementById("talkGuestName");
+    els.guestMood = document.getElementById("talkGuestMood");
+    els.timer = document.getElementById("talkTimer");
+    els.message = document.getElementById("talkMessage");
+    els.c1 = document.getElementById("talkChoice1");
+    els.c2 = document.getElementById("talkChoice2");
+    els.c3 = document.getElementById("talkChoice3");
+  }
+
+  function bindGuestUI(payload){
+    if(!payload) return;
+    els.guestList = payload.guestAffinityEl || null;
+    els.guestEmpty = payload.guestAffinityEmptyEl || null;
+    renderGuestAffinity();
+  }
+
+  function renderGuestAffinity(){
+    if(!els.guestList || !els.guestEmpty) return;
+
+    const rows = getAffinityRows();
+    els.guestList.innerHTML = "";
+
+    if(!rows.length){
+      els.guestEmpty.style.display = "block";
+      return;
+    }
+
+    els.guestEmpty.style.display = "none";
+
+    const frag = document.createDocumentFragment();
+
+    rows.forEach(row => {
+      const card = document.createElement("div");
+      card.className = "gcard";
+
+      let heartsHTML = "";
+      for(let i=0;i<5;i++){
+        heartsHTML += `<span class="${i < row.hearts ? "on" : "off"}">♥</span>`;
+      }
+
+      card.innerHTML = `
+        <div class="ghead">
+          <div class="gname" title="${escapeHTML(row.name)}">${escapeHTML(row.name)}</div>
+          <div class="gmeta">会話 ${escapeHTML(String(row.talkCount))}回</div>
+        </div>
+        <div class="gline">
+          <div class="ghearts">${heartsHTML}</div>
+          <div class="gauge"><i style="width:${clamp(row.love,0,100)}%"></i></div>
+        </div>
+        <div class="gsub">${escapeHTML(row.label)}</div>
+      `;
+      frag.appendChild(card);
+    });
+
+    els.guestList.appendChild(frag);
+  }
+
+  function escapeHTML(s){
+    return String(s || "").replace(/[&<>"']/g, m => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      "\"":"&quot;",
+      "'":"&#039;"
+    }[m]));
+  }
+
+  function getBuyProbabilityBonus(guestId){
+    const g = getGuestState(guestId);
+    const love = Number(g.love || 0);
+    return clamp((love - 20) * 0.0015, -0.03, 0.12);
+  }
+
+  function onPurchaseSuccess(guestId){
+    const g = getGuestState(guestId);
+    patchGuest(guestId, {
+      love: clamp(Number(g.love || 0) + 1, 0, 100),
+      buyCount: Number(g.buyCount || 0) + 1,
+      lastSeenAt: Date.now()
+    });
+    renderGuestAffinity();
+  }
+
+  function shouldTalk(guestId){
+    const g = getGuestState(guestId);
+    const love = Number(g.love || 0);
+    let p = 0.34;
+    if(love >= 60) p += 0.10;
+    else if(love >= 30) p += 0.05;
+    if(Number(g.talkCount || 0) === 0) p += 0.08;
+    return Math.random() < clamp(p, 0.15, 0.60);
+  }
+
+  function pickTalkEvent(guestId){
+    const pool = TALK_POOLS[guestId] || GENERIC_POOL;
+    return pick(pool);
+  }
+
+  function setChoicesDisabled(disabled){
+    [els.c1, els.c2, els.c3].forEach(btn => {
+      if(!btn) return;
+      btn.disabled = !!disabled;
+      btn.style.opacity = disabled ? "0.65" : "1";
+      btn.style.cursor = disabled ? "default" : "pointer";
+    });
+  }
+
+  function closeTalkModal(){
+    if(els.modal){
+      els.modal.classList.remove("show");
+      els.modal.setAttribute("aria-hidden", "true");
+    }
+    document.body.classList.remove("noscroll");
+  }
+
+  function openTalkModal(){
+    if(els.modal){
+      els.modal.classList.add("show");
+      els.modal.setAttribute("aria-hidden", "false");
+    }
+    document.body.classList.add("noscroll");
+  }
+
+  function forceCloseTalk(){
+    activeTalk = null;
+    clearTimers();
+    closeTalkModal();
+  }
+
+  function clearTimers(){
+    if(countdownTimer){
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+  }
+
+  function updateTimer(deadlineAt){
+    const remain = Math.max(0, Math.ceil((deadlineAt - Date.now()) / 1000));
+    if(els.timer) els.timer.textContent = `${remain}s`;
+  }
+
+  function finishTalk(result){
+    const cb = onResultGlobal;
+    activeTalk = null;
+    clearTimers();
+    closeTalkModal();
+    renderGuestAffinity();
+    if(typeof cb === "function"){
+      cb(result || {});
+    }
+  }
+
+  function handleIgnoreTimeout(){
+    if(!activeTalk) return;
+
+    const guestId = activeTalk.guestId;
+    const guestName = activeTalk.guestName;
+    const prev = getGuestState(guestId);
+
+    patchGuest(guestId, {
+      love: clamp(Number(prev.love || 0) - 4, 0, 100),
+      ignoreCount: Number(prev.ignoreCount || 0) + 1,
+      lastSeenAt: Date.now()
+    });
+
+    const linePool = [
+      ...IGNORE_LINES_COMMON,
+      ...(IGNORE_LINES_BY_TYPE[guestId] || [])
+    ];
+
+    const leaveLine = pick(linePool);
+
+    if(helpersGlobal && typeof helpersGlobal.pushLog === "function"){
+      helpersGlobal.pushLog("会話失敗", `${guestName} を放置してしまった`, guestId);
+    }
+    if(helpersGlobal && typeof helpersGlobal.addRep === "function"){
+      helpersGlobal.addRep(-1);
+    }
+    if(helpersGlobal && typeof helpersGlobal.renderGuestAffinity === "function"){
+      helpersGlobal.renderGuestAffinity();
+    }
+
+    finishTalk({
+      leaveNow: true,
+      leaveLine,
+      stageMessage: "……返事がなくて、寂しそうに視線をそらした。"
+    });
+  }
+
+  function applyChoice(choice){
+    if(!activeTalk || !choice) return;
+
+    setChoicesDisabled(true);
+
+    const guestId = activeTalk.guestId;
+    const guestName = activeTalk.guestName;
+    const prev = getGuestState(guestId);
+    const nextLove = clamp(Number(prev.love || 0) + Number(choice.delta || 0), 0, 100);
+
+    patchGuest(guestId, {
+      love: nextLove,
+      talkCount: Number(prev.talkCount || 0) + 1,
+      lastTalkAt: Date.now(),
+      lastSeenAt: Date.now()
+    });
+
+    if(helpersGlobal && typeof helpersGlobal.pushLog === "function"){
+      helpersGlobal.pushLog("会話", `${guestName}：${choice.log || "会話した"}（好感度 ${choice.delta >= 0 ? "+" : ""}${choice.delta || 0}）`, guestId);
+    }
+
+    if(helpersGlobal && typeof helpersGlobal.toast === "function"){
+      const sign = Number(choice.delta || 0) >= 0 ? "+" : "";
+      helpersGlobal.toast("会話した", `${guestName}｜好感度 ${sign}${choice.delta || 0}`, "");
+    }
+
+    if(helpersGlobal && typeof helpersGlobal.renderGuestAffinity === "function"){
+      helpersGlobal.renderGuestAffinity();
+    }
+
+    if(els.message){
+      els.message.textContent = choice.reply || "……";
+    }
+    if(els.guestMood){
+      els.guestMood.textContent = `好感度 ${nextLove}/100`;
+    }
+
+    clearTimers();
+    setTimeout(() => {
+      finishTalk({
+        leaveNow: false,
+        stageMessage: choice.stage || "……少しだけ空気がやわらいだ。"
+      });
+    }, 1100);
+  }
+
+  function maybeStartConversation(ctx){
+    if(!ctx || !ctx.guestId || !ctx.visitId) return false;
+    if(activeTalk) return false;
+    if(!shouldTalk(ctx.guestId)) return false;
+
+    bindEls();
+
+    if(!els.modal || !els.message || !els.c1 || !els.c2 || !els.c3){
+      return false;
+    }
+
+    const guestId = ctx.guestId;
+    const guestName = ctx.guestName || CUSTOMER_NAME_MAP[guestId] || guestId;
+    const ev = pickTalkEvent(guestId);
+
+    const deadlineAt = Date.now() + 10000;
+
+    activeTalk = {
+      guestId,
+      guestName,
+      visitId: ctx.visitId,
+      event: ev,
+      deadlineAt
+    };
+
+    onStateChangeGlobal = typeof ctx.onStateChange === "function" ? ctx.onStateChange : null;
+    onResultGlobal = typeof ctx.onResult === "function" ? ctx.onResult : null;
+    helpersGlobal = ctx.helpers || null;
+
+    const prev = getGuestState(guestId);
+    patchGuest(guestId, {
+      lastSeenAt: Date.now()
+    });
+
+    if(typeof onStateChangeGlobal === "function"){
+      onStateChangeGlobal({
+        talking: true,
+        talkStartedAt: Date.now(),
+        vMsg: "……なにか話したそうだ。"
+      });
+    }
+
+    if(els.guestName) els.guestName.textContent = guestName;
+    if(els.guestMood) els.guestMood.textContent = ev.mood || "会話中…";
+    if(els.message) els.message.textContent = ev.ask || "……";
+    if(els.timer) els.timer.textContent = "10s";
+
+    const choices = ev.choices || [];
+    const c1 = choices[0] || { text:"うなずく", delta:0, reply:"……。", stage:"……少しだけ落ち着いた。" };
+    const c2 = choices[1] || { text:"少し考える", delta:0, reply:"……。", stage:"……少しだけ落ち着いた。" };
+    const c3 = choices[2] || { text:"話を流す", delta:-1, reply:"……。", stage:"……少しだけ気まずい空気になった。" };
+
+    els.c1.textContent = c1.text;
+    els.c2.textContent = c2.text;
+    els.c3.textContent = c3.text;
+
+    els.c1.onclick = () => applyChoice(c1);
+    els.c2.onclick = () => applyChoice(c2);
+    els.c3.onclick = () => applyChoice(c3);
+
+    setChoicesDisabled(false);
+    openTalkModal();
+    renderGuestAffinity();
+
+    updateTimer(deadlineAt);
+    countdownTimer = setInterval(() => {
+      if(!activeTalk) return;
+      updateTimer(deadlineAt);
+      if(Date.now() >= deadlineAt){
+        handleIgnoreTimeout();
+      }
+    }, 200);
+
+    return true;
+  }
+
+  function init(){
+    bindEls();
+    renderGuestAffinity();
+    return true;
+  }
+
+  window.RotenSocial = {
+    init,
+    bindGuestUI,
+    renderGuestAffinity,
+    getAffinityRows,
+    getBuyProbabilityBonus,
+    maybeStartConversation,
+    onPurchaseSuccess,
+    forceCloseTalk
+  };
+})();
