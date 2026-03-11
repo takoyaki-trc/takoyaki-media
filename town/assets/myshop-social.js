@@ -347,7 +347,6 @@
     guestEmpty: null,
 
     affectionBtn: null,
-    affectionBtnRep: null,
     affectionModal: null,
     affectionClose: null,
     affectionOk: null,
@@ -538,7 +537,6 @@
     els.c3 = document.getElementById("talkChoice3");
 
     els.affectionBtn = document.getElementById("affectionCheckBtn");
-    els.affectionBtnRep = document.getElementById("affectionCheckRep");
     els.affectionModal = document.getElementById("affectionModal");
     els.affectionClose = document.getElementById("affectionClose");
     els.affectionOk = document.getElementById("affectionOk");
@@ -622,11 +620,8 @@
     listEl.appendChild(frag);
   }
 
-  function updateAffinityButton(rep){
+  function updateAffinityButton(){
     bindEls();
-    if(els.affectionBtnRep){
-      els.affectionBtnRep.textContent = `${clamp(Number(rep||0),0,100)}/100`;
-    }
   }
 
   function openAffinityModal(){
@@ -666,11 +661,11 @@
   function shouldTalk(guestId){
     const g = getGuestState(guestId);
     const love = Number(g.love || 0);
-    let p = 0.34;
-    if(love >= 60) p += 0.10;
-    else if(love >= 30) p += 0.05;
-    if(Number(g.talkCount || 0) === 0) p += 0.08;
-    return Math.random() < clamp(p, 0.15, 0.60);
+    let p = 0.30;
+    if(love >= 60) p += 0.05;
+    else if(love >= 30) p += 0.03;
+    if(Number(g.talkCount || 0) === 0) p += 0.03;
+    return Math.random() < clamp(p, 0.30, 0.40);
   }
 
   function pickTalkEvent(guestId){
@@ -751,9 +746,6 @@
     }
     if(helpersGlobal && typeof helpersGlobal.addRep === "function"){
       helpersGlobal.addRep(-1);
-      if(typeof helpersGlobal.getRep === "function"){
-        updateAffinityButton(helpersGlobal.getRep());
-      }
     }
     if(helpersGlobal && typeof helpersGlobal.renderGuestAffinity === "function"){
       helpersGlobal.renderGuestAffinity();
@@ -827,7 +819,6 @@
     const guestId = ctx.guestId;
     const guestName = ctx.guestName || CUSTOMER_NAME_MAP[guestId] || guestId;
     const ev = pickTalkEvent(guestId);
-
     const deadlineAt = Date.now() + 10000;
 
     activeTalk = {
