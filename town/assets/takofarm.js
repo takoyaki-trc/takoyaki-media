@@ -318,7 +318,7 @@
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
 
-  const XP_BY_RARITY = { N: 20, R: 40, SR: 80, UR: 160, LR: 300, SP: 0 };
+  const XP_BY_RARITY = { N: 10, R: 20, SR: 40, UR: 130, LR: 200, SP: 0 };
 
   function xpNeedForLevel(level) {
     return 120 + (level - 1) * 50 + Math.floor(Math.pow(level - 1, 1.6) * 20);
