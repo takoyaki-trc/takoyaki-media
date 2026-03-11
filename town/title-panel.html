@@ -497,6 +497,12 @@
       ========================================================= */
       const LS_MONTHLY = "ttc_monthly_stats_v1";
       const LS_HISTORY = "ttc_monthly_history_v1";
+
+      /* ★追加：マイ露店専用の月間売上キー
+         ここに「myshopで売れた金額だけ」を保存する
+      ========================================================= */
+      const LS_MYSHOP_MONTHLY_SALES = "ttc_myshop_monthly_sales_v1";
+
       const HISTORY_LIMIT = 24;
 
       /* =========================================================
@@ -518,6 +524,13 @@
         };
       }
 
+      function createDefaultMyshopSales(){
+        return {
+          monthKey: getMonthKey(),
+          sales: 0
+        };
+      }
+
       function normalizeMonthly(parsed){
         const currentMonth = getMonthKey();
 
@@ -534,6 +547,22 @@
           sales: Number(parsed.sales || 0),
           fishing: Number(parsed.fishing || 0),
           tower: Number(parsed.tower || 0)
+        };
+      }
+
+      function normalizeMyshopSales(parsed){
+        const currentMonth = getMonthKey();
+
+        if (!parsed || typeof parsed !== "object"){
+          return createDefaultMyshopSales();
+        }
+
+        const rawMonthKey = String(parsed.monthKey || "");
+        const monthKey = rawMonthKey || currentMonth;
+
+        return {
+          monthKey,
+          sales: Number(parsed.sales || 0)
         };
       }
 
@@ -559,6 +588,30 @@
       function saveMonthly(data){
         const normalized = normalizeMonthly(data);
         localStorage.setItem(LS_MONTHLY, JSON.stringify(normalized));
+      }
+
+      function getMyshopMonthlySales(){
+        try{
+          const raw = localStorage.getItem(LS_MYSHOP_MONTHLY_SALES);
+          if(!raw){
+            const def = createDefaultMyshopSales();
+            localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
+            return def;
+          }
+          const parsed = JSON.parse(raw);
+          const normalized = normalizeMyshopSales(parsed);
+          localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(normalized));
+          return normalized;
+        }catch(e){
+          const def = createDefaultMyshopSales();
+          localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
+          return def;
+        }
+      }
+
+      function saveMyshopMonthlySales(data){
+        const normalized = normalizeMyshopSales(data);
+        localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(normalized));
       }
 
       function normalizeHistoryItem(item){
@@ -656,33 +709,76 @@
 
       function rolloverIfNeeded(){
         const currentKey = getMonthKey();
-        const monthly = getMonthly();
 
-        if(monthly.monthKey === currentKey) return monthly;
+        const monthly = getMonthly();
+        const myshopSales = getMyshopMonthlySales();
+
+        const mergedCurrent = {
+          monthKey: monthly.monthKey || currentKey,
+          harvest: Number(monthly.harvest || 0),
+          sales: Number(myshopSales.sales || 0), /* ★ここがマイ露店売上のみ */
+          fishing: Number(monthly.fishing || 0),
+          tower: Number(monthly.tower || 0)
+        };
+
+        const needsMonthlyRollover = monthly.monthKey !== currentKey;
+        const needsMyshopRollover = myshopSales.monthKey !== currentKey;
+
+        if (!needsMonthlyRollover && !needsMyshopRollover){
+          return mergedCurrent;
+        }
+
+        const oldMonthKey = monthly.monthKey || myshopSales.monthKey || currentKey;
+        const mergedOld = {
+          monthKey: oldMonthKey,
+          harvest: Number(monthly.harvest || 0),
+          sales: Number(myshopSales.sales || 0), /* ★履歴にもマイ露店売上のみ保存 */
+          fishing: Number(monthly.fishing || 0),
+          tower: Number(monthly.tower || 0)
+        };
 
         const history = getHistory();
 
-        if (monthly.monthKey && isMeaningfulMonth(monthly) && !historyHasMonth(history, monthly.monthKey)) {
+        if (
+          mergedOld.monthKey &&
+          isMeaningfulMonth(mergedOld) &&
+          !historyHasMonth(history, mergedOld.monthKey)
+        ){
           history.unshift({
-            monthKey: monthly.monthKey,
-            title: getTitleFromStats(monthly),
-            harvest: Number(monthly.harvest || 0),
-            sales: Number(monthly.sales || 0),
-            fishing: Number(monthly.fishing || 0),
-            tower: Number(monthly.tower || 0)
+            monthKey: mergedOld.monthKey,
+            title: getTitleFromStats(mergedOld),
+            harvest: mergedOld.harvest,
+            sales: mergedOld.sales,
+            fishing: mergedOld.fishing,
+            tower: mergedOld.tower
           });
           saveHistory(history);
         }
 
-        const fresh = {
+        if (needsMonthlyRollover){
+          saveMonthly({
+            monthKey: currentKey,
+            harvest: 0,
+            sales: 0,
+            fishing: 0,
+            tower: 0
+          });
+        }
+
+        if (needsMyshopRollover){
+          saveMyshopMonthlySales({
+            monthKey: currentKey,
+            sales: 0
+          });
+        }
+
+        return {
           monthKey: currentKey,
           harvest: 0,
           sales: 0,
           fishing: 0,
           tower: 0
         };
-        saveMonthly(fresh);
-        return fresh;
       }
 
       /* =========================================================
@@ -708,8 +804,7 @@
         monthInfo.textContent = `${y}年${Number(m)}月の記録から称号を判定しています`;
       }
 
-      /* 
-     =========================================================
+      /* =========================================================
          履歴モーダル
       ========================================================= */
       const modal = document.getElementById("historyModal");
@@ -790,6 +885,8 @@
       /* =========================================================
          開発用：コンソールから試せる関数
       ========================================================= */
+
+      /* 既存の月間値（収穫/釣り/タワーなど） */
       window.ttcSetMonthly = function(data){
         const current = getMonthly();
         const next = {
@@ -800,6 +897,28 @@
           tower: Number(data?.tower ?? current.tower ?? 0)
         };
         saveMonthly(next);
+        render();
+      };
+
+      /* ★追加：マイ露店売上だけを直接セット */
+      window.ttcSetMyshopSales = function(value){
+        const current = getMyshopMonthlySales();
+        const next = {
+          monthKey: current.monthKey || getMonthKey(),
+          sales: Number(value || 0)
+        };
+        saveMyshopMonthlySales(next);
+        render();
+      };
+
+      /* ★追加：マイ露店売上だけを加算 */
+      window.ttcAddMyshopSales = function(delta){
+        const current = getMyshopMonthlySales();
+        const next = {
+          monthKey: current.monthKey || getMonthKey(),
+          sales: Math.max(0, Number(current.sales || 0) + Number(delta || 0))
+        };
+        saveMyshopMonthlySales(next);
         render();
       };
 
@@ -824,6 +943,7 @@
 
       window.ttcClearMonthly = function(){
         saveMonthly(createDefaultMonthly());
+        saveMyshopMonthlySales(createDefaultMyshopSales());
         render();
       };
 
