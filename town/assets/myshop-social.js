@@ -3,28 +3,76 @@
 
   const LS_KEY = "roten_v1_guest_affection";
 
+  const CUSTOMER_NAME_MAP = {
+    impulse: "即決タコ民",
+    picky: "見えないタコ民",
+    king: "王様タコ民",
+    flipper: "よっぱらいタコ民",
+    careful: "つぶやきタコ民",
+    looker: "冷やかしタコ民",
+    rich: "札束タコ民",
+    climber: "踏破タコ民",
+    guide: "ナビタコ民",
+    relax: "ほぐしタコ民",
+    artisan: "返し職人タコ民",
+    diet: "ゼロ理論タコ民",
+    overflow: "枠外タコ民",
+    collector: "未開封保護タコ民",
+    shadow: "防水タコ民",
+    ramen: "替え玉タコ民",
+    streamer: "投げ銭タコ民",
+    gourmet: "舌判定タコ民",
+    opener: "即バリタコ民",
+    party: "宴タコ民",
+    pilgrim: "覚悟タコ民"
+  };
+
+  const CUSTOMER_ICON_MAP = {
+    careful:   "https://ul.h3z.jp/RpLPCRTc.png",
+    impulse:   "https://ul.h3z.jp/TMXU9ztW.png",
+    looker:    "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku16.png",
+    picky:     "https://ul.h3z.jp/MZYfusKm.png",
+    king:      "https://ul.h3z.jp/wMM8PrcP.png",
+    flipper:   "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku20.png",
+    rich:      "https://ul.h3z.jp/pZKu3lSE.png",
+    climber:   "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku2.png",
+    guide:     "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku3.png",
+    relax:     "https://ul.h3z.jp/dbBbLypa.png",
+    artisan:   "https://ul.h3z.jp/OA5StkvT.png",
+    diet:      "https://ul.h3z.jp/KVImBYZ8.png",
+    overflow:  "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/kyaku7.png",
+    collector: "https://ul.h3z.jp/zSvGyVq9.png",
+    shadow:    "https://ul.h3z.jp/IBKDrVAm.png",
+    ramen:     "https://ul.h3z.jp/NViRwhdj.png",
+    streamer:  "https://ul.h3z.jp/8PukOegd.png",
+    gourmet:   "https://ul.h3z.jp/We4UXFSI.png",
+    opener:    "https://ul.h3z.jp/9usFHTdU.png",
+    party:     "https://ul.h3z.jp/pByCAUMC.png",
+    pilgrim:   "https://ul.h3z.jp/eW2dluw2.png"
+  };
+
   const GUEST_LABELS = {
-    impulse:   { min:0,  text:"まだ勢いだけで来ている。", mid:"ノリが合う店だと思い始めている。", max:"勢いで来て、愛着で帰る常連。" },
-    picky:     { min:0,  text:"まだ厳しく見定めている。", mid:"少しずつ認め始めている。", max:"うるさいけど、かなり気に入っている。" },
-    king:      { min:0,  text:"まだ試す目で見ている。", mid:"店の格を認め始めている。", max:"王が認めた棚。かなり強い。" },
-    flipper:   { min:0,  text:"利益しか見ていない。", mid:"数字以外の価値も少し見えてきた。", max:"打算から始まったのに、なぜか情がある。" },
-    careful:   { min:0,  text:"まだ警戒しながら様子見。", mid:"少しずつ安心してきている。", max:"かなり信頼している常連候補。" },
-    looker:    { min:0,  text:"まだ“見るだけ”の距離感。", mid:"眺めるだけでは済まなくなってきた。", max:"口では軽いが、かなり好き。" },
-    rich:      { min:0,  text:"金で測っている。", mid:"値段以外の面白さも認め始めた。", max:"財布より先に心が動いている。" },
-    climber:   { min:0,  text:"まだ試練の棚だと思っている。", mid:"登る価値のある店だと思い始めた。", max:"景色の見える常連ポジション。" },
-    guide:     { min:0,  text:"まだ外から案内している。", mid:"語りたくなる場所になってきた。", max:"もう半分この店の広報。" },
-    relax:     { min:0,  text:"まだ様子見で空気を読んでいる。", mid:"居心地の良さを感じ始めている。", max:"癒やし目的でも来ている。" },
-    artisan:   { min:0,  text:"仕事として見ている。", mid:"腕前を認めてきている。", max:"技術も空気も含めて評価している。" },
-    diet:      { min:0,  text:"理屈で距離を取っている。", mid:"理論の中に好意が混ざり始めた。", max:"もはや理屈を超えて好き。" },
-    overflow:  { min:0,  text:"まだ枠外から見ている。", mid:"ズレた会話を楽しみ始めている。", max:"規格外どうしで相性が良い。" },
-    collector: { min:0,  text:"まだ管理対象として見ている。", mid:"保存以上の感情が生まれ始めた。", max:"かなり大切な棚認定。" },
-    shadow:    { min:0,  text:"まだ慎重に距離を測っている。", mid:"守れる価値を感じ始めている。", max:"信用しているから買う側に寄っている。" },
-    ramen:     { min:0,  text:"まだ濃さだけ見ている。", mid:"味わうように通い始めている。", max:"締めに寄りたくなる店になった。" },
-    streamer:  { min:0,  text:"まだネタとして見ている。", mid:"映え以上の面白さを感じている。", max:"本気で推したくなっている。" },
-    gourmet:   { min:0,  text:"まだ厳しく品定めしている。", mid:"余韻のある店だと感じ始めた。", max:"かなり深く気に入っている。" },
-    opener:    { min:0,  text:"まだ勢いだけで近づいている。", mid:"開封以上に店も楽しみ始めた。", max:"テンション込みでかなり好き。" },
-    party:     { min:0,  text:"まだ祭りのノリで来ている。", mid:"ノリ以上の居場所感が出てきた。", max:"騒がしいけど本気で好き。" },
-    pilgrim:   { min:0,  text:"まだ巡礼先のひとつ。", mid:"来た意味がある場所だと思い始めた。", max:"わざわざ来る価値があると確信している。" }
+    impulse:   { min:0, text:"まだ勢いだけで来ている。", mid:"ノリが合う店だと思い始めている。", max:"勢いで来て、愛着で帰る常連。" },
+    picky:     { min:0, text:"まだ厳しく見定めている。", mid:"少しずつ認め始めている。", max:"うるさいけど、かなり気に入っている。" },
+    king:      { min:0, text:"まだ試す目で見ている。", mid:"店の格を認め始めている。", max:"王が認めた棚。かなり強い。" },
+    flipper:   { min:0, text:"利益しか見ていない。", mid:"数字以外の価値も少し見えてきた。", max:"打算から始まったのに、なぜか情がある。" },
+    careful:   { min:0, text:"まだ警戒しながら様子見。", mid:"少しずつ安心してきている。", max:"かなり信頼している常連候補。" },
+    looker:    { min:0, text:"まだ“見るだけ”の距離感。", mid:"眺めるだけでは済まなくなってきた。", max:"口では軽いが、かなり好き。" },
+    rich:      { min:0, text:"金で測っている。", mid:"値段以外の面白さも認め始めた。", max:"財布より先に心が動いている。" },
+    climber:   { min:0, text:"まだ試練の棚だと思っている。", mid:"登る価値のある店だと思い始めた。", max:"景色の見える常連ポジション。" },
+    guide:     { min:0, text:"まだ外から案内している。", mid:"語りたくなる場所になってきた。", max:"もう半分この店の広報。" },
+    relax:     { min:0, text:"まだ様子見で空気を読んでいる。", mid:"居心地の良さを感じ始めている。", max:"癒やし目的でも来ている。" },
+    artisan:   { min:0, text:"仕事として見ている。", mid:"腕前を認めてきている。", max:"技術も空気も含めて評価している。" },
+    diet:      { min:0, text:"理屈で距離を取っている。", mid:"理論の中に好意が混ざり始めた。", max:"もはや理屈を超えて好き。" },
+    overflow:  { min:0, text:"まだ枠外から見ている。", mid:"ズレた会話を楽しみ始めている。", max:"規格外どうしで相性が良い。" },
+    collector: { min:0, text:"まだ管理対象として見ている。", mid:"保存以上の感情が生まれ始めた。", max:"かなり大切な棚認定。" },
+    shadow:    { min:0, text:"まだ慎重に距離を測っている。", mid:"守れる価値を感じ始めている。", max:"信用しているから買う側に寄っている。" },
+    ramen:     { min:0, text:"まだ濃さだけ見ている。", mid:"味わうように通い始めている。", max:"締めに寄りたくなる店になった。" },
+    streamer:  { min:0, text:"まだネタとして見ている。", mid:"映え以上の面白さを感じている。", max:"本気で推したくなっている。" },
+    gourmet:   { min:0, text:"まだ厳しく品定めしている。", mid:"余韻のある店だと感じ始めた。", max:"かなり深く気に入っている。" },
+    opener:    { min:0, text:"まだ勢いだけで近づいている。", mid:"開封以上に店も楽しみ始めた。", max:"テンション込みでかなり好き。" },
+    party:     { min:0, text:"まだ祭りのノリで来ている。", mid:"ノリ以上の居場所感が出てきた。", max:"騒がしいけど本気で好き。" },
+    pilgrim:   { min:0, text:"まだ巡礼先のひとつ。", mid:"来た意味がある場所だと思い始めた。", max:"わざわざ来る価値があると確信している。" }
   };
 
   const TALK_POOLS = {
@@ -57,15 +105,6 @@
           { text: "今いかないと、未来の自分がうるさいです。", delta: +3, reply: "そういうの好き！ 未来の自分はあとで謝らせる！", stage: "……完全にテンションが上がった。", log: "即決派の勢いを肯定した" },
           { text: "深呼吸してからでも遅くないです。", delta: +1, reply: "それもそう。でも多分もう遅い気もする！", stage: "……少し理性が戻った。", log: "即決派を少し落ち着かせた" },
           { text: "迷うなら今日はやめましょう。", delta: -2, reply: "えっ、そこは背中押してよ！？", stage: "……勢いを止められて少し不満そうだ。", log: "即決派を止めた" }
-        ]
-      },
-      {
-        mood: "すでに買う顔をしながら確認してきた。",
-        ask: "ねえ、こういうのって“出会い”でしょ？",
-        choices: [
-          { text: "はい。しかもだいぶ危険な出会いです。", delta: +3, reply: "危険って言われると余計に好き！", stage: "……危険ワードが刺さった。", log: "即決派に危険な出会い認定した" },
-          { text: "出会いだけど、財布とは相談です。", delta: +1, reply: "現実！ でも嫌いじゃない！", stage: "……現実も飲み込んだようだ。", log: "即決派に現実を添えた" },
-          { text: "たまたま目に入っただけです。", delta: -3, reply: "うわ、急にロマン消さないで！？", stage: "……明らかにしょんぼりした。", log: "即決派のロマンを折った" }
         ]
       }
     ],
@@ -255,7 +294,7 @@
         mood: "余韻を見るような顔で尋ねてきた。",
         ask: "これ、買ったあとに“残る”タイプ？",
         choices: [
-          { text: "残ります。静かにあとから効く方です。", delta: +3, reply: "……いいね、その言い方。", stage: "……かなり上品に刺さった。", log: "舌判定客に余韻で返した" },
+          { text: "残ります。静かにあとから効く方です。", delta: +3, reply: "……いいね。その言い方。", stage: "……かなり上品に刺さった。", log: "舌判定客に余韻で返した" },
           { text: "派手じゃないけど、忘れにくいです。", delta: +2, reply: "それが一番危ないんだよね。", stage: "……深く納得している。", log: "舌判定客に忘れにくさを返した" },
           { text: "その場の勢いだけです。", delta: -3, reply: "……急に浅くなった。", stage: "……評価がだいぶ下がった。", log: "舌判定客に浅い返しをした" }
         ]
@@ -361,40 +400,16 @@
   let onResultGlobal = null;
   let helpersGlobal = null;
 
-  const CUSTOMER_NAME_MAP = {
-    impulse: "即決タコ民",
-    picky: "見えないタコ民",
-    king: "王様タコ民",
-    flipper: "よっぱらいタコ民",
-    careful: "つぶやきタコ民",
-    looker: "冷やかしタコ民",
-    rich: "札束タコ民",
-    climber: "踏破タコ民",
-    guide: "ナビタコ民",
-    relax: "ほぐしタコ民",
-    artisan: "返し職人タコ民",
-    diet: "ゼロ理論タコ民",
-    overflow: "枠外タコ民",
-    collector: "未開封保護タコ民",
-    shadow: "防水タコ民",
-    ramen: "替え玉タコ民",
-    streamer: "投げ銭タコ民",
-    gourmet: "舌判定タコ民",
-    opener: "即バリタコ民",
-    party: "宴タコ民",
-    pilgrim: "覚悟タコ民"
-  };
-
   function safeJSON(raw, fallback){
     try{ return JSON.parse(raw); }
     catch(e){ return fallback; }
   }
 
-  function clamp(n, min, max){
+  function clampValue(n, min, max){
     return Math.max(min, Math.min(max, n));
   }
 
-  function pick(arr){
+  function pickValue(arr){
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
@@ -461,7 +476,7 @@
     }
     Object.assign(state.guests[id], patch || {});
     if(typeof state.guests[id].love === "number"){
-      state.guests[id].love = clamp(state.guests[id].love, 0, 100);
+      state.guests[id].love = clampValue(state.guests[id].love, 0, 100);
     }
     saveState(state);
     return state.guests[id];
@@ -496,6 +511,7 @@
       return {
         id,
         name: guestDisplayName(id, CUSTOMER_NAME_MAP[id] || id),
+        icon: CUSTOMER_ICON_MAP[id] || "",
         love,
         hearts: heartsFromLove(love),
         talkCount: Number(g.talkCount || 0),
@@ -524,6 +540,58 @@
       "\"":"&quot;",
       "'":"&#039;"
     }[m]));
+  }
+
+  function injectStyles(){
+    if(document.getElementById("rotenSocialExtraStyle")) return;
+
+    const style = document.createElement("style");
+    style.id = "rotenSocialExtraStyle";
+    style.textContent = `
+      #guestAffinity,
+      #guestAffinityEmpty{
+        display:none !important;
+      }
+
+      .affrow{
+        display:grid;
+        grid-template-columns:56px 1fr;
+        gap:10px;
+        align-items:center;
+      }
+      .afficon{
+        width:56px;
+        height:56px;
+        border-radius:12px;
+        overflow:hidden;
+        border:1px solid rgba(255,255,255,.14);
+        background:rgba(0,0,0,.18);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        box-shadow:0 8px 22px rgba(0,0,0,.18);
+      }
+      .afficon img{
+        width:100%;
+        height:100%;
+        object-fit:contain;
+        image-rendering:pixelated;
+        display:block;
+      }
+      .afficon-fallback{
+        font-size:11px;
+        color:rgba(255,255,255,.66);
+        text-align:center;
+        line-height:1.2;
+        padding:4px;
+      }
+      .affbody{
+        min-width:0;
+        display:grid;
+        gap:8px;
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   function bindEls(){
@@ -567,15 +635,20 @@
     if(!payload) return;
     els.guestList = payload.guestAffinityEl || null;
     els.guestEmpty = payload.guestAffinityEmptyEl || null;
+
+    if(els.guestList) els.guestList.style.display = "none";
+    if(els.guestEmpty) els.guestEmpty.style.display = "none";
+
     renderGuestAffinity();
   }
 
   function renderGuestAffinity(){
     bindEls();
+    injectStyles();
 
-    if(els.guestList && els.guestEmpty){
-      renderAffinityList(els.guestList, els.guestEmpty, false);
-    }
+    if(els.guestList) els.guestList.style.display = "none";
+    if(els.guestEmpty) els.guestEmpty.style.display = "none";
+
     if(els.affectionModalList && els.affectionModalEmpty){
       renderAffinityList(els.affectionModalList, els.affectionModalEmpty, true);
     }
@@ -602,17 +675,26 @@
         heartsHTML += `<span class="${i < row.hearts ? "on" : "off"}">♥</span>`;
       }
 
+      const iconHTML = row.icon
+        ? `<img alt="${escapeHTML(row.name)}" src="${escapeHTML(row.icon)}">`
+        : `<div class="afficon-fallback">画像<br>なし</div>`;
+
       card.innerHTML = `
-        <div class="ghead">
-          <div class="gname" title="${escapeHTML(row.name)}">${escapeHTML(row.name)}</div>
-          <div class="gmeta">会話 ${escapeHTML(String(row.talkCount))}回</div>
+        <div class="affrow">
+          <div class="afficon">${iconHTML}</div>
+          <div class="affbody">
+            <div class="ghead">
+              <div class="gname" title="${escapeHTML(row.name)}">${escapeHTML(row.name)}</div>
+              <div class="gmeta">会話 ${escapeHTML(String(row.talkCount))}回</div>
+            </div>
+            <div class="gline">
+              <div class="ghearts">${heartsHTML}</div>
+              <div class="gauge"><i style="width:${clampValue(row.love,0,100)}%"></i></div>
+            </div>
+            <div class="gsub">${escapeHTML(row.label)}</div>
+            ${detailed ? `<div class="gsub">好感度 ${escapeHTML(String(row.love))}/100 ・ 購入 ${escapeHTML(String(row.buyCount))}回 ・ 放置 ${escapeHTML(String(row.ignoreCount))}回</div>` : ``}
+          </div>
         </div>
-        <div class="gline">
-          <div class="ghearts">${heartsHTML}</div>
-          <div class="gauge"><i style="width:${clamp(row.love,0,100)}%"></i></div>
-        </div>
-        <div class="gsub">${escapeHTML(row.label)}</div>
-        ${detailed ? `<div class="gsub">好感度 ${escapeHTML(String(row.love))}/100 ・ 購入 ${escapeHTML(String(row.buyCount))}回 ・ 放置 ${escapeHTML(String(row.ignoreCount))}回</div>` : ``}
       `;
       frag.appendChild(card);
     });
@@ -645,13 +727,13 @@
   function getBuyProbabilityBonus(guestId){
     const g = getGuestState(guestId);
     const love = Number(g.love || 0);
-    return clamp((love - 20) * 0.0015, -0.03, 0.12);
+    return clampValue((love - 20) * 0.0015, -0.03, 0.12);
   }
 
   function onPurchaseSuccess(guestId){
     const g = getGuestState(guestId);
     patchGuest(guestId, {
-      love: clamp(Number(g.love || 0) + 1, 0, 100),
+      love: clampValue(Number(g.love || 0) + 1, 0, 100),
       buyCount: Number(g.buyCount || 0) + 1,
       lastSeenAt: Date.now()
     });
@@ -665,12 +747,12 @@
     if(love >= 60) p += 0.05;
     else if(love >= 30) p += 0.03;
     if(Number(g.talkCount || 0) === 0) p += 0.03;
-    return Math.random() < clamp(p, 0.30, 0.40);
+    return Math.random() < clampValue(p, 0.30, 0.40);
   }
 
   function pickTalkEvent(guestId){
     const pool = TALK_POOLS[guestId] || GENERIC_POOL;
-    return pick(pool);
+    return pickValue(pool);
   }
 
   function setChoicesDisabled(disabled){
@@ -729,7 +811,7 @@
     const prev = getGuestState(guestId);
 
     patchGuest(guestId, {
-      love: clamp(Number(prev.love || 0) - 1, 0, 100),
+      love: clampValue(Number(prev.love || 0) - 1, 0, 100),
       ignoreCount: Number(prev.ignoreCount || 0) + 1,
       lastSeenAt: Date.now()
     });
@@ -739,7 +821,7 @@
       ...(IGNORE_LINES_BY_TYPE[guestId] || [])
     ];
 
-    const leaveLine = pick(linePool);
+    const leaveLine = pickValue(linePool);
 
     if(helpersGlobal && typeof helpersGlobal.pushLog === "function"){
       helpersGlobal.pushLog("会話失敗", `${guestName} を放置してしまった`, guestId);
@@ -767,7 +849,7 @@
     const guestName = activeTalk.guestName;
     const prev = getGuestState(guestId);
     const delta = normalizeDelta(choice.delta);
-    const nextLove = clamp(Number(prev.love || 0) + delta, 0, 100);
+    const nextLove = clampValue(Number(prev.love || 0) + delta, 0, 100);
 
     patchGuest(guestId, {
       love: nextLove,
@@ -909,7 +991,12 @@
 
   function init(){
     bindEls();
+    injectStyles();
     showInlineTalk(false);
+
+    if(els.guestList) els.guestList.style.display = "none";
+    if(els.guestEmpty) els.guestEmpty.style.display = "none";
+
     renderGuestAffinity();
     return true;
   }
