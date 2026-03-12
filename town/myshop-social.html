@@ -516,6 +516,10 @@
   const stageMsg = $("#stageMsg");
   const stageTimeTag = $("#stageTimeTag");
   const stageNextTag = $("#stageNextTag");
+  const requestInline = $("#requestInline");
+const requestCardBox = $("#requestCardBox");
+const requestSellBtn = $("#requestSellBtn");
+const requestFoot = $("#requestFoot");
 
   const pickModal = $("#pickModal");
   const pickCardsEl = $("#pickCards");
@@ -755,25 +759,40 @@
     stageTimeTag.textContent = night ? "夜" : "昼";
   }
 
-  const STAGE_DEFAULT = {
-    ver:1,
-    hasVisitor:false,
-    leaving:false,
-    vUrl:"",
-    vName:"—",
-    vMsg:"まだ誰も来ていない。",
-    vType:"",
-    vBudget:0,
-    vIsRegular:false,
-    stayMs:0,
-    targetSlot:-1,
-    updatedAt:0,
-    source:"",
-    visitId:"",
-    talking:false,
-    talkDone:false,
-    talkStartedAt:0
-  };
+
+const STAGE_DEFAULT = {
+  ver:1,
+  hasVisitor:false,
+  leaving:false,
+  vUrl:"",
+  vName:"—",
+  vMsg:"まだ誰も来ていない。",
+  vType:"",
+  vBudget:0,
+  vIsRegular:false,
+
+  requestActive:false,
+  requestCardId:"",
+  requestCardName:"",
+  requestCardImg:"",
+  requestCardRarity:"",
+  requestQty:0,
+  requestReward:0,
+
+  stayMs:0,
+  targetSlot:-1,
+  updatedAt:0,
+  source:"",
+  visitId:"",
+  talking:false,
+  talkDone:false,
+  talkStartedAt:0
+};
+
+
+
+
+  
   function loadStage(){
     const s = lsGet(LS.stage, STAGE_DEFAULT);
     return { ...STAGE_DEFAULT, ...s };
@@ -952,6 +971,68 @@ function injectStageWalletStyles(){
       beginLeave(pick(LEAVE_LINES));
     }, Math.max(5000, Math.floor(stayMs || 12000)));
   }
+
+
+
+
+function setStageEmpty(msg){
+
+  clearStageTimers();
+
+  const s = loadStage();
+
+  s.hasVisitor = false;
+  s.leaving = false;
+
+  s.vUrl = "";
+  s.vName = "—";
+  s.vMsg = msg || "まだ誰も来ていない。";
+
+  s.vType = "";
+  s.vBudget = 0;
+  s.vIsRegular = false;
+
+  // 探し物イベント初期化
+  s.requestActive = false;
+  s.requestCardId = "";
+  s.requestCardName = "";
+  s.requestCardImg = "";
+  s.requestCardRarity = "";
+  s.requestQty = 0;
+  s.requestReward = 0;
+
+  s.stayMs = 0;
+  s.targetSlot = -1;
+  s.source = "";
+  s.visitId = "";
+
+  s.talking = false;
+  s.talkDone = false;
+  s.talkStartedAt = 0;
+
+  saveStage(s);
+  renderStage();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 function renderStage(){
   const s = loadStage();
 
@@ -1098,7 +1179,8 @@ if(slot && slot.item && s.vBudget){
   }
 }
   
-
+renderRequestBox();
+  
   function setStageEmpty(msg){
     clearStageTimers();
     const s = loadStage();
@@ -1270,6 +1352,179 @@ if(slot && slot.item && s.vBudget){
     return arr;
   }
 
+
+
+function getFreeCopiesByCardId(cardId){
+  const book = loadFarmBook();
+  const key = findGotKeyByCardId(book, cardId);
+  if(!key) return 0;
+
+  const c = book.got[key];
+  const owned = Math.max(0, Number(c?.count || 0));
+  const listedMap = countListedById();
+  const listed = Math.max(0, Number(listedMap[cardId] || 0));
+
+  return Math.max(0, owned - listed);
+}
+
+function canFulfillRequest(cardId, qty){
+  qty = Math.max(1, Math.floor(Number(qty || 1)));
+  return getFreeCopiesByCardId(cardId) >= qty;
+}
+
+function decrementFreeCopiesForRequest(cardId, qty){
+  qty = Math.max(1, Math.floor(Number(qty || 1)));
+  if(!canFulfillRequest(cardId, qty)) return false;
+  return decrementBookCountById(cardId, qty);
+}
+
+function listRequestableCards(){
+  const owned = listOwnedCardsFromBook();
+  const arr = owned
+    .map(c => {
+      const free = getFreeCopiesByCardId(c.id);
+      return {
+        ...c,
+        free
+      };
+    })
+    .filter(c => c.free >= 1);
+
+  arr.sort((a,b)=>
+    (b.free - a.free) ||
+    (basePriceFor(b) - basePriceFor(a)) ||
+    a.name.localeCompare(b.name, "ja")
+  );
+
+  return arr;
+}
+
+function maybeBuildRequestEvent(custId){
+  const candidates = listRequestableCards();
+  if(!candidates.length) return null;
+
+  if(Math.random() >= 0.18) return null;
+
+  let pool = candidates.slice();
+
+  if(custId === "collector"){
+    pool = candidates.filter(c => c.free >= 2) || candidates;
+  }else if(custId === "king" || custId === "rich"){
+    pool = candidates.slice().sort((a,b)=> basePriceFor(b) - basePriceFor(a)).slice(0, 8);
+  }else if(custId === "looker"){
+    pool = candidates.filter(c => c.free >= 1).slice(0, 10);
+  }
+
+  if(!pool.length) pool = candidates;
+
+  const picked = pick(pool);
+
+  let qty = 1;
+  if(picked.free >= 3) qty = rand(1, 3);
+  else if(picked.free >= 2) qty = rand(1, 2);
+
+  qty = Math.min(qty, picked.free);
+
+  const unit = basePriceFor(picked);
+  const reward = Math.max(1, Math.floor(unit * qty * 1.25));
+
+  return {
+    active: true,
+    cardId: picked.id,
+    cardName: picked.name,
+    cardImg: picked.img,
+    cardRarity: picked.rarity,
+    qty,
+    reward
+  };
+}
+
+function renderRequestBox(){
+  const s = loadStage();
+
+  if(!requestInline || !requestCardBox || !requestSellBtn || !requestFoot) return;
+
+  if(!s.hasVisitor || !s.requestActive || !s.requestCardId || s.leaving){
+    requestInline.style.display = "none";
+    requestCardBox.innerHTML = "";
+    return;
+  }
+
+  requestInline.style.display = "grid";
+
+  const free = getFreeCopiesByCardId(s.requestCardId);
+  const canSell = free >= Number(s.requestQty || 0);
+
+  requestCardBox.innerHTML = `
+    <div class="request-thumb">
+      ${s.requestCardImg ? `<img alt="" src="${escapeHTML(s.requestCardImg)}">` : `<div>?</div>`}
+    </div>
+    <div class="request-meta">
+      <div class="request-name">${escapeHTML(s.requestCardName || "カード")}</div>
+      <div class="request-sub">このカードを探している。持っていれば、その場でまとめ売却できます。</div>
+      <div class="request-qty">
+        必要枚数 ×${escapeHTML(Number(s.requestQty || 0))}
+      </div>
+      <div class="request-sub">
+        あなたの手持ち：${fmt(free)} 枚 / 報酬：${fmt(Number(s.requestReward || 0))} OCTO
+      </div>
+    </div>
+  `;
+
+  requestSellBtn.disabled = !canSell;
+  requestSellBtn.textContent = canSell ? "まとめて渡す" : "枚数が足りない";
+  requestFoot.textContent = canSell
+    ? "条件を満たしています。渡すと客は満足して帰ります。"
+    : "棚に出品している分は使えません。手持ち分だけ渡せます。";
+}
+
+function fulfillRequestEvent(){
+  const s = loadStage();
+  if(!s.hasVisitor || !s.requestActive || !s.requestCardId) return;
+
+  const qty = Math.max(1, Math.floor(Number(s.requestQty || 1)));
+  const reward = Math.max(1, Math.floor(Number(s.requestReward || 0)));
+
+  if(!canFulfillRequest(s.requestCardId, qty)){
+    toast("渡せない", "手持ち枚数が足りません", "");
+    renderStage();
+    return;
+  }
+
+  const ok = decrementFreeCopiesForRequest(s.requestCardId, qty);
+  if(!ok){
+    toast("渡せない", "図鑑との同期ずれの可能性があります", "");
+    renderStage();
+    return;
+  }
+
+  saveOcto(loadOcto() + reward);
+  addMonthlyMyShopSales(reward);
+  addRep(2);
+  addExp(5);
+
+  socialCall("onPurchaseSuccess", s.vType);
+
+  pushLog(
+    "探し物成功",
+    `${s.vName} に ${s.requestCardName} ×${qty} を渡した（+${fmt(reward)} OCTO）`,
+    s.requestCardId
+  );
+
+  toast("探し物達成！", `${s.requestCardName} ×${qty} ／ +${fmt(reward)} OCTO`, "sale");
+
+  s.requestActive = false;
+  saveStage(s);
+
+  beginLeave(`……${s.requestCardName} を受け取って、かなり満足そうに帰っていった。`);
+  renderAll();
+}
+
+
+
+
+
+  
   const CONTRACT_DEFAULT = {
     ver:1,
     active: false,
@@ -2285,6 +2540,15 @@ if(slot && slot.item && s.vBudget){
       s.vMsg = msg;
       s.vBudget = budget;
       s.vIsRegular = !!isRegular;
+
+      s.requestActive = !!req;
+      s.requestCardId = req?.cardId || "";
+      s.requestCardName = req?.cardName || "";
+      s.requestCardImg = req?.cardImg || "";
+      s.requestCardRarity = req?.cardRarity || "";
+      s.requestQty = Number(req?.qty || 0);
+      s.requestReward = Number(req?.reward || 0);
+      
       s.stayMs = stayMs;
       s.targetSlot = targetSlot;
       s.source = (type==="shout") ? "shout" : "normal";
@@ -2296,8 +2560,14 @@ if(slot && slot.item && s.vBudget){
       rememberVisitorType(cust.id);
       renderStage();
 
-      pushLog("来客", `${s.vName} が棚${targetSlot+1}を見ている（所持金 ${fmt(budget)} OCTO${isRegular ? " / 常連" : ""}）`, `${typeLabel}`);
 
+      pushLog(
+  "来客",
+  `${s.vName} が棚${targetSlot+1}を見ている（所持金 ${fmt(budget)} OCTO${isRegular ? " / 常連" : ""}${s.requestActive ? ` / 探し物: ${s.requestCardName}×${s.requestQty}` : ""}）`,
+  `${typeLabel}`
+);
+
+      
       const lvup = addExp(1);
       if(lvup.leveled){
         pushLog("レベルアップ", `Lv${lvup.state.lv}になった！`, "");
@@ -2410,6 +2680,9 @@ if(slot && slot.item && s.vBudget){
   });
 
   shoutBtn.addEventListener("click", shout);
+  if(requestSellBtn){
+  requestSellBtn.addEventListener("click", fulfillRequestEvent);
+}
 
   fixBtn.addEventListener("click", ()=>{
     Storage.setItem(LS.stage, JSON.stringify({
