@@ -598,30 +598,6 @@
     document.head.appendChild(style);
   }
 
-  function bindAffectionButton(btn){
-    if(!btn) return;
-    if(btn.__rotenAffinityClickBound) return;
-    btn.__rotenAffinityClickBound = true;
-    btn.addEventListener("click", openAffinityModal);
-  }
-
-  function bindStaticModalEvents(){
-    if(els.affectionClose && !els.affectionClose.__bound){
-      els.affectionClose.__bound = true;
-      els.affectionClose.addEventListener("click", closeAffinityModal);
-    }
-    if(els.affectionOk && !els.affectionOk.__bound){
-      els.affectionOk.__bound = true;
-      els.affectionOk.addEventListener("click", closeAffinityModal);
-    }
-    if(els.affectionModal && !els.affectionModal.__bound){
-      els.affectionModal.__bound = true;
-      els.affectionModal.addEventListener("click", (e)=>{
-        if(e.target === els.affectionModal) closeAffinityModal();
-      });
-    }
-  }
-
   function bindEls(){
     els.stageName = document.getElementById("stageName");
     els.stageMsg = document.getElementById("stageMsg");
@@ -632,11 +608,7 @@
     els.c2 = document.getElementById("talkChoice2");
     els.c3 = document.getElementById("talkChoice3");
 
-    const latestBtn = document.getElementById("affectionCheckBtn");
-    if(latestBtn !== els.affectionBtn){
-      els.affectionBtn = latestBtn;
-    }
-
+    els.affectionBtn = document.getElementById("affectionCheckBtn");
     els.affectionModal = document.getElementById("affectionModal");
     els.affectionClose = document.getElementById("affectionClose");
     els.affectionOk = document.getElementById("affectionOk");
@@ -648,28 +620,24 @@
 
     const guestCard = (els.guestList && els.guestList.closest(".card")) ||
                       (els.guestEmpty && els.guestEmpty.closest(".card")) ||
-                      document.getElementById("guestAffinity")?.closest(".card") ||
-                      document.getElementById("guestAffinityEmpty")?.closest(".card") ||
                       null;
-
     if(guestCard){
       els.guestCard = guestCard;
       if(!els.guestCard.id) els.guestCard.id = "guestAffinityCard";
     }
-
-    bindAffectionButton(els.affectionBtn);
-    bindStaticModalEvents();
   }
 
   function bindGuestUI(payload){
     if(!payload) return;
+    els.guestList = payload.guestAffinityEl || null;
+    els.guestEmpty = payload.guestAffinityEmptyEl || null;
 
-    els.guestList = payload.guestAffinityEl || document.getElementById("guestAffinity") || null;
-    els.guestEmpty = payload.guestAffinityEmptyEl || document.getElementById("guestAffinityEmpty") || null;
-    els.guestCard = (els.guestList && els.guestList.closest(".card")) || (els.guestEmpty && els.guestEmpty.closest(".card")) || null;
-
-    if(els.guestCard && !els.guestCard.id){
-      els.guestCard.id = "guestAffinityCard";
+    const guestCard = (els.guestList && els.guestList.closest(".card")) ||
+                      (els.guestEmpty && els.guestEmpty.closest(".card")) ||
+                      null;
+    if(guestCard){
+      els.guestCard = guestCard;
+      if(!els.guestCard.id) els.guestCard.id = "guestAffinityCard";
     }
 
     forceHideBottomAffinity();
@@ -694,7 +662,7 @@
   function forceHideBottomAffinity(){
     const list = document.getElementById("guestAffinity") || els.guestList;
     const empty = document.getElementById("guestAffinityEmpty") || els.guestEmpty;
-    const card = (list && list.closest(".card")) || (empty && empty.closest(".card")) || els.guestCard;
+    const card = (list && list.closest(".card")) || (empty && empty.closest(".card")) || els.guestCard || null;
 
     if(list) els.guestList = list;
     if(empty) els.guestEmpty = empty;
@@ -1059,6 +1027,31 @@
     showInlineTalk(false);
   }
 
+  function bindDocumentDelegation(){
+    if(document.__rotenAffinityDelegated) return;
+    document.__rotenAffinityDelegated = true;
+
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("#affectionCheckBtn");
+      if(btn){
+        e.preventDefault();
+        openAffinityModal();
+        return;
+      }
+
+      const closeBtn = e.target.closest("#affectionClose, #affectionOk");
+      if(closeBtn){
+        e.preventDefault();
+        closeAffinityModal();
+        return;
+      }
+
+      if(e.target && e.target.id === "affectionModal"){
+        closeAffinityModal();
+      }
+    });
+  }
+
   function startBottomHideWatcher(){
     forceHideBottomAffinity();
 
@@ -1068,7 +1061,6 @@
     const mo = new MutationObserver(() => {
       bindEls();
       forceHideBottomAffinity();
-      bindAffectionButton(document.getElementById("affectionCheckBtn"));
     });
 
     mo.observe(document.documentElement || document.body, {
@@ -1084,6 +1076,7 @@
   function init(){
     bindEls();
     injectStyles();
+    bindDocumentDelegation();
     showInlineTalk(false);
     forceHideBottomAffinity();
     startBottomHideWatcher();
