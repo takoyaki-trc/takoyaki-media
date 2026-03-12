@@ -770,6 +770,148 @@
     if(stageLeaveTimer){ clearTimeout(stageLeaveTimer); stageLeaveTimer=null; }
   }
 
+
+
+function injectStageWalletStyles(){
+  if(document.getElementById("stageWalletFxStyle")) return;
+
+  const style = document.createElement("style");
+  style.id = "stageWalletFxStyle";
+  style.textContent = `
+    .stage-name-ui{
+      display:grid;
+      gap:6px;
+      min-width:0;
+    }
+
+    .stage-name-main{
+      font-weight:800;
+      font-size:15px;
+      letter-spacing:.02em;
+      line-height:1.2;
+      word-break:break-word;
+    }
+
+    .stage-name-main.neg{
+      color:#ffb6c1;
+    }
+
+    .stage-name-main.pos{
+      color:#ffffff;
+    }
+
+    .stage-chip-row{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .stage-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      line-height:1;
+      white-space:nowrap;
+      box-shadow:0 0 8px rgba(0,0,0,.25);
+      backdrop-filter: blur(2px);
+    }
+
+    .stage-chip.regular{
+      background:linear-gradient(180deg,#ffd76a,#ffb13b);
+      border:1px solid #ffd76a;
+      color:#3a2400;
+      box-shadow:
+        0 0 10px rgba(255,200,80,.45),
+        inset 0 1px 0 rgba(255,255,255,.35);
+    }
+
+    .stage-chip.wallet{
+      animation: walletFloat 2.1s ease-in-out infinite;
+      transform-origin:center;
+    }
+
+    .stage-chip.wallet.normal{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      color:#ffffff;
+    }
+
+    .stage-chip.wallet.mid{
+      background:linear-gradient(180deg,#b7dcff,#7fbaff);
+      border:1px solid #9fd0ff;
+      color:#00264a;
+      box-shadow:
+        0 0 10px rgba(120,180,255,.32),
+        inset 0 1px 0 rgba(255,255,255,.38);
+    }
+
+    .stage-chip.wallet.rich{
+      background:linear-gradient(180deg,#ffe8a3,#ffc94a);
+      border:1px solid #ffe8a3;
+      color:#3a2400;
+      box-shadow:
+        0 0 12px rgba(255,210,90,.38),
+        inset 0 1px 0 rgba(255,255,255,.42);
+    }
+
+    .stage-chip.wallet.king{
+      background:linear-gradient(180deg,#ffd76a,#ffb13b);
+      border:1px solid #ffd76a;
+      color:#3a2400;
+      box-shadow:
+        0 0 14px rgba(255,190,70,.48),
+        0 0 24px rgba(255,190,70,.18),
+        inset 0 1px 0 rgba(255,255,255,.42);
+      animation: walletFloat 2.1s ease-in-out infinite, walletGlow 1.8s ease-in-out infinite;
+    }
+
+    .stage-chip-icon{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+    }
+
+    .stage-chip-text{
+      display:inline-flex;
+      align-items:center;
+    }
+
+    @keyframes walletFloat{
+      0%   { transform:translateY(0px) rotate(0deg) scale(1); }
+      25%  { transform:translateY(-1px) rotate(-1.2deg) scale(1.01); }
+      50%  { transform:translateY(0px) rotate(.8deg) scale(1.02); }
+      75%  { transform:translateY(-1px) rotate(-.8deg) scale(1.01); }
+      100% { transform:translateY(0px) rotate(0deg) scale(1); }
+    }
+
+    @keyframes walletGlow{
+      0%,100%{
+        box-shadow:
+          0 0 14px rgba(255,190,70,.48),
+          0 0 24px rgba(255,190,70,.18),
+          inset 0 1px 0 rgba(255,255,255,.42);
+      }
+      50%{
+        box-shadow:
+          0 0 18px rgba(255,215,110,.68),
+          0 0 34px rgba(255,200,80,.28),
+          inset 0 1px 0 rgba(255,255,255,.46);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+
+
+
+  
   function startVisitorTimers(stayMs){
     clearStageTimers();
 
@@ -864,27 +1006,25 @@ function renderStage(){
   : "";
 
   stageName.innerHTML = `
-  <div style="display:grid;gap:6px;min-width:0;">
-    <div style="
-      font-weight:800;
-      font-size:15px;
-      letter-spacing:.02em;
-      ${isNegativeType(s.vType) ? "color:#ffb6c1;" : "color:#ffffff;"}
-    ">
-      ${name}
-    </div>
+  <div class="stage-name-ui">
 
     <div style="
       display:flex;
-      gap:6px;
-      flex-wrap:wrap;
       align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
     ">
-      ${regularChip}
+      <div class="stage-name-main ${isNegativeType(s.vType) ? "neg" : "pos"}">
+        ${name}
+      </div>
+
       ${walletChip}
+      ${regularChip}
+
     </div>
+
   </div>
-  `;
+`;
 
   stageMsg.textContent = s.vMsg || "—";
 
