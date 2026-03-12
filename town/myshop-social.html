@@ -2588,73 +2588,76 @@
 
   let spawnLockUntil = 0;
 
-  function maybeStartTalkAfterSpawn(stageState){
-    const s = stageState || loadStage();
-    if(!s.hasVisitor || s.leaving || s.talking) return false;
-    if(s.eventMode !== "talk") return false;
-    if(s.requestActive) return false;
 
-    const started = socialCall("maybeStartConversation", {
-      visitId: s.visitId,
-      guestId: s.vType,
-      guestName: s.vName,
-      guestMood: s.vMsg,
-      getStageState: () => loadStage(),
-      onStateChange: (patch) => {
-        const st = loadStage();
-        if(!st.hasVisitor) return;
-        if(st.eventMode !== "talk") return;
-        Object.assign(st, patch || {});
+function maybeStartTalkAfterSpawn(stageState){
+  const s = stageState || loadStage();
+  if(!s.hasVisitor || s.leaving || s.talking) return false;
+  if(s.eventMode !== "talk") return false;
+  if(s.requestActive) return false;
+
+  const started = socialCall("startConversationNow", {
+    visitId: s.visitId,
+    guestId: s.vType,
+    guestName: s.vName,
+    guestMood: s.vMsg,
+    getStageState: () => loadStage(),
+    onStateChange: (patch) => {
+      const st = loadStage();
+      if(!st.hasVisitor) return;
+      if(st.eventMode !== "talk") return;
+      Object.assign(st, patch || {});
+      saveStage(st);
+      renderStage();
+    },
+    onResult: (result) => {
+      const st = loadStage();
+      if(!st.hasVisitor) return;
+      if(st.eventMode !== "talk") return;
+
+      st.talking = false;
+      st.talkDone = true;
+      saveStage(st);
+
+      if(result && result.stageMessage){
+        st.vMsg = result.stageMessage;
         saveStage(st);
         renderStage();
-      },
-      onResult: (result) => {
-        const st = loadStage();
-        if(!st.hasVisitor) return;
-        if(st.eventMode !== "talk") return;
-
-        st.talking = false;
-        st.talkDone = true;
-        saveStage(st);
-
-        if(result && result.stageMessage){
-          st.vMsg = result.stageMessage;
-          saveStage(st);
-          renderStage();
-        }
-
-        if(result && result.leaveNow){
-          beginLeave(result.leaveLine || pick(LEAVE_LINES));
-          renderAll();
-          return;
-        }
-
-        const remain = rand(6000, 11000);
-        startVisitorTimers(remain);
-        renderAll();
-      },
-      helpers: {
-        toast,
-        pushLog,
-        addRep,
-        addExp,
-        getRep: getRepValue,
-        renderAll,
-        renderGuestAffinity
       }
-    });
 
-    if(started){
-      const st2 = loadStage();
-      st2.talking = false;
-      st2.talkStartedAt = 0;
-      saveStage(st2);
-      renderStage();
-      return true;
+      if(result && result.leaveNow){
+        beginLeave(result.leaveLine || pick(LEAVE_LINES));
+        renderAll();
+        return;
+      }
+
+      const remain = rand(6000, 11000);
+      startVisitorTimers(remain);
+      renderAll();
+    },
+    helpers: {
+      toast,
+      pushLog,
+      addRep,
+      addExp,
+      getRep: getRepValue,
+      renderAll,
+      renderGuestAffinity
     }
+  });
 
-    return false;
+  if(started){
+    const st2 = loadStage();
+    st2.talking = false;
+    st2.talkStartedAt = 0;
+    saveStage(st2);
+    renderStage();
+    return true;
   }
+
+  return false;
+}
+
+  
 
   function spawnVisitorSoon(targetSlot, type){
     const typeLabel = (type === "shout") ? "呼び込み" : "通常";
