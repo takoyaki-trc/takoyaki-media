@@ -452,6 +452,13 @@
     "……これは縁がなかったんじゃない。タイミングが悪かっただけ。"
   ];
 
+  const REQUEST_LEAVE_LINES = [
+    "……探し物は見つからなかったようで、少し残念そうに帰っていった。",
+    "……目当てのカードには出会えず、静かに引き返していった。",
+    "……探していた一枚は今日は無かったらしい。",
+    "……また別の日に探しに来るつもりらしい。"
+  ];
+
   const BUY_LINES = [
     "ニヤッと笑って帰っていった。",
     "大事そうにカードを抱えて帰っていった。",
@@ -547,6 +554,8 @@
     requestCardRarity: "",
     requestQty: 0,
     requestReward: 0,
+
+    eventMode: "", // "request" | "talk" | "sale"
 
     stayMs: 0,
     targetSlot: -1,
@@ -953,6 +962,19 @@
     document.head.appendChild(style);
   }
 
+  function chooseVisitorEventMode(custId, requestEvent, love){
+    if(requestEvent) return "request";
+
+    let talkP = 0.30;
+    if(love >= 60) talkP += 0.05;
+    else if(love >= 30) talkP += 0.03;
+
+    talkP = clamp(talkP, 0.30, 0.40);
+
+    if(Math.random() < talkP) return "talk";
+    return "sale";
+  }
+
   function startVisitorTimers(stayMs){
     clearStageTimers();
 
@@ -965,23 +987,52 @@
       renderStage();
     }, rand(3000, 6000));
 
-    stageSellTimer = setTimeout(() => {
-      const s3 = loadStage();
-      if(s3.talking){
-        startVisitorTimers(rand(5000, 9000));
-        return;
-      }
-      saleProcess();
-    }, Math.max(1000, Math.floor(stayMs || 12000) - 1000));
+    const mode = loadStage().eventMode || "sale";
 
-    stageLeaveTimer = setTimeout(() => {
-      const s4 = loadStage();
-      if(s4.talking){
-        startVisitorTimers(rand(4000, 8000));
-        return;
-      }
-      beginLeave(pick(LEAVE_LINES));
-    }, Math.max(5000, Math.floor(stayMs || 12000)));
+    if(mode === "sale"){
+      stageSellTimer = setTimeout(() => {
+        const s3 = loadStage();
+        if(!s3.hasVisitor || s3.leaving) return;
+        if(s3.eventMode !== "sale") return;
+        if(s3.talking) return;
+        saleProcess();
+      }, Math.max(1000, Math.floor(stayMs || 12000) - 1000));
+
+      stageLeaveTimer = setTimeout(() => {
+        const s4 = loadStage();
+        if(!s4.hasVisitor || s4.leaving) return;
+        if(s4.eventMode !== "sale") return;
+        if(s4.talking){
+          startVisitorTimers(rand(4000, 8000));
+          return;
+        }
+        beginLeave(pick(LEAVE_LINES));
+      }, Math.max(5000, Math.floor(stayMs || 12000)));
+      return;
+    }
+
+    if(mode === "request"){
+      stageLeaveTimer = setTimeout(() => {
+        const s4 = loadStage();
+        if(!s4.hasVisitor || s4.leaving) return;
+        if(s4.eventMode !== "request") return;
+        beginLeave(pick(REQUEST_LEAVE_LINES));
+      }, Math.max(5000, Math.floor(stayMs || 12000)));
+      return;
+    }
+
+    if(mode === "talk"){
+      stageLeaveTimer = setTimeout(() => {
+        const s4 = loadStage();
+        if(!s4.hasVisitor || s4.leaving) return;
+        if(s4.eventMode !== "talk") return;
+        if(s4.talking){
+          startVisitorTimers(rand(4000, 8000));
+          return;
+        }
+        beginLeave(pick(LEAVE_LINES));
+      }, Math.max(5000, Math.floor(stayMs || 12000)));
+    }
   }
 
   function setStageEmpty(msg){
@@ -1006,6 +1057,8 @@
     s.requestCardRarity = "";
     s.requestQty = 0;
     s.requestReward = 0;
+
+    s.eventMode = "";
 
     s.stayMs = 0;
     s.targetSlot = -1;
@@ -1480,7 +1533,9 @@
 
   function fulfillRequestEvent(){
     const s = loadStage();
-    if(!s.hasVisitor || !s.requestActive || !s.requestCardId) return;
+    if(!s.hasVisitor || s.leaving) return;
+    if(s.eventMode !== "request") return;
+    if(!s.requestActive || !s.requestCardId) return;
 
     const qty = Math.max(1, Math.floor(Number(s.requestQty || 1)));
     const reward = Math.max(1, Math.floor(Number(s.requestReward || 0)));
@@ -2375,6 +2430,7 @@
   function saleProcess(){
     const st = loadStage();
     if(!st.hasVisitor || st.leaving || st.talking) return;
+    if(st.eventMode !== "sale") return;
 
     const shop = loadMyShop();
     const slotIdx = st.targetSlot;
@@ -2488,8 +2544,8 @@
 
     if(isShrine){
       const bonusOk = canTriggerContractBonus();
-      const bonusOcto = bonusOk ? rand(CONTRACT_BONUS.octoMin, CONTRACT_BONUS.octoMax) : 0;
-      const bonusRep  = bonusOk ? rand(CONTRACT_BONUS.repMin, CONTRACT_BONUS.repMax)  : 0;
+            const bonusOcto = bonusOk ? rand(CONTRACT_BONUS.octoMin, CONTRACT_BONUS.octoMax) : 0;
+      const bonusRep  = bonusOk ? rand(CONTRACT_BONUS.repMin, CONTRACT_BONUS.repMax) : 0;
 
       if(bonusOk){
         saveOcto(loadOcto() + bonusOcto);
@@ -2535,6 +2591,8 @@
   function maybeStartTalkAfterSpawn(stageState){
     const s = stageState || loadStage();
     if(!s.hasVisitor || s.leaving || s.talking) return false;
+    if(s.eventMode !== "talk") return false;
+    if(s.requestActive) return false;
 
     const started = socialCall("maybeStartConversation", {
       visitId: s.visitId,
@@ -2545,6 +2603,7 @@
       onStateChange: (patch) => {
         const st = loadStage();
         if(!st.hasVisitor) return;
+        if(st.eventMode !== "talk") return;
         Object.assign(st, patch || {});
         saveStage(st);
         renderStage();
@@ -2552,6 +2611,7 @@
       onResult: (result) => {
         const st = loadStage();
         if(!st.hasVisitor) return;
+        if(st.eventMode !== "talk") return;
 
         st.talking = false;
         st.talkDone = true;
@@ -2611,7 +2671,7 @@
 
       const cust = pickCustomer();
       const asset = pickVisitorAsset(cust.id);
-      const req = maybeBuildRequestEvent(cust.id);
+      const rawReq = maybeBuildRequestEvent(cust.id);
 
       const stayMs = rand(9000, 18000);
       const msg = pick(VISITOR_LINES[cust.id] || ["……"]);
@@ -2624,6 +2684,9 @@
       const range = getBudgetRangeByGuestId(cust.id, love, isRegular);
       let budget = rand(Number(range.min || 0), Number(range.max || 0));
 
+      const eventMode = chooseVisitorEventMode(cust.id, rawReq, love);
+      const req = (eventMode === "request") ? rawReq : null;
+
       const s = loadStage();
       s.hasVisitor = true;
       s.leaving = false;
@@ -2633,6 +2696,8 @@
       s.vMsg = msg;
       s.vBudget = budget;
       s.vIsRegular = !!isRegular;
+
+      s.eventMode = eventMode;
 
       s.requestActive = !!req;
       s.requestCardId = req?.cardId || "";
@@ -2656,7 +2721,7 @@
 
       pushLog(
         "来客",
-        `${s.vName} が棚${targetSlot + 1}を見ている（所持金 ${fmt(budget)} OCTO${isRegular ? " / 常連" : ""}${s.requestActive ? ` / 探し物: ${s.requestCardName}×${s.requestQty}` : ""}）`,
+        `${s.vName} が棚${targetSlot + 1}を見ている（所持金 ${fmt(budget)} OCTO${isRegular ? " / 常連" : ""}${s.eventMode === "request" ? ` / 探し物: ${s.requestCardName}×${s.requestQty}` : s.eventMode === "talk" ? " / 会話" : " / 購入検討"}）`,
         `${typeLabel}`
       );
 
@@ -2670,10 +2735,14 @@
       tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
       saveTick(tickObj);
 
-      if(maybeStartTalkAfterSpawn(s)){
-        startVisitorTimers(stayMs);
-        renderAll();
-        return;
+      if(s.eventMode === "talk"){
+        if(maybeStartTalkAfterSpawn(s)){
+          startVisitorTimers(stayMs);
+          renderAll();
+          return;
+        }
+        s.eventMode = "sale";
+        saveStage(s);
       }
 
       startVisitorTimers(stayMs);
@@ -2809,6 +2878,8 @@
       requestQty: 0,
       requestReward: 0,
 
+      eventMode: "",
+
       stayMs: 0,
       targetSlot: -1,
       updatedAt: Date.now(),
@@ -2888,7 +2959,7 @@
   }
 })();
 </script>
-
+    
 
 
 
