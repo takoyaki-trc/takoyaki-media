@@ -949,41 +949,6 @@
         border:1px solid #ffd76a;
         color:#3a2400;
       }
-
-      .stage-chip-icon{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        font-size:13px;
-      }
-
-      .stage-chip-text{
-        display:inline-flex;
-        align-items:center;
-      }
-
-      @keyframes walletFloat{
-        0%   { transform:translateY(0px) rotate(0deg) scale(1); }
-        25%  { transform:translateY(-1px) rotate(-1.2deg) scale(1.01); }
-        50%  { transform:translateY(0px) rotate(.8deg) scale(1.02); }
-        75%  { transform:translateY(-1px) rotate(-.8deg) scale(1.01); }
-        100% { transform:translateY(0px) rotate(0deg) scale(1); }
-      }
-
-      @keyframes walletGlow{
-        0%,100%{
-          box-shadow:
-            0 0 14px rgba(255,190,70,.48),
-            0 0 24px rgba(255,190,70,.18),
-            inset 0 1px 0 rgba(255,255,255,.42);
-        }
-        50%{
-          box-shadow:
-            0 0 18px rgba(255,215,110,.68),
-            0 0 34px rgba(255,200,80,.28),
-            inset 0 1px 0 rgba(255,255,255,.46);
-        }
-      }
     `;
     document.head.appendChild(style);
   }
@@ -1543,6 +1508,8 @@
 
     toast("探し物達成！", `${s.requestCardName} ×${qty} ／ +${fmt(reward)} OCTO`, "sale");
 
+    const requestedName = s.requestCardName || "カード";
+
     s.requestActive = false;
     s.requestCardId = "";
     s.requestCardName = "";
@@ -1552,7 +1519,7 @@
     s.requestReward = 0;
     saveStage(s);
 
-    beginLeave(`……${s.requestCardName} を受け取って、かなり満足そうに帰っていった。`);
+    beginLeave(`……${requestedName} を受け取って、かなり満足そうに帰っていった。`);
     renderAll();
   }
 
@@ -2378,7 +2345,7 @@
     const guestRows = socialCall("getAffinityRows") || [];
     const guestRow = guestRows.find((x) => x.id === cust.id);
     const love = Number(guestRow?.love || 0);
-    const isRegular = !!guestRow?.isRegular;
+    const isRegular = love >= 80;
     const budget = Number(st.vBudget || 0);
 
     if(!isShrine && budget > 0 && price > budget){
@@ -2595,7 +2562,7 @@
       const guestRows = socialCall("getAffinityRows") || [];
       const guestRow = guestRows.find((x) => x.id === cust.id);
       const love = Number(guestRow?.love || 0);
-      const isRegular = !!socialCall("isRegularLove", love);
+      const isRegular = love >= 80;
 
       const range = socialCall("getBudgetRangeByGuestId", cust.id) || { min: 2000, max: 6000 };
       let budget = rand(Number(range.min || 2000), Number(range.max || 6000));
@@ -2869,7 +2836,9 @@
 })();
 </script>
 
-<script src="assets/myshop-social-data.js"></script>
-<script src="assets/myshop-social.js"></script>
+<!-- 外部JSの二重読み込み防止のため一旦停止 -->
+<!-- <script src="assets/myshop-social-data.js"></script> -->
+<!-- <script src="assets/myshop-social.js"></script> -->
+
 </body>
 </html>
