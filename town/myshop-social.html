@@ -1070,7 +1070,12 @@
     let walletBorder = "rgba(255,255,255,.14)";
     let walletColor = "#ffffff";
 
-    if(budget >= 20000){
+    if(budget >= 100000000){
+      walletIcon = "💴";
+      walletBg = "linear-gradient(180deg,#ffe8a3,#ffc94a)";
+      walletBorder = "#ffe8a3";
+      walletColor = "#3a2400";
+    }else if(budget >= 20000){
       walletIcon = "👑";
       walletBg = "linear-gradient(180deg,#ffd76a,#ffb13b)";
       walletBorder = "#ffd76a";
@@ -1147,11 +1152,11 @@
 
       let price = Math.floor(base * repFactor(rep));
 
-      if(slot.priceTier === "安い") price = Math.floor(price * 0.8);
-      if(slot.priceTier === "高い") price = Math.floor(price * 1.3);
+      if(slot.priceTier === "安い") price = Math.floor(price * tierMult("安い"));
+      if(slot.priceTier === "高い") price = Math.floor(price * tierMult("高い"));
 
-      if(s.targetSlot === 5){
-        price = Math.floor(price * 1.15);
+      if(s.targetSlot === SHRINE_SLOT){
+        price = Math.floor(base * repFactor(rep) * SHRINE_PRICE_MULT);
       }
 
       let label = "";
@@ -1712,11 +1717,11 @@
   function basePriceFor(card){
     const r = String(card?.rarity || "").toUpperCase().trim();
     const map = {
-      "N":  150,
-      "R":  300,
-      "SR": 500,
-      "UR": 1000,
-      "LR": 3000
+      "N":  120,
+      "R":  200,
+      "SR": 350,
+      "UR": 700,
+      "LR": 1200
     };
 
     if(map[r] != null) return map[r];
@@ -1736,8 +1741,8 @@
   }
 
   function repFactor(rep){
-  return 0.75 + (rep / 100) * 0.50;
-}
+    return 0.75 + (rep / 100) * 0.50;
+  }
 
   const CUSTOMER_TYPES = [
     { id:"impulse",   name:"即決タコ民",       repDeltaOnBuy:+3, baseBuy:0.56, weight:10 },
@@ -1763,6 +1768,58 @@
     { id:"party",     name:"宴タコ民",         repDeltaOnBuy:+2, baseBuy:0.62, weight:4  },
     { id:"pilgrim",   name:"覚悟タコ民",       repDeltaOnBuy:+4, baseBuy:0.66, weight:3  }
   ];
+
+  function getBudgetRangeByGuestId(guestId, love = 0, isRegular = false){
+    const l = Math.max(0, Math.min(100, Number(love || 0)));
+
+    const table = {
+      impulse:   { min: 250,        max: 1200 },
+      picky:     { min: 180,        max: 900  },
+      king:      { min: 3000,       max: 15000 },
+      flipper:   { min: 350,        max: 1800 },
+      careful:   { min: 250,        max: 1100 },
+      looker:    { min: 80,         max: 400  },
+
+      rich:      { min: 100000000,  max: 999999999 },
+
+      climber:   { min: 500,        max: 2200 },
+      guide:     { min: 300,        max: 1400 },
+      relax:     { min: 250,        max: 1300 },
+      artisan:   { min: 700,        max: 2800 },
+      diet:      { min: 180,        max: 900  },
+      overflow:  { min: 250,        max: 1300 },
+      collector: { min: 1200,       max: 4500 },
+      shadow:    { min: 400,        max: 1800 },
+      ramen:     { min: 350,        max: 1600 },
+      streamer:  { min: 500,        max: 2200 },
+      gourmet:   { min: 700,        max: 2600 },
+      opener:    { min: 400,        max: 1800 },
+      party:     { min: 600,        max: 2600 },
+      pilgrim:   { min: 1200,       max: 5000 }
+    };
+
+    const base = table[String(guestId || "")] || { min: 250, max: 1200 };
+
+    let min = Number(base.min || 0);
+    let max = Number(base.max || min);
+
+    if(String(guestId) === "rich"){
+      return { min, max };
+    }
+
+    const loveBonus = 1 + (l / 100) * 0.35;
+    min = Math.floor(min * loveBonus);
+    max = Math.floor(max * loveBonus);
+
+    if(isRegular){
+      min = Math.floor(min * 1.15);
+      max = Math.floor(max * 1.20);
+    }
+
+    if(max < min) max = min;
+
+    return { min, max };
+  }
 
   function loadRecentVisitors(){
     const v = lsGet(LS.recentVisitors, { ver:1, ids:[] });
@@ -2564,12 +2621,8 @@
       const love = Number(guestRow?.love || 0);
       const isRegular = love >= 80;
 
-      const range = socialCall("getBudgetRangeByGuestId", cust.id) || { min: 2000, max: 6000 };
-      let budget = rand(Number(range.min || 2000), Number(range.max || 6000));
-
-      if(isRegular){
-        budget += rand(1200, 5000);
-      }
+      const range = getBudgetRangeByGuestId(cust.id, love, isRegular);
+      let budget = rand(Number(range.min || 0), Number(range.max || 0));
 
       const s = loadStage();
       s.hasVisitor = true;
@@ -2835,6 +2888,16 @@
   }
 })();
 </script>
+
+
+
+
+
+
+
+
+
+  
 
 <!-- 外部JSの二重読み込み防止のため一旦停止 -->
 <!-- <script src="assets/myshop-social-data.js"></script> -->
