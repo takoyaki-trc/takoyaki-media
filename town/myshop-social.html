@@ -1757,18 +1757,41 @@
       price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
     }
 
-    let buyP = clamp(cust.baseBuy, 0.10, 0.90);
+        let buyP = clamp(cust.baseBuy, 0.10, 0.90);
 
     if(isShrine) buyP = clamp(buyP + 0.10, 0.10, 0.95);
-    if(slot.priceTier === "高い" && !isShrine) buyP -= 0.05;
-    if(slot.priceTier === "安い" && !isShrine) buyP += 0.05;
+
     if(rep >= 80) buyP += 0.04;
     else if(rep <= 25) buyP -= 0.04;
 
-    const loveBonus = Number(socialCall("getBuyProbabilityBonus", cust.id) || 0);
-    buyP += loveBonus;
+    const guestRows = socialCall("getAffinityRows") || [];
+    const guestRow = guestRows.find(x => x.id === cust.id);
+    const love = Number(guestRow?.love || 0);
 
-    buyP = clamp(buyP, 0.10, 0.95);
+    let tierLoveAdjust = 0;
+
+    if(!isShrine){
+      if(slot.priceTier === "安い"){
+        // 好感度が低くても買いやすい
+        // love=0 で +0.08、love=100 で +0.14
+        tierLoveAdjust = 0.08 + (love / 100) * 0.06;
+      }else if(slot.priceTier === "普通"){
+        // love=0 で -0.03、love=100 で +0.07
+        tierLoveAdjust = -0.03 + (love / 100) * 0.10;
+      }else if(slot.priceTier === "高い"){
+        // love=0 で -0.18、love=100 で +0.10
+        // 低好感度だとかなり売れにくく、高好感度で逆転
+        tierLoveAdjust = -0.25 + (love / 100) * 0.35;
+      }
+    }
+
+    buyP += tierLoveAdjust;
+
+    // 既存の好感度ボーナスも少し残す
+    const loveBonus = Number(socialCall("getBuyProbabilityBonus", cust.id) || 0);
+    buyP += loveBonus * 0.35;
+
+    buyP = clamp(buyP, 0.05, 0.95);
 
     const willBuy = Math.random() < buyP;
     if(!willBuy){
