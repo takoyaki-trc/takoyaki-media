@@ -94,8 +94,9 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
-      
   <div class="modal" id="pickModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-label="出品するカードを選ぶ">
       <div class="sheet-h">
@@ -150,7 +151,12 @@
           ・お客さんが来店して約2秒後、吹き出しの中に選択肢が出ます<br>
           ・選択肢の並び順は毎回ランダムです<br>
           ・好感度の変化は -1 / 0 / +1 のみです<br>
-          ・「好感度チェック」ボタンから一覧確認できます
+          ・「好感度チェック」ボタンから一覧確認できます<br><br>
+
+          <b>常連 / 所持金システム</b><br>
+          ・好感度80以上で常連になります<br>
+          ・常連は少し財布が強くなり、高い棚でも買いやすくなります<br>
+          ・来店時に所持金が決まり、値段が届かない商品は買えません
         </div>
       </div>
       <div class="sheet-actions">
@@ -734,6 +740,8 @@
     vName:"—",
     vMsg:"まだ誰も来ていない。",
     vType:"",
+    vBudget:0,
+    vIsRegular:false,
     stayMs:0,
     targetSlot:-1,
     updatedAt:0,
@@ -795,7 +803,16 @@
 
   function renderStage(){
     const s = loadStage();
-    stageName.textContent = s.vName || "—";
+
+    let nameText = s.vName || "—";
+    if(s.vIsRegular){
+      nameText += "【常連】";
+    }
+    if(s.vBudget > 0){
+      nameText += `｜所持金 ${fmt(s.vBudget)} OCTO`;
+    }
+
+    stageName.textContent = nameText;
     stageName.classList.toggle("neg", isNegativeType(s.vType));
     stageMsg.textContent  = s.vMsg  || "—";
     if(s.vUrl) stageVisitor.src = s.vUrl;
@@ -816,6 +833,8 @@
     s.vName = "—";
     s.vMsg = msg || "まだ誰も来ていない。";
     s.vType = "";
+    s.vBudget = 0;
+    s.vIsRegular = false;
     s.stayMs = 0;
     s.targetSlot = -1;
     s.source = "";
@@ -1757,37 +1776,45 @@
       price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
     }
 
-        let buyP = clamp(cust.baseBuy, 0.10, 0.90);
+    const guestRows = socialCall("getAffinityRows") || [];
+    const guestRow = guestRows.find(x => x.id === cust.id);
+    const love = Number(guestRow?.love || 0);
+    const isRegular = !!guestRow?.isRegular;
+    const budget = Number(st.vBudget || 0);
+
+    if(!isShrine && budget > 0 && price > budget){
+      addRep(-1);
+      pushLog("買えない", `${st.vName} は所持金不足で買えなかった（${fmt(price)} / 所持金 ${fmt(budget)}）`, `棚${slotIdx+1}`);
+      beginLeave("……欲しかったけど、今日は財布が追いつかなかった。");
+      renderAll();
+      return;
+    }
+
+    let buyP = clamp(cust.baseBuy, 0.10, 0.90);
 
     if(isShrine) buyP = clamp(buyP + 0.10, 0.10, 0.95);
 
     if(rep >= 80) buyP += 0.04;
     else if(rep <= 25) buyP -= 0.04;
 
-    const guestRows = socialCall("getAffinityRows") || [];
-    const guestRow = guestRows.find(x => x.id === cust.id);
-    const love = Number(guestRow?.love || 0);
-
     let tierLoveAdjust = 0;
 
     if(!isShrine){
       if(slot.priceTier === "安い"){
-        // 好感度が低くても買いやすい
-        // love=0 で +0.08、love=100 で +0.14
         tierLoveAdjust = 0.08 + (love / 100) * 0.06;
       }else if(slot.priceTier === "普通"){
-        // love=0 で -0.03、love=100 で +0.07
         tierLoveAdjust = -0.03 + (love / 100) * 0.10;
       }else if(slot.priceTier === "高い"){
-        // love=0 で -0.18、love=100 で +0.10
-        // 低好感度だとかなり売れにくく、高好感度で逆転
         tierLoveAdjust = -0.25 + (love / 100) * 0.35;
       }
     }
 
     buyP += tierLoveAdjust;
 
-    // 既存の好感度ボーナスも少し残す
+    if(isRegular){
+      buyP += 0.08;
+    }
+
     const loveBonus = Number(socialCall("getBuyProbabilityBonus", cust.id) || 0);
     buyP += loveBonus * 0.35;
 
@@ -1962,6 +1989,18 @@
       const stayMs = rand(9000, 18000);
       const msg = pick(VISITOR_LINES[cust.id] || ["……"]);
 
+      const guestRows = socialCall("getAffinityRows") || [];
+      const guestRow = guestRows.find(x => x.id === cust.id);
+      const love = Number(guestRow?.love || 0);
+      const isRegular = !!socialCall("isRegularLove", love);
+
+      const range = socialCall("getBudgetRangeByGuestId", cust.id) || { min: 2000, max: 6000 };
+      let budget = rand(Number(range.min || 2000), Number(range.max || 6000));
+
+      if(isRegular){
+        budget += rand(1200, 5000);
+      }
+
       const s = loadStage();
       s.hasVisitor = true;
       s.leaving = false;
@@ -1969,6 +2008,8 @@
       s.vName = asset.name || cust.name;
       s.vUrl = asset.url || "";
       s.vMsg = msg;
+      s.vBudget = budget;
+      s.vIsRegular = !!isRegular;
       s.stayMs = stayMs;
       s.targetSlot = targetSlot;
       s.source = (type==="shout") ? "shout" : "normal";
@@ -1980,7 +2021,7 @@
       rememberVisitorType(cust.id);
       renderStage();
 
-      pushLog("来客", `${s.vName} が棚${targetSlot+1}を見ている`, `${typeLabel}`);
+      pushLog("来客", `${s.vName} が棚${targetSlot+1}を見ている（所持金 ${fmt(budget)} OCTO${isRegular ? " / 常連" : ""}）`, `${typeLabel}`);
 
       const lvup = addExp(1);
       if(lvup.leveled){
@@ -2104,6 +2145,8 @@
       vName:"—",
       vMsg:"まだ誰も来ていない。",
       vType:"",
+      vBudget:0,
+      vIsRegular:false,
       stayMs:0,
       targetSlot:-1,
       updatedAt:Date.now(),
