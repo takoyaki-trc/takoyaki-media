@@ -2,6 +2,7 @@
   "use strict";
 
   const LS_KEY = "roten_v1_guest_affection";
+  const REGULAR_LOVE_THRESHOLD = 80;
 
   const CUSTOMER_NAME_MAP = {
     impulse: "即決タコ民",
@@ -49,6 +50,30 @@
     opener:    "https://ul.h3z.jp/9usFHTdU.png",
     party:     "https://ul.h3z.jp/pByCAUMC.png",
     pilgrim:   "https://ul.h3z.jp/eW2dluw2.png"
+  };
+
+  const CUSTOMER_BUDGET_RANGE = {
+    impulse:   { min: 2500,  max: 7000  },
+    picky:     { min: 1800,  max: 5000  },
+    king:      { min: 12000, max: 30000 },
+    flipper:   { min: 2000,  max: 9000  },
+    careful:   { min: 2200,  max: 6500  },
+    looker:    { min: 1200,  max: 2800  },
+    rich:      { min: 18000, max: 50000 },
+    climber:   { min: 3000,  max: 8500  },
+    guide:     { min: 2200,  max: 6000  },
+    relax:     { min: 2000,  max: 5500  },
+    artisan:   { min: 3500,  max: 9000  },
+    diet:      { min: 1500,  max: 4500  },
+    overflow:  { min: 2200,  max: 6200  },
+    collector: { min: 5000,  max: 14000 },
+    shadow:    { min: 3200,  max: 8000  },
+    ramen:     { min: 2500,  max: 7200  },
+    streamer:  { min: 3000,  max: 10000 },
+    gourmet:   { min: 4500,  max: 12000 },
+    opener:    { min: 2200,  max: 6500  },
+    party:     { min: 3500,  max: 11000 },
+    pilgrim:   { min: 5000,  max: 15000 }
   };
 
   const GUEST_LABELS = {
@@ -485,6 +510,14 @@
     return 0;
   }
 
+  function isRegularLove(love){
+    return Number(love || 0) >= REGULAR_LOVE_THRESHOLD;
+  }
+
+  function getBudgetRangeByGuestId(id){
+    return CUSTOMER_BUDGET_RANGE[id] || { min: 2000, max: 6000 };
+  }
+
   function labelFromLove(id, love){
     const row = GUEST_LABELS[id];
     if(!row){
@@ -512,11 +545,14 @@
         buyCount: Number(g.buyCount || 0),
         ignoreCount: Number(g.ignoreCount || 0),
         label: labelFromLove(id, love),
+        isRegular: isRegularLove(love),
+        budgetRange: getBudgetRangeByGuestId(id),
         lastSeenAt: Number(g.lastSeenAt || 0)
       };
     });
 
     rows.sort((a, b) =>
+      (Number(b.isRegular) - Number(a.isRegular)) ||
       (b.love - a.love) ||
       (b.lastSeenAt - a.lastSeenAt) ||
       String(a.name).localeCompare(String(b.name), "ja")
@@ -593,6 +629,16 @@
         min-width:0;
         display:grid;
         gap:8px;
+      }
+      .regular-badge{
+        margin-left:8px;
+        padding:2px 8px;
+        border-radius:999px;
+        font-size:11px;
+        background:rgba(255,215,0,.18);
+        border:1px solid rgba(255,215,0,.45);
+        color:#ffe082;
+        vertical-align:middle;
       }
     `;
     document.head.appendChild(style);
@@ -716,7 +762,10 @@
           <div class="afficon">${iconHTML}</div>
           <div class="affbody">
             <div class="ghead">
-              <div class="gname" title="${escapeHTML(row.name)}">${escapeHTML(row.name)}</div>
+              <div class="gname" title="${escapeHTML(row.name)}">
+                ${escapeHTML(row.name)}
+                ${row.isRegular ? `<span class="regular-badge">常連</span>` : ``}
+              </div>
               <div class="gmeta">好感度 ${escapeHTML(String(row.love))}/100</div>
             </div>
             <div class="gline">
@@ -724,7 +773,11 @@
               <div class="gauge"><i style="width:${clampValue(row.love,0,100)}%"></i></div>
             </div>
             <div class="gsub">${escapeHTML(row.label)}</div>
-            ${detailed ? `<div class="gsub">会話 ${escapeHTML(String(row.talkCount))}回 ・ 放置 ${escapeHTML(String(row.ignoreCount))}回</div>` : ``}
+            ${
+              detailed
+                ? `<div class="gsub">会話 ${escapeHTML(String(row.talkCount))}回 ・ 放置 ${escapeHTML(String(row.ignoreCount))}回</div>`
+                : ``
+            }
           </div>
         </div>
       `;
@@ -1095,6 +1148,8 @@
     forceCloseTalk,
     updateAffinityButton,
     openAffinityModal,
-    closeAffinityModal
+    closeAffinityModal,
+    getBudgetRangeByGuestId,
+    isRegularLove
   };
 })();
