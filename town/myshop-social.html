@@ -800,29 +800,103 @@
       beginLeave(pick(LEAVE_LINES));
     }, Math.max(5000, Math.floor(stayMs || 12000)));
   }
+function renderStage(){
+  const s = loadStage();
 
-  function renderStage(){
-    const s = loadStage();
+  const name = escapeHTML(s.vName || "—");
+  const budget = Number(s.vBudget || 0);
+  const isRegular = !!s.vIsRegular;
 
-    let nameText = s.vName || "—";
-    if(s.vIsRegular){
-      nameText += "【常連】";
-    }
-    if(s.vBudget > 0){
-      nameText += `｜所持金 ${fmt(s.vBudget)} OCTO`;
-    }
+  let walletIcon = "👛";
+  let walletBg = "rgba(255,255,255,.08)";
+  let walletBorder = "rgba(255,255,255,.14)";
+  let walletColor = "#ffffff";
 
-    stageName.textContent = nameText;
-    stageName.classList.toggle("neg", isNegativeType(s.vType));
-    stageMsg.textContent  = s.vMsg  || "—";
-    if(s.vUrl) stageVisitor.src = s.vUrl;
-
-    if(s.hasVisitor && s.vUrl && !s.leaving){
-      stageVisitor.classList.add("show");
-    }else{
-      stageVisitor.classList.remove("show");
-    }
+  if(budget >= 20000){
+    walletIcon = "👑";
+    walletBg = "linear-gradient(180deg,#ffd76a,#ffb13b)";
+    walletBorder = "#ffd76a";
+    walletColor = "#3a2400";
   }
+  else if(budget >= 10000){
+    walletIcon = "💰";
+    walletBg = "linear-gradient(180deg,#ffe8a3,#ffc94a)";
+    walletBorder = "#ffe8a3";
+    walletColor = "#3a2400";
+  }
+  else if(budget >= 4000){
+    walletIcon = "👛";
+    walletBg = "linear-gradient(180deg,#b7dcff,#7fbaff)";
+    walletBorder = "#9fd0ff";
+    walletColor = "#00264a";
+  }
+
+  const regularChip = isRegular
+  ? `<span style="
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:4px 10px;
+      border-radius:999px;
+      background:linear-gradient(180deg,#ffd76a,#ffb13b);
+      border:1px solid #ffd76a;
+      color:#3a2400;
+      font-size:12px;
+      font-weight:700;
+      box-shadow:0 0 10px rgba(255,200,80,.45);
+    ">⭐ 常連</span>`
+  : "";
+
+  const walletChip = budget > 0
+  ? `<span style="
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 12px;
+      border-radius:999px;
+      background:${walletBg};
+      border:1px solid ${walletBorder};
+      color:${walletColor};
+      font-size:12px;
+      font-weight:700;
+      box-shadow:0 0 8px rgba(0,0,0,.25);
+    ">${walletIcon} ${fmt(budget)}</span>`
+  : "";
+
+  stageName.innerHTML = `
+  <div style="display:grid;gap:6px;min-width:0;">
+    <div style="
+      font-weight:800;
+      font-size:15px;
+      letter-spacing:.02em;
+      ${isNegativeType(s.vType) ? "color:#ffb6c1;" : "color:#ffffff;"}
+    ">
+      ${name}
+    </div>
+
+    <div style="
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      align-items:center;
+    ">
+      ${regularChip}
+      ${walletChip}
+    </div>
+  </div>
+  `;
+
+  stageMsg.textContent = s.vMsg || "—";
+
+  if(s.vUrl) stageVisitor.src = s.vUrl;
+
+  if(s.hasVisitor && s.vUrl && !s.leaving){
+    stageVisitor.classList.add("show");
+  }else{
+    stageVisitor.classList.remove("show");
+  }
+}
+  
 
   function setStageEmpty(msg){
     clearStageTimers();
