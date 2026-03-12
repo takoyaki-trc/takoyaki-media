@@ -1014,7 +1014,58 @@ function renderStage(){
 `;
 
   stageMsg.textContent = s.vMsg || "—";
+// 財布と棚価格の比較表示
+const shop = loadMyShop();
+const slot = shop.slots?.[s.targetSlot];
 
+if(slot && slot.item && s.vBudget){
+
+  const rep = loadRep().rep;
+  const base = basePriceFor(slot.item);
+
+  let price = Math.floor(base * repFactor(rep));
+
+  if(slot.priceTier === "安い") price = Math.floor(price * 0.8);
+  if(slot.priceTier === "高い") price = Math.floor(price * 1.3);
+
+  if(s.targetSlot === 5){
+    price = Math.floor(price * 1.15);
+  }
+
+  let label = "";
+  let icon = "";
+
+  if(s.vBudget >= price * 1.3){
+    label = "余裕あり";
+    icon = "💰";
+  }
+  else if(s.vBudget >= price){
+    label = "買えそう";
+    icon = "🟡";
+  }
+  else{
+    label = "予算きびしい";
+    icon = "💸";
+  }
+
+  stageMsg.innerHTML = `
+    ${escapeHTML(s.vMsg || "—")}
+    <div style="
+      margin-top:6px;
+      font-size:12px;
+      opacity:.9;
+      display:flex;
+      gap:6px;
+      align-items:center;
+      flex-wrap:wrap;
+    ">
+      <span style="opacity:.7">この棚：</span>
+      <b>${fmt(price)} OCTO</b>
+      <span>｜</span>
+      <span>${icon}${label}</span>
+    </div>
+  `;
+}
   if(s.vUrl) stageVisitor.src = s.vUrl;
 
   if(s.hasVisitor && s.vUrl && !s.leaving){
