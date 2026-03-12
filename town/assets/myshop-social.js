@@ -384,6 +384,7 @@
 
     guestList: null,
     guestEmpty: null,
+    guestCard: null,
 
     affectionBtn: null,
     affectionModal: null,
@@ -540,14 +541,10 @@
     const style = document.createElement("style");
     style.id = "rotenSocialExtraStyle";
     style.textContent = `
-      /* =========================================================
-         下の通常一覧は完全非表示
-         display だけだと他JSの再描画で一瞬見えることがあるので、
-         visibility / height / max-height / overflow / opacity / pointer-events
-         も併用して強制的に隠す
-      ========================================================= */
+      /* 下の通常一覧とそのカード自体を完全非表示 */
       #guestAffinity,
-      #guestAffinityEmpty{
+      #guestAffinityEmpty,
+      #guestAffinityCard{
         display:none !important;
         visibility:hidden !important;
         opacity:0 !important;
@@ -619,6 +616,20 @@
     els.affectionModalList = document.getElementById("affectionModalList");
     els.affectionModalEmpty = document.getElementById("affectionModalEmpty");
 
+    const guestListDom = document.getElementById("guestAffinity");
+    const guestEmptyDom = document.getElementById("guestAffinityEmpty");
+
+    if(!els.guestList) els.guestList = guestListDom;
+    if(!els.guestEmpty) els.guestEmpty = guestEmptyDom;
+
+    if(!els.guestCard){
+      const baseCard = guestListDom?.closest(".card") || guestEmptyDom?.closest(".card") || null;
+      els.guestCard = baseCard;
+      if(els.guestCard && !els.guestCard.id){
+        els.guestCard.id = "guestAffinityCard";
+      }
+    }
+
     if(els.affectionBtn && !els.affectionBtn.__bound){
       els.affectionBtn.__bound = true;
       els.affectionBtn.addEventListener("click", openAffinityModal);
@@ -641,86 +652,56 @@
 
   function bindGuestUI(payload){
     if(!payload) return;
-    els.guestList = payload.guestAffinityEl || null;
-    els.guestEmpty = payload.guestAffinityEmptyEl || null;
 
-    if(els.guestList){
-      els.guestList.style.display = "none";
-      els.guestList.style.visibility = "hidden";
-      els.guestList.style.opacity = "0";
-      els.guestList.style.height = "0";
-      els.guestList.style.maxHeight = "0";
-      els.guestList.style.overflow = "hidden";
-      els.guestList.style.pointerEvents = "none";
-      els.guestList.style.margin = "0";
-      els.guestList.style.padding = "0";
-      els.guestList.style.border = "0";
-    }
-    if(els.guestEmpty){
-      els.guestEmpty.style.display = "none";
-      els.guestEmpty.style.visibility = "hidden";
-      els.guestEmpty.style.opacity = "0";
-      els.guestEmpty.style.height = "0";
-      els.guestEmpty.style.maxHeight = "0";
-      els.guestEmpty.style.overflow = "hidden";
-      els.guestEmpty.style.pointerEvents = "none";
-      els.guestEmpty.style.margin = "0";
-      els.guestEmpty.style.padding = "0";
-      els.guestEmpty.style.border = "0";
+    els.guestList = payload.guestAffinityEl || document.getElementById("guestAffinity") || null;
+    els.guestEmpty = payload.guestAffinityEmptyEl || document.getElementById("guestAffinityEmpty") || null;
+    els.guestCard = (els.guestList && els.guestList.closest(".card")) || (els.guestEmpty && els.guestEmpty.closest(".card")) || els.guestCard || null;
+
+    if(els.guestCard && !els.guestCard.id){
+      els.guestCard.id = "guestAffinityCard";
     }
 
+    forceHideBottomAffinity();
     renderGuestAffinity();
+  }
+
+  function hideElementHard(el){
+    if(!el) return;
+    el.style.setProperty("display", "none", "important");
+    el.style.setProperty("visibility", "hidden", "important");
+    el.style.setProperty("opacity", "0", "important");
+    el.style.setProperty("height", "0", "important");
+    el.style.setProperty("max-height", "0", "important");
+    el.style.setProperty("min-height", "0", "important");
+    el.style.setProperty("margin", "0", "important");
+    el.style.setProperty("padding", "0", "important");
+    el.style.setProperty("overflow", "hidden", "important");
+    el.style.setProperty("pointer-events", "none", "important");
+    el.style.setProperty("border", "0", "important");
   }
 
   function forceHideBottomAffinity(){
     const list = document.getElementById("guestAffinity");
     const empty = document.getElementById("guestAffinityEmpty");
+    const card = list?.closest(".card") || empty?.closest(".card") || els.guestCard || null;
 
-    [list, empty].forEach(el => {
-      if(!el) return;
-      el.style.setProperty("display", "none", "important");
-      el.style.setProperty("visibility", "hidden", "important");
-      el.style.setProperty("opacity", "0", "important");
-      el.style.setProperty("height", "0", "important");
-      el.style.setProperty("max-height", "0", "important");
-      el.style.setProperty("min-height", "0", "important");
-      el.style.setProperty("margin", "0", "important");
-      el.style.setProperty("padding", "0", "important");
-      el.style.setProperty("overflow", "hidden", "important");
-      el.style.setProperty("pointer-events", "none", "important");
-      el.style.setProperty("border", "0", "important");
-    });
+    if(list) els.guestList = list;
+    if(empty) els.guestEmpty = empty;
+    if(card) els.guestCard = card;
+
+    if(els.guestCard && !els.guestCard.id){
+      els.guestCard.id = "guestAffinityCard";
+    }
+
+    hideElementHard(els.guestList);
+    hideElementHard(els.guestEmpty);
+    hideElementHard(els.guestCard);
   }
 
   function renderGuestAffinity(){
     bindEls();
     injectStyles();
     forceHideBottomAffinity();
-
-    if(els.guestList){
-      els.guestList.style.setProperty("display", "none", "important");
-      els.guestList.style.setProperty("visibility", "hidden", "important");
-      els.guestList.style.setProperty("opacity", "0", "important");
-      els.guestList.style.setProperty("height", "0", "important");
-      els.guestList.style.setProperty("max-height", "0", "important");
-      els.guestList.style.setProperty("overflow", "hidden", "important");
-      els.guestList.style.setProperty("pointer-events", "none", "important");
-      els.guestList.style.setProperty("margin", "0", "important");
-      els.guestList.style.setProperty("padding", "0", "important");
-      els.guestList.style.setProperty("border", "0", "important");
-    }
-    if(els.guestEmpty){
-      els.guestEmpty.style.setProperty("display", "none", "important");
-      els.guestEmpty.style.setProperty("visibility", "hidden", "important");
-      els.guestEmpty.style.setProperty("opacity", "0", "important");
-      els.guestEmpty.style.setProperty("height", "0", "important");
-      els.guestEmpty.style.setProperty("max-height", "0", "important");
-      els.guestEmpty.style.setProperty("overflow", "hidden", "important");
-      els.guestEmpty.style.setProperty("pointer-events", "none", "important");
-      els.guestEmpty.style.setProperty("margin", "0", "important");
-      els.guestEmpty.style.setProperty("padding", "0", "important");
-      els.guestEmpty.style.setProperty("border", "0", "important");
-    }
 
     if(els.affectionModalList && els.affectionModalEmpty){
       renderAffinityList(els.affectionModalList, els.affectionModalEmpty, true);
@@ -1094,16 +1075,6 @@
     showInlineTalk(false);
     forceHideBottomAffinity();
     startBottomHideWatcher();
-
-    if(els.guestList){
-      els.guestList.style.setProperty("display", "none", "important");
-      els.guestList.style.setProperty("visibility", "hidden", "important");
-    }
-    if(els.guestEmpty){
-      els.guestEmpty.style.setProperty("display", "none", "important");
-      els.guestEmpty.style.setProperty("visibility", "hidden", "important");
-    }
-
     renderGuestAffinity();
     return true;
   }
