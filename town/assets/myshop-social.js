@@ -52,28 +52,34 @@
     pilgrim:   "https://ul.h3z.jp/eW2dluw2.png"
   };
 
+  // 今の価格帯に合わせて調整済み
+  // rich（札束タコ民）のみ 10億〜100億
   const CUSTOMER_BUDGET_RANGE = {
-    impulse:   { min: 2500,  max: 7000  },
-    picky:     { min: 1800,  max: 5000  },
-    king:      { min: 12000, max: 30000 },
-    flipper:   { min: 2000,  max: 9000  },
-    careful:   { min: 2200,  max: 6500  },
-    looker:    { min: 1200,  max: 2800  },
-    rich:      { min: 18000, max: 50000 },
-    climber:   { min: 3000,  max: 8500  },
-    guide:     { min: 2200,  max: 6000  },
-    relax:     { min: 2000,  max: 5500  },
-    artisan:   { min: 3500,  max: 9000  },
-    diet:      { min: 1500,  max: 4500  },
-    overflow:  { min: 2200,  max: 6200  },
-    collector: { min: 5000,  max: 14000 },
-    shadow:    { min: 3200,  max: 8000  },
-    ramen:     { min: 2500,  max: 7200  },
-    streamer:  { min: 3000,  max: 10000 },
-    gourmet:   { min: 4500,  max: 12000 },
-    opener:    { min: 2200,  max: 6500  },
-    party:     { min: 3500,  max: 11000 },
-    pilgrim:   { min: 5000,  max: 15000 }
+    careful:   { min: 800,        max: 3200 },
+    looker:    { min: 300,        max: 1200 },
+    picky:     { min: 700,        max: 2600 },
+    diet:      { min: 900,        max: 3000 },
+    overflow:  { min: 1000,       max: 3800 },
+    relax:     { min: 1200,       max: 4200 },
+    guide:     { min: 1000,       max: 4000 },
+
+    impulse:   { min: 1500,       max: 5500 },
+    opener:    { min: 1800,       max: 6000 },
+    streamer:  { min: 1800,       max: 6500 },
+    party:     { min: 2000,       max: 7000 },
+    ramen:     { min: 1800,       max: 6500 },
+    climber:   { min: 2200,       max: 7000 },
+    shadow:    { min: 2200,       max: 7000 },
+    gourmet:   { min: 2500,       max: 8500 },
+
+    flipper:   { min: 2500,       max: 9000 },
+    artisan:   { min: 3000,       max: 10000 },
+    collector: { min: 3500,       max: 12000 },
+    pilgrim:   { min: 4000,       max: 14000 },
+
+    king:      { min: 12000,      max: 30000 },
+
+    rich:      { min: 1000000000, max: 10000000000 }
   };
 
   const GUEST_LABELS = {
@@ -425,6 +431,8 @@
   let onStateChangeGlobal = null;
   let onResultGlobal = null;
   let helpersGlobal = null;
+  let initDone = false;
+  let bootRetryTimer = null;
 
   function clampValue(n, min, max){
     return Math.max(min, Math.min(max, Number(n || 0)));
@@ -515,7 +523,7 @@
   }
 
   function getBudgetRangeByGuestId(id){
-    return CUSTOMER_BUDGET_RANGE[id] || { min: 2000, max: 6000 };
+    return CUSTOMER_BUDGET_RANGE[id] || { min: 1500, max: 5000 };
   }
 
   function labelFromLove(id, love){
@@ -688,6 +696,7 @@
 
     forceHideBottomAffinity();
     renderGuestAffinity();
+    bindAffinityButtonDirect();
   }
 
   function hideElementHard(el){
@@ -789,19 +798,25 @@
 
   function updateAffinityButton(){
     bindEls();
+    bindAffinityButtonDirect();
   }
 
   function openAffinityModal(){
     bindEls();
     renderGuestAffinity();
-    if(els.affectionModal){
-      els.affectionModal.classList.add("show");
-      els.affectionModal.setAttribute("aria-hidden", "false");
+
+    if(!els.affectionModal){
+      return false;
     }
+
+    els.affectionModal.classList.add("show");
+    els.affectionModal.setAttribute("aria-hidden", "false");
     document.body.classList.add("noscroll");
+    return true;
   }
 
   function closeAffinityModal(){
+    bindEls();
     if(els.affectionModal){
       els.affectionModal.classList.remove("show");
       els.affectionModal.setAttribute("aria-hidden", "true");
@@ -1080,6 +1095,44 @@
     showInlineTalk(false);
   }
 
+  function bindAffinityButtonDirect(){
+    bindEls();
+
+    if(els.affectionBtn && !els.affectionBtn.__rotenBound){
+      els.affectionBtn.__rotenBound = true;
+      els.affectionBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openAffinityModal();
+      });
+    }
+
+    if(els.affectionClose && !els.affectionClose.__rotenBound){
+      els.affectionClose.__rotenBound = true;
+      els.affectionClose.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeAffinityModal();
+      });
+    }
+
+    if(els.affectionOk && !els.affectionOk.__rotenBound){
+      els.affectionOk.__rotenBound = true;
+      els.affectionOk.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeAffinityModal();
+      });
+    }
+
+    if(els.affectionModal && !els.affectionModal.__rotenBoundBackdrop){
+      els.affectionModal.__rotenBoundBackdrop = true;
+      els.affectionModal.addEventListener("click", (e) => {
+        if(e.target === els.affectionModal){
+          closeAffinityModal();
+        }
+      });
+    }
+  }
+
   function bindDocumentDelegation(){
     if(document.__rotenAffinityDelegated) return;
     document.__rotenAffinityDelegated = true;
@@ -1088,6 +1141,7 @@
       const btn = e.target.closest("#affectionCheckBtn");
       if(btn){
         e.preventDefault();
+        e.stopPropagation();
         openAffinityModal();
         return;
       }
@@ -1114,6 +1168,7 @@
     const mo = new MutationObserver(() => {
       bindEls();
       forceHideBottomAffinity();
+      bindAffinityButtonDirect();
     });
 
     mo.observe(document.documentElement || document.body, {
@@ -1126,6 +1181,14 @@
     window.__rotenAffinityHideWatcher = mo;
   }
 
+  function readyForInit(){
+    bindEls();
+    return !!document.body &&
+           !!els.affectionModal &&
+           !!els.affectionModalList &&
+           !!els.affectionModalEmpty;
+  }
+
   function init(){
     bindEls();
     injectStyles();
@@ -1134,8 +1197,45 @@
     forceHideBottomAffinity();
     startBottomHideWatcher();
     renderGuestAffinity();
+    bindAffinityButtonDirect();
+    initDone = true;
     return true;
   }
+
+  function boot(){
+    if(initDone) return true;
+    if(!readyForInit()) return false;
+    init();
+    return true;
+  }
+
+  function scheduleBootRetries(){
+    if(boot()) return;
+
+    if(bootRetryTimer){
+      clearInterval(bootRetryTimer);
+      bootRetryTimer = null;
+    }
+
+    let tries = 0;
+    bootRetryTimer = setInterval(() => {
+      tries += 1;
+      if(boot() || tries >= 60){
+        clearInterval(bootRetryTimer);
+        bootRetryTimer = null;
+      }
+    }, 250);
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", scheduleBootRetries, { once:true });
+  } else {
+    scheduleBootRetries();
+  }
+
+  window.addEventListener("load", () => {
+    scheduleBootRetries();
+  }, { once:true });
 
   window.RotenSocial = {
     init,
@@ -1150,6 +1250,7 @@
     openAffinityModal,
     closeAffinityModal,
     getBudgetRangeByGuestId,
-    isRegularLove
+    isRegularLove,
+    startConversationNow
   };
 })();
