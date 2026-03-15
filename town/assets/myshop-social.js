@@ -1137,7 +1137,7 @@
     return true;
   }
 
-    window.RotenSocial = {
+  window.RotenSocial = {
     init,
     bindGuestUI,
     renderGuestAffinity,
@@ -1150,7 +1150,6 @@
     openAffinityModal,
     closeAffinityModal,
     getBudgetRangeByGuestId,
-    isRegularLove,
-    startConversationNow
+    isRegularLove
   };
 })();
