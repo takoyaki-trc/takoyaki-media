@@ -3,6 +3,7 @@
 
   const LS_KEY = "roten_v1_guest_affection";
   const REGULAR_LOVE_THRESHOLD = 80;
+  const REGULAR_BUDGET_BONUS_RATE = 0.18; // おすすめ値：18%
 
   const CUSTOMER_NAME_MAP = {
     impulse: "即決タコ民",
@@ -79,7 +80,7 @@
 
     king:      { min: 12000,      max: 30000 },
 
-    rich:      { min: 1000000000, max: 10000000000 }
+    rich:      { min: 1000000000, max: 100000000000 }
   };
 
   const GUEST_LABELS = {
@@ -522,6 +523,10 @@
     return Number(love || 0) >= REGULAR_LOVE_THRESHOLD;
   }
 
+  function getRegularBudgetBonusRate(){
+    return REGULAR_BUDGET_BONUS_RATE;
+  }
+
   function getBudgetRangeByGuestId(id){
     return CUSTOMER_BUDGET_RANGE[id] || { min: 1500, max: 5000 };
   }
@@ -647,6 +652,103 @@
         border:1px solid rgba(255,215,0,.45);
         color:#ffe082;
         vertical-align:middle;
+      }
+
+      /* 所持金バッジの文字にじみ対策 */
+      #stageName span[style*="border-radius:999px"]{
+        text-shadow:none !important;
+        filter:none !important;
+        backdrop-filter:none !important;
+        -webkit-backdrop-filter:none !important;
+      }
+      #stageName span[style*="box-shadow"]{
+        box-shadow:none !important;
+        text-shadow:none !important;
+        filter:none !important;
+      }
+
+      /* 会話中の質問を目立たせる */
+      #stageMsg.talk-question{
+        display:block;
+        margin-top:6px;
+        padding:10px 12px;
+        border-radius:12px;
+        background:rgba(255, 208, 102, .18);
+        border:1px solid rgba(255, 208, 102, .45);
+        color:#fff4cf !important;
+        font-weight:800;
+        line-height:1.55;
+        box-shadow:none !important;
+      }
+
+      /* 会話パネル全体を見やすく */
+      #talkInline{
+        margin-top:10px;
+        padding:10px;
+        border-radius:14px;
+        background:rgba(0,0,0,.22);
+        border:1px solid rgba(255,255,255,.10);
+      }
+
+      #talkMoodInline{
+        color:#ffe082 !important;
+        font-weight:800;
+        letter-spacing:.02em;
+      }
+
+      #talkTimerInline{
+        color:#ffd6d6 !important;
+        font-weight:800;
+      }
+
+      .talk-inline-top{
+        align-items:center;
+        margin-bottom:8px;
+      }
+
+      .talk-inline-choices{
+        display:grid;
+        gap:8px;
+        margin-top:8px;
+      }
+
+      .talk-inline-choices .talk-choice{
+        min-height:44px;
+        padding:10px 12px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.14);
+        color:#fff !important;
+        font-weight:700;
+        line-height:1.45;
+        box-shadow:none !important;
+        text-shadow:none !important;
+        transition:transform .08s ease, opacity .12s ease;
+      }
+
+      .talk-inline-choices .talk-choice:hover{
+        transform:translateY(-1px);
+      }
+
+      .talk-inline-choices .talk-choice:nth-child(1){
+        background:rgba(76, 175, 80, .22) !important;
+        border-color:rgba(129, 199, 132, .55) !important;
+      }
+
+      .talk-inline-choices .talk-choice:nth-child(2){
+        background:rgba(66, 165, 245, .20) !important;
+        border-color:rgba(144, 202, 249, .50) !important;
+      }
+
+      .talk-inline-choices .talk-choice:nth-child(3){
+        background:rgba(239, 83, 80, .18) !important;
+        border-color:rgba(239, 154, 154, .45) !important;
+      }
+
+      .talk-inline-foot{
+        margin-top:8px;
+        color:rgba(255,255,255,.72);
+        font-size:12px;
+        line-height:1.5;
       }
     `;
     document.head.appendChild(style);
@@ -796,6 +898,16 @@
     listEl.appendChild(frag);
   }
 
+  function setQuestionMode(on){
+    bindEls();
+    if(!els.stageMsg) return;
+    if(on){
+      els.stageMsg.classList.add("talk-question");
+    }else{
+      els.stageMsg.classList.remove("talk-question");
+    }
+  }
+
   function updateAffinityButton(){
     bindEls();
     bindAffinityButtonDirect();
@@ -896,6 +1008,7 @@
 
     clearTimers();
     showInlineTalk(false);
+    setQuestionMode(false);
 
     if(activeTalk && els.stageName){
       els.stageName.textContent = activeTalk.guestName || "来店客";
@@ -1036,6 +1149,8 @@
     if(els.talkMoodInline) els.talkMoodInline.textContent = ev.mood || "会話中…";
     if(els.timerInline) els.timerInline.textContent = "10s";
 
+    setQuestionMode(true);
+
     const choices = shuffle((ev.choices || []).map(ch => ({
       ...ch,
       delta: Number(ch.delta || 0)
@@ -1093,6 +1208,7 @@
     activeTalk = null;
     clearTimers();
     showInlineTalk(false);
+    setQuestionMode(false);
   }
 
   function bindAffinityButtonDirect(){
@@ -1194,6 +1310,7 @@
     injectStyles();
     bindDocumentDelegation();
     showInlineTalk(false);
+    setQuestionMode(false);
     forceHideBottomAffinity();
     startBottomHideWatcher();
     renderGuestAffinity();
@@ -1250,6 +1367,7 @@
     openAffinityModal,
     closeAffinityModal,
     getBudgetRangeByGuestId,
+    getRegularBudgetBonusRate,
     isRegularLove,
     startConversationNow
   };
