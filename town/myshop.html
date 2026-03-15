@@ -4,745 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>マイ露店</title>
-
-  <style>
-    :root{
-      --bg:#0f1220;
-      --panel:rgba(255,255,255,.08);
-      --line:rgba(255,255,255,.14);
-      --text:#fff;
-      --muted:rgba(255,255,255,.72);
-      --good:#9fffa8;
-      --warn:#ffd38a;
-      --bad:#ff9aa5;
-      --btn:rgba(255,255,255,.12);
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius:14px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-
-      --tile:112px;
-      --thumbPad:4px;
-      --gap:10px;
-
-      --shelfPad:10px;
-      --cardAR: 3 / 4;
-
-      --woodA:#6b4a2d;
-      --woodB:#4b2f1a;
-      --woodC:#7a5736;
-      --woodD:#3a2414;
-
-      --shrineLine: rgba(180,255,240,.35);
-      --shrineGlow: rgba(0,255,204,.22);
-      --shrineGlow2: rgba(64,160,255,.16);
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(circle at 50% 20%, #1a2040 0%, #070812 60%),
-        linear-gradient(#07060b,#0c0b12);
-      min-height:100svh;
-    }
-    body.noscroll{ overflow:hidden; touch-action:none; }
-
-    .mono{font-family:var(--mono)}
-    .wrap{max-width:980px;margin:0 auto;padding:14px 12px 140px}
-
-    .btn{
-      appearance:none;
-      border:1px solid var(--line);
-      background:var(--btn);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:900;
-      white-space:nowrap;
-      -webkit-tap-highlight-color: transparent;
-      min-width:0;
-    }
-    .btn:active{transform:translateY(1px)}
-    .btn.warn{background:linear-gradient(180deg, rgba(255,211,138,.18), rgba(255,255,255,.10));}
-    .btn.ghost{background:transparent}
-    .btn[disabled]{opacity:.55;cursor:not-allowed}
-
-    .header{
-      position:sticky; top:0; z-index:20;
-      background:linear-gradient(to bottom, rgba(15,18,32,.95), rgba(15,18,32,.55));
-      backdrop-filter: blur(6px);
-      border-bottom:1px solid var(--line);
-    }
-    .head-inner{
-      max-width:980px;margin:0 auto;padding:10px 12px;
-      display:flex;align-items:center;gap:10px;
-    }
-    .back{
-      width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
-      background:var(--btn); color:var(--text); font-size:18px; cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-      flex:0 0 auto;
-    }
-    .titlebox{flex:1;min-width:0}
-    .title{font-size:16px;font-weight:950;letter-spacing:.02em}
-    .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex:0 0 auto}
-
-    .card{
-      border:1px solid var(--line);
-      background:var(--panel);
-      border-radius:var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .card-h{
-      padding:12px 12px 10px;
-      border-bottom:1px solid var(--line);
-      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
-    }
-    .card-title{font-weight:950;font-size:14px}
-    .card-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
-    .card-b{padding:12px}
-
-    .stats{
-      display:grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      gap:8px;
-      margin-bottom:12px;
-    }
-    @media (max-width: 680px){
-      .stats{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-    }
-    .stat{
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.14);
-      border-radius:12px;
-      padding:8px 10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      min-width:0;
-    }
-    .stat .k{font-size:11px;color:var(--muted);white-space:nowrap}
-    .stat .v{
-      font-size:14px;
-      font-weight:950;
-      display:flex;
-      align-items:baseline;
-      gap:6px;
-      white-space:nowrap;
-      min-width:0;
-    }
-    .stat .v small{font-size:11px;color:var(--muted);font-weight:800}
-    .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
-
-    .stage-card{margin-bottom:12px}
-    .stage{
-      position:relative;
-      width:100%;
-      max-width:980px;
-      border-radius:14px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.18);
-    }
-    .stage-media{
-      position:relative;
-      width:100%;
-      aspect-ratio: 16 / 9;
-      background: rgba(0,0,0,.22);
-      border-bottom:1px solid rgba(255,255,255,.12);
-      overflow:hidden;
-    }
-    @media (max-width: 520px){
-      .stage-media{ aspect-ratio: 16 / 10; }
-    }
-    .stage-bg{
-      position:absolute; inset:0;
-      width:100%; height:100%;
-      object-fit:contain; object-position:center;
-      image-rendering:pixelated;
-      display:block;
-      background: rgba(0,0,0,.22);
-    }
-    .stage-visitor{
-      position:absolute;
-      left:50%;
-      bottom:51px;
-      height:150px;
-      image-rendering: pixelated;
-      pointer-events:none;
-      opacity:0;
-      transform:translateX(-50%) translateY(8px);
-      transition: opacity .45s ease, transform .45s ease;
-      will-change: opacity, transform;
-      filter: drop-shadow(0 10px 22px rgba(0,0,0,.55));
-    }
-    .stage-visitor.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    .stage-overlay{
-      position:absolute;
-      right:10px;
-      top:10px;
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-      pointer-events:none;
-      z-index:5;
-    }
-    .stage-overlay .tag{
-      border:1px solid rgba(255,255,255,.22);
-      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.78));
-      border-radius:999px;
-      padding:7px 10px;
-      font-size:12px;
-      color:rgba(255,255,255,.92);
-      white-space:nowrap;
-      box-shadow: 0 12px 30px rgba(0,0,0,.45);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      text-shadow: 0 2px 0 rgba(0,0,0,.35);
-    }
-    .stage-ui{
-      position:relative;
-      display:flex;
-      align-items:flex-start;
-      justify-content:flex-start;
-      gap:10px;
-      padding:12px;
-      pointer-events:auto;
-      background: transparent;
-    }
-    .bubble{
-      width:100%;
-      border:1px solid rgba(120,255,235,.38);
-      background:
-        radial-gradient(circle at 18% 20%, rgba(0,255,204,.20), rgba(0,0,0,0) 52%),
-        radial-gradient(circle at 82% 30%, rgba(64,160,255,.16), rgba(0,0,0,0) 55%),
-        linear-gradient(180deg, rgba(0,170,160,.18), rgba(0,0,0,.62));
-      border-radius:14px;
-      padding:12px 14px;
-      line-height:1.35;
-      box-shadow:
-        0 18px 45px rgba(0,0,0,.45),
-        0 0 0 1px rgba(255,255,255,.06) inset,
-        0 0 34px rgba(0,255,204,.18);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      min-width:0;
-    }
-    .bubble .n{font-weight:950;font-size:16px;letter-spacing:.02em;text-shadow: 0 2px 0 rgba(0,0,0,.35);}
-    .bubble .n.neg{ color: var(--bad); }
-    .bubble .m{color:rgba(255,255,255,.94);font-size:14px;margin-top:6px;line-height:1.55;text-shadow: 0 2px 0 rgba(0,0,0,.25);}
-
-    .grid{display:grid;grid-template-columns:1fr;gap:12px}
-
-    .shelf-board{
-      position:relative;
-      border-radius:16px;
-      padding:12px;
-      border:1px solid rgba(255,255,255,.18);
-      box-shadow: 0 18px 55px rgba(0,0,0,.55);
-      overflow:hidden;
-      background:
-        repeating-linear-gradient(
-          90deg,
-          rgba(255,255,255,.035) 0px,
-          rgba(255,255,255,.035) 8px,
-          rgba(0,0,0,.02) 8px,
-          rgba(0,0,0,.02) 18px
-        ),
-        repeating-linear-gradient(
-          180deg,
-          rgba(0,0,0,.10) 0px,
-          rgba(0,0,0,.10) 2px,
-          rgba(255,255,255,.06) 2px,
-          rgba(255,255,255,.06) 36px
-        ),
-        linear-gradient(180deg, rgba(122,87,54,.92), rgba(58,36,20,.92));
-    }
-    .shelf-board:before{
-      content:"";
-      position:absolute; inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(circle at 50% 20%, rgba(255,255,255,.10), rgba(0,0,0,0) 55%),
-        radial-gradient(circle at 50% 90%, rgba(0,0,0,.20), rgba(0,0,0,0) 60%);
-      mix-blend-mode: overlay;
-      opacity:.9;
-    }
-    .shelf-board:after{
-      content:"";
-      position:absolute; inset:8px;
-      border-radius:12px;
-      border:1px solid rgba(0,0,0,.18);
-      box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset;
-      pointer-events:none;
-    }
-
-    .shelves{
-      position:relative;
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap:10px;
-      z-index:1;
-    }
-    @media (min-width: 940px){
-      .shelves{ grid-template-columns: repeat(3, minmax(0,1fr)); }
-    }
-
-    .shelf{
-      border:1px solid rgba(255,255,255,.18);
-      border-radius:14px;
-      overflow:hidden;
-      min-width:0;
-      background: linear-gradient(180deg, rgba(0,0,0,.14), rgba(0,0,0,.28));
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-      position:relative;
-    }
-    .shelf.locked{opacity:.62;filter:saturate(.75)}
-
-    .shelf.shrine{
-      border-color: var(--shrineLine);
-      box-shadow:
-        0 18px 55px rgba(0,0,0,.55),
-        0 0 0 1px rgba(255,255,255,.06) inset,
-        0 0 34px rgba(0,255,204,.12);
-    }
-    .shelf.shrine:before{
-      content:"";
-      position:absolute; inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(circle at 18% 18%, var(--shrineGlow), rgba(0,0,0,0) 52%),
-        radial-gradient(circle at 82% 26%, var(--shrineGlow2), rgba(0,0,0,0) 55%),
-        linear-gradient(180deg, rgba(0,170,160,.10), rgba(0,0,0,.25));
-      opacity:.9;
-    }
-    .shelf.shrine .shelf-top{
-      border-bottom:1px dashed rgba(180,255,240,.25);
-    }
-
-    .shelf-top{
-      padding:10px 10px 8px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border-bottom:1px dashed rgba(255,255,255,.16);
-      min-width:0;
-      position:relative;
-      z-index:1;
-    }
-    .shelf-title{
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .shelf-name{
-      font-weight:950;
-      font-size:13px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .shelf-tag{
-      font-size:11px;
-      color:rgba(255,255,255,.78);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width:100%;
-    }
-
-    .tierPill{
-      flex:0 0 auto;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.20);
-      background:rgba(0,0,0,.25);
-      font-size:12px;
-      font-weight:950;
-      line-height:1;
-      white-space:nowrap;
-      position:relative;
-      z-index:1;
-    }
-    .tier--high{ color: var(--bad); border-color: rgba(255,154,165,.38); }
-    .tier--mid { color: var(--warn); border-color: rgba(255,211,138,.34); }
-    .tier--low { color: var(--good); border-color: rgba(159,255,168,.30); }
-    .tier--shrine{
-      color: rgba(200,255,240,.96);
-      border-color: rgba(180,255,240,.38);
-      background: rgba(0,0,0,.35);
-      text-shadow: 0 2px 0 rgba(0,0,0,.35);
-    }
-
-    .shelf-body{
-      padding: var(--shelfPad);
-      display:grid;
-      gap:10px;
-      min-width:0;
-      position:relative;
-      z-index:1;
-    }
-
-    .slot{
-      width:100%;
-      aspect-ratio: var(--cardAR);
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(0,0,0,.22);
-      overflow:hidden;
-      position:relative;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .slot img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      padding:5px;
-      image-rendering:pixelated;
-      display:block;
-    }
-    .slot .ph{
-      width:100%;
-      height:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:rgba(255,255,255,.70);
-      font-size:12px;
-      text-align:center;
-      padding:10px;
-      line-height:1.25;
-    }
-    .slot .qty{
-      position:absolute; right:8px; bottom:8px;
-      font-size:12px; font-weight:950;
-      background:rgba(0,0,0,.62);
-      border:1px solid rgba(255,255,255,.18);
-      padding:3px 9px;border-radius:999px;
-      font-family:var(--mono);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-
-    .shelf-info{
-      min-width:0;
-      display:grid;
-      gap:6px;
-    }
-
-    .line{
-      font-size:12px;
-      color:rgba(255,255,255,.80);
-      line-height:1.35;
-      min-width:0;
-      overflow-wrap:anywhere;
-      word-break:break-word;
-    }
-    .line b{color:var(--text)}
-
-    .line.titleLine{
-      font-size:14px;
-      font-weight:950;
-      color:var(--text);
-      line-height:1.25;
-      display:-webkit-box;
-      -webkit-line-clamp:3;
-      -webkit-box-orient:vertical;
-      overflow:hidden;
-    }
-
-    .priceLine b{font-size:16px}
-    .subNote{color:rgba(255,255,255,.68);font-size:11px}
-
-    .shelf-actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:4px;
-      min-width:0;
-    }
-    .mini{
-      padding:10px 10px;
-      border-radius:12px;
-      font-size:12px;
-      font-weight:950;
-      flex: 1 1 120px;
-      min-width:0;
-    }
-    @media (max-width: 420px){
-      .line.titleLine{ font-size:13px; -webkit-line-clamp:3; }
-      .priceLine b{ font-size:15px; }
-      .mini{ flex: 1 1 100%; }
-    }
-
-    .modal{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.65);
-      display:none;
-      align-items:flex-end;
-      justify-content:center;
-      z-index:100;
-      padding:14px 12px;
-      overscroll-behavior: contain;
-    }
-    .modal.show{display:flex}
-    .sheet{
-      width:min(980px, 100%);
-      border:1px solid var(--line);
-      background:rgba(15,18,32,.98);
-      border-radius:16px;
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      max-height: 86vh;
-      display:flex;
-      flex-direction:column;
-    }
-    .sheet-h{
-      padding:12px; border-bottom:1px solid var(--line);
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      flex:0 0 auto;
-      min-width:0;
-    }
-    .sheet-h b{font-size:14px}
-    .sheet-b{
-      padding:12px;
-      overflow:auto;
-      -webkit-overflow-scrolling: touch;
-      flex: 1 1 auto;
-      touch-action: pan-y;
-    }
-    .sheet-actions{
-      display:flex;gap:8px;justify-content:flex-end;
-      padding:12px;border-top:1px solid var(--line);flex:0 0 auto
-    }
-    .close{width:40px;height:40px;border-radius:12px}
-
-    .cards{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap:var(--gap);
-      align-items:stretch;
-    }
-    @media (max-width: 340px){
-      .cards{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-    }
-    @media (min-width: 920px){
-      .cards{ grid-template-columns: repeat(4, minmax(0,1fr)); }
-    }
-
-    .citem{
-      position:relative;
-      border:1px solid rgba(255,255,255,.14);
-      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.14));
-      border-radius:14px;
-      overflow:hidden;
-      cursor:pointer;
-      user-select:none;
-      -webkit-tap-highlight-color:transparent;
-      transition:transform .12s ease, filter .12s ease;
-      display:flex;
-      flex-direction:column;
-      min-width:0;
-    }
-    .citem:active{transform:scale(.985)}
-    .cimg{
-      width:100%;
-      height:var(--tile);
-      display:block;
-      background:rgba(0,0,0,.14);
-      position:relative;
-    }
-    .cimg img{
-      width:100%;height:100%;
-      object-fit:contain;
-      padding:var(--thumbPad);
-      image-rendering:pixelated;
-      image-rendering:crisp-edges;
-      display:block;
-    }
-    .cimg .ph{
-      width:100%;height:100%;
-      display:flex;align-items:center;justify-content:center;
-      color:rgba(255,255,255,.6);
-      font-size:11px;text-align:center;padding:8px;line-height:1.2;
-    }
-    .cimg .cnt{
-      position:absolute; right:6px; top:6px;
-      font-size:11px; font-weight:950;
-      background:rgba(0,0,0,.62);
-      border:1px solid rgba(255,255,255,.18);
-      padding:3px 8px;border-radius:999px;
-      font-family:var(--mono);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .cmeta{
-      padding:7px 8px 9px;
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      min-width:0;
-    }
-    .cname{
-      font-size:12px;
-      font-weight:950;
-      line-height:1.25;
-      display:-webkit-box;
-      -webkit-line-clamp:2;
-      -webkit-box-orient:vertical;
-      overflow:hidden;
-      overflow-wrap:anywhere;
-      word-break:break-word;
-    }
-    .csub{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:6px;
-      color:var(--muted);
-      font-size:11px;
-      min-width:0;
-    }
-    .csub .tagmini{
-      display:inline-flex;align-items:center;gap:6px;
-      padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.18);color:var(--muted);max-width:100%;
-      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-      min-width:0;
-    }
-    .csub .tagmini b{color:var(--text);font-weight:800}
-
-    .toast{
-      position:fixed;
-      left:12px;
-      right:12px;
-      bottom:50%;
-      transform: translateY(50%);
-      display:flex;
-      justify-content:center;
-      pointer-events:none;
-      z-index:200;
-    }
-    .toast .box{
-      width:min(680px, 100%);
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(0,0,0,.65);
-      color:var(--text);
-      border-radius:14px;
-      padding:10px 12px;
-      box-shadow: var(--shadow);
-      pointer-events:none;
-      display:none;
-      white-space:pre-line;
-    }
-    .toast .box.show{display:block;animation: popIn .18s ease-out;}
-    @keyframes popIn{
-      from{ transform: translateY(8px) scale(.98); opacity: 0; }
-      to  { transform: translateY(0)   scale(1);   opacity: 1; }
-    }
-
-    .toast .box.toast--sale{
-      border-color: rgba(255,211,138,.90);
-      background: linear-gradient(180deg, rgba(255,211,138,.28), rgba(0,0,0,.80));
-      box-shadow:
-        0 22px 70px rgba(0,0,0,.70),
-        0 0 0 1px rgba(255,211,138,.25) inset,
-        0 0 40px rgba(255,211,138,.20);
-      transform-origin:center;
-      animation: salePop .20s ease-out, salePulse 1.2s ease-in-out infinite;
-    }
-    @keyframes salePop{
-      from{ transform: translateY(16px) scale(.92); opacity:0; }
-      to  { transform: translateY(0)    scale(1);   opacity:1; }
-    }
-    @keyframes salePulse{
-      0%,100%{ filter: drop-shadow(0 0 0 rgba(255,211,138,0)); }
-      50%{ filter: drop-shadow(0 0 14px rgba(255,211,138,.35)); }
-    }
-    .toast .box.toast--sale b{
-      font-size:18px;
-      letter-spacing:.02em;
-      text-shadow: 0 2px 0 rgba(0,0,0,.25);
-    }
-    .toast .box.toast--sale .small{
-      font-size:14px;
-      color:rgba(255,255,255,.96);
-    }
-
-    .toast .box.toast--contract{
-      border-color: rgba(180,255,240,.78);
-      background:
-        radial-gradient(circle at 18% 20%, rgba(0,255,204,.22), rgba(0,0,0,0) 52%),
-        radial-gradient(circle at 82% 26%, rgba(64,160,255,.16), rgba(0,0,0,0) 55%),
-        linear-gradient(180deg, rgba(0,170,160,.18), rgba(0,0,0,.84));
-      box-shadow:
-        0 22px 80px rgba(0,0,0,.72),
-        0 0 0 1px rgba(180,255,240,.18) inset,
-        0 0 44px rgba(0,255,204,.18);
-      animation: salePop .20s ease-out, contractPulse 1.4s ease-in-out infinite;
-    }
-    @keyframes contractPulse{
-      0%,100%{ filter: drop-shadow(0 0 0 rgba(0,255,204,0)); }
-      50%{ filter: drop-shadow(0 0 16px rgba(0,255,204,.28)); }
-    }
-
-    .sale-flash{
-      position:fixed; inset:0;
-      pointer-events:none;
-      background: radial-gradient(circle at 50% 55%, rgba(255,211,138,.22), rgba(0,0,0,0) 55%);
-      opacity:0;
-      z-index:190;
-    }
-    .sale-flash.show{ animation: flash .55s ease-out; }
-    @keyframes flash{
-      0%{ opacity:0; }
-      18%{ opacity:1; }
-      100%{ opacity:0; }
-    }
-
-    .contract-flash{
-      position:fixed; inset:0;
-      pointer-events:none;
-      background: radial-gradient(circle at 50% 55%, rgba(0,255,204,.20), rgba(0,0,0,0) 58%);
-      opacity:0;
-      z-index:191;
-    }
-    .contract-flash.show{ animation: flash .60s ease-out; }
-
-    .cd{font-size:11px;color:var(--muted);margin-left:8px;align-self:center;}
-    .head-actions-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;min-width:0;}
-
-    .errbar{
-      position:fixed;
-      left:10px; right:10px;
-      bottom:10px;
-      z-index:9999;
-      display:none;
-    }
-    .errbar.show{display:block}
-    .errbar .box{
-      border:1px solid rgba(255,154,165,.55);
-      background:rgba(0,0,0,.78);
-      border-radius:14px;
-      padding:10px 12px;
-      box-shadow: 0 14px 50px rgba(0,0,0,.55);
-      font-size:12px;
-      line-height:1.5;
-    }
-    .errbar .t{font-weight:950;color:var(--bad)}
-    .errbar .m{margin-top:4px;color:rgba(255,255,255,.92);white-space:pre-wrap;font-family:var(--mono)}
-  </style>
+  <link rel="stylesheet" href="assets/myshop-social.css">
 </head>
 
 <body>
@@ -783,8 +45,29 @@
 
           <div class="stage-ui">
             <div class="bubble">
-              <div class="n" id="stageName">—</div>
-              <div class="m" id="stageMsg">まだ誰も来ていない。</div>
+              <div class="bubble-head">
+                <div class="bubble-left">
+                  <div class="n" id="stageName">—</div>
+                  <div class="m" id="stageMsg">まだ誰も来ていない。</div>
+                </div>
+              </div>
+
+              <div class="talk-inline" id="talkInline">
+                <div class="talk-inline-top">
+                  <div class="talk-inline-mood" id="talkMoodInline">会話中…</div>
+                  <div class="talk-inline-timer" id="talkTimerInline">10s</div>
+                </div>
+
+                <div class="talk-inline-choices">
+                  <button class="talk-choice" id="talkChoice1" type="button">選択肢1</button>
+                  <button class="talk-choice" id="talkChoice2" type="button">選択肢2</button>
+                  <button class="talk-choice" id="talkChoice3" type="button">選択肢3</button>
+                </div>
+
+                <div class="talk-inline-foot">
+                  10秒以内に返事しないと、お客さんは寂しそうに帰ってしまいます。
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -862,11 +145,45 @@
           <b>棚6：祀り棚（契約イベント）</b><br>
           ・棚6に置いたカードは「奉納」扱い（値段固定/切替なし）<br>
           ・売れた瞬間、契約が成立して<b>ボーナス報酬</b>が発生（OCTO/評判/EXP など）<br>
-          ・取り下げは“儀式”（確認が必要）<br>
+          ・取り下げは“儀式”（確認が必要）<br><br>
+
+          <b>会話システム</b><br>
+          ・お客さんが来店して約2秒後、吹き出しの中に選択肢が出ます<br>
+          ・選択肢の並び順は毎回ランダムです<br>
+          ・好感度の変化は -1 / 0 / +1 のみです<br>
+          ・「好感度チェック」ボタンから一覧確認できます<br><br>
+
+          <b>常連 / 所持金システム</b><br>
+          ・好感度80以上で常連になります<br>
+          ・常連は少し財布が強くなり、高い棚でも買いやすくなります<br>
+          ・来店時に所持金が決まり、値段が届かない商品は買えません
         </div>
       </div>
       <div class="sheet-actions">
         <button class="btn" id="helpOk" type="button">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="affectionModal" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-label="好感度チェック">
+      <div class="sheet-h">
+        <div style="min-width:0">
+          <b>好感度チェック</b>
+          <div style="margin-top:4px;font-size:12px;color:rgba(255,255,255,.72)">
+            よく話したお客さんほど、買ってくれやすくなります。
+          </div>
+        </div>
+        <button class="btn close" id="affectionClose" type="button" aria-label="閉じる">×</button>
+      </div>
+
+      <div class="sheet-b">
+        <div class="gempty" id="affectionModalEmpty">まだ誰とも会話していません。</div>
+        <div class="affection-list" id="affectionModalList"></div>
+      </div>
+
+      <div class="sheet-actions">
+        <button class="btn" id="affectionOk" type="button">OK</button>
       </div>
     </div>
   </div>
@@ -1085,72 +402,7 @@
     "……今日は買わなかった。逆に一生覚えてる。",
     "……欲しかった。でも今日は理性が勝った。",
     "……見送っただけだ。負けではない。",
-    "……これは縁がなかったんじゃない。タイミングが悪かっただけ。",
-    "……今買うと、明日の自分に怒られる。",
-    "……財布が無言で首を横に振った。",
-    "……今日は下見。そういうことにする。",
-    "……買わないって決めたのに、心だけ置いてきた。",
-    "……この棚、罪深いな。",
-    "……危なかった。あと一押しで買ってた。",
-    "……欲望だけ先に会計を済ませていった。",
-    "……また会おう。その時はたぶん負ける。",
-    "……見れば見るほど危険だった。",
-    "……今日は耐えた。たぶん褒められていい。",
-    "……買わなかったんじゃない。未来に残したんだ。",
-    "……これは“撤退”ではなく“保留”だ。",
-    "……棚の前で心が開封されかけた。",
-    "……今の俺には、まだ早い。",
-    "……次に来た時、まだあったら運命だ。",
-    "……手は伸びた。でも最後に止まった。",
-    "……この店、客の決意を試してくる。",
-    "……買わなかったのに、なぜか負けた気がする。",
-    "……今日は見るだけ。その約束だけは守った。",
-    "……本気で危なかった。棚が強い。",
-    "……後ろ髪を焼かれながら帰ります。",
-    "……ここで一枚買うと、二枚目が見える気がした。",
-    "……帰るけど、心はまだ店内にある。",
-    "……今日は財布を守った。次は知らない。",
-    "……また来る。その時の俺は、もう止まらないかもしれない。",
-    "……潮風に当たって頭を冷やしてくる。",
-    "……函館の風が、今日は買うなと言っていた。",
-    "……坂の上まで登ったら、気持ちも変わるかもしれない。",
-    "……夜景みたいに綺麗だった。だから余計に危なかった。",
-    "……港の空気を吸って、出直してきます。",
-    "……今日は海の匂いだけ持って帰る。",
-    "……この気持ち、たぶん函館の夜に置いていくには惜しい。",
-    "……坂道より、この棚のほうが心臓にくる。",
-    "……夜景を見る前に財布が沈んだ。",
-    "……港で黄昏れたら、たぶんまた欲しくなる。",
-    "……潮の流れは読めても、この棚の流れは読めなかった。",
-    "……異国情緒みたいに、ちょっと洒落てて危険だった。",
-    "……旅の記念にするには、ちょっと刺さりすぎた。",
-    "……函館の空気ごと欲しくなったのは反則だろ。",
-    "……赤レンガみたいに雰囲気が強い。",
-    "……この一枚、景色込みで記憶に残るやつだった。",
-    "……海辺で考え直しても、たぶん答えは同じだ。",
-    "……坂を下るころには、たぶん後悔が始まってる。",
-    "……函館の夜より、この棚のほうがまぶしかった。",
-    "……港町の情緒で財布が緩みかけた。",
-    "……旅人の顔して来たのに、心だけ常連になりかけた。",
-    "……潮風は冷たいのに、この棚の熱は引かない。",
-    "……海を見ても、この欲望は静まらない気がする。",
-    "……次は夜景の勢いで来たら危ないな。",
-    "……函館に来てまで、こんなに心を揺らされるとは。",
-    "……イカより先に、俺が釣られかけた。",
-    "……朝市の勢いで買いそうになった。危ない。",
-    "……観光気分の財布は、だいたい弱い。",
-    "……函館まで来て理性の修行をするとは思わなかった。",
-    "……もう少しで“記念だから”の一言で全部終わってた。",
-    "……旅のテンションは怖い。ほんとに怖い。",
-    "……おみやげの顔して、とんでもない破壊力だった。",
-    "……これは買い物じゃない。事件の予告だった。",
-    "……港町って、こういう罠もあるんだな。",
-    "……函館の思い出にするには、ちょっと濃すぎる。",
-    "……帰りの電車までに、まだ心が揺れそうだ。",
-    "……イカは我慢できても、これは危なかった。",
-    "……観光客の顔をしていたが、中身は完全に獲物だった。",
-    "……この街、景色だけじゃなく棚まで強いのか。",
-    "……また来る。その時はたぶん“函館のせい”にする。"
+    "……これは縁がなかったんじゃない。タイミングが悪かっただけ。"
   ];
 
   const BUY_LINES = [
@@ -1163,65 +415,7 @@
     "勝者の顔で帰っていった。",
     "いい買い物だった、と頷いて帰っていった。",
     "静かにガッツポーズして帰っていった。",
-    "帰り道まで誇らしそうだった。",
-    "口元だけで勝利を語りながら帰っていった。",
-    "次も来る気まんまんの顔で帰っていった。",
-    "満足というより、確信を持った顔だった。",
-    "買った瞬間から“また来る客”の顔になっていた。",
-    "完全に自分へのご褒美顔だった。",
-    "函館の潮風より満足そうな顔だった。",
-    "夜景を見た後みたいな顔で帰っていった。",
-    "港の風を受けながら帰っていった。",
-    "坂を登る足取りがやけに軽かった。",
-    "赤レンガより渋い顔で帰っていった。",
-    "海より深く満足していた。",
-    "夜景の前に勝利を手に入れていた。",
-    "函館の旅の思い出が一つ増えた顔だった。",
-    "潮の匂いと一緒に帰っていった。",
-    "ベイエリアを歩く顔つきじゃなかった。完全に勝者だった。",
-    "函館山に登る前から、もう景色が見えている顔だった。",
-    "港町の空気ごと持ち帰る勢いだった。",
-    "異国情緒より、この一枚に酔っていた。",
-    "帰り道の坂までご機嫌そうだった。",
-    "夜の函館に似合う顔で帰っていった。",
-    "財布は死んだが魂は生きていた。",
-    "完全に焼かれた顔だった。",
-    "この店に魂を置いて帰った。",
-    "勝者の顔をした敗者だった。",
-    "カードを抱えて港へ消えた。",
-    "帰り道で絶対もう一回来る顔だった。",
-    "今日の自分を未来の自分が怒る予定だった。",
-    "満足というより、事件後の顔だった。",
-    "店の方向を何度も振り返っていた。",
-    "たぶんまた来る。たぶんじゃない。絶対来る。",
-    "財布から悲鳴、本人から笑顔が出ていた。",
-    "人はこうして焼かれていくのか、という顔だった。",
-    "理性は敗北したが、本人は大満足だった。",
-    "一枚買っただけなのに、人生の転機みたいな顔だった。",
-    "会計後に急に主人公みたいな歩き方になった。",
-    "イカより先に心を釣られていた。",
-    "朝市より勢いで買っていた。",
-    "夜景より財布が光っていた。",
-    "潮風でテンションが上がっていた。",
-    "函館のせいにする気満々の顔だった。",
-    "旅のテンションが完全に勝っていた。",
-    "観光客の顔して財布は戦死していた。",
-    "港町に財布を沈めて帰っていった。",
-    "坂より急に財布が落ちていった。",
-    "函館で一番焼かれたのはこの人だった。",
-    "ベイエリアの空気を吸った瞬間、買う運命だったらしい。",
-    "観光の予定表に無かった敗北を持ち帰っていた。",
-    "赤レンガより先に理性が崩れていた。",
-    "夜景を見る前に、もう目がキラキラしていた。",
-    "函館旅行のハイライトが更新された顔だった。",
-    "財布は軽くなったのに、歩き方は重厚だった。",
-    "買った瞬間に旅の目的が変わっていた。",
-    "店を出る顔じゃない。伝説を持ち帰る顔だった。",
-    "函館に来た価値を一枚で回収していた。",
-    "満足のあまり、潮風まで味方に見えていた。",
-    "たこ焼きより先に人生を焼かれていた。",
-    "観光の顔して、完全にコレクターの顔で帰っていった。",
-    "さっきまで他人だったのに、今は常連の顔をしていた。"
+    "帰り道まで誇らしそうだった。"
   ];
 
   const CONTRACT_LINES = [
@@ -1229,44 +423,21 @@
     "📜 奉納が受理された。見えない手が押印した。",
     "📜 署名完了。焼かれた運命が、少しだけ味方した。",
     "📜 契約が通った。次の客の足音が軽い。",
-    "📜 祀り棚が静かにうなずいた。",
-    "📜 祭壇の奥で、誰かが満足そうに笑った。",
-    "📜 焼きの神経が一本つながった。",
-    "📜 供物は受理された。店の空気が変わる。",
-    "📜 朱印のような熱が、棚に残った。",
-    "📜 契約書は無い。だが効力だけは本物だ。",
-    "📜 棚6が目を覚ました。",
-    "📜 奉納の気配が、街に染み込んでいく。",
-    "📜 見えない判子が押された音がした。",
-    "📜 今夜は運命の焼き加減が違う。",
-    "📜 棚の奥で、何かがこちらを認めた。",
-    "📜 祭りではない。これは契約だ。",
-    "📜 契約成立。なのに誰も説明してくれない。",
-    "📜 供物は沈黙で受理された。だから逆に怖い。",
-    "📜 棚6の空気だけ、少し高級になった。",
-    "📜 札は無い。だが、縁だけは確かに結ばれた。"
+    "📜 祀り棚が静かにうなずいた。"
   ];
 
   const CONTRACT_SMALL_LINES = [
     "……契約は通った。静かな効き目が残っている。",
     "……深い報酬は眠っているが、棚は確かに応えた。",
     "……今回は印だけ。だが印だけでも十分に重い。",
-    "……契約は成立。余韻だけでも店が少し強くなる。",
-    "……派手ではない。だが確実に何かが動いた。",
-    "……小さな契約でも、棚は覚えている。",
-    "……大当たりではない。でも見えない追い風は吹いた。",
-    "……祭壇は静かだった。静かな時ほど、後で効く。"
+    "……契約は成立。余韻だけでも店が少し強くなる。"
   ];
 
   const CONTRACT_BONUS_LINES = [
     "棚の気配が濃くなった。",
     "街の流れが少しだけこちらに寄った。",
     "焼きの神様が小さく頷いた。",
-    "運の焼き加減がちょうど良くなった。",
-    "常連運がほんの少し上向いた。",
-    "店に見えない追い風が入った。",
-    "函館の風まで味方した気がする。",
-    "棚の奥行きが一段深くなった。"
+    "運の焼き加減がちょうど良くなった。"
   ];
 
   const NEG_TYPES = new Set(["looker","picky","flipper"]);
@@ -1347,6 +518,9 @@
   const shoutCdEl = $("#shoutCd");
   const fixBtn = $("#fixBtn");
 
+  const guestAffinityEl = $("#guestAffinity");
+  const guestAffinityEmptyEl = $("#guestAffinityEmpty");
+
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const now = () => Date.now();
   const fmt = (n) => (Number(n||0)).toLocaleString("ja-JP");
@@ -1362,6 +536,21 @@
   function lsSet(key, val){
     try{ Storage.setItem(key, JSON.stringify(val)); }
     catch(e){ showErr("lsSet failed: " + (e?.message||e)); }
+  }
+
+  function social(){
+    return window.RotenSocial || null;
+  }
+  function socialCall(method, ...args){
+    try{
+      const s = social();
+      if(!s) return undefined;
+      if(typeof s[method] !== "function") return undefined;
+      return s[method](...args);
+    }catch(e){
+      showErr(`RotenSocial.${method} failed: ` + (e?.message || e));
+      return undefined;
+    }
   }
 
   function getMonthKey(date = new Date()){
@@ -1544,9 +733,23 @@
   }
 
   const STAGE_DEFAULT = {
-    ver:1, hasVisitor:false, leaving:false,
-    vUrl:"", vName:"—", vMsg:"まだ誰も来ていない。",
-    vType:"", stayMs:0, targetSlot:-1, updatedAt:0, source:""
+    ver:1,
+    hasVisitor:false,
+    leaving:false,
+    vUrl:"",
+    vName:"—",
+    vMsg:"まだ誰も来ていない。",
+    vType:"",
+    vBudget:0,
+    vIsRegular:false,
+    stayMs:0,
+    targetSlot:-1,
+    updatedAt:0,
+    source:"",
+    visitId:"",
+    talking:false,
+    talkDone:false,
+    talkStartedAt:0
   };
   function loadStage(){
     const s = lsGet(LS.stage, STAGE_DEFAULT);
@@ -1567,32 +770,330 @@
     if(stageLeaveTimer){ clearTimeout(stageLeaveTimer); stageLeaveTimer=null; }
   }
 
-  function renderStage(){
-    const s = loadStage();
-    stageName.textContent = s.vName || "—";
-    stageName.classList.toggle("neg", isNegativeType(s.vType));
-    stageMsg.textContent  = s.vMsg  || "—";
-    if(s.vUrl) stageVisitor.src = s.vUrl;
 
-    if(s.hasVisitor && s.vUrl && !s.leaving){
-      stageVisitor.classList.add("show");
-    }else{
-      stageVisitor.classList.remove("show");
+
+function injectStageWalletStyles(){
+  if(document.getElementById("stageWalletFxStyle")) return;
+
+  const style = document.createElement("style");
+  style.id = "stageWalletFxStyle";
+  style.textContent = `
+    .stage-name-ui{
+      display:grid;
+      gap:6px;
+      min-width:0;
     }
+
+    .stage-name-main{
+      font-weight:800;
+      font-size:15px;
+      letter-spacing:.02em;
+      line-height:1.2;
+      word-break:break-word;
+    }
+
+    .stage-name-main.neg{
+      color:#ffb6c1;
+    }
+
+    .stage-name-main.pos{
+      color:#ffffff;
+    }
+
+    .stage-chip-row{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .stage-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  line-height:1;
+  white-space:nowrap;
+}
+
+    .stage-chip.regular{
+      background:linear-gradient(180deg,#ffd76a,#ffb13b);
+      border:1px solid #ffd76a;
+      color:#3a2400;
+      box-shadow:
+        0 0 10px rgba(255,200,80,.45),
+        inset 0 1px 0 rgba(255,255,255,.35);
+    }
+
+    
+
+    .stage-chip.wallet.normal{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      color:#ffffff;
+    }
+
+    .stage-chip.wallet.mid{
+      background:linear-gradient(180deg,#b7dcff,#7fbaff);
+      border:1px solid #9fd0ff;
+      color:#00264a;
+      box-shadow:
+        0 0 10px rgba(120,180,255,.32),
+        inset 0 1px 0 rgba(255,255,255,.38);
+    }
+
+    .stage-chip.wallet.rich{
+  background:linear-gradient(180deg,#ffe8a3,#ffc94a);
+  border:1px solid #ffe8a3;
+  color:#3a2400;
+}
+
+.stage-chip.wallet.king{
+  background:linear-gradient(180deg,#ffd76a,#ffb13b);
+  border:1px solid #ffd76a;
+  color:#3a2400;
+}
+
+    .stage-chip-icon{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+    }
+
+    .stage-chip-text{
+      display:inline-flex;
+      align-items:center;
+    }
+
+    @keyframes walletFloat{
+      0%   { transform:translateY(0px) rotate(0deg) scale(1); }
+      25%  { transform:translateY(-1px) rotate(-1.2deg) scale(1.01); }
+      50%  { transform:translateY(0px) rotate(.8deg) scale(1.02); }
+      75%  { transform:translateY(-1px) rotate(-.8deg) scale(1.01); }
+      100% { transform:translateY(0px) rotate(0deg) scale(1); }
+    }
+
+    @keyframes walletGlow{
+      0%,100%{
+        box-shadow:
+          0 0 14px rgba(255,190,70,.48),
+          0 0 24px rgba(255,190,70,.18),
+          inset 0 1px 0 rgba(255,255,255,.42);
+      }
+      50%{
+        box-shadow:
+          0 0 18px rgba(255,215,110,.68),
+          0 0 34px rgba(255,200,80,.28),
+          inset 0 1px 0 rgba(255,255,255,.46);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+
+
+
+  
+  function startVisitorTimers(stayMs){
+    clearStageTimers();
+
+    stageTalkTimer = setInterval(()=>{
+      const s2 = loadStage();
+      if(!s2.hasVisitor || s2.leaving || s2.talking) return;
+      const baseLines = VISITOR_LINES[s2.vType] || ["……"];
+      s2.vMsg = pick(baseLines);
+      saveStage(s2);
+      renderStage();
+    }, rand(3000, 6000));
+
+    stageSellTimer = setTimeout(()=>{
+      const s3 = loadStage();
+      if(s3.talking){
+        startVisitorTimers(rand(5000, 9000));
+        return;
+      }
+      saleProcess();
+    }, Math.max(1000, Math.floor(stayMs || 12000) - 1000));
+
+    stageLeaveTimer = setTimeout(()=>{
+      const s4 = loadStage();
+      if(s4.talking){
+        startVisitorTimers(rand(4000, 8000));
+        return;
+      }
+      beginLeave(pick(LEAVE_LINES));
+    }, Math.max(5000, Math.floor(stayMs || 12000)));
   }
+function renderStage(){
+  const s = loadStage();
+
+  const name = escapeHTML(s.vName || "—");
+  const budget = Number(s.vBudget || 0);
+  const isRegular = !!s.vIsRegular;
+
+  let walletIcon = "👛";
+  let walletBg = "rgba(255,255,255,.08)";
+  let walletBorder = "rgba(255,255,255,.14)";
+  let walletColor = "#ffffff";
+
+  if(budget >= 20000){
+    walletIcon = "👑";
+    walletBg = "linear-gradient(180deg,#ffd76a,#ffb13b)";
+    walletBorder = "#ffd76a";
+    walletColor = "#3a2400";
+  }
+  else if(budget >= 10000){
+    walletIcon = "💰";
+    walletBg = "linear-gradient(180deg,#ffe8a3,#ffc94a)";
+    walletBorder = "#ffe8a3";
+    walletColor = "#3a2400";
+  }
+  else if(budget >= 4000){
+    walletIcon = "👛";
+    walletBg = "linear-gradient(180deg,#b7dcff,#7fbaff)";
+    walletBorder = "#9fd0ff";
+    walletColor = "#00264a";
+  }
+
+  const regularChip = isRegular
+  ? `<span style="
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:4px 10px;
+      border-radius:999px;
+      background:linear-gradient(180deg,#ffd76a,#ffb13b);
+      border:1px solid #ffd76a;
+      color:#3a2400;
+      font-size:12px;
+      font-weight:700;
+      box-shadow:0 0 10px rgba(255,200,80,.45);
+    ">⭐ 常連</span>`
+  : "";
+
+  const walletChip = budget > 0
+  ? `<span style="
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 12px;
+      border-radius:999px;
+      background:${walletBg};
+      border:1px solid ${walletBorder};
+      color:${walletColor};
+      font-size:12px;
+      font-weight:700;
+      box-shadow:0 0 8px rgba(0,0,0,.25);
+    ">${walletIcon} ${fmt(budget)}</span>`
+  : "";
+
+  stageName.innerHTML = `
+  <div class="stage-name-ui">
+
+    <div style="
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    ">
+      <div class="stage-name-main ${isNegativeType(s.vType) ? "neg" : "pos"}">
+        ${name}
+      </div>
+
+      ${walletChip}
+      ${regularChip}
+
+    </div>
+
+  </div>
+`;
+
+  stageMsg.textContent = s.vMsg || "—";
+// 財布と棚価格の比較表示
+const shop = loadMyShop();
+const slot = shop.slots?.[s.targetSlot];
+
+if(slot && slot.item && s.vBudget){
+
+  const rep = loadRep().rep;
+  const base = basePriceFor(slot.item);
+
+  let price = Math.floor(base * repFactor(rep));
+
+  if(slot.priceTier === "安い") price = Math.floor(price * 0.8);
+  if(slot.priceTier === "高い") price = Math.floor(price * 1.3);
+
+  if(s.targetSlot === 5){
+    price = Math.floor(price * 1.15);
+  }
+
+  let label = "";
+  let icon = "";
+
+  if(s.vBudget >= price * 1.3){
+    label = "余裕あり";
+    icon = "💰";
+  }
+  else if(s.vBudget >= price){
+    label = "買えそう";
+    icon = "🟡";
+  }
+  else{
+    label = "予算きびしい";
+    icon = "💸";
+  }
+
+  stageMsg.innerHTML = `
+    ${escapeHTML(s.vMsg || "—")}
+    <div style="
+      margin-top:6px;
+      font-size:12px;
+      opacity:.9;
+      display:flex;
+      gap:6px;
+      align-items:center;
+      flex-wrap:wrap;
+    ">
+      <span style="opacity:.7">この棚：</span>
+      <b>${fmt(price)} OCTO</b>
+      <span>｜</span>
+      <span>${icon}${label}</span>
+    </div>
+  `;
+}
+  if(s.vUrl) stageVisitor.src = s.vUrl;
+
+  if(s.hasVisitor && s.vUrl && !s.leaving){
+    stageVisitor.classList.add("show");
+  }else{
+    stageVisitor.classList.remove("show");
+  }
+}
+  
 
   function setStageEmpty(msg){
     clearStageTimers();
     const s = loadStage();
-    s.hasVisitor=false;
-    s.leaving=false;
-    s.vUrl="";
-    s.vName="—";
-    s.vMsg=msg || "まだ誰も来ていない。";
-    s.vType="";
-    s.stayMs=0;
-    s.targetSlot=-1;
-    s.source="";
+    s.hasVisitor = false;
+    s.leaving = false;
+    s.vUrl = "";
+    s.vName = "—";
+    s.vMsg = msg || "まだ誰も来ていない。";
+    s.vType = "";
+    s.vBudget = 0;
+    s.vIsRegular = false;
+    s.stayMs = 0;
+    s.targetSlot = -1;
+    s.source = "";
+    s.visitId = "";
+    s.talking = false;
+    s.talkDone = false;
+    s.talkStartedAt = 0;
     saveStage(s);
     renderStage();
   }
@@ -1603,8 +1104,11 @@
     const leavingSlot = Number(s.targetSlot ?? -1);
 
     s.leaving = true;
+    s.talking = false;
     saveStage(s);
     renderStage();
+
+    socialCall("forceCloseTalk");
 
     setGlobalSpawnCooldown(GLOBAL_VISITOR_COOLDOWN_MS);
     if(leavingSlot >= 0) shiftOtherDueTimers(leavingSlot);
@@ -1660,7 +1164,14 @@
     const s = loadRep();
     s.rep = Math.round(clamp(s.rep + Number(delta||0), 0, 100));
     saveRep(s);
+    const socialObj = social();
+    if(socialObj && typeof socialObj.updateAffinityButton === "function"){
+      socialObj.updateAffinityButton(s.rep);
+    }
     return s;
+  }
+  function getRepValue(){
+    return loadRep().rep;
   }
 
   function loadFarmBook(){
@@ -1827,7 +1338,6 @@
   }
   function saveTick(t){ lsSet(LS.tick, t); }
 
-  /* ★自然来店：最大150秒以内 */
   function nextVisitDelayMs(){
     return rand(70, 150) * 1000;
   }
@@ -1901,10 +1411,10 @@
   function basePriceFor(card){
     const r = String(card?.rarity || "").toUpperCase().trim();
     const map = {
-      "N":  500,
-      "R":  800,
-      "SR": 1500,
-      "UR": 3000,
+      "N":  300,
+      "R":  600,
+      "SR": 1200,
+      "UR": 2500,
       "LR": 5000
     };
     if(map[r] != null) return map[r];
@@ -2211,11 +1721,86 @@
     const listed = shop.slots.filter(s=>!!s.item).length;
 
     statsEl.innerHTML = `
-      <div class="stat"><div class="k">オクト</div><div class="v"><span class="good">${fmt(loadOcto())}</span><small>OCTO</small></div></div>
-      <div class="stat"><div class="k">レベル</div><div class="v">${lv.lv}<small>EXP ${fmt(lv.exp)}/${fmt(needExpFor(lv.lv))}</small></div></div>
-      <div class="stat"><div class="k">評判</div><div class="v"><span class="${rep>=60?'good':rep>=40?'warn':'bad'}">${rep}</span><small>/100</small></div></div>
-      <div class="stat"><div class="k">出品</div><div class="v">${listed}<small>/6</small></div></div>
+      <div class="stat">
+        <div class="k">オクト</div>
+        <div class="v"><span class="good">${fmt(loadOcto())}</span><small>OCTO</small></div>
+      </div>
+
+      <div class="stat">
+        <div class="k">レベル</div>
+        <div class="v">${lv.lv}<small>EXP ${fmt(lv.exp)}/${fmt(needExpFor(lv.lv))}</small></div>
+      </div>
+
+      <div class="stat">
+        <div class="repstat">
+          <div class="rep-left">
+            <div class="k">評判</div>
+            <div class="v">
+              <span class="${rep>=60?'good':rep>=40?'warn':'bad'}">${rep}</span><small>/100</small>
+            </div>
+          </div>
+          <button class="repcheck-btn" id="affectionCheckBtn" type="button">
+            好感度チェック
+          </button>
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="k">出品</div>
+        <div class="v">${listed}<small>/6</small></div>
+      </div>
     `;
+
+    const s = social();
+    if(s && typeof s.updateAffinityButton === "function"){
+      s.updateAffinityButton(rep);
+    }
+    if(s && typeof s.init === "function"){
+      s.init();
+    }
+  }
+
+  function renderGuestAffinity(){
+    if(!guestAffinityEl || !guestAffinityEmptyEl) return;
+
+    const rows = socialCall("getAffinityRows") || [];
+    guestAffinityEl.innerHTML = "";
+
+    if(!rows.length){
+      guestAffinityEmptyEl.style.display = "block";
+      return;
+    }
+
+    guestAffinityEmptyEl.style.display = "none";
+
+    const frag = document.createDocumentFragment();
+    rows.forEach(row=>{
+      const card = document.createElement("div");
+      card.className = "gcard";
+
+      const heartCount = Math.max(0, Math.min(5, Number(row.hearts || 0)));
+      let heartsHTML = "";
+      for(let i=0;i<5;i++){
+        heartsHTML += `<span class="${i < heartCount ? "on" : "off"}">♥</span>`;
+      }
+
+      const gaugePct = Math.max(0, Math.min(100, Number(row.love || 0)));
+
+      card.innerHTML = `
+        <div class="ghead">
+          <div class="gname" title="${escapeHTML(row.name || row.id || "来店客")}">${escapeHTML(row.name || row.id || "来店客")}</div>
+          <div class="gmeta">会話 ${escapeHTML(Number(row.talkCount || 0))}回</div>
+        </div>
+        <div class="gline">
+          <div class="ghearts">${heartsHTML}</div>
+          <div class="gauge"><i style="width:${gaugePct}%"></i></div>
+        </div>
+        <div class="gsub">${escapeHTML(row.label || "まだ距離を測っている。")}</div>
+      `;
+      frag.appendChild(card);
+    });
+
+    guestAffinityEl.appendChild(frag);
   }
 
   function lockBodyScroll(){ document.body.classList.add("noscroll"); }
@@ -2419,7 +2004,7 @@
 
   function saleProcess(){
     const st = loadStage();
-    if(!st.hasVisitor || st.leaving) return;
+    if(!st.hasVisitor || st.leaving || st.talking) return;
 
     const shop = loadMyShop();
     const slotIdx = st.targetSlot;
@@ -2443,15 +2028,49 @@
       price = Math.max(1, Math.floor(base * tierMult(slot.priceTier) * repFactor(rep)));
     }
 
+    const guestRows = socialCall("getAffinityRows") || [];
+    const guestRow = guestRows.find(x => x.id === cust.id);
+    const love = Number(guestRow?.love || 0);
+    const isRegular = !!guestRow?.isRegular;
+    const budget = Number(st.vBudget || 0);
+
+    if(!isShrine && budget > 0 && price > budget){
+      addRep(-1);
+      pushLog("買えない", `${st.vName} は所持金不足で買えなかった（${fmt(price)} / 所持金 ${fmt(budget)}）`, `棚${slotIdx+1}`);
+      beginLeave("……欲しかったけど、今日は財布が追いつかなかった。");
+      renderAll();
+      return;
+    }
+
     let buyP = clamp(cust.baseBuy, 0.10, 0.90);
 
     if(isShrine) buyP = clamp(buyP + 0.10, 0.10, 0.95);
-    if(slot.priceTier === "高い" && !isShrine) buyP -= 0.05;
-    if(slot.priceTier === "安い" && !isShrine) buyP += 0.05;
+
     if(rep >= 80) buyP += 0.04;
     else if(rep <= 25) buyP -= 0.04;
 
-    buyP = clamp(buyP, 0.10, 0.95);
+    let tierLoveAdjust = 0;
+
+    if(!isShrine){
+      if(slot.priceTier === "安い"){
+        tierLoveAdjust = 0.08 + (love / 100) * 0.06;
+      }else if(slot.priceTier === "普通"){
+        tierLoveAdjust = -0.03 + (love / 100) * 0.10;
+      }else if(slot.priceTier === "高い"){
+        tierLoveAdjust = -0.25 + (love / 100) * 0.35;
+      }
+    }
+
+    buyP += tierLoveAdjust;
+
+    if(isRegular){
+      buyP += 0.08;
+    }
+
+    const loveBonus = Number(socialCall("getBuyProbabilityBonus", cust.id) || 0);
+    buyP += loveBonus * 0.35;
+
+    buyP = clamp(buyP, 0.05, 0.95);
 
     const willBuy = Math.random() < buyP;
     if(!willBuy){
@@ -2487,6 +2106,8 @@
     t.nextAtBySlot = t.nextAtBySlot || {};
     t.nextAtBySlot[String(slotIdx)] = now() + nextVisitDelayMs();
     saveTick(t);
+
+    socialCall("onPurchaseSuccess", cust.id);
 
     const leftText = (afterQty > 0) ? `（残り×${afterQty}）` : "（完売）";
     pushLog("売れた！", `${soldItem.name||soldItem.id} が ${fmt(price)} OCTOで売れた ${leftText}`, `棚${slotIdx+1}`);
@@ -2528,24 +2149,76 @@
     renderStage();
     const st = loadStage();
     if(st.hasVisitor && !st.leaving){
-      clearStageTimers();
-      stageTalkTimer = setInterval(()=>{
-        const s2 = loadStage();
-        if(!s2.hasVisitor || s2.leaving) return;
-        const baseLines = VISITOR_LINES[s2.vType] || ["……"];
-        s2.vMsg = pick(baseLines);
-        saveStage(s2);
-        renderStage();
-      }, rand(3000, 6000));
-
-      stageSellTimer = setTimeout(()=> saleProcess(), Math.max(1000, Math.floor((st.stayMs||12000) - 1000)));
-      stageLeaveTimer = setTimeout(()=> beginLeave(pick(LEAVE_LINES)), Math.max(5000, Math.floor(st.stayMs||12000)));
+      startVisitorTimers(st.stayMs || 12000);
       return;
     }
     setStageEmpty("まだ誰も来ていない。");
   }
 
   let spawnLockUntil = 0;
+
+  function maybeStartTalkAfterSpawn(stageState){
+    const s = stageState || loadStage();
+    if(!s.hasVisitor || s.leaving || s.talking) return false;
+
+    const started = socialCall("maybeStartConversation", {
+      visitId: s.visitId,
+      guestId: s.vType,
+      guestName: s.vName,
+      guestMood: s.vMsg,
+      getStageState: () => loadStage(),
+      onStateChange: (patch)=>{
+        const st = loadStage();
+        if(!st.hasVisitor) return;
+        Object.assign(st, patch || {});
+        saveStage(st);
+        renderStage();
+      },
+      onResult: (result)=>{
+        const st = loadStage();
+        if(!st.hasVisitor) return;
+
+        st.talking = false;
+        st.talkDone = true;
+        saveStage(st);
+
+        if(result && result.stageMessage){
+          st.vMsg = result.stageMessage;
+          saveStage(st);
+          renderStage();
+        }
+
+        if(result && result.leaveNow){
+          beginLeave(result.leaveLine || pick(LEAVE_LINES));
+          renderAll();
+          return;
+        }
+
+        const remain = rand(6000, 11000);
+        startVisitorTimers(remain);
+        renderAll();
+      },
+      helpers: {
+        toast,
+        pushLog,
+        addRep,
+        addExp,
+        getRep: getRepValue,
+        renderAll,
+        renderGuestAffinity
+      }
+    });
+
+    if(started){
+      const st2 = loadStage();
+      st2.talking = false;
+      st2.talkStartedAt = 0;
+      saveStage(st2);
+      renderStage();
+      return true;
+    }
+    return false;
+  }
 
   function spawnVisitorSoon(targetSlot, type){
     const typeLabel = (type==="shout") ? "呼び込み" : "通常";
@@ -2568,6 +2241,19 @@
       const stayMs = rand(9000, 18000);
       const msg = pick(VISITOR_LINES[cust.id] || ["……"]);
 
+      const guestRows = socialCall("getAffinityRows") || [];
+      const guestRow = guestRows.find(x => x.id === cust.id);
+      const love = Number(guestRow?.love || 0);
+      const isRegular = !!socialCall("isRegularLove", love);
+
+      const range = socialCall("getBudgetRangeByGuestId", cust.id) || { min: 2000, max: 6000 };
+      let budget = rand(Number(range.min || 2000), Number(range.max || 6000));
+
+      if(isRegular){
+  const rate = Number(socialCall("getRegularBudgetBonusRate") || 0.18);
+  budget = Math.floor(budget * (1 + rate));
+}
+
       const s = loadStage();
       s.hasVisitor = true;
       s.leaving = false;
@@ -2575,14 +2261,20 @@
       s.vName = asset.name || cust.name;
       s.vUrl = asset.url || "";
       s.vMsg = msg;
+      s.vBudget = budget;
+      s.vIsRegular = !!isRegular;
       s.stayMs = stayMs;
       s.targetSlot = targetSlot;
       s.source = (type==="shout") ? "shout" : "normal";
+      s.visitId = `visit_${now()}_${Math.random().toString(36).slice(2,8)}`;
+      s.talking = false;
+      s.talkDone = false;
+      s.talkStartedAt = 0;
       saveStage(s);
       rememberVisitorType(cust.id);
       renderStage();
 
-      pushLog("来客", `${s.vName} が棚${targetSlot+1}を見ている`, `${typeLabel}`);
+      pushLog("来客", `${s.vName} が棚${targetSlot+1}を見ている（所持金 ${fmt(budget)} OCTO${isRegular ? " / 常連" : ""}）`, `${typeLabel}`);
 
       const lvup = addExp(1);
       if(lvup.leveled){
@@ -2590,53 +2282,19 @@
         toast("レベルアップ！", `Lv${lvup.state.lv}`, "");
       }
 
-      clearStageTimers();
-      stageTalkTimer = setInterval(()=>{
-        const s2 = loadStage();
-        if(!s2.hasVisitor || s2.leaving) return;
-        const baseLines = VISITOR_LINES[s2.vType] || ["……"];
-        s2.vMsg = pick(baseLines);
-        saveStage(s2);
-        renderStage();
-      }, rand(3000, 6000));
-
-      stageSellTimer = setTimeout(()=> saleProcess(), Math.max(1000, stayMs - 1000));
-      stageLeaveTimer = setTimeout(()=> beginLeave(pick(LEAVE_LINES)), stayMs);
-
       const tickObj = loadTick();
       tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
       saveTick(tickObj);
 
+      if(maybeStartTalkAfterSpawn(s)){
+        startVisitorTimers(stayMs);
+        renderAll();
+        return;
+      }
+
+      startVisitorTimers(stayMs);
       renderAll();
     }, 3000);
-  }
-
-  function tick(){
-    updateNextTag();
-    updateShoutUI();
-
-    const st = loadStage();
-    const nowMs = now();
-
-    if(st.hasVisitor) return;
-    if(nowMs < spawnLockUntil) return;
-    if(getGlobalSpawnCooldownRemainMs() > 0) return;
-
-    const lv = loadLevel().lv;
-    const shop = loadMyShop();
-    const t = ensureNextAtForActiveSlots();
-
-    const activeIdx = [];
-    shop.slots.forEach((s, idx)=>{
-      if(s.item && canUseSlot(idx, lv)) activeIdx.push(idx);
-    });
-    if(activeIdx.length===0) return;
-
-    const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
-    if(due.length===0) return;
-
-    const targetSlot = due[Math.floor(Math.random()*due.length)];
-    spawnVisitorSoon(targetSlot, "normal");
   }
 
   const SHOUT_LINES = [
@@ -2701,6 +2359,7 @@
     applyDayNight();
     updateNextTag();
     updateShoutUI();
+    renderGuestAffinity();
   }
 
   function openHelp(){
@@ -2732,18 +2391,44 @@
 
   fixBtn.addEventListener("click", ()=>{
     Storage.setItem(LS.stage, JSON.stringify({
-      ver:1,hasVisitor:false,leaving:false,vUrl:"",vName:"—",vMsg:"まだ誰も来ていない。",
-      vType:"",stayMs:0,targetSlot:-1,updatedAt:Date.now(),source:""
+      ver:1,
+      hasVisitor:false,
+      leaving:false,
+      vUrl:"",
+      vName:"—",
+      vMsg:"まだ誰も来ていない。",
+      vType:"",
+      vBudget:0,
+      vIsRegular:false,
+      stayMs:0,
+      targetSlot:-1,
+      updatedAt:Date.now(),
+      source:"",
+      visitId:"",
+      talking:false,
+      talkDone:false,
+      talkStartedAt:0
     }));
     Storage.removeItem(LS.tick);
     lsSet(LS.queue, { ver:1, shoutPending:false, shoutTargetSlot:null, shoutSpawnAt:0, normalPending:false, normalTargetSlot:null, queuedAt:0 });
     lsSet(LS.flow, { ver:1, nextSpawnAllowedAt: 0 });
+    socialCall("forceCloseTalk");
 
     alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
     location.reload();
   });
 
   try{
+    renderAll();
+
+    if(socialCall("init")){
+      socialCall("bindGuestUI", {
+        guestAffinityEl,
+        guestAffinityEmptyEl
+      });
+      socialCall("updateAffinityButton", getRepValue());
+    }
+
     applyDayNight();
     renderAll();
     scheduleStage();
@@ -2751,7 +2436,39 @@
   }catch(e){
     showErr(e?.stack || e?.message || String(e));
   }
+
+  function tick(){
+    updateNextTag();
+    updateShoutUI();
+    renderGuestAffinity();
+
+    const st = loadStage();
+    const nowMs = now();
+
+    if(st.hasVisitor) return;
+    if(nowMs < spawnLockUntil) return;
+    if(getGlobalSpawnCooldownRemainMs() > 0) return;
+
+    const lv = loadLevel().lv;
+    const shop = loadMyShop();
+    const t = ensureNextAtForActiveSlots();
+
+    const activeIdx = [];
+    shop.slots.forEach((s, idx)=>{
+      if(s.item && canUseSlot(idx, lv)) activeIdx.push(idx);
+    });
+    if(activeIdx.length===0) return;
+
+    const due = activeIdx.filter(i => Number(t.nextAtBySlot[String(i)]||0) <= nowMs);
+    if(due.length===0) return;
+
+    const targetSlot = due[Math.floor(Math.random()*due.length)];
+    spawnVisitorSoon(targetSlot, "normal");
+  }
 })();
 </script>
+
+<script src="assets/myshop-social-data.js"></script>
+<script src="assets/myshop-social.js"></script>
 </body>
 </html>
