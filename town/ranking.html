@@ -1469,6 +1469,9 @@
   const closeTrialBtn  = document.getElementById("closeTrialBtn");
   const closeRewardBtn = document.getElementById("closeRewardBtn");
 
+  const rankingTitle   = document.getElementById("rankingTitle");
+  const rankTabs       = document.getElementById("rankTabs");
+
   const toastEl = document.getElementById("toast");
 
   /* =========================================================
@@ -1632,6 +1635,28 @@
     return "🌱 " + grantedSeeds.map(v => v.name).join(" / ");
   }
 
+  function getRankTypeLabel(rankType){
+    const map = {
+      total: "総合",
+      harvest: "収穫",
+      sales: "露店",
+      fishing: "釣り",
+      tower: "タワー"
+    };
+    return map[rankType] || "総合";
+  }
+
+  function getRankTypeTitle(rankType){
+    const map = {
+      total: "月間総合ランキング",
+      harvest: "月間収穫ランキング",
+      sales: "月間露店ランキング",
+      fishing: "月間釣りランキング",
+      tower: "月間タワーランキング"
+    };
+    return map[rankType] || "月間総合ランキング";
+  }
+
   /* =========================================================
      JSONP
   ========================================================= */
@@ -1725,14 +1750,15 @@
     return data;
   }
 
-  async function rankGetRanking(){
+  async function rankGetRanking(rankType = "total"){
     const userId = localStorage.getItem(LS_RANK_USER_ID) || "";
     const month = loadMonthly().monthKey || getMonthKey();
 
     const url =
       `${GAS_WEBAPP_URL}?action=getRanking` +
       `&userId=${encodeURIComponent(userId)}` +
-      `&month=${encodeURIComponent(month)}`;
+      `&month=${encodeURIComponent(month)}` +
+      `&rankType=${encodeURIComponent(rankType)}`;
 
     const data = await jsonp(url);
 
@@ -1761,12 +1787,13 @@
       `総合点 ${fmtNum(me.totalScore)} ｜ 収穫 ${fmtNum(me.harvest)} ｜ 売上 ${fmtNum(me.sales)} oct ｜ 釣り ${fmtNum(me.fishing)} ｜ タワー ${fmtNum(me.tower)}F`;
   }
 
-  function renderRankingModal(data){
+  function renderRankingModal(data, rankType = "total"){
     const list = Array.isArray(data?.top20) ? data.top20 : [];
     const myUserId = localStorage.getItem(LS_RANK_USER_ID) || "";
     const totalUsers = Number(data?.totalUsers || 0);
     const month = String(data?.month || getMonthKey());
 
+    rankingTitle.textContent = getRankTypeTitle(rankType);
     rankingNote.textContent = `${month} / 参加者 ${totalUsers}人 / 上位20人を表示`;
 
     if (!list.length) {
@@ -1783,17 +1810,30 @@
         rank === 3 ? "rank-badge bronze" :
         "rank-badge";
 
+      let mainValue = "";
+      if (rankType === "harvest") {
+        mainValue = `${fmtNum(item.harvest)} 枚`;
+      } else if (rankType === "sales") {
+        mainValue = `${fmtNum(item.sales)} oct`;
+      } else if (rankType === "fishing") {
+        mainValue = `${fmtNum(item.fishing)} 点`;
+      } else if (rankType === "tower") {
+        mainValue = `${fmtNum(item.tower)} F`;
+      } else {
+        mainValue = fmtNum(item.totalScore);
+      }
+
       return `
         <div class="rank-item ${isMe ? "me" : ""}">
           <div class="rank-topline">
             <div class="${badgeClass}">${rank}位</div>
             <div class="rank-name-wrap">
               <div class="rank-name">${escapeHtml(item.userName || "NO NAME")}${isMe ? "（あなた）" : ""}</div>
-              <div class="rank-total">TOTAL ${fmtNum(item.totalScore)}</div>
+              <div class="rank-total">${escapeHtml(getRankTypeLabel(rankType).toUpperCase())} ${mainValue}</div>
             </div>
           </div>
           <div class="rank-stats">
-            <div>🔥 収穫 ${fmtNum(item.harvest)}</div>
+            <div>🔥 収穫 ${fmtNum(item.harvest)} 枚</div>
             <div>🪙 売上 ${fmtNum(item.sales)} oct</div>
             <div>🎣 釣り ${fmtNum(item.fishing)} 点</div>
             <div>🗼 タワー ${fmtNum(item.tower)} F</div>
@@ -1803,13 +1843,24 @@
     }).join("");
   }
 
+  async function loadRankingByType(rankType = "total"){
+    rankingList.innerHTML = `<div class="loading-box">ランキングを読み込み中...</div>`;
+
+    document.querySelectorAll(".rank-tab").forEach(tab => {
+      tab.classList.toggle("active", (tab.dataset.rankType || "total") === rankType);
+    });
+
+    const data = await rankGetRanking(rankType);
+    renderRankingModal(data, rankType);
+  }
+
   async function syncAndRefreshRankingUI(){
     try {
       await rankInitUser();
       await rankSaveMonthly();
-      const data = await rankGetRanking();
+      const data = await rankGetRanking("total");
       renderMyRankSummary(data);
-      renderRankingModal(data);
+      renderRankingModal(data, "total");
     } catch (err) {
       console.error(err);
       rankUserName.textContent = "ユーザー名：取得失敗";
@@ -2744,29 +2795,13 @@
     openModal(rankingModal);
 
     try {
-      const data = await rankGetRanking();
-      renderRankingModal(data);
+      await loadRankingByType("total");
     } catch (err) {
       console.error(err);
       rankingList.innerHTML = `<div class="loading-box">ランキング取得に失敗しました</div>`;
     }
   }
-/* ★ここに追加 ★ */
-window.addEventListener("DOMContentLoaded", () => {
 
-  document.querySelectorAll(".rank-tab").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      try {
-        await loadRankingByType(btn.dataset.rankType || "total");
-      } catch (err) {
-        console.error(err);
-        rankingList.innerHTML =
-          `<div class="loading-box">ランキング取得に失敗しました</div>`;
-      }
-    });
-  });
-
-});
   /* =========================================================
      modal events
   ========================================================= */
@@ -2825,6 +2860,19 @@ window.addEventListener("DOMContentLoaded", () => {
       closeModal(historyModal);
     }
   });
+
+  if (rankTabs) {
+    rankTabs.querySelectorAll(".rank-tab").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        try {
+          await loadRankingByType(btn.dataset.rankType || "total");
+        } catch (err) {
+          console.error(err);
+          rankingList.innerHTML = `<div class="loading-box">ランキング取得に失敗しました</div>`;
+        }
+      });
+    });
+  }
 
   /* =========================================================
      buttons
