@@ -4,7 +4,7 @@
   // =========================
   // ここを自分のGAS WebアプリURLに変える
   // =========================
-  const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbytGAGcEAHZFaZp6co26ZI1CcXAAAhUv68G30PGWZZirsEVTYJU3R6TMgFlqfW2EAo5/exec";
+  const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw828xr9EDv7-E5hkCdUgjsyiFR8y29gLcZilOwJNcLkRSs76M-B7s4UWpu3okbbQxZ/exec";
 
   const LS_USER_ID = "takotore_user_id";
   const LS_USER_NAME = "takotore_user_name";
