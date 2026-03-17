@@ -530,319 +530,483 @@
 
   <script>
     (() => {
-  "use strict";
+      "use strict";
 
-  // ===== 主要キー（必要ならここだけ増やせる） =====
-  const KEY = {
-    resident: "trc_v1_resident",
-    lastLogin: "trc_v1_last_login",
-  };
+      /* =========================================================
+         localStorage キー
+      ========================================================= */
+      const LS_MONTHLY = "ttc_monthly_stats_v1";
+      const LS_HISTORY = "ttc_monthly_history_v1";
 
-  const EXIST = {
-    farmBook:   "tf_v1_book",
-    farmInv:    "tf_v1_inv",
-    rotenOcto:  "roten_v1_octo",
-    tower:      "tower_v1_state",
-    fish:       "fish_v1_state",
+      /* ★追加：マイ露店専用の月間売上キー
+         ここに「myshopで売れた金額だけ」を保存する
+      ========================================================= */
+      const LS_MYSHOP_MONTHLY_SALES = "ttc_myshop_monthly_sales_v1";
 
-    // ★称号の頂
-    monthly:    "ttc_monthly_stats_v1",
-    history:    "ttc_monthly_history_v1",
-    godfarm:    "ttc_godfarm_v1",
-    godbonus:   "ttc_god_bonus_v1",
+      const HISTORY_LIMIT = 24;
 
-    // ★追加：マイ露店月間売上
-    myshopMonthlySales: "ttc_myshop_monthly_sales_v1"
-  };
-
-  // ===== utils =====
-  const getRaw = (k) => {
-    const v = localStorage.getItem(k);
-    return (v === null || v === undefined) ? null : String(v);
-  };
-
-  const safeJSONParse = (raw, fallback) => {
-    try { return JSON.parse(raw); } catch (_) { return fallback; }
-  };
-
-  const safeStringify = (obj) => {
-    try { return JSON.stringify(obj); } catch (_) { return "null"; }
-  };
-
-  function listKeysByRegex(re) {
-    const out = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (re.test(k)) out.push(k);
-    }
-    return out;
-  }
-
-  // ===== 図鑑slim（count+img等） =====
-  function slimBookRawKeepImg() {
-    const raw = getRaw(EXIST.farmBook);
-    if (!raw) return null;
-
-    const book = safeJSONParse(raw, null);
-    if (!book || typeof book !== "object") return raw;
-
-    const got = (book.got && typeof book.got === "object") ? book.got : {};
-    const outGot = {};
-
-    for (const id of Object.keys(got)) {
-      const node = got[id] || {};
-      const c = Number(node.count || 0);
-      if (c > 0) {
-        const out = { id, count: c };
-        if (typeof node.img === "string" && node.img.trim()) out.img = node.img.trim();
-        if (typeof node.name === "string" && node.name.trim()) out.name = node.name.trim();
-        if (typeof node.rarity === "string" && node.rarity.trim()) out.rarity = node.rarity.trim();
-        if (node.at != null && String(node.at).trim()) out.at = node.at;
-        if (node.lastAt != null && String(node.lastAt).trim()) out.lastAt = node.lastAt;
-        outGot[id] = out;
+      /* =========================================================
+         基本
+      ========================================================= */
+      function getMonthKey(date = new Date()){
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        return `${y}-${m}`;
       }
-    }
 
-    const slim = { ver: book.ver ?? 1, got: outGot };
-    return safeStringify(slim);
-  }
-
-  function findFarmProgressKeys() {
-    const out = [];
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (!/^tf_v1_/i.test(k)) continue;
-      if (/log|history|debug/i.test(k)) continue;
-      if (k === EXIST.farmBook || k === EXIST.farmInv) continue;
-      out.push(k);
-    }
-
-    const prefer = [
-      "tf_v1_state",
-      "tf_v1_level",
-      "tf_v1_xp",
-      "tf_v1_farm",
-      "tf_v1_progress"
-    ];
-
-    const ordered = [];
-    for (const p of prefer) {
-      if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
-    }
-    for (const k of out) {
-      if (!ordered.includes(k)) ordered.push(k);
-    }
-
-    return ordered.slice(0, 40);
-  }
-
-  function findRotenProgressKeys() {
-    const out = [];
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (!/^roten_v1_/i.test(k)) continue;
-      if (/log|history|debug/i.test(k)) continue;
-      out.push(k);
-    }
-
-    const prefer = [
-      "roten_v1_level",
-      "roten_v1_rep",
-      "roten_v1_myshop",
-      "roten_v1_inventory",
-      "roten_v1_market",
-      "roten_v1_state",
-      "roten_v1_shelves",
-      "roten_v1_octo"
-    ];
-
-    const ordered = [];
-    for (const p of prefer) {
-      if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
-    }
-    for (const k of out) {
-      if (!ordered.includes(k)) ordered.push(k);
-    }
-
-    return ordered.slice(0, 90);
-  }
-
-  // ===== バックアップ作成 =====
-  function buildSlimBackupPayload() {
-    const keys = {};
-
-    keys[KEY.resident] = getRaw(KEY.resident);
-    keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
-
-    keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
-    keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
-    keys[EXIST.farmBook]  = slimBookRawKeepImg();
-
-    for (const k of findFarmProgressKeys()) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
-
-    for (const k of findRotenProgressKeys()) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
-
-    if (getRaw(EXIST.tower) != null) keys[EXIST.tower] = getRaw(EXIST.tower);
-    for (const k of listKeysByRegex(/tower/i)) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
-
-    if (getRaw(EXIST.fish) != null) keys[EXIST.fish] = getRaw(EXIST.fish);
-    for (const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)) {
-      const v = getRaw(k);
-      if (v != null) keys[k] = v;
-    }
-
-    // ★追加：称号の頂
-    if (getRaw(EXIST.monthly)  != null) keys[EXIST.monthly]  = getRaw(EXIST.monthly);
-    if (getRaw(EXIST.history)  != null) keys[EXIST.history]  = getRaw(EXIST.history);
-    if (getRaw(EXIST.godfarm)  != null) keys[EXIST.godfarm]  = getRaw(EXIST.godfarm);
-    if (getRaw(EXIST.godbonus) != null) keys[EXIST.godbonus] = getRaw(EXIST.godbonus);
-
-    // ★追加：マイ露店売上
-    if (getRaw(EXIST.myshopMonthlySales) != null) keys[EXIST.myshopMonthlySales] = getRaw(EXIST.myshopMonthlySales);
-
-    // ★追加：ランキング用ユーザー情報
-    if (getRaw("ttc_user_id_v1")   != null) keys["ttc_user_id_v1"]   = getRaw("ttc_user_id_v1");
-    if (getRaw("ttc_user_name_v1") != null) keys["ttc_user_name_v1"] = getRaw("ttc_user_name_v1");
-
-    for (const k of Object.keys(keys)) {
-      if (keys[k] === null || keys[k] === undefined) delete keys[k];
-    }
-
-    return {
-      app: "takoyaki-trc",
-      ver: 7,
-      kind: "slim+roten+title-compatible",
-      exportedAt: new Date().toISOString(),
-      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り/称号の頂/マイ露店売上/ランキング用ユーザーID を保存。旧keys形式バックアップの復元にも対応。",
-      keys
-    };
-  }
-
-  function downloadJson(obj, filename) {
-    const blob = new Blob(
-      [JSON.stringify(obj, null, 2)],
-      { type: "application/json" }
-    );
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function backupSlim() {
-    const payload = buildSlimBackupPayload();
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    downloadJson(payload, `takoyaki-trc-backup_${stamp}.json`);
-  }
-
-  // ===== 復元（旧形式 keys / 新形式 storage 両対応） =====
-  async function restoreFromFile(file) {
-    const text = await file.text();
-    const data = safeJSONParse(text, null);
-
-    if (!data || typeof data !== "object") {
-      alert("このファイルはバックアップ形式ではありません。");
-      return;
-    }
-
-    const source =
-      (data.keys && typeof data.keys === "object") ? data.keys :
-      (data.storage && typeof data.storage === "object") ? data.storage :
-      null;
-
-    if (!source) {
-      alert("このファイルはバックアップ形式ではありません。");
-      return;
-    }
-
-    const keys = Object.keys(source);
-    const exportedAt = String(data.exportedAt || data.exported || "");
-
-    const ok = confirm(
-      "バックアップから復元します。\n" +
-      "現在のデータは上書きされます（元に戻せません）。\n\n" +
-      `復元キー数: ${keys.length}\n` +
-      `書き出し日時: ${exportedAt}\n\n` +
-      "続行しますか？"
-    );
-    if (!ok) return;
-
-    for (const k of keys) {
-      const v = source[k];
-      if (v === null || v === undefined) {
-        localStorage.removeItem(k);
-      } else {
-        localStorage.setItem(k, String(v));
+      function createDefaultMonthly(){
+        return {
+          monthKey: getMonthKey(),
+          harvest: 0,
+          sales: 0,
+          fishing: 0,
+          tower: 0
+        };
       }
-    }
 
-    alert("復元しました。ページを再読み込みします。");
-    location.reload();
-  }
-
-  // ===== UI wiring（フッター版） =====
-  const btnBackup  = document.getElementById("trcFooterBackup");
-  const btnRestore = document.getElementById("trcFooterRestore");
-  const inp        = document.getElementById("trcFooterRestoreFile");
-
-  if (!btnBackup || !btnRestore || !inp) return;
-
-  btnBackup.addEventListener("click", () => {
-    const normal = btnBackup.textContent;
-    btnBackup.disabled = true;
-    btnBackup.textContent = "作成中…";
-
-    setTimeout(() => {
-      try {
-        backupSlim();
-      } finally {
-        btnBackup.disabled = false;
-        btnBackup.textContent = normal;
+      function createDefaultMyshopSales(){
+        return {
+          monthKey: getMonthKey(),
+          sales: 0
+        };
       }
-    }, 50);
-  });
 
-  btnRestore.addEventListener("click", () => {
-    inp.click();
-  });
+      function normalizeMonthly(parsed){
+        const currentMonth = getMonthKey();
 
-  inp.addEventListener("change", async () => {
-    const f = inp.files && inp.files[0];
-    inp.value = "";
-    if (!f) return;
+        if (!parsed || typeof parsed !== "object"){
+          return createDefaultMonthly();
+        }
 
-    const normal = btnRestore.textContent;
-    btnRestore.disabled = true;
-    btnRestore.textContent = "読込中…";
+        const rawMonthKey = String(parsed.monthKey || "");
+        const monthKey = rawMonthKey || currentMonth;
 
-    try {
-      await restoreFromFile(f);
-    } finally {
-      btnRestore.disabled = false;
-      btnRestore.textContent = normal;
-    }
-  });
+        return {
+          monthKey,
+          harvest: Number(parsed.harvest || 0),
+          sales: Number(parsed.sales || 0),
+          fishing: Number(parsed.fishing || 0),
+          tower: Number(parsed.tower || 0)
+        };
+      }
 
-})();
+      function normalizeMyshopSales(parsed){
+        const currentMonth = getMonthKey();
+
+        if (!parsed || typeof parsed !== "object"){
+          return createDefaultMyshopSales();
+        }
+
+        const rawMonthKey = String(parsed.monthKey || "");
+        const monthKey = rawMonthKey || currentMonth;
+
+        return {
+          monthKey,
+          sales: Number(parsed.sales || 0)
+        };
+      }
+
+      function getMonthly(){
+        try{
+          const raw = localStorage.getItem(LS_MONTHLY);
+          if(!raw){
+            const def = createDefaultMonthly();
+            localStorage.setItem(LS_MONTHLY, JSON.stringify(def));
+            return def;
+          }
+          const parsed = JSON.parse(raw);
+          const normalized = normalizeMonthly(parsed);
+          localStorage.setItem(LS_MONTHLY, JSON.stringify(normalized));
+          return normalized;
+        }catch(e){
+          const def = createDefaultMonthly();
+          localStorage.setItem(LS_MONTHLY, JSON.stringify(def));
+          return def;
+        }
+      }
+
+      function saveMonthly(data){
+        const normalized = normalizeMonthly(data);
+        localStorage.setItem(LS_MONTHLY, JSON.stringify(normalized));
+      }
+
+      function getMyshopMonthlySales(){
+        try{
+          const raw = localStorage.getItem(LS_MYSHOP_MONTHLY_SALES);
+          if(!raw){
+            const def = createDefaultMyshopSales();
+            localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
+            return def;
+          }
+          const parsed = JSON.parse(raw);
+          const normalized = normalizeMyshopSales(parsed);
+          localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(normalized));
+          return normalized;
+        }catch(e){
+          const def = createDefaultMyshopSales();
+          localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
+          return def;
+        }
+      }
+
+      function saveMyshopMonthlySales(data){
+        const normalized = normalizeMyshopSales(data);
+        localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(normalized));
+      }
+
+      function normalizeHistoryItem(item){
+        if (!item || typeof item !== "object") return null;
+
+        return {
+          monthKey: String(item.monthKey || ""),
+          title: String(item.title || "タコ民"),
+          harvest: Number(item.harvest || 0),
+          sales: Number(item.sales || 0),
+          fishing: Number(item.fishing || 0),
+          tower: Number(item.tower || 0)
+        };
+      }
+
+      function getHistory(){
+        try{
+          const raw = localStorage.getItem(LS_HISTORY);
+          if(!raw) return [];
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return [];
+          return parsed
+            .map(normalizeHistoryItem)
+            .filter(Boolean)
+            .filter(v => v.monthKey);
+        }catch(e){
+          return [];
+        }
+      }
+
+      function saveHistory(list){
+        const safe = Array.isArray(list) ? list : [];
+        const normalized = safe
+          .map(normalizeHistoryItem)
+          .filter(Boolean)
+          .filter(v => v.monthKey)
+          .slice(0, HISTORY_LIMIT);
+        localStorage.setItem(LS_HISTORY, JSON.stringify(normalized));
+      }
+
+      /* =========================================================
+         数字整形
+      ========================================================= */
+      function fmtNum(n){
+        return Number(n || 0).toLocaleString("ja-JP");
+      }
+
+      /* =========================================================
+         称号判定
+      ========================================================= */
+      function getTitleFromStats(stats){
+        const harvest = Number(stats.harvest || 0);
+        const sales = Number(stats.sales || 0);
+        const fishing = Number(stats.fishing || 0);
+        const tower = Number(stats.tower || 0);
+
+        if (harvest >= 500) return "焼かれし収穫神";
+        if (sales >= 50000) return "黄金露店皇";
+        if (fishing >= 3000) return "深海の釣神";
+        if (tower >= 150) return "積み上げの神";
+
+        if (harvest >= 300) return "神焼きの極";
+        if (sales >= 30000) return "黄金露店王";
+        if (fishing >= 1500) return "釣神";
+        if (tower >= 100) return "積み上げの王";
+
+        if (harvest >= 150) return "焼きの達人";
+        if (sales >= 15000) return "露店王";
+        if (fishing >= 800) return "釣り神";
+        if (tower >= 50) return "塔の覇者";
+
+        if (harvest >= 50) return "収穫見習い";
+        if (sales >= 5000) return "露店番";
+        if (fishing >= 300) return "釣り好き";
+        if (tower >= 20) return "積み上げ人";
+
+        return "タコ民";
+      }
+
+      /* =========================================================
+         月切り替え
+      ========================================================= */
+      function isMeaningfulMonth(stats){
+        return (
+          Number(stats.harvest || 0) > 0 ||
+          Number(stats.sales || 0) > 0 ||
+          Number(stats.fishing || 0) > 0 ||
+          Number(stats.tower || 0) > 0
+        );
+      }
+
+      function historyHasMonth(list, monthKey){
+        return list.some(v => String(v.monthKey || "") === String(monthKey || ""));
+      }
+
+      function rolloverIfNeeded(){
+        const currentKey = getMonthKey();
+
+        const monthly = getMonthly();
+        const myshopSales = getMyshopMonthlySales();
+
+        const mergedCurrent = {
+          monthKey: monthly.monthKey || currentKey,
+          harvest: Number(monthly.harvest || 0),
+          sales: Number(myshopSales.sales || 0),
+          fishing: Number(monthly.fishing || 0),
+          tower: Number(monthly.tower || 0)
+        };
+
+        const needsMonthlyRollover = monthly.monthKey !== currentKey;
+        const needsMyshopRollover = myshopSales.monthKey !== currentKey;
+
+        if (!needsMonthlyRollover && !needsMyshopRollover){
+          return mergedCurrent;
+        }
+
+        const oldMonthKey = monthly.monthKey || myshopSales.monthKey || currentKey;
+        const mergedOld = {
+          monthKey: oldMonthKey,
+          harvest: Number(monthly.harvest || 0),
+          sales: Number(myshopSales.sales || 0),
+          fishing: Number(monthly.fishing || 0),
+          tower: Number(monthly.tower || 0)
+        };
+
+        const history = getHistory();
+
+        if (
+          mergedOld.monthKey &&
+          isMeaningfulMonth(mergedOld) &&
+          !historyHasMonth(history, mergedOld.monthKey)
+        ){
+          history.unshift({
+            monthKey: mergedOld.monthKey,
+            title: getTitleFromStats(mergedOld),
+            harvest: mergedOld.harvest,
+            sales: mergedOld.sales,
+            fishing: mergedOld.fishing,
+            tower: mergedOld.tower
+          });
+          saveHistory(history);
+        }
+
+        if (needsMonthlyRollover){
+          saveMonthly({
+            monthKey: currentKey,
+            harvest: 0,
+            sales: 0,
+            fishing: 0,
+            tower: 0
+          });
+        }
+
+        if (needsMyshopRollover){
+          saveMyshopMonthlySales({
+            monthKey: currentKey,
+            sales: 0
+          });
+        }
+
+        return {
+          monthKey: currentKey,
+          harvest: 0,
+          sales: 0,
+          fishing: 0,
+          tower: 0
+        };
+      }
+
+      /* =========================================================
+         画面反映
+      ========================================================= */
+      const harvestValue = document.getElementById("harvestValue");
+      const salesValue   = document.getElementById("salesValue");
+      const fishingValue = document.getElementById("fishingValue");
+      const towerValue   = document.getElementById("towerValue");
+      const mainTitle    = document.getElementById("mainTitle");
+      const monthInfo    = document.getElementById("monthInfo");
+
+      function render(){
+        const stats = rolloverIfNeeded();
+
+        harvestValue.textContent = `${fmtNum(stats.harvest)} 枚`;
+        salesValue.textContent   = `${fmtNum(stats.sales)} oct`;
+        fishingValue.textContent = `${fmtNum(stats.fishing)} 点`;
+        towerValue.textContent   = `${fmtNum(stats.tower)} F`;
+        mainTitle.textContent    = getTitleFromStats(stats);
+
+        const [y, m] = String(stats.monthKey || getMonthKey()).split("-");
+        monthInfo.textContent = `${y}年${Number(m)}月の記録から称号を判定しています`;
+      }
+
+      /* =========================================================
+         履歴モーダル
+      ========================================================= */
+      const modal = document.getElementById("historyModal");
+      const openBtn = document.getElementById("openHistoryBtn");
+      const closeBtn = document.getElementById("closeHistoryBtn");
+      const historyList = document.getElementById("historyList");
+
+      function renderHistory(){
+        const list = getHistory();
+        historyList.innerHTML = "";
+
+        if(!list.length){
+          historyList.innerHTML = `
+            <div class="empty">
+              まだ履歴はありません
+            </div>
+          `;
+          return;
+        }
+
+        list.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "history-item";
+          row.innerHTML = `
+            <div class="history-month">${escapeHtml(item.monthKey)}</div>
+            <div class="history-main">
+              <div class="history-title">${escapeHtml(item.title || "タコ民")}</div>
+              <div class="history-stats">
+                <div>🔥 収穫 ${fmtNum(item.harvest)} 枚</div>
+                <div>🪙 売上 ${fmtNum(item.sales)} oct</div>
+                <div>🎣 釣り ${fmtNum(item.fishing)} 点</div>
+                <div>🗼 タワー ${fmtNum(item.tower)} F</div>
+              </div>
+            </div>
+          `;
+          historyList.appendChild(row);
+        });
+      }
+
+      function openHistory(){
+        renderHistory();
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeHistory(){
+        modal.classList.remove("show");
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+      }
+
+      openBtn.addEventListener("click", openHistory);
+      closeBtn.addEventListener("click", closeHistory);
+
+      modal.addEventListener("click", (e) => {
+        if(e.target === modal) closeHistory();
+      });
+
+      window.addEventListener("keydown", (e) => {
+        if(e.key === "Escape" && modal.classList.contains("show")){
+          closeHistory();
+        }
+      });
+
+      /* =========================================================
+         戻るボタン
+      ========================================================= */
+      const backBtn = document.getElementById("backBtn");
+
+      if(backBtn){
+        backBtn.addEventListener("click", () => {
+          if(window.history.length > 1){
+            window.history.back();
+          }else{
+            location.href = "../";
+          }
+        });
+      }
+
+      /* =========================================================
+         HTMLエスケープ
+      ========================================================= */
+      function escapeHtml(str){
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      /* =========================================================
+         開発用：コンソールから試せる関数
+      ========================================================= */
+
+      /* 既存の月間値（収穫/釣り/タワーなど） */
+      window.ttcSetMonthly = function(data){
+        const current = getMonthly();
+        const next = {
+          monthKey: current.monthKey || getMonthKey(),
+          harvest: Number(data?.harvest ?? current.harvest ?? 0),
+          sales: Number(data?.sales ?? current.sales ?? 0),
+          fishing: Number(data?.fishing ?? current.fishing ?? 0),
+          tower: Number(data?.tower ?? current.tower ?? 0)
+        };
+        saveMonthly(next);
+        render();
+      };
+
+      /* ★追加：マイ露店売上だけを直接セット */
+      window.ttcSetMyshopSales = function(value){
+        const current = getMyshopMonthlySales();
+        const next = {
+          monthKey: current.monthKey || getMonthKey(),
+          sales: Number(value || 0)
+        };
+        saveMyshopMonthlySales(next);
+        render();
+      };
+
+      /* ★追加：マイ露店売上だけを加算 */
+      window.ttcAddMyshopSales = function(delta){
+        const current = getMyshopMonthlySales();
+        const next = {
+          monthKey: current.monthKey || getMonthKey(),
+          sales: Math.max(0, Number(current.sales || 0) + Number(delta || 0))
+        };
+        saveMyshopMonthlySales(next);
+        render();
+      };
+
+      window.ttcAddHistory = function(monthKey, title, stats = {}){
+        const list = getHistory();
+        list.unshift({
+          monthKey: String(monthKey || ""),
+          title: String(title || "タコ民"),
+          harvest: Number(stats.harvest || 0),
+          sales: Number(stats.sales || 0),
+          fishing: Number(stats.fishing || 0),
+          tower: Number(stats.tower || 0)
+        });
+        saveHistory(list);
+        renderHistory();
+      };
+
+      window.ttcResetHistory = function(){
+        localStorage.removeItem(LS_HISTORY);
+        renderHistory();
+      };
+
+      window.ttcClearMonthly = function(){
+        saveMonthly(createDefaultMonthly());
+        saveMyshopMonthlySales(createDefaultMyshopSales());
+        render();
+      };
+
+      /* =========================================================
+         初期描画
+      ========================================================= */
+      render();
+    })();
   </script>
 </body>
 </html>
