@@ -630,19 +630,72 @@
         localStorage.setItem(LS_MONTHLY, JSON.stringify(normalized));
       }
 
+      /* =========================================================
+         ★復元漏れ対策
+         - ttc_myshop_monthly_sales_v1 が無い場合
+         - 旧データの ttc_monthly_stats_v1.sales を読む
+         - 読めたら自動で専用キーへ移行する
+      ========================================================= */
+      function getLegacySalesFromMonthly(){
+        const monthly = getMonthly();
+        return {
+          monthKey: String(monthly.monthKey || getMonthKey()),
+          sales: Number(monthly.sales || 0)
+        };
+      }
+
       function getMyshopMonthlySales(){
         try{
           const raw = localStorage.getItem(LS_MYSHOP_MONTHLY_SALES);
+
           if(!raw){
+            const legacy = getLegacySalesFromMonthly();
+
+            if (Number(legacy.sales || 0) > 0) {
+              const migrated = {
+                monthKey: legacy.monthKey || getMonthKey(),
+                sales: Number(legacy.sales || 0)
+              };
+              localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(migrated));
+              return migrated;
+            }
+
             const def = createDefaultMyshopSales();
             localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
             return def;
           }
+
           const parsed = JSON.parse(raw);
           const normalized = normalizeMyshopSales(parsed);
+
+          if (Number(normalized.sales || 0) <= 0) {
+            const legacy = getLegacySalesFromMonthly();
+            if (
+              String(legacy.monthKey || "") === String(normalized.monthKey || "") &&
+              Number(legacy.sales || 0) > 0
+            ) {
+              const migrated = {
+                monthKey: normalized.monthKey || legacy.monthKey || getMonthKey(),
+                sales: Number(legacy.sales || 0)
+              };
+              localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(migrated));
+              return migrated;
+            }
+          }
+
           localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(normalized));
           return normalized;
         }catch(e){
+          const legacy = getLegacySalesFromMonthly();
+          if (Number(legacy.sales || 0) > 0) {
+            const migrated = {
+              monthKey: legacy.monthKey || getMonthKey(),
+              sales: Number(legacy.sales || 0)
+            };
+            localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(migrated));
+            return migrated;
+          }
+
           const def = createDefaultMyshopSales();
           localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
           return def;
