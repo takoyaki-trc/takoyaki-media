@@ -1282,7 +1282,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-<script>
 (() => {
   "use strict";
 
@@ -1296,16 +1295,13 @@
   const LS_INV      = "tf_v1_inv";
   const LS_GODBONUS = "ttc_god_bonus_v1";
 
-  /* ★追加：マイ露店売上専用 */
-  const LS_MYSHOP_MONTHLY_SALES = "ttc_myshop_monthly_sales_v1";
-
   const GROW_MS = 30 * 60 * 1000;
   const HISTORY_LIMIT = 24;
 
   /* =========================================================
      ranking api
   ========================================================= */
-  const RANKING_API_URL = "https://script.google.com/macros/s/AKfycbyVZyF9Kio2CMMBsHGSnb17-XTIAWZqzdhahzgnG1V1fnNaABV2oBJuDAUkR6GO2RvU/exec";
+  const RANKING_API_URL = "https://script.google.com/macros/s/AKfycbwqPMlOXeVfx8163qydkpAYkao381bbzeaUCrVco412hvQaQmZVn2yDA3Bns5be5Ayc/exec";
 
   /* =========================================================
      threshold
@@ -1609,32 +1605,41 @@
 
   function jsonp(url){
     return new Promise((resolve, reject) => {
-      const callbackName = "jsonp_cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
+      const callbackName = "__jsonp_cb_" + Math.random().toString(36).slice(2);
+      const sep = url.includes("?") ? "&" : "?";
       const script = document.createElement("script");
+      let done = false;
 
-      const timeout = setTimeout(() => {
-        cleanup();
-        reject(new Error("timeout"));
-      }, 10000);
-
-      function cleanup(){
-        clearTimeout(timeout);
+      const cleanup = () => {
         if (script.parentNode) script.parentNode.removeChild(script);
-        delete window[callbackName];
-      }
+        try { delete window[callbackName]; } catch(_) { window[callbackName] = undefined; }
+      };
 
       window[callbackName] = (data) => {
+        if (done) return;
+        done = true;
         cleanup();
         resolve(data);
       };
 
+      script.src = `${url}${sep}callback=${callbackName}`;
+      script.async = true;
+
       script.onerror = () => {
+        if (done) return;
+        done = true;
         cleanup();
-        reject(new Error("jsonp error"));
+        reject(new Error("JSONP通信に失敗しました"));
       };
 
-      script.src = url + (url.includes("?") ? "&" : "?") + "callback=" + callbackName + "&_=" + Date.now();
       document.body.appendChild(script);
+
+      setTimeout(() => {
+        if (done) return;
+        done = true;
+        cleanup();
+        reject(new Error("JSONP通信がタイムアウトしました"));
+      }, 15000);
     });
   }
 
@@ -1652,6 +1657,168 @@
     if (rankType === "fishing") return `${fmtNum(n)} 点`;
     if (rankType === "tower") return `${fmtNum(n)} F`;
     return `${fmtNum(n)} pt`;
+  }
+
+  function getCurrentMonthStats(){
+    const stats = loadMonthly();
+    return {
+      monthKey: stats.monthKey || getMonthKey(),
+      harvest: Number(stats.harvest || 0),
+      sales: Number(stats.sales || 0),
+      fishing: Number(stats.fishing || 0),
+      tower: Number(stats.tower || 0)
+    };
+  }
+
+  async function rankInitUser(){
+    const userId = getOrCreateUserId();
+    const userName = getUserName();
+
+    const url =
+      `${RANKING_API_URL}` +
+      `?action=initUser` +
+      `&userId=${encodeURIComponent(userId)}` +
+      `&userName=${encodeURIComponent(userName)}`;
+
+    return await jsonp(url);
+  }
+
+  async function rankSaveMonthly(){
+    const userId = getOrCreateUserId();
+    const userName = getUserName();
+    const stats = getCurrentMonthStats();
+
+    const url =
+      `${RANKING_API_URL}` +
+      `?action=saveMonthlyStats` +
+      `&userId=${encodeURIComponent(userId)}` +
+      `&userName=${encodeURIComponent(userName)}` +
+      `&monthKey=${encodeURIComponent(stats.monthKey)}` +
+      `&harvest=${encodeURIComponent(stats.harvest)}` +
+      `&sales=${encodeURIComponent(stats.sales)}` +
+      `&fishing=${encodeURIComponent(stats.fishing)}` +
+      `&tower=${encodeURIComponent(stats.tower)}`;
+
+    return await jsonp(url);
+  }
+
+  async function rankGetRanking(rankType){
+    const userId = getOrCreateUserId();
+    const stats = getCurrentMonthStats();
+
+    const url =
+      `${RANKING_API_URL}` +
+      `?action=getRanking` +
+      `&rankType=${encodeURIComponent(rankType)}` +
+      `&month=${encodeURIComponent(stats.monthKey)}` +
+      `&limit=${encodeURIComponent(10)}` +
+      `&userId=${encodeURIComponent(userId)}`;
+
+    return await jsonp(url);
+  }
+
+  function renderMyRankBox(rankType, myRank){
+    if (!myRank) {
+      myRankBox.style.display = "none";
+      myRankBox.innerHTML = "";
+      return;
+    }
+
+    myRankBox.style.display = "block";
+
+    if (rankType === "total") {
+      myRankBox.innerHTML = `
+        <div class="my-rank-title">MY RANK</div>
+        <div class="my-rank-main">${rankLabel(myRank.rank)} / ${escapeHtml(myRank.userName)} / ${fmtNum(myRank.totalPoints)} pt</div>
+        <div class="my-rank-sub">
+          収穫 ${myRank.harvestRank}位 / 露店 ${myRank.salesRank}位 / 釣り ${myRank.fishingRank}位 / タワー ${myRank.towerRank}位
+        </div>
+      `;
+      return;
+    }
+
+    myRankBox.innerHTML = `
+      <div class="my-rank-title">MY RANK</div>
+      <div class="my-rank-main">${rankLabel(myRank.rank)} / ${escapeHtml(myRank.userName)}</div>
+      <div class="my-rank-sub">現在値：${fmtRankValue(rankType, myRank.value)}</div>
+    `;
+  }
+
+  function renderRankingList(rankType, list){
+    if (!list || !list.length) {
+      rankingList.innerHTML = `<div class="rank-empty">まだランキングデータがありません</div>`;
+      return;
+    }
+
+    if (rankType === "total") {
+      rankingList.innerHTML = list.map(item => `
+        <div class="rank-item">
+          <div class="rank-pos">${rankLabel(item.rank)}</div>
+          <div class="rank-main">
+            <div class="rank-name">${escapeHtml(item.userName)}</div>
+            <div class="rank-sub">
+              収穫${item.harvestRank}位 / 露店${item.salesRank}位 / 釣り${item.fishingRank}位 / タワー${item.towerRank}位
+            </div>
+          </div>
+          <div class="rank-value">${fmtNum(item.totalPoints)} pt</div>
+        </div>
+      `).join("");
+      return;
+    }
+
+    rankingList.innerHTML = list.map(item => `
+      <div class="rank-item">
+        <div class="rank-pos">${rankLabel(item.rank)}</div>
+        <div class="rank-main">
+          <div class="rank-name">${escapeHtml(item.userName)}</div>
+          <div class="rank-sub">順位ポイント ${fmtNum(item.point)} pt</div>
+        </div>
+        <div class="rank-value">${fmtRankValue(rankType, item.value)}</div>
+      </div>
+    `).join("");
+  }
+
+  async function loadRankingByType(rankType = "total"){
+    rankingList.innerHTML = `<div class="ranking-loading">ランキングを読み込み中...</div>`;
+    myRankBox.style.display = "none";
+
+    try {
+      await rankSaveMonthly();
+      const res = await rankGetRanking(rankType);
+
+      if (!res || !res.ok || !res.data) {
+        throw new Error("ランキング取得に失敗しました");
+      }
+
+      const data = res.data;
+
+      rankingNote.textContent =
+        `${data.monthKey} の ${rankType === "total" ? "総合" : (
+          rankType === "harvest" ? "収穫" :
+          rankType === "sales" ? "露店売上" :
+          rankType === "fishing" ? "釣り" : "タワー"
+        )} ランキング`;
+
+      renderMyRankBox(rankType, data.myRank);
+      renderRankingList(rankType, data.ranking);
+
+    } catch (err) {
+      console.error(err);
+      rankingList.innerHTML = `<div class="rank-empty">ランキング取得に失敗しました</div>`;
+      myRankBox.style.display = "none";
+    }
+  }
+
+  function bindRankingTabs(){
+    if (!rankingTabs) return;
+
+    rankingTabs.querySelectorAll(".ranking-tab").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        rankingTabs.querySelectorAll(".ranking-tab").forEach(v => v.classList.remove("active"));
+        btn.classList.add("active");
+        await loadRankingByType(btn.dataset.rankType || "total");
+      });
+    });
   }
 
   /* =========================================================
@@ -1699,60 +1866,6 @@
 
   function saveMonthly(v){
     localStorage.setItem(LS_MONTHLY, JSON.stringify(normalizeMonthly(v)));
-  }
-
-  /* =========================================================
-     ★ myshop monthly sales
-  ========================================================= */
-  function createDefaultMyshopSales(){
-    return {
-      monthKey: getMonthKey(),
-      sales: 0
-    };
-  }
-
-  function normalizeMyshopSales(v){
-    if (!v || typeof v !== "object") return createDefaultMyshopSales();
-    return {
-      monthKey: String(v.monthKey || getMonthKey()),
-      sales: Number(v.sales || 0)
-    };
-  }
-
-  function loadMyshopMonthlySales(){
-    try{
-      const raw = localStorage.getItem(LS_MYSHOP_MONTHLY_SALES);
-      if (!raw){
-        const def = createDefaultMyshopSales();
-        localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
-        return def;
-      }
-      const parsed = JSON.parse(raw);
-      const safe = normalizeMyshopSales(parsed);
-      localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(safe));
-      return safe;
-    }catch(_){
-      const def = createDefaultMyshopSales();
-      localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
-      return def;
-    }
-  }
-
-  function saveMyshopMonthlySales(v){
-    localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(normalizeMyshopSales(v)));
-  }
-
-  function getCurrentMonthStats(){
-    const monthly = loadMonthly();
-    const myshopSales = loadMyshopMonthlySales();
-
-    return {
-      monthKey: monthly.monthKey || myshopSales.monthKey || getMonthKey(),
-      harvest: Number(monthly.harvest || 0),
-      sales: Number(myshopSales.sales || 0),
-      fishing: Number(monthly.fishing || 0),
-      tower: Number(monthly.tower || 0)
-    };
   }
 
   /* =========================================================
@@ -1987,239 +2100,49 @@
   function rolloverIfNeeded(){
     const currentKey = getMonthKey();
     const monthly = loadMonthly();
-    const myshopSales = loadMyshopMonthlySales();
 
-    const mergedCurrent = {
-      monthKey: monthly.monthKey || myshopSales.monthKey || currentKey,
-      harvest: Number(monthly.harvest || 0),
-      sales: Number(myshopSales.sales || 0),
-      fishing: Number(monthly.fishing || 0),
-      tower: Number(monthly.tower || 0)
-    };
-
-    const needsMonthlyRollover = monthly.monthKey !== currentKey;
-    const needsMyshopRollover = myshopSales.monthKey !== currentKey;
-
-    if (!needsMonthlyRollover && !needsMyshopRollover) return mergedCurrent;
+    if (monthly.monthKey === currentKey) return monthly;
 
     const history = loadHistory();
-    const oldMonthKey = monthly.monthKey || myshopSales.monthKey || currentKey;
-
-    const mergedOld = {
-      monthKey: oldMonthKey,
-      harvest: Number(monthly.harvest || 0),
-      sales: Number(myshopSales.sales || 0),
-      fishing: Number(monthly.fishing || 0),
-      tower: Number(monthly.tower || 0)
-    };
 
     if (
-      mergedOld.monthKey &&
-      isMeaningfulMonth(mergedOld) &&
-      !history.some(v => v.monthKey === mergedOld.monthKey)
+      monthly.monthKey &&
+      isMeaningfulMonth(monthly) &&
+      !history.some(v => v.monthKey === monthly.monthKey)
     ) {
-      const title = getMainTitleFromStats(mergedOld);
-      const grantedSeeds = getGrantedSeedsFromStats(mergedOld);
+      const title = getMainTitleFromStats(monthly);
+      const grantedSeeds = getGrantedSeedsFromStats(monthly);
 
       grantedSeeds.forEach(seed => addSeed(seed.id, 1));
 
       history.unshift({
-        monthKey: mergedOld.monthKey,
+        monthKey: monthly.monthKey,
         title,
-        harvest: mergedOld.harvest,
-        sales: mergedOld.sales,
-        fishing: mergedOld.fishing,
-        tower: mergedOld.tower,
+        harvest: Number(monthly.harvest || 0),
+        sales: Number(monthly.sales || 0),
+        fishing: Number(monthly.fishing || 0),
+        tower: Number(monthly.tower || 0),
         grantedSeeds
       });
 
       saveHistory(history);
 
       if (grantedSeeds.length) {
-        toast(`${mergedOld.monthKey} 報酬確定：${grantedSeeds.map(v => v.name).join(" / ")} を授かりました`);
+        toast(`${monthly.monthKey} 報酬確定：${grantedSeeds.map(v => v.name).join(" / ")} を授かりました`);
       } else {
-        toast(`${mergedOld.monthKey} の月間結果を確定しました`);
+        toast(`${monthly.monthKey} の月間結果を確定しました`);
       }
     }
 
-    if (needsMonthlyRollover) {
-      saveMonthly({
-        monthKey: currentKey,
-        harvest: 0,
-        sales: 0,
-        fishing: 0,
-        tower: 0
-      });
-    }
-
-    if (needsMyshopRollover) {
-      saveMyshopMonthlySales({
-        monthKey: currentKey,
-        sales: 0
-      });
-    }
-
-    return {
+    const fresh = {
       monthKey: currentKey,
       harvest: 0,
       sales: 0,
       fishing: 0,
       tower: 0
     };
-  }
-
-  /* =========================================================
-     ranking
-  ========================================================= */
-  async function rankInitUser(){
-    const userId = getOrCreateUserId();
-    const userName = getUserName();
-
-    const url =
-      `${RANKING_API_URL}` +
-      `?action=initUser` +
-      `&userId=${encodeURIComponent(userId)}` +
-      `&userName=${encodeURIComponent(userName)}`;
-
-    return await jsonp(url);
-  }
-
-  async function rankSaveMonthly(){
-    const userId = getOrCreateUserId();
-    const userName = getUserName();
-    const stats = getCurrentMonthStats();
-
-    const url =
-      `${RANKING_API_URL}` +
-      `?action=saveMonthlyStats` +
-      `&userId=${encodeURIComponent(userId)}` +
-      `&userName=${encodeURIComponent(userName)}` +
-      `&monthKey=${encodeURIComponent(stats.monthKey)}` +
-      `&harvest=${encodeURIComponent(stats.harvest)}` +
-      `&sales=${encodeURIComponent(stats.sales)}` +
-      `&fishing=${encodeURIComponent(stats.fishing)}` +
-      `&tower=${encodeURIComponent(stats.tower)}`;
-
-    return await jsonp(url);
-  }
-
-  async function rankGetRanking(rankType){
-    const userId = getOrCreateUserId();
-    const stats = getCurrentMonthStats();
-
-    const url =
-      `${RANKING_API_URL}` +
-      `?action=getRanking` +
-      `&rankType=${encodeURIComponent(rankType)}` +
-      `&month=${encodeURIComponent(stats.monthKey)}` +
-      `&limit=${encodeURIComponent(10)}` +
-      `&userId=${encodeURIComponent(userId)}`;
-
-    return await jsonp(url);
-  }
-
-  function renderMyRankBox(rankType, myRank){
-    if (!myRank) {
-      myRankBox.style.display = "none";
-      myRankBox.innerHTML = "";
-      return;
-    }
-
-    myRankBox.style.display = "block";
-
-    if (rankType === "total") {
-      myRankBox.innerHTML = `
-        <div class="my-rank-title">MY RANK</div>
-        <div class="my-rank-main">${rankLabel(myRank.rank)} / ${escapeHtml(myRank.userName)} / ${fmtNum(myRank.totalPoints)} pt</div>
-        <div class="my-rank-sub">
-          収穫 ${myRank.harvestRank}位 / 露店 ${myRank.salesRank}位 / 釣り ${myRank.fishingRank}位 / タワー ${myRank.towerRank}位
-        </div>
-      `;
-      return;
-    }
-
-    myRankBox.innerHTML = `
-      <div class="my-rank-title">MY RANK</div>
-      <div class="my-rank-main">${rankLabel(myRank.rank)} / ${escapeHtml(myRank.userName)}</div>
-      <div class="my-rank-sub">現在値：${fmtRankValue(rankType, myRank.value)}</div>
-    `;
-  }
-
-  function renderRankingList(rankType, list){
-    if (!list || !list.length) {
-      rankingList.innerHTML = `<div class="rank-empty">まだランキングデータがありません</div>`;
-      return;
-    }
-
-    if (rankType === "total") {
-      rankingList.innerHTML = list.map(item => `
-        <div class="rank-item">
-          <div class="rank-pos">${rankLabel(item.rank)}</div>
-          <div class="rank-main">
-            <div class="rank-name">${escapeHtml(item.userName)}</div>
-            <div class="rank-sub">
-              収穫${item.harvestRank}位 / 露店${item.salesRank}位 / 釣り${item.fishingRank}位 / タワー${item.towerRank}位
-            </div>
-          </div>
-          <div class="rank-value">${fmtNum(item.totalPoints)} pt</div>
-        </div>
-      `).join("");
-      return;
-    }
-
-    rankingList.innerHTML = list.map(item => `
-      <div class="rank-item">
-        <div class="rank-pos">${rankLabel(item.rank)}</div>
-        <div class="rank-main">
-          <div class="rank-name">${escapeHtml(item.userName)}</div>
-          <div class="rank-sub">順位ポイント ${fmtNum(item.point)} pt</div>
-        </div>
-        <div class="rank-value">${fmtRankValue(rankType, item.value)}</div>
-      </div>
-    `).join("");
-  }
-
-  async function loadRankingByType(rankType = "total"){
-    rankingList.innerHTML = `<div class="ranking-loading">ランキングを読み込み中...</div>`;
-    myRankBox.style.display = "none";
-
-    try {
-      await rankSaveMonthly();
-      const res = await rankGetRanking(rankType);
-
-      if (!res || !res.ok || !res.data) {
-        throw new Error("ランキング取得に失敗しました");
-      }
-
-      const data = res.data;
-
-      rankingNote.textContent =
-        `${data.monthKey} の ${rankType === "total" ? "総合" : (
-          rankType === "harvest" ? "収穫" :
-          rankType === "sales" ? "露店売上" :
-          rankType === "fishing" ? "釣り" : "タワー"
-        )} ランキング`;
-
-      renderMyRankBox(rankType, data.myRank);
-      renderRankingList(rankType, data.ranking);
-
-    } catch (err) {
-      console.error(err);
-      rankingList.innerHTML = `<div class="rank-empty">ランキング取得に失敗しました</div>`;
-      myRankBox.style.display = "none";
-    }
-  }
-
-  function bindRankingTabs(){
-    if (!rankingTabs) return;
-
-    rankingTabs.querySelectorAll(".ranking-tab").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        rankingTabs.querySelectorAll(".ranking-tab").forEach(v => v.classList.remove("active"));
-        btn.classList.add("active");
-        await loadRankingByType(btn.dataset.rankType || "total");
-      });
-    });
+    saveMonthly(fresh);
+    return fresh;
   }
 
   /* =========================================================
@@ -2902,7 +2825,7 @@
     const next = {
       monthKey: cur.monthKey || getMonthKey(),
       harvest: Number(data?.harvest ?? cur.harvest ?? 0),
-      sales: Number(cur.sales || 0),
+      sales: Number(data?.sales ?? cur.sales ?? 0),
       fishing: Number(data?.fishing ?? cur.fishing ?? 0),
       tower: Number(data?.tower ?? cur.tower ?? 0)
     };
@@ -2916,7 +2839,7 @@
     const next = {
       monthKey: cur.monthKey || getMonthKey(),
       harvest: Number(cur.harvest || 0) + Number(data?.harvest || 0),
-      sales: Number(cur.sales || 0),
+      sales: Number(cur.sales || 0) + Number(data?.sales || 0),
       fishing: Number(cur.fishing || 0) + Number(data?.fishing || 0),
       tower: Number(cur.tower || 0) + Number(data?.tower || 0)
     };
@@ -2935,35 +2858,6 @@
       tower: Math.max(Number(cur.tower || 0), Number(floor || 0))
     };
     saveMonthly(next);
-    renderAll();
-    await saveRankingAfterMonthlyUpdate();
-  };
-
-  /* ★追加：マイ露店売上専用 */
-  window.ttcSetMyshopSales = async function(value){
-    const cur = loadMyshopMonthlySales();
-    const next = {
-      monthKey: cur.monthKey || getMonthKey(),
-      sales: Math.max(0, Number(value || 0))
-    };
-    saveMyshopMonthlySales(next);
-    renderAll();
-    await saveRankingAfterMonthlyUpdate();
-  };
-
-  window.ttcAddMyshopSales = async function(delta){
-    const cur = loadMyshopMonthlySales();
-    const next = {
-      monthKey: cur.monthKey || getMonthKey(),
-      sales: Math.max(0, Number(cur.sales || 0) + Number(delta || 0))
-    };
-    saveMyshopMonthlySales(next);
-    renderAll();
-    await saveRankingAfterMonthlyUpdate();
-  };
-
-  window.ttcResetMyshopSales = async function(){
-    saveMyshopMonthlySales(createDefaultMyshopSales());
     renderAll();
     await saveRankingAfterMonthlyUpdate();
   };
@@ -2992,28 +2886,21 @@
 
   window.ttcResetMonthly = async function(){
     saveMonthly(createDefaultMonthly());
-    saveMyshopMonthlySales(createDefaultMyshopSales());
     renderAll();
     await saveRankingAfterMonthlyUpdate();
   };
 
   window.ttcForceRolloverTest = function(){
-    const curMonthly = loadMonthly();
-    const curMyshop = loadMyshopMonthlySales();
+    const cur = loadMonthly();
     const d = new Date();
     d.setMonth(d.getMonth() - 1);
 
     saveMonthly({
       monthKey: getMonthKey(d),
-      harvest: Number(curMonthly.harvest || 0),
-      sales: Number(curMonthly.sales || 0),
-      fishing: Number(curMonthly.fishing || 0),
-      tower: Number(curMonthly.tower || 0)
-    });
-
-    saveMyshopMonthlySales({
-      monthKey: getMonthKey(d),
-      sales: Number(curMyshop.sales || 0)
+      harvest: Number(cur.harvest || 0),
+      sales: Number(cur.sales || 0),
+      fishing: Number(cur.fishing || 0),
+      tower: Number(cur.tower || 0)
     });
 
     renderAll();
@@ -3040,7 +2927,6 @@
 
   init();
 })();
-</script>
 </script>
 </body>
 </html>
