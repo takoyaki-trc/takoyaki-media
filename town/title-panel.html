@@ -529,537 +529,489 @@
   </div>
 
   <script>
-    (() => {
-      "use strict";
+    <script>
+  (() => {
+    "use strict";
 
-      /* =========================================================
-         localStorage キー
-      ========================================================= */
-      const LS_MONTHLY = "ttc_monthly_stats_v1";
-      const LS_HISTORY = "ttc_monthly_history_v1";
+    /* =========================================================
+       localStorage キー
+    ========================================================= */
+    const LS_MONTHLY = "ttc_monthly_stats_v1";
+    const LS_HISTORY = "ttc_monthly_history_v1";
 
-      /* ★追加：マイ露店専用の月間売上キー
-         ここに「myshopで売れた金額だけ」を保存する
-      ========================================================= */
-      const LS_MYSHOP_MONTHLY_SALES = "ttc_myshop_monthly_sales_v1";
+    /* ★マイ露店専用の月間売上キー
+       ここに「myshopで売れた金額だけ」を保存する
+    ========================================================= */
+    const LS_MYSHOP_MONTHLY_SALES = "ttc_myshop_monthly_sales_v1";
 
-      const HISTORY_LIMIT = 24;
+    const HISTORY_LIMIT = 24;
 
-      /* =========================================================
-         基本
-      ========================================================= */
-      function getMonthKey(date = new Date()){
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, "0");
-        return `${y}-${m}`;
+    /* =========================================================
+       基本
+    ========================================================= */
+    function getMonthKey(date = new Date()){
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      return `${y}-${m}`;
+    }
+
+    function createDefaultMonthly(){
+      return {
+        monthKey: getMonthKey(),
+        harvest: 0,
+        sales: 0,
+        fishing: 0,
+        tower: 0
+      };
+    }
+
+    function createDefaultMyshopSales(){
+      return {
+        monthKey: getMonthKey(),
+        sales: 0
+      };
+    }
+
+    function normalizeMonthly(parsed){
+      const currentMonth = getMonthKey();
+
+      if (!parsed || typeof parsed !== "object"){
+        return createDefaultMonthly();
       }
 
-      function createDefaultMonthly(){
-        return {
-          monthKey: getMonthKey(),
-          harvest: 0,
-          sales: 0,
-          fishing: 0,
-          tower: 0
-        };
+      const rawMonthKey = String(parsed.monthKey || "");
+      const monthKey = rawMonthKey || currentMonth;
+
+      return {
+        monthKey,
+        harvest: Number(parsed.harvest || 0),
+        sales: Number(parsed.sales || 0),
+        fishing: Number(parsed.fishing || 0),
+        tower: Number(parsed.tower || 0)
+      };
+    }
+
+    function normalizeMyshopSales(parsed){
+      const currentMonth = getMonthKey();
+
+      if (!parsed || typeof parsed !== "object"){
+        return createDefaultMyshopSales();
       }
 
-      function createDefaultMyshopSales(){
-        return {
-          monthKey: getMonthKey(),
-          sales: 0
-        };
-      }
+      const rawMonthKey = String(parsed.monthKey || "");
+      const monthKey = rawMonthKey || currentMonth;
 
-      function normalizeMonthly(parsed){
-        const currentMonth = getMonthKey();
+      return {
+        monthKey,
+        sales: Number(parsed.sales || 0)
+      };
+    }
 
-        if (!parsed || typeof parsed !== "object"){
-          return createDefaultMonthly();
-        }
-
-        const rawMonthKey = String(parsed.monthKey || "");
-        const monthKey = rawMonthKey || currentMonth;
-
-        return {
-          monthKey,
-          harvest: Number(parsed.harvest || 0),
-          sales: Number(parsed.sales || 0),
-          fishing: Number(parsed.fishing || 0),
-          tower: Number(parsed.tower || 0)
-        };
-      }
-
-      function normalizeMyshopSales(parsed){
-        const currentMonth = getMonthKey();
-
-        if (!parsed || typeof parsed !== "object"){
-          return createDefaultMyshopSales();
-        }
-
-        const rawMonthKey = String(parsed.monthKey || "");
-        const monthKey = rawMonthKey || currentMonth;
-
-        return {
-          monthKey,
-          sales: Number(parsed.sales || 0)
-        };
-      }
-
-      function getMonthly(){
-        try{
-          const raw = localStorage.getItem(LS_MONTHLY);
-          if(!raw){
-            const def = createDefaultMonthly();
-            localStorage.setItem(LS_MONTHLY, JSON.stringify(def));
-            return def;
-          }
-          const parsed = JSON.parse(raw);
-          const normalized = normalizeMonthly(parsed);
-          localStorage.setItem(LS_MONTHLY, JSON.stringify(normalized));
-          return normalized;
-        }catch(e){
+    function getMonthly(){
+      try{
+        const raw = localStorage.getItem(LS_MONTHLY);
+        if(!raw){
           const def = createDefaultMonthly();
           localStorage.setItem(LS_MONTHLY, JSON.stringify(def));
           return def;
         }
-      }
-
-      function saveMonthly(data){
-        const normalized = normalizeMonthly(data);
+        const parsed = JSON.parse(raw);
+        const normalized = normalizeMonthly(parsed);
         localStorage.setItem(LS_MONTHLY, JSON.stringify(normalized));
+        return normalized;
+      }catch(e){
+        const def = createDefaultMonthly();
+        localStorage.setItem(LS_MONTHLY, JSON.stringify(def));
+        return def;
       }
+    }
 
-      /* =========================================================
-         ★復元漏れ対策
-         - ttc_myshop_monthly_sales_v1 が無い場合
-         - 旧データの ttc_monthly_stats_v1.sales を読む
-         - 読めたら自動で専用キーへ移行する
-      ========================================================= */
-      function getLegacySalesFromMonthly(){
-        const monthly = getMonthly();
-        return {
-          monthKey: String(monthly.monthKey || getMonthKey()),
-          sales: Number(monthly.sales || 0)
-        };
-      }
+    function saveMonthly(data){
+      const normalized = normalizeMonthly(data);
+      localStorage.setItem(LS_MONTHLY, JSON.stringify(normalized));
+    }
 
-      function getMyshopMonthlySales(){
-        try{
-          const raw = localStorage.getItem(LS_MYSHOP_MONTHLY_SALES);
+    /* =========================================================
+       ★マイ露店売上は専用キーだけを見る
+       ttc_monthly_stats_v1.sales は一切参照しない
+    ========================================================= */
+    function getMyshopMonthlySales(){
+      try{
+        const raw = localStorage.getItem(LS_MYSHOP_MONTHLY_SALES);
 
-          if(!raw){
-            const legacy = getLegacySalesFromMonthly();
-
-            if (Number(legacy.sales || 0) > 0) {
-              const migrated = {
-                monthKey: legacy.monthKey || getMonthKey(),
-                sales: Number(legacy.sales || 0)
-              };
-              localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(migrated));
-              return migrated;
-            }
-
-            const def = createDefaultMyshopSales();
-            localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
-            return def;
-          }
-
-          const parsed = JSON.parse(raw);
-          const normalized = normalizeMyshopSales(parsed);
-
-          if (Number(normalized.sales || 0) <= 0) {
-            const legacy = getLegacySalesFromMonthly();
-            if (
-              String(legacy.monthKey || "") === String(normalized.monthKey || "") &&
-              Number(legacy.sales || 0) > 0
-            ) {
-              const migrated = {
-                monthKey: normalized.monthKey || legacy.monthKey || getMonthKey(),
-                sales: Number(legacy.sales || 0)
-              };
-              localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(migrated));
-              return migrated;
-            }
-          }
-
-          localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(normalized));
-          return normalized;
-        }catch(e){
-          const legacy = getLegacySalesFromMonthly();
-          if (Number(legacy.sales || 0) > 0) {
-            const migrated = {
-              monthKey: legacy.monthKey || getMonthKey(),
-              sales: Number(legacy.sales || 0)
-            };
-            localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(migrated));
-            return migrated;
-          }
-
+        if(!raw){
           const def = createDefaultMyshopSales();
           localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
           return def;
         }
-      }
 
-      function saveMyshopMonthlySales(data){
-        const normalized = normalizeMyshopSales(data);
+        const parsed = JSON.parse(raw);
+        const normalized = normalizeMyshopSales(parsed);
         localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(normalized));
+        return normalized;
+      }catch(e){
+        const def = createDefaultMyshopSales();
+        localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
+        return def;
       }
+    }
 
-      function normalizeHistoryItem(item){
-        if (!item || typeof item !== "object") return null;
+    function saveMyshopMonthlySales(data){
+      const normalized = normalizeMyshopSales(data);
+      localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(normalized));
+    }
 
-        return {
-          monthKey: String(item.monthKey || ""),
-          title: String(item.title || "タコ民"),
-          harvest: Number(item.harvest || 0),
-          sales: Number(item.sales || 0),
-          fishing: Number(item.fishing || 0),
-          tower: Number(item.tower || 0)
-        };
-      }
+    function normalizeHistoryItem(item){
+      if (!item || typeof item !== "object") return null;
 
-      function getHistory(){
-        try{
-          const raw = localStorage.getItem(LS_HISTORY);
-          if(!raw) return [];
-          const parsed = JSON.parse(raw);
-          if (!Array.isArray(parsed)) return [];
-          return parsed
-            .map(normalizeHistoryItem)
-            .filter(Boolean)
-            .filter(v => v.monthKey);
-        }catch(e){
-          return [];
-        }
-      }
+      return {
+        monthKey: String(item.monthKey || ""),
+        title: String(item.title || "タコ民"),
+        harvest: Number(item.harvest || 0),
+        sales: Number(item.sales || 0),
+        fishing: Number(item.fishing || 0),
+        tower: Number(item.tower || 0)
+      };
+    }
 
-      function saveHistory(list){
-        const safe = Array.isArray(list) ? list : [];
-        const normalized = safe
+    function getHistory(){
+      try{
+        const raw = localStorage.getItem(LS_HISTORY);
+        if(!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed
           .map(normalizeHistoryItem)
           .filter(Boolean)
-          .filter(v => v.monthKey)
-          .slice(0, HISTORY_LIMIT);
-        localStorage.setItem(LS_HISTORY, JSON.stringify(normalized));
+          .filter(v => v.monthKey);
+      }catch(e){
+        return [];
+      }
+    }
+
+    function saveHistory(list){
+      const safe = Array.isArray(list) ? list : [];
+      const normalized = safe
+        .map(normalizeHistoryItem)
+        .filter(Boolean)
+        .filter(v => v.monthKey)
+        .slice(0, HISTORY_LIMIT);
+      localStorage.setItem(LS_HISTORY, JSON.stringify(normalized));
+    }
+
+    /* =========================================================
+       数字整形
+    ========================================================= */
+    function fmtNum(n){
+      return Number(n || 0).toLocaleString("ja-JP");
+    }
+
+    /* =========================================================
+       称号判定
+    ========================================================= */
+    function getTitleFromStats(stats){
+      const harvest = Number(stats.harvest || 0);
+      const sales = Number(stats.sales || 0);
+      const fishing = Number(stats.fishing || 0);
+      const tower = Number(stats.tower || 0);
+
+      if (harvest >= 500) return "焼かれし収穫神";
+      if (sales >= 50000) return "黄金露店皇";
+      if (fishing >= 3000) return "深海の釣神";
+      if (tower >= 150) return "積み上げの神";
+
+      if (harvest >= 300) return "神焼きの極";
+      if (sales >= 30000) return "黄金露店王";
+      if (fishing >= 1500) return "釣神";
+      if (tower >= 100) return "積み上げの王";
+
+      if (harvest >= 150) return "焼きの達人";
+      if (sales >= 15000) return "露店王";
+      if (fishing >= 800) return "釣り神";
+      if (tower >= 50) return "塔の覇者";
+
+      if (harvest >= 50) return "収穫見習い";
+      if (sales >= 5000) return "露店番";
+      if (fishing >= 300) return "釣り好き";
+      if (tower >= 20) return "積み上げ人";
+
+      return "タコ民";
+    }
+
+    /* =========================================================
+       月切り替え
+    ========================================================= */
+    function isMeaningfulMonth(stats){
+      return (
+        Number(stats.harvest || 0) > 0 ||
+        Number(stats.sales || 0) > 0 ||
+        Number(stats.fishing || 0) > 0 ||
+        Number(stats.tower || 0) > 0
+      );
+    }
+
+    function historyHasMonth(list, monthKey){
+      return list.some(v => String(v.monthKey || "") === String(monthKey || ""));
+    }
+
+    function rolloverIfNeeded(){
+      const currentKey = getMonthKey();
+
+      const monthly = getMonthly();
+      const myshopSales = getMyshopMonthlySales();
+
+      const mergedCurrent = {
+        monthKey: monthly.monthKey || currentKey,
+        harvest: Number(monthly.harvest || 0),
+        sales: Number(myshopSales.sales || 0),
+        fishing: Number(monthly.fishing || 0),
+        tower: Number(monthly.tower || 0)
+      };
+
+      const needsMonthlyRollover = monthly.monthKey !== currentKey;
+      const needsMyshopRollover = myshopSales.monthKey !== currentKey;
+
+      if (!needsMonthlyRollover && !needsMyshopRollover){
+        return mergedCurrent;
       }
 
-      /* =========================================================
-         数字整形
-      ========================================================= */
-      function fmtNum(n){
-        return Number(n || 0).toLocaleString("ja-JP");
+      const oldMonthKey = monthly.monthKey || myshopSales.monthKey || currentKey;
+      const mergedOld = {
+        monthKey: oldMonthKey,
+        harvest: Number(monthly.harvest || 0),
+        sales: Number(myshopSales.sales || 0),
+        fishing: Number(monthly.fishing || 0),
+        tower: Number(monthly.tower || 0)
+      };
+
+      const history = getHistory();
+
+      if (
+        mergedOld.monthKey &&
+        isMeaningfulMonth(mergedOld) &&
+        !historyHasMonth(history, mergedOld.monthKey)
+      ){
+        history.unshift({
+          monthKey: mergedOld.monthKey,
+          title: getTitleFromStats(mergedOld),
+          harvest: mergedOld.harvest,
+          sales: mergedOld.sales,
+          fishing: mergedOld.fishing,
+          tower: mergedOld.tower
+        });
+        saveHistory(history);
       }
 
-      /* =========================================================
-         称号判定
-      ========================================================= */
-      function getTitleFromStats(stats){
-        const harvest = Number(stats.harvest || 0);
-        const sales = Number(stats.sales || 0);
-        const fishing = Number(stats.fishing || 0);
-        const tower = Number(stats.tower || 0);
-
-        if (harvest >= 500) return "焼かれし収穫神";
-        if (sales >= 50000) return "黄金露店皇";
-        if (fishing >= 3000) return "深海の釣神";
-        if (tower >= 150) return "積み上げの神";
-
-        if (harvest >= 300) return "神焼きの極";
-        if (sales >= 30000) return "黄金露店王";
-        if (fishing >= 1500) return "釣神";
-        if (tower >= 100) return "積み上げの王";
-
-        if (harvest >= 150) return "焼きの達人";
-        if (sales >= 15000) return "露店王";
-        if (fishing >= 800) return "釣り神";
-        if (tower >= 50) return "塔の覇者";
-
-        if (harvest >= 50) return "収穫見習い";
-        if (sales >= 5000) return "露店番";
-        if (fishing >= 300) return "釣り好き";
-        if (tower >= 20) return "積み上げ人";
-
-        return "タコ民";
-      }
-
-      /* =========================================================
-         月切り替え
-      ========================================================= */
-      function isMeaningfulMonth(stats){
-        return (
-          Number(stats.harvest || 0) > 0 ||
-          Number(stats.sales || 0) > 0 ||
-          Number(stats.fishing || 0) > 0 ||
-          Number(stats.tower || 0) > 0
-        );
-      }
-
-      function historyHasMonth(list, monthKey){
-        return list.some(v => String(v.monthKey || "") === String(monthKey || ""));
-      }
-
-      function rolloverIfNeeded(){
-        const currentKey = getMonthKey();
-
-        const monthly = getMonthly();
-        const myshopSales = getMyshopMonthlySales();
-
-        const mergedCurrent = {
-          monthKey: monthly.monthKey || currentKey,
-          harvest: Number(monthly.harvest || 0),
-          sales: Number(myshopSales.sales || 0),
-          fishing: Number(monthly.fishing || 0),
-          tower: Number(monthly.tower || 0)
-        };
-
-        const needsMonthlyRollover = monthly.monthKey !== currentKey;
-        const needsMyshopRollover = myshopSales.monthKey !== currentKey;
-
-        if (!needsMonthlyRollover && !needsMyshopRollover){
-          return mergedCurrent;
-        }
-
-        const oldMonthKey = monthly.monthKey || myshopSales.monthKey || currentKey;
-        const mergedOld = {
-          monthKey: oldMonthKey,
-          harvest: Number(monthly.harvest || 0),
-          sales: Number(myshopSales.sales || 0),
-          fishing: Number(monthly.fishing || 0),
-          tower: Number(monthly.tower || 0)
-        };
-
-        const history = getHistory();
-
-        if (
-          mergedOld.monthKey &&
-          isMeaningfulMonth(mergedOld) &&
-          !historyHasMonth(history, mergedOld.monthKey)
-        ){
-          history.unshift({
-            monthKey: mergedOld.monthKey,
-            title: getTitleFromStats(mergedOld),
-            harvest: mergedOld.harvest,
-            sales: mergedOld.sales,
-            fishing: mergedOld.fishing,
-            tower: mergedOld.tower
-          });
-          saveHistory(history);
-        }
-
-        if (needsMonthlyRollover){
-          saveMonthly({
-            monthKey: currentKey,
-            harvest: 0,
-            sales: 0,
-            fishing: 0,
-            tower: 0
-          });
-        }
-
-        if (needsMyshopRollover){
-          saveMyshopMonthlySales({
-            monthKey: currentKey,
-            sales: 0
-          });
-        }
-
-        return {
+      if (needsMonthlyRollover){
+        saveMonthly({
           monthKey: currentKey,
           harvest: 0,
           sales: 0,
           fishing: 0,
           tower: 0
-        };
+        });
       }
 
-      /* =========================================================
-         画面反映
-      ========================================================= */
-      const harvestValue = document.getElementById("harvestValue");
-      const salesValue   = document.getElementById("salesValue");
-      const fishingValue = document.getElementById("fishingValue");
-      const towerValue   = document.getElementById("towerValue");
-      const mainTitle    = document.getElementById("mainTitle");
-      const monthInfo    = document.getElementById("monthInfo");
-
-      function render(){
-        const stats = rolloverIfNeeded();
-
-        harvestValue.textContent = `${fmtNum(stats.harvest)} 枚`;
-        salesValue.textContent   = `${fmtNum(stats.sales)} oct`;
-        fishingValue.textContent = `${fmtNum(stats.fishing)} 点`;
-        towerValue.textContent   = `${fmtNum(stats.tower)} F`;
-        mainTitle.textContent    = getTitleFromStats(stats);
-
-        const [y, m] = String(stats.monthKey || getMonthKey()).split("-");
-        monthInfo.textContent = `${y}年${Number(m)}月の記録から称号を判定しています`;
+      if (needsMyshopRollover){
+        saveMyshopMonthlySales({
+          monthKey: currentKey,
+          sales: 0
+        });
       }
 
-      /* =========================================================
-         履歴モーダル
-      ========================================================= */
-      const modal = document.getElementById("historyModal");
-      const openBtn = document.getElementById("openHistoryBtn");
-      const closeBtn = document.getElementById("closeHistoryBtn");
-      const historyList = document.getElementById("historyList");
+      return {
+        monthKey: currentKey,
+        harvest: 0,
+        sales: 0,
+        fishing: 0,
+        tower: 0
+      };
+    }
 
-      function renderHistory(){
-        const list = getHistory();
-        historyList.innerHTML = "";
+    /* =========================================================
+       画面反映
+    ========================================================= */
+    const harvestValue = document.getElementById("harvestValue");
+    const salesValue   = document.getElementById("salesValue");
+    const fishingValue = document.getElementById("fishingValue");
+    const towerValue   = document.getElementById("towerValue");
+    const mainTitle    = document.getElementById("mainTitle");
+    const monthInfo    = document.getElementById("monthInfo");
 
-        if(!list.length){
-          historyList.innerHTML = `
-            <div class="empty">
-              まだ履歴はありません
+    function render(){
+      const stats = rolloverIfNeeded();
+
+      harvestValue.textContent = `${fmtNum(stats.harvest)} 枚`;
+      salesValue.textContent   = `${fmtNum(stats.sales)} oct`;
+      fishingValue.textContent = `${fmtNum(stats.fishing)} 点`;
+      towerValue.textContent   = `${fmtNum(stats.tower)} F`;
+      mainTitle.textContent    = getTitleFromStats(stats);
+
+      const [y, m] = String(stats.monthKey || getMonthKey()).split("-");
+      monthInfo.textContent = `${y}年${Number(m)}月の記録から称号を判定しています`;
+    }
+
+    /* =========================================================
+       履歴モーダル
+    ========================================================= */
+    const modal = document.getElementById("historyModal");
+    const openBtn = document.getElementById("openHistoryBtn");
+    const closeBtn = document.getElementById("closeHistoryBtn");
+    const historyList = document.getElementById("historyList");
+
+    function renderHistory(){
+      const list = getHistory();
+      historyList.innerHTML = "";
+
+      if(!list.length){
+        historyList.innerHTML = `
+          <div class="empty">
+            まだ履歴はありません
+          </div>
+        `;
+        return;
+      }
+
+      list.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "history-item";
+        row.innerHTML = `
+          <div class="history-month">${escapeHtml(item.monthKey)}</div>
+          <div class="history-main">
+            <div class="history-title">${escapeHtml(item.title || "タコ民")}</div>
+            <div class="history-stats">
+              <div>🔥 収穫 ${fmtNum(item.harvest)} 枚</div>
+              <div>🪙 売上 ${fmtNum(item.sales)} oct</div>
+              <div>🎣 釣り ${fmtNum(item.fishing)} 点</div>
+              <div>🗼 タワー ${fmtNum(item.tower)} F</div>
             </div>
-          `;
-          return;
-        }
-
-        list.forEach(item => {
-          const row = document.createElement("div");
-          row.className = "history-item";
-          row.innerHTML = `
-            <div class="history-month">${escapeHtml(item.monthKey)}</div>
-            <div class="history-main">
-              <div class="history-title">${escapeHtml(item.title || "タコ民")}</div>
-              <div class="history-stats">
-                <div>🔥 収穫 ${fmtNum(item.harvest)} 枚</div>
-                <div>🪙 売上 ${fmtNum(item.sales)} oct</div>
-                <div>🎣 釣り ${fmtNum(item.fishing)} 点</div>
-                <div>🗼 タワー ${fmtNum(item.tower)} F</div>
-              </div>
-            </div>
-          `;
-          historyList.appendChild(row);
-        });
-      }
-
-      function openHistory(){
-        renderHistory();
-        modal.classList.add("show");
-        modal.setAttribute("aria-hidden", "false");
-        document.body.style.overflow = "hidden";
-      }
-
-      function closeHistory(){
-        modal.classList.remove("show");
-        modal.setAttribute("aria-hidden", "true");
-        document.body.style.overflow = "";
-      }
-
-      openBtn.addEventListener("click", openHistory);
-      closeBtn.addEventListener("click", closeHistory);
-
-      modal.addEventListener("click", (e) => {
-        if(e.target === modal) closeHistory();
+          </div>
+        `;
+        historyList.appendChild(row);
       });
+    }
 
-      window.addEventListener("keydown", (e) => {
-        if(e.key === "Escape" && modal.classList.contains("show")){
-          closeHistory();
+    function openHistory(){
+      renderHistory();
+      modal.classList.add("show");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeHistory(){
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    openBtn.addEventListener("click", openHistory);
+    closeBtn.addEventListener("click", closeHistory);
+
+    modal.addEventListener("click", (e) => {
+      if(e.target === modal) closeHistory();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if(e.key === "Escape" && modal.classList.contains("show")){
+        closeHistory();
+      }
+    });
+
+    /* =========================================================
+       戻るボタン
+    ========================================================= */
+    const backBtn = document.getElementById("backBtn");
+
+    if(backBtn){
+      backBtn.addEventListener("click", () => {
+        if(window.history.length > 1){
+          window.history.back();
+        }else{
+          location.href = "../";
         }
       });
+    }
 
-      /* =========================================================
-         戻るボタン
-      ========================================================= */
-      const backBtn = document.getElementById("backBtn");
+    /* =========================================================
+       HTMLエスケープ
+    ========================================================= */
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
 
-      if(backBtn){
-        backBtn.addEventListener("click", () => {
-          if(window.history.length > 1){
-            window.history.back();
-          }else{
-            location.href = "../";
-          }
-        });
-      }
+    /* =========================================================
+       開発用：コンソールから試せる関数
+    ========================================================= */
 
-      /* =========================================================
-         HTMLエスケープ
-      ========================================================= */
-      function escapeHtml(str){
-        return String(str)
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#39;");
-      }
-
-      /* =========================================================
-         開発用：コンソールから試せる関数
-      ========================================================= */
-
-      /* 既存の月間値（収穫/釣り/タワーなど） */
-      window.ttcSetMonthly = function(data){
-        const current = getMonthly();
-        const next = {
-          monthKey: current.monthKey || getMonthKey(),
-          harvest: Number(data?.harvest ?? current.harvest ?? 0),
-          sales: Number(data?.sales ?? current.sales ?? 0),
-          fishing: Number(data?.fishing ?? current.fishing ?? 0),
-          tower: Number(data?.tower ?? current.tower ?? 0)
-        };
-        saveMonthly(next);
-        render();
+    window.ttcSetMonthly = function(data){
+      const current = getMonthly();
+      const next = {
+        monthKey: current.monthKey || getMonthKey(),
+        harvest: Number(data?.harvest ?? current.harvest ?? 0),
+        sales: Number(data?.sales ?? current.sales ?? 0),
+        fishing: Number(data?.fishing ?? current.fishing ?? 0),
+        tower: Number(data?.tower ?? current.tower ?? 0)
       };
-
-      /* ★追加：マイ露店売上だけを直接セット */
-      window.ttcSetMyshopSales = function(value){
-        const current = getMyshopMonthlySales();
-        const next = {
-          monthKey: current.monthKey || getMonthKey(),
-          sales: Number(value || 0)
-        };
-        saveMyshopMonthlySales(next);
-        render();
-      };
-
-      /* ★追加：マイ露店売上だけを加算 */
-      window.ttcAddMyshopSales = function(delta){
-        const current = getMyshopMonthlySales();
-        const next = {
-          monthKey: current.monthKey || getMonthKey(),
-          sales: Math.max(0, Number(current.sales || 0) + Number(delta || 0))
-        };
-        saveMyshopMonthlySales(next);
-        render();
-      };
-
-      window.ttcAddHistory = function(monthKey, title, stats = {}){
-        const list = getHistory();
-        list.unshift({
-          monthKey: String(monthKey || ""),
-          title: String(title || "タコ民"),
-          harvest: Number(stats.harvest || 0),
-          sales: Number(stats.sales || 0),
-          fishing: Number(stats.fishing || 0),
-          tower: Number(stats.tower || 0)
-        });
-        saveHistory(list);
-        renderHistory();
-      };
-
-      window.ttcResetHistory = function(){
-        localStorage.removeItem(LS_HISTORY);
-        renderHistory();
-      };
-
-      window.ttcClearMonthly = function(){
-        saveMonthly(createDefaultMonthly());
-        saveMyshopMonthlySales(createDefaultMyshopSales());
-        render();
-      };
-
-      /* =========================================================
-         初期描画
-      ========================================================= */
+      saveMonthly(next);
       render();
-    })();
+    };
+
+    window.ttcSetMyshopSales = function(value){
+      const current = getMyshopMonthlySales();
+      const next = {
+        monthKey: current.monthKey || getMonthKey(),
+        sales: Number(value || 0)
+      };
+      saveMyshopMonthlySales(next);
+      render();
+    };
+
+    window.ttcAddMyshopSales = function(delta){
+      const current = getMyshopMonthlySales();
+      const next = {
+        monthKey: current.monthKey || getMonthKey(),
+        sales: Math.max(0, Number(current.sales || 0) + Number(delta || 0))
+      };
+      saveMyshopMonthlySales(next);
+      render();
+    };
+
+    window.ttcAddHistory = function(monthKey, title, stats = {}){
+      const list = getHistory();
+      list.unshift({
+        monthKey: String(monthKey || ""),
+        title: String(title || "タコ民"),
+        harvest: Number(stats.harvest || 0),
+        sales: Number(stats.sales || 0),
+        fishing: Number(stats.fishing || 0),
+        tower: Number(stats.tower || 0)
+      });
+      saveHistory(list);
+      renderHistory();
+    };
+
+    window.ttcResetHistory = function(){
+      localStorage.removeItem(LS_HISTORY);
+      renderHistory();
+    };
+
+    window.ttcClearMonthly = function(){
+      saveMonthly(createDefaultMonthly());
+      saveMyshopMonthlySales(createDefaultMyshopSales());
+      render();
+    };
+
+    /* =========================================================
+       初期描画
+    ========================================================= */
+    render();
+  })();
+</script>
   </script>
 </body>
 </html>
