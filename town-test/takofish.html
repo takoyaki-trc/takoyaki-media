@@ -116,6 +116,7 @@
       display:none; align-items:stretch; justify-content:center;
       background: rgba(0,0,0,.72);
       padding: 12px;
+      z-index: 40;
     }
     .overlay.show{ display:flex; }
 
@@ -272,7 +273,7 @@
     }
 
     .resultMain{ font-weight:1000; font-size:18px; line-height:1.35; margin: 10px 0 8px; }
-    .resultLines > div{ margin: 2px 0; }
+    .resultLines > div{ margin: 4px 0; }
     .tagNew{
       display:inline-block;
       font-size: 11px; font-weight: 1000;
@@ -285,7 +286,7 @@
     }
 
     .resultDate{
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 12px;
       opacity: .72;
     }
@@ -351,9 +352,133 @@
     }
     .spBtns .btn{ flex:1; }
 
+    /* ▼ ドロップ演出 */
+    .dropSplash{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,.12), rgba(0,0,0,.78) 65%);
+      z-index: 60;
+      padding: 20px;
+    }
+    .dropSplash.show{ display:flex; }
+
+    .dropCard{
+      width:min(420px, 100%);
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.22);
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,.16), rgba(255,255,255,.05) 48%, rgba(0,0,0,.30) 100%);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.05) inset,
+        0 20px 60px rgba(0,0,0,.55),
+        0 0 35px rgba(127,208,255,.18);
+      padding:20px 18px 18px;
+      text-align:center;
+      animation: dropPop .42s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+    .dropCard::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:
+        linear-gradient(120deg,
+          transparent 0%,
+          rgba(255,255,255,.08) 35%,
+          transparent 55%);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+    @keyframes dropPop{
+      0%{ transform:scale(.72); opacity:0; }
+      70%{ transform:scale(1.04); opacity:1; }
+      100%{ transform:scale(1); opacity:1; }
+    }
+    .dropBadge{
+      display:inline-block;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:1000;
+      letter-spacing:.08em;
+      border:1px solid rgba(255,255,255,.22);
+      background:rgba(255,255,255,.08);
+      margin-bottom:10px;
+    }
+    .dropHero{
+      width:120px;
+      height:120px;
+      margin:0 auto 10px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 10px 28px rgba(0,0,0,.35);
+    }
+    .dropHero img{
+      width:92px;
+      height:92px;
+      object-fit:contain;
+      image-rendering: pixelated;
+      display:block;
+    }
+    .dropTitle{
+      font-size:30px;
+      font-weight:1000;
+      line-height:1.1;
+      margin-bottom:6px;
+      text-shadow:
+        0 0 10px rgba(255,255,255,.10),
+        0 0 22px rgba(127,208,255,.14);
+    }
+    .dropSub{
+      font-size:14px;
+      color:rgba(255,255,255,.86);
+      margin-bottom:12px;
+    }
+    .dropQty{
+      font-size:16px;
+      font-weight:1000;
+      margin-bottom:8px;
+    }
+    .dropTotal{
+      font-size:13px;
+      color:rgba(255,255,255,.78);
+      margin-bottom:14px;
+    }
+    .dropAction{
+      display:flex;
+      gap:10px;
+    }
+    .dropAction .btn{
+      flex:1;
+      padding:12px 12px;
+    }
+    .dropRare{
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.55),
+        0 0 42px rgba(255,217,121,.28);
+    }
+
     @media (max-width: 560px){
       .countNum{ font-size: 60px; }
       .grid2{ grid-template-columns: 1fr; }
+      .dropTitle{ font-size:24px; }
+      .dropHero{
+        width:100px;
+        height:100px;
+      }
+      .dropHero img{
+        width:78px;
+        height:78px;
+      }
     }
   </style>
 </head>
@@ -472,6 +597,23 @@
               </div>
             </div>
 
+            <!-- ▼ ドロップ演出 -->
+            <div id="dropSplash" class="dropSplash" aria-hidden="true">
+              <div id="dropCard" class="dropCard">
+                <div id="dropBadge" class="dropBadge">DROP</div>
+                <div class="dropHero">
+                  <img id="dropImg" alt="ドロップ報酬">
+                </div>
+                <div id="dropTitle" class="dropTitle">海水</div>
+                <div id="dropSub" class="dropSub">ファームに報酬が追加された！</div>
+                <div id="dropQty" class="dropQty">×1 GET!</div>
+                <div id="dropTotal" class="dropTotal">所持数：0</div>
+                <div class="dropAction">
+                  <button id="dropOkBtn" class="btn" type="button">OK</button>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <div class="footnote">
@@ -584,17 +726,30 @@
     return { best: newBest, isNew };
   }
 
-  const V = "2";
+  const V = "3";
   const SP_BASE = "./assets/images/sp/";
 
-  // =========================
-  // 釣り報酬
-  // =========================
   const DROP_WATERS = {
-    rotten:   { id: "water_rotten",   label: "腐ったミズ" },
-    sea:      { id: "water_sea",      label: "海水" },
-    yunokawa: { id: "water_yunokawa", label: "ゆのかわの温泉水" },
-    supergod: { id: "water_supergod", label: "超神水" },
+    rotten: {
+      id: "water_rotten",
+      label: "腐ったミズ",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/6.png"
+    },
+    sea: {
+      id: "water_sea",
+      label: "海水",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/7.png"
+    },
+    yunokawa: {
+      id: "water_yunokawa",
+      label: "ゆのかわの温泉水",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/8.png"
+    },
+    supergod: {
+      id: "water_supergod",
+      label: "超神水",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/9.png"
+    },
   };
 
   const TAKOKAGE_SP = {
@@ -655,27 +810,29 @@
     return {
       id: drop.id,
       label: drop.label,
+      img: drop.img || "",
       qty,
       total: inv.water[drop.id]
     };
   }
 
+  // ▼ ドロップ率を上げた版
   function rollWaterDrop(score){
     score = Math.floor(Number(score) || 0);
 
-    // 超神水：2000〜5000で上昇、5000以上は固定
+    // 超神水：2000〜5000で大きく上昇
     if (score >= 2000){
       const t = normalizeScore(score, 2000, 5000);
-      const chance = 0.02 + 0.18 * t; // 2% -> 20%
+      const chance = 0.08 + 0.24 * t; // 8% → 32%
       if (Math.random() < chance){
         return { ...DROP_WATERS.supergod, qty: 1 };
       }
     }
 
-    // ゆのかわの温泉水：1000〜3000
+    // 温泉水：1000〜3000
     if (score >= 1000 && score <= 3000){
       const t = normalizeScore(score, 1000, 3000);
-      const chance = 0.12 + 0.33 * t; // 12% -> 45%
+      const chance = 0.25 + 0.35 * t; // 25% → 60%
       if (Math.random() < chance){
         return { ...DROP_WATERS.yunokawa, qty: 1 };
       }
@@ -684,16 +841,16 @@
     // 海水：-500〜2000
     if (score >= -500 && score <= 2000){
       const t = normalizeScore(score, -500, 2000);
-      const chance = 0.10 + 0.42 * t; // 10% -> 52%
+      const chance = 0.28 + 0.42 * t; // 28% → 70%
       if (Math.random() < chance){
         return { ...DROP_WATERS.sea, qty: 1 };
       }
     }
 
-    // 腐ったミズ：-500〜-3000でマイナスが深いほど上昇
+    // 腐ったミズ：-500〜-3000
     if (score <= -500 && score >= -3000){
       const t = normalizeNegativeMagnitude(score, -500, -3000);
-      const chance = 0.12 + 0.45 * t; // 12% -> 57%
+      const chance = 0.24 + 0.46 * t; // 24% → 70%
       if (Math.random() < chance){
         return { ...DROP_WATERS.rotten, qty: 1 };
       }
@@ -993,6 +1150,16 @@
     spYesBtn: document.getElementById("spYesBtn"),
     spNoBtn: document.getElementById("spNoBtn"),
 
+    dropSplash: document.getElementById("dropSplash"),
+    dropCard: document.getElementById("dropCard"),
+    dropBadge: document.getElementById("dropBadge"),
+    dropImg: document.getElementById("dropImg"),
+    dropTitle: document.getElementById("dropTitle"),
+    dropSub: document.getElementById("dropSub"),
+    dropQty: document.getElementById("dropQty"),
+    dropTotal: document.getElementById("dropTotal"),
+    dropOkBtn: document.getElementById("dropOkBtn"),
+
     countOverlay: document.getElementById("countOverlay"),
     countNum: document.getElementById("countNum"),
 
@@ -1028,6 +1195,45 @@
   }
   function hideCountdown(){
     els.countOverlay.classList.remove("show");
+  }
+
+  function showDropSplash(payload){
+    return new Promise((resolve) => {
+      if (!payload){
+        resolve();
+        return;
+      }
+
+      els.dropBadge.textContent = payload.badge || "DROP";
+      els.dropTitle.textContent = payload.title || "GET!";
+      els.dropSub.textContent = payload.sub || "";
+      els.dropQty.textContent = payload.qtyText || "";
+      els.dropTotal.innerHTML = payload.totalText || "";
+
+      if (payload.img){
+        els.dropImg.src = payload.img;
+        els.dropImg.style.display = "block";
+      } else {
+        els.dropImg.removeAttribute("src");
+        els.dropImg.style.display = "none";
+      }
+
+      if (payload.rare){
+        els.dropCard.classList.add("dropRare");
+      } else {
+        els.dropCard.classList.remove("dropRare");
+      }
+
+      els.dropSplash.classList.add("show");
+
+      const done = () => {
+        els.dropSplash.classList.remove("show");
+        els.dropOkBtn.removeEventListener("click", done);
+        resolve();
+      };
+
+      els.dropOkBtn.addEventListener("click", done, { once:true });
+    });
   }
 
   els.rulesBtn.addEventListener("click", showRules);
@@ -1181,7 +1387,7 @@
     return `🎁 ${dropInfo.label} ×${dropInfo.qty} を手に入れた！ 所持数：<b>${dropInfo.total}</b>`;
   }
 
-  function showResultScreen(score, extended, oniReached){
+  async function showResultScreen(score, extended, oniReached){
     const rec = saveFishingRecord(score);
     refreshBestUI();
 
@@ -1193,8 +1399,31 @@
 
     const waterDrop = rollWaterDrop(score);
     const dropInfo = addWaterToFarm(waterDrop);
-
     SP_PENDING = rollTakokageSP();
+
+    if (dropInfo){
+      await showDropSplash({
+        badge: "WATER DROP",
+        title: dropInfo.label,
+        sub: "ファームにミズが追加された！",
+        qtyText: `×${dropInfo.qty} GET!`,
+        totalText: `所持数：<b>${dropInfo.total}</b>`,
+        img: dropInfo.img,
+        rare: dropInfo.id === "water_supergod" || dropInfo.id === "water_yunokawa"
+      });
+    }
+
+    if (SP_PENDING){
+      await showDropSplash({
+        badge: "SP CARD",
+        title: "タコ影カード",
+        sub: "超低確率ドロップ！",
+        qtyText: "図鑑チャンス！",
+        totalText: "このあと結果画面で登録できます",
+        img: SP_PENDING.img,
+        rare: true
+      });
+    }
 
     els.resultTitle.innerHTML = rec.isNew ? `結果<span class="tagNew">NEW</span>` : "結果";
 
@@ -1266,7 +1495,7 @@
 
       if (getRemainingTime() <= 0 && !STATE.ended){
         STATE.ended = true;
-        setTimeout(() => showResultScreen(STATE.score, STATE.extended, STATE.oniReached), 120);
+        setTimeout(() => { showResultScreen(STATE.score, STATE.extended, STATE.oniReached); }, 120);
       }
     }, 1000);
   }
@@ -1945,3 +2174,4 @@
 </script>
 </body>
 </html>
+
