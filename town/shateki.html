@@ -246,14 +246,13 @@
   </div>
 
   <div class="toast" id="toast"></div>
-
 <script>
 (() => {
   "use strict";
 
   const STORAGE = {
-    bestScore: "trc_shateki_best_score_v2",
-    rewards: "trc_shateki_rewards_v2"
+    bestScore: "trc_shateki_best_score_v3",
+    rewards: "trc_shateki_rewards_v3"
   };
 
   const DEFAULT_REWARD_STATE = {
@@ -276,27 +275,28 @@
   const resultList = document.getElementById("resultList");
   const toastEl = document.getElementById("toast");
 
-  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
   let cssWidth = 900;
   let cssHeight = 1280;
+  let dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  let rafId = 0;
+  let toastTimer = null;
 
   const CONFIG = {
     bulletsMax: 5,
-    laneY: [295, 470, 645],
-    laneSpeed: [-88, 128, -178],
+    laneRatios: [0.24, 0.39, 0.54],   // 3段
+    laneSpeed: [-90, 130, -175],       // 1段目左、2段目右、3段目左
     targetsPerLane: [5, 5, 6],
-    gunXRatio: 0.5,
-    gunY: 1095,
-    counterTopY: 880,
-    shotLife: 220,
+    counterYRatio: 0.69,
+    gunYRatio: 0.84,
+    shotLife: 240,
     hitFlashMs: 180
   };
 
   const SIZE_MAP = {
-    xs: 22,
-    s: 32,
-    m: 44,
-    l: 58
+    xs: 18,
+    s: 28,
+    m: 40,
+    l: 54
   };
 
   const TARGET_TYPES = {
@@ -304,40 +304,40 @@
       key: "water",
       label: "ミズ",
       emoji: "💧",
-      color: "#77d8ff",
+      color: "#74d8ff",
+      particle: "#a2ebff",
       scoreBase: 90,
       rewardBySize: { xs: 3, s: 2, m: 1, l: 1 },
-      particle: "#8ce3ff",
       bad: false
     },
     fertilizer: {
       key: "fertilizer",
       label: "ヒリョウ",
       emoji: "🧪",
-      color: "#dca3ff",
+      color: "#d5a5ff",
+      particle: "#edd0ff",
       scoreBase: 100,
       rewardBySize: { xs: 3, s: 2, m: 1, l: 1 },
-      particle: "#e7c1ff",
       bad: false
     },
     seed: {
       key: "seed",
       label: "タネ",
       emoji: "🌱",
-      color: "#97df6d",
+      color: "#9be06d",
+      particle: "#caf6a9",
       scoreBase: 110,
       rewardBySize: { xs: 3, s: 2, m: 1, l: 1 },
-      particle: "#b7f08e",
       bad: false
     },
     bad: {
       key: "bad",
       label: "ハズレ",
       emoji: "💀",
-      color: "#ff9f78",
+      color: "#ffa27a",
+      particle: "#ffd0bf",
       scoreBase: -80,
       rewardBySize: { xs: 0, s: 0, m: 0, l: 0 },
-      particle: "#ffbfaa",
       bad: true
     }
   };
@@ -349,113 +349,84 @@
     l: 0
   };
 
-  let state = {
+  const state = {
     running: false,
     bullets: CONFIG.bulletsMax,
     score: 0,
     gainedCount: 0,
     bestScore: readNumber(STORAGE.bestScore, 0),
+    rewardsThisRun: { ...DEFAULT_REWARD_STATE },
     targets: [],
     shots: [],
     particles: [],
     floatTexts: [],
     hitRings: [],
-    rewardsThisRun: { ...DEFAULT_REWARD_STATE },
     lastTs: 0
   };
 
-  updateHud();
-  resizeCanvas();
-  startGame();
-  window.addEventListener("resize", resizeCanvas);
-
-  startBtn.addEventListener("click", () => {
-    startGame();
-  });
-
-  resetBestBtn.addEventListener("click", () => {
-    localStorage.removeItem(STORAGE.bestScore);
-    state.bestScore = 0;
-    updateHud();
-    showToast("ベスト記録をリセットしました");
-  });
-
-  canvas.addEventListener("pointerdown", onPointerDown, { passive:false });
-
-  function startGame(){
-    state.running = true;
-    state.bullets = CONFIG.bulletsMax;
-    state.score = 0;
-    state.gainedCount = 0;
-    state.targets = [];
-    state.shots = [];
-    state.particles = [];
-    state.floatTexts = [];
-    state.hitRings = [];
-    state.rewardsThisRun = { ...DEFAULT_REWARD_STATE };
-    state.lastTs = performance.now();
-    resultBox.hidden = true;
-    createTargets();
-    updateHud();
-    startBtn.textContent = "プレイ中";
-    showToast("たこ焼き射的スタート！");
-    requestAnimationFrame(loop);
+  function laneY(index){
+    return cssHeight * CONFIG.laneRatios[index];
   }
 
-  function endGame(){
-    state.running = false;
-
-    if (state.score > state.bestScore) {
-      state.bestScore = state.score;
-      localStorage.setItem(STORAGE.bestScore, String(state.bestScore));
-    }
-
-    saveRewards(state.rewardsThisRun);
-    updateHud();
-    renderResult();
-    startBtn.textContent = "もう一回あそぶ";
-    showToast("ゲーム終了！報酬を保存しました");
-    draw();
+  function counterTopY(){
+    return cssHeight * CONFIG.counterYRatio;
   }
 
-  function createTargets(){
+  function gunX(){
+    return cssWidth * 0.5;
+  }
+
+  function gunY(){
+    return cssHeight * CONFIG.gunYRatio;
+  }
+
+  function setupCanvas(){
+    const rect = canvas.getBoundingClientRect();
+    const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 900;
+    cssWidth = Math.max(320, Math.floor(rect.width || parentWidth || 900));
+    cssHeight = Math.floor(cssWidth * (1280 / 900));
+    dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+    canvas.style.height = cssHeight + "px";
+    canvas.width = Math.floor(cssWidth * dpr);
+    canvas.height = Math.floor(cssHeight * dpr);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+  }
+
+  function initTargets(){
     state.targets = [];
     for (let lane = 0; lane < 3; lane++) {
       const count = CONFIG.targetsPerLane[lane];
       const dir = CONFIG.laneSpeed[lane] > 0 ? 1 : -1;
+      const spacing = cssWidth / (count + 0.4);
+
       for (let i = 0; i < count; i++) {
-        state.targets.push(makeTarget(lane, i, dir));
+        const type = pickTargetType();
+        const sizeKey = pickSizeKey(type.key);
+        const r = SIZE_MAP[sizeKey];
+
+        let x = spacing * (i + 0.7);
+        if (dir < 0) x = cssWidth - x;
+        x += rand(-20, 20);
+
+        state.targets.push({
+          id: `t_${lane}_${i}_${Math.random().toString(36).slice(2,7)}`,
+          lane,
+          type,
+          sizeKey,
+          r,
+          x,
+          y: laneY(lane),
+          baseY: laneY(lane),
+          vx: CONFIG.laneSpeed[lane] * rand(0.9, 1.1),
+          bobT: Math.random() * Math.PI * 2,
+          hitFlash: 0,
+          hitBounce: 0
+        });
       }
     }
-  }
-
-  function makeTarget(lane, index, dir){
-    const type = pickTargetType();
-    const sizeKey = pickSizeKey(type.key);
-    const r = SIZE_MAP[sizeKey];
-    const spacing = cssWidth / (CONFIG.targetsPerLane[lane] + 0.4);
-    let x = spacing * (index + 0.5);
-
-    if (dir < 0) {
-      x = cssWidth - x;
-    }
-
-    x += rand(-28, 28);
-
-    return {
-      id: `t_${lane}_${index}_${Math.random().toString(36).slice(2,8)}`,
-      lane,
-      x,
-      y: CONFIG.laneY[lane],
-      baseY: CONFIG.laneY[lane],
-      vx: CONFIG.laneSpeed[lane] * rand(0.88, 1.16),
-      type,
-      sizeKey,
-      r,
-      bobT: Math.random() * Math.PI * 2,
-      hitFlash: 0,
-      hitBounce: 0
-    };
   }
 
   function pickTargetType(){
@@ -471,8 +442,8 @@
 
     if (typeKey === "bad") {
       if (roll < 0.10) return "xs";
-      if (roll < 0.25) return "s";
-      if (roll < 0.55) return "m";
+      if (roll < 0.28) return "s";
+      if (roll < 0.60) return "m";
       return "l";
     }
 
@@ -482,163 +453,46 @@
     return "l";
   }
 
-  function onPointerDown(e){
-    e.preventDefault();
+  function startGame(){
+    cancelAnimationFrame(rafId);
 
-    if (!state.running) return;
-    if (state.bullets <= 0) return;
+    state.running = true;
+    state.bullets = CONFIG.bulletsMax;
+    state.score = 0;
+    state.gainedCount = 0;
+    state.rewardsThisRun = { ...DEFAULT_REWARD_STATE };
+    state.shots = [];
+    state.particles = [];
+    state.floatTexts = [];
+    state.hitRings = [];
 
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (cssWidth / rect.width);
-    const y = (e.clientY - rect.top) * (cssHeight / rect.height);
-
-    shoot(x, y);
-  }
-
-  function shoot(targetX, targetY){
-    if (!state.running || state.bullets <= 0) return;
-
-    state.bullets--;
-
-    const gunX = cssWidth * CONFIG.gunXRatio;
-    const gunY = CONFIG.gunY;
-
-    state.shots.push({
-      fromX: gunX,
-      fromY: gunY - 84,
-      toX: targetX,
-      toY: targetY,
-      life: CONFIG.shotLife,
-      maxLife: CONFIG.shotLife
-    });
-
-    state.hitRings.push({
-      x: targetX,
-      y: targetY,
-      life: 220,
-      maxLife: 220,
-      miss: true
-    });
-
-    let hitTarget = null;
-    for (let i = state.targets.length - 1; i >= 0; i--) {
-      const t = state.targets[i];
-      const dx = targetX - t.x;
-      const dy = targetY - t.y;
-      if (dx * dx + dy * dy <= t.r * t.r) {
-        hitTarget = t;
-        break;
-      }
-    }
-
-    if (hitTarget) {
-      applyHit(hitTarget, targetX, targetY);
-    } else {
-      state.score = Math.max(0, state.score - 15);
-      state.floatTexts.push({
-        x: targetX,
-        y: targetY - 8,
-        text: "MISS",
-        color: "#fff0d9",
-        life: 780,
-        maxLife: 780,
-        size: 34
-      });
-      burst(targetX, targetY, "#fff0d9", 7, true);
-      showToast("はずれ！");
-    }
+    setupCanvas();
+    initTargets();
+    resultBox.hidden = true;
+    startBtn.textContent = "プレイ中";
+    state.lastTs = performance.now();
 
     updateHud();
-
-    if (state.bullets <= 0) {
-      setTimeout(endGame, 450);
-    }
+    draw();
+    showToast("たこ焼き射的スタート！");
+    rafId = requestAnimationFrame(loop);
   }
 
-  function applyHit(target, x, y){
-    const type = target.type;
-    const bonus = SIZE_SCORE_BONUS[target.sizeKey] || 0;
-    const scoreAdd = type.bad ? type.scoreBase - bonus * 0.5 : type.scoreBase + bonus;
+  function endGame(){
+    state.running = false;
+    cancelAnimationFrame(rafId);
 
-    state.score = Math.max(0, state.score + Math.round(scoreAdd));
-    target.hitFlash = CONFIG.hitFlashMs;
-    target.hitBounce = 280;
-
-    const rewardAmount = type.rewardBySize[target.sizeKey] || 0;
-
-    state.hitRings.push({
-      x, y,
-      life: 360,
-      maxLife: 360,
-      miss: false
-    });
-
-    if (!type.bad) {
-      if (type.key === "water") state.rewardsThisRun.water += rewardAmount;
-      if (type.key === "fertilizer") state.rewardsThisRun.fertilizer += rewardAmount;
-      if (type.key === "seed") state.rewardsThisRun.seed += rewardAmount;
-
-      state.gainedCount += rewardAmount;
-
-      state.floatTexts.push({
-        x,
-        y: y - 4,
-        text: "HIT!",
-        color: "#fff7af",
-        life: 900,
-        maxLife: 900,
-        size: 40
-      });
-
-      state.floatTexts.push({
-        x,
-        y: y + 28,
-        text: `+${type.label}×${rewardAmount}`,
-        color: "#ffffff",
-        life: 900,
-        maxLife: 900,
-        size: 26
-      });
-
-      burst(x, y, type.particle, 16, false);
-      showToast(`${type.emoji} ${type.label} ×${rewardAmount}`);
-    } else {
-      state.floatTexts.push({
-        x,
-        y: y - 4,
-        text: "MISS...",
-        color: "#ffd7c9",
-        life: 900,
-        maxLife: 900,
-        size: 36
-      });
-
-      burst(x, y, type.particle, 12, false);
-      showToast("ハズレに命中！");
+    if (state.score > state.bestScore) {
+      state.bestScore = state.score;
+      localStorage.setItem(STORAGE.bestScore, String(state.bestScore));
     }
 
-    recycleTarget(target);
-  }
-
-  function recycleTarget(target){
-    const lane = target.lane;
-    const dir = CONFIG.laneSpeed[lane] > 0 ? 1 : -1;
-
-    target.type = pickTargetType();
-    target.sizeKey = pickSizeKey(target.type.key);
-    target.r = SIZE_MAP[target.sizeKey];
-    target.y = CONFIG.laneY[lane];
-    target.baseY = CONFIG.laneY[lane];
-    target.bobT = Math.random() * Math.PI * 2;
-    target.hitFlash = 0;
-
-    if (dir < 0) {
-      target.x = cssWidth + target.r + rand(20, 110);
-    } else {
-      target.x = -target.r - rand(20, 110);
-    }
-
-    target.vx = CONFIG.laneSpeed[lane] * rand(0.88, 1.16);
+    saveRewards(state.rewardsThisRun);
+    updateHud();
+    renderResult();
+    startBtn.textContent = "もう一回あそぶ";
+    showToast("ゲーム終了！報酬を保存しました");
+    draw();
   }
 
   function loop(ts){
@@ -649,14 +503,19 @@
 
     update(dt);
     draw();
-    requestAnimationFrame(loop);
+    rafId = requestAnimationFrame(loop);
   }
 
   function update(dt){
     for (const t of state.targets) {
       t.x += t.vx * dt / 1000;
       t.bobT += dt * 0.004;
-      const bounce = t.hitBounce > 0 ? Math.sin((280 - t.hitBounce) * 0.06) * 10 : 0;
+
+      const bounce = t.hitBounce > 0
+        ? Math.sin((280 - t.hitBounce) * 0.06) * 10
+        : 0;
+
+      t.baseY = laneY(t.lane);
       t.y = t.baseY + Math.sin(t.bobT) * 4 - bounce;
 
       if (t.hitFlash > 0) t.hitFlash -= dt;
@@ -683,7 +542,7 @@
     });
 
     state.floatTexts = state.floatTexts.filter(f => {
-      f.y -= dt * 0.036;
+      f.y -= dt * 0.038;
       f.life -= dt;
       return f.life > 0;
     });
@@ -692,6 +551,152 @@
       r.life -= dt;
       return r.life > 0;
     });
+  }
+
+  function recycleTarget(t){
+    const lane = t.lane;
+    const dir = CONFIG.laneSpeed[lane] > 0 ? 1 : -1;
+    const type = pickTargetType();
+    const sizeKey = pickSizeKey(type.key);
+
+    t.type = type;
+    t.sizeKey = sizeKey;
+    t.r = SIZE_MAP[sizeKey];
+    t.baseY = laneY(lane);
+    t.y = laneY(lane);
+    t.bobT = Math.random() * Math.PI * 2;
+    t.hitFlash = 0;
+    t.hitBounce = 0;
+    t.vx = CONFIG.laneSpeed[lane] * rand(0.9, 1.1);
+
+    if (dir < 0) {
+      t.x = cssWidth + t.r + rand(20, 100);
+    } else {
+      t.x = -t.r - rand(20, 100);
+    }
+  }
+
+  function shoot(targetX, targetY){
+    if (!state.running || state.bullets <= 0) return;
+
+    state.bullets--;
+
+    state.shots.push({
+      fromX: gunX(),
+      fromY: gunY() - 70,
+      toX: targetX,
+      toY: targetY,
+      life: CONFIG.shotLife,
+      maxLife: CONFIG.shotLife
+    });
+
+    let hitTarget = null;
+    for (let i = state.targets.length - 1; i >= 0; i--) {
+      const t = state.targets[i];
+      const dx = targetX - t.x;
+      const dy = targetY - t.y;
+      if (dx * dx + dy * dy <= t.r * t.r) {
+        hitTarget = t;
+        break;
+      }
+    }
+
+    if (hitTarget) {
+      applyHit(hitTarget, targetX, targetY);
+    } else {
+      state.score = Math.max(0, state.score - 15);
+      state.hitRings.push({
+        x: targetX,
+        y: targetY,
+        life: 220,
+        maxLife: 220,
+        miss: true
+      });
+      state.floatTexts.push({
+        x: targetX,
+        y: targetY - 8,
+        text: "MISS",
+        color: "#fff0d9",
+        life: 760,
+        maxLife: 760,
+        size: 34
+      });
+      burst(targetX, targetY, "#fff0d9", 7, true);
+      showToast("はずれ！");
+    }
+
+    updateHud();
+
+    if (state.bullets <= 0) {
+      setTimeout(endGame, 420);
+    }
+  }
+
+  function applyHit(target, x, y){
+    const type = target.type;
+    const bonus = SIZE_SCORE_BONUS[target.sizeKey] || 0;
+    const scoreAdd = type.bad
+      ? type.scoreBase - bonus * 0.5
+      : type.scoreBase + bonus;
+
+    state.score = Math.max(0, state.score + Math.round(scoreAdd));
+    target.hitFlash = CONFIG.hitFlashMs;
+    target.hitBounce = 280;
+
+    state.hitRings.push({
+      x, y,
+      life: 360,
+      maxLife: 360,
+      miss: false
+    });
+
+    if (!type.bad) {
+      const amount = type.rewardBySize[target.sizeKey] || 0;
+
+      if (type.key === "water") state.rewardsThisRun.water += amount;
+      if (type.key === "fertilizer") state.rewardsThisRun.fertilizer += amount;
+      if (type.key === "seed") state.rewardsThisRun.seed += amount;
+
+      state.gainedCount += amount;
+
+      state.floatTexts.push({
+        x,
+        y: y - 4,
+        text: "HIT!",
+        color: "#fff7af",
+        life: 900,
+        maxLife: 900,
+        size: 40
+      });
+
+      state.floatTexts.push({
+        x,
+        y: y + 28,
+        text: `+${type.label}×${amount}`,
+        color: "#ffffff",
+        life: 900,
+        maxLife: 900,
+        size: 26
+      });
+
+      burst(x, y, type.particle, 16, false);
+      showToast(`${type.emoji} ${type.label} ×${amount}`);
+    } else {
+      state.floatTexts.push({
+        x,
+        y: y - 4,
+        text: "MISS...",
+        color: "#ffd7c9",
+        life: 900,
+        maxLife: 900,
+        size: 36
+      });
+
+      burst(x, y, type.particle, 12, false);
+      showToast("ハズレに命中！");
+    }
+
+    recycleTarget(target);
   }
 
   function draw(){
@@ -722,7 +727,6 @@
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, cssWidth, cssHeight);
 
-    // 上帯
     roundRect(ctx, 26, 34, cssWidth - 52, 84, 18, "#f1c66d");
     ctx.fillStyle = "#5c2410";
     ctx.font = `900 ${Math.max(24, cssWidth * 0.06)}px sans-serif`;
@@ -730,37 +734,30 @@
     ctx.textBaseline = "middle";
     ctx.fillText("たこ焼き射的", cssWidth / 2, 76);
 
-    // 提灯
     const lanternXs = [0.12, 0.31, 0.5, 0.69, 0.88];
-    for (const rate of lanternXs) {
-      drawLantern(cssWidth * rate, 22);
-    }
+    for (const rate of lanternXs) drawLantern(cssWidth * rate, 22);
 
-    // 棚板
-    drawShelf(0, 235, cssWidth, 16);
-    drawShelf(0, 410, cssWidth, 16);
-    drawShelf(0, 585, cssWidth, 16);
+    drawShelf(0, laneY(0) - 60, cssWidth, 14);
+    drawShelf(0, laneY(1) - 60, cssWidth, 14);
+    drawShelf(0, laneY(2) - 60, cssWidth, 14);
 
-    // カウンター
     ctx.fillStyle = "#60230e";
-    ctx.fillRect(0, CONFIG.counterTopY, cssWidth, cssHeight - CONFIG.counterTopY);
+    ctx.fillRect(0, counterTopY(), cssWidth, cssHeight - counterTopY());
 
     ctx.fillStyle = "#4a1608";
-    ctx.fillRect(0, CONFIG.counterTopY + 32, cssWidth, 18);
+    ctx.fillRect(0, counterTopY() + 32, cssWidth, 18);
 
-    // 下の暗部
     ctx.fillStyle = "rgba(0,0,0,.18)";
-    ctx.fillRect(0, CONFIG.counterTopY + 52, cssWidth, cssHeight - (CONFIG.counterTopY + 52));
+    ctx.fillRect(0, counterTopY() + 52, cssWidth, cssHeight - (counterTopY() + 52));
   }
 
   function drawLantern(x, y){
-    ctx.save();
     ctx.fillStyle = "#f9e2ae";
     ctx.fillRect(x - 2, y, 4, 18);
 
     roundRect(ctx, x - 34, y + 18, 68, 86, 18, "#ffa757");
-    ctx.lineWidth = 4;
     ctx.strokeStyle = "#883513";
+    ctx.lineWidth = 4;
     ctx.strokeRect(x - 28, y + 26, 56, 70);
 
     ctx.fillStyle = "#6f230f";
@@ -768,7 +765,6 @@
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("祭", x, y + 60);
-    ctx.restore();
   }
 
   function drawShelf(x, y, w, h){
@@ -779,8 +775,8 @@
   }
 
   function drawLaneGuides(){
-    for (let i = 0; i < CONFIG.laneY.length; i++) {
-      const y = CONFIG.laneY[i];
+    for (let i = 0; i < 3; i++) {
+      const y = laneY(i);
 
       ctx.save();
       ctx.globalAlpha = 0.16;
@@ -788,16 +784,11 @@
       ctx.fillRect(0, y - 64, cssWidth, 128);
       ctx.restore();
 
-      ctx.fillStyle = "rgba(255,245,220,.85)";
+      ctx.fillStyle = "rgba(255,245,220,.9)";
       ctx.font = "900 16px sans-serif";
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
-
-      let text = "";
-      if (i === 0) text = "1段目 ←";
-      if (i === 1) text = "2段目 →";
-      if (i === 2) text = "3段目 ←";
-      ctx.fillText(text, 16, y - 78);
+      ctx.fillText(i === 1 ? "2段目 →" : (i === 0 ? "1段目 ←" : "3段目 ←"), 16, y - 78);
     }
   }
 
@@ -807,7 +798,6 @@
       const pulse = 1 + glow * 0.16;
       const r = t.r * pulse;
 
-      // 影
       ctx.save();
       ctx.globalAlpha = 0.22;
       ctx.fillStyle = "#000";
@@ -816,7 +806,6 @@
       ctx.fill();
       ctx.restore();
 
-      // 発光
       if (glow > 0) {
         ctx.save();
         ctx.globalAlpha = glow * 0.45;
@@ -827,7 +816,6 @@
         ctx.restore();
       }
 
-      // 本体
       ctx.fillStyle = t.type.color;
       ctx.beginPath();
       ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
@@ -837,26 +825,22 @@
       ctx.strokeStyle = "#fff6e7";
       ctx.stroke();
 
-      // 内側リング
       ctx.lineWidth = 3;
       ctx.strokeStyle = "rgba(255,255,255,.45)";
       ctx.beginPath();
       ctx.arc(t.x, t.y, r * 0.65, 0, Math.PI * 2);
       ctx.stroke();
 
-      // 絵文字
       ctx.fillStyle = "#26130c";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.font = `900 ${Math.max(18, r * 0.92)}px sans-serif`;
+      ctx.font = `900 ${Math.max(16, r * 0.9)}px sans-serif`;
       ctx.fillText(t.type.emoji, t.x, t.y + 3);
 
-      // サイズバッジ
-      const badgeText = sizeLabel(t.sizeKey);
       roundRect(ctx, t.x - 26, t.y + r + 10, 52, 22, 10, "rgba(255,250,242,.96)");
       ctx.fillStyle = "#502110";
       ctx.font = "900 12px sans-serif";
-      ctx.fillText(badgeText, t.x, t.y + r + 22);
+      ctx.fillText(sizeLabel(t.sizeKey), t.x, t.y + r + 22);
     }
   }
 
@@ -868,7 +852,6 @@
       const cx = s.fromX + (s.toX - s.fromX) * p;
       const cy = s.fromY + (s.toY - s.fromY) * p;
 
-      // 弾道
       ctx.save();
       ctx.globalAlpha = alpha * 0.7;
       ctx.strokeStyle = "#ffe8b0";
@@ -879,7 +862,6 @@
       ctx.stroke();
       ctx.restore();
 
-      // たこ焼き弾
       drawTakoyakiBall(cx, cy, 18, alpha);
     }
   }
@@ -897,7 +879,6 @@
     ctx.strokeStyle = "#ffe3ae";
     ctx.stroke();
 
-    // ソース
     ctx.strokeStyle = "#6b240d";
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -905,7 +886,6 @@
     ctx.quadraticCurveTo(x, y - 10, x + 8, y - 3);
     ctx.stroke();
 
-    // マヨ
     ctx.strokeStyle = "#fff5de";
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -958,7 +938,6 @@
       ctx.font = `900 ${f.size}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-
       ctx.lineWidth = 5;
       ctx.strokeStyle = "rgba(63,27,12,.45)";
       ctx.strokeText(f.text, f.x, f.y);
@@ -968,17 +947,13 @@
   }
 
   function drawGun(){
-    const cx = cssWidth * CONFIG.gunXRatio;
-    const baseY = CONFIG.gunY;
+    const cx = gunX();
+    const baseY = gunY();
 
-    // 土台
     roundRect(ctx, cx - 122, baseY + 44, 244, 80, 22, "#f0ca7a");
-
-    // 支柱
     roundRect(ctx, cx - 26, baseY - 84, 52, 138, 14, "#e2a643");
     roundRect(ctx, cx - 14, baseY - 56, 28, 84, 10, "#fff4dc");
 
-    // 砲身頭
     ctx.beginPath();
     ctx.fillStyle = "#c0632f";
     ctx.arc(cx, baseY - 106, 46, 0, Math.PI * 2);
@@ -1050,31 +1025,12 @@
     bestView.textContent = state.bestScore;
   }
 
-  function resizeCanvas(){
-    const rect = canvas.getBoundingClientRect();
-    const targetWidth = rect.width || canvas.parentElement.clientWidth || 900;
-    cssWidth = Math.max(320, Math.floor(targetWidth));
-    cssHeight = Math.floor(cssWidth * (1280 / 900));
-
-    canvas.style.height = cssHeight + "px";
-    canvas.width = Math.floor(cssWidth * DPR);
-    canvas.height = Math.floor(cssHeight * DPR);
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-
-    // 幅変更時にレーン位置や的の見え方が崩れにくいよう再描画
-    if (!state.running) draw();
-  }
-
   function saveRewards(addition){
     const current = readRewards();
     current.seed += Number(addition.seed || 0);
     current.water += Number(addition.water || 0);
     current.fertilizer += Number(addition.fertilizer || 0);
     localStorage.setItem(STORAGE.rewards, JSON.stringify(current));
-
-    /*
-      ここを後で既存ファームの所持数キーに合わせて差し替え可能
-    */
   }
 
   function readRewards(){
@@ -1104,6 +1060,10 @@
     return "大";
   }
 
+  function rand(min, max){
+    return Math.random() * (max - min) + min;
+  }
+
   function roundRect(ctx, x, y, w, h, r, fill){
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -1116,11 +1076,6 @@
     ctx.fill();
   }
 
-  function rand(min, max){
-    return Math.random() * (max - min) + min;
-  }
-
-  let toastTimer = null;
   function showToast(msg){
     toastEl.textContent = msg;
     toastEl.classList.add("show");
@@ -1129,7 +1084,53 @@
       toastEl.classList.remove("show");
     }, 1200);
   }
+
+  function onPointerDown(e){
+    e.preventDefault();
+    if (!state.running || state.bullets <= 0) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (cssWidth / rect.width);
+    const y = (e.clientY - rect.top) * (cssHeight / rect.height);
+    shoot(x, y);
+  }
+
+  startBtn.addEventListener("click", startGame);
+
+  resetBestBtn.addEventListener("click", () => {
+    localStorage.removeItem(STORAGE.bestScore);
+    state.bestScore = 0;
+    updateHud();
+    showToast("ベスト記録をリセットしました");
+  });
+
+  canvas.addEventListener("pointerdown", onPointerDown, { passive:false });
+
+  window.addEventListener("resize", () => {
+    const wasRunning = state.running;
+    if (wasRunning) {
+      cancelAnimationFrame(rafId);
+      setupCanvas();
+      for (const t of state.targets) {
+        t.baseY = laneY(t.lane);
+        t.y = laneY(t.lane);
+      }
+      draw();
+      state.lastTs = performance.now();
+      rafId = requestAnimationFrame(loop);
+    } else {
+      setupCanvas();
+      draw();
+    }
+  });
+
+  setupCanvas();
+  initTargets();
+  updateHud();
+  draw();
+  startGame();
 })();
 </script>
 </body>
 </html>
+
