@@ -11,6 +11,7 @@
   //        seed_anniv  → 「期間限定」(目立つ色)
   // ✅ 月間記録 ttc_monthly_stats_v1 に harvest を自動反映
   // ✅ 釣りドロップ水4種に対応
+  // ✅ 腐ったミズ / 海水 専用カード対応
   // =========================================================
 
   // =========================
@@ -205,7 +206,6 @@
 
   // =========================================================
   // 水一覧
-  // ✅ 既存 + 釣りドロップ4種
   // =========================================================
   const WATERS = [
     { id: "water_plain_free", name: "ただの水", desc: "無料・UR/LRなし。\n無課金の基準。", factor: 1.0, fx: "基準（水）", img: "https://ul.h3z.jp/13XdhuHi.png", rates: { N: 62.5, R: 31.2, SR: 6.3, UR: 0, LR: 0 } },
@@ -214,11 +214,42 @@
     { id: "water_overdo", name: "やりすぎな水", desc: "勝負水・現実より上。\n体感で強い。", factor: 0.9, fx: "勝負", img: "https://ul.h3z.jp/vsL9ggf6.png", rates: { N: 58.0, R: 29.0, SR: 9.5, UR: 2.8, LR: 0.7 } },
     { id: "water_regret", name: "押さなきゃよかった水", desc: "確定枠・狂気。\n事件製造機（SNS向け）", factor: 1.0, fx: "事件", img: "https://ul.h3z.jp/L0nafMOp.png", rates: { N: 99.97, R: 0, SR: 0, UR: 0, LR: 0.03 } },
 
-    // ▼ 釣りドロップ追加
-    { id: "water_rotten", name: "腐ったミズ", desc: "深いマイナスから来た水。\nあんまり信用できない。", factor: 1.06, fx: "やや不安定", img: "https://takoyaki-card.com/town/assets/images/mizu/6.png", rates: { N: 78.0, R: 18.0, SR: 3.5, UR: 0.4, LR: 0.1 } },
-    { id: "water_sea", name: "海水", desc: "しょっぱさを宿したミズ。\n波の気配がする。", factor: 0.98, fx: "標準寄り", img: "https://takoyaki-card.com/town/assets/images/mizu/7.png", rates: { N: 64.0, R: 28.0, SR: 6.0, UR: 1.6, LR: 0.4 } },
-    { id: "water_yunokawa", name: "ゆのかわの温泉水", desc: "湯けむりのご利益入り。\nちょい熱めの上振れ。", factor: 0.88, fx: "上振れ寄り", img: "https://takoyaki-card.com/town/assets/images/mizu/8.png", rates: { N: 54.0, R: 28.0, SR: 11.0, UR: 5.0, LR: 2.0 } },
-    { id: "water_supergod", name: "超神水", desc: "もはや水ではなく神託。\n震えながら植えるやつ。", factor: 0.72, fx: "超上振れ", img: "https://takoyaki-card.com/town/assets/images/mizu/9.png", rates: { N: 40.0, R: 26.0, SR: 16.0, UR: 11.0, LR: 7.0 } },
+    {
+      id: "water_rotten",
+      name: "腐ったミズ",
+      desc: "腐敗した力を宿した危険なミズ。\n通常カードはレアリティが1段階下がるが、稀に《腐敗したカード》や《浸食したカード》を引き当てる。",
+      factor: 1.06,
+      fx: "1段階ダウン / 特別カード率12%",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/6.png",
+      rates: { N: 0, R: 0, SR: 0, UR: 0, LR: 0 }
+    },
+    {
+      id: "water_sea",
+      name: "海水",
+      desc: "しょっぱさが染みついた海のミズ。\nしょっぱいカードが多く出るが、稀に《腐敗したカード》や《浸食したカード》が紛れ込む。",
+      factor: 0.98,
+      fx: "N多め / 特別カード率3%",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/7.png",
+      rates: { N: 0, R: 0, SR: 0, UR: 0, LR: 0 }
+    },
+    {
+      id: "water_yunokawa",
+      name: "ゆのかわの温泉水",
+      desc: "湯の川温泉のご利益をたっぷり含んだミズ。\nRがかなり出やすく、安定して収穫しやすい。",
+      factor: 0.88,
+      fx: "N30 / R68 / SR1.5 / UR0.4 / LR0.1",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/8.png",
+      rates: { N: 30.0, R: 68.0, SR: 1.5, UR: 0.4, LR: 0.1 }
+    },
+    {
+      id: "water_supergod",
+      name: "超神水",
+      desc: "神域から落ちた一滴。\n高レアカードを引き寄せる、最上級のミズ。",
+      factor: 0.72,
+      fx: "N30 / R50 / SR18 / UR1 / LR1",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/9.png",
+      rates: { N: 30.0, R: 50.0, SR: 18.0, UR: 1.0, LR: 1.0 }
+    },
   ];
 
   // =========================================================
@@ -279,6 +310,82 @@
     { id: "SP-ANV-004", name: "ここにいる店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/4a.jpg", rarity: "SP", tier: "UR" },
     { id: "SP-ANV-005", name: "物語の外側", img: "https://takoyaki-card.com/town/assets/images/anniversary/4b.jpg", rarity: "SP", tier: "LR" },
   ];
+
+  // =========================================================
+  // 腐ったミズ / 海水 専用カード
+  // 腐敗したカード = N
+  // 浸食したカード = LR
+  // =========================================================
+  const WATER_SPECIAL_CARDS = {
+    rotten: [
+      {
+        id: "SP-MIZU-001",
+        name: "腐敗したカード",
+        img: "https://takoyaki-card.com/town/assets/images/mizu/fuhai-card.png",
+        rarity: "N",
+        tier: "N",
+        weight: 92
+      },
+      {
+        id: "SP-MIZU-002",
+        name: "浸食したカード",
+        img: "https://takoyaki-card.com/town/assets/images/mizu/shinshoku-card.png",
+        rarity: "LR",
+        tier: "LR",
+        weight: 8
+      }
+    ],
+    sea: [
+      {
+        id: "SP-MIZU-001",
+        name: "腐敗したカード",
+        img: "https://takoyaki-card.com/town/assets/images/mizu/fuhai-card.png",
+        rarity: "N",
+        tier: "N",
+        weight: 97
+      },
+      {
+        id: "SP-MIZU-002",
+        name: "浸食したカード",
+        img: "https://takoyaki-card.com/town/assets/images/mizu/shinshoku-card.png",
+        rarity: "LR",
+        tier: "LR",
+        weight: 3
+      }
+    ]
+  };
+
+  function pickWeightedCard(list) {
+    const total = list.reduce((sum, x) => sum + Math.max(0, Number(x.weight || 0)), 0);
+    if (total <= 0) return list[0];
+    let r = Math.random() * total;
+    for (const item of list) {
+      r -= Math.max(0, Number(item.weight || 0));
+      if (r <= 0) return item;
+    }
+    return list[0];
+  }
+
+  function pickWaterSpecialReward(waterId) {
+    let pool = null;
+
+    if (waterId === "water_rotten") {
+      pool = WATER_SPECIAL_CARDS.rotten;
+    } else if (waterId === "water_sea") {
+      pool = WATER_SPECIAL_CARDS.sea;
+    }
+
+    if (!pool || !pool.length) return null;
+
+    const c = pickWeightedCard(pool);
+    return {
+      id: c.id,
+      name: c.name,
+      img: c.img,
+      rarity: c.rarity,
+      tier: c.tier
+    };
+  }
 
   const ANNIV_RATES = {
     N: 66,
@@ -567,12 +674,63 @@
 
   function pickRarityWithWater(waterId) {
     const w = WATERS.find((x) => x.id === waterId);
-    if (w && w.rates) {
-      const rates = w.rates;
+
+    // =========================================================
+    // 腐ったミズ
+    // ・特別カード抽選あり
+    // ・通常カードは1段階ダウン
+    // =========================================================
+    if (w && w.id === "water_rotten") {
+      if (Math.random() < 0.12) return "WATER_SPECIAL";
+
+      const baseRates = {
+        N: 70.0,
+        R: 24.0,
+        SR: 5.0,
+        UR: 0.8,
+        LR: 0.2
+      };
       const keys = ["N", "R", "SR", "UR", "LR"];
+
+      let total = 0;
+      for (const k of keys) total += Math.max(0, Number(baseRates[k] ?? 0));
+      if (total <= 0) return "N";
+
+      let r = Math.random() * total;
+      for (const k of keys) {
+        r -= Math.max(0, Number(baseRates[k] ?? 0));
+        if (r <= 0) {
+          if (k === "LR") return "UR";
+          if (k === "UR") return "SR";
+          if (k === "SR") return "R";
+          if (k === "R") return "N";
+          return "N";
+        }
+      }
+      return "N";
+    }
+
+    // =========================================================
+    // 海水
+    // ・しょっぱいカード多め
+    // ・稀に専用カード抽選
+    // =========================================================
+    if (w && w.id === "water_sea") {
+      if (Math.random() < 0.03) return "WATER_SPECIAL";
+
+      const rates = {
+        N: 82.0,
+        R: 16.5,
+        SR: 1.1,
+        UR: 0.3,
+        LR: 0.1
+      };
+      const keys = ["N", "R", "SR", "UR", "LR"];
+
       let total = 0;
       for (const k of keys) total += Math.max(0, Number(rates[k] ?? 0));
       if (total <= 0) return "N";
+
       let r = Math.random() * total;
       for (const k of keys) {
         r -= Math.max(0, Number(rates[k] ?? 0));
@@ -580,6 +738,77 @@
       }
       return "N";
     }
+
+    // =========================================================
+    // ゆのかわの温泉水
+    // N30 / R68 / SR1.5 / UR0.4 / LR0.1
+    // =========================================================
+    if (w && w.id === "water_yunokawa") {
+      const rates = {
+        N: 30.0,
+        R: 68.0,
+        SR: 1.5,
+        UR: 0.4,
+        LR: 0.1
+      };
+      const keys = ["N", "R", "SR", "UR", "LR"];
+
+      let total = 0;
+      for (const k of keys) total += Math.max(0, Number(rates[k] ?? 0));
+      if (total <= 0) return "N";
+
+      let r = Math.random() * total;
+      for (const k of keys) {
+        r -= Math.max(0, Number(rates[k] ?? 0));
+        if (r <= 0) return k;
+      }
+      return "N";
+    }
+
+    // =========================================================
+    // 超神水
+    // N30 / R50 / SR18 / UR1 / LR1
+    // =========================================================
+    if (w && w.id === "water_supergod") {
+      const rates = {
+        N: 30.0,
+        R: 50.0,
+        SR: 18.0,
+        UR: 1.0,
+        LR: 1.0
+      };
+      const keys = ["N", "R", "SR", "UR", "LR"];
+
+      let total = 0;
+      for (const k of keys) total += Math.max(0, Number(rates[k] ?? 0));
+      if (total <= 0) return "N";
+
+      let r = Math.random() * total;
+      for (const k of keys) {
+        r -= Math.max(0, Number(rates[k] ?? 0));
+        if (r <= 0) return k;
+      }
+      return "N";
+    }
+
+    // =========================================================
+    // それ以外は既存
+    // =========================================================
+    if (w && w.rates) {
+      const rates = w.rates;
+      const keys = ["N", "R", "SR", "UR", "LR"];
+      let total = 0;
+      for (const k of keys) total += Math.max(0, Number(rates[k] ?? 0));
+      if (total <= 0) return "N";
+
+      let r = Math.random() * total;
+      for (const k of keys) {
+        r -= Math.max(0, Number(rates[k] ?? 0));
+        if (r <= 0) return k;
+      }
+      return "N";
+    }
+
     const keys = Object.keys(BASE_RARITY_RATE);
     let total = 0;
     for (const k of keys) total += Math.max(0, BASE_RARITY_RATE[k]);
@@ -698,6 +927,12 @@
     }
 
     const rarity = p && p.fixedRarity ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
+
+    // ▼ 腐ったミズ / 海水 専用カード
+    if (rarity === "WATER_SPECIAL") {
+      const special = pickWaterSpecialReward(p ? p.waterId : null);
+      if (special) return special;
+    }
 
     const seedId = p ? p.seedId : null;
     const filtered = filterPoolBySeed(seedId, getPoolByRarity(rarity));
