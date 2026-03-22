@@ -208,16 +208,16 @@
   // 水一覧
   // =========================================================
   const WATERS = [
-    { id: "water_plain_free", name: "ただの水", desc: "無料・UR/LRなし。\n無課金の基準。", factor: 1.0, fx: "基準（水）", img: "https://ul.h3z.jp/13XdhuHi.png", rates: { N: 62.5, R: 31.2, SR: 6.3, UR: 0, LR: 0 } },
+    { id: "water_plain_free", name: "ただの水", desc: "UR/LRなし。\n無課金の基準。", factor: 1.0, fx: "基準（水）", img: "https://ul.h3z.jp/13XdhuHi.png", rates: { N: 62.5, R: 31.2, SR: 6.3, UR: 0, LR: 0 } },
     { id: "water_nice", name: "なんか良さそうな水", desc: "ちょい上振れ・LRなし。\n初心者の背中押し。", factor: 0.98, fx: "ちょい上振れ", img: "https://ul.h3z.jp/3z04ypEd.png", rates: { N: 60.5, R: 31.0, SR: 7.3, UR: 1.2, LR: 0 } },
     { id: "water_suspicious", name: "怪しい水", desc: "現実準拠・標準。\n実パックと同じ空気。", factor: 0.95, fx: "標準（現実準拠）", img: "https://ul.h3z.jp/wtCO9mec.png", rates: { N: 66.0, R: 28.5, SR: 4.5, UR: 0.8, LR: 0.2 } },
     { id: "water_overdo", name: "やりすぎな水", desc: "勝負水・現実より上。\n体感で強い。", factor: 0.9, fx: "勝負", img: "https://ul.h3z.jp/vsL9ggf6.png", rates: { N: 58.0, R: 29.0, SR: 9.5, UR: 2.8, LR: 0.7 } },
-    { id: "water_regret", name: "押さなきゃよかった水", desc: "確定枠・狂気。\n事件製造機（SNS向け）", factor: 1.0, fx: "事件", img: "https://ul.h3z.jp/L0nafMOp.png", rates: { N: 99.97, R: 0, SR: 0, UR: 0, LR: 0.03 } },
+    { id: "water_regret", name: "押さなきゃよかった水", desc: "ほぼ狂気。\n事件製造機（SNS向け）", factor: 1.0, fx: "事件", img: "https://ul.h3z.jp/L0nafMOp.png", rates: { N: 99.97, R: 0, SR: 0, UR: 0, LR: 0.03 } },
 
     {
       id: "water_rotten",
       name: "腐ったミズ",
-      desc: "腐敗した力を宿した危険なミズ。\n通常カードはレアリティが1段階下がるが、稀に《腐敗したカード》や《浸食したカード》を引き当てる。",
+      desc: "腐敗した力を宿した危険なミズ。\n通常カードはレアリティが1段階下がるが、たまにSPカードを引き当てる。",
       factor: 1.06,
       fx: "1段階ダウン / 特別カード率12%",
       img: "https://takoyaki-card.com/town/assets/images/mizu/6.png",
@@ -226,7 +226,7 @@
     {
       id: "water_sea",
       name: "海水",
-      desc: "しょっぱさが染みついた海のミズ。\nしょっぱいカードが多く出るが、稀に《腐敗したカード》や《浸食したカード》が紛れ込む。",
+      desc: "しょっぱさが染みついた海のミズ。\nしょっぱいカードが多く出るが、稀にSPカードが紛れ込む。",
       factor: 0.98,
       fx: "N多め / 特別カード率3%",
       img: "https://takoyaki-card.com/town/assets/images/mizu/7.png",
@@ -234,8 +234,8 @@
     },
     {
       id: "water_yunokawa",
-      name: "ゆのかわの温泉水",
-      desc: "湯の川温泉のご利益をたっぷり含んだミズ。\nRがかなり出やすく、安定して収穫しやすい。",
+      name: "ゆのかわの温泉ミズ",
+      desc: "アツめのご利益をたっぷり含んだミズ。\nRがかなり出やすく、安定して収穫しやすい。",
       factor: 0.88,
       fx: "N30 / R68 / SR1.5 / UR0.4 / LR0.1",
       img: "https://takoyaki-card.com/town/assets/images/mizu/8.png",
@@ -248,7 +248,7 @@
       factor: 0.72,
       fx: "N30 / R50 / SR18 / UR1 / LR1",
       img: "https://takoyaki-card.com/town/assets/images/mizu/9.png",
-      rates: { N: 30.0, R: 50.0, SR: 18.0, UR: 1.0, LR: 1.0 }
+      rates: { N: 38.0, R: 50.0, SR: 10.0, UR: 1.0, LR: 1.0 }
     },
   ];
 
@@ -321,7 +321,7 @@
       {
         id: "SP-MIZU-001",
         name: "腐敗したカード",
-        img: "https://takoyaki-card.com/town/assets/images/mizu/fuhai-card.png",
+        img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png",
         rarity: "N",
         tier: "N",
         weight: 92
@@ -329,7 +329,7 @@
       {
         id: "SP-MIZU-002",
         name: "浸食したカード",
-        img: "https://takoyaki-card.com/town/assets/images/mizu/shinshoku-card.png",
+        img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png",
         rarity: "LR",
         tier: "LR",
         weight: 8
@@ -339,7 +339,7 @@
       {
         id: "SP-MIZU-001",
         name: "腐敗したカード",
-        img: "https://takoyaki-card.com/town/assets/images/mizu/fuhai-card.png",
+        img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png",
         rarity: "N",
         tier: "N",
         weight: 97
@@ -347,7 +347,7 @@
       {
         id: "SP-MIZU-002",
         name: "浸食したカード",
-        img: "https://takoyaki-card.com/town/assets/images/mizu/shinshoku-card.png",
+        img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png",
         rarity: "LR",
         tier: "LR",
         weight: 3
