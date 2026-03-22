@@ -1490,10 +1490,6 @@ html.is-night .boss-gate{
     return /Instagram/i.test(ua);
   }
 
-  function isAndroid() {
-    return /Android/i.test(navigator.userAgent || "");
-  }
-
   // ===== 図鑑slim（count+img等） =====
   function slimBookRawKeepImg() {
     const raw = getRaw(EXIST.farmBook);
@@ -1620,7 +1616,6 @@ html.is-night .boss-gate{
       if (v != null) keys[k] = v;
     }
 
-    // ★追加：称号の頂
     if (getRaw(EXIST.monthly)  != null) keys[EXIST.monthly]  = getRaw(EXIST.monthly);
     if (getRaw(EXIST.history)  != null) keys[EXIST.history]  = getRaw(EXIST.history);
     if (getRaw(EXIST.godfarm)  != null) keys[EXIST.godfarm]  = getRaw(EXIST.godfarm);
@@ -1763,12 +1758,12 @@ html.is-night .boss-gate{
     ta.value = jsonText;
   }
 
-  // ===== 通常DL → 共有 → fallback の順で保存 =====
+  // ===== ダウンロード / 共有 / fallback =====
   async function saveBackupCrossBrowser(obj, filename) {
     const jsonText = JSON.stringify(obj, null, 2);
     const blob = new Blob([jsonText], { type: "application/json" });
 
-    // 1) まず普通のダウンロードを試す
+    // 1) 通常ダウンロード
     try {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -1784,14 +1779,12 @@ html.is-night .boss-gate{
         URL.revokeObjectURL(url);
       }, 1200);
 
-      // Instagram内ブラウザでは成功判定が取れないため、
-      // UAがInstagramなら共有も案内できるよう少し待って終了
       if (!isInstagramInAppBrowser()) {
         return { mode: "download" };
       }
     } catch (_) {}
 
-    // 2) Android/Instagram系では共有が通ることがある
+    // 2) 共有
     try {
       if (navigator.share && typeof File !== "undefined") {
         const file = new File([jsonText], filename, { type: "application/json" });
@@ -1805,11 +1798,9 @@ html.is-night .boss-gate{
           return { mode: "share" };
         }
       }
-    } catch (_) {
-      // share がキャンセル/失敗でも fallback へ
-    }
+    } catch (_) {}
 
-    // 3) 最後は手動コピー保存モーダル
+    // 3) fallback
     showBackupFallbackModal(jsonText, filename);
     return { mode: "fallback" };
   }
@@ -1830,14 +1821,11 @@ html.is-night .boss-gate{
     }
   }
 
-  // ===== 復元（旧形式 keys / 新形式 storage 両対応） =====
-  async function restoreFromFile(file) {
-    const text = await file.text();
-    const data = safeJSONParse(text, null);
-
+  // ===== 共通復元 =====
+  function restoreFromParsedData(data) {
     if (!data || typeof data !== "object") {
-      alert("このファイルはバックアップ形式ではありません。");
-      return;
+      alert("この内容はバックアップ形式ではありません。");
+      return false;
     }
 
     const source =
@@ -1846,8 +1834,8 @@ html.is-night .boss-gate{
       null;
 
     if (!source) {
-      alert("このファイルはバックアップ形式ではありません。");
-      return;
+      alert("この内容はバックアップ形式ではありません。");
+      return false;
     }
 
     const keys = Object.keys(source);
@@ -1860,7 +1848,7 @@ html.is-night .boss-gate{
       `書き出し日時: ${exportedAt}\n\n` +
       "続行しますか？"
     );
-    if (!ok) return;
+    if (!ok) return false;
 
     for (const k of keys) {
       const v = source[k];
@@ -1873,9 +1861,266 @@ html.is-night .boss-gate{
 
     alert("復元しました。ページを再読み込みします。");
     location.reload();
+    return true;
   }
 
-  // ===== UI wiring（フッター版） =====
+  // ===== ファイル復元 =====
+  async function restoreFromFile(file) {
+    const text = await file.text();
+    const data = safeJSONParse(text, null);
+
+    if (!data) {
+      alert("このファイルはバックアップ形式ではありません。");
+      return;
+    }
+
+    restoreFromParsedData(data);
+  }
+
+  // ===== 貼り付け復元 =====
+  function normalizePastedText(text) {
+    let t = String(text || "").trim();
+
+    if (t.startsWith("takoyaki-trc-backup.json")) {
+      t = t.replace(/^takoyaki-trc-backup\.json\s*/i, "").trim();
+    }
+
+    return t;
+  }
+
+  function restoreFromPastedText(text) {
+    const normalized = normalizePastedText(text);
+
+    if (!normalized) {
+      alert("貼り付け内容が空です。");
+      return;
+    }
+
+    const data = safeJSONParse(normalized, null);
+    if (!data) {
+      alert("JSONの形式が正しくありません。最初の { から最後の } まで貼り付けてください。");
+      return;
+    }
+
+    restoreFromParsedData(data);
+  }
+
+  // ===== 復元モーダル生成 =====
+  function ensureRestoreChoiceModal() {
+    let modal = document.getElementById("trcRestoreChoiceModal");
+    if (modal) return modal;
+
+    modal = document.createElement("div");
+    modal.id = "trcRestoreChoiceModal";
+    modal.style.cssText = `
+      position:fixed;
+      inset:0;
+      z-index:999999;
+      background:rgba(0,0,0,.82);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      box-sizing:border-box;
+    `;
+
+    modal.innerHTML = `
+      <div style="
+        width:min(640px,96vw);
+        background:#111827;
+        color:#fff;
+        border:2px solid rgba(255,255,255,.18);
+        border-radius:16px;
+        box-shadow:0 20px 60px rgba(0,0,0,.5);
+        padding:16px;
+        box-sizing:border-box;
+      ">
+        <div style="font-size:18px;font-weight:900;margin-bottom:10px;">
+          復元方法を選んでください
+        </div>
+
+        <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.88);margin-bottom:14px;">
+          メモに保存したバックアップは「貼り付け復元」、<br>
+          JSONファイルとして保存したバックアップは「ファイルを開く」から復元できます。
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button id="trcChoicePaste" type="button" style="
+            border:0;
+            border-radius:12px;
+            padding:14px 16px;
+            font-weight:900;
+            cursor:pointer;
+            background:#60a5fa;
+            color:#08111f;
+            text-align:left;
+          ">貼り付け復元</button>
+
+          <button id="trcChoiceFile" type="button" style="
+            border:0;
+            border-radius:12px;
+            padding:14px 16px;
+            font-weight:900;
+            cursor:pointer;
+            background:#a7f3d0;
+            color:#06261b;
+            text-align:left;
+          ">ファイルを開く</button>
+
+          <button id="trcChoiceClose" type="button" style="
+            border:1px solid rgba(255,255,255,.22);
+            border-radius:12px;
+            padding:12px 14px;
+            font-weight:900;
+            cursor:pointer;
+            background:rgba(255,255,255,.08);
+            color:#fff;
+          ">閉じる</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  function ensurePasteRestoreModal() {
+    let modal = document.getElementById("trcPasteRestoreModal");
+    if (modal) return modal;
+
+    modal = document.createElement("div");
+    modal.id = "trcPasteRestoreModal";
+    modal.style.cssText = `
+      position:fixed;
+      inset:0;
+      z-index:999999;
+      background:rgba(0,0,0,.82);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      box-sizing:border-box;
+    `;
+
+    modal.innerHTML = `
+      <div style="
+        width:min(720px,96vw);
+        max-height:90vh;
+        overflow:auto;
+        background:#111827;
+        color:#fff;
+        border:2px solid rgba(255,255,255,.18);
+        border-radius:16px;
+        box-shadow:0 20px 60px rgba(0,0,0,.5);
+        padding:16px;
+        box-sizing:border-box;
+      ">
+        <div style="font-size:18px;font-weight:900;margin-bottom:10px;">
+          貼り付け復元
+        </div>
+
+        <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.88);margin-bottom:12px;">
+          メモなどに保存したバックアップJSONを、そのまま下に貼り付けてください。<br>
+          復元すると現在のデータは上書きされます。
+        </div>
+
+        <textarea id="trcPasteRestoreText" style="
+          width:100%;
+          min-height:280px;
+          resize:vertical;
+          border-radius:12px;
+          border:1px solid rgba(255,255,255,.2);
+          background:#0b1220;
+          color:#dff3ff;
+          padding:12px;
+          box-sizing:border-box;
+          font-size:12px;
+          line-height:1.5;
+        " placeholder='ここに {"app":"takoyaki-trc", ... } を貼り付け'></textarea>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+          <button id="trcPasteRestoreRun" type="button" style="
+            border:0;
+            border-radius:12px;
+            padding:12px 14px;
+            font-weight:900;
+            cursor:pointer;
+            background:#60a5fa;
+            color:#08111f;
+          ">この内容で復元</button>
+
+          <button id="trcPasteRestoreClose" type="button" style="
+            border:1px solid rgba(255,255,255,.22);
+            border-radius:12px;
+            padding:12px 14px;
+            font-weight:900;
+            cursor:pointer;
+            background:rgba(255,255,255,.08);
+            color:#fff;
+          ">閉じる</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  function openRestoreChoiceModal() {
+    const choiceModal = ensureRestoreChoiceModal();
+    const pasteModal  = ensurePasteRestoreModal();
+
+    choiceModal.style.display = "flex";
+
+    const btnPaste = choiceModal.querySelector("#trcChoicePaste");
+    const btnFile  = choiceModal.querySelector("#trcChoiceFile");
+    const btnClose = choiceModal.querySelector("#trcChoiceClose");
+
+    const closeChoice = () => {
+      choiceModal.style.display = "none";
+    };
+
+    const handleOverlayChoice = (e) => {
+      if (e.target === choiceModal) closeChoice();
+    };
+
+    choiceModal.onclick = handleOverlayChoice;
+    btnClose.onclick = closeChoice;
+
+    btnPaste.onclick = () => {
+      closeChoice();
+      pasteModal.style.display = "flex";
+      const ta = pasteModal.querySelector("#trcPasteRestoreText");
+      if (ta) {
+        ta.value = "";
+        setTimeout(() => ta.focus(), 30);
+      }
+    };
+
+    btnFile.onclick = () => {
+      closeChoice();
+      const inp = document.getElementById("trcFooterRestoreFile");
+      if (inp) inp.click();
+    };
+
+    const pasteText  = pasteModal.querySelector("#trcPasteRestoreText");
+    const pasteRun   = pasteModal.querySelector("#trcPasteRestoreRun");
+    const pasteClose = pasteModal.querySelector("#trcPasteRestoreClose");
+
+    pasteModal.onclick = (e) => {
+      if (e.target === pasteModal) pasteModal.style.display = "none";
+    };
+
+    pasteClose.onclick = () => {
+      pasteModal.style.display = "none";
+    };
+
+    pasteRun.onclick = () => {
+      restoreFromPastedText(pasteText.value);
+    };
+  }
+
+  // ===== UI wiring =====
   const btnBackup  = document.getElementById("trcFooterBackup");
   const btnRestore = document.getElementById("trcFooterRestore");
   const inp        = document.getElementById("trcFooterRestoreFile");
@@ -1899,7 +2144,7 @@ html.is-night .boss-gate{
   });
 
   btnRestore.addEventListener("click", () => {
-    inp.click();
+    openRestoreChoiceModal();
   });
 
   inp.addEventListener("change", async () => {
@@ -1918,10 +2163,7 @@ html.is-night .boss-gate{
       btnRestore.textContent = normal;
     }
   });
-
 })();
-
-
 </script>
 </body>
 </html>
