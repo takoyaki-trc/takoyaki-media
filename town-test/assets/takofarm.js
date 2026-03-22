@@ -1192,7 +1192,7 @@
     }
   }
 
-    function openPickGrid(kind) {
+      function openPickGrid(kind) {
     inv = loadInv();
     loadout = loadLoadout();
 
@@ -1221,62 +1221,75 @@
           (isWater && loadout.waterId === x.id) ||
           (isFert && loadout.fertId === x.id);
 
-        let specialTag = "";
+        let topBadge = "";
 
         if (isSeed && x.id === "seed_colabo") {
-          specialTag = `
+          topBadge = `
             <div style="
-              margin-top:8px;
-              width:100%;
-              text-align:center;
-              padding:8px 10px;
-              border-radius:12px;
+              position:absolute;
+              top:6px;
+              right:6px;
+              z-index:3;
+              padding:3px 7px;
+              border-radius:999px;
+              font-size:10px;
               font-weight:1000;
-              letter-spacing:.06em;
-              background:rgba(255,70,90,.92);
-              border:1px solid rgba(255,70,90,.95);
+              letter-spacing:.02em;
+              line-height:1;
+              background:rgba(255,70,90,.96);
+              border:1px solid rgba(255,110,130,.98);
               color:#fff;
-              box-shadow:0 8px 18px rgba(0,0,0,.25);
+              box-shadow:0 3px 10px rgba(0,0,0,.22);
+              pointer-events:none;
             ">コラボ</div>
           `;
         } else if (isSeed && x.id === "seed_anniv") {
-          specialTag = `
+          topBadge = `
             <div style="
-              margin-top:8px;
-              width:100%;
-              text-align:center;
-              padding:8px 10px;
-              border-radius:12px;
+              position:absolute;
+              top:6px;
+              right:6px;
+              z-index:3;
+              padding:3px 7px;
+              border-radius:999px;
+              font-size:10px;
               font-weight:1000;
-              letter-spacing:.06em;
-              background:rgba(255,195,80,.92);
-              border:1px solid rgba(255,195,80,.95);
+              letter-spacing:.02em;
+              line-height:1;
+              background:rgba(255,195,80,.96);
+              border:1px solid rgba(255,220,130,.98);
               color:#0b0d17;
-              box-shadow:0 8px 18px rgba(0,0,0,.22);
+              box-shadow:0 3px 10px rgba(0,0,0,.22);
+              pointer-events:none;
             ">期間限定</div>
           `;
         } else if (isWater && FISHING_WATER_IDS.has(x.id)) {
-          specialTag = `
+          topBadge = `
             <div style="
-              margin-top:8px;
-              width:100%;
-              text-align:center;
-              padding:8px 10px;
-              border-radius:12px;
+              position:absolute;
+              top:6px;
+              right:6px;
+              z-index:3;
+              padding:3px 7px;
+              border-radius:999px;
+              font-size:10px;
               font-weight:1000;
-              letter-spacing:.06em;
-              background:rgba(90,180,255,.95);
-              border:1px solid rgba(140,210,255,1);
+              letter-spacing:.02em;
+              line-height:1;
+              background:rgba(90,180,255,.96);
+              border:1px solid rgba(150,215,255,.98);
               color:#07131f;
-              box-shadow:0 8px 18px rgba(0,0,0,.22);
+              box-shadow:0 3px 10px rgba(0,0,0,.22);
+              pointer-events:none;
             ">釣り</div>
           `;
         }
 
         return `
         <button class="gridCard ${selected ? "isSelected" : ""}" type="button" data-pick="${x.id}" ${disabled ? "disabled" : ""}>
-          <div class="gridImg">
+          <div class="gridImg" style="position:relative;">
             <img src="${x.img}" alt="${x.name}">
+            ${topBadge}
             <div class="gridCnt">×${cnt}</div>
             ${selected ? `<div class="gridSel">装備中</div>` : ``}
             ${disabled ? `<div class="gridEmpty">在庫なし</div>` : ``}
@@ -1284,7 +1297,6 @@
           <div class="gridName">${x.name}</div>
           <div class="gridDesc">${(x.desc || "").replace(/\n/g, "<br>")}</div>
           <div class="gridFx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
-          ${specialTag}
         </button>
       `;
       })
