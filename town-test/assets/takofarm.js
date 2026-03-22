@@ -1192,7 +1192,7 @@
     }
   }
 
-  function openPickGrid(kind) {
+    function openPickGrid(kind) {
     inv = loadInv();
     loadout = loadLoadout();
 
@@ -1205,6 +1205,13 @@
 
     const title = isSeed ? "種を選ぶ" : isWater ? "水を選ぶ" : "肥料を選ぶ";
 
+    const FISHING_WATER_IDS = new Set([
+      "water_rotten",
+      "water_sea",
+      "water_yunokawa",
+      "water_supergod"
+    ]);
+
     const cells = items
       .map((x) => {
         const cnt = invGet(inv, invType, x.id);
@@ -1215,6 +1222,7 @@
           (isFert && loadout.fertId === x.id);
 
         let specialTag = "";
+
         if (isSeed && x.id === "seed_colabo") {
           specialTag = `
             <div style="
@@ -1246,6 +1254,22 @@
               color:#0b0d17;
               box-shadow:0 8px 18px rgba(0,0,0,.22);
             ">期間限定</div>
+          `;
+        } else if (isWater && FISHING_WATER_IDS.has(x.id)) {
+          specialTag = `
+            <div style="
+              margin-top:8px;
+              width:100%;
+              text-align:center;
+              padding:8px 10px;
+              border-radius:12px;
+              font-weight:1000;
+              letter-spacing:.06em;
+              background:rgba(90,180,255,.95);
+              border:1px solid rgba(140,210,255,1);
+              color:#07131f;
+              box-shadow:0 8px 18px rgba(0,0,0,.22);
+            ">釣り</div>
           `;
         }
 
