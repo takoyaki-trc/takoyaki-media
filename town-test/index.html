@@ -1437,7 +1437,6 @@ html.is-night .boss-gate{
     © たこ焼き菜々 / 焼かれた伝説 たこ焼きトレーディングカード
   </div>
 </footer>
-
 <script>
 (() => {
   "use strict";
@@ -1484,6 +1483,15 @@ html.is-night .boss-gate{
       if (re.test(k)) out.push(k);
     }
     return out;
+  }
+
+  function isInstagramInAppBrowser() {
+    const ua = navigator.userAgent || "";
+    return /Instagram/i.test(ua);
+  }
+
+  function isAndroid() {
+    return /Android/i.test(navigator.userAgent || "");
   }
 
   // ===== 図鑑slim（count+img等） =====
@@ -1632,26 +1640,194 @@ html.is-night .boss-gate{
     };
   }
 
-  function downloadJson(obj, filename) {
-    const blob = new Blob(
-      [JSON.stringify(obj, null, 2)],
-      { type: "application/json" }
-    );
+  // ===== Instagram内ブラウザ向け fallback UI =====
+  function showBackupFallbackModal(jsonText, filename) {
+    let modal = document.getElementById("trcBackupFallbackModal");
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "trcBackupFallbackModal";
+      modal.style.cssText = `
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        background: rgba(0,0,0,.82);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        box-sizing: border-box;
+      `;
+
+      modal.innerHTML = `
+        <div style="
+          width:min(720px, 96vw);
+          max-height:90vh;
+          overflow:auto;
+          background:#111827;
+          color:#fff;
+          border:2px solid rgba(255,255,255,.18);
+          border-radius:16px;
+          box-shadow:0 20px 60px rgba(0,0,0,.5);
+          padding:16px;
+          box-sizing:border-box;
+        ">
+          <div style="font-size:18px;font-weight:900;margin-bottom:10px;">
+            バックアップ保存
+          </div>
+
+          <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.85);margin-bottom:12px;">
+            Instagram内ブラウザでは、ファイル保存が失敗することがあります。<br>
+            下のJSONをコピーして、メモ帳などに
+            <b style="color:#ffd166;">${filename}</b>
+            という名前で保存してください。<br><br>
+            いちばん確実なのは、右上メニューから
+            <b style="color:#8ecae6;">外部ブラウザで開いてバックアップ</b>
+            です。
+          </div>
+
+          <textarea id="trcBackupFallbackText" readonly style="
+            width:100%;
+            min-height:280px;
+            resize:vertical;
+            border-radius:12px;
+            border:1px solid rgba(255,255,255,.2);
+            background:#0b1220;
+            color:#dff3ff;
+            padding:12px;
+            box-sizing:border-box;
+            font-size:12px;
+            line-height:1.5;
+          "></textarea>
+
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
+            <button id="trcBackupCopyBtn" type="button" style="
+              border:0;
+              border-radius:12px;
+              padding:12px 14px;
+              font-weight:900;
+              cursor:pointer;
+              background:#60a5fa;
+              color:#08111f;
+            ">コピー</button>
+
+            <button id="trcBackupCloseBtn" type="button" style="
+              border:1px solid rgba(255,255,255,.22);
+              border-radius:12px;
+              padding:12px 14px;
+              font-weight:900;
+              cursor:pointer;
+              background:rgba(255,255,255,.08);
+              color:#fff;
+            ">閉じる</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.remove();
+      });
+
+      modal.querySelector("#trcBackupCloseBtn").addEventListener("click", () => {
+        modal.remove();
+      });
+
+      modal.querySelector("#trcBackupCopyBtn").addEventListener("click", async () => {
+        const ta = modal.querySelector("#trcBackupFallbackText");
+        ta.focus();
+        ta.select();
+
+        let copied = false;
+
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(ta.value);
+            copied = true;
+          }
+        } catch (_) {}
+
+        if (!copied) {
+          try {
+            document.execCommand("copy");
+            copied = true;
+          } catch (_) {}
+        }
+
+        alert(copied ? "バックアップJSONをコピーしました。" : "コピーに失敗しました。長押しで手動コピーしてください。");
+      });
+    }
+
+    const ta = modal.querySelector("#trcBackupFallbackText");
+    ta.value = jsonText;
   }
 
-  function backupSlim() {
+  // ===== 通常DL → 共有 → fallback の順で保存 =====
+  async function saveBackupCrossBrowser(obj, filename) {
+    const jsonText = JSON.stringify(obj, null, 2);
+    const blob = new Blob([jsonText], { type: "application/json" });
+
+    // 1) まず普通のダウンロードを試す
+    try {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.rel = "noopener";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        a.remove();
+        URL.revokeObjectURL(url);
+      }, 1200);
+
+      // Instagram内ブラウザでは成功判定が取れないため、
+      // UAがInstagramなら共有も案内できるよう少し待って終了
+      if (!isInstagramInAppBrowser()) {
+        return { mode: "download" };
+      }
+    } catch (_) {}
+
+    // 2) Android/Instagram系では共有が通ることがある
+    try {
+      if (navigator.share && typeof File !== "undefined") {
+        const file = new File([jsonText], filename, { type: "application/json" });
+
+        if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: "たこ焼きトレカ バックアップ",
+            text: "バックアップファイルを保存してください。",
+            files: [file]
+          });
+          return { mode: "share" };
+        }
+      }
+    } catch (_) {
+      // share がキャンセル/失敗でも fallback へ
+    }
+
+    // 3) 最後は手動コピー保存モーダル
+    showBackupFallbackModal(jsonText, filename);
+    return { mode: "fallback" };
+  }
+
+  async function backupSlim() {
     const payload = buildSlimBackupPayload();
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    downloadJson(payload, `takoyaki-trc-backup_${stamp}.json`);
+    const filename = `takoyaki-trc-backup_${stamp}.json`;
+
+    const result = await saveBackupCrossBrowser(payload, filename);
+
+    if (result.mode === "download") {
+      if (isInstagramInAppBrowser()) {
+        alert("Instagram内ブラウザでは保存に失敗する場合があります。保存されていない場合は、右上メニューから外部ブラウザで開いて再度バックアップしてください。");
+      }
+    } else if (result.mode === "share") {
+      alert("共有画面を開きました。ファイルアプリやドライブ等に保存してください。");
+    }
   }
 
   // ===== 復元（旧形式 keys / 新形式 storage 両対応） =====
@@ -1664,8 +1840,6 @@ html.is-night .boss-gate{
       return;
     }
 
-    // 旧形式: data.keys
-    // 新形式: data.storage
     const source =
       (data.keys && typeof data.keys === "object") ? data.keys :
       (data.storage && typeof data.storage === "object") ? data.storage :
@@ -1708,19 +1882,20 @@ html.is-night .boss-gate{
 
   if (!btnBackup || !btnRestore || !inp) return;
 
-  btnBackup.addEventListener("click", () => {
+  btnBackup.addEventListener("click", async () => {
     const normal = btnBackup.textContent;
     btnBackup.disabled = true;
     btnBackup.textContent = "作成中…";
 
-    setTimeout(() => {
-      try {
-        backupSlim();
-      } finally {
-        btnBackup.disabled = false;
-        btnBackup.textContent = normal;
-      }
-    }, 50);
+    try {
+      await backupSlim();
+    } catch (err) {
+      console.error(err);
+      alert("バックアップの作成に失敗しました。外部ブラウザでお試しください。");
+    } finally {
+      btnBackup.disabled = false;
+      btnBackup.textContent = normal;
+    }
   });
 
   btnRestore.addEventListener("click", () => {
@@ -1745,6 +1920,8 @@ html.is-night .boss-gate{
   });
 
 })();
+
+
 </script>
 </body>
 </html>
