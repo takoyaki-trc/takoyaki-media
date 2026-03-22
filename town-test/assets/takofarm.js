@@ -12,6 +12,7 @@
   // ✅ 月間記録 ttc_monthly_stats_v1 に harvest を自動反映
   // ✅ 釣りドロップ水4種に対応
   // ✅ 腐ったミズ / 海水 専用カード対応
+  // ✅ 焦げは1タップで即回収
   // =========================================================
 
   // =========================
@@ -675,11 +676,6 @@
   function pickRarityWithWater(waterId) {
     const w = WATERS.find((x) => x.id === waterId);
 
-    // =========================================================
-    // 腐ったミズ
-    // ・特別カード抽選あり
-    // ・通常カードは1段階ダウン
-    // =========================================================
     if (w && w.id === "water_rotten") {
       if (Math.random() < 0.12) return "WATER_SPECIAL";
 
@@ -710,11 +706,6 @@
       return "N";
     }
 
-    // =========================================================
-    // 海水
-    // ・しょっぱいカード多め
-    // ・稀に専用カード抽選
-    // =========================================================
     if (w && w.id === "water_sea") {
       if (Math.random() < 0.03) return "WATER_SPECIAL";
 
@@ -739,10 +730,6 @@
       return "N";
     }
 
-    // =========================================================
-    // ゆのかわの温泉水
-    // N30 / R68 / SR1.5 / UR0.4 / LR0.1
-    // =========================================================
     if (w && w.id === "water_yunokawa") {
       const rates = {
         N: 30.0,
@@ -765,10 +752,6 @@
       return "N";
     }
 
-    // =========================================================
-    // 超神水
-    // N30 / R50 / SR18 / UR1 / LR1
-    // =========================================================
     if (w && w.id === "water_supergod") {
       const rates = {
         N: 30.0,
@@ -791,9 +774,6 @@
       return "N";
     }
 
-    // =========================================================
-    // それ以外は既存
-    // =========================================================
     if (w && w.rates) {
       const rates = w.rates;
       const keys = ["N", "R", "SR", "UR", "LR"];
@@ -928,7 +908,6 @@
 
     const rarity = p && p.fixedRarity ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
 
-    // ▼ 腐ったミズ / 海水 専用カード
     if (rarity === "WATER_SPECIAL") {
       const special = pickWaterSpecialReward(p ? p.waterId : null);
       if (special) return special;
@@ -1119,6 +1098,38 @@
     document.removeEventListener("keydown", onEsc);
     mBody.innerHTML = "";
     unlockScroll();
+  }
+
+  function showToast(message) {
+    let el = document.getElementById("farmToast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "farmToast";
+      el.style.position = "fixed";
+      el.style.left = "50%";
+      el.style.bottom = "24px";
+      el.style.transform = "translateX(-50%)";
+      el.style.zIndex = "99999";
+      el.style.padding = "10px 14px";
+      el.style.borderRadius = "999px";
+      el.style.background = "rgba(20,20,20,.88)";
+      el.style.color = "#fff";
+      el.style.fontSize = "13px";
+      el.style.fontWeight = "900";
+      el.style.boxShadow = "0 8px 20px rgba(0,0,0,.28)";
+      el.style.opacity = "0";
+      el.style.pointerEvents = "none";
+      el.style.transition = "opacity .18s ease";
+      document.body.appendChild(el);
+    }
+
+    el.textContent = message;
+    el.style.opacity = "1";
+
+    if (showToast._timer) clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(() => {
+      el.style.opacity = "0";
+    }, 900);
   }
 
   let __harvestCommitFn = null;
@@ -1368,7 +1379,7 @@
       } else if (p.state === "BURN") {
         burn++;
         img = PLOT_IMG.BURN;
-        label = "焦げ";
+        label = "1タップ回収";
       }
 
       btn.innerHTML = `
@@ -1649,21 +1660,11 @@
     }
 
     if (p.state === "BURN") {
-      openModal("焼けた…", `
-        <div class="step">放置しすぎて焼けた。回収するとマスが空になる。</div>
-        <div class="row">
-          <button type="button" id="btnBack">戻る</button>
-          <button type="button" class="primary" id="btnClear">回収して空にする</button>
-        </div>
-      `);
       clearHarvestCommit();
-      document.getElementById("btnBack").addEventListener("click", closeModal);
-      document.getElementById("btnClear").addEventListener("click", () => {
-        state.plots[i] = { state: "EMPTY" };
-        saveState(state);
-        closeModal();
-        render();
-      });
+      state.plots[i] = { state: "EMPTY" };
+      saveState(state);
+      render();
+      showToast("焦げを回収した");
       return;
     }
   }
