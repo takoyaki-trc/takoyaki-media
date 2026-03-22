@@ -220,7 +220,7 @@
       name: "腐ったミズ",
       desc: "腐敗した力を宿した危険なミズ。\n通常カードはレアリティが1段階下がるが、たまにSPカードを引き当てる。",
       factor: 1.06,
-      fx: "1段階ダウン / 特別カード率12%",
+      fx: "1段階ダウン / SPカード出るかも",
       img: "https://takoyaki-card.com/town/assets/images/mizu/6.png",
       rates: { N: 0, R: 0, SR: 0, UR: 0, LR: 0 }
     },
@@ -229,7 +229,7 @@
       name: "海水",
       desc: "しょっぱさが染みついた海のミズ。\nしょっぱいカードが多く出るが、稀にSPカードが紛れ込む。",
       factor: 0.98,
-      fx: "N多め / 特別カード率3%",
+      fx: "N多め / SPカード稀に出るかも",
       img: "https://takoyaki-card.com/town/assets/images/mizu/7.png",
       rates: { N: 0, R: 0, SR: 0, UR: 0, LR: 0 }
     },
@@ -238,7 +238,7 @@
       name: "ゆのかわの温泉ミズ",
       desc: "アツめのご利益をたっぷり含んだミズ。\nRがかなり出やすく、安定して収穫しやすい。",
       factor: 0.88,
-      fx: "N30 / R68 / SR1.5 / UR0.4 / LR0.1",
+      fx: "安定",
       img: "https://takoyaki-card.com/town/assets/images/mizu/8.png",
       rates: { N: 30.0, R: 68.0, SR: 1.5, UR: 0.4, LR: 0.1 }
     },
@@ -247,7 +247,7 @@
       name: "超神水",
       desc: "神域から落ちた一滴。\n高レアカードを引き寄せる、最上級のミズ。",
       factor: 0.72,
-      fx: "N30 / R50 / SR18 / UR1 / LR1",
+      fx: "アツい",
       img: "https://takoyaki-card.com/town/assets/images/mizu/9.png",
       rates: { N: 38.0, R: 50.0, SR: 10.0, UR: 1.0, LR: 1.0 }
     },
@@ -325,7 +325,7 @@
         img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png",
         rarity: "N",
         tier: "N",
-        weight: 92
+        weight: 95
       },
       {
         id: "SP-MIZU-002",
@@ -333,7 +333,7 @@
         img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png",
         rarity: "LR",
         tier: "LR",
-        weight: 8
+        weight: 5
       }
     ],
     sea: [
@@ -343,7 +343,7 @@
         img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png",
         rarity: "N",
         tier: "N",
-        weight: 97
+        weight: 98
       },
       {
         id: "SP-MIZU-002",
@@ -351,7 +351,7 @@
         img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png",
         rarity: "LR",
         tier: "LR",
-        weight: 3
+        weight: 2
       }
     ]
   };
