@@ -13,6 +13,9 @@
   // ✅ 釣りドロップ水4種に対応
   // ✅ 腐ったミズ / 海水 専用カード対応
   // ✅ 焦げは1タップで即回収
+  // ✅ ミズはレアリティ抽選のみ反映
+  // ✅ 時短はヒリョウのみ反映
+  // ✅ 70%時短で 1時間30分 になるよう修正
   // =========================================================
 
   // =========================
@@ -261,7 +264,7 @@
     { id: "fert_feel", name: "気のせい肥料", desc: "早くなった気がする。\n気のせいかもしれない。", factor: 0.95, fx: "時短 5%", img: "https://ul.h3z.jp/XqFTb7sw.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
     { id: "fert_guts", name: "根性論ぶち込み肥料", desc: "理由はない。\n気合いだ。", factor: 0.8, fx: "時短 20%", img: "https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: true, skipGrowAnim: false },
     { id: "fert_skip", name: "工程すっ飛ばし肥料", desc: "途中は、\n見なかったことにした。", factor: 0.6, fx: "時短 40%", img: "https://ul.h3z.jp/FqPzx12Q.png", burnCardUp: 0.0, rawCardChance: 0.01, mantra: false, skipGrowAnim: true },
-    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n焼けてないって？\nたまに《生焼けカード》", factor: 0.1, fx: "時短 70%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
+    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n焼けてないって？\nたまに《生焼けカード》", factor: 0.3, fx: "時短 70%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
   ];
 
   const TAKOPI_SEED_POOL = [
@@ -1192,7 +1195,7 @@
     }
   }
 
-      function openPickGrid(kind) {
+  function openPickGrid(kind) {
     inv = loadInv();
     loadout = loadLoadout();
 
@@ -1498,12 +1501,18 @@
     const water = WATERS.find((x) => x.id === waterId);
     const fert = FERTS.find((x) => x.id === fertId);
 
-    const factor = clamp(
-      (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
-      0.35, 1.0
+    // ============================================
+    // 収穫時間はヒリョウのみ反映
+    // ミズはレアリティ抽選だけに使用
+    // タネも収穫時間には影響させない
+    // 70%時短 = factor 0.3（1時間30分）
+    // ============================================
+    const growFactor = clamp(
+      (fert?.factor ?? 1),
+      0.3, 1.0
     );
 
-    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60 * 60 * 1000);
+    const growMs = Math.floor(BASE_GROW_MS * growFactor);
     const now = Date.now();
 
     invDec(inv, "seed", seedId);
