@@ -1,0 +1,1283 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>カード募集板</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#130b1d;
+      --bg2:#2a1742;
+      --panel:#2c1b43;
+      --panel2:#1e122f;
+      --paper1:#f6ecd2;
+      --paper2:#e8d7b1;
+      --ink:#2b1d12;
+      --line:rgba(255,255,255,.14);
+      --gold1:#ffe39f;
+      --gold2:#eab648;
+      --gold3:#9c6b13;
+      --text:#fff6e4;
+      --muted:#d5c8ae;
+      --ok:#7af0aa;
+      --warn:#ffd56f;
+      --danger:#ff8181;
+      --btn:#f6edd5;
+      --btnText:#2b1d12;
+      --shadow:0 12px 28px rgba(0,0,0,.35);
+      --radius:18px;
+      --radiusSm:12px;
+      --cardW:84px;
+      --cardH:116px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:"DotGothic16", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(132,91,220,.30), transparent 30%),
+        linear-gradient(180deg,var(--bg2),var(--bg1));
+      min-height:100dvh;
+    }
+
+    .wrap{
+      width:min(1100px, calc(100% - 24px));
+      margin:0 auto;
+      padding:16px 0 90px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .leftTools,.rightTools{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .pixel-btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      background:linear-gradient(180deg,#fff7e4,#ead8aa);
+      color:#2a1d12;
+      padding:10px 14px;
+      border-radius:14px;
+      box-shadow:var(--shadow);
+      font:inherit;
+      min-height:42px;
+    }
+    .pixel-btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+    }
+
+    .titleBox{
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:18px;
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      align-items:center;
+      margin-bottom:14px;
+    }
+
+    .titleMain{
+      font-size:clamp(22px, 5vw, 34px);
+      line-height:1.2;
+      margin:0 0 8px;
+    }
+
+    .titleSub{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.7;
+      margin:0;
+    }
+
+    .metaPanel{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+    }
+
+    .pill{
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    .inventoryBar{
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:12px;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+      box-shadow:var(--shadow);
+    }
+
+    .invChip{
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:13px;
+    }
+
+    .boardGrid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+
+    .noticeCard{
+      background:linear-gradient(180deg,var(--paper1),var(--paper2));
+      color:var(--ink);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      border:4px solid #7f5a26;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .noticeCard.completed{
+      filter:saturate(.82);
+      opacity:.88;
+    }
+
+    .noticeCard::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(transparent 0 28px, rgba(0,0,0,.025) 28px 29px, transparent 29px),
+        linear-gradient(90deg, rgba(255,255,255,.14), transparent 70%);
+      background-size:100% 29px, 100% 100%;
+      mix-blend-mode:multiply;
+    }
+
+    .noticeInner{
+      position:relative;
+      z-index:1;
+      padding:16px;
+    }
+
+    .noticeHead{
+      display:grid;
+      grid-template-columns:76px 1fr auto;
+      gap:12px;
+      align-items:start;
+      margin-bottom:14px;
+    }
+
+    .clientAvatar{
+      width:76px;
+      height:76px;
+      border-radius:18px;
+      border:3px solid #694720;
+      background:#fff5dc;
+      object-fit:cover;
+      image-rendering:auto;
+      box-shadow:0 6px 14px rgba(0,0,0,.18);
+    }
+
+    .clientMeta{
+      min-width:0;
+    }
+
+    .clientName{
+      font-size:20px;
+      margin:0 0 6px;
+      line-height:1.2;
+    }
+
+    .clientLine{
+      margin:0;
+      font-size:14px;
+      line-height:1.65;
+      color:#4a3422;
+    }
+
+    .difficultyBox{
+      text-align:right;
+      min-width:116px;
+    }
+
+    .starText{
+      font-size:18px;
+      letter-spacing:1px;
+      line-height:1.2;
+      margin-bottom:6px;
+      white-space:nowrap;
+    }
+
+    .star-1,.star-2{color:#564132}
+    .star-3{color:#2050a5}
+    .star-4{color:#7f2ca3}
+    .star-5{color:#9a6911; text-shadow:0 1px 0 #fff3cc}
+
+    .tagRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .tag{
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      border:1px solid rgba(0,0,0,.12);
+      background:rgba(255,255,255,.4);
+    }
+
+    .wantTitle{
+      font-size:14px;
+      margin:0 0 10px;
+      color:#4e3924;
+    }
+
+    .wantGrid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(84px, max-content));
+      gap:10px;
+      align-items:start;
+      margin-bottom:14px;
+    }
+
+    .wantItem{
+      width:var(--cardW);
+    }
+
+    .miniCard{
+      width:var(--cardW);
+      height:var(--cardH);
+      border-radius:14px;
+      overflow:hidden;
+      position:relative;
+      border:3px solid #694720;
+      background:#fff2d7;
+      box-shadow:0 6px 14px rgba(0,0,0,.15);
+    }
+
+    .miniCard img{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit:cover;
+      background:#fff7ea;
+    }
+
+    .qtyBadge{
+      position:absolute;
+      right:6px;
+      bottom:6px;
+      min-width:28px;
+      height:28px;
+      padding:0 7px;
+      border-radius:999px;
+      background:rgba(18,13,8,.88);
+      color:#fff7eb;
+      display:grid;
+      place-items:center;
+      font-size:13px;
+      border:2px solid rgba(255,255,255,.18);
+    }
+
+    .ownBadge{
+      position:absolute;
+      left:6px;
+      top:6px;
+      min-width:34px;
+      height:24px;
+      padding:0 6px;
+      border-radius:999px;
+      background:rgba(255,255,255,.92);
+      color:#2c2016;
+      display:grid;
+      place-items:center;
+      font-size:11px;
+      border:2px solid rgba(0,0,0,.08);
+    }
+
+    .wantName{
+      margin-top:6px;
+      font-size:11px;
+      line-height:1.45;
+      color:#4a3422;
+      word-break:break-word;
+      min-height:32px;
+    }
+
+    .rarityCard{
+      width:100%;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:8px;
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,.58), transparent 32%),
+        linear-gradient(180deg,#fff8eb,#efdcb2);
+    }
+
+    .rarityFrame{
+      border-color:#694720;
+    }
+
+    .rarityFrame.N  { background:linear-gradient(180deg,#f7efe3,#eadcc8); }
+    .rarityFrame.R  { background:linear-gradient(180deg,#dff0ff,#b8d8ff); }
+    .rarityFrame.SR { background:linear-gradient(180deg,#efd8ff,#d5a9ff); }
+    .rarityFrame.UR { background:linear-gradient(180deg,#ffe5ae,#ffc857); }
+    .rarityFrame.LR { background:linear-gradient(180deg,#fff0ad,#ffd54d); }
+
+    .rarityBig{
+      font-size:24px;
+      line-height:1;
+      margin-bottom:6px;
+      font-weight:700;
+    }
+
+    .raritySmall{
+      font-size:11px;
+      line-height:1.4;
+    }
+
+    .rewardBox{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:14px;
+    }
+
+    .rewardChip{
+      background:rgba(255,255,255,.52);
+      border:1px solid rgba(0,0,0,.10);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      color:#3a291a;
+    }
+
+    .noticeFoot{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .statusText{
+      font-size:13px;
+      color:#4a3422;
+      line-height:1.6;
+    }
+
+    .statusOk{ color:#0e7e47; }
+    .statusNg{ color:#9d2b2b; }
+
+    .stamp{
+      position:absolute;
+      right:12px;
+      top:12px;
+      transform:rotate(-10deg);
+      border:4px solid rgba(170,24,24,.78);
+      color:rgba(170,24,24,.82);
+      padding:8px 10px;
+      border-radius:14px;
+      font-size:18px;
+      font-weight:700;
+      background:rgba(255,255,255,.22);
+      display:none;
+      pointer-events:none;
+    }
+
+    .noticeCard.completed .stamp{
+      display:block;
+    }
+
+    .emptyState{
+      background:rgba(255,255,255,.08);
+      border:1px dashed var(--line);
+      border-radius:18px;
+      padding:20px;
+      color:var(--muted);
+      text-align:center;
+    }
+
+    .toast{
+      position:fixed;
+      left:12px;
+      right:12px;
+      bottom:calc(12px + env(safe-area-inset-bottom));
+      z-index:9999;
+      display:grid;
+      place-items:center;
+      pointer-events:none;
+      opacity:0;
+      transform:translateY(12px);
+      transition:.22s ease;
+    }
+
+    .toast.show{
+      opacity:1;
+      transform:translateY(0);
+    }
+
+    .toastInner{
+      max-width:min(560px, 100%);
+      background:rgba(20,12,30,.96);
+      color:#fff7eb;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;
+      padding:12px 14px;
+      box-shadow:var(--shadow);
+      font-size:14px;
+      text-align:center;
+    }
+
+    .helper{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.7;
+      margin-top:12px;
+    }
+
+    @media (max-width:720px){
+      .titleBox{
+        grid-template-columns:1fr;
+      }
+      .metaPanel{
+        align-items:flex-start;
+      }
+      .noticeHead{
+        grid-template-columns:76px 1fr;
+      }
+      .difficultyBox{
+        grid-column:1 / -1;
+        text-align:left;
+        min-width:0;
+      }
+      .tagRow{
+        justify-content:flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="leftTools">
+        <button class="pixel-btn" id="backBtn">← 戻る</button>
+      </div>
+      <div class="rightTools">
+        <button class="pixel-btn" id="resetTodayBtn">本日の貼り紙を作り直す</button>
+      </div>
+    </div>
+
+    <section class="titleBox">
+      <div>
+        <h1 class="titleMain">カード募集板</h1>
+        <p class="titleSub">
+          タコ民たちが探しているカードの貼り紙が並んでいるたこ。<br>
+          持っているカードがあれば、その場で納品して報酬を受け取れるたこ。
+        </p>
+      </div>
+
+      <div class="metaPanel">
+        <div class="pill" id="todayLabel">本日: ----/--/--</div>
+        <div class="pill" id="doneLabel">達成 0 / 5</div>
+      </div>
+    </section>
+
+    <section class="inventoryBar" id="inventoryBar"></section>
+
+    <section class="boardGrid" id="boardGrid"></section>
+
+    <p class="helper">
+      ※ この試作版は <code>tf_v1_book</code> の所持枚数を読んで判定します。<br>
+      ※ 条件依頼（SR以上など）は、所持中の該当カードから自動で消費されます。<br>
+      ※ タコ民画像・カード画像は今は仮画像です。あとで実画像URLに差し替えできます。
+    </p>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="toastInner" id="toastText"></div>
+  </div>
+
+  <script>
+  (() => {
+    "use strict";
+
+    // =========================================================
+    // Keys
+    // =========================================================
+    const KEY = {
+      board: "ttc_card_board_v1",
+      octo: "roten_v1_octo",
+      player: "tf_v1_player",
+      book: "tf_v1_book"
+    };
+
+    // =========================================================
+    // Utils
+    // =========================================================
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const pad2 = (n) => String(n).padStart(2, "0");
+    const todayKey = () => {
+      const d = new Date();
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    };
+    const todayJP = () => {
+      const d = new Date();
+      return `${d.getFullYear()}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())}`;
+    };
+
+    function safeJSONParse(raw, fallback){
+      try{
+        const v = JSON.parse(raw);
+        return v ?? fallback;
+      }catch{
+        return fallback;
+      }
+    }
+
+    function loadJSON(key, fallback){
+      return safeJSONParse(localStorage.getItem(key), fallback);
+    }
+
+    function saveJSON(key, value){
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function clamp(n, a, b){
+      return Math.max(a, Math.min(b, n));
+    }
+
+    function randInt(min, max){
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pick(arr){
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function shuffle(arr){
+      const a = [...arr];
+      for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function stars(n){
+      return "★".repeat(n) + "☆".repeat(5 - n);
+    }
+
+    function showToast(msg){
+      const el = $("#toast");
+      const text = $("#toastText");
+      text.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 2200);
+    }
+
+    function seededRandom(seedStr){
+      let h = 2166136261;
+      for(let i=0;i<seedStr.length;i++){
+        h ^= seedStr.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return function(){
+        h += h << 13; h ^= h >>> 7;
+        h += h << 3;  h ^= h >>> 17;
+        h += h << 5;
+        return ((h >>> 0) / 4294967295);
+      };
+    }
+
+    function seededPick(arr, rnd){
+      return arr[Math.floor(rnd() * arr.length)];
+    }
+
+    // =========================================================
+    // SVG helper
+    // =========================================================
+    function svgDataUri(svg){
+      return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+    }
+
+    function makeClientAvatar(name, bg1, bg2, face="・"){
+      return svgDataUri(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+          <defs>
+            <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="${bg1}"/>
+              <stop offset="100%" stop-color="${bg2}"/>
+            </linearGradient>
+          </defs>
+          <rect width="160" height="160" rx="24" fill="url(#g)"/>
+          <circle cx="80" cy="86" r="40" fill="#ffdca8"/>
+          <circle cx="66" cy="80" r="5" fill="#2b1d12"/>
+          <circle cx="94" cy="80" r="5" fill="#2b1d12"/>
+          <path d="M67 102 Q80 112 93 102" fill="none" stroke="#2b1d12" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="80" cy="30" rx="34" ry="18" fill="#d94747"/>
+          <circle cx="57" cy="26" r="9" fill="#d94747"/>
+          <circle cx="103" cy="26" r="9" fill="#d94747"/>
+          <text x="80" y="145" text-anchor="middle" font-size="16" font-family="sans-serif" fill="#fff">${name}</text>
+        </svg>
+      `);
+    }
+
+    function makeCardArt(name, rarity, bg1, bg2, accent="#ffffff"){
+      return svgDataUri(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420">
+          <defs>
+            <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="${bg1}"/>
+              <stop offset="100%" stop-color="${bg2}"/>
+            </linearGradient>
+          </defs>
+          <rect width="300" height="420" rx="24" fill="url(#g)"/>
+          <rect x="16" y="16" width="268" height="388" rx="18" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+          <circle cx="150" cy="168" r="70" fill="${accent}" opacity=".18"/>
+          <circle cx="150" cy="168" r="46" fill="${accent}" opacity=".35"/>
+          <text x="150" y="74" text-anchor="middle" font-size="26" font-family="sans-serif" fill="white">${rarity}</text>
+          <text x="150" y="340" text-anchor="middle" font-size="24" font-family="sans-serif" fill="white">${name}</text>
+        </svg>
+      `);
+    }
+
+    // =========================================================
+    // Master data
+    // =========================================================
+    const CLIENTS = [
+      {
+        id: "normal",
+        name: "ふつうのタコ民",
+        minStar: 1, maxStar: 2,
+        lines: [
+          "このカード、探してるんだたこ",
+          "1枚だけでもうれしいたこ…",
+          "見つけたら売ってほしいたこ"
+        ],
+        avatar: makeClientAvatar("ふつう", "#8ec5ff", "#4a7bd9")
+      },
+      {
+        id: "collector",
+        name: "コレクタータコ民",
+        minStar: 2, maxStar: 4,
+        lines: [
+          "並べて眺めたいんだよね",
+          "できれば種類多めで頼むよ",
+          "図鑑欲が止まらないんだ"
+        ],
+        avatar: makeClientAvatar("収集家", "#c9a3ff", "#7c4fd8")
+      },
+      {
+        id: "regular",
+        name: "常連タコ民",
+        minStar: 2, maxStar: 4,
+        lines: [
+          "いつも世話になってるからね",
+          "今日はちょっと多めに払うよ",
+          "欲しいカードがあるんだ"
+        ],
+        avatar: makeClientAvatar("常連", "#8fe1b2", "#2e9a65")
+      },
+      {
+        id: "hurry",
+        name: "せっかちタコ民",
+        minStar: 2, maxStar: 3,
+        lines: [
+          "早く！今すぐ欲しい！",
+          "枚数多めでまとめて頼むよ！",
+          "急いでるんだ、急いで！"
+        ],
+        avatar: makeClientAvatar("せっかち", "#ffd79d", "#d78626")
+      },
+      {
+        id: "rich",
+        name: "札束タコ民",
+        minStar: 5, maxStar: 5,
+        lines: [
+          "安いのはいらない。光ってるやつを持ってこい",
+          "値段は気にするな。欲しいものが欲しい",
+          "高いカードほど心が落ち着くんだよねぇ"
+        ],
+        avatar: makeClientAvatar("札束", "#ffe59a", "#b9851c")
+      }
+    ];
+
+    const CARD_CATALOG = [
+      { id:"TN-001", name:"店主反撃レビュー", rarity:"N",  image:makeCardArt("反撃レビュー","N","#6c7b8f","#404e60","#ffffff") },
+      { id:"TN-002", name:"生焼けたカード",   rarity:"N",  image:makeCardArt("生焼け","N","#9f7b54","#66452f","#fff0cf") },
+      { id:"TN-003", name:"焼きすぎたカード", rarity:"R",  image:makeCardArt("焼きすぎ","R","#8a403c","#4f201d","#ffd7a2") },
+      { id:"TN-004", name:"腐敗したカード",   rarity:"R",  image:makeCardArt("腐敗","R","#547d53","#2c4d2c","#dbffbf") },
+      { id:"TN-005", name:"浸食したカード",   rarity:"SR", image:makeCardArt("浸食","SR","#50567d","#282f51","#b5c6ff") },
+      { id:"TN-006", name:"行列召喚",         rarity:"SR", image:makeCardArt("行列召喚","SR","#7f4db5","#4b2978","#eed4ff") },
+      { id:"TN-007", name:"カウノカミ",       rarity:"UR", image:makeCardArt("カウノカミ","UR","#b78b35","#735412","#fff0a6") },
+      { id:"TN-008", name:"オチルカミ",       rarity:"UR", image:makeCardArt("オチルカミ","UR","#c26b1a","#6f3906","#ffe4ad") },
+      { id:"TN-009", name:"頂上神",           rarity:"LR", image:makeCardArt("頂上神","LR","#bca33a","#6d5a15","#fff6c4") },
+      { id:"TN-010", name:"幻塔神",           rarity:"LR", image:makeCardArt("幻塔神","LR","#cfb94f","#78651a","#fff6cc") }
+    ];
+
+    const CARD_MAP = Object.fromEntries(CARD_CATALOG.map(c => [c.id, c]));
+    const RARITY_ORDER = { N:1, R:2, SR:3, UR:4, LR:5 };
+
+    const RARITY_POOL_BY_STAR = {
+      1: ["N"],
+      2: ["N","R"],
+      3: ["R","SR"],
+      4: ["SR","UR"],
+      5: ["SR","UR","LR"]
+    };
+
+    const REWARD_BY_STAR = {
+      1: { octo:[20,40],   exp:[1,2],   rep:[0,1] },
+      2: { octo:[40,80],   exp:[2,4],   rep:[1,2] },
+      3: { octo:[80,140],  exp:[4,7],   rep:[1,3] },
+      4: { octo:[140,240], exp:[7,12],  rep:[2,4] },
+      5: { octo:[250,500], exp:[10,18], rep:[3,6] }
+    };
+
+    const DAILY_PATTERNS = [
+      [1,1,2,3,5],
+      [1,2,2,4,5],
+      [1,2,3,3,5],
+      [1,2,3,4,4]
+    ];
+
+    // =========================================================
+    // Demo seed inventory
+    // =========================================================
+    function ensureDemoBookIfMissing(){
+      const raw = localStorage.getItem(KEY.book);
+      if (raw) return;
+
+      const got = {};
+      for (const c of CARD_CATALOG){
+        let count = 0;
+        if (c.rarity === "N")  count = randInt(2, 6);
+        if (c.rarity === "R")  count = randInt(1, 4);
+        if (c.rarity === "SR") count = randInt(0, 3);
+        if (c.rarity === "UR") count = randInt(0, 2);
+        if (c.rarity === "LR") count = randInt(0, 1);
+
+        got[c.id] = {
+          count,
+          name: c.name,
+          rarity: c.rarity
+        };
+      }
+
+      saveJSON(KEY.book, { got });
+    }
+
+    function ensureMetaDefaults(){
+      if (localStorage.getItem(KEY.octo) == null) localStorage.setItem(KEY.octo, "1000");
+      if (!localStorage.getItem(KEY.player)){
+        saveJSON(KEY.player, { exp: 0, rep: 0 });
+      }
+    }
+
+    // =========================================================
+    // Book / player
+    // =========================================================
+    function loadBook(){
+      const book = loadJSON(KEY.book, { got:{} });
+      if (!book.got || typeof book.got !== "object") book.got = {};
+      return book;
+    }
+
+    function saveBook(book){
+      saveJSON(KEY.book, book);
+    }
+
+    function getOwnedCount(cardId){
+      const book = loadBook();
+      return Number(book?.got?.[cardId]?.count || 0);
+    }
+
+    function addOwned(cardId, delta){
+      const book = loadBook();
+      if (!book.got[cardId]){
+        const info = CARD_MAP[cardId] || { name: cardId, rarity:"N" };
+        book.got[cardId] = { count: 0, name: info.name, rarity: info.rarity };
+      }
+      const next = Math.max(0, Number(book.got[cardId].count || 0) + delta);
+      book.got[cardId].count = next;
+      saveBook(book);
+    }
+
+    function getCardsByRarityAtLeast(rarity){
+      const min = RARITY_ORDER[rarity] || 1;
+      return CARD_CATALOG.filter(c => (RARITY_ORDER[c.rarity] || 0) >= min);
+    }
+
+    function getOwnedCardsByRarityAtLeast(rarity){
+      const min = RARITY_ORDER[rarity] || 1;
+      const book = loadBook();
+      return CARD_CATALOG
+        .filter(c => (RARITY_ORDER[c.rarity] || 0) >= min)
+        .map(c => ({
+          ...c,
+          count: Number(book?.got?.[c.id]?.count || 0)
+        }))
+        .filter(c => c.count > 0)
+        .sort((a,b) => (RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]) || a.name.localeCompare(b.name, "ja"));
+    }
+
+    function addOcto(delta){
+      const now = Number(localStorage.getItem(KEY.octo) || 0);
+      localStorage.setItem(KEY.octo, String(Math.max(0, now + delta)));
+    }
+
+    function getOcto(){
+      return Number(localStorage.getItem(KEY.octo) || 0);
+    }
+
+    function addPlayerStats(expDelta, repDelta){
+      const player = loadJSON(KEY.player, { exp:0, rep:0 });
+      player.exp = Number(player.exp || 0) + Number(expDelta || 0);
+      player.rep = Number(player.rep || 0) + Number(repDelta || 0);
+      saveJSON(KEY.player, player);
+    }
+
+    function getPlayer(){
+      return loadJSON(KEY.player, { exp:0, rep:0 });
+    }
+
+    // =========================================================
+    // Board generation
+    // =========================================================
+    function getBoardState(){
+      return loadJSON(KEY.board, null);
+    }
+
+    function saveBoardState(state){
+      saveJSON(KEY.board, state);
+    }
+
+    function generateReward(star, rnd){
+      const src = REWARD_BY_STAR[star];
+      const ri = (a,b) => Math.floor(rnd() * (b - a + 1)) + a;
+      return {
+        octo: ri(src.octo[0], src.octo[1]),
+        exp: ri(src.exp[0], src.exp[1]),
+        rep: ri(src.rep[0], src.rep[1])
+      };
+    }
+
+    function generateWantCountByStar(star, rnd){
+      if (star === 1) return 1;
+      if (star === 2) return rnd() < 0.55 ? 1 : 2;
+      if (star === 3) return 2;
+      if (star === 4) return rnd() < 0.45 ? 2 : 3;
+      return rnd() < 0.35 ? 2 : 3;
+    }
+
+    function generateQtyByStar(star, rnd){
+      if (star === 1) return 1 + (rnd() < 0.35 ? 1 : 0);
+      if (star === 2) return 1 + (rnd() < 0.65 ? 1 : 0);
+      if (star === 3) return 2 + (rnd() < 0.4 ? 1 : 0);
+      if (star === 4) return 2 + Math.floor(rnd() * 3); // 2-4
+      return 3 + Math.floor(rnd() * 3); // 3-5
+    }
+
+    function maybeRarityQuest(star, rnd, usedCardIds){
+      // 高難易度ほど条件依頼を混ぜる
+      let p = 0;
+      if (star === 3) p = 0.18;
+      if (star === 4) p = 0.28;
+      if (star === 5) p = 0.40;
+      if (rnd() > p) return null;
+
+      const pool = RARITY_POOL_BY_STAR[star];
+      const rarity = seededPick(pool, rnd);
+      const qty = (star >= 4) ? (rnd() < 0.5 ? 1 : 2) : 1;
+      return {
+        type: "rarity",
+        rarity,
+        label: `${rarity}以上`,
+        qty
+      };
+    }
+
+    function makeOneJob(star, idx, seedBase){
+      const rnd = seededRandom(`${seedBase}::job::${idx}`);
+      let clientPool = CLIENTS.filter(c => star >= c.minStar && star <= c.maxStar);
+      if (star === 5) clientPool = CLIENTS.filter(c => c.id === "rich");
+      const client = seededPick(clientPool, rnd);
+
+      const wants = [];
+      const wantKinds = generateWantCountByStar(star, rnd);
+      const usedCardIds = new Set();
+
+      for (let i=0;i<wantKinds;i++){
+        const rarityQuest = maybeRarityQuest(star, rnd, usedCardIds);
+        if (rarityQuest){
+          wants.push(rarityQuest);
+          continue;
+        }
+
+        const rarityPool = RARITY_POOL_BY_STAR[star];
+        let rarity = seededPick(rarityPool, rnd);
+
+        // ★5でもLRは出すぎないように調整
+        if (star === 5 && rarity === "LR" && rnd() < 0.65) {
+          rarity = rnd() < 0.6 ? "SR" : "UR";
+        }
+
+        const cards = CARD_CATALOG.filter(c => c.rarity === rarity && !usedCardIds.has(c.id));
+        const card = seededPick(cards.length ? cards : CARD_CATALOG.filter(c => !usedCardIds.has(c.id)), rnd);
+        usedCardIds.add(card.id);
+
+        wants.push({
+          type: "card",
+          cardId: card.id,
+          name: card.name,
+          image: card.image,
+          rarity: card.rarity,
+          qty: generateQtyByStar(star, rnd)
+        });
+      }
+
+      return {
+        id: `job_${idx + 1}`,
+        clientId: client.id,
+        clientName: client.name,
+        clientImage: client.avatar,
+        difficulty: star,
+        line: seededPick(client.lines, rnd),
+        wants,
+        rewards: generateReward(star, rnd),
+        completed: false,
+        completedAt: null
+      };
+    }
+
+    function generateDailyBoard(force=false){
+      const today = todayKey();
+      const existing = getBoardState();
+      if (!force && existing && existing.date === today) return existing;
+
+      const rnd = seededRandom(`board::${today}`);
+      const pattern = seededPick(DAILY_PATTERNS, rnd);
+
+      const jobs = pattern.map((star, idx) => makeOneJob(star, idx, today));
+
+      const state = {
+        date: today,
+        jobs
+      };
+      saveBoardState(state);
+      return state;
+    }
+
+    // =========================================================
+    // Render helpers
+    // =========================================================
+    function getJobNeedStatus(job){
+      const result = {
+        ok: true,
+        lines: []
+      };
+
+      for (const want of job.wants){
+        if (want.type === "card"){
+          const owned = getOwnedCount(want.cardId);
+          const ok = owned >= want.qty;
+          result.lines.push({
+            ok,
+            text: `${want.name}　${owned}/${want.qty}`
+          });
+          if (!ok) result.ok = false;
+        } else if (want.type === "rarity"){
+          const ownedList = getOwnedCardsByRarityAtLeast(want.rarity);
+          const total = ownedList.reduce((sum, c) => sum + c.count, 0);
+          const ok = total >= want.qty;
+          result.lines.push({
+            ok,
+            text: `${want.label}　${total}/${want.qty}`
+          });
+          if (!ok) result.ok = false;
+        }
+      }
+
+      return result;
+    }
+
+    function renderInventoryBar(){
+      const bar = $("#inventoryBar");
+      const player = getPlayer();
+
+      const counts = { N:0, R:0, SR:0, UR:0, LR:0 };
+      const book = loadBook();
+      for (const c of CARD_CATALOG){
+        counts[c.rarity] += Number(book?.got?.[c.id]?.count || 0);
+      }
+
+      bar.innerHTML = `
+        <div class="invChip">所持OCTO: ${getOcto()}</div>
+        <div class="invChip">EXP: ${Number(player.exp || 0)}</div>
+        <div class="invChip">評判: ${Number(player.rep || 0)}</div>
+        <div class="invChip">N: ${counts.N}</div>
+        <div class="invChip">R: ${counts.R}</div>
+        <div class="invChip">SR: ${counts.SR}</div>
+        <div class="invChip">UR: ${counts.UR}</div>
+        <div class="invChip">LR: ${counts.LR}</div>
+      `;
+    }
+
+    function makeWantItemHTML(want){
+      if (want.type === "card"){
+        const owned = getOwnedCount(want.cardId);
+        return `
+          <div class="wantItem">
+            <div class="miniCard">
+              <img src="${want.image}" alt="${escapeHtml(want.name)}">
+              <div class="ownBadge">所持${owned}</div>
+              <div class="qtyBadge">×${want.qty}</div>
+            </div>
+            <div class="wantName">${escapeHtml(want.name)}</div>
+          </div>
+        `;
+      }
+
+      const ownedList = getOwnedCardsByRarityAtLeast(want.rarity);
+      const total = ownedList.reduce((sum, c) => sum + c.count, 0);
+
+      return `
+        <div class="wantItem">
+          <div class="miniCard rarityFrame ${want.rarity}">
+            <div class="rarityCard">
+              <div class="rarityBig">${escapeHtml(want.rarity)}</div>
+              <div class="raritySmall">${escapeHtml(want.label)}</div>
+            </div>
+            <div class="ownBadge">所持${total}</div>
+            <div class="qtyBadge">×${want.qty}</div>
+          </div>
+          <div class="wantName">${escapeHtml(want.label)}</div>
+        </div>
+      `;
+    }
+
+    function renderBoard(){
+      const state = generateDailyBoard(false);
+      const root = $("#boardGrid");
+      $("#todayLabel").textContent = `本日: ${todayJP()}`;
+
+      if (!state.jobs?.length){
+        root.innerHTML = `<div class="emptyState">貼り紙はまだないたこ。</div>`;
+        $("#doneLabel").textContent = "達成 0 / 0";
+        return;
+      }
+
+      const done = state.jobs.filter(j => j.completed).length;
+      $("#doneLabel").textContent = `達成 ${done} / ${state.jobs.length}`;
+
+      root.innerHTML = state.jobs.map(job => {
+        const need = getJobNeedStatus(job);
+        const starCls = `star-${job.difficulty}`;
+
+        return `
+          <article class="noticeCard ${job.completed ? "completed" : ""}" data-job-id="${job.id}">
+            <div class="stamp">達成済</div>
+            <div class="noticeInner">
+              <div class="noticeHead">
+                <img class="clientAvatar" src="${job.clientImage}" alt="${escapeHtml(job.clientName)}">
+                <div class="clientMeta">
+                  <h2 class="clientName">${escapeHtml(job.clientName)}</h2>
+                  <p class="clientLine">${escapeHtml(job.line)}</p>
+                </div>
+
+                <div class="difficultyBox">
+                  <div class="starText ${starCls}">${stars(job.difficulty)}</div>
+                  <div class="tagRow">
+                    <span class="tag">難易度 ${job.difficulty}</span>
+                    <span class="tag">報酬大 ${job.difficulty >= 4 ? "あり" : "ふつう"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <p class="wantTitle">探しているカード</p>
+              <div class="wantGrid">
+                ${job.wants.map(makeWantItemHTML).join("")}
+              </div>
+
+              <div class="rewardBox">
+                <span class="rewardChip">OCTO +${job.rewards.octo}</span>
+                <span class="rewardChip">EXP +${job.rewards.exp}</span>
+                <span class="rewardChip">評判 +${job.rewards.rep}</span>
+              </div>
+
+              <div class="noticeFoot">
+                <div class="statusText">
+                  ${need.lines.map(line => `
+                    <div class="${line.ok ? "statusOk" : "statusNg"}">${escapeHtml(line.text)}</div>
+                  `).join("")}
+                </div>
+
+                <button class="pixel-btn deliverBtn"
+                        data-job-id="${job.id}"
+                        ${job.completed || !need.ok ? "disabled" : ""}>
+                  ${job.completed ? "納品済み" : "納品する"}
+                </button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      $$(".deliverBtn", root).forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.jobId;
+          deliverJob(id);
+        });
+      });
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#39;"
+      })[s]);
+    }
+
+    // =========================================================
+    // Delivery
+    // =========================================================
+    function consumeWant(want){
+      if (want.type === "card"){
+        const owned = getOwnedCount(want.cardId);
+        if (owned < want.qty) return false;
+        addOwned(want.cardId, -want.qty);
+        return true;
+      }
+
+      if (want.type === "rarity"){
+        let remain = want.qty;
+        const ownedList = getOwnedCardsByRarityAtLeast(want.rarity);
+        const total = ownedList.reduce((sum, c) => sum + c.count, 0);
+        if (total < want.qty) return false;
+
+        // 下位レアから順に消費
+        for (const c of ownedList){
+          if (remain <= 0) break;
+          const use = Math.min(remain, c.count);
+          addOwned(c.id, -use);
+          remain -= use;
+        }
+        return remain === 0;
+      }
+
+      return false;
+    }
+
+    function deliverJob(jobId){
+      const state = getBoardState();
+      if (!state?.jobs?.length) return;
+
+      const job = state.jobs.find(j => j.id === jobId);
+      if (!job || job.completed) return;
+
+      const need = getJobNeedStatus(job);
+      if (!need.ok){
+        showToast("カードが足りないたこ。");
+        renderAll();
+        return;
+      }
+
+      // 消費
+      for (const want of job.wants){
+        const ok = consumeWant(want);
+        if (!ok){
+          showToast("納品に失敗したたこ。");
+          renderAll();
+          return;
+        }
+      }
+
+      addOcto(job.rewards.octo);
+      addPlayerStats(job.rewards.exp, job.rewards.rep);
+
+      job.completed = true;
+      job.completedAt = Date.now();
+      saveBoardState(state);
+
+      if (job.clientId === "rich"){
+        showToast(`札束タコ民が大喜び！ OCTO +${job.rewards.octo}`);
+      } else {
+        showToast(`納品完了！ OCTO +${job.rewards.octo}`);
+      }
+
+      renderAll();
+    }
+
+    // =========================================================
+    // Boot
+    // =========================================================
+    function renderAll(){
+      renderInventoryBar();
+      renderBoard();
+    }
+
+    function bindUI(){
+      $("#backBtn").addEventListener("click", () => {
+        if (history.length > 1) history.back();
+        else location.href = "./";
+      });
+
+      $("#resetTodayBtn").addEventListener("click", () => {
+        const ok = confirm("本日の貼り紙を作り直します。達成状態も今日の分はリセットされます。よろしいですか？");
+        if (!ok) return;
+        generateDailyBoard(true);
+        renderAll();
+        showToast("本日の貼り紙を作り直したたこ。");
+      });
+    }
+
+    ensureMetaDefaults();
+    ensureDemoBookIfMissing();
+    generateDailyBoard(false);
+    bindUI();
+    renderAll();
+  })();
+  </script>
+</body>
+</html>
