@@ -1,1 +1,1272 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>たこ焼きみくじ｜ログインボーナス</title>
 
+  <style>
+    :root{
+      --bg1:#2b0e18;
+      --bg2:#4a1625;
+      --bg3:#7b1f2f;
+      --gold1:#fff2bf;
+      --gold2:#ffd76a;
+      --gold3:#d99b1c;
+      --paper:#fff8e9;
+      --ink:#2b1a12;
+      --white:#ffffff;
+      --line:rgba(255,255,255,.14);
+      --panel:rgba(24,10,18,.68);
+      --panel2:rgba(255,248,233,.10);
+      --shadow:0 18px 50px rgba(0,0,0,.42);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--white);
+      font-family:
+        "Hiragino Sans","Yu Gothic","Meiryo",system-ui,-apple-system,sans-serif;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,220,120,.12), transparent 20%),
+        radial-gradient(circle at 80% 18%, rgba(255,180,120,.10), transparent 18%),
+        radial-gradient(circle at 50% 120%, rgba(255,240,180,.08), transparent 28%),
+        linear-gradient(180deg, #2a0d17 0%, #4b1625 45%, #6b1c2b 100%);
+      overflow-x:hidden;
+    }
+
+    /* 背景の神社っぽい演出 */
+    .bg-wrap{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      overflow:hidden;
+    }
+    .bg-glow{
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 50% 12%, rgba(255,220,120,.25), transparent 24%),
+        radial-gradient(circle at 50% 0%, rgba(255,245,200,.12), transparent 30%);
+    }
+    .bg-torii{
+      position:absolute;
+      left:50%;
+      bottom:88px;
+      transform:translateX(-50%);
+      width:min(760px, 110vw);
+      height:340px;
+      opacity:.12;
+      filter: blur(.2px);
+    }
+    .bg-torii::before,
+    .bg-torii::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      background:#1a0a0f;
+      border-radius:8px;
+    }
+    .bg-torii::before{
+      top:12px;
+      width:86%;
+      height:22px;
+      box-shadow: 0 26px 0 0 #1a0a0f;
+    }
+    .bg-torii::after{
+      bottom:0;
+      width:18px;
+      height:220px;
+      box-shadow:
+        -170px 0 0 0 #1a0a0f,
+         170px 0 0 0 #1a0a0f;
+    }
+    .lantern{
+      position:absolute;
+      top:110px;
+      width:52px;
+      height:72px;
+      border-radius:18px;
+      background:
+        linear-gradient(180deg,#fff3c9 0%, #ffd45d 45%, #d4880f 100%);
+      box-shadow:
+        0 0 30px rgba(255,200,80,.38),
+        inset 0 -10px 20px rgba(120,50,0,.18);
+      opacity:.48;
+    }
+    .lantern::before,
+    .lantern::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      background:#5e1e14;
+      border-radius:999px;
+    }
+    .lantern::before{ top:-10px; width:26px; height:8px; }
+    .lantern::after{ bottom:-10px; width:24px; height:8px; }
+    .lantern.left{ left:calc(50% - min(36vw, 280px)); }
+    .lantern.right{ right:calc(50% - min(36vw, 280px)); }
+
+    .sparkles{
+      position:absolute; inset:0;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.8) 0 1px, transparent 1.2px),
+        radial-gradient(circle, rgba(255,225,150,.7) 0 1.2px, transparent 1.4px),
+        radial-gradient(circle, rgba(255,255,255,.6) 0 1px, transparent 1.3px);
+      background-size: 140px 140px, 220px 220px, 180px 180px;
+      background-position: 10px 20px, 60px 80px, 120px 40px;
+      opacity:.18;
+    }
+
+    .page{
+      position:relative;
+      z-index:1;
+      width:min(980px, calc(100% - 24px));
+      margin:0 auto;
+      padding:14px 0 calc(26px + var(--safe-bottom));
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+      padding-top:4px;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius:14px;
+      padding:12px 16px;
+      font-weight:900;
+      letter-spacing:.02em;
+      transition:transform .12s ease, opacity .12s ease, box-shadow .16s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active{ transform:translateY(1px) scale(.99); }
+
+    .btn-ghost{
+      color:#fff;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow:0 8px 18px rgba(0,0,0,.18);
+    }
+
+    .btn-gold{
+      color:#3a2204;
+      background:linear-gradient(180deg, var(--gold1), var(--gold2));
+      box-shadow:0 10px 24px rgba(0,0,0,.24), inset 0 -2px 0 rgba(120,72,0,.18);
+    }
+
+    .btn-red{
+      color:#fff8ef;
+      background:linear-gradient(180deg, #ff7a6b, #d74131);
+      box-shadow:0 10px 24px rgba(0,0,0,.24), inset 0 -2px 0 rgba(92,0,0,.24);
+    }
+
+    .hud{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-height:46px;
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.09);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      white-space:nowrap;
+    }
+    .pill .num{
+      font-size:20px;
+      font-weight:1000;
+    }
+
+    .hero{
+      position:relative;
+      overflow:hidden;
+      border-radius:28px;
+      padding:20px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)),
+        linear-gradient(180deg, rgba(58,13,24,.72), rgba(26,8,13,.82));
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow:var(--shadow);
+      margin-bottom:16px;
+      min-height:260px;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 50% 10%, rgba(255,225,150,.18), transparent 24%),
+        linear-gradient(180deg, transparent 55%, rgba(0,0,0,.14) 100%);
+      pointer-events:none;
+    }
+
+    .hero-grid{
+      position:relative;
+      display:grid;
+      grid-template-columns: 220px 1fr;
+      gap:18px;
+      align-items:center;
+      z-index:1;
+    }
+
+    .takopi-stage{
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      min-height:220px;
+    }
+
+    .takopi-card{
+      width:100%;
+      max-width:220px;
+      padding:12px;
+      border-radius:24px;
+      background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.16);
+      text-align:center;
+      box-shadow:0 18px 40px rgba(0,0,0,.28);
+    }
+
+    .takopi-img{
+      display:block;
+      width:100%;
+      max-width:180px;
+      margin:0 auto 8px;
+      image-rendering:auto;
+      filter: drop-shadow(0 8px 18px rgba(0,0,0,.28));
+    }
+
+    .takopi-name{
+      font-size:14px;
+      font-weight:1000;
+      letter-spacing:.08em;
+      opacity:.9;
+    }
+
+    .hero-copy{
+      min-width:0;
+    }
+
+    .sub-kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:900;
+      margin-bottom:12px;
+    }
+
+    .title{
+      margin:0 0 10px;
+      font-size:clamp(28px, 5vw, 52px);
+      line-height:1.05;
+      font-weight:1000;
+      letter-spacing:.04em;
+      text-shadow:0 4px 18px rgba(0,0,0,.28);
+    }
+
+    .lead{
+      margin:0 0 14px;
+      font-size:15px;
+      line-height:1.8;
+      color:rgba(255,255,255,.92);
+    }
+
+    .mini-info{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .mini-chip{
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.09);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:13px;
+      line-height:1.4;
+    }
+
+    .main-grid{
+      display:grid;
+      grid-template-columns: 1.08fr .92fr;
+      gap:16px;
+    }
+
+    .panel{
+      position:relative;
+      overflow:hidden;
+      border-radius:24px;
+      padding:18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)),
+        linear-gradient(180deg, rgba(32,12,18,.82), rgba(18,8,13,.86));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:var(--shadow);
+    }
+
+    .panel-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .panel-title{
+      font-size:22px;
+      font-weight:1000;
+      letter-spacing:.04em;
+      margin:0;
+    }
+
+    .panel-sub{
+      font-size:12px;
+      opacity:.78;
+      margin-top:4px;
+    }
+
+    .fortune-stage{
+      position:relative;
+      min-height:420px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:16px;
+      padding:14px 10px 6px;
+      border-radius:22px;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255,228,157,.18), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.10);
+    }
+
+    .shimenawa{
+      width:min(420px, 90%);
+      height:16px;
+      border-radius:999px;
+      background:linear-gradient(180deg,#d8ae4f,#a77117);
+      box-shadow: inset 0 -2px 0 rgba(90,48,0,.25);
+      position:relative;
+      margin-bottom:4px;
+    }
+    .shimenawa::before,
+    .shimenawa::after{
+      content:"";
+      position:absolute;
+      bottom:-18px;
+      width:24px;
+      height:28px;
+      background:linear-gradient(180deg,#f6e4af,#e3c365);
+      clip-path: polygon(50% 100%, 0 0, 100% 0);
+      opacity:.92;
+    }
+    .shimenawa::before{ left:20%; }
+    .shimenawa::after{ right:20%; }
+
+    .omikuji-box{
+      position:relative;
+      width:min(320px, 84%);
+      aspect-ratio: 1 / 1.04;
+      border-radius:26px;
+      background:
+        linear-gradient(180deg, #c92e27 0%, #9d191a 100%);
+      border:6px solid #f1d07d;
+      box-shadow:
+        0 18px 40px rgba(0,0,0,.28),
+        inset 0 0 0 3px rgba(130,32,18,.38);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+    .omikuji-box::before{
+      content:"";
+      position:absolute;
+      top:18px;
+      left:50%;
+      transform:translateX(-50%);
+      width:64%;
+      height:28px;
+      border-radius:8px;
+      background:#4b0f12;
+      box-shadow: inset 0 2px 0 rgba(255,255,255,.08);
+    }
+    .omikuji-box::after{
+      content:"御";
+      position:absolute;
+      inset:auto;
+      font-size:96px;
+      font-weight:1000;
+      color:rgba(255,236,173,.22);
+      letter-spacing:.1em;
+      transform:translateY(20px);
+    }
+
+    .ticket{
+      width:min(190px, 64%);
+      aspect-ratio: .75 / 1;
+      background:
+        linear-gradient(180deg, #fff8e8 0%, #f5e8c6 100%);
+      border:2px solid rgba(85,48,10,.18);
+      border-radius:14px;
+      box-shadow:0 12px 24px rgba(0,0,0,.18);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#5d2b12;
+      font-weight:1000;
+      font-size:30px;
+      letter-spacing:.12em;
+      transform: translateY(18px);
+    }
+
+    .fortune-actions{
+      width:100%;
+      max-width:420px;
+      display:grid;
+      gap:10px;
+    }
+
+    .draw-btn{
+      min-height:64px;
+      font-size:20px;
+      border-radius:18px;
+    }
+
+    .helper{
+      text-align:center;
+      font-size:13px;
+      line-height:1.7;
+      color:rgba(255,255,255,.88);
+    }
+
+    .status-list{
+      display:grid;
+      gap:12px;
+    }
+
+    .status-card{
+      border-radius:18px;
+      padding:14px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
+    }
+
+    .status-label{
+      font-size:12px;
+      opacity:.8;
+      margin-bottom:6px;
+    }
+
+    .status-value{
+      font-size:26px;
+      font-weight:1000;
+      line-height:1.1;
+    }
+
+    .reward-list{
+      display:grid;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .reward-item{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      padding:12px 12px;
+      border-radius:16px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .reward-ico{
+      width:38px;
+      height:38px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background:rgba(255,255,255,.12);
+      font-size:20px;
+      flex:0 0 auto;
+    }
+    .reward-body b{
+      display:block;
+      margin-bottom:4px;
+      font-size:15px;
+    }
+    .reward-body span{
+      display:block;
+      font-size:12px;
+      line-height:1.5;
+      opacity:.84;
+    }
+
+    .note-box{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,240,190,.08);
+      border:1px dashed rgba(255,225,150,.24);
+      font-size:12px;
+      line-height:1.7;
+      color:rgba(255,255,255,.88);
+    }
+
+    #toast{
+      position:fixed !important;
+      left:12px !important;
+      right:12px !important;
+      bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+      z-index: 2147483647 !important;
+      pointer-events:none !important;
+      opacity:0 !important;
+      transform: translateY(10px) scale(.98) !important;
+      transition: opacity .16s ease, transform .18s ease !important;
+      padding: 14px 14px !important;
+      border-radius: 14px !important;
+      font-weight: 900 !important;
+      letter-spacing: .02em !important;
+      text-align:center !important;
+      color:#fff !important;
+      background: rgba(15,18,32,.92) !important;
+      border:1px solid rgba(255,255,255,.16) !important;
+      box-shadow: 0 18px 44px rgba(0,0,0,.55) !important;
+      backdrop-filter: blur(6px) !important;
+      -webkit-backdrop-filter: blur(6px) !important;
+    }
+    #toast.is-show{
+      opacity:1 !important;
+      transform: translateY(0) scale(1) !important;
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:2147483646;
+      background:rgba(0,0,0,.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .modal.is-open{ display:flex; }
+
+    .modal-card{
+      width:min(560px, 100%);
+      border-radius:26px;
+      overflow:hidden;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)),
+        linear-gradient(180deg, rgba(42,14,22,.94), rgba(24,10,15,.96));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:var(--shadow);
+    }
+
+    .result-top{
+      padding:22px 18px 10px;
+      text-align:center;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,225,150,.20), transparent 40%);
+    }
+
+    .result-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:120px;
+      min-height:42px;
+      padding:8px 18px;
+      border-radius:999px;
+      font-weight:1000;
+      font-size:22px;
+      letter-spacing:.08em;
+      margin-bottom:12px;
+      color:#4a2408;
+      background:linear-gradient(180deg, #fff4c4, #ffd56c);
+      box-shadow:0 10px 24px rgba(0,0,0,.24);
+    }
+
+    .result-reward{
+      font-size:42px;
+      font-weight:1000;
+      margin:6px 0 8px;
+      line-height:1.08;
+    }
+
+    .result-copy{
+      margin:0;
+      font-size:15px;
+      line-height:1.8;
+      color:rgba(255,255,255,.94);
+    }
+
+    .result-bottom{
+      padding:14px 18px 18px;
+    }
+
+    .result-paper{
+      border-radius:18px;
+      padding:16px;
+      background:linear-gradient(180deg, #fff8eb, #f3e2bb);
+      color:#402312;
+      border:1px solid rgba(110,62,13,.16);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.5);
+      line-height:1.9;
+      font-size:15px;
+    }
+
+    .result-actions{
+      display:flex;
+      gap:10px;
+      margin-top:14px;
+    }
+    .result-actions .btn{
+      flex:1;
+      min-height:52px;
+    }
+
+    @media (max-width: 860px){
+      .hero-grid,
+      .main-grid{
+        grid-template-columns:1fr;
+      }
+      .takopi-stage{
+        min-height:auto;
+      }
+      .topbar{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+      .hud{
+        width:100%;
+        justify-content:flex-start;
+      }
+    }
+
+    @media (max-width: 520px){
+      .page{ width:min(100% - 16px, 980px); }
+      .hero, .panel{ padding:14px; }
+      .panel-title{ font-size:20px; }
+      .fortune-stage{ min-height:380px; }
+      .result-reward{ font-size:34px; }
+      .title{ font-size:34px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-wrap" aria-hidden="true">
+    <div class="bg-glow"></div>
+    <div class="bg-torii"></div>
+    <div class="lantern left"></div>
+    <div class="lantern right"></div>
+    <div class="sparkles"></div>
+  </div>
+
+  <div class="page">
+    <div class="topbar">
+      <button class="btn btn-ghost" id="backBtn" type="button">←戻る</button>
+
+      <div class="hud">
+        <div class="pill">
+          <span>🪙 所持オクト</span>
+          <span class="num" id="octoNow">0</span>
+        </div>
+        <div class="pill">
+          <span>🔥 連続ログイン</span>
+          <span class="num" id="streakNow">1</span>
+          <span>日</span>
+        </div>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="takopi-stage">
+          <div class="takopi-card">
+            <img
+              class="takopi-img"
+              src="https://ul.h3z.jp/0eBSeUBg.png"
+              alt="たこぴ"
+            />
+            <div class="takopi-name">TAKOPI SHRINE STAFF</div>
+          </div>
+        </div>
+
+        <div class="hero-copy">
+          <div class="sub-kicker">🎍 毎日1回だけのログインボーナス</div>
+          <h1 class="title">たこ焼きみくじ</h1>
+          <p class="lead">
+            今日はどんな運勢が焼かれるたこ？<br>
+            みくじを引くと、<b>オクト</b>や<b>おまけボーナス</b>がもらえるログインページたこ。<br>
+            1日1回だけ引けるから、毎日こっそり通うたこ。
+          </p>
+
+          <div class="mini-info">
+            <div class="mini-chip">📅 日付が変わると再挑戦</div>
+            <div class="mini-chip">🪙 結果に応じてオクト加算</div>
+            <div class="mini-chip">🔥 連続ログインでおまけ増量</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="main-grid">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">本日のみくじ</h2>
+            <div class="panel-sub">運勢と報酬がランダムで決まるたこ</div>
+          </div>
+        </div>
+
+        <div class="fortune-stage">
+          <div class="shimenawa"></div>
+
+          <div class="omikuji-box" aria-hidden="true">
+            <div class="ticket" id="ticketFace">みくじ</div>
+          </div>
+
+          <div class="fortune-actions">
+            <button class="btn btn-gold draw-btn" id="drawBtn" type="button">
+              🎲 たこ焼きみくじを引く
+            </button>
+            <div class="helper" id="drawHelp">
+              今日はまだ引いてないたこ。<br>
+              運試しして、ログインボーナスを受け取るたこ。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">ログイン状況</h2>
+            <div class="panel-sub">今日の状態と報酬の目安たこ</div>
+          </div>
+        </div>
+
+        <div class="status-list">
+          <div class="status-card">
+            <div class="status-label">本日の状態</div>
+            <div class="status-value" id="todayState">未受取</div>
+          </div>
+
+          <div class="status-card">
+            <div class="status-label">次回リセット</div>
+            <div class="status-value" id="nextResetText">日付変更後</div>
+          </div>
+
+          <div class="status-card">
+            <div class="status-label">今日の連続ボーナス係数</div>
+            <div class="status-value" id="streakBonusText">×1.0</div>
+          </div>
+        </div>
+
+        <div class="reward-list">
+          <div class="reward-item">
+            <div class="reward-ico">🪙</div>
+            <div class="reward-body">
+              <b>基本報酬：100〜1000オクト</b>
+              <span>運勢によって増減。大吉はかなり気前がいいたこ。</span>
+            </div>
+          </div>
+
+          <div class="reward-item">
+            <div class="reward-ico">🔥</div>
+            <div class="reward-body">
+              <b>連続ログインで少し上乗せ</b>
+              <span>続けて来るほど報酬がちょっとだけ育つたこ。</span>
+            </div>
+          </div>
+
+          <div class="reward-item">
+            <div class="reward-ico">🎁</div>
+            <div class="reward-body">
+              <b>たまに特別コメント</b>
+              <span>たこぴが意味ありげなことを言うけど、だいたい雰囲気たこ。</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="note-box">
+          ※ このページはログインボーナス用の独立ページとして作ってあるので、あとから
+          <b>種・水・ヒリョウ付与</b>や<b>限定シリアル</b>にも拡張しやすい形にしてあるたこ。
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" aria-live="polite"></div>
+
+  <div class="modal" id="resultModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="result-top">
+        <div class="result-badge" id="resultFortune">大吉</div>
+        <div class="result-reward" id="resultReward">+500 OCTO</div>
+        <p class="result-copy" id="resultCopy">
+          今日はツイてるたこ。熱々の流れが来てるたこ。
+        </p>
+      </div>
+
+      <div class="result-bottom">
+        <div class="result-paper" id="resultPaper">
+          今日の一言がここに入る。
+        </div>
+
+        <div class="result-actions">
+          <button class="btn btn-ghost" id="closeResultBtn" type="button">閉じる</button>
+          <button class="btn btn-red" id="goTownBtn" type="button">町にもどる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      // =========================
+      // 設定
+      // =========================
+      const KEY = {
+        omikujiState: "ttc_omikuji_login_bonus_v1"
+      };
+
+      // 戻る先。必要なら変えてOK
+      const BACK_URL = "index.html";
+
+      const el = {
+        backBtn: document.getElementById("backBtn"),
+        octoNow: document.getElementById("octoNow"),
+        streakNow: document.getElementById("streakNow"),
+        drawBtn: document.getElementById("drawBtn"),
+        drawHelp: document.getElementById("drawHelp"),
+        ticketFace: document.getElementById("ticketFace"),
+        todayState: document.getElementById("todayState"),
+        nextResetText: document.getElementById("nextResetText"),
+        streakBonusText: document.getElementById("streakBonusText"),
+
+        resultModal: document.getElementById("resultModal"),
+        resultFortune: document.getElementById("resultFortune"),
+        resultReward: document.getElementById("resultReward"),
+        resultCopy: document.getElementById("resultCopy"),
+        resultPaper: document.getElementById("resultPaper"),
+        closeResultBtn: document.getElementById("closeResultBtn"),
+        goTownBtn: document.getElementById("goTownBtn"),
+
+        toast: document.getElementById("toast")
+      };
+
+      // =========================
+      // utils
+      // =========================
+      function showToast(msg, ms = 1500){
+        if(!el.toast) return;
+        el.toast.textContent = msg;
+        el.toast.classList.add("is-show");
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => {
+          el.toast.classList.remove("is-show");
+        }, ms);
+      }
+
+      function pad2(n){ return String(n).padStart(2,"0"); }
+
+      function todayKey(){
+        const d = new Date();
+        return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+      }
+
+      function ymdFromDate(d){
+        return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+      }
+
+      function daysBetween(a, b){
+        const da = new Date(a + "T00:00:00");
+        const db = new Date(b + "T00:00:00");
+        return Math.round((db - da) / 86400000);
+      }
+
+      function loadJSON(key, fallback){
+        try{
+          const raw = localStorage.getItem(key);
+          if(!raw) return fallback;
+          const obj = JSON.parse(raw);
+          return obj && typeof obj === "object" ? obj : fallback;
+        }catch(_){
+          return fallback;
+        }
+      }
+
+      function saveJSON(key, value){
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+
+      // =========================
+      // OCTO 読み書き
+      // =========================
+      function toInt(v){
+        const n = parseInt(String(v || "0").replace(/[^\d-]/g, ""), 10);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      const CAND_KEYS = [
+        "octo", "OCTO", "octoNow", "TRC_OCTO", "LS_OCTO",
+        "tf_v1_octo", "tf_octo", "roten_v1_octo", "tower_v1_octo",
+        "tf_v1_state", "TRC_STATE"
+      ];
+
+      function readOcto(){
+        for(const k of CAND_KEYS){
+          const raw = localStorage.getItem(k);
+          if(raw == null) continue;
+
+          if((raw.startsWith("{") && raw.endsWith("}")) || (raw.startsWith("[") && raw.endsWith("]"))){
+            try{
+              const obj = JSON.parse(raw);
+              const candidates = [
+                obj?.octo, obj?.OCTO, obj?.money, obj?.wallet,
+                obj?.inv?.octo, obj?.player?.octo
+              ];
+              for(const c of candidates){
+                if(Number.isFinite(Number(c))) return Number(c);
+              }
+            }catch(_){}
+            continue;
+          }
+
+          const n = toInt(raw);
+          if(n !== 0 || raw === "0") return n;
+        }
+
+        return 0;
+      }
+
+      function writeOcto(next){
+        next = Math.max(0, Math.floor(Number(next) || 0));
+
+        el.octoNow.textContent = String(next);
+
+        for(const k of CAND_KEYS){
+          const raw = localStorage.getItem(k);
+          if(raw == null) continue;
+
+          if(raw.startsWith("{") && raw.endsWith("}")){
+            try{
+              const obj = JSON.parse(raw);
+              if(typeof obj === "object" && obj){
+                let changed = false;
+
+                if("octo" in obj){ obj.octo = next; changed = true; }
+                else if("OCTO" in obj){ obj.OCTO = next; changed = true; }
+                else if(obj.inv && typeof obj.inv === "object" && ("octo" in obj.inv)){
+                  obj.inv.octo = next;
+                  changed = true;
+                }else if(obj.player && typeof obj.player === "object" && ("octo" in obj.player)){
+                  obj.player.octo = next;
+                  changed = true;
+                }
+
+                if(changed){
+                  localStorage.setItem(k, JSON.stringify(obj));
+                }
+              }
+            }catch(_){}
+            continue;
+          }
+
+          const n = toInt(raw);
+          if(n !== 0 || raw === "0"){
+            localStorage.setItem(k, String(next));
+          }
+        }
+
+        // どのキーも存在しない時の保険
+        if(!localStorage.getItem("roten_v1_octo") && !localStorage.getItem("octo")){
+          localStorage.setItem("roten_v1_octo", String(next));
+        }
+
+        window.dispatchEvent(new CustomEvent("octo:changed", { detail: { octo: next } }));
+      }
+
+      function addOcto(amount){
+        const cur = readOcto();
+        const next = cur + Math.floor(Number(amount) || 0);
+        writeOcto(next);
+        return next;
+      }
+
+      // =========================
+      // ログインボーナス状態
+      // =========================
+      function getInitialState(){
+        return {
+          lastDrawDate: "",
+          streak: 1,
+          lastFortune: "",
+          lastReward: 0
+        };
+      }
+
+      function loadState(){
+        const s = loadJSON(KEY.omikujiState, getInitialState());
+        if(typeof s.streak !== "number" || s.streak < 1) s.streak = 1;
+        return s;
+      }
+
+      function saveState(s){
+        saveJSON(KEY.omikujiState, s);
+      }
+
+      function canDrawToday(state){
+        return state.lastDrawDate !== todayKey();
+      }
+
+      function calcStreak(state){
+        const today = todayKey();
+        if(!state.lastDrawDate){
+          return 1;
+        }
+        const diff = daysBetween(state.lastDrawDate, today);
+        if(diff <= 0) return state.streak || 1;
+        if(diff === 1) return Math.max(1, (state.streak || 1) + 1);
+        return 1;
+      }
+
+      function streakMultiplier(streak){
+        const s = Math.max(1, Math.floor(streak || 1));
+        return Math.min(1 + ((s - 1) * 0.05), 1.5); // 最大1.5倍
+      }
+
+      // =========================
+      // みくじ抽選
+      // =========================
+      const FORTUNES = [
+        {
+          name: "大吉",
+          weight: 8,
+          rewardMin: 700,
+          rewardMax: 1000,
+          copy: "今日は流れが熱い。焼き加減まで味方してるたこ。",
+          paper: "大吉。\n今日はやることがちょっとだけ全部うまくいく日たこ。\nたこ焼きも会話もオクトも、なぜか丸くおさまりやすいたこ。\n欲張りすぎると逆にこぼすから、調子に乗るなら上品に乗るたこ。"
+        },
+        {
+          name: "中吉",
+          weight: 20,
+          rewardMin: 450,
+          rewardMax: 700,
+          copy: "いい感じの追い風たこ。ちゃんと積めばちゃんと増えるたこ。",
+          paper: "中吉。\n派手ではないけど、今日のあなたは地味に強いたこ。\n大成功ではなくても、あとで効いてくるタイプの日たこ。\n焦らず焼けば、ちゃんといい匂いになるたこ。"
+        },
+        {
+          name: "小吉",
+          weight: 28,
+          rewardMin: 250,
+          rewardMax: 450,
+          copy: "そこそこ良い日たこ。油断しなければ十分勝ちたこ。",
+          paper: "小吉。\n目立たないけど悪くないたこ。\n『今日は普通かな』と思った日に限って、あとから良かったと気づくたこ。\n小さく拾って大きく喜ぶと、運も照れるたこ。"
+        },
+        {
+          name: "吉",
+          weight: 24,
+          rewardMin: 180,
+          rewardMax: 320,
+          copy: "穏やかに前進たこ。無理しないのがいちばん強いたこ。",
+          paper: "吉。\n特別すごくはないけど、ちゃんと前へ進める日たこ。\n派手さより、崩れないことがえらいたこ。\n今日は『減らさない』も立派な勝ちたこ。"
+        },
+        {
+          name: "末吉",
+          weight: 14,
+          rewardMin: 120,
+          rewardMax: 220,
+          copy: "あとからじわっと上がる日たこ。序盤は静かでも大丈夫たこ。",
+          paper: "末吉。\n出だしは静かでも、終わりに向けて少しずつ整っていく日たこ。\n今すぐ結果が見えなくても、ちゃんと火は通っているたこ。\nせっかちは今日はちょっと損たこ。"
+        },
+        {
+          name: "凶",
+          weight: 6,
+          rewardMin: 100,
+          rewardMax: 160,
+          copy: "運は控えめ。でも0じゃないたこ。焼けただけえらいたこ。",
+          paper: "凶。\n今日は少し引っかかることがあるかもしれないたこ。\nでも安心していいたこ。完全にダメな日ではなく、\n『雑に動くと崩れるから丁寧に行こう』というお知らせたこ。\n慎重さがそのまま開運たこ。"
+        }
+      ];
+
+      function randInt(min, max){
+        min = Math.floor(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function pickWeighted(list){
+        const total = list.reduce((a, x) => a + (x.weight || 0), 0);
+        let r = Math.random() * total;
+        for(const item of list){
+          r -= (item.weight || 0);
+          if(r <= 0) return item;
+        }
+        return list[list.length - 1];
+      }
+
+      function drawFortune(streak){
+        const picked = pickWeighted(FORTUNES);
+        const base = randInt(picked.rewardMin, picked.rewardMax);
+        const mul = streakMultiplier(streak);
+        const reward = Math.floor(base * mul);
+
+        return {
+          fortune: picked.name,
+          reward,
+          copy: picked.copy,
+          paper: picked.paper,
+          multiplier: mul
+        };
+      }
+
+      // =========================
+      // UI
+      // =========================
+      function openResultModal(result){
+        el.resultFortune.textContent = result.fortune;
+        el.resultReward.textContent = `+${result.reward} OCTO`;
+        el.resultCopy.textContent = result.copy;
+        el.resultPaper.textContent = result.paper;
+        el.resultModal.classList.add("is-open");
+        el.resultModal.setAttribute("aria-hidden", "false");
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeResultModal(){
+        el.resultModal.classList.remove("is-open");
+        el.resultModal.setAttribute("aria-hidden", "true");
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+      }
+
+      function updateTicketVisual(state){
+        if(canDrawToday(state)){
+          el.ticketFace.textContent = "みくじ";
+        }else{
+          el.ticketFace.textContent = state.lastFortune || "済";
+        }
+      }
+
+      function render(){
+        const state = loadState();
+        const streak = canDrawToday(state) ? calcStreak(state) : (state.streak || 1);
+        const mult = streakMultiplier(streak);
+
+        el.octoNow.textContent = String(readOcto());
+        el.streakNow.textContent = String(streak);
+        el.streakBonusText.textContent = `×${mult.toFixed(2)}`;
+
+        if(canDrawToday(state)){
+          el.todayState.textContent = "未受取";
+          el.drawBtn.disabled = false;
+          el.drawBtn.style.opacity = "1";
+          el.drawHelp.innerHTML = "今日はまだ引いてないたこ。<br>運試しして、ログインボーナスを受け取るたこ。";
+        }else{
+          el.todayState.textContent = "受取済";
+          el.drawBtn.disabled = true;
+          el.drawBtn.style.opacity = ".55";
+          el.drawHelp.innerHTML = `今日はもう引いたたこ。<br>結果：<b>${state.lastFortune || "受取済"}</b> ／ <b>+${state.lastReward || 0} OCTO</b>`;
+        }
+
+        el.nextResetText.textContent = "次の日付変更後";
+        updateTicketVisual(state);
+      }
+
+      // =========================
+      // イベント
+      // =========================
+      function onDraw(){
+        const state = loadState();
+
+        if(!canDrawToday(state)){
+          showToast("今日はもう引いたたこ！");
+          render();
+          return;
+        }
+
+        const newStreak = calcStreak(state);
+        const result = drawFortune(newStreak);
+
+        addOcto(result.reward);
+
+        state.lastDrawDate = todayKey();
+        state.streak = newStreak;
+        state.lastFortune = result.fortune;
+        state.lastReward = result.reward;
+        saveState(state);
+
+        updateTicketVisual(state);
+        render();
+        openResultModal(result);
+        showToast(`🎉 ${result.fortune}！ +${result.reward}オクト`);
+      }
+
+      // =========================
+      // 初期化
+      // =========================
+      el.backBtn.addEventListener("click", () => {
+        location.href = BACK_URL;
+      });
+
+      el.drawBtn.addEventListener("click", onDraw);
+
+      el.closeResultBtn.addEventListener("click", closeResultModal);
+      el.goTownBtn.addEventListener("click", () => {
+        location.href = BACK_URL;
+      });
+
+      el.resultModal.addEventListener("click", (e) => {
+        if(e.target === el.resultModal) closeResultModal();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if(e.key === "Escape") closeResultModal();
+      });
+
+      window.addEventListener("octo:changed", () => {
+        el.octoNow.textContent = String(readOcto());
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
