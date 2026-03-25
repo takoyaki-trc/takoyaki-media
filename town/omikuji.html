@@ -7,18 +7,29 @@
 
   <style>
     :root{
-      --bg1:#1d0a12;
-      --bg2:#3a1020;
-      --bg3:#6d1e2d;
-      --gold1:#fff1bd;
-      --gold2:#ffd666;
-      --gold3:#d79a1d;
-      --paper:#fff6e4;
-      --ink:#3b2314;
-      --white:#fffdf9;
+      --bg1:#1b0911;
+      --bg2:#35111f;
+      --bg3:#6a2130;
+
+      --gold1:#fff0bc;
+      --gold2:#ffd564;
+      --gold3:#d28f16;
+
+      --white:#fffdf8;
+      --textSoft:rgba(255,255,255,.88);
       --line:rgba(255,255,255,.14);
-      --panel:rgba(20,8,14,.74);
-      --shadow:0 20px 48px rgba(0,0,0,.42);
+
+      --panelA:rgba(32,10,18,.82);
+      --panelB:rgba(18,7,12,.92);
+
+      --shadow:0 18px 48px rgba(0,0,0,.40);
+      --shadowSoft:0 10px 28px rgba(0,0,0,.22);
+
+      --chipBg:rgba(255,255,255,.08);
+      --chipBd:rgba(255,255,255,.12);
+
+      --activeGlow:0 0 0 2px rgba(255,231,153,.80), 0 0 24px rgba(255,204,82,.45);
+      --safeBottom:env(safe-area-inset-bottom, 0px);
     }
 
     *{ box-sizing:border-box; }
@@ -30,9 +41,9 @@
       font-family:
         "Hiragino Sans","Yu Gothic","Meiryo",system-ui,-apple-system,sans-serif;
       background:
-        radial-gradient(circle at 50% 10%, rgba(255,220,140,.15), transparent 24%),
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,.06), transparent 18%),
-        radial-gradient(circle at 80% 18%, rgba(255,200,150,.08), transparent 18%),
+        radial-gradient(circle at 50% 8%, rgba(255,218,128,.16), transparent 22%),
+        radial-gradient(circle at 20% 18%, rgba(255,255,255,.05), transparent 16%),
+        radial-gradient(circle at 80% 16%, rgba(255,180,120,.07), transparent 16%),
         linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 52%, var(--bg3) 100%);
       overflow-x:hidden;
     }
@@ -41,31 +52,31 @@
       position:fixed;
       inset:0;
       pointer-events:none;
-      overflow:hidden;
       z-index:0;
+      overflow:hidden;
     }
 
     .bg::before{
       content:"";
       position:absolute;
       left:50%;
-      top:56px;
+      top:58px;
       transform:translateX(-50%);
-      width:min(820px, 130vw);
-      height:300px;
+      width:min(860px, 135vw);
+      height:320px;
       background:
-        radial-gradient(circle at 50% 0%, rgba(255,228,150,.22), transparent 38%);
+        radial-gradient(circle at 50% 0%, rgba(255,232,155,.18), transparent 42%);
       filter: blur(10px);
     }
 
     .lantern{
       position:absolute;
-      top:84px;
+      top:86px;
       width:54px;
       height:74px;
       border-radius:18px;
       background:
-        linear-gradient(180deg,#fff1bf 0%, #ffd65c 45%, #d6880f 100%);
+        linear-gradient(180deg,#fff0bf 0%, #ffd662 45%, #d78610 100%);
       box-shadow:
         0 0 28px rgba(255,204,92,.28),
         inset 0 -10px 18px rgba(120,50,0,.14);
@@ -81,17 +92,17 @@
     }
     .lantern::before{ top:-8px; width:24px; height:7px; }
     .lantern::after{ bottom:-8px; width:22px; height:7px; }
-    .lantern.l1{ left:calc(50% - min(34vw, 260px)); }
-    .lantern.l2{ right:calc(50% - min(34vw, 260px)); }
+    .lantern.l1{ left:calc(50% - min(35vw, 270px)); }
+    .lantern.l2{ right:calc(50% - min(35vw, 270px)); }
 
     .torii{
       position:absolute;
       left:50%;
-      bottom:80px;
+      bottom:78px;
       transform:translateX(-50%);
       width:min(760px, 118vw);
       height:320px;
-      opacity:.10;
+      opacity:.09;
     }
     .torii::before,
     .torii::after{
@@ -118,9 +129,9 @@
     .wrap{
       position:relative;
       z-index:1;
-      width:min(980px, calc(100% - 20px));
+      width:min(960px, calc(100% - 20px));
       margin:0 auto;
-      padding:14px 0 28px;
+      padding:14px 0 calc(28px + var(--safeBottom));
     }
 
     .topbar{
@@ -139,7 +150,7 @@
       padding:12px 16px;
       font-weight:1000;
       letter-spacing:.02em;
-      transition:transform .12s ease, opacity .12s ease, filter .12s ease;
+      transition:transform .12s ease, opacity .12s ease, filter .12s ease, box-shadow .14s ease;
       -webkit-tap-highlight-color: transparent;
     }
     .btn:active{ transform:translateY(1px) scale(.99); }
@@ -157,30 +168,56 @@
       box-shadow:0 10px 22px rgba(0,0,0,.24), inset 0 -2px 0 rgba(100,60,0,.16);
     }
 
-    .hud{
+    .topchips{
       display:flex;
       flex-wrap:wrap;
       gap:10px;
       justify-content:flex-end;
     }
 
-    .pill{
+    .topchip{
+      min-height:50px;
+      padding:10px 14px;
+      border-radius:18px;
       display:flex;
       align-items:center;
-      gap:8px;
-      min-height:46px;
-      padding:10px 14px;
-      border-radius:999px;
-      background:rgba(255,255,255,.08);
+      gap:10px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
       border:1px solid rgba(255,255,255,.14);
-      box-shadow:var(--shadow);
+      box-shadow:var(--shadowSoft);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      white-space:nowrap;
     }
-    .pill .num{
+
+    .topchip-ico{
+      width:34px;
+      height:34px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background:rgba(255,255,255,.12);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+      font-size:17px;
+      flex:0 0 auto;
+    }
+
+    .topchip-meta{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      line-height:1.1;
+    }
+    .topchip-label{
+      font-size:11px;
+      letter-spacing:.04em;
+      opacity:.74;
+      font-weight:900;
+    }
+    .topchip-value{
       font-size:20px;
       font-weight:1000;
+      white-space:nowrap;
     }
 
     .hero{
@@ -190,7 +227,7 @@
       padding:20px;
       background:
         linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)),
-        linear-gradient(180deg, rgba(55,15,25,.78), rgba(21,8,13,.88));
+        linear-gradient(180deg, rgba(55,15,25,.80), rgba(21,8,13,.90));
       border:1px solid rgba(255,255,255,.14);
       box-shadow:var(--shadow);
       margin-bottom:16px;
@@ -201,7 +238,7 @@
       position:absolute;
       inset:0;
       background:
-        radial-gradient(circle at 50% 12%, rgba(255,220,140,.16), transparent 28%);
+        radial-gradient(circle at 50% 10%, rgba(255,220,140,.15), transparent 26%);
       pointer-events:none;
     }
 
@@ -209,7 +246,7 @@
       position:relative;
       z-index:1;
       display:grid;
-      grid-template-columns: 230px 1fr;
+      grid-template-columns: 240px 1fr;
       gap:18px;
       align-items:center;
     }
@@ -261,30 +298,21 @@
     }
 
     .lead{
-      margin:0 0 12px;
+      margin:0 0 14px;
       line-height:1.8;
       font-size:15px;
-      color:rgba(255,255,255,.94);
+      color:var(--textSoft);
     }
 
-    .chips{
+    .hero-actions{
       display:flex;
       flex-wrap:wrap;
       gap:10px;
-      margin-top:10px;
+      margin-top:12px;
     }
 
-    .chip{
-      padding:10px 12px;
-      border-radius:14px;
-      background:rgba(255,255,255,.09);
-      border:1px solid rgba(255,255,255,.12);
-      font-size:13px;
-    }
-
-    .grid{
+    .main{
       display:grid;
-      grid-template-columns: 1.08fr .92fr;
       gap:16px;
     }
 
@@ -347,7 +375,7 @@
     .shimenawa::after{ right:20%; }
 
     .grill-card{
-      width:min(420px, 100%);
+      width:min(430px, 100%);
       border-radius:24px;
       padding:14px;
       background:
@@ -379,12 +407,12 @@
       cursor:pointer;
       border-radius:18px;
       padding:8px;
-      background:rgba(0,0,0,.16);
+      background:rgba(0,0,0,.18);
       border:1px solid rgba(255,255,255,.12);
       min-height:92px;
       display:grid;
       place-items:center;
-      transition:transform .12s ease, filter .12s ease, background .12s ease;
+      transition:transform .12s ease, filter .12s ease, background .12s ease, box-shadow .16s ease, border-color .16s ease;
     }
     .ball:hover{ filter:brightness(1.04); }
     .ball:active{ transform:translateY(1px) scale(.98); }
@@ -392,11 +420,25 @@
       display:block;
       width:min(78px, 100%);
       height:auto;
+      transition:transform .16s ease, filter .16s ease;
+    }
+    .ball.is-selected{
+      background:linear-gradient(180deg, rgba(255,238,167,.25), rgba(255,179,64,.24));
+      border-color:rgba(255,234,153,.95);
+      box-shadow:var(--activeGlow);
+    }
+    .ball.is-selected img{
+      transform:scale(1.06);
+      filter: drop-shadow(0 0 10px rgba(255,225,120,.45));
+    }
+    .ball[disabled]{
+      opacity:.62;
+      cursor:default;
     }
 
     .draw-btn{
       min-height:60px;
-      width:min(420px, 100%);
+      width:min(430px, 100%);
       font-size:20px;
       border-radius:18px;
     }
@@ -406,71 +448,111 @@
       line-height:1.7;
       font-size:13px;
       color:rgba(255,255,255,.88);
-      max-width:420px;
+      max-width:430px;
     }
 
-    .status-list{
-      display:grid;
-      gap:12px;
+    .helper b{ color:#fff7d2; }
+
+    .streak-wrap{
+      margin-top:2px;
     }
 
-    .status-card{
-      border-radius:18px;
-      padding:14px;
+    .streak-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+    }
+
+    .streak-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
       background:rgba(255,255,255,.08);
       border:1px solid rgba(255,255,255,.10);
+      font-weight:900;
+      font-size:13px;
     }
 
-    .status-label{
-      font-size:12px;
-      opacity:.8;
-      margin-bottom:6px;
-    }
-
-    .status-value{
-      font-size:26px;
-      font-weight:1000;
-      line-height:1.1;
-    }
-
-    .reward-list{
+    .streak-steps{
       display:grid;
+      grid-template-columns:repeat(7, minmax(0,1fr));
       gap:10px;
-      margin-top:14px;
     }
 
-    .reward-item{
-      display:flex;
-      align-items:flex-start;
-      gap:12px;
-      padding:12px;
-      border-radius:16px;
-      background:rgba(255,255,255,.07);
+    .step{
+      position:relative;
+      padding:12px 10px;
+      border-radius:18px;
+      background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.10);
+      min-height:116px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;
     }
 
-    .reward-ico{
-      width:38px;
-      height:38px;
-      border-radius:12px;
+    .step-day{
+      font-size:11px;
+      font-weight:1000;
+      opacity:.74;
+      letter-spacing:.06em;
+    }
+
+    .step-icon{
+      width:42px;
+      height:42px;
+      border-radius:14px;
       display:grid;
       place-items:center;
-      background:rgba(255,255,255,.12);
-      font-size:20px;
-      flex:0 0 auto;
+      background:rgba(255,255,255,.10);
+      font-size:22px;
     }
 
-    .reward-body b{
-      display:block;
-      margin-bottom:4px;
-      font-size:15px;
-    }
-
-    .reward-body span{
-      display:block;
+    .step-reward{
       font-size:12px;
-      line-height:1.6;
-      opacity:.84;
+      line-height:1.45;
+      font-weight:900;
+      color:rgba(255,255,255,.92);
+    }
+
+    .step.is-past{
+      background:linear-gradient(180deg, rgba(111,255,182,.12), rgba(111,255,182,.06));
+      border-color:rgba(111,255,182,.34);
+      box-shadow:0 0 0 1px rgba(111,255,182,.10);
+    }
+
+    .step.is-current{
+      background:linear-gradient(180deg, rgba(255,229,128,.18), rgba(255,183,72,.10));
+      border-color:rgba(255,228,145,.48);
+      box-shadow:0 0 0 1px rgba(255,228,145,.16), 0 0 24px rgba(255,202,94,.12);
+      transform:translateY(-2px);
+    }
+
+    .step.is-current::after{
+      content:"TODAY";
+      position:absolute;
+      top:8px;
+      right:8px;
+      font-size:10px;
+      font-weight:1000;
+      letter-spacing:.08em;
+      padding:3px 7px;
+      border-radius:999px;
+      background:rgba(255,232,157,.95);
+      color:#5d3710;
+    }
+
+    .step.is-future{
+      opacity:.92;
     }
 
     .note-box{
@@ -561,10 +643,10 @@
     }
 
     .result-reward{
-      font-size:34px;
+      font-size:32px;
       font-weight:1000;
       margin:6px 0 8px;
-      line-height:1.08;
+      line-height:1.15;
     }
 
     .result-copy{
@@ -600,26 +682,88 @@
       min-height:52px;
     }
 
+    .sheet-body{
+      padding:18px;
+    }
+
+    .reward-sheet-grid{
+      display:grid;
+      gap:10px;
+    }
+
+    .reward-sheet-item{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      padding:12px;
+      border-radius:16px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.10);
+    }
+
+    .reward-sheet-icon{
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background:rgba(255,255,255,.12);
+      font-size:20px;
+      flex:0 0 auto;
+    }
+
+    .reward-sheet-text b{
+      display:block;
+      margin-bottom:4px;
+      font-size:15px;
+    }
+
+    .reward-sheet-text span{
+      display:block;
+      font-size:12px;
+      line-height:1.6;
+      opacity:.88;
+    }
+
+    .sheet-actions{
+      padding:0 18px 18px;
+    }
+    .sheet-actions .btn{
+      width:100%;
+      min-height:50px;
+    }
+
     @media (max-width: 860px){
-      .hero-grid,
-      .grid{
+      .hero-grid{
         grid-template-columns:1fr;
       }
       .topbar{
         align-items:flex-start;
         flex-direction:column;
       }
-      .hud{
+      .topchips{
         width:100%;
         justify-content:flex-start;
       }
+      .streak-steps{
+        grid-template-columns:repeat(4, minmax(0,1fr));
+      }
     }
 
-    @media (max-width: 520px){
-      .wrap{ width:min(100% - 16px, 980px); }
+    @media (max-width: 560px){
+      .wrap{ width:min(100% - 16px, 960px); }
       .hero, .panel{ padding:14px; }
       .fortune-stage{ min-height:390px; }
-      .result-reward{ font-size:28px; }
+      .result-reward{ font-size:26px; }
+      .streak-steps{
+        grid-template-columns:repeat(2, minmax(0,1fr));
+      }
+      .hero-actions{
+        flex-direction:column;
+      }
+      .hero-actions .btn{
+        width:100%;
+      }
     }
   </style>
 </head>
@@ -634,14 +778,29 @@
     <div class="topbar">
       <button class="btn btn-ghost" id="backBtn" type="button">←戻る</button>
 
-      <div class="hud">
-        <div class="pill">
-          <span>🪙 所持オクト</span>
-          <span class="num" id="octoNow">0</span>
+      <div class="topchips">
+        <div class="topchip">
+          <div class="topchip-ico">🪙</div>
+          <div class="topchip-meta">
+            <div class="topchip-label">所持オクト</div>
+            <div class="topchip-value" id="octoNow">0</div>
+          </div>
         </div>
-        <div class="pill">
-          <span>📅 今日のみくじ</span>
-          <span class="num" id="todayStateMini">未</span>
+
+        <div class="topchip">
+          <div class="topchip-ico">🔥</div>
+          <div class="topchip-meta">
+            <div class="topchip-label">連続ログイン</div>
+            <div class="topchip-value"><span id="streakNow">1</span>日</div>
+          </div>
+        </div>
+
+        <div class="topchip">
+          <div class="topchip-ico">📅</div>
+          <div class="topchip-meta">
+            <div class="topchip-label">今日のみくじ</div>
+            <div class="topchip-value" id="todayStateMini">未</div>
+          </div>
         </div>
       </div>
     </div>
@@ -649,8 +808,8 @@
     <section class="hero">
       <div class="hero-grid">
         <div class="char-card">
-          <img src="https://ul.h3z.jp/0eBSeUBg.png" alt="たこぴ">
-          <div class="name">TAKOPI LOGIN BONUS</div>
+          <img src="town/assets/images/map/miko.png" alt="みこ">
+          <div class="name">TAKOYAKI LOGIN SHRINE</div>
         </div>
 
         <div>
@@ -660,21 +819,17 @@
             「焼き台から1つ選んで…たこ。運勢が出る…たこ。」
           </p>
 
-          <div class="chips">
-            <div class="chip">大吉：たこぴのタネ×1 + オクト+7777</div>
-            <div class="chip">中吉：押さなきゃよかった水×1 + オクト+3000</div>
-            <div class="chip">末吉：やりすぎな水×1 + オクト+1000</div>
-            <div class="chip">凶：工程すっ飛ばし肥料×1 + オクト+500</div>
-            <div class="chip">大凶：オクト+1</div>
+          <div class="hero-actions">
+            <button class="btn btn-gold" id="openRewardBtn" type="button">🎁 報酬一覧を見る</button>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="grid">
-      <div class="panel">
+    <main class="main">
+      <section class="panel">
         <h2 class="panel-title">本日の焼き台</h2>
-        <div class="panel-sub">たこ焼きを1つ選ぶと、その日の運命が確定するたこ</div>
+        <div class="panel-sub">まずは1つえらぶ。そのあと「たこ焼きみくじを引く」を押すたこ</div>
 
         <div class="fortune-stage">
           <div class="shimenawa"></div>
@@ -697,74 +852,31 @@
           <button class="btn btn-gold draw-btn" id="drawBtn" type="button">🎲 たこ焼きみくじを引く</button>
 
           <div class="helper" id="drawHelp">
-            今日はまだ引いてないたこ。<br>
-            ボタンでも、たこ焼きタップでも引けるたこ。
+            まだ選んでないたこ。<br>
+            <b>先にたこ焼きを1つタップ</b>してから引くたこ。
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="panel">
-        <h2 class="panel-title">みくじの状態</h2>
-        <div class="panel-sub">`roten.js` と同じ保存先を使うたこ</div>
+      <section class="panel">
+        <h2 class="panel-title">連続ログインボーナス</h2>
+        <div class="panel-sub">来るたび少しずつ積み上がる。7日目まで来たらまた1日目に戻るたこ</div>
 
-        <div class="status-list">
-          <div class="status-card">
-            <div class="status-label">本日の状態</div>
-            <div class="status-value" id="todayState">未受取</div>
+        <div class="streak-wrap">
+          <div class="streak-head">
+            <div class="streak-badge">🔥 現在の連続ログイン：<b id="streakNowText">1日</b></div>
+            <div class="streak-badge">📌 今日の受取状態：<b id="todayStateText">未受取</b></div>
           </div>
 
-          <div class="status-card">
-            <div class="status-label">保存キー</div>
-            <div class="status-value" style="font-size:18px;">roten_v1_mikuji_date</div>
-          </div>
-
-          <div class="status-card">
-            <div class="status-label">共通オクト</div>
-            <div class="status-value" style="font-size:18px;">roten_v1_octo</div>
-          </div>
-        </div>
-
-        <div class="reward-list">
-          <div class="reward-item">
-            <div class="reward-ico">🌱</div>
-            <div class="reward-body">
-              <b>大吉</b>
-              <span>たこぴのタネ×1 + オクト+7777</span>
-            </div>
-          </div>
-
-          <div class="reward-item">
-            <div class="reward-ico">💧</div>
-            <div class="reward-body">
-              <b>中吉 / 末吉</b>
-              <span>水系アイテム + オクト報酬</span>
-            </div>
-          </div>
-
-          <div class="reward-item">
-            <div class="reward-ico">🧪</div>
-            <div class="reward-body">
-              <b>凶</b>
-              <span>工程すっ飛ばし肥料×1 + オクト+500</span>
-            </div>
-          </div>
-
-          <div class="reward-item">
-            <div class="reward-ico">🪙</div>
-            <div class="reward-body">
-              <b>大凶</b>
-              <span>……でもオクト+1。希望はゼロじゃないたこ。</span>
-            </div>
-          </div>
+          <div class="streak-steps" id="streakSteps"></div>
         </div>
 
         <div class="note-box">
-          このページは、あなたが貼ってくれた <b>roten.js のおみくじロジック</b> を
-          独立ページに移したものたこ。<br>
-          なので、露店ページと同じ localStorage を共有して使えるたこ。
+          ※ 連続ログインは、前日に来ていて今日も来たら1日加算。<br>
+          1日空くと1日目に戻るたこ。表示はログインボーナスのステップ演出用たこ。
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
   </div>
 
   <div id="toast" aria-live="polite"></div>
@@ -788,6 +900,63 @@
     </div>
   </div>
 
+  <div class="modal" id="rewardModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="result-top">
+        <div class="result-badge">報酬一覧</div>
+        <p class="result-copy">たこ焼きみくじで出る運勢と報酬たこ</p>
+      </div>
+
+      <div class="sheet-body">
+        <div class="reward-sheet-grid">
+          <div class="reward-sheet-item">
+            <div class="reward-sheet-icon">🌱</div>
+            <div class="reward-sheet-text">
+              <b>大吉</b>
+              <span>たこぴのタネ×1 + オクト+7777</span>
+            </div>
+          </div>
+
+          <div class="reward-sheet-item">
+            <div class="reward-sheet-icon">💧</div>
+            <div class="reward-sheet-text">
+              <b>中吉</b>
+              <span>押さなきゃよかった水×1 + オクト+3000</span>
+            </div>
+          </div>
+
+          <div class="reward-sheet-item">
+            <div class="reward-sheet-icon">💧</div>
+            <div class="reward-sheet-text">
+              <b>末吉</b>
+              <span>やりすぎな水×1 + オクト+1000</span>
+            </div>
+          </div>
+
+          <div class="reward-sheet-item">
+            <div class="reward-sheet-icon">🧪</div>
+            <div class="reward-sheet-text">
+              <b>凶</b>
+              <span>工程すっ飛ばし肥料×1 + オクト+500</span>
+            </div>
+          </div>
+
+          <div class="reward-sheet-item">
+            <div class="reward-sheet-icon">🪙</div>
+            <div class="reward-sheet-text">
+              <b>大凶</b>
+              <span>オクト+1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-actions">
+        <button class="btn btn-ghost" id="closeRewardBtn" type="button">閉じる</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (() => {
       "use strict";
@@ -796,15 +965,16 @@
         octo: "roten_v1_octo",
         inv: "tf_v1_inv",
         mikujiDate: "roten_v1_mikuji_date",
-        log: "roten_v1_log"
+        log: "roten_v1_log",
+        streak: "loginbonus_v1_streak_state"
       };
 
       const BACK_URL = "./index.html";
 
       const SAY = [
         "「焼き台から1つ選んで…たこ。運勢が出る…たこ。」",
-        "「押した瞬間、今日の運命が固まる…たこ。」",
-        "「いい日でも、悪い日でも、焼き台は黙ってる…たこ。」",
+        "「どれを選ぶかで、気分はもう半分決まってる…たこ。」",
+        "「選んだたこ焼きが今日の相棒…たこ。」",
         "「大凶でも…1オクトは希望…たこ。」"
       ];
 
@@ -861,20 +1031,33 @@
         }
       ];
 
+      const STREAK_REWARDS = [
+        { day:1, icon:"🪙", text:"ログイン開始" },
+        { day:2, icon:"💧", text:"ちょい上振れの日" },
+        { day:3, icon:"🧪", text:"少しだけ勢い追加" },
+        { day:4, icon:"🔥", text:"流れが乗ってくる" },
+        { day:5, icon:"🎁", text:"ボーナス感アップ" },
+        { day:6, icon:"✨", text:"かなり続いてる" },
+        { day:7, icon:"👑", text:"連続達成ボーナス" }
+      ];
+
       const $ = (sel, root=document) => root.querySelector(sel);
       const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
       const el = {
         backBtn: $("#backBtn"),
         octoNow: $("#octoNow"),
+        streakNow: $("#streakNow"),
         todayStateMini: $("#todayStateMini"),
-        todayState: $("#todayState"),
         takopiSay: $("#takopiSay"),
         grill: $("#grill"),
         drawBtn: $("#drawBtn"),
         drawHelp: $("#drawHelp"),
-
         toast: $("#toast"),
+
+        streakNowText: $("#streakNowText"),
+        todayStateText: $("#todayStateText"),
+        streakSteps: $("#streakSteps"),
 
         resultModal: $("#resultModal"),
         resultFortune: $("#resultFortune"),
@@ -882,8 +1065,14 @@
         resultCopy: $("#resultCopy"),
         resultPaper: $("#resultPaper"),
         closeResultBtn: $("#closeResultBtn"),
-        goTownBtn: $("#goTownBtn")
+        goTownBtn: $("#goTownBtn"),
+
+        rewardModal: $("#rewardModal"),
+        openRewardBtn: $("#openRewardBtn"),
+        closeRewardBtn: $("#closeRewardBtn")
       };
+
+      let selectedIndex = null;
 
       function todayKey(){
         const d = new Date();
@@ -953,6 +1142,7 @@
       function showToast(msg, kind="info", ms=1800){
         if(!el.toast) return;
         el.toast.textContent = msg;
+
         if(kind === "good"){
           el.toast.style.border = "1px solid rgba(159,255,168,.35)";
           el.toast.style.boxShadow = "0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(159,255,168,.18)";
@@ -999,31 +1189,133 @@
         el.takopiSay.textContent = SAY[Math.floor(Math.random() * SAY.length)];
       }
 
+      function openModal(modalEl){
+        if(!modalEl) return;
+        modalEl.classList.add("is-open");
+        modalEl.setAttribute("aria-hidden", "false");
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeModal(modalEl){
+        if(!modalEl) return;
+        modalEl.classList.remove("is-open");
+        modalEl.setAttribute("aria-hidden", "true");
+
+        const anyOpen = $$(".modal.is-open").length > 0;
+        if(!anyOpen){
+          document.documentElement.style.overflow = "";
+          document.body.style.overflow = "";
+        }
+      }
+
       function openResultModal(r){
         el.resultFortune.textContent = r.luck;
         el.resultReward.textContent = r.label;
         el.resultCopy.textContent = r.msg;
         el.resultPaper.textContent =
           `たこぴ：\n「${r.msg}」\n\n本日の結果：${r.luck}\n報酬：${r.label}`;
-        el.resultModal.classList.add("is-open");
-        el.resultModal.setAttribute("aria-hidden", "false");
-        document.documentElement.style.overflow = "hidden";
-        document.body.style.overflow = "hidden";
+        openModal(el.resultModal);
       }
 
-      function closeResultModal(){
-        el.resultModal.classList.remove("is-open");
-        el.resultModal.setAttribute("aria-hidden", "true");
-        document.documentElement.style.overflow = "";
-        document.body.style.overflow = "";
+      function loadStreakState(){
+        return loadJSON(LS.streak, {
+          lastVisitDate: "",
+          streak: 1
+        });
+      }
+
+      function saveStreakState(state){
+        saveJSON(LS.streak, state);
+      }
+
+      function daysBetween(a, b){
+        const da = new Date(a + "T00:00:00");
+        const db = new Date(b + "T00:00:00");
+        return Math.round((db - da) / 86400000);
+      }
+
+      function computeStreakState(){
+        const state = loadStreakState();
+        const today = todayKey();
+
+        if(!state.lastVisitDate){
+          state.lastVisitDate = today;
+          state.streak = 1;
+          saveStreakState(state);
+          return state;
+        }
+
+        if(state.lastVisitDate === today){
+          if(!state.streak || state.streak < 1) state.streak = 1;
+          saveStreakState(state);
+          return state;
+        }
+
+        const diff = daysBetween(state.lastVisitDate, today);
+        if(diff === 1){
+          state.streak = Number(state.streak || 1) + 1;
+        }else{
+          state.streak = 1;
+        }
+
+        state.lastVisitDate = today;
+        saveStreakState(state);
+        return state;
+      }
+
+      function currentStepDay(streak){
+        const s = Math.max(1, Number(streak || 1));
+        return ((s - 1) % 7) + 1;
+      }
+
+      function renderStreakSteps(streak){
+        const currentDay = currentStepDay(streak);
+        const doneToday = isDoneToday();
+
+        el.streakSteps.innerHTML = STREAK_REWARDS.map(item => {
+          let cls = "step is-future";
+          if(item.day < currentDay){
+            cls = "step is-past";
+          }else if(item.day === currentDay){
+            cls = doneToday ? "step is-past" : "step is-current";
+          }
+
+          return `
+            <div class="${cls}">
+              <div class="step-day">DAY ${item.day}</div>
+              <div class="step-icon">${item.icon}</div>
+              <div class="step-reward">${item.text}</div>
+            </div>
+          `;
+        }).join("");
+
+        el.streakNow.textContent = String(streak);
+        el.streakNowText.textContent = `${streak}日`;
+        el.todayStateText.textContent = doneToday ? "受取済" : "未受取";
+      }
+
+      function clearSelection(){
+        selectedIndex = null;
+        $$(".ball", el.grill).forEach(btn => btn.classList.remove("is-selected"));
+      }
+
+      function selectBall(index){
+        if(isDoneToday()) return;
+        selectedIndex = index;
+        $$(".ball", el.grill).forEach((btn, i) => {
+          btn.classList.toggle("is-selected", i === index);
+        });
+        el.drawHelp.innerHTML = `たこ焼き <b>${index + 1}</b> を選んだたこ。<br>このまま「たこ焼きみくじを引く」を押すたこ。`;
       }
 
       function refreshUI(){
         const done = isDoneToday();
+        const streakState = computeStreakState();
 
         el.octoNow.textContent = String(getOcto());
         el.todayStateMini.textContent = done ? "済" : "未";
-        el.todayState.textContent = done ? "受取済" : "未受取";
+        renderStreakSteps(streakState.streak);
 
         if(done){
           el.drawBtn.disabled = true;
@@ -1031,18 +1323,21 @@
           el.drawHelp.innerHTML = "今日はもう引いた…たこ。<br>明日またおいで…たこ。";
           $$(".ball", el.grill).forEach(btn => {
             btn.disabled = true;
-            btn.style.opacity = ".6";
+            btn.style.opacity = ".62";
             btn.style.cursor = "default";
           });
         }else{
           el.drawBtn.disabled = false;
           el.drawBtn.style.opacity = "1";
-          el.drawHelp.innerHTML = "今日はまだ引いてないたこ。<br>ボタンでも、たこ焼きタップでも引けるたこ。";
           $$(".ball", el.grill).forEach(btn => {
             btn.disabled = false;
             btn.style.opacity = "1";
             btn.style.cursor = "pointer";
           });
+
+          if(selectedIndex == null){
+            el.drawHelp.innerHTML = "まだ選んでないたこ。<br><b>先にたこ焼きを1つタップ</b>してから引くたこ。";
+          }
         }
       }
 
@@ -1053,11 +1348,17 @@
           return;
         }
 
+        if(selectedIndex == null){
+          showToast("先にたこ焼きを1つ選ぶたこ！", "bad");
+          el.drawHelp.innerHTML = "まだ選んでないたこ。<br><b>先にたこ焼きを1つタップ</b>してから引くたこ。";
+          return;
+        }
+
         const r = pickWeighted(OMKUJI);
 
         applyReward(r);
         localStorage.setItem(LS.mikujiDate, todayKey());
-        pushLog(`みくじ：${r.luck} / ${r.label}`);
+        pushLog(`みくじ：${r.luck} / ${r.label} / selected:${selectedIndex}`);
 
         openResultModal(r);
         showToast(`🎉 ${r.luck}！ ${r.label}`, "good");
@@ -1075,24 +1376,36 @@
 
       el.drawBtn.addEventListener("click", doMikuji);
 
-      $$(".ball", el.grill).forEach(btn => {
-        btn.addEventListener("click", doMikuji);
+      $$(".ball", el.grill).forEach((btn, index) => {
+        btn.addEventListener("click", () => {
+          selectBall(index);
+        });
       });
 
-      el.closeResultBtn.addEventListener("click", closeResultModal);
+      el.openRewardBtn.addEventListener("click", () => openModal(el.rewardModal));
+      el.closeRewardBtn.addEventListener("click", () => closeModal(el.rewardModal));
+
+      el.closeResultBtn.addEventListener("click", () => closeModal(el.resultModal));
       el.goTownBtn.addEventListener("click", () => {
         location.href = BACK_URL;
       });
 
-      el.resultModal.addEventListener("click", (e) => {
-        if(e.target === el.resultModal) closeResultModal();
+      [el.resultModal, el.rewardModal].forEach(modal => {
+        modal?.addEventListener("click", (e) => {
+          if(e.target === modal) closeModal(modal);
+        });
       });
 
       document.addEventListener("keydown", (e) => {
-        if(e.key === "Escape") closeResultModal();
+        if(e.key === "Escape"){
+          closeModal(el.resultModal);
+          closeModal(el.rewardModal);
+        }
       });
 
       ensureInvKeys();
+      computeStreakState();
+      clearSelection();
       setTakopiSayRandom();
       refreshUI();
       showToast("✨ ログインボーナスページ起動！", "info", 1300);
