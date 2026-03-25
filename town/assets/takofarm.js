@@ -2,15 +2,20 @@
   "use strict";
 
   // =========================================================
-  // takofarm.js（完全版）
+  // takofarm.js（釣り連携 完全版）
   // ✅ アニバーサリー：図鑑ではSP扱い（rarity="SP"固定）
   // ✅ XP：rarityではなく tier（N/R/SR/UR/LR）に沿って入る（tier優先）
   // ✅ 図鑑：tierも保存
-  // ✅ 追加：タネ選択モーダルで
+  // ✅ タネ選択モーダルで
   //        seed_colabo → 「コラボ」(赤)
   //        seed_anniv  → 「期間限定」(目立つ色)
-  //        ※CSSいじらず、JSのinline styleで“カード一番下”に表示
-  // ✅ 追加：月間記録 ttc_monthly_stats_v1 に harvest を自動反映
+  // ✅ 月間記録 ttc_monthly_stats_v1 に harvest を自動反映
+  // ✅ 釣りドロップ水4種に対応
+  // ✅ 腐ったミズ / 海水 専用カード対応
+  // ✅ 焦げは1タップで即回収
+  // ✅ ミズはレアリティ抽選のみ反映
+  // ✅ 時短はヒリョウのみ反映
+  // ✅ 70%時短で 1時間30分 になるよう修正
   // =========================================================
 
   // =========================
@@ -19,22 +24,18 @@
   const PLOT_IMG = {
     EMPTY: "https://ul.h3z.jp/muPEAkao.png",
 
-    // 通常成長
     GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
     GROW2: "https://ul.h3z.jp/tD4LUB6F.png",
 
-    // ★コラボ（グラタン）専用成長GIF
     COLABO_GROW1: "https://ul.h3z.jp/cq1soJdm.gif",
     COLABO_GROW2: "https://ul.h3z.jp/I6Iu4J32.gif",
 
-    // ★コラボ（アニバーサリー）専用成長GIF（2段階）
     ANNIV_GROW1: "https://takoyaki-card.com/town/assets/images/anniversary/tane1.gif",
     ANNIV_GROW2: "https://takoyaki-card.com/town/assets/images/anniversary/tane2.gif",
 
     READY: "https://ul.h3z.jp/AmlnQA1b.png",
     BURN: "https://ul.h3z.jp/q9hxngx6.png",
 
-    // ✅ SR保証系（※コラボ/固定タネでは出さない）
     GROW2_SR65: "https://ul.h3z.jp/HfpFoeBk.png",
     GROW2_SR100: "https://ul.h3z.jp/tBVUoc8w.png",
   };
@@ -46,28 +47,18 @@
   const LS_BOOK = "tf_v1_book";
   const LS_PLAYER = "tf_v1_player";
   const LS_INV = "tf_v1_inv";
-
-  // ✅ 装備（種/水/肥料）
   const LS_LOADOUT = "tf_v1_loadout";
-
-  // ✅ オクト（露店と共通のキーを使う）
   const LS_OCTO = "roten_v1_octo";
-
-  // ✅ 月間記録
   const LS_MONTHLY_STATS = "ttc_monthly_stats_v1";
 
-  // 育成時間など
-  const BASE_GROW_MS = 5 * 60 * 60 * 1000; // 5時間
-  const READY_TO_BURN_MS = 24 * 60 * 60 * 1000; // READYから24時間で焦げ
+  const BASE_GROW_MS = 5 * 60 * 60 * 1000;
+  const READY_TO_BURN_MS = 24 * 60 * 60 * 1000;
   const TICK_MS = 1000;
 
-  // ベース（使わないなら水ratesが優先）
   const BASE_RARITY_RATE = { N: 70, R: 20, SR: 8, UR: 1.8, LR: 0.2 };
 
   // =========================================================
-  // ✅ 月間記録ユーティリティ
-  // harvest / sales / fishing / tower を同じ箱で管理
-  // 月が変わったら今月用に自動リセット
+  // 月間記録
   // =========================================================
   function getMonthKey(date = new Date()) {
     return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
@@ -92,7 +83,6 @@
 
     const monthKey = String(raw.monthKey || "");
     if (monthKey !== curMonth) {
-      // 月が切り替わったら、今月用に初期化
       return defaultMonthlyStats();
     }
 
@@ -137,7 +127,7 @@
   }
 
   // =========================================================
-  // カードプール（あなたの現行のまま）
+  // カードプール
   // =========================================================
   const CARD_POOLS = {
     N: [
@@ -203,7 +193,7 @@
   };
 
   // =========================================================
-  // ★タネ一覧（完全版 2026最新版）
+  // タネ一覧
   // =========================================================
   const SEEDS = [
     { id: "seed_random", name: "なに出るタネ", desc: "何が育つかは完全ランダム。\n店主も知らない。", factor: 1.0, img: "https://ul.h3z.jp/gnyvP580.png", fx: "第一弾全50種" },
@@ -214,33 +204,69 @@
     { id: "seed_bussasari", name: "ブッ刺さりタネ", desc: "刺さるのは心だけ。\n出るのは5枚だけ", factor: 1.05, img: "https://ul.h3z.jp/MjWkTaU3.png", fx: "ダーツプロ全5種" },
     { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "これがｼｮｯﾌﾟｶｰﾄﾞ\nってやつなのか", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全12種" },
 
-    // ★コラボ（グラタン）
     { id: "seed_colabo", name: "【ｺﾗﾎﾞ】ぐらたん\nのタネ", desc: "全2種ランダム収穫\n《N/LR》", factor: 1.0, img: "https://ul.h3z.jp/wbnwoTzm.png" },
-
-    // ★コラボ（アニバーサリー）
     { id: "seed_anniv", name: "ﾊｰﾌｱﾆﾊﾞｰｻﾘｰ\nのタネ", desc: "全5種ランダム収穫\n《N/R/SR/UR/LR》", factor: 1.0, img: "https://takoyaki-card.com/town/assets/images/anniversary/anv1.png" },
   ];
 
+  // =========================================================
+  // 水一覧
+  // =========================================================
   const WATERS = [
-    { id: "water_plain_free", name: "ただの水", desc: "無料・UR/LRなし。\n無課金の基準。", factor: 1.0, fx: "基準（水）", img: "https://ul.h3z.jp/13XdhuHi.png", rates: { N: 62.5, R: 31.2, SR: 6.3, UR: 0, LR: 0 } },
+    { id: "water_plain_free", name: "ただの水", desc: "UR/LRなし。\n無課金の基準。", factor: 1.0, fx: "基準（水）", img: "https://ul.h3z.jp/13XdhuHi.png", rates: { N: 62.5, R: 31.2, SR: 6.3, UR: 0, LR: 0 } },
     { id: "water_nice", name: "なんか良さそうな水", desc: "ちょい上振れ・LRなし。\n初心者の背中押し。", factor: 0.98, fx: "ちょい上振れ", img: "https://ul.h3z.jp/3z04ypEd.png", rates: { N: 60.5, R: 31.0, SR: 7.3, UR: 1.2, LR: 0 } },
     { id: "water_suspicious", name: "怪しい水", desc: "現実準拠・標準。\n実パックと同じ空気。", factor: 0.95, fx: "標準（現実準拠）", img: "https://ul.h3z.jp/wtCO9mec.png", rates: { N: 66.0, R: 28.5, SR: 4.5, UR: 0.8, LR: 0.2 } },
     { id: "water_overdo", name: "やりすぎな水", desc: "勝負水・現実より上。\n体感で強い。", factor: 0.9, fx: "勝負", img: "https://ul.h3z.jp/vsL9ggf6.png", rates: { N: 58.0, R: 29.0, SR: 9.5, UR: 2.8, LR: 0.7 } },
-    { id: "water_regret", name: "押さなきゃよかった水", desc: "確定枠・狂気。\n事件製造機（SNS向け）", factor: 1.0, fx: "事件", img: "https://ul.h3z.jp/L0nafMOp.png", rates: { N: 99.97, R: 0, SR: 0, UR: 0, LR: 0.03 } },
+    { id: "water_regret", name: "押さなきゃよかった水", desc: "ほぼ狂気。\n事件製造機（SNS向け）", factor: 1.0, fx: "事件", img: "https://ul.h3z.jp/L0nafMOp.png", rates: { N: 99.97, R: 0, SR: 0, UR: 0, LR: 0.03 } },
+
+    {
+      id: "water_rotten",
+      name: "腐ったミズ",
+      desc: "腐敗した力を宿した危険なミズ。\n通常カードはレアリティが1段階下がるが、たまにSPカードを引き当てる。",
+      factor: 1.06,
+      fx: "1段階ダウン / SPカード出るかも",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/6.png",
+      rates: { N: 0, R: 0, SR: 0, UR: 0, LR: 0 }
+    },
+    {
+      id: "water_sea",
+      name: "海水",
+      desc: "しょっぱさが染みついた海のミズ。\nしょっぱいカードが多く出るが、稀にSPカードが紛れ込む。",
+      factor: 0.98,
+      fx: "N多め / SPカード稀に出るかも",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/7.png",
+      rates: { N: 0, R: 0, SR: 0, UR: 0, LR: 0 }
+    },
+    {
+      id: "water_yunokawa",
+      name: "ゆのかわの温泉ミズ",
+      desc: "アツめのご利益をたっぷり含んだミズ。\nRがかなり出やすく、安定して収穫しやすい。",
+      factor: 0.88,
+      fx: "安定",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/8.png",
+      rates: { N: 30.0, R: 68.0, SR: 1.5, UR: 0.4, LR: 0.1 }
+    },
+    {
+      id: "water_supergod",
+      name: "超神水",
+      desc: "神域から落ちた一滴。\n高レアカードを引き寄せる、最上級のミズ。",
+      factor: 0.72,
+      fx: "アツい",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/9.png",
+      rates: { N: 38.0, R: 50.0, SR: 10.0, UR: 1.0, LR: 1.0 }
+    },
   ];
 
-  // ✅ 肥料は “時短だけ”
+  // =========================================================
+  // 肥料
+  // =========================================================
   const FERTS = [
     { id: "fert_agedama", name: "ただの揚げ玉", desc: "時短0。\nおいしそう…\nたまに《焼きすぎたカード》", factor: 1.0, fx: "時短 0%", img: "https://ul.h3z.jp/9p5fx53n.png", burnCardUp: 0.12, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
     { id: "fert_feel", name: "気のせい肥料", desc: "早くなった気がする。\n気のせいかもしれない。", factor: 0.95, fx: "時短 5%", img: "https://ul.h3z.jp/XqFTb7sw.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
     { id: "fert_guts", name: "根性論ぶち込み肥料", desc: "理由はない。\n気合いだ。", factor: 0.8, fx: "時短 20%", img: "https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: true, skipGrowAnim: false },
     { id: "fert_skip", name: "工程すっ飛ばし肥料", desc: "途中は、\n見なかったことにした。", factor: 0.6, fx: "時短 40%", img: "https://ul.h3z.jp/FqPzx12Q.png", burnCardUp: 0.0, rawCardChance: 0.01, mantra: false, skipGrowAnim: true },
-    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n焼けてないって？\nたまに《生焼けカード》", factor: 0.1, fx: "時短 70%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
+    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n焼けてないって？\nたまに《生焼けカード》", factor: 0.3, fx: "時短 70%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
   ];
 
-  // =========================
-  // ★たこぴのタネ専用（8枚）
-  // =========================
   const TAKOPI_SEED_POOL = [
     { id: "TP-001", name: "届け！たこぴ便", img: "https://ul.h3z.jp/rjih1Em9.png", rarity: "N" },
     { id: "TP-002", name: "ハロウィンたこぴ", img: "https://ul.h3z.jp/hIDWKss0.png", rarity: "N" },
@@ -252,9 +278,6 @@
     { id: "TP-008", name: "入学たこぴ", img: "https://ul.h3z.jp/DidPdK9b.png", rarity: "UR" },
   ];
 
-  // =========================
-  // ✅ ブッ刺さりタネ：専用5種（全部N固定）
-  // =========================
   const BUSSASARI_POOL = [
     { id: "BS-001", name: "たこ焼きダーツインフェルノ《對馬裕佳子》", img: "https://ul.h3z.jp/l5roYZJ4.png", rarity: "N" },
     { id: "BS-002", name: "店主反撃レビュー《佐俣雄一郎》", img: "https://ul.h3z.jp/BtOTLlSo.png", rarity: "N" },
@@ -263,9 +286,6 @@
     { id: "BS-005", name: "白い契約《稲石裕》", img: "https://ul.h3z.jp/nmiaCKae.png", rarity: "N" },
   ];
 
-  // =========================
-  // ✅ なまら買わさるタネ：専用12種（レア内訳固定）
-  // =========================
   const NAMARA_POOL = [
     { id: "NK-001", name: "イカさま焼き", img: "https://ul.h3z.jp/1UB3EY1B.png", rarity: "LR" },
     { id: "NK-002", name: "定番のソース", img: "https://ul.h3z.jp/MBZcFmq9.png", rarity: "N" },
@@ -281,20 +301,12 @@
     { id: "NK-012", name: "てりたま", img: "https://ul.h3z.jp/MU6ehdTH.png", rarity: "SR" },
   ];
 
-  // =========================
-  // ✅ グラタン：2種固定（①LR / ②N）
-  // =========================
   const GRATIN_POOL = [
     { id: "col-001", name: "伝説のたこ焼きライバー", img: "https://ul.h3z.jp/CmVTkAd2.png", rarity: "LR" },
     { id: "col-002", name: "たこ焼き実況者ライバー", img: "https://ul.h3z.jp/1VQvIP7v.png", rarity: "N" },
   ];
   const GRATIN_LR_CHANCE = 0.05;
 
-  // =========================
-  // ✅ アニバーサリー：全5種
-  // 図鑑では rarity="SP" 固定
-  // XPは tier（N/R/SR/UR/LR）で入る
-  // =========================
   const ANNIV_POOL = [
     { id: "SP-ANV-001", name: "会話トリガー:店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/1.png", rarity: "SP", tier: "N" },
     { id: "SP-ANV-002", name: "定型ループNPC", img: "https://takoyaki-card.com/town/assets/images/anniversary/2.png", rarity: "SP", tier: "R" },
@@ -303,7 +315,82 @@
     { id: "SP-ANV-005", name: "物語の外側", img: "https://takoyaki-card.com/town/assets/images/anniversary/4b.jpg", rarity: "SP", tier: "LR" },
   ];
 
-  // 抽選は「段階（tier）」の確率で引く（ここを調整）
+  // =========================================================
+  // 腐ったミズ / 海水 専用カード
+  // 腐敗したカード = N
+  // 浸食したカード = LR
+  // =========================================================
+  const WATER_SPECIAL_CARDS = {
+    rotten: [
+      {
+        id: "SP-MIZU-001",
+        name: "腐敗したカード",
+        img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png",
+        rarity: "N",
+        tier: "N",
+        weight: 95
+      },
+      {
+        id: "SP-MIZU-002",
+        name: "浸食したカード",
+        img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png",
+        rarity: "LR",
+        tier: "LR",
+        weight: 5
+      }
+    ],
+    sea: [
+      {
+        id: "SP-MIZU-001",
+        name: "腐敗したカード",
+        img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png",
+        rarity: "N",
+        tier: "N",
+        weight: 98
+      },
+      {
+        id: "SP-MIZU-002",
+        name: "浸食したカード",
+        img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png",
+        rarity: "LR",
+        tier: "LR",
+        weight: 2
+      }
+    ]
+  };
+
+  function pickWeightedCard(list) {
+    const total = list.reduce((sum, x) => sum + Math.max(0, Number(x.weight || 0)), 0);
+    if (total <= 0) return list[0];
+    let r = Math.random() * total;
+    for (const item of list) {
+      r -= Math.max(0, Number(item.weight || 0));
+      if (r <= 0) return item;
+    }
+    return list[0];
+  }
+
+  function pickWaterSpecialReward(waterId) {
+    let pool = null;
+
+    if (waterId === "water_rotten") {
+      pool = WATER_SPECIAL_CARDS.rotten;
+    } else if (waterId === "water_sea") {
+      pool = WATER_SPECIAL_CARDS.sea;
+    }
+
+    if (!pool || !pool.length) return null;
+
+    const c = pickWeightedCard(pool);
+    return {
+      id: c.id,
+      name: c.name,
+      img: c.img,
+      rarity: c.rarity,
+      tier: c.tier
+    };
+  }
+
   const ANNIV_RATES = {
     N: 66,
     R: 20,
@@ -312,9 +399,6 @@
     LR: 1
   };
 
-  // =========================================================
-  // レベル・XP
-  // =========================================================
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
 
@@ -347,7 +431,7 @@
   let player = loadPlayer();
 
   // =========================================================
-  // ★在庫（すべて在庫制）
+  // 在庫
   // =========================================================
   function defaultInv() {
     const inv = { ver: 1, seed: {}, water: {}, fert: {} };
@@ -393,9 +477,6 @@
     return true;
   }
 
-  // =========================================================
-  // ✅ オクト
-  // =========================================================
   function loadOcto() {
     const n = Number(localStorage.getItem(LS_OCTO) ?? 0);
     return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
@@ -526,9 +607,6 @@
     return { leveled, unlockedDelta, rewards };
   }
 
-  // =========================================================
-  // ✅ 装備（ロードアウト）
-  // =========================================================
   function defaultLoadout() {
     return { ver: 1, seedId: null, waterId: null, fertId: null };
   }
@@ -598,17 +676,55 @@
     return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
   }
 
-  // =========================================================
-  // ✅ 水だけでレアが決まる（植えた時点で確定）
-  // =========================================================
   function pickRarityWithWater(waterId) {
     const w = WATERS.find((x) => x.id === waterId);
-    if (w && w.rates) {
-      const rates = w.rates;
+
+    if (w && w.id === "water_rotten") {
+      if (Math.random() < 0.12) return "WATER_SPECIAL";
+
+      const baseRates = {
+        N: 70.0,
+        R: 24.0,
+        SR: 5.0,
+        UR: 0.8,
+        LR: 0.2
+      };
       const keys = ["N", "R", "SR", "UR", "LR"];
+
+      let total = 0;
+      for (const k of keys) total += Math.max(0, Number(baseRates[k] ?? 0));
+      if (total <= 0) return "N";
+
+      let r = Math.random() * total;
+      for (const k of keys) {
+        r -= Math.max(0, Number(baseRates[k] ?? 0));
+        if (r <= 0) {
+          if (k === "LR") return "UR";
+          if (k === "UR") return "SR";
+          if (k === "SR") return "R";
+          if (k === "R") return "N";
+          return "N";
+        }
+      }
+      return "N";
+    }
+
+    if (w && w.id === "water_sea") {
+      if (Math.random() < 0.03) return "WATER_SPECIAL";
+
+      const rates = {
+        N: 82.0,
+        R: 16.5,
+        SR: 1.1,
+        UR: 0.3,
+        LR: 0.1
+      };
+      const keys = ["N", "R", "SR", "UR", "LR"];
+
       let total = 0;
       for (const k of keys) total += Math.max(0, Number(rates[k] ?? 0));
       if (total <= 0) return "N";
+
       let r = Math.random() * total;
       for (const k of keys) {
         r -= Math.max(0, Number(rates[k] ?? 0));
@@ -616,6 +732,66 @@
       }
       return "N";
     }
+
+    if (w && w.id === "water_yunokawa") {
+      const rates = {
+        N: 30.0,
+        R: 68.0,
+        SR: 1.5,
+        UR: 0.4,
+        LR: 0.1
+      };
+      const keys = ["N", "R", "SR", "UR", "LR"];
+
+      let total = 0;
+      for (const k of keys) total += Math.max(0, Number(rates[k] ?? 0));
+      if (total <= 0) return "N";
+
+      let r = Math.random() * total;
+      for (const k of keys) {
+        r -= Math.max(0, Number(rates[k] ?? 0));
+        if (r <= 0) return k;
+      }
+      return "N";
+    }
+
+    if (w && w.id === "water_supergod") {
+      const rates = {
+        N: 30.0,
+        R: 50.0,
+        SR: 18.0,
+        UR: 1.0,
+        LR: 1.0
+      };
+      const keys = ["N", "R", "SR", "UR", "LR"];
+
+      let total = 0;
+      for (const k of keys) total += Math.max(0, Number(rates[k] ?? 0));
+      if (total <= 0) return "N";
+
+      let r = Math.random() * total;
+      for (const k of keys) {
+        r -= Math.max(0, Number(rates[k] ?? 0));
+        if (r <= 0) return k;
+      }
+      return "N";
+    }
+
+    if (w && w.rates) {
+      const rates = w.rates;
+      const keys = ["N", "R", "SR", "UR", "LR"];
+      let total = 0;
+      for (const k of keys) total += Math.max(0, Number(rates[k] ?? 0));
+      if (total <= 0) return "N";
+
+      let r = Math.random() * total;
+      for (const k of keys) {
+        r -= Math.max(0, Number(rates[k] ?? 0));
+        if (r <= 0) return k;
+      }
+      return "N";
+    }
+
     const keys = Object.keys(BASE_RARITY_RATE);
     let total = 0;
     for (const k of keys) total += Math.max(0, BASE_RARITY_RATE[k]);
@@ -627,9 +803,6 @@
     return "N";
   }
 
-  // =========================================================
-  // ★種ごとに「出るTN番号」を制限
-  // =========================================================
   function makeTNSet(from, to) {
     const set = new Set();
     for (let i = from; i <= to; i++) {
@@ -662,9 +835,6 @@
     return { rarity: "N", card: pick(baseN.length ? baseN : [{ no: "TN-000", name: "NO DATA", img: "" }]) };
   }
 
-  // =========================================================
-  // ✅ 固定タネ抽選
-  // =========================================================
   function pickBussasariReward() {
     const c = pick(BUSSASARI_POOL);
     return { id: c.id, name: c.name, img: c.img, rarity: "N" };
@@ -700,9 +870,6 @@
     return { id: c.id, name: c.name, img: c.img, rarity: "SP", tier: c.tier || tier };
   }
 
-  // =========================================================
-  // ✅【追加】肥料SP抽選（B案：植えた瞬間に確定）
-  // =========================================================
   function pickFertSPIfAny(p) {
     if (!p) return null;
     const fert = FERTS.find((x) => x.id === (p.fertId || null));
@@ -721,9 +888,6 @@
     return null;
   }
 
-  // =========================================================
-  // ★報酬抽選
-  // =========================================================
   function drawRewardForPlot(p) {
     const sp = pickFertSPIfAny(p);
     if (sp) return sp;
@@ -747,6 +911,11 @@
 
     const rarity = p && p.fixedRarity ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
 
+    if (rarity === "WATER_SPECIAL") {
+      const special = pickWaterSpecialReward(p ? p.waterId : null);
+      if (special) return special;
+    }
+
     const seedId = p ? p.seedId : null;
     const filtered = filterPoolBySeed(seedId, getPoolByRarity(rarity));
     const picked = filtered.length ? { rarity, card: pick(filtered) } : fallbackPickBySeed(seedId, rarity);
@@ -762,9 +931,6 @@
     return r || "";
   }
 
-  // =========================
-  // DOM
-  // =========================
   const farmEl = document.getElementById("farm");
   const stBook = document.getElementById("stBook");
   const stGrow = document.getElementById("stGrow");
@@ -843,9 +1009,6 @@
   let book = loadBook();
   let inv = loadInv();
 
-  // =========================================================
-  // ✅ モーダル中：背景だけロックして「モーダル内はスクロールOK」
-  // =========================================================
   let __scrollY = 0;
   let __locked = false;
 
@@ -940,9 +1103,38 @@
     unlockScroll();
   }
 
-  // =========================================================
-  // ✅【最重要】収穫モーダル中だけ「閉じる＝確定」できる仕組み
-  // =========================================================
+  function showToast(message) {
+    let el = document.getElementById("farmToast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "farmToast";
+      el.style.position = "fixed";
+      el.style.left = "50%";
+      el.style.bottom = "24px";
+      el.style.transform = "translateX(-50%)";
+      el.style.zIndex = "99999";
+      el.style.padding = "10px 14px";
+      el.style.borderRadius = "999px";
+      el.style.background = "rgba(20,20,20,.88)";
+      el.style.color = "#fff";
+      el.style.fontSize = "13px";
+      el.style.fontWeight = "900";
+      el.style.boxShadow = "0 8px 20px rgba(0,0,0,.28)";
+      el.style.opacity = "0";
+      el.style.pointerEvents = "none";
+      el.style.transition = "opacity .18s ease";
+      document.body.appendChild(el);
+    }
+
+    el.textContent = message;
+    el.style.opacity = "1";
+
+    if (showToast._timer) clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(() => {
+      el.style.opacity = "0";
+    }, 900);
+  }
+
   let __harvestCommitFn = null;
 
   function setHarvestCommit(fn) {
@@ -964,9 +1156,6 @@
 
   mClose.addEventListener("click", closeModalOrCommit);
 
-  // =========================================================
-  // ✅ 装備表示更新
-  // =========================================================
   function renderLoadout() {
     inv = loadInv();
     loadout = loadLoadout();
@@ -1006,9 +1195,6 @@
     }
   }
 
-  // =========================================================
-  // ✅ グリッド選択UI
-  // =========================================================
   function openPickGrid(kind) {
     inv = loadInv();
     loadout = loadLoadout();
@@ -1022,6 +1208,13 @@
 
     const title = isSeed ? "種を選ぶ" : isWater ? "水を選ぶ" : "肥料を選ぶ";
 
+    const FISHING_WATER_IDS = new Set([
+      "water_rotten",
+      "water_sea",
+      "water_yunokawa",
+      "water_supergod"
+    ]);
+
     const cells = items
       .map((x) => {
         const cnt = invGet(inv, invType, x.id);
@@ -1031,45 +1224,75 @@
           (isWater && loadout.waterId === x.id) ||
           (isFert && loadout.fertId === x.id);
 
-        let specialTag = "";
+        let topBadge = "";
+
         if (isSeed && x.id === "seed_colabo") {
-          specialTag = `
+          topBadge = `
             <div style="
-              margin-top:8px;
-              width:100%;
-              text-align:center;
-              padding:8px 10px;
-              border-radius:12px;
+              position:absolute;
+              top:6px;
+              right:6px;
+              z-index:3;
+              padding:3px 7px;
+              border-radius:999px;
+              font-size:10px;
               font-weight:1000;
-              letter-spacing:.06em;
-              background:rgba(255,70,90,.92);
-              border:1px solid rgba(255,70,90,.95);
+              letter-spacing:.02em;
+              line-height:1;
+              background:rgba(255,70,90,.96);
+              border:1px solid rgba(255,110,130,.98);
               color:#fff;
-              box-shadow:0 8px 18px rgba(0,0,0,.25);
+              box-shadow:0 3px 10px rgba(0,0,0,.22);
+              pointer-events:none;
             ">コラボ</div>
           `;
         } else if (isSeed && x.id === "seed_anniv") {
-          specialTag = `
+          topBadge = `
             <div style="
-              margin-top:8px;
-              width:100%;
-              text-align:center;
-              padding:8px 10px;
-              border-radius:12px;
+              position:absolute;
+              top:6px;
+              right:6px;
+              z-index:3;
+              padding:3px 7px;
+              border-radius:999px;
+              font-size:10px;
               font-weight:1000;
-              letter-spacing:.06em;
-              background:rgba(255,195,80,.92);
-              border:1px solid rgba(255,195,80,.95);
+              letter-spacing:.02em;
+              line-height:1;
+              background:rgba(255,195,80,.96);
+              border:1px solid rgba(255,220,130,.98);
               color:#0b0d17;
-              box-shadow:0 8px 18px rgba(0,0,0,.22);
+              box-shadow:0 3px 10px rgba(0,0,0,.22);
+              pointer-events:none;
             ">期間限定</div>
+          `;
+        } else if (isWater && FISHING_WATER_IDS.has(x.id)) {
+          topBadge = `
+            <div style="
+              position:absolute;
+              top:6px;
+              right:6px;
+              z-index:3;
+              padding:3px 7px;
+              border-radius:999px;
+              font-size:10px;
+              font-weight:1000;
+              letter-spacing:.02em;
+              line-height:1;
+              background:rgba(90,180,255,.96);
+              border:1px solid rgba(150,215,255,.98);
+              color:#07131f;
+              box-shadow:0 3px 10px rgba(0,0,0,.22);
+              pointer-events:none;
+            ">釣り</div>
           `;
         }
 
         return `
         <button class="gridCard ${selected ? "isSelected" : ""}" type="button" data-pick="${x.id}" ${disabled ? "disabled" : ""}>
-          <div class="gridImg">
+          <div class="gridImg" style="position:relative;">
             <img src="${x.img}" alt="${x.name}">
+            ${topBadge}
             <div class="gridCnt">×${cnt}</div>
             ${selected ? `<div class="gridSel">装備中</div>` : ``}
             ${disabled ? `<div class="gridEmpty">在庫なし</div>` : ``}
@@ -1077,7 +1300,6 @@
           <div class="gridName">${x.name}</div>
           <div class="gridDesc">${(x.desc || "").replace(/\n/g, "<br>")}</div>
           <div class="gridFx">${x.fx ? `効果：<b>${x.fx}</b>` : ""}</div>
-          ${specialTag}
         </button>
       `;
       })
@@ -1086,7 +1308,7 @@
     openModal(
       title,
       `
-      <div class="step">※すべて在庫制。露店で買って増やす。<br>装備は消費しない（植えた時に消費）。</div>
+      <div class="step">※すべて在庫制。露店で買うか、釣りで増やす。<br>装備は消費しない（植えた時に消費）。</div>
       <div class="gridWrap">${cells}</div>
       <div class="row">
         <button type="button" id="gridClose">閉じる</button>
@@ -1117,9 +1339,6 @@
   equipWaterBtn.addEventListener("click", () => openPickGrid("water"));
   equipFertBtn.addEventListener("click", () => openPickGrid("fert"));
 
-  // =========================================================
-  // ✅ 描画
-  // =========================================================
   function render() {
     player = loadPlayer();
     book = loadBook();
@@ -1199,7 +1418,7 @@
       } else if (p.state === "BURN") {
         burn++;
         img = PLOT_IMG.BURN;
-        label = "焦げ";
+        label = "1タップ回収";
       }
 
       btn.innerHTML = `
@@ -1235,9 +1454,6 @@
     renderLoadout();
   }
 
-  // =========================================================
-  // ✅ 空きマス：ワンタップ植え
-  // =========================================================
   function ensureLoadoutOrOpen() {
     loadout = loadLoadout();
     if (!loadout.seedId) { openPickGrid("seed"); return false; }
@@ -1285,12 +1501,18 @@
     const water = WATERS.find((x) => x.id === waterId);
     const fert = FERTS.find((x) => x.id === fertId);
 
-    const factor = clamp(
-      (seed?.factor ?? 1) * (water?.factor ?? 1) * (fert?.factor ?? 1),
-      0.35, 1.0
+    // ============================================
+    // 収穫時間はヒリョウのみ反映
+    // ミズはレアリティ抽選だけに使用
+    // タネも収穫時間には影響させない
+    // 70%時短 = factor 0.3（1時間30分）
+    // ============================================
+    const growFactor = clamp(
+      (fert?.factor ?? 1),
+      0.3, 1.0
     );
 
-    const growMs = Math.max(Math.floor(BASE_GROW_MS * factor), 60 * 60 * 1000);
+    const growMs = Math.floor(BASE_GROW_MS * growFactor);
     const now = Date.now();
 
     invDec(inv, "seed", seedId);
@@ -1337,14 +1559,8 @@
     render();
   }
 
-  // =========================================================
-  // ✅【最重要】収穫確定処理（tier優先でXP）
-  // ✅ 月間収穫数もここで +1
-  // =========================================================
   function commitHarvest(i, reward) {
     addToBook(reward);
-
-    // ✅ 月間収穫数を反映
     addMonthlyHarvest(1);
 
     const xpKey = (reward && reward.tier)
@@ -1408,9 +1624,6 @@
     render();
   }
 
-  // =========================================================
-  // マス操作
-  // =========================================================
   function onPlotTap(i) {
     player = loadPlayer();
 
@@ -1492,28 +1705,15 @@
     }
 
     if (p.state === "BURN") {
-      openModal("焼けた…", `
-        <div class="step">放置しすぎて焼けた。回収するとマスが空になる。</div>
-        <div class="row">
-          <button type="button" id="btnBack">戻る</button>
-          <button type="button" class="primary" id="btnClear">回収して空にする</button>
-        </div>
-      `);
       clearHarvestCommit();
-      document.getElementById("btnBack").addEventListener("click", closeModal);
-      document.getElementById("btnClear").addEventListener("click", () => {
-        state.plots[i] = { state: "EMPTY" };
-        saveState(state);
-        closeModal();
-        render();
-      });
+      state.plots[i] = { state: "EMPTY" };
+      saveState(state);
+      render();
+      showToast("焦げを回収した");
       return;
     }
   }
 
-  // =========================================================
-  // ✅ 図鑑に追加（countで枚数管理） + tier保存
-  // =========================================================
   function addToBook(card) {
     const b = loadBook();
     if (!b.got) b.got = {};
@@ -1543,9 +1743,6 @@
     saveBook(b);
   }
 
-  // =========================================================
-  // ✅ tick（GROW→READY / READY→BURN）
-  // =========================================================
   function tick() {
     const now = Date.now();
     let changed = false;
@@ -1572,12 +1769,10 @@
     render();
   }
 
-  // 初期
-  loadMonthlyStats(); // ✅ 月間記録箱を必ず作っておく
+  loadMonthlyStats();
   renderLoadout();
   render();
   setInterval(tick, TICK_MS);
 
-  // デバッグ用（不要なら削除OK）
   window.__takofarm_onPlotTap = onPlotTap;
 })();
