@@ -36,6 +36,10 @@
 
       --activeGlow:0 0 0 2px rgba(255,231,153,.80), 0 0 24px rgba(255,204,82,.45);
       --safeBottom:env(safe-area-inset-bottom, 0px);
+
+      --boardCell:58px;
+      --boardGap:16px;
+      --boardCols:7;
     }
 
     *{ box-sizing:border-box; }
@@ -114,16 +118,17 @@
         0 0 12px rgba(128,247,255,.16);
     }
 
+    /* ←戻るボタンは枠色なし */
     .btn-back{
       border-radius:6px;
       min-height:38px;
       padding:8px 12px;
       font-size:13px;
-      border-color:var(--orange);
+      border:none;
+      background:rgba(255,255,255,.08);
       box-shadow:
-        0 0 0 1px rgba(0,0,0,.28) inset,
-        0 8px 18px rgba(0,0,0,.18),
-        0 0 12px rgba(255,179,87,.18);
+        0 0 0 1px rgba(255,255,255,.10) inset,
+        0 8px 18px rgba(0,0,0,.18);
     }
 
     .btn-gold{
@@ -328,7 +333,6 @@
     .shimenawa::before{ left:20%; }
     .shimenawa::after{ right:20%; }
 
-    /* 右ズレ修正：中央固定＆最大幅を厳密化 */
     .grill-card{
       width:100%;
       max-width:390px;
@@ -476,58 +480,48 @@
 
     .board-scroll{
       width:100%;
-      overflow-x:auto;
-      overflow-y:visible;
+      overflow:visible;
       padding-bottom:8px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .board-scroll::-webkit-scrollbar{
-      height:8px;
-    }
-    .board-scroll::-webkit-scrollbar-thumb{
-      background:rgba(255,255,255,.22);
-      border-radius:999px;
     }
 
     .board{
       position:relative;
       display:grid;
-      grid-template-columns:repeat(7, 58px);
-      gap:16px;
+      grid-template-columns:repeat(var(--boardCols), var(--boardCell));
+      gap:var(--boardGap);
       padding-top:44px;
       padding-left:4px;
       padding-right:4px;
-      width:max-content;
-      min-width:max-content;
+      width:fit-content;
+      max-width:100%;
       align-items:center;
+      justify-content:center;
       margin-inline:auto;
     }
 
     .cell-wrap{
       position:relative;
-      width:58px;
+      width:var(--boardCell);
     }
 
-    .cell-wrap:not(:last-child)::after{
+    .cell-wrap:not(.no-connector)::after{
       content:"";
       position:absolute;
       top:50%;
-      right:-16px;
-      width:16px;
+      right:calc(var(--boardGap) * -1);
+      width:var(--boardGap);
       height:4px;
       transform:translateY(-50%);
       background:linear-gradient(90deg, rgba(255,255,255,.95), rgba(210,216,230,.95));
       border-radius:999px;
       box-shadow:0 0 0 1px rgba(111,118,130,.35) inset, 0 0 8px rgba(255,255,255,.18);
-      display:block !important;
       z-index:1;
     }
 
     .cell{
       position:relative;
-      width:58px;
-      height:58px;
+      width:var(--boardCell);
+      height:var(--boardCell);
       border-radius:12px;
       padding:4px;
       display:flex;
@@ -846,24 +840,96 @@
         padding:5px 8px;
       }
 
-      /* 右ズレ修正をスマホでも維持 */
       .fortune-stage{
         padding-left:6px;
         padding-right:6px;
       }
+
       .grill-card,
       .draw-btn,
       .helper{
         max-width:100%;
       }
 
-      .board{
-        min-width:max-content;
-        grid-template-columns:repeat(7, 58px);
-        gap:16px;
+      /* みくじのマスをスマホで少し小さく */
+      .grill{
+        gap:6px;
       }
-      .cell-wrap:not(:last-child)::after{
+      .ball{
+        min-height:64px;
+        border-radius:14px;
+        padding:4px;
+      }
+      .ball img{
+        width:min(50px, 100%);
+        max-width:50px;
+      }
+      .grill-card{
+        padding:10px 8px;
+      }
+
+      /* すごろくをスマホでは折り返し配置 */
+      :root{
+        --boardCell:58px;
+        --boardGap:12px;
+        --boardCols:4;
+      }
+
+      .panel-sub{
+        margin-bottom:10px;
+      }
+
+      .board-scroll{
+        overflow:visible;
+      }
+
+      .board{
+        width:fit-content;
+        max-width:100%;
+        grid-template-columns:repeat(4, var(--boardCell));
+        gap:var(--boardGap);
+        padding-top:44px;
+      }
+
+      .cell-wrap{
+        width:var(--boardCell);
+      }
+
+      .cell-wrap:not(.no-connector)::after{
+        right:calc(var(--boardGap) * -1);
+        width:var(--boardGap);
         display:block !important;
+      }
+    }
+
+    @media (max-width: 390px){
+      :root{
+        --boardCell:54px;
+        --boardGap:10px;
+        --boardCols:4;
+      }
+
+      .cell{
+        border-radius:11px;
+      }
+
+      .cell-day{
+        font-size:8px;
+      }
+
+      .cell-text{
+        font-size:6px;
+      }
+
+      .cell-icon{
+        width:17px;
+        height:17px;
+        font-size:10px;
+      }
+
+      .piece{
+        width:42px;
+        height:42px;
       }
     }
   </style>
@@ -873,7 +939,7 @@
 
   <div class="wrap">
     <div class="topbar">
-      <button class="btn btn-ghost btn-back" id="backBtn" type="button">←戻る</button>
+      <button class="btn btn-back" id="backBtn" type="button">←戻る</button>
 
       <div class="topchips">
         <div class="topchip">
@@ -951,7 +1017,7 @@
 
       <section class="panel">
         <h2 class="panel-title">連続ログインすごろく</h2>
-        <div class="panel-sub">毎日来ると巫女のコマが1マス進むたこ。スマホでは横にスライドして見れるたこ</div>
+        <div class="panel-sub">毎日来ると巫女のコマが1マス進むたこ。スマホでも画面内に収まるように並ぶたこ</div>
 
         <div class="sugoroku-wrap">
           <div class="sugoroku-head">
@@ -1477,15 +1543,27 @@
         localStorage.setItem(LS.streakRewardClaimDate, today);
       }
 
+      function getBoardCols(){
+        return window.innerWidth <= 560 ? 4 : 7;
+      }
+
       function buildBoard(streak){
         const currentDay = currentStepDay(streak);
         const doneToday = isDoneToday();
+        const cols = getBoardCols();
 
+        el.board.style.setProperty("--boardCols", String(cols));
         el.board.querySelectorAll(".cell-wrap").forEach(n => n.remove());
 
-        STREAK_REWARDS.forEach(item => {
+        STREAK_REWARDS.forEach((item, index) => {
           const wrap = document.createElement("div");
           wrap.className = "cell-wrap";
+
+          const isRowEnd = ((index + 1) % cols === 0);
+          const isLast = (index === STREAK_REWARDS.length - 1);
+          if(isRowEnd || isLast){
+            wrap.classList.add("no-connector");
+          }
 
           const div = document.createElement("div");
           div.className = "cell" + (item.day === 7 ? " day7" : "");
@@ -1515,7 +1593,8 @@
         const boardRect = el.board.getBoundingClientRect();
         const cellRect = target.getBoundingClientRect();
 
-        const x = (cellRect.left - boardRect.left) + (cellRect.width / 2) - (el.piece.offsetWidth / 2);
+        const pieceW = el.piece.offsetWidth || 46;
+        const x = (cellRect.left - boardRect.left) + (cellRect.width / 2) - (pieceW / 2);
         const y = (cellRect.top - boardRect.top) - 30;
 
         el.pieceImg.src = IMG.right;
@@ -1637,7 +1716,8 @@
 
       window.addEventListener("resize", () => {
         const streakState = computeStreakState();
-        placePiece(streakState.streak);
+        buildBoard(streakState.streak);
+        requestAnimationFrame(() => placePiece(streakState.streak));
       });
 
       ensureInvKeys();
