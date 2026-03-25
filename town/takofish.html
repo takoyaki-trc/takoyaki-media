@@ -116,6 +116,7 @@
       display:none; align-items:stretch; justify-content:center;
       background: rgba(0,0,0,.72);
       padding: 12px;
+      z-index: 40;
     }
     .overlay.show{ display:flex; }
 
@@ -272,7 +273,7 @@
     }
 
     .resultMain{ font-weight:1000; font-size:18px; line-height:1.35; margin: 10px 0 8px; }
-    .resultLines > div{ margin: 2px 0; }
+    .resultLines > div{ margin: 4px 0; }
     .tagNew{
       display:inline-block;
       font-size: 11px; font-weight: 1000;
@@ -285,7 +286,7 @@
     }
 
     .resultDate{
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 12px;
       opacity: .72;
     }
@@ -351,9 +352,133 @@
     }
     .spBtns .btn{ flex:1; }
 
+    /* ▼ ドロップ演出 */
+    .dropSplash{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,.12), rgba(0,0,0,.78) 65%);
+      z-index: 60;
+      padding: 20px;
+    }
+    .dropSplash.show{ display:flex; }
+
+    .dropCard{
+      width:min(420px, 100%);
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.22);
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,.16), rgba(255,255,255,.05) 48%, rgba(0,0,0,.30) 100%);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.05) inset,
+        0 20px 60px rgba(0,0,0,.55),
+        0 0 35px rgba(127,208,255,.18);
+      padding:20px 18px 18px;
+      text-align:center;
+      animation: dropPop .42s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+    .dropCard::before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background:
+        linear-gradient(120deg,
+          transparent 0%,
+          rgba(255,255,255,.08) 35%,
+          transparent 55%);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+    @keyframes dropPop{
+      0%{ transform:scale(.72); opacity:0; }
+      70%{ transform:scale(1.04); opacity:1; }
+      100%{ transform:scale(1); opacity:1; }
+    }
+    .dropBadge{
+      display:inline-block;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:1000;
+      letter-spacing:.08em;
+      border:1px solid rgba(255,255,255,.22);
+      background:rgba(255,255,255,.08);
+      margin-bottom:10px;
+    }
+    .dropHero{
+      width:120px;
+      height:120px;
+      margin:0 auto 10px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 10px 28px rgba(0,0,0,.35);
+    }
+    .dropHero img{
+      width:92px;
+      height:92px;
+      object-fit:contain;
+      image-rendering: pixelated;
+      display:block;
+    }
+    .dropTitle{
+      font-size:30px;
+      font-weight:1000;
+      line-height:1.1;
+      margin-bottom:6px;
+      text-shadow:
+        0 0 10px rgba(255,255,255,.10),
+        0 0 22px rgba(127,208,255,.14);
+    }
+    .dropSub{
+      font-size:14px;
+      color:rgba(255,255,255,.86);
+      margin-bottom:12px;
+    }
+    .dropQty{
+      font-size:16px;
+      font-weight:1000;
+      margin-bottom:8px;
+    }
+    .dropTotal{
+      font-size:13px;
+      color:rgba(255,255,255,.78);
+      margin-bottom:14px;
+    }
+    .dropAction{
+      display:flex;
+      gap:10px;
+    }
+    .dropAction .btn{
+      flex:1;
+      padding:12px 12px;
+    }
+    .dropRare{
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.55),
+        0 0 42px rgba(255,217,121,.28);
+    }
+
     @media (max-width: 560px){
       .countNum{ font-size: 60px; }
       .grid2{ grid-template-columns: 1fr; }
+      .dropTitle{ font-size:24px; }
+      .dropHero{
+        width:100px;
+        height:100px;
+      }
+      .dropHero img{
+        width:78px;
+        height:78px;
+      }
     }
   </style>
 </head>
@@ -472,6 +597,23 @@
               </div>
             </div>
 
+            <!-- ▼ ドロップ演出 -->
+            <div id="dropSplash" class="dropSplash" aria-hidden="true">
+              <div id="dropCard" class="dropCard">
+                <div id="dropBadge" class="dropBadge">DROP</div>
+                <div class="dropHero">
+                  <img id="dropImg" alt="ドロップ報酬">
+                </div>
+                <div id="dropTitle" class="dropTitle">海水</div>
+                <div id="dropSub" class="dropSub">ファームに報酬が追加された！</div>
+                <div id="dropQty" class="dropQty">×1 GET!</div>
+                <div id="dropTotal" class="dropTotal">所持数：0</div>
+                <div class="dropAction">
+                  <button id="dropOkBtn" class="btn" type="button">OK</button>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <div class="footnote">
@@ -493,6 +635,7 @@
     compat: "fish_v1_state",
     zukan: "tf_v1_book",
     monthlyStats: "ttc_monthly_stats_v1",
+    inv: "tf_v1_inv",
   };
 
   function readIntLS(key, def=0){
@@ -583,32 +726,147 @@
     return { best: newBest, isNew };
   }
 
-  const V = "1";
+  const V = "3";
   const SP_BASE = "./assets/images/sp/";
-  const SP_CFG = {
-    chance: 0.10,
-    ids: { sp03: "sp_03", sp04: "sp_04", sp05: "sp_05", sp06: "sp_06" },
-    img: {
-      sp03: `${SP_BASE}sp_03.png?v=${V}`,
-      sp04: `${SP_BASE}sp_04.png?v=${V}`,
-      sp05: `${SP_BASE}sp_05.png?v=${V}`,
-      sp06: `${SP_BASE}sp_06.png?v=${V}`,
-    }
+
+  const DROP_WATERS = {
+    rotten: {
+      id: "water_rotten",
+      label: "腐ったミズ",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/6.png"
+    },
+    sea: {
+      id: "water_sea",
+      label: "海水",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/7.png"
+    },
+    yunokawa: {
+      id: "water_yunokawa",
+      label: "ゆのかわの温泉ミズ",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/8.png"
+    },
+    supergod: {
+      id: "water_supergod",
+      label: "超神水",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/9.png"
+    },
   };
-  function getSPBucket(score){
-    score = Math.floor(Number(score)||0);
-    if (score <= -500 && score >= -2999) return "sp03";
-    if (score >= 1000 && score <= 1999) return "sp04";
-    if (score >= 2000 && score <= 2999) return "sp05";
-    if (score >= 3000) return "sp06";
+
+  const TAKOKAGE_SP = {
+  chance: 0.003,
+  id: "SP-FISH-TAKOKAGE",
+  name: "タコ影群影",
+  img: "https://takoyaki-card.com/town/assets/images/sp/fish.png",
+  rarity: "SP",
+};
+
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  function normalizeScore(score, min, max){
+    if (max <= min) return 0;
+    const s = clamp(Number(score) || 0, min, max);
+    return (s - min) / (max - min);
+  }
+
+  function normalizeNegativeMagnitude(score, near=-500, deep=-3000){
+    const s = Number(score) || 0;
+    if (s > near) return 0;
+    const mag = Math.abs(s);
+    const minMag = Math.abs(near);
+    const maxMag = Math.abs(deep);
+    return clamp((mag - minMag) / (maxMag - minMag), 0, 1);
+  }
+
+  function defaultInv(){
+    return { ver: 1, seed: {}, water: {}, fert: {} };
+  }
+  function loadFarmInv(){
+    try{
+      const raw = localStorage.getItem(FISH_LS.inv);
+      if (!raw) return defaultInv();
+      const inv = JSON.parse(raw);
+      if (!inv || typeof inv !== "object") return defaultInv();
+      if (!inv.seed || typeof inv.seed !== "object") inv.seed = {};
+      if (!inv.water || typeof inv.water !== "object") inv.water = {};
+      if (!inv.fert || typeof inv.fert !== "object") inv.fert = {};
+      return inv;
+    }catch(_){
+      return defaultInv();
+    }
+  }
+  function saveFarmInv(inv){
+    localStorage.setItem(FISH_LS.inv, JSON.stringify(inv || defaultInv()));
+  }
+
+  function addWaterToFarm(drop){
+    if (!drop || !drop.id) return null;
+
+    const inv = loadFarmInv();
+    const cur = Math.max(0, Math.floor(Number(inv.water[drop.id] || 0)));
+    const qty = Math.max(1, Math.floor(Number(drop.qty || 1)));
+    inv.water[drop.id] = cur + qty;
+    saveFarmInv(inv);
+
+    return {
+      id: drop.id,
+      label: drop.label,
+      img: drop.img || "",
+      qty,
+      total: inv.water[drop.id]
+    };
+  }
+
+ function rollWaterDrop(score){
+  score = Math.floor(Number(score) || 0);
+
+  // ▼ 放置防止：この範囲は絶対に何もドロップしない
+  if (score >= -150 && score <= 500) {
     return null;
   }
-  function rollSP(score){
-    const bucket = getSPBucket(score);
-    if (!bucket) return null;
-    if (Math.random() >= SP_CFG.chance) return null;
-    return { bucket, id: SP_CFG.ids[bucket], img: SP_CFG.img[bucket] || "" };
+
+  // 超神水：2000〜5000で大きく上昇
+  if (score >= 2000){
+    const t = normalizeScore(score, 2000, 5000);
+    const chance = 0.08 + 0.24 * t; // 8% → 32%
+    if (Math.random() < chance){
+      return { ...DROP_WATERS.supergod, qty: 1 };
+    }
   }
+
+  // 温泉水：1000〜3000
+  if (score >= 1000 && score <= 3000){
+    const t = normalizeScore(score, 1000, 3000);
+    const chance = 0.25 + 0.35 * t; // 25% → 60%
+    if (Math.random() < chance){
+      return { ...DROP_WATERS.yunokawa, qty: 1 };
+    }
+  }
+
+  // 海水：501〜1999 のみ
+  if (score >= 501 && score <= 1999){
+    const t = normalizeScore(score, 501, 1999);
+    const chance = 0.30 + 0.40 * t; // 30% → 70%
+    if (Math.random() < chance){
+      return { ...DROP_WATERS.sea, qty: 1 };
+    }
+  }
+
+  // 腐ったミズ：-151〜-3000
+  if (score <= -51 && score >= -1000){
+    const t = normalizeNegativeMagnitude(score, -151, -1000);
+    const chance = 0.24 + 0.46 * t; // 24% → 70%
+    if (Math.random() < chance){
+      return { ...DROP_WATERS.rotten, qty: 1 };
+    }
+  }
+
+  return null;
+}
+  function rollTakokageSP(){
+    if (Math.random() >= TAKOKAGE_SP.chance) return null;
+    return { ...TAKOKAGE_SP };
+  }
+
   function saveSPToZukan(sp){
     if (!sp || !sp.id) return false;
     const now = Date.now();
@@ -617,12 +875,29 @@
       try{ book = JSON.parse(localStorage.getItem(FISH_LS.zukan) || "{}"); }catch(_){ book = {}; }
       if (!book || typeof book !== "object") book = {};
       if (!book.got || typeof book.got !== "object") book.got = {};
-      if (!book.got[sp.id] || typeof book.got[sp.id] !== "object"){
-        book.got[sp.id] = { count: 0 };
+
+      const prev = book.got[sp.id];
+      if (prev && typeof prev === "object"){
+        const curCount = Number.isFinite(prev.count) ? prev.count : 1;
+        prev.count = curCount + 1;
+        prev.name = sp.name || prev.name || "";
+        prev.img = sp.img || prev.img || "";
+        prev.rarity = sp.rarity || prev.rarity || "SP";
+        prev.lastAt = now;
+        book.got[sp.id] = prev;
+      } else {
+        book.got[sp.id] = {
+          id: sp.id,
+          name: sp.name || "",
+          img: sp.img || "",
+          rarity: sp.rarity || "SP",
+          tier: "",
+          count: 1,
+          at: now,
+          lastAt: now,
+        };
       }
-      book.got[sp.id].count = Math.max(0, Math.floor(Number(book.got[sp.id].count)||0)) + 1;
-      book.got[sp.id].lastAt = now;
-      book.updatedAt = now;
+
       localStorage.setItem(FISH_LS.zukan, JSON.stringify(book));
       return true;
     }catch(_){
@@ -795,7 +1070,6 @@
     return list[list.length - 1];
   }
 
-  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
   function rand(a,b){ return a + Math.random()*(b-a); }
   function pickByWeight(list){
     let sum = 0;
@@ -879,6 +1153,16 @@
     spYesBtn: document.getElementById("spYesBtn"),
     spNoBtn: document.getElementById("spNoBtn"),
 
+    dropSplash: document.getElementById("dropSplash"),
+    dropCard: document.getElementById("dropCard"),
+    dropBadge: document.getElementById("dropBadge"),
+    dropImg: document.getElementById("dropImg"),
+    dropTitle: document.getElementById("dropTitle"),
+    dropSub: document.getElementById("dropSub"),
+    dropQty: document.getElementById("dropQty"),
+    dropTotal: document.getElementById("dropTotal"),
+    dropOkBtn: document.getElementById("dropOkBtn"),
+
     countOverlay: document.getElementById("countOverlay"),
     countNum: document.getElementById("countNum"),
 
@@ -914,6 +1198,45 @@
   }
   function hideCountdown(){
     els.countOverlay.classList.remove("show");
+  }
+
+  function showDropSplash(payload){
+    return new Promise((resolve) => {
+      if (!payload){
+        resolve();
+        return;
+      }
+
+      els.dropBadge.textContent = payload.badge || "DROP";
+      els.dropTitle.textContent = payload.title || "GET!";
+      els.dropSub.textContent = payload.sub || "";
+      els.dropQty.textContent = payload.qtyText || "";
+      els.dropTotal.innerHTML = payload.totalText || "";
+
+      if (payload.img){
+        els.dropImg.src = payload.img;
+        els.dropImg.style.display = "block";
+      } else {
+        els.dropImg.removeAttribute("src");
+        els.dropImg.style.display = "none";
+      }
+
+      if (payload.rare){
+        els.dropCard.classList.add("dropRare");
+      } else {
+        els.dropCard.classList.remove("dropRare");
+      }
+
+      els.dropSplash.classList.add("show");
+
+      const done = () => {
+        els.dropSplash.classList.remove("show");
+        els.dropOkBtn.removeEventListener("click", done);
+        resolve();
+      };
+
+      els.dropOkBtn.addEventListener("click", done, { once:true });
+    });
   }
 
   els.rulesBtn.addEventListener("click", showRules);
@@ -993,10 +1316,10 @@
         "天敵"
       ),
       ruleRow(
-        "スタートの流れ",
-        "スタートを押すと、動いているゲーム画面の上に 3・2・1・GO! を表示。その間に最初の狙い位置を見て考えられる。",
+        "報酬",
+        "点数に応じてファーム用のミズが落ちる。さらに超低確率でタコ影カードが出現する。",
         IMG_URLS.pick,
-        "スタート"
+        "報酬"
       )
     ].join("");
   }
@@ -1062,7 +1385,12 @@
     els.spBlock.style.display = "none";
   });
 
-  function showResultScreen(score, extended, oniReached){
+  function buildDropLine(dropInfo){
+    if (!dropInfo) return "今回は何もドロップしなかった…";
+    return `🎁 ${dropInfo.label} ×${dropInfo.qty} を手に入れた！ 所持数：<b>${dropInfo.total}</b>`;
+  }
+
+  async function showResultScreen(score, extended, oniReached){
     const rec = saveFishingRecord(score);
     refreshBestUI();
 
@@ -1071,7 +1399,34 @@
     els.resultDate.textContent = `日時：${formatLocal(dt)}`;
 
     resetSPUI();
-    SP_PENDING = rollSP(score);
+
+    const waterDrop = rollWaterDrop(score);
+    const dropInfo = addWaterToFarm(waterDrop);
+    SP_PENDING = rollTakokageSP();
+
+    if (dropInfo){
+      await showDropSplash({
+        badge: "WATER DROP",
+        title: dropInfo.label,
+        sub: "ファームにミズが追加された！",
+        qtyText: `×${dropInfo.qty} GET!`,
+        totalText: `所持数：<b>${dropInfo.total}</b>`,
+        img: dropInfo.img,
+        rare: dropInfo.id === "water_supergod" || dropInfo.id === "water_yunokawa"
+      });
+    }
+
+    if (SP_PENDING){
+      await showDropSplash({
+        badge: "SP CARD",
+        title: "タコ影カード",
+        sub: "超低確率ドロップ！",
+        qtyText: "図鑑チャンス！",
+        totalText: "このあと結果画面で登録できます",
+        img: SP_PENDING.img,
+        rare: true
+      });
+    }
 
     els.resultTitle.innerHTML = rec.isNew ? `結果<span class="tagNew">NEW</span>` : "結果";
 
@@ -1080,6 +1435,8 @@
       els.resultLines.innerHTML = `
         <div>Score：<b>${score}</b></div>
         <div>Best：<b>${rec.best}</b>${rec.isNew ? "（更新）" : ""}</div>
+        <div>${buildDropLine(dropInfo)}</div>
+        ${SP_PENDING ? `<div>🌑 タコ影カードが現れた！</div>` : ``}
       `;
       if (SP_PENDING) showSPPrompt(SP_PENDING);
       showResult();
@@ -1094,6 +1451,8 @@
       <div>Best：<b>${rec.best}</b>${rec.isNew ? "（更新）" : ""}</div>
       <div>${extended ? "延長：あり" : "延長：なし"}</div>
       ${extended ? `<div>${oniReached ? "鬼モード：到達" : "鬼モード：未到達"}</div>` : ""}
+      <div>${buildDropLine(dropInfo)}</div>
+      ${SP_PENDING ? `<div>🌑 タコ影カードが現れた！</div>` : ``}
     `;
 
     if (SP_PENDING) showSPPrompt(SP_PENDING);
@@ -1139,7 +1498,7 @@
 
       if (getRemainingTime() <= 0 && !STATE.ended){
         STATE.ended = true;
-        setTimeout(() => showResultScreen(STATE.score, STATE.extended, STATE.oniReached), 120);
+        setTimeout(() => { showResultScreen(STATE.score, STATE.extended, STATE.oniReached); }, 120);
       }
     }, 1000);
   }
@@ -1491,7 +1850,7 @@
         ctx.fillText("鬼モード突入", 110, 230);
       }
 
-      if (remaining() <= 0 && STATE.phase === "play"){
+      if (getRemainingTime() <= 0 && STATE.phase === "play"){
         ctx.fillStyle = "rgba(0,0,0,.65)";
         ctx.fillRect(0,0,W,H);
         ctx.fillStyle = "#fff";
