@@ -25,9 +25,6 @@
       --shadow:0 18px 48px rgba(0,0,0,.40);
       --shadowSoft:0 10px 28px rgba(0,0,0,.22);
 
-      --chipBg:rgba(255,255,255,.08);
-      --chipBd:rgba(255,255,255,.12);
-
       --activeGlow:0 0 0 2px rgba(255,231,153,.80), 0 0 24px rgba(255,204,82,.45);
       --safeBottom:env(safe-area-inset-bottom, 0px);
     }
@@ -453,11 +450,11 @@
 
     .helper b{ color:#fff7d2; }
 
-    .streak-wrap{
+    .sugoroku-wrap{
       margin-top:2px;
     }
 
-    .streak-head{
+    .sugoroku-head{
       display:flex;
       align-items:center;
       justify-content:space-between;
@@ -466,7 +463,7 @@
       flex-wrap:wrap;
     }
 
-    .streak-badge{
+    .sugoroku-badge{
       display:inline-flex;
       align-items:center;
       gap:8px;
@@ -478,66 +475,78 @@
       font-size:13px;
     }
 
-    .streak-steps{
+    .board{
+      position:relative;
       display:grid;
       grid-template-columns:repeat(7, minmax(0,1fr));
       gap:10px;
+      padding-top:54px;
     }
 
-    .step{
+    .cell{
       position:relative;
-      padding:12px 10px;
-      border-radius:18px;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.10);
-      min-height:116px;
+      min-height:118px;
+      border-radius:20px;
+      padding:10px 8px;
       display:flex;
       flex-direction:column;
-      gap:8px;
       align-items:center;
       justify-content:center;
       text-align:center;
-      transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;
+      gap:8px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.10);
+      overflow:visible;
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
     }
 
-    .step-day{
+    .cell.day7{
+      background:
+        linear-gradient(180deg, rgba(255,228,139,.20), rgba(255,182,72,.10));
+      border-color:rgba(255,226,137,.36);
+      box-shadow:0 0 0 1px rgba(255,223,128,.10), 0 0 28px rgba(255,199,71,.10);
+    }
+
+    .cell-day{
       font-size:11px;
       font-weight:1000;
-      opacity:.74;
+      opacity:.76;
       letter-spacing:.06em;
     }
 
-    .step-icon{
-      width:42px;
-      height:42px;
+    .cell-icon{
+      width:44px;
+      height:44px;
       border-radius:14px;
       display:grid;
       place-items:center;
       background:rgba(255,255,255,.10);
       font-size:22px;
+      flex:0 0 auto;
     }
 
-    .step-reward{
+    .cell-text{
       font-size:12px;
       line-height:1.45;
       font-weight:900;
       color:rgba(255,255,255,.92);
     }
 
-    .step.is-past{
+    .cell.is-cleared{
       background:linear-gradient(180deg, rgba(111,255,182,.12), rgba(111,255,182,.06));
       border-color:rgba(111,255,182,.34);
       box-shadow:0 0 0 1px rgba(111,255,182,.10);
     }
 
-    .step.is-current{
+    .cell.is-current{
       background:linear-gradient(180deg, rgba(255,229,128,.18), rgba(255,183,72,.10));
       border-color:rgba(255,228,145,.48);
       box-shadow:0 0 0 1px rgba(255,228,145,.16), 0 0 24px rgba(255,202,94,.12);
       transform:translateY(-2px);
     }
 
-    .step.is-current::after{
+    .cell.is-current::after{
       content:"TODAY";
       position:absolute;
       top:8px;
@@ -551,8 +560,22 @@
       color:#5d3710;
     }
 
-    .step.is-future{
-      opacity:.92;
+    .piece{
+      position:absolute;
+      top:0;
+      left:0;
+      width:56px;
+      height:56px;
+      pointer-events:none;
+      transform:translate(-9999px,-9999px);
+      transition:transform .34s ease;
+      z-index:5;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,.25));
+    }
+    .piece img{
+      display:block;
+      width:100%;
+      height:auto;
     }
 
     .note-box{
@@ -733,7 +756,7 @@
       min-height:50px;
     }
 
-    @media (max-width: 860px){
+    @media (max-width: 900px){
       .hero-grid{
         grid-template-columns:1fr;
       }
@@ -745,7 +768,7 @@
         width:100%;
         justify-content:flex-start;
       }
-      .streak-steps{
+      .board{
         grid-template-columns:repeat(4, minmax(0,1fr));
       }
     }
@@ -755,14 +778,19 @@
       .hero, .panel{ padding:14px; }
       .fortune-stage{ min-height:390px; }
       .result-reward{ font-size:26px; }
-      .streak-steps{
-        grid-template-columns:repeat(2, minmax(0,1fr));
-      }
       .hero-actions{
         flex-direction:column;
       }
       .hero-actions .btn{
         width:100%;
+      }
+      .board{
+        grid-template-columns:repeat(2, minmax(0,1fr));
+        padding-top:48px;
+      }
+      .piece{
+        width:50px;
+        height:50px;
       }
     }
   </style>
@@ -808,7 +836,7 @@
     <section class="hero">
       <div class="hero-grid">
         <div class="char-card">
-          <img src="town/assets/images/map/miko.png" alt="みこ">
+          <img src="https://takoyaki-card.com/town/assets/images/map/miko.png" alt="みこ">
           <div class="name">TAKOYAKI LOGIN SHRINE</div>
         </div>
 
@@ -859,21 +887,25 @@
       </section>
 
       <section class="panel">
-        <h2 class="panel-title">連続ログインボーナス</h2>
-        <div class="panel-sub">来るたび少しずつ積み上がる。7日目まで来たらまた1日目に戻るたこ</div>
+        <h2 class="panel-title">連続ログインすごろく</h2>
+        <div class="panel-sub">1日たつごとに巫女のコマが進むたこ。7日目はゴールたこ</div>
 
-        <div class="streak-wrap">
-          <div class="streak-head">
-            <div class="streak-badge">🔥 現在の連続ログイン：<b id="streakNowText">1日</b></div>
-            <div class="streak-badge">📌 今日の受取状態：<b id="todayStateText">未受取</b></div>
+        <div class="sugoroku-wrap">
+          <div class="sugoroku-head">
+            <div class="sugoroku-badge">🔥 現在の連続ログイン：<b id="streakNowText">1日</b></div>
+            <div class="sugoroku-badge">📌 今日の受取状態：<b id="todayStateText">未受取</b></div>
           </div>
 
-          <div class="streak-steps" id="streakSteps"></div>
+          <div class="board" id="board">
+            <div class="piece" id="piece">
+              <img id="pieceImg" src="https://takoyaki-card.com/town/assets/images/map/syoumen.png" alt="巫女コマ">
+            </div>
+          </div>
         </div>
 
         <div class="note-box">
-          ※ 連続ログインは、前日に来ていて今日も来たら1日加算。<br>
-          1日空くと1日目に戻るたこ。表示はログインボーナスのステップ演出用たこ。
+          ※ 前日に来ていて今日も来たら1マス進むたこ。<br>
+          1日空くと1日目に戻るたこ。7日目まで行ったら、次回はまた1日目からたこ。
         </div>
       </section>
     </main>
@@ -971,6 +1003,13 @@
 
       const BACK_URL = "./index.html";
 
+      const IMG = {
+        top: "https://takoyaki-card.com/town/assets/images/map/miko.png",
+        front: "https://takoyaki-card.com/town/assets/images/map/syoumen.png",
+        right: "https://takoyaki-card.com/town/assets/images/map/migi.png",
+        left: "https://takoyaki-card.com/town/assets/images/map/hidari.png"
+      };
+
       const SAY = [
         "「焼き台から1つ選んで…たこ。運勢が出る…たこ。」",
         "「どれを選ぶかで、気分はもう半分決まってる…たこ。」",
@@ -1031,14 +1070,14 @@
         }
       ];
 
-      const STREAK_REWARDS = [
-        { day:1, icon:"🪙", text:"ログイン開始" },
-        { day:2, icon:"💧", text:"ちょい上振れの日" },
-        { day:3, icon:"🧪", text:"少しだけ勢い追加" },
-        { day:4, icon:"🔥", text:"流れが乗ってくる" },
-        { day:5, icon:"🎁", text:"ボーナス感アップ" },
-        { day:6, icon:"✨", text:"かなり続いてる" },
-        { day:7, icon:"👑", text:"連続達成ボーナス" }
+      const CELLS = [
+        { day:1, icon:"🪙", text:"はじまりのマス" },
+        { day:2, icon:"💧", text:"うるおいのマス" },
+        { day:3, icon:"🧪", text:"勢いのマス" },
+        { day:4, icon:"🔥", text:"加速のマス" },
+        { day:5, icon:"🎁", text:"ごほうび前夜" },
+        { day:6, icon:"✨", text:"あと少し" },
+        { day:7, icon:"👑", text:"ゴール" }
       ];
 
       const $ = (sel, root=document) => root.querySelector(sel);
@@ -1057,7 +1096,10 @@
 
         streakNowText: $("#streakNowText"),
         todayStateText: $("#todayStateText"),
-        streakSteps: $("#streakSteps"),
+
+        board: $("#board"),
+        piece: $("#piece"),
+        pieceImg: $("#pieceImg"),
 
         resultModal: $("#resultModal"),
         resultFortune: $("#resultFortune"),
@@ -1269,30 +1311,54 @@
         return ((s - 1) % 7) + 1;
       }
 
-      function renderStreakSteps(streak){
+      function buildBoard(streak){
         const currentDay = currentStepDay(streak);
         const doneToday = isDoneToday();
 
-        el.streakSteps.innerHTML = STREAK_REWARDS.map(item => {
-          let cls = "step is-future";
+        el.board.querySelectorAll(".cell").forEach(n => n.remove());
+
+        CELLS.forEach(item => {
+          const div = document.createElement("div");
+          div.className = "cell" + (item.day === 7 ? " day7" : "");
+
           if(item.day < currentDay){
-            cls = "step is-past";
+            div.classList.add("is-cleared");
           }else if(item.day === currentDay){
-            cls = doneToday ? "step is-past" : "step is-current";
+            div.classList.add(doneToday ? "is-cleared" : "is-current");
           }
 
-          return `
-            <div class="${cls}">
-              <div class="step-day">DAY ${item.day}</div>
-              <div class="step-icon">${item.icon}</div>
-              <div class="step-reward">${item.text}</div>
-            </div>
+          div.dataset.day = String(item.day);
+          div.innerHTML = `
+            <div class="cell-day">DAY ${item.day}</div>
+            <div class="cell-icon">${item.icon}</div>
+            <div class="cell-text">${item.text}</div>
           `;
-        }).join("");
+          el.board.appendChild(div);
+        });
+      }
 
-        el.streakNow.textContent = String(streak);
-        el.streakNowText.textContent = `${streak}日`;
-        el.todayStateText.textContent = doneToday ? "受取済" : "未受取";
+      function pickPieceImage(day){
+        if(day <= 1) return IMG.front;
+        if(day >= 7) return IMG.front;
+
+        const prev = day - 1;
+        if(day > prev) return IMG.right;
+        return IMG.left;
+      }
+
+      function placePiece(streak){
+        const day = currentStepDay(streak);
+        const target = el.board.querySelector(`.cell[data-day="${day}"]`);
+        if(!target) return;
+
+        const boardRect = el.board.getBoundingClientRect();
+        const cellRect = target.getBoundingClientRect();
+
+        const x = (cellRect.left - boardRect.left) + (cellRect.width / 2) - (el.piece.offsetWidth / 2);
+        const y = (cellRect.top - boardRect.top) - 46;
+
+        el.pieceImg.src = pickPieceImage(day);
+        el.piece.style.transform = `translate(${x}px, ${y}px)`;
       }
 
       function clearSelection(){
@@ -1315,7 +1381,12 @@
 
         el.octoNow.textContent = String(getOcto());
         el.todayStateMini.textContent = done ? "済" : "未";
-        renderStreakSteps(streakState.streak);
+        el.streakNow.textContent = String(streakState.streak);
+        el.streakNowText.textContent = `${streakState.streak}日`;
+        el.todayStateText.textContent = done ? "受取済" : "未受取";
+
+        buildBoard(streakState.streak);
+        requestAnimationFrame(() => placePiece(streakState.streak));
 
         if(done){
           el.drawBtn.disabled = true;
@@ -1401,6 +1472,11 @@
           closeModal(el.resultModal);
           closeModal(el.rewardModal);
         }
+      });
+
+      window.addEventListener("resize", () => {
+        const streakState = computeStreakState();
+        placePiece(streakState.streak);
       });
 
       ensureInvKeys();
