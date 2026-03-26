@@ -55,7 +55,7 @@
       width:100%;
       max-width:900px;
       margin:0 auto;
-      padding-top:106px; /* ← 上に余白を追加 */
+      padding-top:106px;
       padding-bottom:20px;
       box-sizing:border-box;
       position:relative;
@@ -147,7 +147,7 @@
       }
 
       .page-shell{
-        padding-top:118px; /* スマホは少し多めに余白 */
+        padding-top:118px;
       }
     }
 
@@ -262,7 +262,7 @@
       transform:none !important;
     }
 
-    /* ===== 建物座標（差し替えやすいよう固定） ===== */
+    /* ===== 建物座標 ===== */
     .b1{ left:18%; top:22%; width:110px; }
     .b2{ left:51%; top:54%; width:120px; }
     .b3{ left:20%; top:53%; width:118px; }
@@ -381,6 +381,112 @@
     }
 
     /* =========================
+       ファーム説明モーダル強化
+    ========================= */
+    .guide-intro{
+      margin:0 0 14px;
+      padding:12px 14px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.9);
+    }
+
+    .guide-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:12px;
+    }
+
+    .guide-step{
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;
+      overflow:hidden;
+      background:rgba(255,255,255,.04);
+      box-shadow:0 10px 30px rgba(0,0,0,.22);
+    }
+
+    .guide-step-media{
+      aspect-ratio: 16 / 10;
+      background:#0b1220;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+
+    .guide-step-media img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      image-rendering:auto;
+    }
+
+    .guide-step-body{
+      padding:12px;
+    }
+
+    .guide-step-no{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:30px;
+      height:30px;
+      padding:0 10px;
+      border-radius:999px;
+      background:rgba(96,165,250,.18);
+      color:#bfe0ff;
+      font-size:12px;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+
+    .guide-step-title{
+      font-size:15px;
+      font-weight:900;
+      margin:0 0 8px;
+      color:#fff;
+    }
+
+    .guide-step-text{
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.88);
+      margin:0;
+    }
+
+    .guide-tips{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.05);
+    }
+
+    .guide-tips-title{
+      font-size:14px;
+      font-weight:900;
+      margin-bottom:8px;
+      color:#fff;
+    }
+
+    .guide-tips-text{
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.86);
+    }
+
+    @media (max-width:680px){
+      .guide-grid{
+        grid-template-columns:1fr;
+      }
+    }
+
+    /* =========================
        フッターのバックアップ
     ========================= */
     #trcFooterDataBox{
@@ -469,6 +575,38 @@
       text-decoration:none;
       border-bottom:1px solid rgba(255,255,255,.35);
       padding-bottom:1px;
+    }
+
+    /* =========================
+       weather.js 読込状態
+    ========================= */
+    .weather-status{
+      position:fixed;
+      right:10px;
+      bottom:10px;
+      z-index:5000;
+      max-width:min(360px, calc(100vw - 20px));
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(9,12,20,.88);
+      color:#fff;
+      box-shadow:0 12px 34px rgba(0,0,0,.35);
+      font-size:12px;
+      line-height:1.5;
+      display:none;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .weather-status.is-error{
+      display:block;
+      border-color: rgba(255,100,100,.45);
+      color:#ffd5d5;
+    }
+
+    .weather-status b{
+      color:#fff;
     }
   </style>
 </head>
@@ -639,13 +777,83 @@
   <div class="modal" id="farmGuideModal" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="farmGuideTitle">
       <div class="modal-title" id="farmGuideTitle">たこ焼きファームの始め方</div>
-      <div class="modal-text">
-        ① まず「たこぴのお店」やプレゼントからタネやアイテムを受け取ります。<br>
-        ② 畑へ行って、タネ・ミズ・ヒリョウなどをセットして植えます。<br>
-        ③ 時間が経つと収穫でき、デジタルカードや報酬が手に入ります。<br>
-        ④ 手に入れたカードは図鑑に保存されます。<br><br>
-        ※ データはこの端末のブラウザ保存です。必ずバックアップしてください。
+
+      <div class="guide-intro">
+        初めてでも大丈夫たこ。<br>
+        このゲームは <b>「もらう → 植える → 時間を待つ → 収穫する」</b> の流れです。<br>
+        下の順番どおりに進めると、迷わず始めやすいです。
       </div>
+
+      <div class="guide-grid">
+        <section class="guide-step" aria-label="ステップ1">
+          <div class="guide-step-media">
+            <img src="https://takoyaki-card.com/town/assets/images/map/takopimise.png" alt="たこぴのお店の画像">
+          </div>
+          <div class="guide-step-body">
+            <div class="guide-step-no">STEP 1</div>
+            <h3 class="guide-step-title">まずはアイテムを手に入れる</h3>
+            <p class="guide-step-text">
+              右上の <b>初回限定プレゼント</b> か、街の中の <b>たこぴのお店</b> から
+              タネ・ミズ・ヒリョウを受け取ります。<br>
+              最初はプレゼントを開けるのがいちばんわかりやすいです。
+            </p>
+          </div>
+        </section>
+
+        <section class="guide-step" aria-label="ステップ2">
+          <div class="guide-step-media">
+            <img src="https://takoyaki-card.com/town/assets/images/map/hatake.png" alt="たこ焼き畑の画像">
+          </div>
+          <div class="guide-step-body">
+            <div class="guide-step-no">STEP 2</div>
+            <h3 class="guide-step-title">畑へ行って植える</h3>
+            <p class="guide-step-text">
+              街の左上にある <b>たこ焼き畑</b> を押して、畑ページへ進みます。<br>
+              そこで <b>タネ</b> を選び、必要なら <b>ミズ</b> や <b>ヒリョウ</b> もセットして植えます。
+            </p>
+          </div>
+        </section>
+
+        <section class="guide-step" aria-label="ステップ3">
+          <div class="guide-step-media">
+            <img src="https://takoyaki-card.com/town/assets/images/map/saidan.png" alt="月間記録の祭壇の画像">
+          </div>
+          <div class="guide-step-body">
+            <div class="guide-step-no">STEP 3</div>
+            <h3 class="guide-step-title">育つまで待つ</h3>
+            <p class="guide-step-text">
+              植えたあと、時間が経つと収穫できるようになります。<br>
+              ミズやヒリョウの種類によって、<b>育つ速さや結果が変わる</b> ことがあります。<br>
+              まずは気軽に1回植えて試してみるのがおすすめです。
+            </p>
+          </div>
+        </section>
+
+        <section class="guide-step" aria-label="ステップ4">
+          <div class="guide-step-media">
+            <img src="https://takoyaki-card.com/town/assets/images/map/keijiban.png" alt="カード募集板の画像">
+          </div>
+          <div class="guide-step-body">
+            <div class="guide-step-no">STEP 4</div>
+            <h3 class="guide-step-title">収穫して図鑑に残す</h3>
+            <p class="guide-step-text">
+              収穫すると、デジタルカードや報酬が手に入ります。<br>
+              手に入れたカードは <b>図鑑に保存</b> され、集める楽しさが増えていきます。<br>
+              オクトを増やしながら、別の建物も少しずつ遊べます。
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <div class="guide-tips">
+        <div class="guide-tips-title">はじめての人向けポイント</div>
+        <div class="guide-tips-text">
+          ・最初は <b>初回限定プレゼント → 畑</b> の順で進むと迷いにくいです。<br>
+          ・オクトやカードはこの端末のブラウザに保存されます。<br>
+          ・<b>キャッシュ削除・機種変更前は必ずバックアップ</b> してください。
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button class="modal-btn primary" type="button" id="farmGuideClose">閉じる</button>
       </div>
@@ -662,6 +870,8 @@
       <div class="modal-actions" id="giftModalActions"></div>
     </div>
   </div>
+
+  <div id="weatherJsStatus" class="weather-status" aria-live="polite"></div>
 
   <footer>
     <div id="trcFooterDataBox" aria-label="データのバックアップと復元">
@@ -1853,7 +2063,45 @@
   })();
   </script>
 
-  <!-- 天気は外部JSで読み込む -->
- <script src="./weather.js"></script>
+  <script>
+  (() => {
+    "use strict";
+
+    const statusEl = document.getElementById("weatherJsStatus");
+
+    function showWeatherError(message){
+      if (!statusEl) return;
+      statusEl.classList.add("is-error");
+      statusEl.innerHTML = `<b>weather.js 読み込み失敗</b><br>${message}`;
+    }
+
+    function loadWeatherScript(){
+      const s = document.createElement("script");
+      s.src = "./weather.js";
+      s.async = false;
+
+      s.onload = () => {
+        console.log("[town] weather.js loaded successfully");
+        if (statusEl) {
+          statusEl.classList.remove("is-error");
+          statusEl.style.display = "none";
+        }
+      };
+
+      s.onerror = () => {
+        console.error("[town] weather.js failed to load:", s.src);
+        showWeatherError("`./weather.js` が見つからないか、読み込みに失敗しました。ファイル場所と名前を確認してください。");
+      };
+
+      document.body.appendChild(s);
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", loadWeatherScript, { once:true });
+    } else {
+      loadWeatherScript();
+    }
+  })();
+  </script>
 </body>
 </html>
