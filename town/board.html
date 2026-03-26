@@ -34,6 +34,11 @@
       --radiusSm:12px;
       --cardW:84px;
       --cardH:116px;
+      --boardWood1:#75451f;
+      --boardWood2:#5b3417;
+      --boardWood3:#3f230f;
+      --pin1:#d5b36a;
+      --pin2:#8d6521;
     }
 
     *{box-sizing:border-box}
@@ -60,6 +65,7 @@
       justify-content:space-between;
       gap:12px;
       margin-bottom:14px;
+      flex-wrap:wrap;
     }
 
     .leftTools,.rightTools{
@@ -148,28 +154,370 @@
       font-size:13px;
     }
 
-    .boardGrid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:14px;
+    /* =================================
+       Board stage
+    ================================= */
+    .boardStage{
+      position:relative;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,236,175,.10), transparent 35%),
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:26px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
 
-    .noticeCard{
+    .boardHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .boardHeaderTitle{
+      font-size:18px;
+      margin:0;
+    }
+
+    .boardHeaderSub{
+      font-size:12px;
+      color:var(--muted);
+      margin:4px 0 0;
+      line-height:1.6;
+    }
+
+    .boardCount{
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .boardFrame{
+      position:relative;
+      min-height:760px;
+      border-radius:26px;
+      overflow:hidden;
+      padding:18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0)),
+        linear-gradient(180deg, var(--boardWood1), var(--boardWood2));
+      border:8px solid #2e190a;
+      box-shadow:
+        inset 0 0 0 3px rgba(255,255,255,.06),
+        inset 0 0 40px rgba(0,0,0,.18),
+        0 18px 34px rgba(0,0,0,.28);
+    }
+
+    .boardFrame::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255,255,255,.04) 0 10px,
+          rgba(0,0,0,.03) 10px 20px
+        ),
+        repeating-linear-gradient(
+          180deg,
+          transparent 0 80px,
+          rgba(0,0,0,.05) 80px 84px
+        );
+      mix-blend-mode:multiply;
+      opacity:.55;
+    }
+
+    .boardFrame::after{
+      content:"";
+      position:absolute;
+      inset:12px;
+      border-radius:18px;
+      pointer-events:none;
+      border:2px solid rgba(255,255,255,.08);
+    }
+
+    .boardInner{
+      position:relative;
+      min-height:720px;
+      z-index:1;
+    }
+
+    .boardInner.mobileLayout{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:14px;
+      min-height:auto;
+    }
+
+    .boardInner.mobileLayout .paperNote{
+      position:relative !important;
+      left:auto !important;
+      top:auto !important;
+      width:100% !important;
+      transform:none !important;
+    }
+
+    .boardInner.mobileLayout .paperNote.span2{
+      grid-column:1 / -1;
+      width:min(320px, 100%) !important;
+      justify-self:center;
+    }
+
+    /* =================================
+       Note on board
+    ================================= */
+    .paperNote{
+      position:absolute;
+      width:220px;
+      min-height:210px;
+      border:none;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,0)),
+        linear-gradient(180deg,var(--paper1),var(--paper2));
+      color:var(--ink);
+      border-radius:8px 8px 12px 12px;
+      box-shadow:
+        0 10px 24px rgba(0,0,0,.26),
+        inset 0 0 0 1px rgba(90,58,20,.15);
+      padding:18px 14px 14px;
+      text-align:left;
+      cursor:pointer;
+      transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+      overflow:hidden;
+    }
+
+    .paperNote:hover{
+      transform:translateY(-4px) rotate(var(--rot, 0deg)) scale(1.02) !important;
+      box-shadow:
+        0 18px 28px rgba(0,0,0,.30),
+        inset 0 0 0 1px rgba(90,58,20,.15);
+      filter:saturate(1.03);
+    }
+
+    .paperNote:active{
+      transform:translateY(-1px) rotate(var(--rot, 0deg)) scale(1.01) !important;
+    }
+
+    .paperNote::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(transparent 0 26px, rgba(0,0,0,.025) 26px 27px, transparent 27px),
+        linear-gradient(90deg, rgba(255,255,255,.15), transparent 65%);
+      background-size:100% 27px, 100% 100%;
+      mix-blend-mode:multiply;
+    }
+
+    .paperNote::after{
+      content:"";
+      position:absolute;
+      right:0;
+      bottom:0;
+      width:26px;
+      height:26px;
+      background:linear-gradient(135deg, transparent 0 49%, rgba(0,0,0,.10) 50% 100%);
+      clip-path:polygon(100% 0, 0 100%, 100% 100%);
+      opacity:.22;
+    }
+
+    .pin{
+      position:absolute;
+      top:8px;
+      left:50%;
+      transform:translateX(-50%);
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      background:radial-gradient(circle at 32% 30%, #fff2b8, var(--pin1) 45%, var(--pin2) 100%);
+      box-shadow:
+        0 3px 0 rgba(0,0,0,.18),
+        inset 0 1px 1px rgba(255,255,255,.5);
+      z-index:2;
+    }
+
+    .noteTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:10px;
+    }
+
+    .noteClient{
+      display:flex;
+      gap:8px;
+      min-width:0;
+    }
+
+    .noteAvatar{
+      width:42px;
+      height:42px;
+      border-radius:10px;
+      object-fit:cover;
+      background:#fff7ea;
+      border:2px solid rgba(90,58,20,.22);
+      flex:none;
+    }
+
+    .noteMeta{
+      min-width:0;
+    }
+
+    .noteName{
+      font-size:14px;
+      line-height:1.35;
+      margin:0 0 4px;
+      word-break:break-word;
+    }
+
+    .noteShort{
+      font-size:11px;
+      color:#5c4330;
+      line-height:1.45;
+      margin:0;
+    }
+
+    .noteStars{
+      font-size:14px;
+      line-height:1;
+      white-space:nowrap;
+      padding-top:2px;
+    }
+
+    .star-1,.star-2{color:#564132}
+    .star-3{color:#2050a5}
+    .star-4{color:#7f2ca3}
+    .star-5{color:#9a6911; text-shadow:0 1px 0 #fff3cc}
+
+    .noteWant{
+      font-size:13px;
+      line-height:1.6;
+      min-height:68px;
+      color:#3e2b1d;
+      margin-bottom:10px;
+      white-space:pre-line;
+    }
+
+    .noteReward{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-bottom:10px;
+    }
+
+    .miniChip{
+      font-size:11px;
+      border-radius:999px;
+      padding:5px 8px;
+      background:rgba(255,255,255,.52);
+      border:1px solid rgba(0,0,0,.10);
+      color:#3a291a;
+    }
+
+    .noteFooter{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-top:auto;
+    }
+
+    .noteTap{
+      font-size:11px;
+      color:#5c4330;
+    }
+
+    .noteStatus{
+      font-size:11px;
+      border-radius:999px;
+      padding:5px 8px;
+      border:1px solid rgba(0,0,0,.12);
+      background:rgba(255,255,255,.44);
+      color:#3a291a;
+    }
+
+    .noteStatus.ok{
+      background:rgba(122,240,170,.28);
+      color:#0f6e43;
+    }
+
+    .noteStatus.ng{
+      background:rgba(255,129,129,.18);
+      color:#9d2b2b;
+    }
+
+    .noteStatus.done{
+      background:rgba(170,24,24,.12);
+      color:#8d1717;
+    }
+
+    .noteStamp{
+      position:absolute;
+      right:10px;
+      bottom:14px;
+      transform:rotate(-10deg);
+      border:3px solid rgba(170,24,24,.78);
+      color:rgba(170,24,24,.82);
+      padding:5px 8px;
+      border-radius:10px;
+      font-size:15px;
+      font-weight:700;
+      background:rgba(255,255,255,.18);
+      display:none;
+      pointer-events:none;
+    }
+
+    .paperNote.completed{
+      filter:saturate(.86);
+      opacity:.92;
+    }
+
+    .paperNote.completed .noteStamp{
+      display:block;
+    }
+
+    .paperNote.completed .noteTap{
+      color:#8d1717;
+    }
+
+    /* =================================
+       Modal
+    ================================= */
+    .modal{
+      position:fixed;
+      inset:0;
+      z-index:9990;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      background:rgba(12,7,20,.72);
+      backdrop-filter:blur(4px);
+    }
+
+    .modal.show{
+      display:flex;
+    }
+
+    .modalCard{
+      width:min(840px, 100%);
+      max-height:min(90dvh, 900px);
+      overflow:auto;
       background:linear-gradient(180deg,var(--paper1),var(--paper2));
       color:var(--ink);
       border-radius:22px;
-      box-shadow:var(--shadow);
       border:4px solid #7f5a26;
-      overflow:hidden;
+      box-shadow:0 24px 50px rgba(0,0,0,.42);
       position:relative;
     }
 
-    .noticeCard.completed{
-      filter:saturate(.82);
-      opacity:.88;
-    }
-
-    .noticeCard::before{
+    .modalCard::before{
       content:"";
       position:absolute;
       inset:0;
@@ -179,12 +527,45 @@
         linear-gradient(90deg, rgba(255,255,255,.14), transparent 70%);
       background-size:100% 29px, 100% 100%;
       mix-blend-mode:multiply;
+      border-radius:18px;
+    }
+
+    .modalInner{
+      position:relative;
+      z-index:1;
+      padding:18px;
+    }
+
+    .modalClose{
+      position:absolute;
+      right:12px;
+      top:12px;
+      z-index:2;
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      background:rgba(0,0,0,.10);
+      color:#2b1d12;
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      font:inherit;
+    }
+
+    .noticeCard{
+      background:transparent;
+      color:var(--ink);
+      border-radius:22px;
+      box-shadow:none;
+      border:none;
+      overflow:visible;
+      position:relative;
     }
 
     .noticeInner{
       position:relative;
       z-index:1;
-      padding:16px;
+      padding:0;
     }
 
     .noticeHead{
@@ -235,11 +616,6 @@
       margin-bottom:6px;
       white-space:nowrap;
     }
-
-    .star-1,.star-2{color:#564132}
-    .star-3{color:#2050a5}
-    .star-4{color:#7f2ca3}
-    .star-5{color:#9a6911; text-shadow:0 1px 0 #fff3cc}
 
     .tagRow{
       display:flex;
@@ -403,26 +779,6 @@
     .statusOk{ color:#0e7e47; }
     .statusNg{ color:#9d2b2b; }
 
-    .stamp{
-      position:absolute;
-      right:12px;
-      top:12px;
-      transform:rotate(-10deg);
-      border:4px solid rgba(170,24,24,.78);
-      color:rgba(170,24,24,.82);
-      padding:8px 10px;
-      border-radius:14px;
-      font-size:18px;
-      font-weight:700;
-      background:rgba(255,255,255,.22);
-      display:none;
-      pointer-events:none;
-    }
-
-    .noticeCard.completed .stamp{
-      display:block;
-    }
-
     .emptyState{
       background:rgba(255,255,255,.08);
       border:1px dashed var(--line);
@@ -470,6 +826,19 @@
       margin-top:12px;
     }
 
+    .hidden{
+      display:none !important;
+    }
+
+    @media (max-width:900px){
+      .boardFrame{
+        min-height:auto;
+      }
+      .boardInner{
+        min-height:auto;
+      }
+    }
+
     @media (max-width:720px){
       .titleBox{
         grid-template-columns:1fr;
@@ -489,6 +858,18 @@
         justify-content:flex-start;
       }
     }
+
+    @media (max-width:560px){
+      .boardInner.mobileLayout{
+        grid-template-columns:1fr;
+      }
+      .boardInner.mobileLayout .paperNote{
+        width:100% !important;
+      }
+      .boardInner.mobileLayout .paperNote.span2{
+        width:100% !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -506,8 +887,8 @@
       <div>
         <h1 class="titleMain">カード募集板</h1>
         <p class="titleSub">
-          タコ民たちが探しているカードの貼り紙が並んでいるたこ。<br>
-          持っているカードがあれば、その場で納品して報酬を受け取れるたこ。
+          タコ民たちが掲示板に貼った依頼書を確認できるたこ。<br>
+          貼り紙をタップすると、詳しい依頼内容と報酬が見られるたこ。
         </p>
       </div>
 
@@ -519,13 +900,35 @@
 
     <section class="inventoryBar" id="inventoryBar"></section>
 
-    <section class="boardGrid" id="boardGrid"></section>
+    <section class="boardStage">
+      <div class="boardHeader">
+        <div>
+          <h2 class="boardHeaderTitle">募集掲示板</h2>
+          <p class="boardHeaderSub">
+            貼り紙をタップして依頼を見るたこ。<br>
+            達成済みの貼り紙には赤い判子が押されるたこ。
+          </p>
+        </div>
+        <div class="boardCount" id="boardCountText">貼り紙 0枚</div>
+      </div>
+
+      <div class="boardFrame">
+        <div class="boardInner" id="boardGrid"></div>
+      </div>
+    </section>
 
     <p class="helper">
       ※ この試作版は <code>tf_v1_book</code> の所持枚数を読んで判定します。<br>
       ※ 条件依頼（SR以上など）は、所持中の該当カードから自動で消費されます。<br>
       ※ タコ民画像・カード画像は今は仮画像です。あとで実画像URLに差し替えできます。
     </p>
+  </div>
+
+  <div class="modal" id="jobModal" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="jobModalTitle">
+      <button class="modalClose" id="jobModalClose" aria-label="閉じる">✕</button>
+      <div class="modalInner" id="jobModalBody"></div>
+    </div>
   </div>
 
   <div class="toast" id="toast">
@@ -579,29 +982,8 @@
       localStorage.setItem(key, JSON.stringify(value));
     }
 
-    function clamp(n, a, b){
-      return Math.max(a, Math.min(b, n));
-    }
-
     function randInt(min, max){
       return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    function pick(arr){
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    function shuffle(arr){
-      const a = [...arr];
-      for(let i=a.length-1;i>0;i--){
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    }
-
-    function stars(n){
-      return "★".repeat(n) + "☆".repeat(5 - n);
     }
 
     function showToast(msg){
@@ -631,6 +1013,24 @@
       return arr[Math.floor(rnd() * arr.length)];
     }
 
+    function stars(n){
+      return "★".repeat(n) + "☆".repeat(5 - n);
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#39;"
+      })[s]);
+    }
+
+    function isMobileBoardLayout(){
+      return window.innerWidth <= 900;
+    }
+
     // =========================================================
     // SVG helper
     // =========================================================
@@ -638,7 +1038,7 @@
       return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
     }
 
-    function makeClientAvatar(name, bg1, bg2, face="・"){
+    function makeClientAvatar(name, bg1, bg2){
       return svgDataUri(`
         <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
           <defs>
@@ -779,6 +1179,15 @@
       [1,2,3,4,4]
     ];
 
+    // デスクトップ用 貼り紙位置
+    const NOTE_LAYOUTS = [
+      { left:"4%",  top:"4%",  rot:"-4deg" },
+      { left:"38%", top:"8%",  rot:"3deg" },
+      { left:"68%", top:"6%",  rot:"-2deg" },
+      { left:"12%", top:"42%", rot:"2deg" },
+      { left:"53%", top:"46%", rot:"-5deg" }
+    ];
+
     // =========================================================
     // Demo seed inventory
     // =========================================================
@@ -839,11 +1248,6 @@
       const next = Math.max(0, Number(book.got[cardId].count || 0) + delta);
       book.got[cardId].count = next;
       saveBook(book);
-    }
-
-    function getCardsByRarityAtLeast(rarity){
-      const min = RARITY_ORDER[rarity] || 1;
-      return CARD_CATALOG.filter(c => (RARITY_ORDER[c.rarity] || 0) >= min);
     }
 
     function getOwnedCardsByRarityAtLeast(rarity){
@@ -912,12 +1316,11 @@
       if (star === 1) return 1 + (rnd() < 0.35 ? 1 : 0);
       if (star === 2) return 1 + (rnd() < 0.65 ? 1 : 0);
       if (star === 3) return 2 + (rnd() < 0.4 ? 1 : 0);
-      if (star === 4) return 2 + Math.floor(rnd() * 3); // 2-4
-      return 3 + Math.floor(rnd() * 3); // 3-5
+      if (star === 4) return 2 + Math.floor(rnd() * 3);
+      return 3 + Math.floor(rnd() * 3);
     }
 
-    function maybeRarityQuest(star, rnd, usedCardIds){
-      // 高難易度ほど条件依頼を混ぜる
+    function maybeRarityQuest(star, rnd){
       let p = 0;
       if (star === 3) p = 0.18;
       if (star === 4) p = 0.28;
@@ -946,7 +1349,7 @@
       const usedCardIds = new Set();
 
       for (let i=0;i<wantKinds;i++){
-        const rarityQuest = maybeRarityQuest(star, rnd, usedCardIds);
+        const rarityQuest = maybeRarityQuest(star, rnd);
         if (rarityQuest){
           wants.push(rarityQuest);
           continue;
@@ -955,7 +1358,6 @@
         const rarityPool = RARITY_POOL_BY_STAR[star];
         let rarity = seededPick(rarityPool, rnd);
 
-        // ★5でもLRは出すぎないように調整
         if (star === 5 && rarity === "LR" && rnd() < 0.65) {
           rarity = rnd() < 0.6 ? "SR" : "UR";
         }
@@ -1007,7 +1409,7 @@
     }
 
     // =========================================================
-    // Render helpers
+    // Status / summary
     // =========================================================
     function getJobNeedStatus(job){
       const result = {
@@ -1039,6 +1441,22 @@
       return result;
     }
 
+    function getShortWantText(job){
+      return job.wants.map(w => {
+        if (w.type === "card") return `・${w.name} ×${w.qty}`;
+        return `・${w.label} ×${w.qty}`;
+      }).join("\n");
+    }
+
+    function getPaperStatusLabel(job, need){
+      if (job.completed) return { cls:"done", text:"達成済み" };
+      if (need.ok) return { cls:"ok", text:"納品できる" };
+      return { cls:"ng", text:"カード不足" };
+    }
+
+    // =========================================================
+    // Render
+    // =========================================================
     function renderInventoryBar(){
       const bar = $("#inventoryBar");
       const player = getPlayer();
@@ -1100,83 +1518,177 @@
       $("#todayLabel").textContent = `本日: ${todayJP()}`;
 
       if (!state.jobs?.length){
+        root.classList.remove("mobileLayout");
         root.innerHTML = `<div class="emptyState">貼り紙はまだないたこ。</div>`;
         $("#doneLabel").textContent = "達成 0 / 0";
+        $("#boardCountText").textContent = "貼り紙 0枚";
         return;
       }
 
       const done = state.jobs.filter(j => j.completed).length;
       $("#doneLabel").textContent = `達成 ${done} / ${state.jobs.length}`;
+      $("#boardCountText").textContent = `貼り紙 ${state.jobs.length}枚`;
 
-      root.innerHTML = state.jobs.map(job => {
+      const mobile = isMobileBoardLayout();
+      root.classList.toggle("mobileLayout", mobile);
+
+      root.innerHTML = state.jobs.map((job, idx) => {
         const need = getJobNeedStatus(job);
         const starCls = `star-${job.difficulty}`;
+        const status = getPaperStatusLabel(job, need);
+        const pos = NOTE_LAYOUTS[idx] || NOTE_LAYOUTS[NOTE_LAYOUTS.length - 1];
+
+        const style = mobile
+          ? ""
+          : `left:${pos.left}; top:${pos.top}; transform:rotate(${pos.rot}); --rot:${pos.rot};`;
+
+        const noteClass = mobile && idx === 4 ? "paperNote span2" : "paperNote";
 
         return `
-          <article class="noticeCard ${job.completed ? "completed" : ""}" data-job-id="${job.id}">
-            <div class="stamp">達成済</div>
-            <div class="noticeInner">
-              <div class="noticeHead">
-                <img class="clientAvatar" src="${job.clientImage}" alt="${escapeHtml(job.clientName)}">
-                <div class="clientMeta">
-                  <h2 class="clientName">${escapeHtml(job.clientName)}</h2>
-                  <p class="clientLine">${escapeHtml(job.line)}</p>
-                </div>
-
-                <div class="difficultyBox">
-                  <div class="starText ${starCls}">${stars(job.difficulty)}</div>
-                  <div class="tagRow">
-                    <span class="tag">難易度 ${job.difficulty}</span>
-                    <span class="tag">報酬大 ${job.difficulty >= 4 ? "あり" : "ふつう"}</span>
-                  </div>
+          <button class="${noteClass} ${job.completed ? "completed" : ""}"
+                  type="button"
+                  data-job-id="${job.id}"
+                  style="${style}">
+            <div class="pin"></div>
+            <div class="noteTop">
+              <div class="noteClient">
+                <img class="noteAvatar" src="${job.clientImage}" alt="${escapeHtml(job.clientName)}">
+                <div class="noteMeta">
+                  <h3 class="noteName">${escapeHtml(job.clientName)}</h3>
+                  <p class="noteShort">${escapeHtml(job.line)}</p>
                 </div>
               </div>
-
-              <p class="wantTitle">探しているカード</p>
-              <div class="wantGrid">
-                ${job.wants.map(makeWantItemHTML).join("")}
-              </div>
-
-              <div class="rewardBox">
-                <span class="rewardChip">OCTO +${job.rewards.octo}</span>
-                <span class="rewardChip">EXP +${job.rewards.exp}</span>
-                <span class="rewardChip">評判 +${job.rewards.rep}</span>
-              </div>
-
-              <div class="noticeFoot">
-                <div class="statusText">
-                  ${need.lines.map(line => `
-                    <div class="${line.ok ? "statusOk" : "statusNg"}">${escapeHtml(line.text)}</div>
-                  `).join("")}
-                </div>
-
-                <button class="pixel-btn deliverBtn"
-                        data-job-id="${job.id}"
-                        ${job.completed || !need.ok ? "disabled" : ""}>
-                  ${job.completed ? "納品済み" : "納品する"}
-                </button>
-              </div>
+              <div class="noteStars ${starCls}">${stars(job.difficulty)}</div>
             </div>
-          </article>
+
+            <div class="noteWant">${escapeHtml(getShortWantText(job))}</div>
+
+            <div class="noteReward">
+              <span class="miniChip">OCTO +${job.rewards.octo}</span>
+              <span class="miniChip">EXP +${job.rewards.exp}</span>
+            </div>
+
+            <div class="noteFooter">
+              <div class="noteTap">${job.completed ? "完了した貼り紙" : "タップで依頼を見る"}</div>
+              <div class="noteStatus ${status.cls}">${status.text}</div>
+            </div>
+
+            <div class="noteStamp">達成済</div>
+          </button>
         `;
       }).join("");
 
-      $$(".deliverBtn", root).forEach(btn => {
+      $$(".paperNote", root).forEach(btn => {
         btn.addEventListener("click", () => {
           const id = btn.dataset.jobId;
-          deliverJob(id);
+          openJobModal(id);
         });
       });
     }
 
-    function escapeHtml(str){
-      return String(str).replace(/[&<>"']/g, s => ({
-        "&":"&amp;",
-        "<":"&lt;",
-        ">":"&gt;",
-        '"':"&quot;",
-        "'":"&#39;"
-      })[s]);
+    function renderJobDetail(job){
+      const need = getJobNeedStatus(job);
+      const starCls = `star-${job.difficulty}`;
+
+      return `
+        <article class="noticeCard ${job.completed ? "completed" : ""}" data-job-id="${job.id}">
+          <div class="noticeInner">
+            <div class="noticeHead">
+              <img class="clientAvatar" src="${job.clientImage}" alt="${escapeHtml(job.clientName)}">
+              <div class="clientMeta">
+                <h2 class="clientName" id="jobModalTitle">${escapeHtml(job.clientName)}</h2>
+                <p class="clientLine">${escapeHtml(job.line)}</p>
+              </div>
+
+              <div class="difficultyBox">
+                <div class="starText ${starCls}">${stars(job.difficulty)}</div>
+                <div class="tagRow">
+                  <span class="tag">難易度 ${job.difficulty}</span>
+                  <span class="tag">報酬大 ${job.difficulty >= 4 ? "あり" : "ふつう"}</span>
+                </div>
+              </div>
+            </div>
+
+            <p class="wantTitle">探しているカード</p>
+            <div class="wantGrid">
+              ${job.wants.map(makeWantItemHTML).join("")}
+            </div>
+
+            <div class="rewardBox">
+              <span class="rewardChip">OCTO +${job.rewards.octo}</span>
+              <span class="rewardChip">EXP +${job.rewards.exp}</span>
+              <span class="rewardChip">評判 +${job.rewards.rep}</span>
+            </div>
+
+            <div class="noticeFoot">
+              <div class="statusText">
+                ${need.lines.map(line => `
+                  <div class="${line.ok ? "statusOk" : "statusNg"}">${escapeHtml(line.text)}</div>
+                `).join("")}
+              </div>
+
+              <button class="pixel-btn"
+                      id="modalDeliverBtn"
+                      data-job-id="${job.id}"
+                      ${job.completed || !need.ok ? "disabled" : ""}>
+                ${job.completed ? "納品済み" : "納品する"}
+              </button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    // =========================================================
+    // Modal
+    // =========================================================
+    function openJobModal(jobId){
+      const state = getBoardState();
+      if (!state?.jobs?.length) return;
+      const job = state.jobs.find(j => j.id === jobId);
+      if (!job) return;
+
+      $("#jobModalBody").innerHTML = renderJobDetail(job);
+      $("#jobModal").classList.add("show");
+      $("#jobModal").setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+
+      const btn = $("#modalDeliverBtn");
+      if (btn){
+        btn.addEventListener("click", () => {
+          deliverJob(jobId, { keepModal:true });
+        });
+      }
+    }
+
+    function closeJobModal(){
+      $("#jobModal").classList.remove("show");
+      $("#jobModal").setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    function refreshOpenedModalIfNeeded(){
+      const modal = $("#jobModal");
+      if (!modal.classList.contains("show")) return;
+
+      const btn = $("#modalDeliverBtn");
+      const jobId = btn?.dataset?.jobId;
+      if (!jobId) return;
+
+      const state = getBoardState();
+      const job = state?.jobs?.find(j => j.id === jobId);
+      if (!job){
+        closeJobModal();
+        return;
+      }
+
+      $("#jobModalBody").innerHTML = renderJobDetail(job);
+      const nextBtn = $("#modalDeliverBtn");
+      if (nextBtn){
+        nextBtn.addEventListener("click", () => {
+          deliverJob(jobId, { keepModal:true });
+        });
+      }
     }
 
     // =========================================================
@@ -1196,7 +1708,6 @@
         const total = ownedList.reduce((sum, c) => sum + c.count, 0);
         if (total < want.qty) return false;
 
-        // 下位レアから順に消費
         for (const c of ownedList){
           if (remain <= 0) break;
           const use = Math.min(remain, c.count);
@@ -1209,7 +1720,7 @@
       return false;
     }
 
-    function deliverJob(jobId){
+    function deliverJob(jobId, opts = {}){
       const state = getBoardState();
       if (!state?.jobs?.length) return;
 
@@ -1220,15 +1731,16 @@
       if (!need.ok){
         showToast("カードが足りないたこ。");
         renderAll();
+        if (opts.keepModal) refreshOpenedModalIfNeeded();
         return;
       }
 
-      // 消費
       for (const want of job.wants){
         const ok = consumeWant(want);
         if (!ok){
           showToast("納品に失敗したたこ。");
           renderAll();
+          if (opts.keepModal) refreshOpenedModalIfNeeded();
           return;
         }
       }
@@ -1247,6 +1759,7 @@
       }
 
       renderAll();
+      if (opts.keepModal) refreshOpenedModalIfNeeded();
     }
 
     // =========================================================
@@ -1267,8 +1780,27 @@
         const ok = confirm("本日の貼り紙を作り直します。達成状態も今日の分はリセットされます。よろしいですか？");
         if (!ok) return;
         generateDailyBoard(true);
+        closeJobModal();
         renderAll();
         showToast("本日の貼り紙を作り直したたこ。");
+      });
+
+      $("#jobModalClose").addEventListener("click", closeJobModal);
+
+      $("#jobModal").addEventListener("click", (e) => {
+        if (e.target === $("#jobModal")) closeJobModal();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeJobModal();
+      });
+
+      let resizeTimer = null;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          renderBoard();
+        }, 80);
       });
     }
 
