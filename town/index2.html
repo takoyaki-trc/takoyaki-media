@@ -55,93 +55,11 @@
       width:100%;
       max-width:900px;
       margin:0 auto;
-      padding-top:72px;
+      padding-top:106px; /* ← 上に余白を追加 */
       padding-bottom:20px;
       box-sizing:border-box;
       position:relative;
       z-index:2;
-    }
-
-    /* =========================
-       天候
-    ========================= */
-    #weatherLayer{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      z-index:12;
-      overflow:hidden;
-    }
-
-    .weather-particle{
-      position:absolute;
-      top:-12vh;
-      opacity:.9;
-      will-change: transform, opacity;
-    }
-
-    .weather-rain{
-      width:2px;
-      height:58px;
-      border-radius:999px;
-      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(210,235,255,.88));
-      animation: rainFall linear infinite;
-      filter: drop-shadow(0 0 3px rgba(180,220,255,.35));
-    }
-
-    .weather-snow{
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      background: rgba(255,255,255,.95);
-      box-shadow: 0 0 8px rgba(255,255,255,.4);
-      animation: snowFall linear infinite;
-    }
-
-    .weather-label{
-      position:fixed;
-      left:50%;
-      bottom:14px;
-      transform:translateX(-50%);
-      z-index:14;
-      pointer-events:none;
-      padding:8px 12px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.28);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      color:rgba(255,255,255,.88);
-      font-size:12px;
-      font-weight:800;
-      letter-spacing:.03em;
-      opacity:0;
-      transition:opacity .25s ease;
-      white-space:nowrap;
-    }
-
-    .weather-label.show{
-      opacity:1;
-    }
-
-    @keyframes rainFall{
-      0%   { transform: translate3d(0,0,0) rotate(13deg); opacity:0; }
-      8%   { opacity:.95; }
-      100% { transform: translate3d(-18vw,120vh,0) rotate(13deg); opacity:0; }
-    }
-
-    @keyframes snowFall{
-      0%   { transform: translate3d(0,0,0); opacity:0; }
-      10%  { opacity:.95; }
-      50%  { transform: translate3d(18px,50vh,0); }
-      100% { transform: translate3d(-14px,120vh,0); opacity:0; }
-    }
-
-    @media (prefers-reduced-motion: reduce){
-      .weather-particle{
-        animation:none !important;
-        opacity:.15 !important;
-      }
     }
 
     /* =========================
@@ -226,6 +144,10 @@
         min-height:38px;
         padding:9px 10px;
         font-size:12px;
+      }
+
+      .page-shell{
+        padding-top:118px; /* スマホは少し多めに余白 */
       }
     }
 
@@ -551,9 +473,6 @@
   </style>
 </head>
 <body>
-
-  <div id="weatherLayer" aria-hidden="true"></div>
-  <div id="weatherLabel" class="weather-label" aria-hidden="true"></div>
 
   <!-- =========================
        上部HUD
@@ -955,100 +874,7 @@
     }
 
     /* =========================================
-       5) 天候
-    ========================================= */
-    function seededNumber(seedStr){
-      let h = 2166136261;
-      for(let i=0;i<seedStr.length;i++){
-        h ^= seedStr.charCodeAt(i);
-        h = Math.imul(h, 16777619);
-      }
-      return (h >>> 0);
-    }
-
-    function getWeatherState(now){
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, "0");
-      const d = String(now.getDate()).padStart(2, "0");
-      const slot = Math.floor(now.getHours() / 3);
-      const seed = `${y}-${m}-${d}-${slot}`;
-      const n = seededNumber(seed) % 100;
-      const month = now.getMonth() + 1;
-      const hour = now.getHours();
-
-      if ((month <= 3 || month === 12) && (hour < 10 || hour >= 18) && n < 20) {
-        return "snow";
-      }
-      if (n >= 20 && n < 48) {
-        return "rain";
-      }
-      if ((month <= 2 || month === 12) && n >= 48 && n < 56) {
-        return "snow";
-      }
-      return "clear";
-    }
-
-    function buildWeatherParticles(type){
-      const layer = document.getElementById("weatherLayer");
-      if(!layer) return;
-
-      layer.innerHTML = "";
-      layer.dataset.weather = type;
-
-      const label = document.getElementById("weatherLabel");
-      if(label){
-        label.classList.remove("show");
-        if(type === "rain") label.textContent = "☔ 雨が降ってきたたこ。";
-        else if(type === "snow") label.textContent = "❄ 雪が降ってきたたこ。";
-        else label.textContent = "";
-      }
-
-      if(type === "clear") return;
-
-      const count = type === "rain" ? 56 : 34;
-
-      for(let i=0;i<count;i++){
-        const p = document.createElement("span");
-        p.className = `weather-particle ${type === "rain" ? "weather-rain" : "weather-snow"}`;
-        p.style.left = `${Math.random() * 100}%`;
-        p.style.animationDuration = type === "rain"
-          ? `${0.7 + Math.random() * 0.7}s`
-          : `${4.5 + Math.random() * 4.5}s`;
-        p.style.animationDelay = `${Math.random() * -8}s`;
-        p.style.opacity = type === "rain"
-          ? `${0.28 + Math.random() * 0.45}`
-          : `${0.45 + Math.random() * 0.4}`;
-        if(type === "snow"){
-          const size = 4 + Math.random() * 6;
-          p.style.width = `${size}px`;
-          p.style.height = `${size}px`;
-        }else{
-          p.style.height = `${34 + Math.random() * 36}px`;
-        }
-        layer.appendChild(p);
-      }
-
-      if(label){
-        label.classList.add("show");
-        clearTimeout(buildWeatherParticles._labelTimer);
-        buildWeatherParticles._labelTimer = setTimeout(() => {
-          label.classList.remove("show");
-        }, 2400);
-      }
-    }
-
-    function applyWeather(now){
-      const nextType = getWeatherState(now);
-      const layer = document.getElementById("weatherLayer");
-      if(!layer) return;
-      const current = layer.dataset.weather || "";
-      if(current !== nextType){
-        buildWeatherParticles(nextType);
-      }
-    }
-
-    /* =========================================
-       6) タコ民セリフ（昼夜切替）
+       5) タコ民セリフ（昼夜切替）
     ========================================= */
     const TAKOMIN_LINES = {
       t1: {
@@ -1137,7 +963,7 @@
     }
 
     /* =========================================
-       7) 共通モーダル
+       6) 共通モーダル
     ========================================= */
     const farmGuideBtn   = document.getElementById("farmGuideBtn");
     const farmGuideModal = document.getElementById("farmGuideModal");
@@ -1168,12 +994,12 @@
     }
 
     /* =========================================
-       8) 初回限定プレゼント
+       7) 初回限定プレゼント
     ========================================= */
-    const giftBoxBtn      = document.getElementById("giftBoxBtn");
-    const giftModal       = document.getElementById("giftModal");
-    const giftModalBody   = document.getElementById("giftModalBody");
-    const giftModalActions= document.getElementById("giftModalActions");
+    const giftBoxBtn       = document.getElementById("giftBoxBtn");
+    const giftModal        = document.getElementById("giftModal");
+    const giftModalBody    = document.getElementById("giftModalBody");
+    const giftModalActions = document.getElementById("giftModalActions");
 
     function renderGiftModalClaimed(){
       giftModalBody.innerHTML = `
@@ -1282,7 +1108,7 @@
     }
 
     /* =========================================
-       9) まとめて反映
+       8) まとめて反映
     ========================================= */
     function applyAll(){
       const now = nowTokyo();
@@ -1292,7 +1118,6 @@
       applyMapByHour(h);
       applySky(now);
       applyNpcImages();
-      applyWeather(now);
       renderOcto();
       refreshGiftButton();
     }
@@ -2027,5 +1852,8 @@
     });
   })();
   </script>
+
+  <!-- 天気は外部JSで読み込む -->
+ <script src="./weather.js"></script>
 </body>
 </html>
