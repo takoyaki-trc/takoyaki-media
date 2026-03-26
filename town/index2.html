@@ -43,7 +43,7 @@
       content:"";
       position:fixed;
       inset:0;
-      z-index:-2;
+      z-index:-3;
       pointer-events:none;
       background:
         radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.18) 100%),
@@ -58,57 +58,90 @@
       padding-top:72px;
       padding-bottom:20px;
       box-sizing:border-box;
+      position:relative;
+      z-index:2;
     }
 
     /* =========================
-       太陽 / 月
+       天候
     ========================= */
-    #phase-strip{
-      position: relative;
-      width: 220px;
-      height: 54px;
-      margin: 0 auto 8px;
-      padding: 0;
-      z-index: 5;
-    }
-
-    #phase-orb{
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      image-rendering: pixelated;
-      transition:
-        transform 0.6s ease,
-        filter 0.6s ease,
-        background 0.6s ease;
-    }
-
-    #phase-orb.sun{
-      background: radial-gradient(circle at 30% 30%, #fff7c8 0%, #ffd86b 55%, #f2b705 100%);
-      box-shadow: 0 0 14px rgba(255,200,80,0.35);
-      transform: scale(1);
-    }
-
-    #phase-orb.moon{
-      background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e6e6e6 70%, #cfcfcf 100%);
-      transform: scale(0.8);
-    }
-
-    #phase-orb.moon::after{
-      content:"";
-      position:absolute;
+    #weatherLayer{
+      position:fixed;
       inset:0;
-      border-radius:50%;
-      background: rgba(15,20,32,0.95);
-      transform: translateX(var(--shadow-x, 0px));
+      pointer-events:none;
+      z-index:12;
+      overflow:hidden;
     }
 
-    @media (max-width:480px){
-      #phase-strip{ width:200px; }
-      #phase-orb{ width:36px; height:36px; }
+    .weather-particle{
+      position:absolute;
+      top:-12vh;
+      opacity:.9;
+      will-change: transform, opacity;
+    }
+
+    .weather-rain{
+      width:2px;
+      height:58px;
+      border-radius:999px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(210,235,255,.88));
+      animation: rainFall linear infinite;
+      filter: drop-shadow(0 0 3px rgba(180,220,255,.35));
+    }
+
+    .weather-snow{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background: rgba(255,255,255,.95);
+      box-shadow: 0 0 8px rgba(255,255,255,.4);
+      animation: snowFall linear infinite;
+    }
+
+    .weather-label{
+      position:fixed;
+      left:50%;
+      bottom:14px;
+      transform:translateX(-50%);
+      z-index:14;
+      pointer-events:none;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.28);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      color:rgba(255,255,255,.88);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.03em;
+      opacity:0;
+      transition:opacity .25s ease;
+      white-space:nowrap;
+    }
+
+    .weather-label.show{
+      opacity:1;
+    }
+
+    @keyframes rainFall{
+      0%   { transform: translate3d(0,0,0) rotate(13deg); opacity:0; }
+      8%   { opacity:.95; }
+      100% { transform: translate3d(-18vw,120vh,0) rotate(13deg); opacity:0; }
+    }
+
+    @keyframes snowFall{
+      0%   { transform: translate3d(0,0,0); opacity:0; }
+      10%  { opacity:.95; }
+      50%  { transform: translate3d(18px,50vh,0); }
+      100% { transform: translate3d(-14px,120vh,0); opacity:0; }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .weather-particle{
+        animation:none !important;
+        opacity:.15 !important;
+      }
     }
 
     /* =========================
@@ -276,6 +309,8 @@
         drop-shadow(0 0 2px rgba(255, 240, 150, 0.95))
         drop-shadow(0 0 6px rgba(255, 200, 80, 0.75))
         drop-shadow(0 0 14px rgba(255, 140, 20, 0.55));
+      animation:none !important;
+      transform:none !important;
     }
 
     .takomin-balloon{
@@ -299,21 +334,10 @@
       box-shadow: 0 10px 28px rgba(0,0,0,.32);
     }
 
-    @keyframes takominFloat {
-      0%,100% { transform: translateY(0); }
-      50%     { transform: translateY(-3px); }
-    }
-
-    @keyframes takominBob {
-      0%,100% { transform: translateY(0) rotate(0deg); }
-      50%     { transform: translateY(-2px) rotate(-1deg); }
-    }
-
-    .takomin.is-float img{ animation: takominFloat 1.8s ease-in-out infinite; }
-    .takomin.is-bob img{ animation: takominBob 1.6s ease-in-out infinite; }
-
-    @media (prefers-reduced-motion: reduce){
-      .takomin img{ animation:none !important; }
+    .takomin.is-float img,
+    .takomin.is-bob img{
+      animation:none !important;
+      transform:none !important;
     }
 
     /* ===== 建物座標（差し替えやすいよう固定） ===== */
@@ -397,6 +421,41 @@
       border:0;
       background:#60a5fa;
       color:#08111f;
+    }
+
+    .gift-list{
+      margin:14px 0 0;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.05);
+    }
+
+    .gift-list-title{
+      font-size:14px;
+      font-weight:900;
+      margin-bottom:8px;
+      color:#fff;
+    }
+
+    .gift-note{
+      font-size:12px;
+      line-height:1.7;
+      color:rgba(255,255,255,.76);
+      margin-top:10px;
+    }
+
+    .gift-item{
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.92);
+    }
+
+    .gift-divider{
+      border:0;
+      height:1px;
+      background:rgba(255,255,255,.12);
+      margin:10px 0;
     }
 
     /* =========================
@@ -493,6 +552,9 @@
 </head>
 <body>
 
+  <div id="weatherLayer" aria-hidden="true"></div>
+  <div id="weatherLabel" class="weather-label" aria-hidden="true"></div>
+
   <!-- =========================
        上部HUD
   ========================= -->
@@ -512,9 +574,9 @@
       </div>
 
       <div class="hud-right">
-        <button id="giftBoxBtn" class="hud-btn primary" type="button" aria-label="プレゼントボックス">
+        <button id="giftBoxBtn" class="hud-btn primary" type="button" aria-label="初回限定プレゼント">
           <span class="hud-icon">🎁</span>
-          <span>プレゼントBOX</span>
+          <span>初回限定プレゼント</span>
         </button>
 
         <button id="farmGuideBtn" class="hud-btn" type="button" aria-label="たこ焼きファームの始め方">
@@ -526,27 +588,22 @@
   </div>
 
   <div class="page-shell">
-    <div id="phase-strip">
-      <div id="phase-orb"></div>
-    </div>
-
     <!-- =========================
          マップ
     ========================= -->
     <div class="map-wrap" id="townMap">
 
       <!-- 背景マップ -->
-     <img
-  class="map-img"
-  src="https://takoyaki-card.com/town/assets/images/map/farmasa.png"
-  data-morning="https://takoyaki-card.com/town/assets/images/map/farmasa.png"
-  data-day="https://takoyaki-card.com/town/assets/images/map/farmhiru.png"
-  data-night="https://takoyaki-card.com/town/assets/images/map/farmyoru.png"
-  alt="2ページ目マップ">
+      <img
+        class="map-img"
+        src="https://takoyaki-card.com/town/assets/images/map/farmasa.png"
+        data-morning="https://takoyaki-card.com/town/assets/images/map/farmasa.png"
+        data-day="https://takoyaki-card.com/town/assets/images/map/farmhiru.png"
+        data-night="https://takoyaki-card.com/town/assets/images/map/farmyoru.png"
+        alt="2ページ目マップ">
 
       <!-- =========================
            建物 6個
-           ★ href と画像URLを差し替えて使う
       ========================= -->
       <a class="tf-building b1" href="./farm.html" aria-label="建物1">
         <img src="https://takoyaki-card.com/town/assets/images/map/hatake.png" alt="たこ焼き畑">
@@ -574,9 +631,8 @@
 
       <!-- =========================
            タコ民 10人
-           ★ data-day / data-night を差し替え
       ========================= -->
-      <button class="takomin t1 is-float" data-id="t1" type="button" aria-label="タコ民1">
+      <button class="takomin t1" data-id="t1" type="button" aria-label="タコ民1">
         <img src="https://ul.h3z.jp/yfWcFrT4.png"
              data-day="https://ul.h3z.jp/yfWcFrT4.png"
              data-night="https://ul.h3z.jp/93R4C9fH.png"
@@ -584,7 +640,7 @@
         <div class="takomin-balloon"></div>
       </button>
 
-      <button class="takomin t2 is-bob" data-id="t2" type="button" aria-label="菜々">
+      <button class="takomin t2" data-id="t2" type="button" aria-label="菜々">
         <img src="https://takoyaki-card.com/town/assets/images/map/h1.png"
              data-day="https://takoyaki-card.com/town/assets/images/map/h1.png"
              data-night="https://takoyaki-card.com/town/assets/images/map/h2.png"
@@ -592,7 +648,7 @@
         <div class="takomin-balloon"></div>
       </button>
 
-      <button class="takomin t3 is-float" data-id="t3" type="button" aria-label="タコ民3">
+      <button class="takomin t3" data-id="t3" type="button" aria-label="タコ民3">
         <img src="https://ul.h3z.jp/vsy0pctI.png"
              data-day="https://ul.h3z.jp/vsy0pctI.png"
              data-night="https://ul.h3z.jp/PpSfLird.png"
@@ -600,7 +656,7 @@
         <div class="takomin-balloon"></div>
       </button>
 
-      <button class="takomin t4 is-bob" data-id="t4" type="button" aria-label="みこぴ">
+      <button class="takomin t4" data-id="t4" type="button" aria-label="みこぴ">
         <img src="https://takoyaki-card.com/town/assets/images/map/m1.png"
              data-day="https://takoyaki-card.com/town/assets/images/map/m1.png"
              data-night="https://takoyaki-card.com/town/assets/images/map/m2.png"
@@ -608,7 +664,7 @@
         <div class="takomin-balloon"></div>
       </button>
 
-      <button class="takomin t5 is-float" data-id="t5" type="button" aria-label="タコ民5">
+      <button class="takomin t5" data-id="t5" type="button" aria-label="タコ民5">
         <img src="https://ul.h3z.jp/OnsDTpd8.png"
              data-day="https://ul.h3z.jp/OnsDTpd8.png"
              data-night="https://ul.h3z.jp/KgDhxsxP.png"
@@ -616,7 +672,7 @@
         <div class="takomin-balloon"></div>
       </button>
 
-      <button class="takomin t6 is-bob" data-id="t6" type="button" aria-label="タコ民6">
+      <button class="takomin t6" data-id="t6" type="button" aria-label="タコ民6">
         <img src="https://ul.h3z.jp/hx0gOm4a.png"
              data-day="https://ul.h3z.jp/hx0gOm4a.png"
              data-night="https://ul.h3z.jp/hx0gOm4a.png"
@@ -624,7 +680,7 @@
         <div class="takomin-balloon"></div>
       </button>
 
-      <button class="takomin t7 is-float" data-id="t7" type="button" aria-label="タコ民7">
+      <button class="takomin t7" data-id="t7" type="button" aria-label="タコ民7">
         <img src="https://ul.h3z.jp/sticAk2s.png"
              data-day="https://ul.h3z.jp/sticAk2s.png"
              data-night="https://ul.h3z.jp/q8H3THcE.png"
@@ -632,7 +688,7 @@
         <div class="takomin-balloon"></div>
       </button>
 
-      <button class="takomin t8 is-bob" data-id="t8" type="button" aria-label="タコ民8">
+      <button class="takomin t8" data-id="t8" type="button" aria-label="タコ民8">
         <img src="https://basefile.akamaized.net/takoyakitrc-base-shop/696a673f108bf/2bit1.png"
              data-day="https://basefile.akamaized.net/takoyakitrc-base-shop/696a673f108bf/2bit1.png"
              data-night="https://basefile.akamaized.net/takoyakitrc-base-shop/696a6755c2e31/2bit2.png"
@@ -640,7 +696,7 @@
         <div class="takomin-balloon"></div>
       </button>
 
-      <button class="takomin t9 is-float" data-id="t9" type="button" aria-label="タコ民9">
+      <button class="takomin t9" data-id="t9" type="button" aria-label="タコ民9">
         <img src="https://ul.h3z.jp/JPKQZ6sP.png"
              data-day="https://ul.h3z.jp/JPKQZ6sP.png"
              data-night="https://ul.h3z.jp/yF9zSCHU.png"
@@ -648,7 +704,7 @@
         <div class="takomin-balloon"></div>
       </button>
 
-      <button class="takomin t10 is-bob" data-id="t10" type="button" aria-label="タコ民10">
+      <button class="takomin t10" data-id="t10" type="button" aria-label="タコ民10">
         <img src="https://ul.h3z.jp/n6sTv8Xr.png"
              data-day="https://ul.h3z.jp/n6sTv8Xr.png"
              data-night="https://ul.h3z.jp/tHlNh1NI.png"
@@ -678,21 +734,13 @@
   </div>
 
   <!-- =========================
-       プレゼント仮モーダル
-       ★あとで roten.js のコードを入れる場所
+       初回限定プレゼント
   ========================= -->
   <div class="modal" id="giftModal" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="giftModalTitle">
-      <div class="modal-title" id="giftModalTitle">プレゼントBOX（初回限定）</div>
-      <div class="modal-text" id="giftModalBody">
-        ここにあとでプレゼントBOXの処理を入れます。<br>
-        今は仮置きです。<br><br>
-        <b>差し込み場所：</b><br>
-        下の script 内にある <code>openGiftBox()</code> を、あとであなたの roten.js 側の処理に置き換えてください。
-      </div>
-      <div class="modal-actions">
-        <button class="modal-btn primary" type="button" id="giftModalClose">閉じる</button>
-      </div>
+      <div class="modal-title" id="giftModalTitle">初回限定プレゼント</div>
+      <div class="modal-text" id="giftModalBody"></div>
+      <div class="modal-actions" id="giftModalActions"></div>
     </div>
   </div>
 
@@ -740,6 +788,13 @@
     /* =========================================
        0) 共通
     ========================================= */
+    const LS = {
+      octo: "roten_v1_octo",
+      inv: "tf_v1_inv",
+      launchGift: "roten_v1_launch_gift_claimed",
+      log: "roten_v1_log"
+    };
+
     function nowTokyo(){
       return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
     }
@@ -754,13 +809,63 @@
       return "night";
     }
 
-    /* =========================================
-       1) オクト表示
-    ========================================= */
+    function loadJSON(key, fallback){
+      try{
+        const raw = localStorage.getItem(key);
+        if(!raw) return fallback;
+        return JSON.parse(raw);
+      }catch(_){
+        return fallback;
+      }
+    }
+
+    function saveJSON(key, obj){
+      localStorage.setItem(key, JSON.stringify(obj));
+    }
+
+    function pushLog(msg){
+      const a = loadJSON(LS.log, []);
+      a.unshift({ t: Date.now(), msg });
+      saveJSON(LS.log, a.slice(0, 80));
+    }
+
+    function invDefault(){
+      return { ver:1, seed:{}, water:{}, fert:{} };
+    }
+
+    function loadInv(){
+      const inv = loadJSON(LS.inv, invDefault());
+      inv.seed = inv.seed || {};
+      inv.water = inv.water || {};
+      inv.fert = inv.fert || {};
+      return inv;
+    }
+
+    function saveInv(inv){
+      saveJSON(LS.inv, inv);
+    }
+
+    function ensureInvKeys(){
+      const inv = loadInv();
+      inv.seed = inv.seed || {};
+      inv.water = inv.water || {};
+      inv.fert = inv.fert || {};
+      saveInv(inv);
+      return inv;
+    }
+
     function getOctoValue(){
-      const raw = localStorage.getItem("roten_v1_octo");
+      const raw = localStorage.getItem(LS.octo);
       const n = Number(raw || 0);
       return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+    }
+
+    function setOctoValue(v){
+      localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v) || 0))));
+    }
+
+    function addOcto(delta){
+      setOctoValue(getOctoValue() + Number(delta || 0));
     }
 
     function renderOcto(){
@@ -770,7 +875,7 @@
     }
 
     /* =========================================
-       2) マップ画像切替
+       1) マップ画像切替
     ========================================= */
     function applyMapByHour(h){
       const img = document.querySelector(".map-img");
@@ -786,7 +891,7 @@
     }
 
     /* =========================================
-       3) 空グラデーション
+       2) 空グラデーション
     ========================================= */
     const SKY = [
       ["#0b1020", "#141c2e"], ["#0b1020", "#141c2e"],
@@ -823,45 +928,7 @@
     }
 
     /* =========================================
-       4) 太陽 / 月
-    ========================================= */
-    function updatePhaseOrb(now){
-      const strip = document.getElementById("phase-strip");
-      const orb   = document.getElementById("phase-orb");
-      if(!strip || !orb) return;
-
-      const minutes = now.getHours()*60 + now.getMinutes();
-      const sunrise = 6*60;
-      const sunset  = 19*60;
-      const nextSunrise = 24*60 + sunrise;
-
-      let p, isDay;
-      if(minutes >= sunrise && minutes < sunset){
-        isDay = true;
-        p = (minutes - sunrise) / (sunset - sunrise);
-      }else{
-        isDay = false;
-        const m = minutes < sunrise ? minutes + 1440 : minutes;
-        p = (m - sunset) / (nextSunrise - sunset);
-      }
-
-      const maxX = strip.clientWidth - orb.clientWidth;
-      orb.style.transform =
-        `translateX(${Math.round(maxX * p)}px) scale(${isDay ? 1 : 0.8})`;
-
-      orb.classList.toggle("sun", isDay);
-      orb.classList.toggle("moon", !isDay);
-
-      if(!isDay){
-        const sx = Math.round(26 - 52 * p);
-        orb.style.setProperty("--shadow-x", `${sx}px`);
-      }else{
-        orb.style.removeProperty("--shadow-x");
-      }
-    }
-
-    /* =========================================
-       5) 昼夜クラス
+       3) 昼夜クラス
     ========================================= */
     function applyDayNightClass(h){
       const html = document.documentElement;
@@ -875,7 +942,7 @@
     }
 
     /* =========================================
-       6) 建物・タコ民の昼夜画像切替
+       4) 建物・タコ民の昼夜画像切替
     ========================================= */
     function applyNpcImages(){
       const night = document.documentElement.classList.contains("is-night");
@@ -888,7 +955,100 @@
     }
 
     /* =========================================
-       7) タコ民セリフ（昼夜切替）
+       5) 天候
+    ========================================= */
+    function seededNumber(seedStr){
+      let h = 2166136261;
+      for(let i=0;i<seedStr.length;i++){
+        h ^= seedStr.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0);
+    }
+
+    function getWeatherState(now){
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      const slot = Math.floor(now.getHours() / 3);
+      const seed = `${y}-${m}-${d}-${slot}`;
+      const n = seededNumber(seed) % 100;
+      const month = now.getMonth() + 1;
+      const hour = now.getHours();
+
+      if ((month <= 3 || month === 12) && (hour < 10 || hour >= 18) && n < 20) {
+        return "snow";
+      }
+      if (n >= 20 && n < 48) {
+        return "rain";
+      }
+      if ((month <= 2 || month === 12) && n >= 48 && n < 56) {
+        return "snow";
+      }
+      return "clear";
+    }
+
+    function buildWeatherParticles(type){
+      const layer = document.getElementById("weatherLayer");
+      if(!layer) return;
+
+      layer.innerHTML = "";
+      layer.dataset.weather = type;
+
+      const label = document.getElementById("weatherLabel");
+      if(label){
+        label.classList.remove("show");
+        if(type === "rain") label.textContent = "☔ 雨が降ってきたたこ。";
+        else if(type === "snow") label.textContent = "❄ 雪が降ってきたたこ。";
+        else label.textContent = "";
+      }
+
+      if(type === "clear") return;
+
+      const count = type === "rain" ? 56 : 34;
+
+      for(let i=0;i<count;i++){
+        const p = document.createElement("span");
+        p.className = `weather-particle ${type === "rain" ? "weather-rain" : "weather-snow"}`;
+        p.style.left = `${Math.random() * 100}%`;
+        p.style.animationDuration = type === "rain"
+          ? `${0.7 + Math.random() * 0.7}s`
+          : `${4.5 + Math.random() * 4.5}s`;
+        p.style.animationDelay = `${Math.random() * -8}s`;
+        p.style.opacity = type === "rain"
+          ? `${0.28 + Math.random() * 0.45}`
+          : `${0.45 + Math.random() * 0.4}`;
+        if(type === "snow"){
+          const size = 4 + Math.random() * 6;
+          p.style.width = `${size}px`;
+          p.style.height = `${size}px`;
+        }else{
+          p.style.height = `${34 + Math.random() * 36}px`;
+        }
+        layer.appendChild(p);
+      }
+
+      if(label){
+        label.classList.add("show");
+        clearTimeout(buildWeatherParticles._labelTimer);
+        buildWeatherParticles._labelTimer = setTimeout(() => {
+          label.classList.remove("show");
+        }, 2400);
+      }
+    }
+
+    function applyWeather(now){
+      const nextType = getWeatherState(now);
+      const layer = document.getElementById("weatherLayer");
+      if(!layer) return;
+      const current = layer.dataset.weather || "";
+      if(current !== nextType){
+        buildWeatherParticles(nextType);
+      }
+    }
+
+    /* =========================================
+       6) タコ民セリフ（昼夜切替）
     ========================================= */
     const TAKOMIN_LINES = {
       t1: {
@@ -977,7 +1137,7 @@
     }
 
     /* =========================================
-       8) 説明モーダル
+       7) 共通モーダル
     ========================================= */
     const farmGuideBtn   = document.getElementById("farmGuideBtn");
     const farmGuideModal = document.getElementById("farmGuideModal");
@@ -1008,30 +1168,112 @@
     }
 
     /* =========================================
-       9) プレゼントBOX 仮処理
-       ★ あとでここに roten.js のコードを差し込む
+       8) 初回限定プレゼント
     ========================================= */
-    const giftBoxBtn   = document.getElementById("giftBoxBtn");
-    const giftModal    = document.getElementById("giftModal");
-    const giftModalClose = document.getElementById("giftModalClose");
+    const giftBoxBtn      = document.getElementById("giftBoxBtn");
+    const giftModal       = document.getElementById("giftModal");
+    const giftModalBody   = document.getElementById("giftModalBody");
+    const giftModalActions= document.getElementById("giftModalActions");
+
+    function renderGiftModalClaimed(){
+      giftModalBody.innerHTML = `
+        もう受け取った…たこ。<br>
+        大事に使って…たこ。
+      `;
+
+      giftModalActions.innerHTML = `
+        <button class="modal-btn primary" type="button" id="giftModalCloseBtn">閉じる</button>
+      `;
+
+      document.getElementById("giftModalCloseBtn")?.addEventListener("click", () => closeModal(giftModal));
+    }
+
+    function renderGiftModalReady(){
+      giftModalBody.innerHTML = `
+        たこぴ：<br>
+        「ホームページ公開記念…たこ。<br>
+        “最初の火種”をあげる…たこ。」<br><br>
+
+        <div class="gift-list">
+          <div class="gift-list-title">内容</div>
+          <div class="gift-item">🌱 店頭タネ ×15</div>
+          <div class="gift-item">🌱 回線タネ ×15</div>
+          <div class="gift-item">🌱 たこぴのタネ ×1</div>
+          <hr class="gift-divider">
+          <div class="gift-item">💧 なんか良さそう ×10</div>
+          <div class="gift-item">💧 怪しい水 ×10</div>
+          <div class="gift-item">💧 やりすぎな水 ×10</div>
+          <div class="gift-item">🧪 気のせい肥料 ×10</div>
+          <div class="gift-item">🧪 根性論ぶち込み肥料 ×10</div>
+          <div class="gift-item">🧪 工程すっ飛ばし肥料 ×10</div>
+          <div class="gift-item">💰 オクト +1000</div>
+        </div>
+
+        <div class="gift-note">
+          ※1回だけ。押したら戻れない…たこ。
+        </div>
+      `;
+
+      giftModalActions.innerHTML = `
+        <button class="modal-btn primary" type="button" id="claimGiftBtn">受け取る（取り消し不可）</button>
+        <button class="modal-btn" type="button" id="giftModalCloseBtn">やめる</button>
+      `;
+
+      document.getElementById("giftModalCloseBtn")?.addEventListener("click", () => closeModal(giftModal));
+      document.getElementById("claimGiftBtn")?.addEventListener("click", () => {
+        claimLaunchGift();
+        closeModal(giftModal);
+      });
+    }
+
+    function refreshGiftButton(){
+      const claimed = localStorage.getItem(LS.launchGift) === "1";
+      if(!giftBoxBtn) return;
+      giftBoxBtn.innerHTML = claimed
+        ? `<span class="hud-icon">🎁</span><span>初回限定プレゼント（受取済）</span>`
+        : `<span class="hud-icon">🎁</span><span>初回限定プレゼント</span>`;
+    }
 
     function openGiftBox(){
-      /* =========================================================
-         ★あとでここを差し替える
-         例：
-         - 初回判定
-         - アイテム付与
-         - roten.js側の在庫や受取処理
-         - プレゼント済みフラグ保存
-      ========================================================= */
+      const claimed = localStorage.getItem(LS.launchGift) === "1";
+      if(claimed){
+        renderGiftModalClaimed();
+      }else{
+        renderGiftModalReady();
+      }
       openModal(giftModal);
+    }
+
+    function claimLaunchGift(){
+      const claimed = localStorage.getItem(LS.launchGift) === "1";
+      if(claimed) return;
+
+      const inv = ensureInvKeys();
+
+      inv.seed["seed_shop"]    = Number(inv.seed["seed_shop"] || 0) + 15;
+      inv.seed["seed_line"]    = Number(inv.seed["seed_line"] || 0) + 15;
+      inv.seed["seed_special"] = Number(inv.seed["seed_special"] || 0) + 1;
+
+      inv.water["water_nice"]       = Number(inv.water["water_nice"] || 0) + 10;
+      inv.water["water_suspicious"] = Number(inv.water["water_suspicious"] || 0) + 10;
+      inv.water["water_overdo"]     = Number(inv.water["water_overdo"] || 0) + 10;
+
+      inv.fert["fert_feel"] = Number(inv.fert["fert_feel"] || 0) + 10;
+      inv.fert["fert_guts"] = Number(inv.fert["fert_guts"] || 0) + 10;
+      inv.fert["fert_skip"] = Number(inv.fert["fert_skip"] || 0) + 10;
+
+      saveInv(inv);
+      addOcto(1000);
+      localStorage.setItem(LS.launchGift, "1");
+      pushLog("初回限定プレゼント受取（+1000オクト）");
+
+      refreshGiftButton();
+      renderOcto();
+      alert("初回限定プレゼントを受け取りました。オクト+1000も付与したたこ。");
     }
 
     if (giftBoxBtn) {
       giftBoxBtn.addEventListener("click", openGiftBox);
-    }
-    if (giftModalClose) {
-      giftModalClose.addEventListener("click", () => closeModal(giftModal));
     }
     if (giftModal) {
       giftModal.addEventListener("click", (e) => {
@@ -1040,7 +1282,7 @@
     }
 
     /* =========================================
-       10) まとめて反映
+       9) まとめて反映
     ========================================= */
     function applyAll(){
       const now = nowTokyo();
@@ -1049,12 +1291,14 @@
       applyDayNightClass(h);
       applyMapByHour(h);
       applySky(now);
-      updatePhaseOrb(now);
       applyNpcImages();
+      applyWeather(now);
       renderOcto();
+      refreshGiftButton();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      ensureInvKeys();
       applyAll();
       wireTakominTalk();
       setInterval(applyAll, 20 * 1000);
@@ -1063,7 +1307,10 @@
 
     window.addEventListener("pageshow", applyAll);
     window.addEventListener("storage", (e) => {
-      if (e.key === "roten_v1_octo") renderOcto();
+      if (e.key === LS.octo || e.key === LS.launchGift) {
+        renderOcto();
+        refreshGiftButton();
+      }
     });
 
   })();
