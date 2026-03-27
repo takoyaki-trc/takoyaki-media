@@ -10,20 +10,19 @@
   <link rel="icon" href="https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/icon.png">
   <link rel="apple-touch-icon" href="https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/icon.png">
   <meta name="apple-mobile-web-app-title" content="焼かれた伝説">
-
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
   <style>
     :root{
       --hud-top: max(10px, env(safe-area-inset-top));
-      --hud-side: 10px;
-      --panel-bg: rgba(10,12,20,.72);
+      --panel-bg: rgba(10,12,20,.74);
       --panel-line: rgba(255,255,255,.16);
       --panel-text: #fff;
-      --btn-bg: rgba(255,255,255,.10);
-      --btn-bg-strong: rgba(140,200,255,.18);
       --shadow: 0 16px 40px rgba(0,0,0,.38);
+      --shell-max: 900px;
     }
+
+    *{ box-sizing:border-box; }
 
     html, body{
       margin:0;
@@ -53,11 +52,9 @@
 
     .page-shell{
       width:100%;
-      max-width:900px;
+      max-width:var(--shell-max);
       margin:0 auto;
-      padding-top:146px;
-      padding-bottom:20px;
-      box-sizing:border-box;
+      padding:236px 10px 20px;
       position:relative;
       z-index:2;
     }
@@ -66,21 +63,21 @@
        上部HUD
     ========================= */
     .top-hud{
-      position: fixed;
-      top: var(--hud-top);
-      left: 0;
-      right: 0;
-      z-index: 2000;
-      pointer-events: none;
+      position:fixed;
+      top:var(--hud-top);
+      left:0;
+      right:0;
+      z-index:2000;
+      pointer-events:none;
     }
 
     .top-hud-inner{
       width:min(920px, calc(100% - 16px));
       margin:0 auto;
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
       gap:8px;
+      align-items:start;
       pointer-events:none;
     }
 
@@ -88,9 +85,10 @@
     .hud-right{
       display:flex;
       gap:8px;
-      align-items:center;
+      align-items:flex-start;
       flex-wrap:wrap;
       pointer-events:auto;
+      min-width:0;
     }
 
     .hud-right{
@@ -101,9 +99,10 @@
     .hud-btn{
       display:inline-flex;
       align-items:center;
+      justify-content:center;
       gap:8px;
-      min-height:42px;
-      box-sizing:border-box;
+      min-height:44px;
+      min-width:0;
       padding:10px 12px;
       border:1px solid var(--panel-line);
       border-radius:14px;
@@ -115,18 +114,21 @@
       text-decoration:none;
       font-weight:800;
       font-size:14px;
-      line-height:1;
+      line-height:1.15;
       white-space:nowrap;
     }
 
+    .hud-chip{ flex:0 1 auto; }
     .hud-btn{
       cursor:pointer;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      border-color:var(--panel-line);
+      appearance:none;
     }
 
     .hud-btn.primary{
-      background: linear-gradient(180deg, rgba(140,200,255,.22), rgba(255,255,255,.10));
+      background:linear-gradient(180deg, rgba(140,200,255,.22), rgba(255,255,255,.10));
     }
 
     .hud-btn.serial-entry{
@@ -161,7 +163,9 @@
       flex-direction:column;
       align-items:flex-start;
       gap:2px;
+      min-width:0;
       line-height:1.05;
+      white-space:normal;
     }
 
     .hud-btn.serial-entry .label-main{
@@ -196,10 +200,10 @@
     }
 
     .serial-guide-note{
-      max-width:min(520px, 100%);
+      max-width:min(560px, 100%);
       pointer-events:auto;
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       gap:8px;
       padding:10px 12px;
       border-radius:14px;
@@ -218,16 +222,77 @@
       color:#ffe58a;
     }
 
+    .news-badge{
+      display:none;
+      align-items:center;
+      justify-content:center;
+      min-width:34px;
+      height:20px;
+      padding:0 7px;
+      border-radius:999px;
+      background:#ff4d4f;
+      color:#fff;
+      font-size:10px;
+      font-weight:900;
+      line-height:1;
+      box-shadow:0 4px 14px rgba(255,77,79,.35);
+      flex:0 0 auto;
+    }
+
+    .news-badge.is-show{
+      display:inline-flex;
+    }
+
+    @media (max-width:820px){
+      .top-hud-inner{
+        grid-template-columns:1fr;
+      }
+      .hud-right{
+        justify-content:flex-start;
+      }
+      .serial-guide-strip{
+        justify-content:stretch;
+      }
+      .serial-guide-note{
+        max-width:none;
+        width:100%;
+      }
+      .page-shell{
+        padding-top:288px;
+      }
+    }
+
     @media (max-width:640px){
       .top-hud-inner{
         width:calc(100% - 12px);
+        gap:10px;
+      }
+
+      .hud-left{
+        display:grid;
+        grid-template-columns:minmax(0, 110px) minmax(0, 1fr);
+        gap:8px;
+        width:100%;
+      }
+
+      .hud-right{
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:8px;
+        width:100%;
       }
 
       .hud-chip,
       .hud-btn{
-        min-height:38px;
-        padding:9px 10px;
+        width:100%;
+        min-height:42px;
+        padding:10px 10px;
         font-size:12px;
+        white-space:normal;
+      }
+
+      .hud-chip{
+        justify-content:flex-start;
       }
 
       .hud-btn.serial-entry .label-main{
@@ -255,34 +320,16 @@
       }
 
       .page-shell{
-        padding-top:170px;
+        padding-top:334px;
       }
     }
 
-    @media (max-width:520px){
-      .top-hud-inner{
-        align-items:stretch;
-      }
-
+    @media (max-width:420px){
       .hud-left{
-        flex:1 1 auto;
+        grid-template-columns:100px 1fr;
       }
-
-      .hud-right{
-        width:100%;
-        justify-content:flex-end;
-      }
-
-      .serial-guide-strip{
-        justify-content:stretch;
-      }
-
-      .serial-guide-note{
-        width:100%;
-      }
-
       .page-shell{
-        padding-top:188px;
+        padding-top:346px;
       }
     }
 
@@ -290,54 +337,52 @@
        マップ
     ========================= */
     .map-wrap{
-      position: relative !important;
+      position:relative;
       display:block;
-      width:100% !important;
-      max-width: 900px;
-      margin: 0 auto !important;
-      padding:0 !important;
-      box-sizing:border-box !important;
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
+      width:100%;
+      max-width:900px;
+      margin:0 auto;
+      transform:translateZ(0);
+      -webkit-transform:translateZ(0);
     }
 
     .map-img{
-      display:block !important;
-      width:100% !important;
-      max-width:100% !important;
-      height:auto !important;
-      margin:0 !important;
-      image-rendering: pixelated;
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
+      display:block;
+      width:100%;
+      max-width:100%;
+      height:auto;
+      image-rendering:pixelated;
+      transform:translateZ(0);
+      -webkit-transform:translateZ(0);
+      border-radius:0;
     }
 
     /* =========================
        建物
     ========================= */
     .tf-building{
-      position:absolute !important;
-      display:block !important;
-      z-index:40 !important;
+      position:absolute;
+      display:block;
+      z-index:40;
       cursor:pointer;
-      transform: translate(-50%, -100%) !important;
-      transform-origin: 50% 100% !important;
-      margin:0 !important;
-      padding:0 !important;
-      touch-action: manipulation;
+      transform:translate(-50%, -100%);
+      transform-origin:50% 100%;
+      touch-action:manipulation;
       -webkit-tap-highlight-color: transparent;
+      width:var(--w, 110px);
+      max-width:22vw;
     }
 
     .tf-building > img{
-      display:block !important;
-      width:100% !important;
-      height:auto !important;
-      image-rendering: pixelated;
+      display:block;
+      width:100%;
+      height:auto;
+      image-rendering:pixelated;
     }
 
     @media (hover:hover){
       .tf-building:hover{
-        filter: drop-shadow(0 0 10px rgba(255,255,180,.75));
+        filter:drop-shadow(0 0 10px rgba(255,255,180,.75));
       }
     }
 
@@ -346,22 +391,22 @@
     ========================= */
     .takomin{
       position:absolute;
-      transform: translate(-50%, -100%);
-      width: clamp(52px, 6vw, 72px);
-      z-index: 60;
-      background: transparent;
-      border: 0;
-      padding: 0;
-      cursor: pointer;
+      transform:translate(-50%, -100%);
+      width:clamp(36px, 7.2vw, 72px);
+      z-index:60;
+      background:transparent;
+      border:0;
+      padding:0;
+      cursor:pointer;
       -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+      touch-action:manipulation;
     }
 
     .takomin img{
       width:100%;
       height:auto;
       display:block;
-      image-rendering: pixelated;
+      image-rendering:pixelated;
       filter:
         drop-shadow(0 0 2px rgba(255, 240, 150, 0.95))
         drop-shadow(0 0 6px rgba(255, 200, 80, 0.75))
@@ -374,7 +419,7 @@
       position:absolute;
       bottom:100%;
       left:50%;
-      transform: translateX(-50%);
+      transform:translateX(-50%);
       z-index:999;
       display:none;
       background:#000;
@@ -382,13 +427,13 @@
       padding:8px 12px;
       border-radius:8px;
       border:1px solid rgba(255,255,255,.16);
-      font-size: clamp(11px, 2.7vw, 14px);
+      font-size:clamp(11px, 2.7vw, 14px);
       width:max-content;
       max-width:min(360px, 84vw);
       white-space:pre-line;
       line-height:1.45;
       pointer-events:none;
-      box-shadow: 0 10px 28px rgba(0,0,0,.32);
+      box-shadow:0 10px 28px rgba(0,0,0,.32);
     }
 
     .takomin.is-float img,
@@ -398,12 +443,12 @@
     }
 
     /* ===== 建物座標 ===== */
-    .b1{ left:18%; top:22%; width:110px; }
-    .b2{ left:51%; top:54%; width:120px; }
-    .b3{ left:20%; top:53%; width:118px; }
-    .b4{ left:82%; top:22%; width:110px; }
-    .b5{ left:52%; top:83%; width:120px; }
-    .b6{ left:78%; top:58%; width:118px; }
+    .b1{ left:18%; top:22%; --w:110px; }
+    .b2{ left:51%; top:54%; --w:120px; }
+    .b3{ left:20%; top:53%; --w:118px; }
+    .b4{ left:82%; top:22%; --w:110px; }
+    .b5{ left:52%; top:83%; --w:120px; }
+    .b6{ left:78%; top:58%; --w:118px; }
 
     /* ===== タコ民座標 ===== */
     .t1 { top:28%; left:14%; }
@@ -416,6 +461,13 @@
     .t8 { top:63%; left:55%; }
     .t9 { top:66%; left:74%; }
     .t10{ top:61%; left:88%; }
+
+    @media (max-width:640px){
+      .tf-building{ max-width:26vw; }
+      .b1,.b4{ --w:92px; }
+      .b2,.b3,.b5,.b6{ --w:98px; }
+      .takomin{ width:clamp(30px, 8vw, 52px); }
+    }
 
     /* =========================
        モーダル
@@ -516,6 +568,82 @@
     }
 
     /* =========================
+       お知らせ
+    ========================= */
+    .news-list{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .news-item{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.05);
+      border-radius:14px;
+      padding:14px;
+    }
+
+    .news-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+      flex-wrap:wrap;
+    }
+
+    .news-date{
+      font-size:12px;
+      font-weight:900;
+      color:#b9d9ff;
+    }
+
+    .news-label{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:40px;
+      height:22px;
+      padding:0 8px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:900;
+      line-height:1;
+      background:#ff4d4f;
+      color:#fff;
+    }
+
+    .news-item.is-read .news-label{
+      background:rgba(255,255,255,.12);
+      color:rgba(255,255,255,.72);
+    }
+
+    .news-title{
+      font-size:15px;
+      font-weight:900;
+      color:#fff;
+      margin:0 0 8px;
+      line-height:1.45;
+    }
+
+    .news-body{
+      font-size:13px;
+      line-height:1.85;
+      color:rgba(255,255,255,.88);
+      white-space:pre-line;
+    }
+
+    .news-empty{
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.8);
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.04);
+    }
+
+    /* =========================
        ファーム説明モーダル強化
     ========================= */
     .guide-intro{
@@ -544,7 +672,7 @@
     }
 
     .guide-step-media{
-      aspect-ratio: 16 / 10;
+      aspect-ratio:16 / 10;
       background:#0b1220;
       display:flex;
       align-items:center;
@@ -625,16 +753,15 @@
        フッターのバックアップ
     ========================= */
     #trcFooterDataBox{
-      width: min(720px, 92%);
-      margin: 18px auto 10px;
-      padding: 12px 12px;
-      border: 2px solid rgba(255,255,255,.22);
-      border-radius: 14px;
-      background: rgba(10,10,18,.55);
+      width:min(720px, 92%);
+      margin:18px auto 10px;
+      padding:12px 12px;
+      border:2px solid rgba(255,255,255,.22);
+      border-radius:14px;
+      background:rgba(10,10,18,.55);
       backdrop-filter: blur(6px);
-      box-shadow: 0 16px 50px rgba(0,0,0,.45);
-      text-align: left;
-      box-sizing:border-box;
+      box-shadow:0 16px 50px rgba(0,0,0,.45);
+      text-align:left;
     }
 
     #trcFooterDataBox .row{
@@ -649,7 +776,7 @@
       display:flex;
       align-items:center;
       gap:8px;
-      font-weight: 900;
+      font-weight:900;
       letter-spacing:.03em;
       color:#fff;
     }
@@ -658,15 +785,15 @@
       width:8px;
       height:8px;
       border-radius:999px;
-      background: rgba(180,220,255,.85);
-      box-shadow: 0 0 0 2px rgba(180,220,255,.18);
+      background:rgba(180,220,255,.85);
+      box-shadow:0 0 0 2px rgba(180,220,255,.18);
     }
 
     #trcFooterDataBox .desc{
-      margin-top: 8px;
-      font-size: 12px;
-      line-height: 1.6;
-      color: rgba(255,255,255,.76);
+      margin-top:8px;
+      font-size:12px;
+      line-height:1.6;
+      color:rgba(255,255,255,.76);
     }
 
     #trcFooterDataBox .btns{
@@ -676,33 +803,32 @@
     }
 
     #trcFooterDataBox .btn{
-      border: 2px solid rgba(255,255,255,.30);
-      background: rgba(255,255,255,.08);
+      border:2px solid rgba(255,255,255,.30);
+      background:rgba(255,255,255,.08);
       color:#fff;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-weight: 900;
-      letter-spacing: .03em;
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:900;
+      letter-spacing:.03em;
       cursor:pointer;
       -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-      white-space: nowrap;
+      touch-action:manipulation;
+      white-space:nowrap;
     }
 
     #trcFooterDataBox .btn.primary{
-      background: linear-gradient(180deg, rgba(140,200,255,.22), rgba(255,255,255,.08));
-      border-color: rgba(180,220,255,.55);
+      background:linear-gradient(180deg, rgba(140,200,255,.22), rgba(255,255,255,.08));
+      border-color:rgba(180,220,255,.55);
     }
 
     footer{
       width:100%;
-      margin: 10px auto 0;
-      padding: 10px 10px calc(18px + env(safe-area-inset-bottom));
-      box-sizing:border-box;
+      margin:10px auto 0;
+      padding:10px 10px calc(18px + env(safe-area-inset-bottom));
       text-align:center;
-      color: rgba(255,255,255,.78);
-      font-size: 12px;
-      line-height: 1.6;
+      color:rgba(255,255,255,.78);
+      font-size:12px;
+      line-height:1.6;
     }
 
     footer a{
@@ -736,7 +862,7 @@
 
     .weather-status.is-error{
       display:block;
-      border-color: rgba(255,100,100,.45);
+      border-color:rgba(255,100,100,.45);
       color:#ffd5d5;
     }
 
@@ -778,6 +904,12 @@
             <span class="label-sub">限定のタネを受け取る</span>
           </span>
         </a>
+
+        <button id="newsBtn" class="hud-btn" type="button" aria-label="お知らせ">
+          <span class="hud-icon">✉️</span>
+          <span>お知らせ</span>
+          <span id="newsBadge" class="news-badge">NEW</span>
+        </button>
 
         <button id="giftBoxBtn" class="hud-btn primary" type="button" aria-label="初回限定プレゼント">
           <span class="hud-icon">🎁</span>
@@ -822,27 +954,27 @@
       <!-- =========================
            建物 6個
       ========================= -->
-      <a class="tf-building b1" href="./farm.html" aria-label="建物1">
+      <a class="tf-building b1" href="./farm.html" aria-label="たこ焼き畑">
         <img src="https://takoyaki-card.com/town/assets/images/map/hatake.png" alt="たこ焼き畑">
       </a>
 
-      <a class="tf-building b2" href="https://takoyaki-card.com/town-test/roten.html" aria-label="建物2">
+      <a class="tf-building b2" href="https://takoyaki-card.com/town-test/roten.html" aria-label="カード募集板">
         <img src="https://takoyaki-card.com/town/assets/images/map/keijiban.png" alt="カード募集板">
       </a>
 
-      <a class="tf-building b3" href="./myshop.html" aria-label="建物3">
+      <a class="tf-building b3" href="./myshop.html" aria-label="マイ露店">
         <img src="https://takoyaki-card.com/town/assets/images/map/myshop.png" alt="マイ露店">
       </a>
 
-      <a class="tf-building b4" href="./omikuji.html" aria-label="建物4">
-        <img src="https://takoyaki-card.com/town/assets/images/map/omikuji.png" alt="たこ焼きみくじ">
+      <a class="tf-building b4" href="./omikuji.html" aria-label="ログインボーナス">
+        <img src="https://takoyaki-card.com/town/assets/images/map/omikuji.png" alt="ログインボーナス">
       </a>
 
-      <a class="tf-building b5" href="./title-panel.html" aria-label="建物5">
+      <a class="tf-building b5" href="./title-panel.html" aria-label="月間記録の祭壇">
         <img src="https://takoyaki-card.com/town/assets/images/map/saidan.png" alt="月間記録の祭壇">
       </a>
 
-      <a class="tf-building b6" href="./roten.html" aria-label="建物6">
+      <a class="tf-building b6" href="./roten.html" aria-label="たこぴのお店">
         <img src="https://takoyaki-card.com/town/assets/images/map/takopimise.png" alt="たこぴのお店">
       </a>
 
@@ -1034,6 +1166,22 @@
     </div>
   </div>
 
+  <!-- =========================
+       お知らせモーダル
+  ========================= -->
+  <div class="modal" id="newsModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
+      <div class="modal-title" id="newsModalTitle">運営からのお知らせ</div>
+      <div class="modal-text" style="margin-bottom:12px;">
+        最新情報がここに届きます。新しいお知らせがあると、上の <b>✉️お知らせ</b> に <b>NEW</b> が付きます。
+      </div>
+      <div id="newsList" class="news-list"></div>
+      <div class="modal-actions">
+        <button class="modal-btn primary" type="button" id="newsModalClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
   <div id="weatherJsStatus" class="weather-status" aria-live="polite"></div>
 
   <footer>
@@ -1084,8 +1232,34 @@
       octo: "roten_v1_octo",
       inv: "tf_v1_inv",
       launchGift: "roten_v1_launch_gift_claimed",
-      log: "roten_v1_log"
+      log: "roten_v1_log",
+      newsRead: "trc_v1_news_read_ids"
     };
+
+    const NEWS_DATA = [
+      {
+        id: "news_2026_03_27_mail_start",
+        date: "2026.03.27",
+        title: "✉️ お知らせ機能を追加しました",
+        body:
+`街の上にある ✉️「お知らせ」ボタンから、
+運営の最新情報を確認できるようになりました。
+
+新しいお知らせが届くと、
+ボタンに「NEW」が表示されます。`
+      },
+      {
+        id: "news_2026_03_27_guide",
+        date: "2026.03.27",
+        title: "はじめての方へ：おすすめの遊び方",
+        body:
+`シリアルコードを持っている方は、
+まず右上の「シリアルコード入力」から受け取るのがおすすめです。
+
+シリアルがない方は、
+「初回限定プレゼント」→「たこ焼き畑」の順で進むとわかりやすいです。`
+      }
+    ];
 
     function nowTokyo(){
       return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
@@ -1481,7 +1655,97 @@
     }
 
     /* =========================================
-       8) まとめて反映
+       8) お知らせ
+    ========================================= */
+    const newsBtn        = document.getElementById("newsBtn");
+    const newsBadge      = document.getElementById("newsBadge");
+    const newsModal      = document.getElementById("newsModal");
+    const newsList       = document.getElementById("newsList");
+    const newsModalClose = document.getElementById("newsModalClose");
+
+    function getReadNewsIds(){
+      const arr = loadJSON(LS.newsRead, []);
+      return Array.isArray(arr) ? arr : [];
+    }
+
+    function setReadNewsIds(ids){
+      saveJSON(LS.newsRead, Array.from(new Set(ids)));
+    }
+
+    function getUnreadNews(){
+      const readIds = new Set(getReadNewsIds());
+      return NEWS_DATA.filter(item => !readIds.has(item.id));
+    }
+
+    function renderNewsBadge(){
+      if (!newsBadge) return;
+      const unread = getUnreadNews().length;
+      if (unread > 0) {
+        newsBadge.classList.add("is-show");
+        newsBadge.textContent = "NEW";
+      } else {
+        newsBadge.classList.remove("is-show");
+      }
+    }
+
+    function renderNewsList(){
+      if (!newsList) return;
+      const readIds = new Set(getReadNewsIds());
+
+      if (!NEWS_DATA.length) {
+        newsList.innerHTML = `<div class="news-empty">現在、お知らせはありません。</div>`;
+        return;
+      }
+
+      newsList.innerHTML = NEWS_DATA.map(item => {
+        const isRead = readIds.has(item.id);
+        return `
+          <article class="news-item ${isRead ? "is-read" : ""}">
+            <div class="news-head">
+              <div class="news-date">${item.date}</div>
+              <div class="news-label">${isRead ? "既読" : "NEW"}</div>
+            </div>
+            <h3 class="news-title">${escapeHtml(item.title)}</h3>
+            <div class="news-body">${escapeHtml(item.body)}</div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function openNewsModal(){
+      renderNewsList();
+      openModal(newsModal);
+
+      const allIds = NEWS_DATA.map(item => item.id);
+      setReadNewsIds(allIds);
+      renderNewsBadge();
+      pushLog("お知らせを確認");
+    }
+
+    function escapeHtml(str){
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/\n/g, "<br>");
+    }
+
+    if (newsBtn) {
+      newsBtn.addEventListener("click", openNewsModal);
+    }
+    if (newsModalClose) {
+      newsModalClose.addEventListener("click", () => closeModal(newsModal));
+    }
+    if (newsModal) {
+      newsModal.addEventListener("click", (e) => {
+        if (e.target === newsModal) closeModal(newsModal);
+      });
+    }
+
+    /* =========================================
+       9) まとめて反映
     ========================================= */
     function applyAll(){
       const now = nowTokyo();
@@ -1493,6 +1757,7 @@
       applyNpcImages();
       renderOcto();
       refreshGiftButton();
+      renderNewsBadge();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -1505,9 +1770,10 @@
 
     window.addEventListener("pageshow", applyAll);
     window.addEventListener("storage", (e) => {
-      if (e.key === LS.octo || e.key === LS.launchGift) {
+      if (e.key === LS.octo || e.key === LS.launchGift || e.key === LS.newsRead) {
         renderOcto();
         refreshGiftButton();
+        renderNewsBadge();
       }
     });
 
