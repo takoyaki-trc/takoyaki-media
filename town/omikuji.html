@@ -36,10 +36,6 @@
 
       --activeGlow:0 0 0 2px rgba(255,231,153,.80), 0 0 24px rgba(255,204,82,.45);
       --safeBottom:env(safe-area-inset-bottom, 0px);
-
-      --boardCell:58px;
-      --boardGap:16px;
-      --boardCols:7;
     }
 
     *{ box-sizing:border-box; }
@@ -171,6 +167,14 @@
         0 0 0 1px rgba(0,0,0,.24) inset,
         0 6px 14px rgba(0,0,0,.18),
         0 0 12px rgba(128,247,255,.12);
+    }
+
+    .topchip:nth-child(3){
+      border-color:var(--lime);
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,.24) inset,
+        0 6px 14px rgba(0,0,0,.18),
+        0 0 12px rgba(184,255,122,.12);
     }
 
     .topchip-ico{
@@ -700,6 +704,14 @@
         </div>
 
         <div class="topchip">
+          <div class="topchip-ico">🔥</div>
+          <div>
+            <div class="topchip-label">連続</div>
+            <div class="topchip-value"><span id="streakNow">1</span>日</div>
+          </div>
+        </div>
+
+        <div class="topchip">
           <div class="topchip-ico">📅</div>
           <div>
             <div class="topchip-label">今日の結果</div>
@@ -851,7 +863,8 @@
         inv: "tf_v1_inv",
         mikujiDate: "roten_v1_mikuji_date",
         mikujiResult: "roten_v1_mikuji_result",
-        log: "roten_v1_log"
+        log: "roten_v1_log",
+        streak: "loginbonus_v1_streak_state"
       };
 
       const BACK_URL = "./index.html";
@@ -936,6 +949,7 @@
       const el = {
         backBtn: $("#backBtn"),
         octoNow: $("#octoNow"),
+        streakNow: $("#streakNow"),
         todayResultMini: $("#todayResultMini"),
         takopiSay: $("#takopiSay"),
         grill: $("#grill"),
@@ -1138,6 +1152,61 @@
         });
       }
 
+      function loadStreakState(){
+        try{
+          const raw = localStorage.getItem(LS.streak);
+          if(!raw){
+            return { lastVisitDate: "", streak: 1 };
+          }
+          const state = JSON.parse(raw);
+          return {
+            lastVisitDate: state.lastVisitDate || "",
+            streak: Math.max(1, Number(state.streak || 1))
+          };
+        }catch(e){
+          return { lastVisitDate: "", streak: 1 };
+        }
+      }
+
+      function saveStreakState(state){
+        localStorage.setItem(LS.streak, JSON.stringify(state));
+      }
+
+      function daysBetween(a, b){
+        const da = new Date(a + "T00:00:00");
+        const db = new Date(b + "T00:00:00");
+        return Math.round((db - da) / 86400000);
+      }
+
+      function computeStreakState(){
+        const state = loadStreakState();
+        const today = todayKey();
+
+        if(!state.lastVisitDate){
+          state.lastVisitDate = today;
+          state.streak = 1;
+          saveStreakState(state);
+          return state;
+        }
+
+        if(state.lastVisitDate === today){
+          if(!state.streak || state.streak < 1) state.streak = 1;
+          saveStreakState(state);
+          return state;
+        }
+
+        const diff = daysBetween(state.lastVisitDate, today);
+        if(diff === 1){
+          state.streak = Number(state.streak || 1) + 1;
+        }else{
+          state.streak = 1;
+        }
+
+        state.lastVisitDate = today;
+        saveStreakState(state);
+        return state;
+      }
+
       function setTakopiSayRandom(){
         el.takopiSay.textContent = SAY[Math.floor(Math.random() * SAY.length)];
       }
@@ -1187,9 +1256,11 @@
 
       function refreshUI(){
         const done = isDoneToday();
+        const streakState = computeStreakState();
 
         el.octoNow.textContent = String(getOcto());
         el.todayResultMini.textContent = getTodayResultText();
+        el.streakNow.textContent = String(streakState.streak);
 
         if(done){
           el.drawBtn.disabled = true;
