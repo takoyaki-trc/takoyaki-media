@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>シリアルコード入力｜たこ焼きトレカ</title>
+
+  <style>
+    :root{
+      --bg:#0f1220;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(0,0,0,.22);
+      --line:rgba(255,255,255,.14);
+      --text:#fff;
+      --muted:rgba(255,255,255,.72);
+      --gold:rgba(255,210,124,.8);
+      --shadow:0 16px 45px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .page{
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 16px 12px 32px;
+    }
+
+    .header{
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height: 62px;
+      padding: 12px 0;
+      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .back-btn{
+      position:absolute;
+      left:12px;
+      top:12px;
+      appearance:none;
+      border:none;
+      border-radius:14px;
+      padding:10px 12px;
+      background: rgba(255,255,255,.08);
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,.14);
+    }
+
+    .title-wrap{
+      text-align:center;
+      padding: 0 84px;
+    }
+
+    .title{
+      font-size: 22px;
+      font-weight: 1000;
+      line-height: 1.2;
+    }
+
+    .subtitle{
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hero{
+      margin-top: 10px;
+      padding: 16px;
+      border-radius: 20px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      display:grid;
+      grid-template-columns: 120px 1fr;
+      gap: 14px;
+      align-items:center;
+    }
+
+    .hero-illust{
+      border-radius: 16px;
+      background: rgba(0,0,0,.18);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height: 120px;
+      overflow:hidden;
+    }
+
+    .hero-illust img{
+      width: 96px;
+      display:block;
+    }
+
+    .hero-name{
+      font-size: 18px;
+      font-weight: 1000;
+      margin-bottom: 6px;
+    }
+
+    .hero-text{
+      font-size: 14px;
+      line-height: 1.65;
+      color: rgba(255,255,255,.95);
+    }
+
+    .cards{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .serial-card{
+      background: var(--panel);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 20px;
+      overflow:hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .serial-card-top{
+      display:grid;
+      grid-template-columns: 112px 1fr;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .serial-card-img{
+      width:112px;
+      height:112px;
+      border-radius:16px;
+      background: rgba(0,0,0,.2);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .serial-card-img img{
+      width: 96px;
+      display:block;
+      image-rendering: pixelated;
+    }
+
+    .owned-badge{
+      position:absolute;
+      top:6px;
+      right:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      background: rgba(0,0,0,.58);
+      border:1px solid rgba(255,255,255,.16);
+      font-size:12px;
+      font-weight:1000;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .serial-card-name{
+      font-size: 16px;
+      font-weight: 1000;
+      line-height: 1.35;
+    }
+
+    .serial-card-period{
+      margin-top: 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,.75);
+    }
+
+    .serial-card-desc{
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .serial-card-fx{
+      margin-top: 8px;
+      font-size: 12px;
+      color: rgba(255,255,255,.9);
+    }
+
+    .serial-card-bottom{
+      padding: 0 14px 14px;
+    }
+
+    .form-row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:nowrap;
+    }
+
+    .booth-link{
+      appearance:none;
+      border:none;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height:42px;
+      min-width:120px;
+      padding:0 14px;
+      border-radius:14px;
+      background: linear-gradient(135deg, rgba(127,208,255,.30), rgba(166,120,255,.24));
+      border:1px solid rgba(255,255,255,.18);
+      color:#fff;
+      font-weight:1000;
+      white-space:nowrap;
+      flex: 0 0 auto;
+      box-shadow: 0 10px 26px rgba(0,0,0,.35), 0 0 18px rgba(127,208,255,.08);
+    }
+
+    .serial-input-wrap{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex:1 1 auto;
+      min-width: 150px;
+    }
+
+    .serial-input{
+      width:100%;
+      min-width:0;
+      height:42px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      color:#fff;
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.02em;
+      padding:0 12px;
+      outline:none;
+    }
+
+    .serial-input::placeholder{
+      color: rgba(255,255,255,.5);
+      font-weight:800;
+    }
+
+    .send-btn{
+      appearance:none;
+      border:none;
+      height:42px;
+      min-width:72px;
+      padding:0 12px;
+      border-radius:14px;
+      background: linear-gradient(180deg,#ffb347,#ff7a18);
+      color:#2b1800;
+      font-weight:1000;
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow:0 4px 0 #b85b12;
+      cursor:pointer;
+      white-space:nowrap;
+      flex: 0 0 auto;
+    }
+
+    .send-btn:active{
+      transform:translateY(3px);
+      box-shadow:0 2px 0 #b85b12;
+    }
+
+    .send-btn[disabled]{
+      opacity:.6;
+      cursor:default;
+      box-shadow:none;
+    }
+
+    .stock-panel{
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 18px;
+      background: var(--panel);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .stock-title{
+      font-size: 15px;
+      font-weight: 1000;
+      margin-bottom: 10px;
+    }
+
+    .stock-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 0;
+      border-top:1px solid rgba(255,255,255,.08);
+      font-size:14px;
+    }
+
+    .stock-row:first-child{
+      border-top:none;
+      padding-top:0;
+    }
+
+    .stock-name{
+      font-weight:800;
+    }
+
+    .stock-count{
+      white-space:nowrap;
+      font-weight:1000;
+    }
+
+    #toast{
+      position:fixed !important;
+      left:12px !important;
+      right:12px !important;
+      bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+      z-index: 2147483647 !important;
+      pointer-events:none !important;
+      opacity:0 !important;
+      transform: translateY(10px) scale(.98) !important;
+      transition: opacity .16s ease, transform .18s ease !important;
+      padding: 14px !important;
+      border-radius: 14px !important;
+      font-weight: 900 !important;
+      text-align:center !important;
+      color:#fff !important;
+      background: rgba(15,18,32,.92) !important;
+      border:1px solid rgba(255,255,255,.16) !important;
+      box-shadow: 0 18px 44px rgba(0,0,0,.55) !important;
+      backdrop-filter: blur(6px) !important;
+      -webkit-backdrop-filter: blur(6px) !important;
+    }
+
+    @media (max-width: 760px){
+      .cards{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px){
+      .hero{
+        grid-template-columns: 1fr;
+      }
+
+      .serial-card-top{
+        grid-template-columns: 96px 1fr;
+      }
+
+      .serial-card-img{
+        width:96px;
+        height:96px;
+      }
+
+      .serial-card-img img{
+        width:84px;
+      }
+    }
+
+    @media (max-width: 380px){
+      .form-row{
+        flex-wrap:wrap;
+      }
+
+      .serial-input-wrap{
+        flex: 1 1 100%;
+      }
+
+      .serial-input{
+        width:100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <button class="back-btn" id="backBtn" type="button">←戻る</button>
+    <div class="title-wrap">
+      <div class="title">シリアルコード入力</div>
+      <div class="subtitle">限定タネの受け取りページ</div>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <div class="hero-illust">
+        <img src="https://ul.h3z.jp/0eBSeUBg.png" alt="たこぴ">
+      </div>
+      <div>
+        <div class="hero-name">たこぴ</div>
+        <div class="hero-text" id="takopiSay">
+          「シリアルを入れると、限定のタネが増える…たこ。<br>打ち間違いだけ、ちょっとこわい…たこ。」
+        </div>
+      </div>
+    </section>
+
+    <section class="cards">
+      <article class="serial-card" data-pick="gratan">
+        <div class="serial-card-top">
+          <div class="serial-card-img">
+            <span class="owned-badge">×<b id="ownedColabo">0</b></span>
+            <img src="https://ul.h3z.jp/wbnwoTzm.png" alt="ぐらたんのタネ">
+          </div>
+          <div>
+            <div class="serial-card-name">【コラボ】ぐらたんのタネ</div>
+            <div class="serial-card-period">期間：3月20日～4月19日まで</div>
+            <div class="serial-card-desc">
+              コラボ用の限定タネ。<br>
+              専用シリアルコードを入力すると受け取れる。
+            </div>
+            <div class="serial-card-fx">効果：<b>シリアル解放</b></div>
+          </div>
+        </div>
+        <div class="serial-card-bottom">
+          <div class="form-row">
+            <a class="booth-link" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener">BOOTHへ</a>
+            <div class="serial-input-wrap">
+              <input class="serial-input" id="gratanInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="GRATAN-XXXX-XXXX">
+              <button class="send-btn" id="gratanBtn" type="button">送信</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="serial-card" data-pick="anniv">
+        <div class="serial-card-top">
+          <div class="serial-card-img">
+            <span class="owned-badge">×<b id="ownedAnniv">0</b></span>
+            <img src="assets/images/anniversary/anv1.png" alt="ハーフアニバーサリーのタネ">
+          </div>
+          <div>
+            <div class="serial-card-name">ハーフアニバーサリーのタネ</div>
+            <div class="serial-card-period">期間：3月12日～5月19日まで</div>
+            <div class="serial-card-desc">
+              ハーフアニバーサリー限定タネ。<br>
+              専用シリアルコードを入力すると受け取れる。
+            </div>
+            <div class="serial-card-fx">効果：<b>シリアル解放</b></div>
+          </div>
+        </div>
+        <div class="serial-card-bottom">
+          <div class="form-row">
+            <a class="booth-link" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener">BOOTHへ</a>
+            <div class="serial-input-wrap">
+              <input class="serial-input" id="annivInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ANNIV-XXXX-XXXX">
+              <button class="send-btn" id="annivBtn" type="button">送信</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="stock-panel">
+      <div class="stock-title">現在の所持数</div>
+      <div class="stock-row">
+        <span class="stock-name">【コラボ】ぐらたんのタネ</span>
+        <span class="stock-count">×<b id="stockColabo">0</b></span>
+      </div>
+      <div class="stock-row">
+        <span class="stock-name">ハーフアニバーサリーのタネ</span>
+        <span class="stock-count">×<b id="stockAnniv">0</b></span>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const LS = {
+        inv: "tf_v1_inv",
+        codesUsed: "tf_v1_codes_used",
+        deviceId: "tf_v1_device_id"
+      };
+
+      const REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbyzqkzkmGYU8oKv_IWy2lVGOYPwhIDrlmPYx14w3aeNLaPds2o2B7e5X3hzINkWaA4K/exec";
+      const REDEEM_API_KEY  = "takopi-gratan-2026";
+
+      const ANNIV_REDEEM_ENDPOINT = "https://script.google.com/macros/s/AKfycbwiAq999UzbVOFYs265xk_9YGgPcIDqA_jGoU1g9V_nCJCEtB5EVJY9kXGZ4ruEEBbg_A/exec";
+      const ANNIV_REDEEM_API_KEY  = "takopi-anniv-2026";
+
+      const SAY = [
+        "「シリアルを入れると、限定のタネが増える…たこ。打ち間違いだけ、ちょっとこわい…たこ。」",
+        "「限定のタネは、買うんじゃなくて“解放する”感じ…たこ。」",
+        "「成功すると、ちゃんと在庫に入る…たこ。そこは真面目…たこ。」",
+        "「コードはやさしく打って…たこ。勢いで押すと、だいたい何か起きる…たこ。」"
+      ];
+
+      const $ = (sel, root=document) => root.querySelector(sel);
+
+      function loadJSON(key, fallback){
+        try{
+          const raw = localStorage.getItem(key);
+          if(!raw) return fallback;
+          return JSON.parse(raw);
+        }catch(e){
+          return fallback;
+        }
+      }
+
+      function saveJSON(key, obj){
+        localStorage.setItem(key, JSON.stringify(obj));
+      }
+
+      function invDefault(){
+        return { ver:1, seed:{}, water:{}, fert:{} };
+      }
+
+      function loadInv(){
+        const inv = loadJSON(LS.inv, invDefault());
+        inv.seed  = inv.seed  || {};
+        inv.water = inv.water || {};
+        inv.fert  = inv.fert  || {};
+        return inv;
+      }
+
+      function saveInv(inv){
+        saveJSON(LS.inv, inv);
+      }
+
+      function ensureInvKeys(){
+        const inv = loadInv();
+        inv.seed  = inv.seed  || {};
+        inv.water = inv.water || {};
+        inv.fert  = inv.fert  || {};
+        if(typeof inv.seed.seed_colabo !== "number") inv.seed.seed_colabo = Number(inv.seed.seed_colabo || 0);
+        if(typeof inv.seed.seed_anniv !== "number") inv.seed.seed_anniv = Number(inv.seed.seed_anniv || 0);
+        saveInv(inv);
+        return inv;
+      }
+
+      function loadUsedCodes(){
+        const obj = loadJSON(LS.codesUsed, {});
+        return (obj && typeof obj === "object") ? obj : {};
+      }
+
+      function saveUsedCodes(obj){
+        saveJSON(LS.codesUsed, obj);
+      }
+
+      function getDeviceId(){
+        let id = localStorage.getItem(LS.deviceId);
+        if(!id){
+          id = "dev_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+          localStorage.setItem(LS.deviceId, id);
+        }
+        return id;
+      }
+
+      function setRandomSay(){
+        const el = $("#takopiSay");
+        if(!el) return;
+        el.innerHTML = SAY[Math.floor(Math.random() * SAY.length)];
+      }
+
+      function forceToastStyle(el){
+        el.style.setProperty("position","fixed","important");
+        el.style.setProperty("left","12px","important");
+        el.style.setProperty("right","12px","important");
+        el.style.setProperty("bottom","14px","important");
+        el.style.setProperty("z-index","2147483647","important");
+        el.style.setProperty("pointer-events","none","important");
+        el.style.setProperty("padding","14px","important");
+        el.style.setProperty("border-radius","14px","important");
+        el.style.setProperty("font-weight","900","important");
+        el.style.setProperty("text-align","center","important");
+        el.style.setProperty("color","#fff","important");
+        el.style.setProperty("background","rgba(15,18,32,.92)","important");
+        el.style.setProperty("border","1px solid rgba(255,255,255,.16)","important");
+        el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55)","important");
+      }
+
+      function toastHype(text, opt={}){
+        const el = $("#toast");
+        if(!el) return;
+
+        forceToastStyle(el);
+        el.textContent = text || "";
+
+        const kind = opt.kind || "info";
+        if(kind === "good"){
+          el.style.setProperty("border","1px solid rgba(159,255,168,.35)","important");
+          el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(159,255,168,.18)","important");
+        }else if(kind === "bad"){
+          el.style.setProperty("border","1px solid rgba(255,154,165,.38)","important");
+          el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(255,154,165,.16)","important");
+        }else{
+          el.style.setProperty("border","1px solid rgba(255,255,255,.16)","important");
+          el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55)","important");
+        }
+
+        clearTimeout(toastHype._t);
+        el.style.opacity = "0";
+        el.style.transform = "translateY(10px) scale(.98)";
+        void el.offsetHeight;
+
+        requestAnimationFrame(() => {
+          el.style.opacity = "1";
+          el.style.transform = "translateY(0) scale(1)";
+        });
+
+        toastHype._t = setTimeout(() => {
+          el.style.opacity = "0";
+          el.style.transform = "translateY(10px) scale(.98)";
+        }, 1900);
+      }
+
+      async function redeemOnServer(endpoint, apiKey, code){
+        const body = {
+          apiKey,
+          code,
+          deviceId: getDeviceId(),
+          app: "serial-page",
+          ts: Date.now()
+        };
+
+        const res = await fetch(endpoint, {
+          method: "POST",
+          body: JSON.stringify(body),
+          cache: "no-store",
+        });
+
+        if(!res.ok){
+          throw new Error("通信エラー: HTTP " + res.status);
+        }
+
+        const data = await res.json().catch(() => null);
+        if(!data || typeof data.ok !== "boolean"){
+          throw new Error("サーバー応答不正");
+        }
+        return data;
+      }
+
+      function applyRedeemReward(reward){
+        const inv = ensureInvKeys();
+
+        const addColabo = Math.max(0, Math.floor(Number(reward?.seed_colabo || 0) || 0));
+        const addAnniv  = Math.max(0, Math.floor(Number(reward?.seed_anniv  || 0) || 0));
+
+        if(addColabo > 0){
+          inv.seed.seed_colabo = Number(inv.seed.seed_colabo || 0) + addColabo;
+        }
+        if(addAnniv > 0){
+          inv.seed.seed_anniv = Number(inv.seed.seed_anniv || 0) + addAnniv;
+        }
+
+        saveInv(inv);
+
+        return {
+          addedSeedColabo: addColabo,
+          addedSeedAnniv: addAnniv
+        };
+      }
+
+      function refreshOwned(){
+        const inv = ensureInvKeys();
+        const colabo = Number(inv.seed.seed_colabo || 0);
+        const anniv  = Number(inv.seed.seed_anniv || 0);
+
+        $("#ownedColabo").textContent = String(colabo);
+        $("#ownedAnniv").textContent  = String(anniv);
+        $("#stockColabo").textContent = String(colabo);
+        $("#stockAnniv").textContent  = String(anniv);
+      }
+
+      async function runRedeemWithPick(pick, code, btnEl, inputEl){
+        const c = String(code || "").trim().toUpperCase();
+        if(!c){
+          toastHype("シリアルが空です。", {kind:"bad"});
+          return;
+        }
+
+        const used = loadUsedCodes();
+        const usedKey = pick + ":" + c;
+        if(used[usedKey]){
+          toastHype("このコードは、この端末では使用済みです。", {kind:"bad"});
+          return;
+        }
+
+        if(btnEl) btnEl.disabled = true;
+
+        try{
+          const endpoint = pick === "anniv" ? ANNIV_REDEEM_ENDPOINT : REDEEM_ENDPOINT;
+          const apiKey   = pick === "anniv" ? ANNIV_REDEEM_API_KEY  : REDEEM_API_KEY;
+
+          const data = await redeemOnServer(endpoint, apiKey, c);
+          if(!data.ok){
+            toastHype(data.message || data.error || "無効なコードです。", {kind:"bad"});
+            return;
+          }
+
+          const reward = data.reward || data.grant || {};
+          const applied = applyRedeemReward(reward);
+
+          used[usedKey] = { at: Date.now(), payload: reward };
+          saveUsedCodes(used);
+
+          if(inputEl) inputEl.value = "";
+
+          if(pick === "anniv"){
+            toastHype("✨ アニバーサリーのタネ +" + applied.addedSeedAnniv + " ✨", {kind:"good"});
+          }else{
+            toastHype("✨ コラボのタネ +" + applied.addedSeedColabo + " ✨", {kind:"good"});
+          }
+
+          refreshOwned();
+          setRandomSay();
+        }catch(e){
+          toastHype("通信に失敗しました。時間を置いてもう一度試してください。", {kind:"bad"});
+        }finally{
+          if(btnEl) btnEl.disabled = false;
+        }
+      }
+
+      function wireRedeem(inputId, btnId, pick){
+        const input = document.getElementById(inputId);
+        const btn   = document.getElementById(btnId);
+        if(!input || !btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          runRedeemWithPick(pick, input.value, btn, input);
+        });
+
+        input.addEventListener("keydown", (e) => {
+          if(e.key === "Enter"){
+            e.preventDefault();
+            runRedeemWithPick(pick, input.value, btn, input);
+          }
+        });
+      }
+
+      function wireBack(){
+        const btn = document.getElementById("backBtn");
+        if(!btn) return;
+
+        btn.addEventListener("click", () => {
+          if(history.length > 1){
+            history.back();
+          }else{
+            location.href = "./index.html";
+          }
+        });
+      }
+
+      function boot(){
+        ensureInvKeys();
+        refreshOwned();
+        setRandomSay();
+        wireRedeem("gratanInput", "gratanBtn", "gratan");
+        wireRedeem("annivInput", "annivBtn", "anniv");
+        wireBack();
+      }
+
+      if(document.readyState === "loading"){
+        document.addEventListener("DOMContentLoaded", boot, { once:true });
+      }else{
+        boot();
+      }
+    })();
+  </script>
+</body>
+</html>
