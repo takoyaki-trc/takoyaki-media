@@ -5,118 +5,406 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>シリアルコード入力｜たこ焼きトレカ</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --bg:#0f1220;
-      --panel:rgba(255,255,255,.06);
-      --panel2:rgba(0,0,0,.22);
-      --line:rgba(255,255,255,.14);
-      --text:#fff;
-      --muted:rgba(255,255,255,.72);
-      --gold:rgba(255,210,124,.8);
-      --shadow:0 16px 45px rgba(0,0,0,.45);
+      --bgTop:#304f95;
+      --bgMid:#6f8fd8;
+      --bgBottom:#cfe0ff;
+
+      --panel:#f8efd4;
+      --panel2:#efe0b6;
+      --panel3:#fff8e8;
+      --ink:#2f2415;
+      --muted:#65553b;
+      --line:#8a6a31;
+      --gold1:#ffe7a3;
+      --gold2:#f7bf49;
+      --gold3:#a76b13;
+      --orange1:#ffbf65;
+      --orange2:#ff8f2c;
+      --green1:#d8f2b4;
+      --green2:#84bf5b;
+      --blue1:#d7efff;
+      --blue2:#6ea9ff;
+      --red1:#ffd9d9;
+      --red2:#db6464;
+      --shadow:0 10px 0 rgba(80,54,14,.22), 0 18px 34px rgba(27,20,8,.18);
       --radius:18px;
     }
 
     *{ box-sizing:border-box; }
-    html,body{ height:100%; }
+    html,body{ min-height:100%; }
 
     body{
       margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans JP",sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      color:var(--ink);
+      font-family:"DotGothic16", system-ui, sans-serif;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 16%),
+        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 34%, #9fc080 68%, #6c9c58 100%);
+      background-attachment: fixed;
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 10% 12%, rgba(255,255,255,.32) 0 5%, transparent 6%),
+        radial-gradient(circle at 20% 18%, rgba(255,255,255,.24) 0 4%, transparent 5%),
+        radial-gradient(circle at 78% 11%, rgba(255,255,255,.26) 0 5%, transparent 6%),
+        radial-gradient(circle at 88% 19%, rgba(255,255,255,.20) 0 4%, transparent 5%);
+      opacity:.7;
     }
 
     .page{
-      max-width: 860px;
+      position:relative;
+      max-width: 1040px;
       margin: 0 auto;
-      padding: 16px 12px 32px;
+      padding: 14px 12px 40px;
     }
 
     .header{
       position: sticky;
       top: 0;
-      z-index: 30;
+      z-index: 50;
       display:flex;
       align-items:center;
       justify-content:center;
-      min-height: 62px;
-      padding: 12px 0;
-      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
+      min-height: 68px;
+      padding: 10px 0;
+      margin-bottom: 10px;
+      background: linear-gradient(180deg, rgba(44,64,120,.88), rgba(44,64,120,.52));
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
+      border-bottom: 3px solid rgba(255,255,255,.18);
+      box-shadow: 0 8px 20px rgba(0,0,0,.12);
     }
 
     .back-btn{
       position:absolute;
       left:12px;
-      top:12px;
+      top:11px;
       appearance:none;
-      border:none;
+      border:3px solid #fff7d7;
+      border-bottom-width:5px;
       border-radius:14px;
       padding:10px 12px;
-      background: rgba(255,255,255,.08);
+      background: linear-gradient(180deg,#8a5cff,#6240cb);
       color:#fff;
+      font-size:13px;
       font-weight:900;
       cursor:pointer;
-      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 6px 0 #3b267c;
+    }
+
+    .back-btn:active{
+      transform: translateY(2px);
+      box-shadow: 0 4px 0 #3b267c;
     }
 
     .title-wrap{
       text-align:center;
-      padding: 0 84px;
+      padding: 0 90px;
+      color:#fffdf5;
+      text-shadow: 0 2px 0 rgba(0,0,0,.22);
     }
 
     .title{
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 1000;
       line-height: 1.2;
+      letter-spacing:.02em;
     }
 
     .subtitle{
-      margin-top: 4px;
+      margin-top: 5px;
       font-size: 12px;
-      color: var(--muted);
+      opacity:.92;
     }
 
-    .hero{
-      margin-top: 10px;
-      padding: 16px;
-      border-radius: 20px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
+    .top-grid{
       display:grid;
-      grid-template-columns: 120px 1fr;
+      grid-template-columns: 1.1fr .9fr;
       gap: 14px;
-      align-items:center;
+      align-items:stretch;
     }
 
-    .hero-illust{
-      border-radius: 16px;
-      background: rgba(0,0,0,.18);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      min-height: 120px;
+    .panel{
+      background: linear-gradient(180deg, var(--panel3), var(--panel));
+      border: 4px solid #fff4cb;
+      border-radius: 22px;
+      box-shadow: var(--shadow);
       overflow:hidden;
     }
 
+    .panel-inner{
+      padding: 16px;
+    }
+
+    .hero{
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.18), transparent 26%),
+        linear-gradient(90deg, rgba(255,213,112,.12), transparent 40%);
+    }
+
+    .hero-inner{
+      position:relative;
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap: 14px;
+      align-items:center;
+      padding: 18px;
+    }
+
+    .hero-illust-wrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .hero-illust{
+      width:122px;
+      height:122px;
+      border-radius: 20px;
+      border:4px solid #fff4cb;
+      background:
+        linear-gradient(180deg, #9fd7ff, #74a6ff 52%, #83b05b 52%, #6a9246);
+      box-shadow: inset 0 -8px 0 rgba(0,0,0,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .hero-illust::after{
+      content:"";
+      position:absolute;
+      inset:auto 0 0 0;
+      height: 18px;
+      background:
+        linear-gradient(90deg,
+          rgba(255,255,255,.18) 0 12.5%,
+          transparent 12.5% 25%,
+          rgba(255,255,255,.18) 25% 37.5%,
+          transparent 37.5% 50%,
+          rgba(255,255,255,.18) 50% 62.5%,
+          transparent 62.5% 75%,
+          rgba(255,255,255,.18) 75% 87.5%,
+          transparent 87.5% 100%);
+      opacity:.32;
+    }
+
     .hero-illust img{
-      width: 96px;
+      width: 98px;
       display:block;
+      image-rendering: pixelated;
+      transform: translateY(2px);
+    }
+
+    .hero-copy{
+      min-width:0;
+    }
+
+    .hero-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#fff6d7;
+      border:2px solid #e0c67f;
+      color:#6d4f13;
+      font-size:12px;
+      margin-bottom:10px;
     }
 
     .hero-name{
-      font-size: 18px;
-      font-weight: 1000;
-      margin-bottom: 6px;
+      font-size: 22px;
+      font-weight:1000;
+      margin-bottom:8px;
+      line-height:1.25;
     }
 
     .hero-text{
       font-size: 14px;
-      line-height: 1.65;
-      color: rgba(255,255,255,.95);
+      line-height: 1.8;
+      color: var(--ink);
+      background: #fffdf5;
+      border:3px solid #ead39a;
+      border-radius: 18px;
+      padding: 12px 14px;
+    }
+
+    .howto .panel-inner{
+      padding: 16px;
+    }
+
+    .sec-title{
+      font-size:16px;
+      font-weight:1000;
+      margin-bottom: 12px;
+      color:#4f3915;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .steps{
+      display:grid;
+      gap:10px;
+    }
+
+    .step{
+      display:grid;
+      grid-template-columns: 42px 1fr;
+      gap:10px;
+      align-items:start;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.55);
+      border:2px solid #ead39a;
+    }
+
+    .step-no{
+      width:42px;
+      height:42px;
+      border-radius: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:1000;
+      color:#fff;
+      background: linear-gradient(180deg,#ffb245,#ff7d1c);
+      border:2px solid #fff2cf;
+      box-shadow: 0 4px 0 #bf6115;
+    }
+
+    .step-title{
+      font-size:14px;
+      font-weight:1000;
+      margin-bottom:4px;
+      color:#4f3915;
+    }
+
+    .step-text{
+      font-size:12px;
+      line-height:1.7;
+      color:var(--muted);
+    }
+
+    .tips{
+      margin-top:10px;
+      padding: 12px;
+      border-radius:16px;
+      background: linear-gradient(180deg,#eef8ff,#d7efff);
+      border:2px solid #89b7e7;
+      font-size:12px;
+      line-height:1.75;
+      color:#29486a;
+    }
+
+    .nav-panel{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .nav-card{
+      padding: 14px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, var(--panel3), var(--panel));
+      border:4px solid #fff4cb;
+      box-shadow: var(--shadow);
+      display:grid;
+      grid-template-columns: 72px 1fr;
+      gap: 12px;
+      align-items:center;
+    }
+
+    .nav-icon{
+      width:72px;
+      height:72px;
+      border-radius: 16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:3px solid #fff2cf;
+      font-size:26px;
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,.08);
+    }
+
+    .nav-icon.shop{
+      background: linear-gradient(180deg,#ffd2a3,#ffab63);
+    }
+
+    .nav-icon.farm{
+      background: linear-gradient(180deg,#d9f7b8,#93cf65);
+    }
+
+    .nav-title{
+      font-size:15px;
+      font-weight:1000;
+      color:#4f3915;
+      margin-bottom:4px;
+    }
+
+    .nav-desc{
+      font-size:12px;
+      line-height:1.65;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+
+    .nav-btn{
+      appearance:none;
+      border:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight:1000;
+      text-decoration:none;
+      color:#fff;
+      cursor:pointer;
+      border:3px solid #fff4cb;
+      white-space:nowrap;
+    }
+
+    .nav-btn.shop{
+      background: linear-gradient(180deg,#ffb347,#ff7a18);
+      box-shadow: 0 5px 0 #b85b12;
+    }
+
+    .nav-btn.farm{
+      background: linear-gradient(180deg,#91dc69,#55a93d);
+      box-shadow: 0 5px 0 #397428;
+    }
+
+    .nav-btn:active{
+      transform: translateY(2px);
     }
 
     .cards{
@@ -127,30 +415,65 @@
     }
 
     .serial-card{
-      background: var(--panel);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius: 20px;
+      background: linear-gradient(180deg, var(--panel3), var(--panel));
+      border:4px solid #fff4cb;
+      border-radius: 22px;
       overflow:hidden;
       box-shadow: var(--shadow);
     }
 
+    .serial-head{
+      padding: 12px 14px;
+      border-bottom: 3px dashed #e7c976;
+      background: linear-gradient(180deg, rgba(255,245,214,.95), rgba(255,239,196,.92));
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .serial-head-title{
+      font-size: 15px;
+      font-weight:1000;
+      color:#5d4215;
+    }
+
+    .period-chip{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:32px;
+      padding:0 10px;
+      border-radius:999px;
+      border:2px solid #fff2cf;
+      background: linear-gradient(180deg,#ffefb3,#ffc95e);
+      color:#704c0f;
+      font-size:11px;
+      font-weight:1000;
+      text-align:center;
+    }
+
     .serial-card-top{
       display:grid;
-      grid-template-columns: 112px 1fr;
+      grid-template-columns: 120px 1fr;
       gap: 12px;
       padding: 14px;
     }
 
     .serial-card-img{
-      width:112px;
-      height:112px;
-      border-radius:16px;
-      background: rgba(0,0,0,.2);
+      width:120px;
+      height:120px;
+      border-radius:18px;
+      background:
+        linear-gradient(180deg, #fff9e9, #f7e8bc);
+      border:3px solid #ead39a;
       display:flex;
       align-items:center;
       justify-content:center;
       overflow:hidden;
       position:relative;
+      box-shadow: inset 0 -8px 0 rgba(0,0,0,.05);
     }
 
     .serial-card-img img{
@@ -165,41 +488,71 @@
       right:6px;
       padding:4px 8px;
       border-radius:999px;
-      background: rgba(0,0,0,.58);
-      border:1px solid rgba(255,255,255,.16);
-      font-size:12px;
+      background: rgba(72,53,20,.9);
+      color:#fff8dc;
+      border:2px solid rgba(255,245,214,.8);
+      font-size:11px;
       font-weight:1000;
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
     }
 
     .serial-card-name{
-      font-size: 16px;
-      font-weight: 1000;
-      line-height: 1.35;
-    }
-
-    .serial-card-period{
-      margin-top: 6px;
-      font-size: 12px;
-      color: rgba(255,255,255,.75);
+      font-size: 17px;
+      font-weight:1000;
+      line-height: 1.45;
+      color:#4f3915;
+      margin-bottom:8px;
     }
 
     .serial-card-desc{
-      margin-top: 8px;
-      font-size: 13px;
-      line-height: 1.55;
+      font-size: 12px;
+      line-height: 1.8;
       color: var(--muted);
+      margin-bottom:8px;
     }
 
     .serial-card-fx{
-      margin-top: 8px;
       font-size: 12px;
-      color: rgba(255,255,255,.9);
+      line-height: 1.7;
+      color:#5a441b;
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.65);
+      border:2px solid #ecd8a3;
     }
 
     .serial-card-bottom{
       padding: 0 14px 14px;
+    }
+
+    .code-guide{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:10px;
+    }
+
+    .guide-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:1000;
+      border:2px solid;
+    }
+
+    .guide-chip.ex{
+      background:#eef8ff;
+      border-color:#8bbbe7;
+      color:#2f5574;
+    }
+
+    .guide-chip.note{
+      background:#fff6df;
+      border-color:#e8c979;
+      color:#6d5016;
     }
 
     .form-row{
@@ -216,17 +569,23 @@
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      height:42px;
-      min-width:120px;
+      height:46px;
+      min-width:118px;
       padding:0 14px;
       border-radius:14px;
-      background: linear-gradient(135deg, rgba(127,208,255,.30), rgba(166,120,255,.24));
-      border:1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg,#7cd2ff,#4d90ff);
+      border:3px solid #fff4cb;
       color:#fff;
+      font-size:13px;
       font-weight:1000;
       white-space:nowrap;
       flex: 0 0 auto;
-      box-shadow: 0 10px 26px rgba(0,0,0,.35), 0 0 18px rgba(127,208,255,.08);
+      box-shadow: 0 5px 0 #265cb8;
+    }
+
+    .booth-link:active{
+      transform: translateY(2px);
+      box-shadow: 0 3px 0 #265cb8;
     }
 
     .serial-input-wrap{
@@ -234,69 +593,97 @@
       gap:8px;
       align-items:center;
       flex:1 1 auto;
-      min-width: 150px;
+      min-width: 160px;
     }
 
     .serial-input{
       width:100%;
       min-width:0;
-      height:42px;
+      height:46px;
       border-radius:14px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.22);
-      color:#fff;
+      border:3px solid #ead39a;
+      background: #fffdf5;
+      color:#3a2c14;
+      font-family:inherit;
       font-size:14px;
-      font-weight:900;
-      letter-spacing:.02em;
+      font-weight:1000;
+      letter-spacing:.06em;
       padding:0 12px;
       outline:none;
+      text-transform:uppercase;
+    }
+
+    .serial-input:focus{
+      border-color:#ffb238;
+      box-shadow: 0 0 0 4px rgba(255,183,71,.18);
     }
 
     .serial-input::placeholder{
-      color: rgba(255,255,255,.5);
-      font-weight:800;
+      color: #9e8d6d;
+      font-weight:1000;
+      letter-spacing:.04em;
     }
 
-    .send-btn{
+    .mini-btn{
       appearance:none;
       border:none;
-      height:42px;
+      height:46px;
       min-width:72px;
       padding:0 12px;
       border-radius:14px;
-      background: linear-gradient(180deg,#ffb347,#ff7a18);
-      color:#2b1800;
+      font-family:inherit;
+      font-size:13px;
       font-weight:1000;
-      border:1px solid rgba(255,255,255,.14);
-      box-shadow:0 4px 0 #b85b12;
       cursor:pointer;
       white-space:nowrap;
       flex: 0 0 auto;
+      border:3px solid #fff4cb;
+      color:#fff;
     }
 
-    .send-btn:active{
-      transform:translateY(3px);
-      box-shadow:0 2px 0 #b85b12;
+    .paste-btn{
+      background: linear-gradient(180deg,#9f8bff,#7558f0);
+      box-shadow: 0 5px 0 #4d389f;
     }
 
-    .send-btn[disabled]{
-      opacity:.6;
+    .send-btn{
+      background: linear-gradient(180deg,#ffb347,#ff7a18);
+      box-shadow:0 5px 0 #b85b12;
+      color:#2b1800;
+    }
+
+    .mini-btn:active{
+      transform: translateY(2px);
+    }
+
+    .mini-btn[disabled]{
+      opacity:.62;
       cursor:default;
       box-shadow:none;
+      transform:none;
     }
 
     .stock-panel{
       margin-top: 14px;
-      padding: 14px;
-      border-radius: 18px;
-      background: var(--panel);
-      border:1px solid rgba(255,255,255,.08);
+      padding: 0;
+      border-radius: 22px;
+      background: linear-gradient(180deg, var(--panel3), var(--panel));
+      border:4px solid #fff4cb;
+      box-shadow: var(--shadow);
+      overflow:hidden;
     }
 
-    .stock-title{
-      font-size: 15px;
-      font-weight: 1000;
-      margin-bottom: 10px;
+    .stock-head{
+      padding: 12px 14px;
+      border-bottom:3px dashed #e7c976;
+      background: linear-gradient(180deg, rgba(255,245,214,.95), rgba(255,239,196,.92));
+      font-size:15px;
+      font-weight:1000;
+      color:#5d4215;
+    }
+
+    .stock-body{
+      padding: 10px 14px 14px;
     }
 
     .stock-row{
@@ -304,8 +691,8 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding:10px 0;
-      border-top:1px solid rgba(255,255,255,.08);
+      padding:12px 0;
+      border-top:1px dashed #ddc37e;
       font-size:14px;
     }
 
@@ -315,12 +702,32 @@
     }
 
     .stock-name{
-      font-weight:800;
+      font-weight:1000;
+      color:#4f3915;
     }
 
     .stock-count{
       white-space:nowrap;
       font-weight:1000;
+      color:#684913;
+      background:#fff7dc;
+      border:2px solid #e3c670;
+      border-radius:999px;
+      padding:6px 10px;
+      min-width:72px;
+      text-align:center;
+    }
+
+    .footer-note{
+      margin-top:14px;
+      padding: 14px;
+      border-radius: 20px;
+      background: linear-gradient(180deg,#eef8ff,#d7efff);
+      border:3px solid #89b7e7;
+      color:#2a4b6b;
+      font-size:12px;
+      line-height:1.8;
+      box-shadow: var(--shadow);
     }
 
     #toast{
@@ -338,22 +745,43 @@
       font-weight: 900 !important;
       text-align:center !important;
       color:#fff !important;
-      background: rgba(15,18,32,.92) !important;
-      border:1px solid rgba(255,255,255,.16) !important;
-      box-shadow: 0 18px 44px rgba(0,0,0,.55) !important;
+      background: rgba(50,36,12,.92) !important;
+      border:3px solid rgba(255,243,208,.82) !important;
+      box-shadow: 0 18px 44px rgba(0,0,0,.35) !important;
       backdrop-filter: blur(6px) !important;
       -webkit-backdrop-filter: blur(6px) !important;
+      font-family:"DotGothic16", system-ui, sans-serif !important;
     }
 
-    @media (max-width: 760px){
-      .cards{
+    @media (max-width: 920px){
+      .top-grid{
         grid-template-columns: 1fr;
       }
     }
 
-    @media (max-width: 520px){
-      .hero{
+    @media (max-width: 760px){
+      .cards,
+      .nav-panel{
         grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px){
+      .title-wrap{
+        padding: 0 82px;
+      }
+
+      .title{
+        font-size: 20px;
+      }
+
+      .hero-inner{
+        grid-template-columns: 1fr;
+        text-align:center;
+      }
+
+      .hero-copy{
+        text-align:left;
       }
 
       .serial-card-top{
@@ -366,21 +794,55 @@
       }
 
       .serial-card-img img{
-        width:84px;
+        width:78px;
       }
-    }
 
-    @media (max-width: 380px){
       .form-row{
         flex-wrap:wrap;
       }
 
+      .booth-link{
+        width:100%;
+      }
+
       .serial-input-wrap{
-        flex: 1 1 100%;
+        width:100%;
+        flex:1 1 100%;
+        flex-wrap:wrap;
       }
 
       .serial-input{
+        flex:1 1 100%;
+      }
+
+      .mini-btn{
+        flex:1 1 calc(50% - 4px);
+      }
+    }
+
+    @media (max-width: 420px){
+      .page{
+        padding-left:10px;
+        padding-right:10px;
+      }
+
+      .back-btn{
+        padding:10px 10px;
+        font-size:12px;
+      }
+
+      .title-wrap{
+        padding: 0 74px;
+      }
+
+      .serial-head{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .period-chip{
         width:100%;
+        justify-content:center;
       }
     }
   </style>
@@ -390,73 +852,199 @@
     <button class="back-btn" id="backBtn" type="button">←戻る</button>
     <div class="title-wrap">
       <div class="title">シリアルコード入力</div>
-      <div class="subtitle">限定タネの受け取りページ</div>
+      <div class="subtitle">限定のタネを受け取って、露店や畑へ進もう</div>
     </div>
   </header>
 
   <main class="page">
-    <section class="hero">
-      <div class="hero-illust">
-        <img src="https://ul.h3z.jp/0eBSeUBg.png" alt="たこぴ">
-      </div>
-      <div>
-        <div class="hero-name">たこぴ</div>
-        <div class="hero-text" id="takopiSay">
-          「シリアルを入れると、限定のタネが増える…たこ。<br>打ち間違いだけ、ちょっとこわい…たこ。」
+    <section class="top-grid">
+      <section class="panel hero">
+        <div class="hero-inner">
+          <div class="hero-illust-wrap">
+            <div class="hero-illust">
+              <img src="https://ul.h3z.jp/0eBSeUBg.png" alt="たこぴ">
+            </div>
+          </div>
+          <div class="hero-copy">
+            <div class="hero-badge">★ はじめての人もここからでOK</div>
+            <div class="hero-name">たこぴのシリアル案内所</div>
+            <div class="hero-text" id="takopiSay">
+              「ここでシリアルコードを入れると、限定のタネが在庫に入るたこ。<br>
+              受け取ったあとは、たこぴのお店や、たこ焼き畑にそのまま進めるたこ。」
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section class="panel howto">
+        <div class="panel-inner">
+          <div class="sec-title">📜 使い方</div>
+          <div class="steps">
+            <div class="step">
+              <div class="step-no">1</div>
+              <div>
+                <div class="step-title">シリアルつきの商品を用意</div>
+                <div class="step-text">BOOTHや配布イベントでもらったシリアルコードを手元に準備します。</div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-no">2</div>
+              <div>
+                <div class="step-title">対応する欄にコードを入力</div>
+                <div class="step-text">英字は自動で大文字になります。貼り付けボタンから入力してもOKです。</div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-no">3</div>
+              <div>
+                <div class="step-title">送信してタネを受け取る</div>
+                <div class="step-text">成功すると、このページの所持数にすぐ反映されます。使用済みコードは再利用できません。</div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-no">4</div>
+              <div>
+                <div class="step-title">たこぴのお店 → たこ焼き畑へ</div>
+                <div class="step-text">受け取ったタネは畑で植えられます。まずはお店や畑へ進んで遊んでみてください。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tips">
+            【入力のコツ】<br>
+            ・前後のスペースは自動で整えます。<br>
+            ・小文字で入力しても自動で大文字になります。<br>
+            ・コードがコピー済みなら「貼り付け」で楽に入力できます。
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="nav-panel">
+      <article class="nav-card">
+        <div class="nav-icon shop">🏪</div>
+        <div>
+          <div class="nav-title">たこぴのお店へ</div>
+          <div class="nav-desc">タネや道具の確認をしたいときはこちら。街の拠点として使えます。</div>
+          <a class="nav-btn shop" href="./roten.html">お店に行く</a>
+        </div>
+      </article>
+
+      <article class="nav-card">
+        <div class="nav-icon farm">🌱</div>
+        <div>
+          <div class="nav-title">たこ焼き畑へ</div>
+          <div class="nav-desc">受け取ったタネを植えて、カード収穫に進みたいときはこちら。</div>
+          <a class="nav-btn farm" href="./farm.html">畑に行く</a>
+        </div>
+      </article>
     </section>
 
     <section class="cards">
       <article class="serial-card" data-pick="gratan">
+        <div class="serial-head">
+          <div class="serial-head-title">【コラボ】ぐらたんのタネ</div>
+          <div class="period-chip">3月20日～4月19日</div>
+        </div>
+
         <div class="serial-card-top">
           <div class="serial-card-img">
             <span class="owned-badge">×<b id="ownedColabo">0</b></span>
             <img src="https://ul.h3z.jp/wbnwoTzm.png" alt="ぐらたんのタネ">
           </div>
+
           <div>
-            <div class="serial-card-name">【コラボ】ぐらたんのタネ</div>
-            <div class="serial-card-period">期間：3月20日～4月19日まで</div>
+            <div class="serial-card-name">コラボ限定の特別なタネ</div>
             <div class="serial-card-desc">
-              コラボ用の限定タネ。<br>
-              専用シリアルコードを入力すると受け取れる。
+              専用シリアルコードを入力すると受け取れます。<br>
+              受け取ったあとは、たこ焼き畑で使えます。
             </div>
-            <div class="serial-card-fx">効果：<b>シリアル解放</b></div>
+            <div class="serial-card-fx">
+              効果：<b>シリアル解放</b><br>
+              対象コード例：<b>GRATAN-XXXX-XXXX</b>
+            </div>
           </div>
         </div>
+
         <div class="serial-card-bottom">
+          <div class="code-guide">
+            <div class="guide-chip ex">例：GRATAN-XXXX-XXXX</div>
+            <div class="guide-chip note">半角英数字で入力</div>
+          </div>
+
           <div class="form-row">
             <a class="booth-link" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener">BOOTHへ</a>
+
             <div class="serial-input-wrap">
-              <input class="serial-input" id="gratanInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="GRATAN-XXXX-XXXX">
-              <button class="send-btn" id="gratanBtn" type="button">送信</button>
+              <input
+                class="serial-input"
+                id="gratanInput"
+                type="text"
+                inputmode="text"
+                autocomplete="off"
+                autocapitalize="characters"
+                spellcheck="false"
+                placeholder="GRATAN-XXXX-XXXX"
+                aria-label="ぐらたんのタネのシリアルコード"
+              >
+              <button class="mini-btn paste-btn" id="gratanPasteBtn" type="button">貼り付け</button>
+              <button class="mini-btn send-btn" id="gratanBtn" type="button">送信</button>
             </div>
           </div>
         </div>
       </article>
 
       <article class="serial-card" data-pick="anniv">
+        <div class="serial-head">
+          <div class="serial-head-title">ハーフアニバーサリーのタネ</div>
+          <div class="period-chip">3月12日～5月19日</div>
+        </div>
+
         <div class="serial-card-top">
           <div class="serial-card-img">
             <span class="owned-badge">×<b id="ownedAnniv">0</b></span>
             <img src="assets/images/anniversary/anv1.png" alt="ハーフアニバーサリーのタネ">
           </div>
+
           <div>
-            <div class="serial-card-name">ハーフアニバーサリーのタネ</div>
-            <div class="serial-card-period">期間：3月12日～5月19日まで</div>
+            <div class="serial-card-name">アニバーサリー限定の記念タネ</div>
             <div class="serial-card-desc">
-              ハーフアニバーサリー限定タネ。<br>
-              専用シリアルコードを入力すると受け取れる。
+              専用シリアルコードを入力すると受け取れます。<br>
+              期間限定の特別なタネです。
             </div>
-            <div class="serial-card-fx">効果：<b>シリアル解放</b></div>
+            <div class="serial-card-fx">
+              効果：<b>シリアル解放</b><br>
+              対象コード例：<b>ANNIV-XXXX-XXXX</b>
+            </div>
           </div>
         </div>
+
         <div class="serial-card-bottom">
+          <div class="code-guide">
+            <div class="guide-chip ex">例：ANNIV-XXXX-XXXX</div>
+            <div class="guide-chip note">コピーして貼り付けもOK</div>
+          </div>
+
           <div class="form-row">
             <a class="booth-link" href="https://takoyaki-toreka.booth.pm/" target="_blank" rel="noopener">BOOTHへ</a>
+
             <div class="serial-input-wrap">
-              <input class="serial-input" id="annivInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ANNIV-XXXX-XXXX">
-              <button class="send-btn" id="annivBtn" type="button">送信</button>
+              <input
+                class="serial-input"
+                id="annivInput"
+                type="text"
+                inputmode="text"
+                autocomplete="off"
+                autocapitalize="characters"
+                spellcheck="false"
+                placeholder="ANNIV-XXXX-XXXX"
+                aria-label="ハーフアニバーサリーのタネのシリアルコード"
+              >
+              <button class="mini-btn paste-btn" id="annivPasteBtn" type="button">貼り付け</button>
+              <button class="mini-btn send-btn" id="annivBtn" type="button">送信</button>
             </div>
           </div>
         </div>
@@ -464,15 +1052,23 @@
     </section>
 
     <section class="stock-panel">
-      <div class="stock-title">現在の所持数</div>
-      <div class="stock-row">
-        <span class="stock-name">【コラボ】ぐらたんのタネ</span>
-        <span class="stock-count">×<b id="stockColabo">0</b></span>
+      <div class="stock-head">現在の所持数</div>
+      <div class="stock-body">
+        <div class="stock-row">
+          <span class="stock-name">【コラボ】ぐらたんのタネ</span>
+          <span class="stock-count">×<b id="stockColabo">0</b></span>
+        </div>
+        <div class="stock-row">
+          <span class="stock-name">ハーフアニバーサリーのタネ</span>
+          <span class="stock-count">×<b id="stockAnniv">0</b></span>
+        </div>
       </div>
-      <div class="stock-row">
-        <span class="stock-name">ハーフアニバーサリーのタネ</span>
-        <span class="stock-count">×<b id="stockAnniv">0</b></span>
-      </div>
+    </section>
+
+    <section class="footer-note">
+      ※ このページで受け取ったタネは、同じブラウザの保存データに入ります。<br>
+      ※ ページ下のボタンから、そのまま「たこぴのお店」「たこ焼き畑」に移動できます。<br>
+      ※ コードが無効・期限外・使用済みの場合は受け取れません。
     </section>
   </main>
 
@@ -495,10 +1091,10 @@
       const ANNIV_REDEEM_API_KEY  = "takopi-anniv-2026";
 
       const SAY = [
-        "「シリアルを入れると、限定のタネが増える…たこ。打ち間違いだけ、ちょっとこわい…たこ。」",
-        "「限定のタネは、買うんじゃなくて“解放する”感じ…たこ。」",
-        "「成功すると、ちゃんと在庫に入る…たこ。そこは真面目…たこ。」",
-        "「コードはやさしく打って…たこ。勢いで押すと、だいたい何か起きる…たこ。」"
+        "「コードが通ると、限定のタネがちゃんと増えるたこ。ちょっとだけ勇者気分たこ。」",
+        "「買ったあと、ここで解放。次は畑で植える番たこ。」",
+        "「貼り付けボタンもあるから、初めてでも安心たこ。」",
+        "「入力が成功したら、そのままお店や畑に行けるたこ。道に迷わないたこ。」"
       ];
 
       const $ = (sel, root=document) => root.querySelector(sel);
@@ -568,6 +1164,14 @@
         el.innerHTML = SAY[Math.floor(Math.random() * SAY.length)];
       }
 
+      function normalizeCode(value){
+        return String(value || "")
+          .replace(/[‐-‒–—―ー]/g, "-")
+          .replace(/\s+/g, "")
+          .toUpperCase()
+          .trim();
+      }
+
       function forceToastStyle(el){
         el.style.setProperty("position","fixed","important");
         el.style.setProperty("left","12px","important");
@@ -580,9 +1184,9 @@
         el.style.setProperty("font-weight","900","important");
         el.style.setProperty("text-align","center","important");
         el.style.setProperty("color","#fff","important");
-        el.style.setProperty("background","rgba(15,18,32,.92)","important");
-        el.style.setProperty("border","1px solid rgba(255,255,255,.16)","important");
-        el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55)","important");
+        el.style.setProperty("background","rgba(50,36,12,.92)","important");
+        el.style.setProperty("border","3px solid rgba(255,243,208,.82)","important");
+        el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.35)","important");
       }
 
       function toastHype(text, opt={}){
@@ -594,14 +1198,14 @@
 
         const kind = opt.kind || "info";
         if(kind === "good"){
-          el.style.setProperty("border","1px solid rgba(159,255,168,.35)","important");
-          el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(159,255,168,.18)","important");
+          el.style.setProperty("border","3px solid rgba(206,255,178,.95)","important");
+          el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.35), 0 0 22px rgba(159,255,168,.22)","important");
         }else if(kind === "bad"){
-          el.style.setProperty("border","1px solid rgba(255,154,165,.38)","important");
-          el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55), 0 0 22px rgba(255,154,165,.16)","important");
+          el.style.setProperty("border","3px solid rgba(255,199,199,.98)","important");
+          el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.35), 0 0 22px rgba(255,154,165,.18)","important");
         }else{
-          el.style.setProperty("border","1px solid rgba(255,255,255,.16)","important");
-          el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.55)","important");
+          el.style.setProperty("border","3px solid rgba(255,243,208,.82)","important");
+          el.style.setProperty("box-shadow","0 18px 44px rgba(0,0,0,.35)","important");
         }
 
         clearTimeout(toastHype._t);
@@ -617,7 +1221,7 @@
         toastHype._t = setTimeout(() => {
           el.style.opacity = "0";
           el.style.transform = "translateY(10px) scale(.98)";
-        }, 1900);
+        }, 2000);
       }
 
       async function redeemOnServer(endpoint, apiKey, code){
@@ -678,10 +1282,29 @@
         $("#stockAnniv").textContent  = String(anniv);
       }
 
+      async function pasteInto(inputEl){
+        if(!inputEl) return;
+        try{
+          const text = await navigator.clipboard.readText();
+          if(!text){
+            toastHype("クリップボードが空です。", {kind:"bad"});
+            return;
+          }
+          inputEl.value = normalizeCode(text);
+          inputEl.focus();
+          inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+          toastHype("貼り付けました。", {kind:"good"});
+        }catch(e){
+          toastHype("貼り付けできませんでした。手入力してください。", {kind:"bad"});
+        }
+      }
+
       async function runRedeemWithPick(pick, code, btnEl, inputEl){
-        const c = String(code || "").trim().toUpperCase();
+        const c = normalizeCode(code);
+        if(inputEl) inputEl.value = c;
+
         if(!c){
-          toastHype("シリアルが空です。", {kind:"bad"});
+          toastHype("シリアルコードを入力してください。", {kind:"bad"});
           return;
         }
 
@@ -713,29 +1336,49 @@
           if(inputEl) inputEl.value = "";
 
           if(pick === "anniv"){
-            toastHype("✨ アニバーサリーのタネ +" + applied.addedSeedAnniv + " ✨", {kind:"good"});
+            toastHype("✨ ハーフアニバーサリーのタネ +" + applied.addedSeedAnniv + " ✨", {kind:"good"});
           }else{
-            toastHype("✨ コラボのタネ +" + applied.addedSeedColabo + " ✨", {kind:"good"});
+            toastHype("✨ ぐらたんのタネ +" + applied.addedSeedColabo + " ✨", {kind:"good"});
           }
 
           refreshOwned();
           setRandomSay();
         }catch(e){
-          toastHype("通信に失敗しました。時間を置いてもう一度試してください。", {kind:"bad"});
+          toastHype("通信に失敗しました。少し時間を置いて再度お試しください。", {kind:"bad"});
         }finally{
           if(btnEl) btnEl.disabled = false;
         }
       }
 
-      function wireRedeem(inputId, btnId, pick){
+      function wireRedeem(inputId, btnId, pasteBtnId, pick){
         const input = document.getElementById(inputId);
         const btn   = document.getElementById(btnId);
+        const paste = document.getElementById(pasteBtnId);
         if(!input || !btn) return;
+
+        input.addEventListener("input", () => {
+          const pos = input.selectionStart || input.value.length;
+          const before = input.value;
+          const normalized = normalizeCode(before);
+          input.value = normalized;
+          try{
+            const diff = before.length - normalized.length;
+            const nextPos = Math.max(0, pos - Math.max(0, diff));
+            input.setSelectionRange(nextPos, nextPos);
+          }catch(e){}
+        });
 
         btn.addEventListener("click", (e) => {
           e.preventDefault();
           runRedeemWithPick(pick, input.value, btn, input);
         });
+
+        if(paste){
+          paste.addEventListener("click", (e) => {
+            e.preventDefault();
+            pasteInto(input);
+          });
+        }
 
         input.addEventListener("keydown", (e) => {
           if(e.key === "Enter"){
@@ -762,8 +1405,8 @@
         ensureInvKeys();
         refreshOwned();
         setRandomSay();
-        wireRedeem("gratanInput", "gratanBtn", "gratan");
-        wireRedeem("annivInput", "annivBtn", "anniv");
+        wireRedeem("gratanInput", "gratanBtn", "gratanPasteBtn", "gratan");
+        wireRedeem("annivInput", "annivBtn", "annivPasteBtn", "anniv");
         wireBack();
       }
 
