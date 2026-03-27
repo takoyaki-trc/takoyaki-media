@@ -11,17 +11,11 @@
 
   <style>
     :root{
-      --bg1:#1e1428;
-      --bg2:#2b1a39;
-      --bg3:#4a2b2b;
-
       --paper1:#fff9ec;
       --paper2:#f0e2bb;
-
       --text:#fff8eb;
       --muted:rgba(255,248,235,.78);
       --ink:#35210f;
-
       --shadow:0 16px 45px rgba(0,0,0,.45);
     }
 
@@ -157,7 +151,7 @@
         0 8px 18px rgba(0,0,0,.2);
     }
 
-    /* ===== 右上 畑ボタン（アイコンのみ + 初回誘導で光る） ===== */
+    /* 右上 畑ボタン */
     .header-farm-wrap{
       position:absolute;
       right:14px;
@@ -301,7 +295,7 @@
     .hud{
       display:flex;
       align-items:flex-start;
-      justify-content:space-between;
+      justify-content:flex-start;
       gap:10px;
       padding:12px;
       border-radius:20px;
@@ -313,22 +307,13 @@
       margin-bottom:12px;
     }
 
-    .hud-main{
-      display:flex;
-      flex-direction:column;
-      align-items:flex-start;
-      gap:10px;
-      min-width:0;
-      flex:1;
-    }
-
-    .hud-toprow{
+    .hud-line{
       display:flex;
       align-items:center;
       gap:10px;
       min-width:0;
-      flex-wrap:wrap;
       width:100%;
+      flex-wrap:wrap;
     }
 
     .hud-money{
@@ -358,35 +343,27 @@
       line-height:1;
     }
 
-    .hud-stock{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      min-width:0;
-      flex-wrap:wrap;
-      flex:1;
-    }
-
-    .stock-chip{
+    .hud-resources{
       display:inline-flex;
       align-items:center;
-      gap:5px;
-      padding:7px 10px;
+      gap:8px;
+      padding:10px 14px;
       border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      white-space:nowrap;
       background:
         linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)),
         rgba(0,0,0,.16);
       border:1px solid rgba(255,255,255,.08);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      font-size:13px;
+      font-weight:900;
+      white-space:nowrap;
+      min-width:0;
       cursor:pointer;
       user-select:none;
     }
 
-    .stock-chip b{
-      font-size:13px;
+    .hud-resources b{
+      font-size:14px;
     }
 
     .shop-hero{
@@ -480,7 +457,7 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      flex-wrap:wrap;
+      flex-wrap:nowrap;
     }
 
     .block-title{
@@ -489,13 +466,15 @@
       letter-spacing:.05em;
       white-space:nowrap !important;
       line-height:1.1 !important;
+      flex:0 0 auto;
     }
 
     .block-actions{
       display:flex;
       align-items:center;
       gap:8px;
-      flex-wrap:wrap;
+      flex:0 0 auto;
+      margin-left:auto;
     }
 
     .about-btn{
@@ -920,12 +899,12 @@
         right:-2px;
       }
 
-      .hud{
-        flex-direction:column;
+      .hud-line{
+        gap:8px;
       }
 
       .hud-money{
-        padding:9px 12px;
+        padding:8px 11px;
       }
 
       .hud-money .money-label{
@@ -936,13 +915,17 @@
         font-size:17px;
       }
 
-      .stock-chip{
-        padding:6px 9px;
-        font-size:11px;
+      .hud-resources{
+        padding:8px 11px;
+        font-size:12px;
+        flex:1 1 auto;
+        min-width:0;
+        overflow:hidden;
+        text-overflow:ellipsis;
       }
 
-      .stock-chip b{
-        font-size:12px;
+      .hud-resources b{
+        font-size:13px;
       }
 
       .goods-grid{
@@ -976,11 +959,26 @@
       }
 
       .block-head{
-        align-items:flex-start;
+        align-items:center;
+        justify-content:space-between;
+        gap:8px;
+      }
+
+      .block-title{
+        font-size:18px;
       }
 
       .block-actions{
-        width:100%;
+        margin-left:auto;
+      }
+
+      .about-btn{
+        height:36px;
+        padding:0 10px;
+        font-size:11px;
+        max-width:52vw;
+        overflow:hidden;
+        text-overflow:ellipsis;
       }
     }
 
@@ -1002,17 +1000,31 @@
         width:52px !important;
       }
 
-      .about-btn{
-        font-size:11px;
-        padding:0 11px;
-      }
-
       .roten-back{
         padding:9px 11px;
       }
 
       .roten-head-center{
         padding:0 54px;
+      }
+
+      .hud-money{
+        padding:8px 10px;
+      }
+
+      .hud-resources{
+        padding:8px 10px;
+        font-size:11px;
+      }
+
+      .hud-resources b{
+        font-size:12px;
+      }
+
+      .about-btn{
+        max-width:50vw;
+        font-size:10px;
+        padding:0 9px;
       }
     }
   </style>
@@ -1044,19 +1056,18 @@
 
   <main id="rotenApp" class="roten-app">
     <section class="hud">
-      <div class="hud-main">
-        <div class="hud-toprow">
-          <div class="hud-money">
-            <span>🪙</span>
-            <span class="money-label">所持金</span>
-            <span class="money-num" id="octoNow">0</span>
-          </div>
+      <div class="hud-line">
+        <div class="hud-money">
+          <span>🪙</span>
+          <span class="money-num" id="octoNow">0</span>
+        </div>
 
-          <div class="hud-stock">
-            <div class="stock-chip" id="stockSeed" role="button" tabindex="0" aria-label="種の内訳を見る">🌱 種 <b id="chipSeed">0</b></div>
-            <div class="stock-chip" id="stockWater" role="button" tabindex="0" aria-label="水の内訳を見る">💧 水 <b id="chipWater">0</b></div>
-            <div class="stock-chip" id="stockFert" role="button" tabindex="0" aria-label="ヒリョウの内訳を見る">🧪 ヒリョウ <b id="chipFert">0</b></div>
-          </div>
+        <div class="hud-resources" id="resourcesSummary" role="button" tabindex="0" aria-label="所持資材の内訳を見る">
+          <span>🌱</span><span id="chipSeed">0</span>
+          <span>/</span>
+          <span>💧</span><span id="chipWater">0</span>
+          <span>/</span>
+          <span>🧪</span><span id="chipFert">0</span>
         </div>
       </div>
     </section>
@@ -1115,7 +1126,6 @@
       const LS = {
         octo: "roten_v1_octo",
         inv: "tf_v1_inv",
-        book: "tf_v1_book",
         log: "roten_v1_log",
         monthlyStats: "ttc_monthly_stats_v1",
         farmGuideSeen: "roten_v1_farm_guide_seen"
@@ -1284,7 +1294,6 @@
             fx:s.fx,
             img:s.img,
             price: PRICE[s.id] ?? 18,
-            buyable: true,
             tag:"販売"
           });
         }
@@ -1298,7 +1307,6 @@
             fx:w.fx,
             img:w.img,
             price: PRICE[w.id] ?? 18,
-            buyable: true,
             tag:"販売"
           });
         }
@@ -1312,7 +1320,6 @@
             fx:f.fx,
             img:f.img,
             price: PRICE[f.id] ?? 18,
-            buyable: true,
             tag:"販売"
           });
         }
@@ -1631,28 +1638,60 @@
         $("#okBreakdown", document.getElementById("modalBody"))?.addEventListener("click", closeModal);
       }
 
-      function wireChipBreakdowns(){
-        const bind = (id, kind) => {
-          const el = document.getElementById(id);
-          if(!el) return;
+      function wireResourceSummary(){
+        const el = $("#resourcesSummary");
+        if(!el) return;
 
-          const open = () => {
-            openBreakdownModal(kind);
-            setTakopiSayRandom();
-          };
+        const open = () => {
+          openModal("📦 所持資材の内訳", `
+            <div class="mikuji-wrap">
+              <div class="inv-box">
+                <div class="inv-title">🌱 種</div>
+                ${GOODS.filter(g => g.kind === "seed").map(g => `
+                  <div class="inv-row">
+                    <div class="inv-left"><span class="inv-name">${g.name}</span></div>
+                    <div class="inv-right">×<b>${ownedCount(loadInv(), "seed", g.id)}</b></div>
+                  </div>
+                `).join("")}
+              </div>
 
-          el.addEventListener("click", open);
-          el.addEventListener("keydown", (e) => {
-            if(e.key === "Enter" || e.key === " "){
-              e.preventDefault();
-              open();
-            }
-          });
+              <div class="inv-box">
+                <div class="inv-title">💧 水</div>
+                ${GOODS.filter(g => g.kind === "water").map(g => `
+                  <div class="inv-row">
+                    <div class="inv-left"><span class="inv-name">${g.name}</span></div>
+                    <div class="inv-right">×<b>${ownedCount(loadInv(), "water", g.id)}</b></div>
+                  </div>
+                `).join("")}
+              </div>
+
+              <div class="inv-box">
+                <div class="inv-title">🧪 ヒリョウ</div>
+                ${GOODS.filter(g => g.kind === "fert").map(g => `
+                  <div class="inv-row">
+                    <div class="inv-left"><span class="inv-name">${g.name}</span></div>
+                    <div class="inv-right">×<b>${ownedCount(loadInv(), "fert", g.id)}</b></div>
+                  </div>
+                `).join("")}
+              </div>
+
+              <div class="row">
+                <button class="btn btn-ghost" id="okSummary" type="button">閉じる</button>
+              </div>
+            </div>
+          `);
+
+          $("#okSummary", document.getElementById("modalBody"))?.addEventListener("click", closeModal);
+          setTakopiSayRandom();
         };
 
-        bind("stockSeed", "seed");
-        bind("stockWater", "water");
-        bind("stockFert", "fert");
+        el.addEventListener("click", open);
+        el.addEventListener("keydown", (e) => {
+          if(e.key === "Enter" || e.key === " "){
+            e.preventDefault();
+            open();
+          }
+        });
       }
 
       function openAboutModal(){
@@ -1768,7 +1807,7 @@
         wireModalClose();
         wireTabs();
         wireButtons();
-        wireChipBreakdowns();
+        wireResourceSummary();
         setupFarmGuide();
         refreshHUD();
         renderGoods();
