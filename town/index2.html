@@ -15,11 +15,15 @@
   <style>
     :root{
       --hud-top: max(8px, env(safe-area-inset-top));
-      --panel-bg: rgba(10,12,20,.76);
-      --panel-line: rgba(255,255,255,.14);
+      --panel-bg: rgba(9, 14, 26, .88);
+      --panel-bg-soft: rgba(15, 22, 38, .82);
+      --panel-line: rgba(255,255,255,.10);
       --panel-text: #fff;
-      --shadow: 0 12px 28px rgba(0,0,0,.30);
+      --shadow: 0 12px 28px rgba(0,0,0,.28);
       --shell-max: 900px;
+      --gold: #ffe58a;
+      --blue: #bfe0ff;
+      --red: #ff5d5f;
     }
 
     *{ box-sizing:border-box; }
@@ -54,13 +58,13 @@
       width:100%;
       max-width:var(--shell-max);
       margin:0 auto;
-      padding:132px 8px 20px;
+      padding:94px 8px 20px;
       position:relative;
       z-index:2;
     }
 
     /* =========================
-       上部HUD
+       上部HUD（スマート版）
     ========================= */
     .top-hud{
       position:fixed;
@@ -72,110 +76,77 @@
     }
 
     .top-hud-inner{
-      width:min(920px, calc(100% - 12px));
+      width:min(920px, calc(100% - 10px));
       margin:0 auto;
-      display:grid;
-      grid-template-columns:minmax(0, 1fr) auto;
-      gap:8px;
-      align-items:start;
       pointer-events:none;
     }
 
-    .hud-left,
-    .hud-right{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
+    .hud-bar{
       pointer-events:auto;
-      min-width:0;
-    }
-
-    .hud-right{
-      justify-content:flex-end;
-    }
-
-    .hud-chip,
-    .hud-btn{
-      display:inline-flex;
+      display:flex;
       align-items:center;
-      justify-content:center;
-      gap:7px;
-      min-height:36px;
-      min-width:0;
-      padding:8px 11px;
+      gap:6px;
+      flex-wrap:wrap;
+      min-height:48px;
+      padding:6px;
       border:1px solid var(--panel-line);
-      border-radius:12px;
-      background:var(--panel-bg);
-      color:var(--panel-text);
+      border-radius:16px;
+      background:linear-gradient(180deg, rgba(20,28,46,.96), rgba(10,14,24,.92));
       box-shadow:var(--shadow);
       backdrop-filter:blur(6px);
       -webkit-backdrop-filter:blur(6px);
+    }
+
+    .hud-left{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:0;
+      flex:1 1 auto;
+      flex-wrap:wrap;
+    }
+
+    .hud-actions{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:0;
+      flex:0 0 auto;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .hud-btn,
+    .hud-chip{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      min-height:36px;
+      min-width:0;
+      padding:0 12px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      background:var(--panel-bg-soft);
+      color:var(--panel-text);
       text-decoration:none;
-      font-weight:800;
       font-size:12px;
-      line-height:1.1;
+      font-weight:900;
+      line-height:1;
       white-space:nowrap;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
     }
 
     .hud-btn{
       cursor:pointer;
+      appearance:none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
-      appearance:none;
     }
 
-    .hud-btn.primary{
-      background:linear-gradient(180deg, rgba(140,200,255,.20), rgba(255,255,255,.08));
-    }
-
-    .hud-btn.serial-entry{
-      background:
-        linear-gradient(180deg, rgba(255,210,90,.34), rgba(255,153,77,.18)),
-        var(--panel-bg);
-      border-color:rgba(255,220,130,.55);
-      box-shadow:
-        0 12px 28px rgba(0,0,0,.32),
-        0 0 0 1px rgba(255,220,130,.10),
-        0 0 16px rgba(255,180,80,.22);
-      position:relative;
-      overflow:hidden;
-    }
-
-    .hud-btn.serial-entry::after{
-      content:"はじめての方はこちら";
-      position:absolute;
-      top:-6px;
-      right:7px;
-      font-size:9px;
-      font-weight:900;
-      color:#1c1200;
-      background:#ffe58a;
-      border-radius:999px;
-      padding:2px 6px;
-      box-shadow:0 4px 10px rgba(0,0,0,.16);
-    }
-
-    .hud-btn.serial-entry .label-wrap{
-      display:flex;
-      flex-direction:column;
-      align-items:flex-start;
-      gap:1px;
-      min-width:0;
-      line-height:1.02;
-      white-space:normal;
-    }
-
-    .hud-btn.serial-entry .label-main{
-      font-size:12px;
-      font-weight:900;
-      color:#fff7dd;
-    }
-
-    .hud-btn.serial-entry .label-sub{
-      font-size:10px;
-      font-weight:800;
-      color:rgba(255,248,220,.88);
+    .hud-btn:hover,
+    .hud-btn:active{
+      filter:brightness(1.04);
     }
 
     .hud-icon{
@@ -184,9 +155,48 @@
       flex:0 0 auto;
     }
 
+    .hud-btn.back-btn{
+      padding-inline:14px;
+    }
+
+    .hud-chip.octo-chip{
+      flex:1 1 180px;
+      justify-content:flex-start;
+      min-width:150px;
+      background:
+        linear-gradient(180deg, rgba(255,222,120,.08), rgba(255,255,255,.03)),
+        var(--panel-bg-soft);
+    }
+
+    .octo-label{
+      color:rgba(255,255,255,.82);
+      font-weight:800;
+    }
+
     .octo-value{
-      color:#ffe58a;
+      color:var(--gold);
       font-weight:900;
+      margin-left:2px;
+    }
+
+    .hud-btn.inventory-btn{
+      background:
+        linear-gradient(180deg, rgba(191,224,255,.10), rgba(255,255,255,.02)),
+        var(--panel-bg-soft);
+    }
+
+    .hud-btn.serial-btn{
+      background:
+        linear-gradient(180deg, rgba(255,185,90,.16), rgba(255,255,255,.03)),
+        var(--panel-bg-soft);
+      border-color:rgba(255,220,130,.20);
+    }
+
+    .hud-btn.guide-btn{
+      background:
+        linear-gradient(180deg, rgba(140,200,255,.16), rgba(255,255,255,.03)),
+        var(--panel-bg-soft);
+      border-color:rgba(180,220,255,.24);
     }
 
     .icon-only{
@@ -196,18 +206,19 @@
       position:relative;
     }
 
-    .news-badge{
+    .news-badge,
+    .gift-badge{
       display:none;
       position:absolute;
       top:-5px;
-      right:-4px;
+      right:-3px;
       align-items:center;
       justify-content:center;
-      min-width:26px;
+      min-width:16px;
       height:16px;
-      padding:0 5px;
+      padding:0 4px;
       border-radius:999px;
-      background:#ff4d4f;
+      background:var(--red);
       color:#fff;
       font-size:9px;
       font-weight:900;
@@ -215,130 +226,69 @@
       box-shadow:0 4px 10px rgba(255,77,79,.30);
     }
 
-    .news-badge.is-show{
+    .news-badge.is-show,
+    .gift-badge.is-show{
       display:inline-flex;
     }
 
-    .serial-guide-strip{
-      width:min(920px, calc(100% - 12px));
-      margin:6px auto 0;
-      display:flex;
-      justify-content:flex-end;
-      pointer-events:none;
-    }
-
-    .serial-guide-note{
-      max-width:min(520px, 100%);
-      pointer-events:auto;
-      display:flex;
-      align-items:flex-start;
-      gap:7px;
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid rgba(255,232,138,.34);
-      background:rgba(24,18,8,.68);
-      color:#fff4cf;
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(6px);
-      -webkit-backdrop-filter:blur(6px);
-      font-size:11px;
-      line-height:1.45;
-      font-weight:700;
-    }
-
-    .serial-guide-note b{
-      color:#ffe58a;
-    }
-
     @media (max-width:760px){
-      .top-hud-inner{
-        grid-template-columns:1fr;
-      }
-
-      .hud-right{
-        justify-content:flex-start;
-      }
-
-      .serial-guide-strip{
-        justify-content:stretch;
-      }
-
-      .serial-guide-note{
-        width:100%;
-        max-width:none;
-      }
-
       .page-shell{
-        padding-top:168px;
+        padding-top:124px;
+      }
+
+      .hud-left{
+        flex:1 1 100%;
+      }
+
+      .hud-actions{
+        flex:1 1 100%;
+        justify-content:flex-start;
       }
     }
 
     @media (max-width:520px){
       .top-hud-inner{
-        width:calc(100% - 10px);
-        gap:6px;
+        width:calc(100% - 8px);
       }
 
-      .hud-left{
-        display:grid;
-        grid-template-columns:86px 1fr;
-        gap:6px;
-        width:100%;
+      .hud-bar{
+        gap:5px;
+        padding:5px;
+        border-radius:14px;
       }
 
-      .hud-right{
-        display:grid;
-        grid-template-columns:minmax(0, 1fr) 36px minmax(0, 1fr) minmax(0, 1fr);
-        gap:6px;
-        width:100%;
-        align-items:stretch;
-      }
-
-      .hud-chip,
-      .hud-btn{
-        width:100%;
+      .hud-btn,
+      .hud-chip{
         min-height:34px;
-        padding:7px 9px;
+        padding:0 10px;
         font-size:11px;
         border-radius:11px;
       }
 
-      .hud-chip{
-        justify-content:flex-start;
+      .hud-btn.back-btn{
+        min-width:76px;
+        padding-inline:10px;
+      }
+
+      .hud-chip.octo-chip{
+        min-width:0;
+        flex:1 1 calc(100% - 82px);
+      }
+
+      .hud-actions{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr) 36px 36px minmax(0,1fr);
+        gap:5px;
+        width:100%;
       }
 
       .icon-only{
         width:36px;
         min-width:36px;
-        padding:0;
-      }
-
-      .hud-btn.serial-entry .label-main{
-        font-size:11px;
-      }
-
-      .hud-btn.serial-entry .label-sub{
-        font-size:9px;
-      }
-
-      .hud-btn.serial-entry::after{
-        font-size:8px;
-        top:-5px;
-        right:5px;
-        padding:2px 5px;
-      }
-
-      .serial-guide-strip{
-        width:calc(100% - 10px);
-      }
-
-      .serial-guide-note{
-        font-size:10px;
-        padding:8px 9px;
       }
 
       .page-shell{
-        padding-top:163px;
+        padding-top:132px;
       }
     }
 
@@ -564,6 +514,101 @@
       height:1px;
       background:rgba(255,255,255,.12);
       margin:10px 0;
+    }
+
+    /* =========================
+       所持アイテムモーダル
+    ========================= */
+    .inventory-summary{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .inventory-card{
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+    }
+
+    .inventory-card-label{
+      font-size:12px;
+      font-weight:800;
+      color:rgba(255,255,255,.72);
+      margin-bottom:4px;
+    }
+
+    .inventory-card-value{
+      font-size:18px;
+      font-weight:900;
+      color:#fff;
+    }
+
+    .inventory-groups{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .inventory-group{
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .inventory-group-title{
+      font-size:14px;
+      font-weight:900;
+      margin:0 0 10px;
+      color:#fff;
+    }
+
+    .inventory-list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .inventory-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,.05);
+    }
+
+    .inventory-item-name{
+      font-size:13px;
+      font-weight:800;
+      color:#fff;
+    }
+
+    .inventory-item-count{
+      font-size:13px;
+      font-weight:900;
+      color:var(--gold);
+      white-space:nowrap;
+    }
+
+    .inventory-empty{
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.78);
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+    }
+
+    @media (max-width:520px){
+      .inventory-summary{
+        grid-template-columns:1fr;
+      }
     }
 
     /* =========================
@@ -878,59 +923,51 @@
   ========================= -->
   <div class="top-hud">
     <div class="top-hud-inner">
-      <div class="hud-left">
-        <a class="hud-btn" href="./index.html" aria-label="戻る">
-          <span class="hud-icon">←</span>
-          <span>戻る</span>
-        </a>
+      <div class="hud-bar">
+        <div class="hud-left">
+          <a class="hud-btn back-btn" href="./index.html" aria-label="戻る">
+            <span class="hud-icon">←</span>
+            <span>戻る</span>
+          </a>
 
-        <div class="hud-chip" aria-label="所持オクト">
-          <span class="hud-icon">🐙</span>
-          <span>所持オクト</span>
-          <span id="octoValue" class="octo-value">0</span>
+          <div class="hud-chip octo-chip" aria-label="所持オクト">
+            <span class="hud-icon">🐙</span>
+            <span class="octo-label">所持オクト</span>
+            <span id="octoValue" class="octo-value">0</span>
+          </div>
         </div>
-      </div>
 
-      <div class="hud-right">
-        <a
-          id="serialCodeBtn"
-          class="hud-btn serial-entry"
-          href="https://takoyaki-card.com/town-test/code.html"
-          aria-label="シリアルコード入力ページ"
-        >
-          <span class="hud-icon">🎫</span>
-          <span class="label-wrap">
-            <span class="label-main">シリアルコード入力</span>
-            <span class="label-sub">限定のタネを受け取る</span>
-          </span>
-        </a>
+        <div class="hud-actions">
+          <button id="inventoryBtn" class="hud-btn inventory-btn" type="button" aria-label="所持アイテム">
+            <span class="hud-icon">📦</span>
+            <span>所持アイテム</span>
+          </button>
 
-        <button id="newsBtn" class="hud-btn icon-only" type="button" aria-label="お知らせ">
-          <span class="hud-icon">✉️</span>
-          <span id="newsBadge" class="news-badge">NEW</span>
-        </button>
+          <a
+            id="serialCodeBtn"
+            class="hud-btn serial-btn"
+            href="https://takoyaki-card.com/town-test/code.html"
+            aria-label="シリアルコード入力ページ"
+          >
+            <span class="hud-icon">🎫</span>
+            <span>シリアル入力</span>
+          </a>
 
-        <button id="giftBoxBtn" class="hud-btn primary" type="button" aria-label="初回限定プレゼント">
-          <span class="hud-icon">🎁</span>
-          <span>初回限定</span>
-        </button>
+          <button id="newsBtn" class="hud-btn icon-only" type="button" aria-label="お知らせ">
+            <span class="hud-icon">✉️</span>
+            <span id="newsBadge" class="news-badge">N</span>
+          </button>
 
-        <button id="farmGuideBtn" class="hud-btn" type="button" aria-label="たこ焼きファームの始め方">
-          <span class="hud-icon">❓</span>
-          <span>始め方</span>
-        </button>
-      </div>
-    </div>
+          <button id="giftBoxBtn" class="hud-btn icon-only" type="button" aria-label="初回限定プレゼント">
+            <span class="hud-icon">🎁</span>
+            <span id="giftBadge" class="gift-badge">1</span>
+          </button>
 
-    <div class="serial-guide-strip">
-      <div class="serial-guide-note">
-        <span>💡</span>
-        <span>
-          <b>はじめての方へ：</b>
-          シリアルコードがある場合は、まず右上の
-          <b>「シリアルコード入力」</b>
-          から受け取るとわかりやすいです。
-        </span>
+          <button id="farmGuideBtn" class="hud-btn guide-btn" type="button" aria-label="たこ焼きファームの始め方">
+            <span class="hud-icon">🔰</span>
+            <span>始め方</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -941,7 +978,6 @@
     ========================= -->
     <div class="map-wrap" id="townMap">
 
-      <!-- 背景マップ -->
       <img
         class="map-img"
         src="https://takoyaki-card.com/town/assets/images/map/farmasa.png"
@@ -950,9 +986,7 @@
         data-night="https://takoyaki-card.com/town/assets/images/map/farmyoru.png"
         alt="2ページ目マップ">
 
-      <!-- =========================
-           建物 6個
-      ========================= -->
+      <!-- 建物 -->
       <a class="tf-building b1" href="./farm.html" aria-label="たこ焼き畑">
         <img src="https://takoyaki-card.com/town/assets/images/map/hatake.png" alt="たこ焼き畑">
       </a>
@@ -977,9 +1011,7 @@
         <img src="https://takoyaki-card.com/town/assets/images/map/takopimise.png" alt="たこぴのお店">
       </a>
 
-      <!-- =========================
-           タコ民 10人
-      ========================= -->
+      <!-- タコ民 -->
       <button class="takomin t1" data-id="t1" type="button" aria-label="タコ民1">
         <img src="https://ul.h3z.jp/yfWcFrT4.png"
              data-day="https://ul.h3z.jp/yfWcFrT4.png"
@@ -1063,6 +1095,19 @@
   </div>
 
   <!-- =========================
+       所持アイテムモーダル
+  ========================= -->
+  <div class="modal" id="inventoryModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
+      <div class="modal-title" id="inventoryTitle">所持アイテム</div>
+      <div id="inventoryModalBody"></div>
+      <div class="modal-actions">
+        <button class="modal-btn primary" type="button" id="inventoryClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================
        ファーム説明モーダル
   ========================= -->
   <div class="modal" id="farmGuideModal" aria-hidden="true">
@@ -1072,7 +1117,7 @@
       <div class="guide-intro">
         初めてでも大丈夫たこ。<br>
         このゲームは <b>「もらう → 植える → 時間を待つ → 収穫する」</b> の流れです。<br>
-        シリアルコードがある人は、まず <b>右上の「シリアルコード入力」</b> から限定のタネを受け取ると始めやすいです。<br>
+        シリアルコードがある人は、まず <b>上の「シリアル入力」</b> から限定のタネを受け取ると始めやすいです。<br>
         下の順番どおりに進めると、迷わず始めやすいです。
       </div>
 
@@ -1085,8 +1130,8 @@
             <div class="guide-step-no">STEP 1</div>
             <h3 class="guide-step-title">まずはアイテムを手に入れる</h3>
             <p class="guide-step-text">
-              右上の <b>シリアルコード入力</b>、または <b>初回限定プレゼント</b>、
-              街の中の <b>たこぴのお店</b> から
+              上の <b>シリアル入力</b>、<b>初回限定プレゼント</b>、
+              または街の中の <b>たこぴのお店</b> から
               タネ・ミズ・ヒリョウを受け取ります。<br>
               最初はシリアルがあるなら入力、ないならプレゼントを開けるのがいちばんわかりやすいです。
             </p>
@@ -1141,8 +1186,9 @@
       <div class="guide-tips">
         <div class="guide-tips-title">はじめての人向けポイント</div>
         <div class="guide-tips-text">
-          ・シリアルコードを持っている人は、まず <b>右上の「シリアルコード入力」</b> へ。<br>
+          ・シリアルコードを持っている人は、まず <b>上の「シリアル入力」</b> へ。<br>
           ・持っていない人は <b>初回限定プレゼント → 畑</b> の順で進むと迷いにくいです。<br>
+          ・<b>所持アイテム</b> ボタンを押すと、今あるタネ・ミズ・ヒリョウを確認できます。<br>
           ・オクトやカードはこの端末のブラウザに保存されます。<br>
           ・<b>キャッシュ削除・機種変更前は必ずバックアップ</b> してください。
         </div>
@@ -1172,7 +1218,7 @@
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
       <div class="modal-title" id="newsModalTitle">運営からのお知らせ</div>
       <div class="modal-text" style="margin-bottom:12px;">
-        最新情報がここに届きます。新しいお知らせがあると、上の <b>✉️</b> に <b>NEW</b> が付きます。
+        最新情報がここに届きます。新しいお知らせがあると、上の <b>✉️</b> に赤い印が付きます。
       </div>
       <div id="newsList" class="news-list"></div>
       <div class="modal-actions">
@@ -1245,7 +1291,7 @@
 運営の最新情報を確認できるようになりました。
 
 新しいお知らせが届くと、
-ボタンに「NEW」が表示されます。`
+ボタンに印が表示されます。`
       },
       {
         id: "news_2026_03_27_guide",
@@ -1253,12 +1299,44 @@
         title: "はじめての方へ：おすすめの遊び方",
         body:
 `シリアルコードを持っている方は、
-まず右上の「シリアルコード入力」から受け取るのがおすすめです。
+まず上の「シリアル入力」から受け取るのがおすすめです。
 
 シリアルがない方は、
 「初回限定プレゼント」→「たこ焼き畑」の順で進むとわかりやすいです。`
       }
     ];
+
+    const ITEM_NAMES = {
+      seed: {
+        seed_shop: "🌱 店頭タネ",
+        seed_line: "🌱 回線タネ",
+        seed_special: "🌱 たこぴのタネ",
+        seed_random: "🌱 ランダムタネ",
+        seed_bussasari: "🌱 ぶっ刺さりタネ",
+        seed_namara_kawasar: "🌱 なまらかわさるタネ",
+        seed_colabo: "🌱 コラボタネ",
+        seed_anniv: "🌱 アニバーサリータネ"
+      },
+      water: {
+        water_plain_free: "💧 無料のミズ",
+        water_nice: "💧 なんか良さそう",
+        water_suspicious: "💧 怪しい水",
+        water_overdo: "💧 やりすぎな水",
+        water_regret: "💧 押さなきゃよかった水",
+        water_rotten: "💧 腐ったミズ",
+        water_sea: "💧 海水",
+        water_yunokawa: "💧 温泉水",
+        water_supergod: "💧 超神水"
+      },
+      fert: {
+        fert_feel: "🧪 気のせい肥料",
+        fert_guts: "🧪 根性論ぶち込み肥料",
+        fert_skip: "🧪 工程すっ飛ばし肥料",
+        fert_intuition: "🧪 直感のヒリョウ",
+        fert_trial: "🧪 試しのヒリョウ",
+        fert_empty: "🧪 無のヒリョウ"
+      }
+    };
 
     function nowTokyo(){
       return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
@@ -1428,7 +1506,7 @@
         night:["夜になると急に意味深なんだよね。", "昼に見えたもの、ほんとに同じ建物だったたこ？"]
       },
       t2: {
-        day: ["シリアルコードを持ってるなら、右上から先に入力たこ。", "限定のタネは、先に受け取ってから畑へ行くと流れがきれいたこ。"],
+        day: ["シリアルコードを持ってるなら、上のシリアル入力から先に進むたこ。", "限定のタネは、先に受け取ってから畑へ行くと流れがきれいたこ。"],
         night:["夜でもシリアルはちゃんと受け取れるたこ。", "入力してから植えると、話の始まり感が強いたこ。"]
       },
       t3: {
@@ -1452,15 +1530,15 @@
         night:["夜は道よりボタンを信じるたこ。", "帰れるうちに帰るのも才能たこ。"]
       },
       t8: {
-        day: ["右上に“シリアルコード入力”って出てるたこ。", "初めての人が迷わないように、いちばん目立つ場所にあるたこ。"],
-        night:["夜でも目立つボタンは信用できるたこ。", "迷ったら右上を見るたこ。だいたい答えがあるたこ。"]
+        day: ["所持アイテムを押すと、今あるタネやミズを確認できるたこ。", "はじめての人は、まず持ち物を見て流れを覚えるたこ。"],
+        night:["夜でもアイテム確認は大事たこ。", "迷ったら上のボタンを見るたこ。だいたい答えがあるたこ。"]
       },
       t9: {
         day: ["昼のタコ民はちょっと素直たこ。", "見つけたら押して話しかけるたこ。"],
         night:["夜のタコ民は少しだけ本音が出るたこ。", "昼より余計なことを言うたこ。"]
       },
       t10: {
-        day: ["最初の導線は大事たこ。", "シリアルがある人は、右上から始めるだけでかなりスムーズたこ。"],
+        day: ["最初の導線は大事たこ。", "シリアルがある人は、上から始めるだけでかなりスムーズたこ。"],
         night:["夜版になると世界観が一気に増すたこ。", "でも操作の入口は昼も夜も同じ場所たこ。"]
       }
     };
@@ -1511,10 +1589,6 @@
     /* =========================================
        6) 共通モーダル
     ========================================= */
-    const farmGuideBtn   = document.getElementById("farmGuideBtn");
-    const farmGuideModal = document.getElementById("farmGuideModal");
-    const farmGuideClose = document.getElementById("farmGuideClose");
-
     function openModal(modal){
       if (!modal) return;
       modal.style.display = "flex";
@@ -1526,6 +1600,135 @@
       modal.style.display = "none";
       modal.setAttribute("aria-hidden", "true");
     }
+
+    /* =========================================
+       7) 所持アイテムモーダル
+    ========================================= */
+    const inventoryBtn       = document.getElementById("inventoryBtn");
+    const inventoryModal     = document.getElementById("inventoryModal");
+    const inventoryModalBody = document.getElementById("inventoryModalBody");
+    const inventoryClose     = document.getElementById("inventoryClose");
+
+    function friendlyItemName(type, key){
+      const map = ITEM_NAMES[type] || {};
+      if (map[key]) return map[key];
+
+      return String(key || "")
+        .replace(/^seed_/, "🌱 ")
+        .replace(/^water_/, "💧 ")
+        .replace(/^fert_/, "🧪 ")
+        .replace(/_/g, " ");
+    }
+
+    function buildInventoryRows(obj, type){
+      return Object.entries(obj || {})
+        .map(([key, value]) => [key, Number(value || 0)])
+        .filter(([, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1])
+        .map(([key, count]) => `
+          <div class="inventory-item">
+            <div class="inventory-item-name">${escapeHtml(friendlyItemName(type, key))}</div>
+            <div class="inventory-item-count">× ${count.toLocaleString("ja-JP")}</div>
+          </div>
+        `)
+        .join("");
+    }
+
+    function totalCount(obj){
+      return Object.values(obj || {}).reduce((sum, v) => sum + Math.max(0, Number(v || 0)), 0);
+    }
+
+    function renderInventoryModal(){
+      const inv = ensureInvKeys();
+      const seedTotal = totalCount(inv.seed);
+      const waterTotal = totalCount(inv.water);
+      const fertTotal = totalCount(inv.fert);
+      const allTotal = seedTotal + waterTotal + fertTotal;
+
+      const seedRows = buildInventoryRows(inv.seed, "seed");
+      const waterRows = buildInventoryRows(inv.water, "water");
+      const fertRows = buildInventoryRows(inv.fert, "fert");
+
+      if (!allTotal) {
+        inventoryModalBody.innerHTML = `
+          <div class="inventory-summary">
+            <div class="inventory-card">
+              <div class="inventory-card-label">所持オクト</div>
+              <div class="inventory-card-value">🐙 ${getOctoValue().toLocaleString("ja-JP")}</div>
+            </div>
+            <div class="inventory-card">
+              <div class="inventory-card-label">所持アイテム合計</div>
+              <div class="inventory-card-value">0</div>
+            </div>
+          </div>
+          <div class="inventory-empty">
+            まだアイテムを持っていません。<br>
+            「シリアル入力」「初回限定プレゼント」「たこぴのお店」などから受け取ると始めやすいです。
+          </div>
+        `;
+        return;
+      }
+
+      inventoryModalBody.innerHTML = `
+        <div class="inventory-summary">
+          <div class="inventory-card">
+            <div class="inventory-card-label">所持オクト</div>
+            <div class="inventory-card-value">🐙 ${getOctoValue().toLocaleString("ja-JP")}</div>
+          </div>
+          <div class="inventory-card">
+            <div class="inventory-card-label">所持アイテム合計</div>
+            <div class="inventory-card-value">${allTotal.toLocaleString("ja-JP")}</div>
+          </div>
+        </div>
+
+        <div class="inventory-groups">
+          <section class="inventory-group">
+            <h3 class="inventory-group-title">🌱 タネ（${seedTotal.toLocaleString("ja-JP")}）</h3>
+            <div class="inventory-list">
+              ${seedRows || `<div class="inventory-empty">タネはまだありません。</div>`}
+            </div>
+          </section>
+
+          <section class="inventory-group">
+            <h3 class="inventory-group-title">💧 ミズ（${waterTotal.toLocaleString("ja-JP")}）</h3>
+            <div class="inventory-list">
+              ${waterRows || `<div class="inventory-empty">ミズはまだありません。</div>`}
+            </div>
+          </section>
+
+          <section class="inventory-group">
+            <h3 class="inventory-group-title">🧪 ヒリョウ（${fertTotal.toLocaleString("ja-JP")}）</h3>
+            <div class="inventory-list">
+              ${fertRows || `<div class="inventory-empty">ヒリョウはまだありません。</div>`}
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function openInventoryModal(){
+      renderInventoryModal();
+      openModal(inventoryModal);
+    }
+
+    if (inventoryBtn) {
+      inventoryBtn.addEventListener("click", openInventoryModal);
+    }
+    if (inventoryClose) {
+      inventoryClose.addEventListener("click", () => closeModal(inventoryModal));
+    }
+    if (inventoryModal) {
+      inventoryModal.addEventListener("click", (e) => {
+        if (e.target === inventoryModal) closeModal(inventoryModal);
+      });
+    }
+
+    /* =========================================
+       8) ファーム説明モーダル
+    ========================================= */
+    const farmGuideBtn   = document.getElementById("farmGuideBtn");
+    const farmGuideModal = document.getElementById("farmGuideModal");
+    const farmGuideClose = document.getElementById("farmGuideClose");
 
     if (farmGuideBtn) {
       farmGuideBtn.addEventListener("click", () => openModal(farmGuideModal));
@@ -1540,9 +1743,10 @@
     }
 
     /* =========================================
-       7) 初回限定プレゼント
+       9) 初回限定プレゼント
     ========================================= */
     const giftBoxBtn       = document.getElementById("giftBoxBtn");
+    const giftBadge        = document.getElementById("giftBadge");
     const giftModal        = document.getElementById("giftModal");
     const giftModalBody    = document.getElementById("giftModalBody");
     const giftModalActions = document.getElementById("giftModalActions");
@@ -1600,10 +1804,12 @@
 
     function refreshGiftButton(){
       const claimed = localStorage.getItem(LS.launchGift) === "1";
-      if(!giftBoxBtn) return;
-      giftBoxBtn.innerHTML = claimed
-        ? `<span class="hud-icon">🎁</span><span>受取済</span>`
-        : `<span class="hud-icon">🎁</span><span>初回限定</span>`;
+      if (!giftBadge) return;
+      if (claimed) {
+        giftBadge.classList.remove("is-show");
+      } else {
+        giftBadge.classList.add("is-show");
+      }
     }
 
     function openGiftBox(){
@@ -1654,7 +1860,7 @@
     }
 
     /* =========================================
-       8) お知らせ
+       10) お知らせ
     ========================================= */
     const newsBtn        = document.getElementById("newsBtn");
     const newsBadge      = document.getElementById("newsBadge");
@@ -1681,7 +1887,6 @@
       const unread = getUnreadNews().length;
       if (unread > 0) {
         newsBadge.classList.add("is-show");
-        newsBadge.textContent = "NEW";
       } else {
         newsBadge.classList.remove("is-show");
       }
@@ -1744,7 +1949,7 @@
     }
 
     /* =========================================
-       9) まとめて反映
+       11) まとめて反映
     ========================================= */
     function applyAll(){
       const now = nowTokyo();
@@ -1769,10 +1974,13 @@
 
     window.addEventListener("pageshow", applyAll);
     window.addEventListener("storage", (e) => {
-      if (e.key === LS.octo || e.key === LS.launchGift || e.key === LS.newsRead) {
+      if (e.key === LS.octo || e.key === LS.launchGift || e.key === LS.newsRead || e.key === LS.inv) {
         renderOcto();
         refreshGiftButton();
         renderNewsBadge();
+        if (inventoryModal && inventoryModal.style.display === "flex") {
+          renderInventoryModal();
+        }
       }
     });
 
