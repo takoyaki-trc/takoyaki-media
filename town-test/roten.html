@@ -1,186 +1,470 @@
 <!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<html lang="ja">  
+<head>  
+  <meta charset="utf-8" />  
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />  
   <title>露店（たこぴのお店）</title>
 
   <link rel="stylesheet" href="assets/roten.css">
 
-  <style>
-    /* ✅ toastがCSSで潰されても勝つ保険（最強） */
-    #toast{
-      position:fixed !important;
-      left:12px !important;
-      right:12px !important;
-      bottom: calc(14px + env(safe-area-inset-bottom)) !important;
-      z-index: 2147483647 !important;
+  <style>  
+    /* ✅ toastがCSSで潰されても勝つ保険（最強） */  
+    #toast{  
+      position:fixed !important;  
+      left:12px !important;  
+      right:12px !important;  
+      bottom: calc(14px + env(safe-area-inset-bottom)) !important;  
+      z-index: 2147483647 !important;  
       pointer-events:none !important;
 
-      opacity:0 !important;
-      transform: translateY(10px) scale(.98) !important;
+      opacity:0 !important;  
+      transform: translateY(10px) scale(.98) !important;  
       transition: opacity .16s ease, transform .18s ease !important;
 
-      padding: 14px 14px !important;
-      border-radius: 14px !important;
-      font-weight: 900 !important;
-      letter-spacing: .02em !important;
+      padding: 14px 14px !important;  
+      border-radius: 14px !important;  
+      font-weight: 900 !important;  
+      letter-spacing: .02em !important;  
       text-align:center !important;
 
-      color:#fff !important;
-      background: rgba(15,18,32,.92) !important;
-      border:1px solid rgba(255,255,255,.16) !important;
-      box-shadow: 0 18px 44px rgba(0,0,0,.55) !important;
-      backdrop-filter: blur(6px) !important;
-      -webkit-backdrop-filter: blur(6px) !important;
-    }
-    #toast.is-show{
-      opacity:1 !important;
-      transform: translateY(0) scale(1) !important;
-    }
-
-    /* ✅「購入」が縦になる対策 */
-    .block-title{
-      writing-mode: horizontal-tb !important;
-      text-orientation: mixed !important;
-      white-space: nowrap !important;
-      line-height: 1.1 !important;
+      color:#fff !important;  
+      background: rgba(15,18,32,.92) !important;  
+      border:1px solid rgba(255,255,255,.16) !important;  
+      box-shadow: 0 18px 44px rgba(0,0,0,.55) !important;  
+      backdrop-filter: blur(6px) !important;  
+      -webkit-backdrop-filter: blur(6px) !important;  
+    }  
+    #toast.is-show{  
+      opacity:1 !important;  
+      transform: translateY(0) scale(1) !important;  
     }
 
-    /* =====================================================
-       ✅ HUD：スマホでも「オクトの右横に種/水/肥料」を確実に
-       → roten.css の column / width:100% / block化 を全部潰す
+    /* ✅「購入」が縦になる対策 */  
+    .block-title{  
+      writing-mode: horizontal-tb !important;  
+      text-orientation: mixed !important;  
+      white-space: nowrap !important;  
+      line-height: 1.1 !important;  
+    }
+
+    /* =====================================================  
+       ✅ HUD：スマホでも「オクトの右横に種/水/肥料」を確実に  
+       → roten.css の column / width:100% / block化 を全部潰す  
     ===================================================== */
-    .hud{
-      display:flex !important;
-      align-items:flex-start !important;
-      justify-content: space-between !important;
-      gap:10px !important;
+
+    /* hud 自体の並びも保険で固定 */  
+    .hud{  
+      display:flex !important;  
+      align-items:flex-start !important;  
+      justify-content: space-between !important;  
+      gap:10px !important;  
     }
 
-    .hud .hud-left{
-      display:flex !important;
-      flex-direction: row !important;
-      align-items:center !important;
-      gap:10px !important;
-      flex-wrap: wrap !important;
-      width:auto !important;
-      min-width: 0 !important;
+    .hud .hud-left{  
+      display:flex !important;  
+      flex-direction: row !important;  /* ✅ column を潰す */  
+      align-items:center !important;  
+      gap:10px !important;  
+      flex-wrap: wrap !important;      /* 狭い時だけ折り返す */  
+      width:auto !important;  
+      min-width: 0 !important;  
     }
 
-    .hud .hud-left .hud-pill{
-      width:auto !important;
-      flex: 0 0 auto !important;
-      white-space: nowrap !important;
-      margin: 0 !important;
+    .hud .hud-left .hud-pill{  
+      width:auto !important;           /* ✅ width:100% を潰す */  
+      flex: 0 0 auto !important;       /* ✅ 横並び固定 */  
+      white-space: nowrap !important;  
+      margin: 0 !important;  
     }
 
-    .hud .hud-left .hud-pill--big{
-      margin:0 !important;
+    .hud .hud-left .hud-pill--big{  
+      margin:0 !important;  
     }
 
-    .hud .hud-right{
-      flex: 0 0 auto !important;
-      min-width: 0 !important;
+    /* 右側ボタン群が押し出されるときの保険 */  
+    .hud .hud-right{  
+      flex: 0 0 auto !important;  
+      min-width: 0 !important;  
     }
+
+    /* =====================================================  
+       ✅ 売り方をえらぶ：2択モーダル（横並び / スマホ最適）  
+    ===================================================== */  
+    .sellChoice{  
+      position: fixed;  
+      inset: 0;  
+      z-index: 2147483646;  
+      display: none;  
+      align-items: center;  
+      justify-content: center;  
+      padding: 14px;  
+      background: rgba(0,0,0,.72);  
+      backdrop-filter: blur(6px);  
+      -webkit-backdrop-filter: blur(6px);  
+    }  
+    .sellChoice.is-open{ display:flex; }
+
+    .sellChoice__panel{  
+      width: min(620px, 100%);  
+      border-radius: 18px;  
+      border: 1px solid rgba(255,255,255,.14);  
+      background: rgba(15,18,32,.88);  
+      box-shadow: 0 18px 44px rgba(0,0,0,.6);  
+      overflow: hidden;  
+    }
+
+    /* ✅ 左上に ←戻る */  
+    .sellChoice__head{  
+      padding: 12px 12px 10px;  
+      border-bottom: 1px solid rgba(255,255,255,.10);  
+      display:flex;  
+      align-items:center;  
+      justify-content: space-between;  
+      gap: 10px;  
+    }  
+    .sellChoice__back{  
+      height: 36px;  
+      padding: 0 12px;  
+      border-radius: 12px;  
+      font-weight: 900;  
+      border:1px solid rgba(255,255,255,.16);  
+      background: rgba(255,255,255,.08);  
+      color:#fff;  
+      cursor:pointer;  
+      -webkit-tap-highlight-color: transparent;  
+      user-select:none;  
+    }  
+    .sellChoice__title{  
+      font-weight: 1000;  
+      letter-spacing: .04em;  
+      text-align:center;  
+      flex: 1;  
+    }  
+    .sellChoice__spacer{  
+      width: 88px; /* 左右バランス用（戻るボタン幅相当） */  
+      flex: 0 0 auto;  
+    }
+
+    /* ✅ 画像の上に説明文 */  
+    .sellChoice__desc{  
+      padding: 12px 14px 0;  
+      font-size: 13px;  
+      line-height: 1.45;  
+      opacity: .92;  
+    }  
+    .sellChoice__desc b{ font-weight: 1000; }
+
+    /* ✅ 横並び（スマホも常に2列に寄せる）  
+       - 2列がきつい端末は自動で折り返す  
+    */  
+    .sellChoice__body{  
+      padding: 12px 14px 14px;  
+      display:grid;  
+      grid-template-columns: repeat(2, minmax(0, 1fr));  
+      gap: 12px;  
+    }  
+    @media (max-width: 360px){  
+      .sellChoice__body{  
+        grid-template-columns: 1fr; /* 超小型だけ縦 */  
+      }  
+    }
+
+    .sellCard{  
+      display:block;  
+      border-radius: 16px;  
+      overflow:hidden;  
+      border: 1px solid rgba(255,255,255,.14);  
+      background: rgba(0,0,0,.15);  
+      text-decoration:none;  
+      color: inherit;  
+      cursor: pointer;  
+      -webkit-tap-highlight-color: transparent;  
+      user-select: none;  
+      transform: translateZ(0);  
+    }  
+    .sellCard:active{ transform: translateY(1px) scale(.99); }
+
+    /* ✅ スマホ：高さを揃えて気持ちいい（= cover） */  
+    .sellCard img{  
+      display:block;  
+      width: 100%;  
+      height: clamp(150px, 26vw, 220px);  
+      object-fit: cover;  
+    }
+
+    /* ✅ PC：画像が“切れない”ようにする（= contain） */  
+    @media (min-width: 740px){  
+      .sellCard img{  
+        height: auto !important;          /* 高さ固定をやめる */  
+        max-height: 320px !important;     /* 大きくなりすぎ防止（好みで調整） */  
+        object-fit: contain !important;   /* 切らない */  
+        background: rgba(0,0,0,.18);      /* 余白が出た時の下地 */  
+      }  
+    }
+
+    .sellChoice__note{  
+      padding: 0 14px 14px;  
+      opacity: .82;  
+      font-size: 12px;  
+      line-height: 1.4;  
+    }  
   </style>
 </head>
 
-<body>
-  <header class="roten-header">
-    <div class="roten-head-inner">
+<body>  
+  <header class="roten-header">  
+    <div class="roten-head-inner">  
       <button class="btn btn-ghost roten-back" id="rotenBackBtn" type="button" aria-label="戻る">←戻る</button>
 
-      <div class="roten-head-center">
-        <div class="roten-title">露店</div>
-        <div class="roten-sub">マイ露店 / たこぴのお店</div>
-      </div>
+      <div class="roten-head-center">  
+        <div class="roten-title">露店</div>  
+        <div class="roten-sub">マイ露店 / たこぴのお店</div>  
+      </div>  
     </div>
   </header>
 
   <main id="rotenApp" class="roten-app">
-
-    <section class="hud">
-      <div class="hud-left">
-        <div class="hud-pill hud-pill--big">
-          <span class="tag">🪙</span>
-          <span class="num" id="octoNow">0</span>
+    <section class="hud">  
+      <div class="hud-left">  
+        <div class="hud-pill hud-pill--big">  
+          <span class="tag">🪙</span>  
+          <span class="num" id="octoNow">0</span>  
         </div>
 
-        <div class="hud-pill">
-          <span class="ico">🌱</span><span class="lbl">種</span><b id="chipSeed">0</b>
-          <span class="sep">/</span>
-          <span class="ico">💧</span><span class="lbl">水</span><b id="chipWater">0</b>
-          <span class="sep">/</span>
-          <span class="ico">🧪</span><span class="lbl">肥料</span><b id="chipFert">0</b>
-        </div>
+        <!-- ✅ オクトの右横へ（スマホでも強制） -->  
+        <div class="hud-pill">  
+          <span class="ico">🌱</span><span class="lbl">種</span><b id="chipSeed">0</b>  
+          <span class="sep">/</span>  
+          <span class="ico">💧</span><span class="lbl">水</span><b id="chipWater">0</b>  
+          <span class="sep">/</span>  
+          <span class="ico">🧪</span><span class="lbl">肥料</span><b id="chipFert">0</b>  
+        </div>  
       </div>
 
-      <div class="hud-right">
-        <button class="btn btn-ghost" id="btnOpenInv" type="button">所持資材</button>
+      <div class="hud-right">  
+        <button class="btn btn-ghost" id="btnOpenInv" type="button">所持資材</button>  
         <button class="btn btn-ghost" id="btnOpenRates" type="button">水のレア率メモ</button>
       </div>
     </section>
 
-    <section class="shop-hero">
-      <div class="hero-card">
-        <div class="hero-imgwrap">
-          <img class="hero-img" id="takopiHeroImg" src="https://ul.h3z.jp/0eBSeUBg.png" alt="たこぴ" />
+    <section class="shop-hero">  
+      <div class="hero-card">  
+        <div class="hero-imgwrap">  
+          <img class="hero-img" id="takopiHeroImg" src="https://ul.h3z.jp/0eBSeUBg.png" alt="たこぴ" />  
         </div>
 
-        <div class="hero-dialog">
-          <div class="hero-name">たこぴ</div>
-          <div class="hero-text" id="takopiSay">
-            「いらっしゃい…たこ。<br>オクトで“未来”を買うの、すき…たこ？」
+        <div class="hero-dialog">  
+          <div class="hero-name">たこぴ</div>  
+          <div class="hero-text" id="takopiSay">  
+            「いらっしゃい…たこ。<br>オクトで“未来”を買うの、すき…たこ？」  
           </div>
 
-          <div style="display:flex; gap:8px; align-items:center;">
-            <input
-              id="serialInlineInput"
-              type="text"
-              inputmode="text"
-              autocomplete="off"
-              placeholder="例：TC-XXXX-XXXX"
-              style="flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.25); color:#fff; outline:none;"
-            />
-            <button class="btn" id="serialInlineBtn" type="button" style="white-space:nowrap;">使う</button>
-          </div>
-          <div id="serialInlineMsg" style="margin-top:6px; font-size:12px; opacity:.85;" aria-live="polite"></div>
+          <div class="hero-actions"></div>
+
+          <div style="display:flex; gap:8px; align-items:center;">  
+            <input  
+              id="serialInlineInput"  
+              type="text"  
+              inputmode="text"  
+              autocomplete="off"  
+              placeholder="例：TC-XXXX-XXXX"  
+              style="flex:1; min-width:0; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.25); color:#fff; outline:none;"  
+            />  
+            <button class="btn" id="serialInlineBtn" type="button" style="white-space:nowrap;">使う</button>  
+          </div>  
+          <div id="serialInlineMsg" style="margin-top:6px; font-size:12px; opacity:.85;" aria-live="polite"></div>  
         </div>
       </div>
     </section>
 
-    <section class="block">
-      <div class="block-head" style="display:flex; align-items:center; gap:10px;">
-        <div class="block-title" style="flex:1;">購入</div>
-        <div id="_aboutSlot" style="display:flex; justify-content:flex-end; align-items:center;"></div>
+    <section class="block">  
+      <div class="block-head" style="display:flex; align-items:center; gap:10px;">  
+        <div class="block-title" style="flex:1;">購入</div>  
+        <div id="_aboutSlot" style="display:flex; justify-content:flex-end; align-items:center;"></div>  
       </div>
 
-      <div class="goods-tabs" aria-label="資材タブ">
-        <button class="goods-tab is-active" data-kind="seed" type="button">タネ🌱</button>
-        <button class="goods-tab" data-kind="water" type="button">ミズ💧</button>
-        <button class="goods-tab" data-kind="fert" type="button">ヒリョウ🧪</button>
+      <div class="goods-tabs" aria-label="資材タブ">  
+        <button class="goods-tab is-active" data-kind="seed" type="button">タネ🌱</button>  
+        <button class="goods-tab" data-kind="water" type="button">ミズ💧</button>  
+        <button class="goods-tab" data-kind="fert" type="button">ヒリョウ🧪</button>  
       </div>
 
-      <div class="goods-grid" id="goodsGrid"></div>
+      <div class="goods-grid" id="goodsGrid"></div>  
     </section>
-
   </main>
 
   <div id="toast" aria-live="polite"></div>
 
-  <div class="modal" id="modal" aria-hidden="true">
-    <div class="modal__backdrop" id="modalBg"></div>
-    <div class="modal__sheet" role="dialog" aria-label="モーダル">
-      <div class="modal__grab"></div>
-      <div class="modal__head">
-        <div class="modal__title" id="modalTitle">タイトル</div>
-        <button class="btn modal__x" id="modalX" type="button">閉じる</button>
+  <!-- ====== 既存MODAL（そのまま） ====== -->
+  <div class="modal" id="modal" aria-hidden="true">  
+    <div class="modal__backdrop" id="modalBg"></div>  
+    <div class="modal__sheet" role="dialog" aria-label="モーダル">  
+      <div class="modal__grab"></div>  
+      <div class="modal__head">  
+        <div class="modal__title" id="modalTitle">タイトル</div>  
+        <button class="btn modal__x" id="modalX" type="button">閉じる</button>  
+      </div>  
+      <div id="modalBody" class="modal__body"></div>  
+    </div>  
+  </div>
+
+  <!-- ✅ 売り方をえらぶ（2択）モーダル -->
+  <div class="sellChoice" id="sellChoice" aria-hidden="true">  
+    <div class="sellChoice__panel" role="dialog" aria-label="売り方をえらぶ">  
+      <div class="sellChoice__head">  
+        <button class="sellChoice__back" id="sellChoiceBack" type="button" aria-label="戻る">←戻る</button>  
+        <div class="sellChoice__title">売り方をえらぶ</div>  
+        <div class="sellChoice__spacer" aria-hidden="true"></div>  
       </div>
-      <div id="modalBody" class="modal__body"></div>
+
+      <div class="sellChoice__desc">  
+        <b>今すぐオクト化</b>する？ それとも <b>マイ露店でコツコツ販売</b>する？  
+      </div>
+
+      <div class="sellChoice__body">  
+        <a class="sellCard" id="goInstantSell" href="sell.html" aria-label="たこぴに即売りへ">  
+          <img src="https://ul.h3z.jp/OY1i6zTs.png" alt="たこぴに即売り（換金）">  
+        </a>
+
+        <a class="sellCard" id="goMyShopSell" href="https://takoyaki-trc.github.io/takoyaki-media/town/myshop.html" aria-label="マイ露店へ">  
+          <img src="https://ul.h3z.jp/03QxjNxa.png" alt="マイ露店で売る（たこ民に販売）">  
+        </a>  
+      </div>
+
+      <div class="sellChoice__note">  
+        ※即売り＝すぐ換金（安定） / マイ露店＝たこ民にコツコツ販売（上振れ狙い）…たこ。  
+      </div>  
     </div>
   </div>
 
   <script src="assets/roten.js"></script>
-</body>
+
+  <!-- ✅ 公開記念プレゼント：+5000オクトを“追加”する上書き（roten.jsを触らず追記） -->
+  <script>  
+    (function(){  
+      const btn = document.getElementById("btnLaunchPresent");  
+      if(!btn) return;
+
+      function toInt(v){  
+        const n = parseInt(String(v||"0").replace(/[^\d-]/g,""),10);  
+        return Number.isFinite(n) ? n : 0;  
+      }
+
+      const CAND_KEYS = [  
+        "octo", "OCTO", "octoNow", "TRC_OCTO", "LS_OCTO",  
+        "tf_v1_octo", "tf_octo", "tf_v1_state", "TRC_STATE"  
+      ];
+
+      function readOcto(){  
+        for(const k of CAND_KEYS){  
+          const raw = localStorage.getItem(k);  
+          if(raw == null) continue;
+
+          if((raw.startsWith("{") && raw.endsWith("}")) || (raw.startsWith("[") && raw.endsWith("]"))){  
+            try{  
+              const obj = JSON.parse(raw);  
+              const candidates = [  
+                obj?.octo, obj?.OCTO, obj?.money, obj?.wallet,  
+                obj?.inv?.octo, obj?.player?.octo  
+              ];  
+              for(const c of candidates){  
+                if(Number.isFinite(Number(c))) return Number(c);  
+              }  
+            }catch(_){}  
+            continue;  
+          }
+
+          const n = toInt(raw);  
+          if(n !== 0 || raw === "0") return n;  
+        }
+
+        const el = document.getElementById("octoNow");  
+        if(el) return toInt(el.textContent);  
+        return 0;  
+      }
+
+      function writeOcto(next){  
+        const el = document.getElementById("octoNow");  
+        if(el) el.textContent = String(next);
+
+        for(const k of CAND_KEYS){  
+          const raw = localStorage.getItem(k);  
+          if(raw == null) continue;
+
+          if((raw.startsWith("{") && raw.endsWith("}"))){  
+            try{  
+              const obj = JSON.parse(raw);  
+              if(typeof obj === "object" && obj){  
+                if("octo" in obj) obj.octo = next;  
+                else if("OCTO" in obj) obj.OCTO = next;  
+                else if(obj.inv && typeof obj.inv === "object" && ("octo" in obj.inv)) obj.inv.octo = next;  
+                else continue;  
+                localStorage.setItem(k, JSON.stringify(obj));  
+              }  
+            }catch(_){}  
+            continue;  
+          }
+
+          const n = toInt(raw);  
+          if(n !== 0 || raw === "0"){  
+            localStorage.setItem(k, String(next));  
+          }  
+        }
+
+        window.dispatchEvent(new CustomEvent("octo:changed", { detail: { octo: next } }));  
+      }
+
+      btn.addEventListener("click", function(){  
+        setTimeout(function(){  
+          const cur = readOcto();  
+          const next = cur + 5000;  
+          writeOcto(next);
+
+          const t = document.getElementById("toast");  
+          if(t){  
+            t.textContent = "🎁 公開記念プレゼント：+5000オクト！";  
+            t.classList.add("is-show");  
+            setTimeout(()=>t.classList.remove("is-show"), 1400);  
+          }  
+        }, 0);  
+      }, true);  
+    })();  
+  </script>
+
+  <!-- ✅ このページ専用：売却ボタン → 2択モーダル（roten.jsを触らず上書き） -->
+  <script>  
+    (function(){  
+      const openBtn = document.getElementById("btnOpenSell");  
+      const modal   = document.getElementById("sellChoice");  
+      const backBtn = document.getElementById("sellChoiceBack");
+
+      if(!openBtn || !modal) return;
+
+      function open(){  
+        modal.classList.add("is-open");  
+        modal.setAttribute("aria-hidden","false");  
+        document.documentElement.style.overflow = "hidden";  
+        document.body.style.overflow = "hidden";  
+      }  
+      function close(){  
+        modal.classList.remove("is-open");  
+        modal.setAttribute("aria-hidden","true");  
+        document.documentElement.style.overflow = "";  
+        document.body.style.overflow = "";  
+      }
+
+      openBtn.addEventListener("click", function(e){  
+        e.preventDefault();  
+        e.stopPropagation();  
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();  
+        open();  
+      }, true);
+
+      backBtn && backBtn.addEventListener("click", close);
+
+      modal.addEventListener("click", (e)=>{ if(e.target === modal) close(); });  
+      document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") close(); });  
+    })();  
+  </script>
+</body>  
 </html>
