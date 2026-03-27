@@ -15,28 +15,14 @@
       --bg2:#2b1a39;
       --bg3:#4a2b2b;
 
-      --wood1:#7c4f2e;
-      --wood2:#5a351d;
-      --wood3:#3f2413;
-
       --paper1:#fff9ec;
       --paper2:#f0e2bb;
-      --paper3:#dcc48d;
 
-      --gold1:#ffe8aa;
-      --gold2:#d9a84d;
-      --gold3:#8c5d19;
-
-      --line:rgba(255,255,255,.14);
       --text:#fff8eb;
       --muted:rgba(255,248,235,.78);
       --ink:#35210f;
 
-      --panel:rgba(35,18,15,.56);
-      --panel2:rgba(18,9,8,.5);
-
       --shadow:0 16px 45px rgba(0,0,0,.45);
-      --radius:18px;
     }
 
     *{ box-sizing:border-box; }
@@ -83,16 +69,19 @@
       justify-content:center;
       position:relative;
       padding:14px 14px 10px;
-      min-height:62px;
+      min-height:78px;
     }
 
     .roten-back{
       position:absolute;
       left:14px;
+      top:50%;
+      transform:translateY(-50%);
     }
 
     .roten-head-center{
       text-align:center;
+      padding:0 64px;
     }
 
     .roten-title{
@@ -168,9 +157,150 @@
         0 8px 18px rgba(0,0,0,.2);
     }
 
-    .hud{
+    /* ===== 右上 畑ボタン（アイコンのみ + 初回誘導で光る） ===== */
+    .header-farm-wrap{
+      position:absolute;
+      right:14px;
+      top:50%;
+      transform:translateY(-50%);
       display:flex;
       align-items:center;
+      justify-content:center;
+    }
+
+    .farm-icon-btn{
+      width:46px;
+      height:46px;
+      padding:0;
+      border-radius:14px;
+      position:relative;
+      overflow:visible;
+      background:
+        linear-gradient(180deg, rgba(224,255,190,.22), rgba(255,255,255,.05)),
+        linear-gradient(180deg, #658a32, #3a5617);
+      border:1px solid rgba(222,255,186,.38);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.15),
+        0 8px 18px rgba(0,0,0,.24);
+      font-size:22px;
+      line-height:1;
+    }
+
+    .farm-icon-btn:hover{
+      filter:brightness(1.04);
+    }
+
+    .farm-icon-btn::after{
+      content:"";
+      position:absolute;
+      inset:-4px;
+      border-radius:18px;
+      pointer-events:none;
+      opacity:0;
+    }
+
+    .farm-icon-btn.is-glow{
+      animation:farmPulse 1.6s ease-in-out infinite;
+    }
+
+    .farm-icon-btn.is-glow::after{
+      opacity:1;
+      animation:farmRing 1.6s ease-out infinite;
+      box-shadow:
+        0 0 0 2px rgba(199,255,153,.18),
+        0 0 18px rgba(199,255,153,.48),
+        0 0 34px rgba(142,255,117,.34);
+    }
+
+    .farm-badge{
+      position:absolute;
+      right:-6px;
+      top:-6px;
+      min-width:18px;
+      height:18px;
+      padding:0 5px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:10px;
+      font-weight:1000;
+      color:#38220b;
+      background:linear-gradient(180deg, #fff2b0, #ffcf59);
+      border:1px solid rgba(255,255,255,.55);
+      box-shadow:0 4px 10px rgba(0,0,0,.25);
+      letter-spacing:.02em;
+    }
+
+    .farm-tip{
+      position:absolute;
+      right:0;
+      top:56px;
+      max-width:130px;
+      padding:8px 10px;
+      border-radius:12px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04)),
+        rgba(28,18,14,.92);
+      border:1px solid rgba(214,255,181,.26);
+      color:#fff8eb;
+      font-size:11px;
+      line-height:1.45;
+      text-align:center;
+      box-shadow:0 10px 24px rgba(0,0,0,.26);
+      transform-origin:top right;
+      animation:tipFloat 1.8s ease-in-out infinite;
+    }
+
+    .farm-tip::before{
+      content:"";
+      position:absolute;
+      right:16px;
+      top:-7px;
+      width:12px;
+      height:12px;
+      background:rgba(28,18,14,.92);
+      border-left:1px solid rgba(214,255,181,.26);
+      border-top:1px solid rgba(214,255,181,.26);
+      transform:rotate(45deg);
+    }
+
+    @keyframes farmPulse{
+      0%,100%{
+        transform:translateY(0) scale(1);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.15),
+          0 8px 18px rgba(0,0,0,.24),
+          0 0 0 rgba(170,255,142,0);
+      }
+      50%{
+        transform:translateY(-1px) scale(1.03);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.15),
+          0 8px 18px rgba(0,0,0,.24),
+          0 0 22px rgba(170,255,142,.34);
+      }
+    }
+
+    @keyframes farmRing{
+      0%{
+        transform:scale(.92);
+        opacity:.9;
+      }
+      100%{
+        transform:scale(1.16);
+        opacity:0;
+      }
+    }
+
+    @keyframes tipFloat{
+      0%,100%{ transform:translateY(0); }
+      50%{ transform:translateY(-2px); }
+    }
+
+    .hud{
+      display:flex;
+      align-items:flex-start;
       justify-content:space-between;
       gap:10px;
       padding:12px;
@@ -185,11 +315,20 @@
 
     .hud-main{
       display:flex;
-      align-items:center;
+      flex-direction:column;
+      align-items:flex-start;
       gap:10px;
       min-width:0;
       flex:1;
+    }
+
+    .hud-toprow{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
       flex-wrap:wrap;
+      width:100%;
     }
 
     .hud-money{
@@ -225,6 +364,7 @@
       gap:8px;
       min-width:0;
       flex-wrap:wrap;
+      flex:1;
     }
 
     .stock-chip{
@@ -247,33 +387,6 @@
 
     .stock-chip b{
       font-size:13px;
-    }
-
-    .hud-links{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex:0 0 auto;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-
-    .hud-mini-btn{
-      height:38px;
-      padding:0 12px;
-      border-radius:12px;
-      font-size:12px;
-      white-space:nowrap;
-    }
-
-    .hud-farm-btn{
-      background:
-        linear-gradient(180deg, rgba(209,255,186,.22), rgba(255,255,255,.05)),
-        linear-gradient(180deg, #5b7b2c, #3c5619);
-      border:1px solid rgba(223,255,187,.34);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.14),
-        0 8px 18px rgba(0,0,0,.24);
     }
 
     .shop-hero{
@@ -374,8 +487,6 @@
       font-size:19px;
       font-weight:1000;
       letter-spacing:.05em;
-      writing-mode:horizontal-tb !important;
-      text-orientation:mixed !important;
       white-space:nowrap !important;
       line-height:1.1 !important;
     }
@@ -397,21 +508,6 @@
         linear-gradient(180deg, rgba(255,238,164,.24), rgba(255,255,255,.05)),
         linear-gradient(180deg, #7b542b, #5c381d);
       border:1px solid rgba(255,227,138,.42);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.18),
-        0 8px 18px rgba(0,0,0,.2);
-    }
-
-    .farm-jump-btn{
-      height:38px;
-      padding:0 14px;
-      border-radius:12px;
-      font-size:12px;
-      white-space:nowrap;
-      background:
-        linear-gradient(180deg, rgba(202,255,171,.24), rgba(255,255,255,.05)),
-        linear-gradient(180deg, #53752c, #365016);
-      border:1px solid rgba(208,255,176,.42);
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.18),
         0 8px 18px rgba(0,0,0,.2);
@@ -641,10 +737,6 @@
       color:rgba(255,255,255,.96);
     }
 
-    #btnOpenInv{
-      display:none !important;
-    }
-
     .modal{
       position:fixed;
       inset:0;
@@ -801,25 +893,35 @@
       -webkit-backdrop-filter:blur(6px) !important;
     }
 
-    @media (max-width:720px){
-      .hud{
-        align-items:flex-start;
-      }
-
-      .hud-links{
-        width:100%;
-        justify-content:flex-start;
-      }
-    }
-
     @media (max-width:520px){
+      .roten-head-inner{
+        min-height:86px;
+      }
+
+      .roten-head-center{
+        padding:0 58px;
+      }
+
+      .roten-title{
+        font-size:20px;
+      }
+
+      .farm-icon-btn{
+        width:42px;
+        height:42px;
+        border-radius:13px;
+        font-size:20px;
+      }
+
+      .farm-tip{
+        max-width:116px;
+        font-size:10px;
+        top:51px;
+        right:-2px;
+      }
+
       .hud{
         flex-direction:column;
-      }
-
-      .hud-main{
-        width:100%;
-        align-items:flex-start;
       }
 
       .hud-money{
@@ -841,11 +943,6 @@
 
       .stock-chip b{
         font-size:12px;
-      }
-
-      .hud-links{
-        width:100%;
-        justify-content:flex-start;
       }
 
       .goods-grid{
@@ -888,10 +985,6 @@
     }
 
     @media (max-width:420px){
-      .roten-title{
-        font-size:20px;
-      }
-
       .goods-tab{
         font-size:13px;
         padding:11px 6px;
@@ -909,11 +1002,17 @@
         width:52px !important;
       }
 
-      .about-btn,
-      .farm-jump-btn,
-      .hud-mini-btn{
+      .about-btn{
         font-size:11px;
         padding:0 11px;
+      }
+
+      .roten-back{
+        padding:9px 11px;
+      }
+
+      .roten-head-center{
+        padding:0 54px;
       }
     }
   </style>
@@ -928,27 +1027,37 @@
         <div class="roten-title">たこぴのお店</div>
         <div class="roten-sub">資材ショップ</div>
       </div>
+
+      <div class="header-farm-wrap">
+        <a
+          class="btn farm-icon-btn is-glow"
+          id="btnGoFarmTop"
+          href="./farm.html"
+          aria-label="たこ焼き畑へ"
+          title="たこ焼き畑へ"
+        >🌱</a>
+        <div class="farm-badge" id="farmBadge">!</div>
+        <div class="farm-tip" id="farmTip">たこ焼き畑へ移動</div>
+      </div>
     </div>
   </header>
 
   <main id="rotenApp" class="roten-app">
     <section class="hud">
       <div class="hud-main">
-        <div class="hud-money">
-          <span>🪙</span>
-          <span class="money-label">所持金</span>
-          <span class="money-num" id="octoNow">0</span>
-        </div>
+        <div class="hud-toprow">
+          <div class="hud-money">
+            <span>🪙</span>
+            <span class="money-label">所持金</span>
+            <span class="money-num" id="octoNow">0</span>
+          </div>
 
-        <div class="hud-stock">
-          <div class="stock-chip" id="stockSeed" role="button" tabindex="0" aria-label="種の内訳を見る">🌱 種 <b id="chipSeed">0</b></div>
-          <div class="stock-chip" id="stockWater" role="button" tabindex="0" aria-label="水の内訳を見る">💧 水 <b id="chipWater">0</b></div>
-          <div class="stock-chip" id="stockFert" role="button" tabindex="0" aria-label="肥料の内訳を見る">🧪 ヒリョウ <b id="chipFert">0</b></div>
+          <div class="hud-stock">
+            <div class="stock-chip" id="stockSeed" role="button" tabindex="0" aria-label="種の内訳を見る">🌱 種 <b id="chipSeed">0</b></div>
+            <div class="stock-chip" id="stockWater" role="button" tabindex="0" aria-label="水の内訳を見る">💧 水 <b id="chipWater">0</b></div>
+            <div class="stock-chip" id="stockFert" role="button" tabindex="0" aria-label="ヒリョウの内訳を見る">🧪 ヒリョウ <b id="chipFert">0</b></div>
+          </div>
         </div>
-      </div>
-
-      <div class="hud-links">
-        <a class="btn hud-mini-btn hud-farm-btn" id="btnGoFarmTop" href="./farm.html">🌱 たこ焼き畑へ</a>
       </div>
     </section>
 
@@ -972,7 +1081,6 @@
 
         <div class="block-actions">
           <button class="btn about-btn" id="btnOpenRates" type="button">🔰 タネ/ミズ/ヒリョウについて</button>
-          <a class="btn farm-jump-btn" id="btnGoFarm" href="./farm.html">🌱 たこ焼き畑へ</a>
         </div>
       </div>
 
@@ -1009,7 +1117,8 @@
         inv: "tf_v1_inv",
         book: "tf_v1_book",
         log: "roten_v1_log",
-        monthlyStats: "ttc_monthly_stats_v1"
+        monthlyStats: "ttc_monthly_stats_v1",
+        farmGuideSeen: "roten_v1_farm_guide_seen"
       };
 
       const $  = (sel, root=document) => root.querySelector(sel);
@@ -1625,6 +1734,33 @@
         });
       }
 
+      function setupFarmGuide(){
+        const btn = $("#btnGoFarmTop");
+        const badge = $("#farmBadge");
+        const tip = $("#farmTip");
+        if(!btn) return;
+
+        const seen = localStorage.getItem(LS.farmGuideSeen) === "1";
+
+        if(seen){
+          btn.classList.remove("is-glow");
+          if(badge) badge.style.display = "none";
+          if(tip) tip.style.display = "none";
+        }else{
+          btn.classList.add("is-glow");
+          if(badge) badge.style.display = "flex";
+          if(tip) tip.style.display = "block";
+
+          setTimeout(() => {
+            if(tip) tip.style.display = "none";
+          }, 6000);
+        }
+
+        btn.addEventListener("click", () => {
+          localStorage.setItem(LS.farmGuideSeen, "1");
+        });
+      }
+
       function boot(){
         loadMonthlyStats();
         ensureInvKeys();
@@ -1633,6 +1769,7 @@
         wireTabs();
         wireButtons();
         wireChipBreakdowns();
+        setupFarmGuide();
         refreshHUD();
         renderGoods();
         toastHype("✨ たこぴのお店 起動！", {kind:"info"});
