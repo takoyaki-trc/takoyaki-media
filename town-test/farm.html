@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>たこ焼きファーム</title>
   <link rel="stylesheet" href="assets/takofarm.css">
 </head>
@@ -13,7 +13,7 @@
     <!-- =========================
       🔥 HUD
     ========================= -->
-    <div class="hud">
+    <header class="hud">
       <a class="hudBtn" href="./index.html" aria-label="戻る">←</a>
 
       <div class="hudCenter">
@@ -22,55 +22,55 @@
       </div>
 
       <a class="hudBtn" href="./zukan.html" aria-label="図鑑">図鑑</a>
-    </div>
+    </header>
 
     <!-- =========================
       🔥 ステータス
     ========================= -->
-    <div class="hudStatus">
+    <section class="hudStatus" aria-label="ステータス">
       <div class="hudItem">Lv <b id="stLevel">1</b></div>
       <div class="hudItem">XP <b id="stXP">0</b></div>
       <div class="hudItem">解放 <b id="stUnlock">3</b>/25</div>
       <div class="hudItem">図鑑 <b id="stBook">0</b></div>
-    </div>
+    </section>
 
     <!-- =========================
       🔥 導線
     ========================= -->
-    <div class="actionGrid">
+    <nav class="actionGrid" aria-label="メニュー">
       <a href="./roten.html" class="actionBtn isPrimary">
-        <span class="ico">🏪</span>
+        <span class="ico" aria-hidden="true">🏪</span>
         <span class="txt">お店</span>
       </a>
 
       <a href="./myshop.html" class="actionBtn">
-        <span class="ico">💰</span>
+        <span class="ico" aria-hidden="true">💰</span>
         <span class="txt">露店</span>
       </a>
 
       <button class="actionBtn" id="howtoBtn" type="button">
-        <span class="ico">📜</span>
+        <span class="ico" aria-hidden="true">📜</span>
         <span class="txt">遊び方</span>
       </button>
-    </div>
+    </nav>
 
     <!-- =========================
       🔥 XPバー
     ========================= -->
-    <div class="xpPanel">
+    <section class="xpPanel" aria-label="経験値">
       <div class="xpTop">
         <div>次Lvまで <b id="stXpLeft">0</b></div>
         <small><span id="stXpNow">0</span>/<span id="stXpNeed">0</span></small>
       </div>
-      <div class="xpBarWrap">
+      <div class="xpBarWrap" aria-hidden="true">
         <div id="stXpBar" class="xpBar"></div>
       </div>
-    </div>
+    </section>
 
     <!-- =========================
       🔥 装備HUD
     ========================= -->
-    <div class="loadoutWrap">
+    <section class="loadoutWrap" aria-label="装備">
       <div class="loadoutHead">
         <div class="loadoutTtl">装備</div>
         <div class="loadoutSub">タップで変更</div>
@@ -110,15 +110,17 @@
           <div class="equipName" id="equipFertName">未装備</div>
         </button>
       </div>
-    </div>
+    </section>
 
     <!-- =========================
       🌱 畑
     ========================= -->
-    <div id="farm" class="farm"></div>
+    <section aria-label="畑">
+      <div id="farm" class="farm"></div>
+    </section>
 
     <!-- 🔥 JS用ダミー -->
-    <div style="display:none;">
+    <div hidden>
       <span id="stGrow">0</span>
       <span id="stReady">0</span>
       <span id="stBurn">0</span>
@@ -130,12 +132,14 @@
     📜 モーダル
   ========================= -->
   <div id="modal" class="modal" aria-hidden="true">
-    <div class="sheet">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
       <div class="sheetHead">
         <div class="ttl" id="mTitle">遊び方</div>
         <button id="mClose" type="button">閉じる</button>
       </div>
-      <div class="sheetBody" id="mBody"></div>
+      <div class="sheetBody">
+        <div id="mBody"></div>
+      </div>
     </div>
   </div>
 
@@ -150,8 +154,16 @@
     const mBody = document.getElementById("mBody");
     const mClose = document.getElementById("mClose");
 
-    howtoBtn.onclick = () => {
+    function openModal() {
       modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal() {
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    howtoBtn.onclick = () => {
+      openModal();
       mBody.innerHTML = `
         <div class="step">
           ① タネを装備<br>
@@ -162,13 +174,17 @@
       `;
     };
 
-    mClose.onclick = () => {
-      modal.setAttribute("aria-hidden", "true");
-    };
+    mClose.onclick = closeModal;
 
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
-        modal.setAttribute("aria-hidden", "true");
+        closeModal();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.getAttribute("aria-hidden") === "false") {
+        closeModal();
       }
     });
   </script>
