@@ -261,15 +261,15 @@
         left:50%;
         bottom:14px;
         transform:translateX(-50%);
-        z-index:14;
+        z-index:99999;
         pointer-events:none;
         padding:8px 12px;
         border-radius:999px;
-        border:1px solid rgba(255,255,255,.14);
-        background:rgba(0,0,0,.28);
+        border:1px solid rgba(255,255,255,.22);
+        background:rgba(0,0,0,.72);
         backdrop-filter:blur(6px);
         -webkit-backdrop-filter:blur(6px);
-        color:rgba(255,255,255,.88);
+        color:#fff;
         font-size:12px;
         font-weight:800;
         letter-spacing:.03em;
@@ -348,7 +348,15 @@
     clearTimeout(showWeatherLabel._timer);
     showWeatherLabel._timer = setTimeout(() => {
       label.classList.remove("show");
-    }, 2400);
+    }, 5000);
+  }
+
+  function hideWeatherLabel(){
+    const label = document.getElementById("weatherLabel");
+    if (!label) return;
+    label.classList.remove("show");
+    label.textContent = "";
+    clearTimeout(showWeatherLabel._timer);
   }
 
   function clearWeatherLayer(){
@@ -490,8 +498,9 @@
 
     if (forceLabel || prev !== type) {
       showWeatherLabel(WEATHER_LABELS[type] || type);
-      localStorage.setItem(WEATHER_KEY, type);
     }
+
+    localStorage.setItem(WEATHER_KEY, type);
   }
 
   window.TRCWeather = {
@@ -502,18 +511,24 @@
     recalc(){
       applyWeather(true);
     },
+    force(type){
+      renderWeather(type);
+      showWeatherLabel(WEATHER_LABELS[type] || type);
+      localStorage.setItem(WEATHER_KEY, type);
+    },
     clear(){
       clearWeatherLayer();
+      hideWeatherLabel();
       localStorage.removeItem(WEATHER_KEY);
     }
   };
 
   document.addEventListener("DOMContentLoaded", () => {
-    applyWeather(false);
+    applyWeather(true);
     setInterval(() => applyWeather(false), 20 * 1000);
   });
 
   window.addEventListener("pageshow", () => {
-    applyWeather(false);
+    applyWeather(true);
   });
 })();
