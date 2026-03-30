@@ -16,6 +16,7 @@
   // ✅ ミズはレアリティ抽選のみ反映
   // ✅ 時短はヒリョウのみ反映
   // ✅ 70%時短で 1時間30分 になるよう修正
+  // ✅ 収穫モーダル：カード下に「閉じる」「図鑑を確認する」の2ボタン
   // =========================================================
 
   // =========================
@@ -317,8 +318,6 @@
 
   // =========================================================
   // 腐ったミズ / 海水 専用カード
-  // 腐敗したカード = N
-  // 浸食したカード = LR
   // =========================================================
   const WATER_SPECIAL_CARDS = {
     rotten: [
@@ -1501,12 +1500,6 @@
     const water = WATERS.find((x) => x.id === waterId);
     const fert = FERTS.find((x) => x.id === fertId);
 
-    // ============================================
-    // 収穫時間はヒリョウのみ反映
-    // ミズはレアリティ抽選だけに使用
-    // タネも収穫時間には影響させない
-    // 70%時短 = factor 0.3（1時間30分）
-    // ============================================
     const growFactor = clamp(
       (fert?.factor ?? 1),
       0.3, 1.0
@@ -1676,17 +1669,23 @@
       const reward = p.reward;
 
       openModal("収穫！", `
-        <div class="reward">
-          <div class="big">${reward.name}（${reward.id}）</div>
-          <div class="mini">
-            レア：<b>${rarityLabel(reward.rarity, reward.tier)}</b><br>
-            この画面を閉じると自動で図鑑に登録されます。
+        <div class="harvWrap">
+          <div class="reward">
+            <div class="harvMeta">
+              <div class="harvName">${reward.name}（${reward.id}）</div>
+              <div class="harvId">レア：<b>${rarityLabel(reward.rarity, reward.tier)}</b></div>
+              <div class="note">この画面を閉じると自動で図鑑に登録されます。</div>
+            </div>
+
+            <div class="harvCard">
+              <img src="${reward.img}" alt="${reward.name}">
+            </div>
+
+            <div class="row">
+              <button type="button" id="btnCancel">閉じる</button>
+              <button type="button" class="primary" id="btnConfirm">図鑑を確認する</button>
+            </div>
           </div>
-          <img class="img" src="${reward.img}" alt="${reward.name}">
-        </div>
-        <div class="row">
-          <button type="button" id="btnCancel">閉じる</button>
-          <button type="button" class="primary" id="btnConfirm">図鑑を確認する</button>
         </div>
       `);
 
