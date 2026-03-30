@@ -1837,4 +1837,4 @@
   setInterval(tick, TICK_MS);
 
   window.__takofarm_onPlotTap = onPlotTap;
-})();
+})();　
