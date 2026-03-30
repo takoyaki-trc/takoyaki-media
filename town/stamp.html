@@ -1,0 +1,1319 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>焼き印スタンプ所</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#120814;
+      --bg2:#241028;
+      --bg3:#3a1730;
+
+      --panel:rgba(16,20,36,.82);
+      --panel2:rgba(24,28,48,.92);
+      --line:rgba(255,255,255,.14);
+
+      --text:#fff8e8;
+      --muted:rgba(255,248,232,.75);
+
+      --gold1:#fff0b8;
+      --gold2:#ffd35c;
+      --gold3:#c88714;
+
+      --orange1:#ffca7a;
+      --orange2:#ff9438;
+      --orange3:#c4560a;
+
+      --red1:#ff8080;
+      --red2:#ff5252;
+      --cyan:#8cefff;
+      --lime:#c7ff8d;
+
+      --shadow:0 14px 36px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius-sm:12px;
+      --safe-top:max(12px, env(safe-area-inset-top));
+      --safe-bottom:max(14px, env(safe-area-inset-bottom));
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:"DotGothic16", system-ui, sans-serif;
+      background:
+        radial-gradient(1100px 500px at 50% -10%, rgba(255,185,86,.18), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2) 46%, var(--bg3));
+      min-height:100%;
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 15% 18%, rgba(255,255,255,.05) 0 1px, transparent 1px 100%),
+        radial-gradient(circle at 85% 22%, rgba(255,255,255,.04) 0 1px, transparent 1px 100%),
+        radial-gradient(circle at 32% 72%, rgba(255,255,255,.04) 0 1px, transparent 1px 100%);
+      opacity:.55;
+    }
+
+    .wrap{
+      width:min(100%, 860px);
+      margin:0 auto;
+      padding:
+        calc(var(--safe-top) + 8px)
+        14px
+        calc(var(--safe-bottom) + 24px);
+      position:relative;
+      z-index:1;
+    }
+
+    .topbar{
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:10px;
+      align-items:center;
+      margin-bottom:14px;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      color:var(--text);
+      border-radius:14px;
+      min-height:52px;
+      padding:0 16px;
+      font:inherit;
+      cursor:pointer;
+      box-shadow:var(--shadow);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      text-decoration:none;
+      white-space:nowrap;
+    }
+
+    .btn:active{ transform:translateY(1px); }
+
+    .titlechip{
+      min-height:52px;
+      border-radius:14px;
+      border:1px solid rgba(255,211,92,.24);
+      background:linear-gradient(180deg, rgba(30,38,68,.95), rgba(14,18,34,.95));
+      box-shadow:var(--shadow);
+      padding:0 14px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      overflow:hidden;
+    }
+
+    .titlechip .emoji{
+      font-size:22px;
+      filter:drop-shadow(0 0 8px rgba(255,179,71,.2));
+    }
+
+    .titlechip .main{
+      font-size:18px;
+      line-height:1;
+      letter-spacing:.02em;
+    }
+
+    .titlechip .sub{
+      margin-top:4px;
+      font-size:11px;
+      color:var(--muted);
+      letter-spacing:.03em;
+    }
+
+    .hud{
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .chip{
+      min-height:68px;
+      border-radius:16px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(27,32,55,.92), rgba(13,17,32,.95));
+      box-shadow:var(--shadow);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .chip-ico{
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      font-size:20px;
+      background:linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.12);
+      flex:0 0 auto;
+    }
+
+    .chip-label{
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:4px;
+    }
+
+    .chip-value{
+      font-size:18px;
+      line-height:1.15;
+      word-break:break-word;
+    }
+
+    .panel{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(25,29,52,.94), rgba(15,18,32,.97));
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      margin-bottom:14px;
+    }
+
+    .hero{
+      padding:20px 16px 18px;
+      position:relative;
+      isolation:isolate;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(300px 120px at 50% 0%, rgba(255,185,86,.16), transparent 72%),
+        radial-gradient(180px 120px at 80% 18%, rgba(255,95,95,.12), transparent 70%);
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .hero-inner{
+      position:relative;
+      z-index:1;
+    }
+
+    .hero-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .hero-title{
+      font-size:22px;
+      line-height:1.25;
+      margin:0 0 6px;
+    }
+
+    .hero-text{
+      margin:0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.8;
+    }
+
+    .progress-badge{
+      flex:0 0 auto;
+      min-width:94px;
+      text-align:center;
+      padding:10px 10px 9px;
+      border-radius:16px;
+      border:1px solid rgba(255,211,92,.26);
+      background:linear-gradient(180deg, rgba(79,52,14,.6), rgba(39,24,6,.7));
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+    }
+
+    .progress-badge .small{
+      font-size:11px;
+      color:#ffe8b5;
+      margin-bottom:4px;
+    }
+
+    .progress-badge .big{
+      font-size:22px;
+      color:var(--gold1);
+      line-height:1;
+    }
+
+    .stamp-card{
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        linear-gradient(180deg, rgba(255,245,224,.08), rgba(255,245,224,.03)),
+        linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      padding:14px 12px 16px;
+    }
+
+    .stamp-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    .stamp-title{
+      font-size:14px;
+    }
+
+    .stamp-next{
+      font-size:11px;
+      color:#ffe5b2;
+      text-align:right;
+    }
+
+    .stamp-row{
+      display:grid;
+      grid-template-columns:repeat(5, 1fr);
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .stamp{
+      aspect-ratio:1/1;
+      border-radius:16px;
+      border:2px solid rgba(255,255,255,.12);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      display:grid;
+      place-items:center;
+      font-size:22px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .stamp::after{
+      content:"";
+      position:absolute;
+      inset:auto 0 0 0;
+      height:28%;
+      background:linear-gradient(180deg, transparent, rgba(0,0,0,.16));
+      pointer-events:none;
+    }
+
+    .stamp.done{
+      border-color:rgba(255,191,72,.55);
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255,217,122,.32), transparent 60%),
+        linear-gradient(180deg, rgba(130,71,9,.62), rgba(66,31,4,.85));
+      box-shadow:
+        inset 0 0 0 1px rgba(255,245,220,.08),
+        0 0 0 1px rgba(255,197,77,.08);
+    }
+
+    .stamp.done .mark{
+      filter:drop-shadow(0 0 8px rgba(255,185,66,.3));
+    }
+
+    .stamp.locked .mark{
+      opacity:.4;
+      filter:grayscale(1);
+    }
+
+    .stamp-num{
+      position:absolute;
+      top:5px;
+      right:7px;
+      font-size:10px;
+      color:rgba(255,255,255,.86);
+      z-index:1;
+    }
+
+    .stamp.done .stamp-num{
+      color:#fff4cc;
+    }
+
+    .section{
+      padding:16px;
+      border-top:1px solid rgba(255,255,255,.06);
+    }
+
+    .section h2{
+      margin:0 0 10px;
+      font-size:16px;
+      line-height:1.35;
+    }
+
+    .section p{
+      margin:0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.8;
+    }
+
+    .reward-list{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .reward-item{
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:16px;
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      padding:12px 12px 11px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+    }
+
+    .reward-left{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      min-width:0;
+    }
+
+    .reward-icon{
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      font-size:20px;
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.1);
+      flex:0 0 auto;
+    }
+
+    .reward-name{
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .reward-note{
+      margin-top:3px;
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .reward-right{
+      font-size:12px;
+      color:#ffe6b0;
+      flex:0 0 auto;
+      text-align:right;
+    }
+
+    .cta-area{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .btn-primary{
+      border-color:rgba(255,186,92,.34);
+      background:
+        linear-gradient(180deg, rgba(255,185,86,.28), rgba(185,77,16,.22)),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      color:#fff7df;
+    }
+
+    .btn-sub{
+      background:
+        linear-gradient(180deg, rgba(133,237,255,.14), rgba(66,132,149,.1)),
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border-color:rgba(140,239,255,.18);
+    }
+
+    .speech{
+      position:relative;
+      margin-top:14px;
+      border-radius:16px;
+      background:linear-gradient(180deg, #fff7e9, #f4e6c8);
+      color:#392410;
+      border:2px solid #caa25d;
+      padding:14px 14px 12px;
+      box-shadow:0 10px 24px rgba(0,0,0,.22);
+      font-size:13px;
+      line-height:1.8;
+    }
+
+    .speech-label{
+      display:inline-block;
+      margin-bottom:8px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:#4a2911;
+      color:#fff0c9;
+      font-size:11px;
+      line-height:1;
+    }
+
+    .history-box{
+      display:grid;
+      gap:8px;
+      margin-top:10px;
+    }
+
+    .history-row{
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
+      padding:10px 12px;
+      font-size:12px;
+      line-height:1.7;
+      color:var(--muted);
+    }
+
+    .history-row strong{
+      color:var(--text);
+      font-weight:400;
+    }
+
+    .tips{
+      display:grid;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .tip{
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.09);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      padding:11px 12px;
+      font-size:12px;
+      line-height:1.8;
+      color:var(--muted);
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(4,7,16,.68);
+      backdrop-filter:blur(6px);
+      z-index:99;
+    }
+
+    .modal.show{ display:flex; }
+
+    .modal-card{
+      width:min(100%, 520px);
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(320px 160px at 50% 0%, rgba(255,188,84,.18), transparent 72%),
+        linear-gradient(180deg, rgba(28,32,58,.98), rgba(14,17,31,.99));
+      box-shadow:0 22px 56px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+
+    .modal-body{
+      padding:18px 16px 16px;
+    }
+
+    .modal-title{
+      margin:0 0 10px;
+      font-size:20px;
+      line-height:1.35;
+      text-align:center;
+    }
+
+    .result-big{
+      text-align:center;
+      font-size:14px;
+      color:#ffe7af;
+      margin-bottom:14px;
+      line-height:1.8;
+    }
+
+    .result-bonus{
+      margin-top:10px;
+      padding:11px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,208,105,.28);
+      background:linear-gradient(180deg, rgba(255,191,72,.18), rgba(128,74,12,.16));
+      font-size:13px;
+      color:#fff0c4;
+      line-height:1.7;
+    }
+
+    .modal-actions{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .muted{
+      color:var(--muted);
+    }
+
+    @media (max-width: 720px){
+      .topbar{
+        grid-template-columns:1fr;
+      }
+      .topbar .btn,
+      .topbar .titlechip{
+        width:100%;
+      }
+      .hud{
+        grid-template-columns:1fr;
+      }
+      .hero-head{
+        flex-direction:column;
+        align-items:stretch;
+      }
+      .progress-badge{
+        width:100%;
+      }
+    }
+
+    @media (max-width: 430px){
+      .wrap{ padding-left:10px; padding-right:10px; }
+      .hero-title{ font-size:19px; }
+      .stamp-row{ gap:8px; }
+      .stamp{ border-radius:14px; font-size:19px; }
+      .chip-value{ font-size:17px; }
+      .btn{ min-height:50px; padding:0 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="topbar">
+      <a class="btn" href="town.html">← 戻る</a>
+
+      <div class="titlechip">
+        <div class="emoji">🔥</div>
+        <div>
+          <div class="main">焼き印スタンプ所</div>
+          <div class="sub">来店チェックインでスタンプを焼きつける場所</div>
+        </div>
+      </div>
+
+      <button class="btn" id="resetBtn" type="button">↺ テスト初期化</button>
+    </div>
+
+    <div class="hud">
+      <div class="chip">
+        <div class="chip-ico">🪙</div>
+        <div>
+          <div class="chip-label">所持オクト</div>
+          <div class="chip-value" id="octoNow">0</div>
+        </div>
+      </div>
+
+      <div class="chip">
+        <div class="chip-ico">🔥</div>
+        <div>
+          <div class="chip-label">累計スタンプ</div>
+          <div class="chip-value"><span id="stampNow">0</span> / 10</div>
+        </div>
+      </div>
+
+      <div class="chip">
+        <div class="chip-ico">📅</div>
+        <div>
+          <div class="chip-label">今日の状態</div>
+          <div class="chip-value" id="todayState">未チェックイン</div>
+        </div>
+      </div>
+    </div>
+
+    <section class="panel hero">
+      <div class="hero-inner">
+        <div class="hero-head">
+          <div>
+            <h1 class="hero-title">毎日1回、来店の焼き印を残すたこ。</h1>
+            <p class="hero-text">
+              店内のQRを読んで、来店スタンプを1個獲得。<br>
+              小さな報酬を毎回もらえて、5回・10回で節目ボーナスもあるたこ。
+            </p>
+          </div>
+
+          <div class="progress-badge">
+            <div class="small">つぎの節目まで</div>
+            <div class="big" id="nextGoalText">あと5</div>
+          </div>
+        </div>
+
+        <div class="stamp-card">
+          <div class="stamp-top">
+            <div class="stamp-title">焼き印スタンプカード</div>
+            <div class="stamp-next" id="stampHint">5個で節目ボーナス</div>
+          </div>
+
+          <div class="stamp-row" id="stampRow1"></div>
+          <div class="stamp-row" id="stampRow2"></div>
+        </div>
+
+        <div class="cta-area">
+          <button class="btn btn-primary" id="checkinBtn" type="button">📷 チェックインする</button>
+          <button class="btn btn-sub" id="rewardTableBtn" type="button">🎁 報酬一覧を見る</button>
+        </div>
+
+        <div class="speech" id="takopiSpeech">
+          <div class="speech-label">たこぴ</div>
+          <div id="speechText">まだ焼き印が薄いたこ。今日も一発、ジュッといくたこ。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section">
+        <h2>節目ボーナス</h2>
+        <p>
+          5回・10回のチェックインで、ふだんより少し良い報酬を追加でもらえるたこ。
+        </p>
+
+        <div class="reward-list">
+          <div class="reward-item">
+            <div class="reward-left">
+              <div class="reward-icon">5️⃣</div>
+              <div>
+                <div class="reward-name">5回目ボーナス</div>
+                <div class="reward-note">おすすめ：ノーマルタネ 2個</div>
+              </div>
+            </div>
+            <div class="reward-right">節目報酬</div>
+          </div>
+
+          <div class="reward-item">
+            <div class="reward-left">
+              <div class="reward-icon">🔟</div>
+              <div>
+                <div class="reward-name">10回目ボーナス</div>
+                <div class="reward-note">おすすめ：少し良いタネ 1個</div>
+              </div>
+            </div>
+            <div class="reward-right">節目報酬</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>最近の記録</h2>
+        <p>最後に受け取った内容や、今日の状態をここで確認できるたこ。</p>
+
+        <div class="history-box">
+          <div class="history-row">
+            <strong>最後の報酬：</strong>
+            <span id="lastRewardText">まだなし</span>
+          </div>
+          <div class="history-row">
+            <strong>最終チェックイン日：</strong>
+            <span id="lastDateText">まだなし</span>
+          </div>
+          <div class="history-row">
+            <strong>端末ID：</strong>
+            <span id="deviceIdText">未生成</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="rewardTableSection" style="display:none;">
+        <h2>通常報酬一覧</h2>
+        <p>チェックイン成功時、下の中から1つがランダムでもらえるたこ。</p>
+
+        <div class="reward-list">
+          <div class="reward-item">
+            <div class="reward-left">
+              <div class="reward-icon">🪙</div>
+              <div>
+                <div class="reward-name">オクト +100</div>
+                <div class="reward-note">軽めの基本報酬</div>
+              </div>
+            </div>
+            <div class="reward-right">よく出る</div>
+          </div>
+
+          <div class="reward-item">
+            <div class="reward-left">
+              <div class="reward-icon">🪙</div>
+              <div>
+                <div class="reward-name">オクト +200</div>
+                <div class="reward-note">標準報酬</div>
+              </div>
+            </div>
+            <div class="reward-right">ふつう</div>
+          </div>
+
+          <div class="reward-item">
+            <div class="reward-left">
+              <div class="reward-icon">🪙</div>
+              <div>
+                <div class="reward-name">オクト +300</div>
+                <div class="reward-note">ちょっと嬉しい</div>
+              </div>
+            </div>
+            <div class="reward-right">やや低確率</div>
+          </div>
+
+          <div class="reward-item">
+            <div class="reward-left">
+              <div class="reward-icon">💧</div>
+              <div>
+                <div class="reward-name">水 +1</div>
+                <div class="reward-note">畑で使える想定</div>
+              </div>
+            </div>
+            <div class="reward-right">ふつう</div>
+          </div>
+
+          <div class="reward-item">
+            <div class="reward-left">
+              <div class="reward-icon">🧪</div>
+              <div>
+                <div class="reward-name">ヒリョウ +1</div>
+                <div class="reward-note">畑で使える想定</div>
+              </div>
+            </div>
+            <div class="reward-right">ふつう</div>
+          </div>
+
+          <div class="reward-item">
+            <div class="reward-left">
+              <div class="reward-icon">🌱</div>
+              <div>
+                <div class="reward-name">ノーマルタネ +1</div>
+                <div class="reward-note">定番の嬉しい報酬</div>
+              </div>
+            </div>
+            <div class="reward-right">やや低確率</div>
+          </div>
+
+          <div class="reward-item">
+            <div class="reward-left">
+              <div class="reward-icon">✨</div>
+              <div>
+                <div class="reward-name">少し良いタネ +1</div>
+                <div class="reward-note">低確率の当たり</div>
+              </div>
+            </div>
+            <div class="reward-right">低確率</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>メモ</h2>
+        <div class="tips">
+          <div class="tip">この版はまずページ単体で動くローカル保存版。あとからQR実読み取りやGAS連携を追加しやすい形にしてあるたこ。</div>
+          <div class="tip">今の「📷 チェックインする」は、まずテスト用として1日1回処理だけ動く。後でここをQR読み取り開始ボタンに置き換えればOKたこ。</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal" id="resultModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-body">
+        <h2 class="modal-title" id="modalTitle">チェックイン成功！</h2>
+        <div class="result-big" id="modalMainText"></div>
+
+        <div class="reward-list">
+          <div class="reward-item">
+            <div class="reward-left">
+              <div class="reward-icon" id="modalRewardIcon">🎁</div>
+              <div>
+                <div class="reward-name" id="modalRewardName">報酬名</div>
+                <div class="reward-note" id="modalRewardNote">説明</div>
+              </div>
+            </div>
+            <div class="reward-right" id="modalStampText">+1 スタンプ</div>
+          </div>
+        </div>
+
+        <div class="result-bonus" id="bonusBox" style="display:none;"></div>
+
+        <div class="speech" style="margin-top:14px;">
+          <div class="speech-label">たこぴ</div>
+          <div id="modalSpeech">今日の焼き印、しっかり残したたこ。</div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-primary" type="button" id="closeModalBtn">とじる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      // =========================================================
+      // 設定
+      // =========================================================
+      const MAX_STAMPS = 10;
+      const GOALS = [5, 10];
+
+      // 共有ウォレット
+      const OCTO_KEY = "roten_v1_octo";
+
+      // このページ用保存キー
+      const LS_KEYS = {
+        stampTotal: "ttc_stamp_total_v1",
+        lastCheckinDate: "ttc_stamp_last_checkin_date_v1",
+        lastReward: "ttc_stamp_last_reward_v1",
+        history: "ttc_stamp_history_v1",
+        deviceId: "tf_v1_device_id",
+        inv: "tf_v1_inv"
+      };
+
+      // 今回の仮固定QR値（後で実QR読み取りに移行するときの判定用に使える）
+      const FIXED_QR_VALUE = "TAKOYAKI_CHECKIN_NANA";
+
+      // 通常報酬テーブル
+      const REWARD_TABLE = [
+        { type: "octo", id: "octo_100", icon: "🪙", label: "オクト +100", amount: 100, note: "軽めの基本報酬", weight: 26 },
+        { type: "octo", id: "octo_200", icon: "🪙", label: "オクト +200", amount: 200, note: "標準報酬", weight: 24 },
+        { type: "octo", id: "octo_300", icon: "🪙", label: "オクト +300", amount: 300, note: "ちょっと嬉しい", weight: 14 },
+
+        { type: "water", id: "water_plain_free", icon: "💧", label: "水 +1", amount: 1, note: "畑で使える想定", weight: 14 },
+        { type: "fert", id: "fert_agedama", icon: "🧪", label: "ヒリョウ +1", amount: 1, note: "畑で使える想定", weight: 12 },
+
+        { type: "seed", id: "seed_random", icon: "🌱", label: "ノーマルタネ +1", amount: 1, note: "定番の嬉しい報酬", weight: 8 },
+        { type: "seed", id: "seed_shop", icon: "✨", label: "少し良いタネ +1", amount: 1, note: "低確率の当たり", weight: 2 }
+      ];
+
+      // 節目報酬
+      const GOAL_BONUS = {
+        5:  { type: "seed", id: "seed_random", icon: "5️⃣", label: "5回目ボーナス：ノーマルタネ +2", amount: 2, note: "節目報酬" },
+        10: { type: "seed", id: "seed_shop",   icon: "🔟", label: "10回目ボーナス：少し良いタネ +1", amount: 1, note: "節目報酬" }
+      };
+
+      // =========================================================
+      // DOM
+      // =========================================================
+      const $ = (sel) => document.querySelector(sel);
+
+      const octoNowEl = $("#octoNow");
+      const stampNowEl = $("#stampNow");
+      const todayStateEl = $("#todayState");
+      const nextGoalTextEl = $("#nextGoalText");
+      const stampHintEl = $("#stampHint");
+      const stampRow1El = $("#stampRow1");
+      const stampRow2El = $("#stampRow2");
+      const speechTextEl = $("#speechText");
+      const lastRewardTextEl = $("#lastRewardText");
+      const lastDateTextEl = $("#lastDateText");
+      const deviceIdTextEl = $("#deviceIdText");
+      const rewardTableSectionEl = $("#rewardTableSection");
+
+      const rewardTableBtn = $("#rewardTableBtn");
+      const checkinBtn = $("#checkinBtn");
+      const resetBtn = $("#resetBtn");
+
+      const resultModal = $("#resultModal");
+      const modalTitle = $("#modalTitle");
+      const modalMainText = $("#modalMainText");
+      const modalRewardIcon = $("#modalRewardIcon");
+      const modalRewardName = $("#modalRewardName");
+      const modalRewardNote = $("#modalRewardNote");
+      const modalStampText = $("#modalStampText");
+      const bonusBox = $("#bonusBox");
+      const modalSpeech = $("#modalSpeech");
+      const closeModalBtn = $("#closeModalBtn");
+
+      // =========================================================
+      // 基本
+      // =========================================================
+      function getTodayLocalYMD() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+
+      function safeParse(json, fallback) {
+        try {
+          return JSON.parse(json);
+        } catch {
+          return fallback;
+        }
+      }
+
+      function loadNumber(key, fallback = 0) {
+        const raw = localStorage.getItem(key);
+        const n = Number(raw);
+        return Number.isFinite(n) ? n : fallback;
+      }
+
+      function saveNumber(key, value) {
+        localStorage.setItem(key, String(value));
+      }
+
+      function loadJSON(key, fallback) {
+        return safeParse(localStorage.getItem(key), fallback);
+      }
+
+      function saveJSON(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+
+      function getOrCreateDeviceId() {
+        let id = localStorage.getItem(LS_KEYS.deviceId);
+        if (id) return id;
+
+        if (window.crypto && crypto.randomUUID) {
+          id = crypto.randomUUID();
+        } else {
+          id = "dev_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        }
+        localStorage.setItem(LS_KEYS.deviceId, id);
+        return id;
+      }
+
+      function formatNumber(n) {
+        return Number(n || 0).toLocaleString("ja-JP");
+      }
+
+      function getInventory() {
+        const inv = loadJSON(LS_KEYS.inv, null);
+        if (inv && typeof inv === "object") {
+          if (!inv.seed) inv.seed = {};
+          if (!inv.water) inv.water = {};
+          if (!inv.fert) inv.fert = {};
+          return inv;
+        }
+        return {
+          ver: 1,
+          seed: {},
+          water: {},
+          fert: {}
+        };
+      }
+
+      function saveInventory(inv) {
+        saveJSON(LS_KEYS.inv, inv);
+      }
+
+      function addInventoryItem(type, id, amount) {
+        const inv = getInventory();
+
+        if (type === "seed") {
+          inv.seed[id] = (inv.seed[id] || 0) + amount;
+        } else if (type === "water") {
+          inv.water[id] = (inv.water[id] || 0) + amount;
+        } else if (type === "fert") {
+          inv.fert[id] = (inv.fert[id] || 0) + amount;
+        }
+
+        saveInventory(inv);
+      }
+
+      function weightedPick(items) {
+        const total = items.reduce((sum, item) => sum + item.weight, 0);
+        let r = Math.random() * total;
+        for (const item of items) {
+          r -= item.weight;
+          if (r <= 0) return item;
+        }
+        return items[items.length - 1];
+      }
+
+      function getStampTotal() {
+        return Math.max(0, Math.min(MAX_STAMPS, loadNumber(LS_KEYS.stampTotal, 0)));
+      }
+
+      function setStampTotal(n) {
+        saveNumber(LS_KEYS.stampTotal, Math.max(0, Math.min(MAX_STAMPS, n)));
+      }
+
+      function getLastCheckinDate() {
+        return localStorage.getItem(LS_KEYS.lastCheckinDate) || "";
+      }
+
+      function setLastCheckinDate(v) {
+        localStorage.setItem(LS_KEYS.lastCheckinDate, v);
+      }
+
+      function getLastReward() {
+        return loadJSON(LS_KEYS.lastReward, null);
+      }
+
+      function setLastReward(v) {
+        saveJSON(LS_KEYS.lastReward, v);
+      }
+
+      function getHistory() {
+        return loadJSON(LS_KEYS.history, []);
+      }
+
+      function pushHistory(entry) {
+        const arr = getHistory();
+        arr.unshift(entry);
+        saveJSON(LS_KEYS.history, arr.slice(0, 20));
+      }
+
+      function addOcto(amount) {
+        const now = loadNumber(OCTO_KEY, 0);
+        saveNumber(OCTO_KEY, now + amount);
+      }
+
+      function currentGoalInfo(stampTotal) {
+        for (const goal of GOALS) {
+          if (stampTotal < goal) {
+            return {
+              nextGoal: goal,
+              remaining: goal - stampTotal
+            };
+          }
+        }
+        return {
+          nextGoal: null,
+          remaining: 0
+        };
+      }
+
+      function speechByState(stampTotal, checkedInToday) {
+        if (stampTotal >= 10) {
+          return "焼き印がかなり濃くなってきたたこ。常連の香りがしてきたたこ。";
+        }
+        if (checkedInToday) {
+          return "今日はもう焼きつけ済みたこ。また明日ジュッと来るたこ。";
+        }
+        if (stampTotal >= 5) {
+          return "半分を越えたたこ。このへんから通いグセがついてくるたこ。";
+        }
+        return "まだ焼き印が薄いたこ。今日も一発、ジュッといくたこ。";
+      }
+
+      function renderStamps(stampTotal) {
+        stampRow1El.innerHTML = "";
+        stampRow2El.innerHTML = "";
+
+        for (let i = 1; i <= MAX_STAMPS; i++) {
+          const done = i <= stampTotal;
+          const div = document.createElement("div");
+          div.className = "stamp " + (done ? "done" : "locked");
+          div.innerHTML = `
+            <div class="stamp-num">${i}</div>
+            <div class="mark">${done ? "🐙" : "○"}</div>
+          `;
+          if (i <= 5) {
+            stampRow1El.appendChild(div);
+          } else {
+            stampRow2El.appendChild(div);
+          }
+        }
+      }
+
+      function render() {
+        const stampTotal = getStampTotal();
+        const lastDate = getLastCheckinDate();
+        const today = getTodayLocalYMD();
+        const checkedInToday = lastDate === today;
+        const lastReward = getLastReward();
+        const deviceId = getOrCreateDeviceId();
+        const octo = loadNumber(OCTO_KEY, 0);
+        const goal = currentGoalInfo(stampTotal);
+
+        octoNowEl.textContent = formatNumber(octo);
+        stampNowEl.textContent = String(stampTotal);
+        todayStateEl.textContent = checkedInToday ? "チェックイン済み" : "未チェックイン";
+        deviceIdTextEl.textContent = deviceId;
+        lastDateTextEl.textContent = lastDate || "まだなし";
+        lastRewardTextEl.textContent = lastReward ? lastReward.label : "まだなし";
+
+        if (goal.nextGoal) {
+          nextGoalTextEl.textContent = `あと${goal.remaining}`;
+          stampHintEl.textContent = `${goal.nextGoal}個で節目ボーナス`;
+        } else {
+          nextGoalTextEl.textContent = "達成済";
+          stampHintEl.textContent = "スタンプカードはMAXたこ";
+        }
+
+        speechTextEl.textContent = speechByState(stampTotal, checkedInToday);
+        renderStamps(stampTotal);
+      }
+
+      // =========================================================
+      // チェックイン処理（ローカルテスト版）
+      // 後でここを QR読取 → GAS送信 に置き換えればOK
+      // =========================================================
+      function canCheckinToday() {
+        return getLastCheckinDate() !== getTodayLocalYMD();
+      }
+
+      function applyReward(reward) {
+        if (reward.type === "octo") {
+          addOcto(reward.amount);
+          return;
+        }
+        if (reward.type === "seed" || reward.type === "water" || reward.type === "fert") {
+          addInventoryItem(reward.type, reward.id, reward.amount);
+        }
+      }
+
+      function doCheckinMock() {
+        const today = getTodayLocalYMD();
+
+        if (!canCheckinToday()) {
+          showAlreadyCheckedModal();
+          render();
+          return;
+        }
+
+        // 将来の実装想定：QR値が正しいときだけ成功
+        const scannedQrValue = FIXED_QR_VALUE;
+        if (scannedQrValue !== FIXED_QR_VALUE) {
+          showErrorModal("無効なQRです", "店内のQRを読み込んでください。");
+          return;
+        }
+
+        const before = getStampTotal();
+        const after = Math.min(MAX_STAMPS, before + 1);
+        setStampTotal(after);
+        setLastCheckinDate(today);
+
+        const reward = weightedPick(REWARD_TABLE);
+        applyReward(reward);
+        setLastReward(reward);
+
+        let bonus = null;
+        if (GOAL_BONUS[after]) {
+          bonus = GOAL_BONUS[after];
+          applyReward(bonus);
+        }
+
+        pushHistory({
+          date: today,
+          reward,
+          bonus,
+          stampTotal: after
+        });
+
+        render();
+        showSuccessModal(reward, bonus, after);
+      }
+
+      // =========================================================
+      // モーダル
+      // =========================================================
+      function openModal() {
+        resultModal.classList.add("show");
+        resultModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeModal() {
+        resultModal.classList.remove("show");
+        resultModal.setAttribute("aria-hidden", "true");
+      }
+
+      function showSuccessModal(reward, bonus, stampTotal) {
+        modalTitle.textContent = "チェックイン成功！";
+        modalMainText.innerHTML = `今日の焼き印を1個追加したたこ。<br>現在のスタンプ：<strong>${stampTotal} / ${MAX_STAMPS}</strong>`;
+        modalRewardIcon.textContent = reward.icon;
+        modalRewardName.textContent = reward.label;
+        modalRewardNote.textContent = reward.note;
+        modalStampText.textContent = "+1 スタンプ";
+        modalSpeech.textContent = bonus
+          ? "節目まで来たたこ。今日はちょっといい焼き上がりたこ。"
+          : "今日の焼き印、しっかり残したたこ。";
+
+        if (bonus) {
+          bonusBox.style.display = "";
+          bonusBox.innerHTML = `🎉 <strong>${bonus.label}</strong><br><span class="muted">${bonus.note}</span>`;
+        } else {
+          bonusBox.style.display = "none";
+          bonusBox.innerHTML = "";
+        }
+
+        openModal();
+      }
+
+      function showAlreadyCheckedModal() {
+        modalTitle.textContent = "今日はチェックイン済み";
+        modalMainText.innerHTML = `今日の焼き印はもう押してあるたこ。<br>また明日ためしに来るたこ。`;
+        modalRewardIcon.textContent = "📅";
+        modalRewardName.textContent = "本日は受け取り済み";
+        modalRewardNote.textContent = "1日1回まで";
+        modalStampText.textContent = "追加なし";
+        bonusBox.style.display = "none";
+        bonusBox.innerHTML = "";
+        modalSpeech.textContent = "欲張りは禁物たこ。焼きすぎると焦げるたこ。";
+        openModal();
+      }
+
+      function showErrorModal(title, text) {
+        modalTitle.textContent = title;
+        modalMainText.innerHTML = text;
+        modalRewardIcon.textContent = "⚠️";
+        modalRewardName.textContent = "処理できませんでした";
+        modalRewardNote.textContent = "時間をおいて再度お試しください";
+        modalStampText.textContent = "追加なし";
+        bonusBox.style.display = "none";
+        bonusBox.innerHTML = "";
+        modalSpeech.textContent = "ちょっと煙が多かったたこ。";
+        openModal();
+      }
+
+      // =========================================================
+      // テスト初期化
+      // =========================================================
+      function resetAllForTest() {
+        localStorage.removeItem(LS_KEYS.stampTotal);
+        localStorage.removeItem(LS_KEYS.lastCheckinDate);
+        localStorage.removeItem(LS_KEYS.lastReward);
+        localStorage.removeItem(LS_KEYS.history);
+        closeModal();
+        render();
+      }
+
+      // =========================================================
+      // イベント
+      // =========================================================
+      checkinBtn.addEventListener("click", () => {
+        doCheckinMock();
+      });
+
+      rewardTableBtn.addEventListener("click", () => {
+        const shown = rewardTableSectionEl.style.display !== "none";
+        rewardTableSectionEl.style.display = shown ? "none" : "";
+        rewardTableBtn.textContent = shown ? "🎁 報酬一覧を見る" : "🎁 報酬一覧を閉じる";
+      });
+
+      resetBtn.addEventListener("click", () => {
+        const ok = confirm("スタンプ所ページのテスト状態を初期化する？");
+        if (!ok) return;
+        resetAllForTest();
+      });
+
+      closeModalBtn.addEventListener("click", closeModal);
+      resultModal.addEventListener("click", (e) => {
+        if (e.target === resultModal) closeModal();
+      });
+
+      // =========================================================
+      // 初期表示
+      // =========================================================
+      getOrCreateDeviceId();
+      render();
+
+    })();
+  </script>
+</body>
+</html>
