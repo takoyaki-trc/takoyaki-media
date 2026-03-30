@@ -16,7 +16,7 @@
   // ✅ ミズはレアリティ抽選のみ反映
   // ✅ 時短はヒリョウのみ反映
   // ✅ 70%時短で 1時間30分 になるよう修正
-  // ✅ 収穫モーダル：カードを枠にぴったり表示 / 下ボタン2分割化
+  // ✅ 収穫モーダル：カード下に「閉じる」「図鑑を確認する」の2ボタン
   // =========================================================
 
   // =========================
@@ -318,8 +318,6 @@
 
   // =========================================================
   // 腐ったミズ / 海水 専用カード
-  // 腐敗したカード = N
-  // 浸食したカード = LR
   // =========================================================
   const WATER_SPECIAL_CARDS = {
     rotten: [
@@ -1502,12 +1500,6 @@
     const water = WATERS.find((x) => x.id === waterId);
     const fert = FERTS.find((x) => x.id === fertId);
 
-    // ============================================
-    // 収穫時間はヒリョウのみ反映
-    // ミズはレアリティ抽選だけに使用
-    // タネも収穫時間には影響させない
-    // 70%時短 = factor 0.3（1時間30分）
-    // ============================================
     const growFactor = clamp(
       (fert?.factor ?? 1),
       0.3, 1.0
@@ -1677,76 +1669,21 @@
       const reward = p.reward;
 
       openModal("収穫！", `
-        <div style="padding:2px 0 0;">
-          <div style="max-width:420px;margin:0 auto;">
-            <div style="text-align:center;font-size:16px;font-weight:1000;line-height:1.35;">
-              ${reward.name}（${reward.id}）
+        <div class="harvWrap">
+          <div class="reward">
+            <div class="harvMeta">
+              <div class="harvName">${reward.name}（${reward.id}）</div>
+              <div class="harvId">レア：<b>${rarityLabel(reward.rarity, reward.tier)}</b></div>
+              <div class="note">この画面を閉じると自動で図鑑に登録されます。</div>
             </div>
 
-            <div style="text-align:center;font-size:13px;line-height:1.7;opacity:.96;margin-top:6px;">
-              レア：<b>${rarityLabel(reward.rarity, reward.tier)}</b><br>
-              この画面を閉じると自動で図鑑に登録されます。
+            <div class="harvCard">
+              <img src="${reward.img}" alt="${reward.name}">
             </div>
 
-            <div style="
-              margin:12px auto 0;
-              width:100%;
-              max-width:390px;
-              border-radius:22px;
-              padding:10px;
-              background:linear-gradient(180deg, rgba(18,22,44,.94), rgba(12,16,34,.98));
-              box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), 0 14px 34px rgba(0,0,0,.28);
-            ">
-              <img
-                src="${reward.img}"
-                alt="${reward.name}"
-                style="
-                  display:block;
-                  width:100%;
-                  height:auto;
-                  border-radius:18px;
-                  object-fit:contain;
-                  background:transparent;
-                  box-shadow:0 0 0 1px rgba(255,255,255,.04);
-                "
-              >
-            </div>
-
-            <div style="
-              display:grid;
-              grid-template-columns:1fr 1fr;
-              gap:14px;
-              margin-top:14px;
-            ">
-              <button
-                type="button"
-                id="btnCancel"
-                style="
-                  min-height:58px;
-                  border:none;
-                  border-radius:18px;
-                  font-size:15px;
-                  font-weight:1000;
-                  color:#fff;
-                  background:linear-gradient(180deg, rgba(86,95,126,.95), rgba(59,66,97,.98));
-                  box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 8px 20px rgba(0,0,0,.18);
-                "
-              >閉じる</button>
-
-              <button
-                type="button"
-                id="btnConfirm"
-                style="
-                  min-height:58px;
-                  border:none;
-                  border-radius:18px;
-                  font-size:15px;
-                  font-weight:1000;
-                  color:#fff;
-                  background:linear-gradient(180deg, rgba(74,122,95,.98), rgba(47,89,68,.98));
-                  box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 8px 20px rgba(0,0,0,.18);
-                "
-              >図鑑を確認する</button>
+            <div class="row">
+              <button type="button" id="btnCancel">閉じる</button>
+              <button type="button" class="primary" id="btnConfirm">図鑑を確認する</button>
             </div>
           </div>
         </div>
@@ -1837,4 +1774,4 @@
   setInterval(tick, TICK_MS);
 
   window.__takofarm_onPlotTap = onPlotTap;
-})();　
+})();
