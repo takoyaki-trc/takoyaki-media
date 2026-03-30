@@ -11,7 +11,7 @@
   <div class="wrap">
 
     <!-- =========================
-      🔥 ヘッダー
+      ヘッダー
     ========================= -->
     <header class="hud">
       <a class="hudBtn" href="./index.html" aria-label="戻る">←</a>
@@ -25,17 +25,17 @@
     </header>
 
     <!-- =========================
-      🔥 導線
+      メニュー
     ========================= -->
     <nav class="actionGrid" aria-label="メニュー">
       <a href="./roten.html" class="actionBtn">
         <span class="ico" aria-hidden="true">🏪</span>
-        <span class="txt">お店</span>
+        <span class="txt">資材屋</span>
       </a>
 
       <a href="./myshop.html" class="actionBtn">
         <span class="ico" aria-hidden="true">💰</span>
-        <span class="txt">露店</span>
+        <span class="txt">マイ露店</span>
       </a>
 
       <button class="actionBtn" id="howtoBtn" type="button">
@@ -45,7 +45,7 @@
     </nav>
 
     <!-- =========================
-      🔥 XP統合パネル
+      XPパネル
     ========================= -->
     <section class="xpPanel xpPanelCompact" aria-label="経験値">
       <div class="xpMainRow">
@@ -73,7 +73,7 @@
     </section>
 
     <!-- =========================
-      🔥 装備HUD
+      装備
     ========================= -->
     <section class="loadoutWrap" aria-label="装備">
       <div class="loadoutHead">
@@ -84,33 +84,33 @@
       <div class="loadout">
         <button class="equipCard" id="equipSeed" type="button">
           <div class="equipTop">
-            <span class="equipTag">タネ</span>
-            <span class="equipCnt" id="equipSeedCnt">×0</span>
+            <span class="equipTag equipTag-seed">タネ</span>
           </div>
           <div class="equipImg">
             <img id="equipSeedImg" src="https://ul.h3z.jp/muPEAkao.png" alt="タネ">
+            <span class="equipCnt" id="equipSeedCnt">×0</span>
           </div>
           <div class="equipName" id="equipSeedName">未装備</div>
         </button>
 
         <button class="equipCard" id="equipWater" type="button">
           <div class="equipTop">
-            <span class="equipTag">ミズ</span>
-            <span class="equipCnt" id="equipWaterCnt">×0</span>
+            <span class="equipTag equipTag-water">ミズ</span>
           </div>
           <div class="equipImg">
             <img id="equipWaterImg" src="https://ul.h3z.jp/muPEAkao.png" alt="ミズ">
+            <span class="equipCnt" id="equipWaterCnt">×0</span>
           </div>
           <div class="equipName" id="equipWaterName">未装備</div>
         </button>
 
         <button class="equipCard" id="equipFert" type="button">
           <div class="equipTop">
-            <span class="equipTag">ヒリョウ</span>
-            <span class="equipCnt" id="equipFertCnt">×0</span>
+            <span class="equipTag equipTag-fert">ヒリョウ</span>
           </div>
           <div class="equipImg">
             <img id="equipFertImg" src="https://ul.h3z.jp/muPEAkao.png" alt="ヒリョウ">
+            <span class="equipCnt" id="equipFertCnt">×0</span>
           </div>
           <div class="equipName" id="equipFertName">未装備</div>
         </button>
@@ -118,14 +118,14 @@
     </section>
 
     <!-- =========================
-      🌱 畑
+      畑
     ========================= -->
     <section aria-label="畑">
       <div id="farm" class="farm"></div>
     </section>
 
     <!-- =========================
-      🔻 フッター
+      フッター
     ========================= -->
     <footer class="footer">
       © たこ焼き菜々 / 焼かれた伝説<br>
@@ -142,7 +142,7 @@
   </div>
 
   <!-- =========================
-    📜 モーダル
+    モーダル
   ========================= -->
   <div id="modal" class="modal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
@@ -166,22 +166,73 @@
 
     function openModal() {
       modal.setAttribute("aria-hidden", "false");
+      removeInnerCloseButtons();
     }
 
     function closeModal() {
       modal.setAttribute("aria-hidden", "true");
     }
 
+    function removeInnerCloseButtons() {
+      const innerButtons = mBody.querySelectorAll("button, .gridSmallBtn, .row button, .sheetBody button");
+      innerButtons.forEach(btn => {
+        const text = (btn.textContent || "").trim();
+        if (text === "閉じる") {
+          btn.remove();
+        }
+      });
+    }
+
     howtoBtn.onclick = () => {
       openModal();
       mBody.innerHTML = `
-        <div class="step">
-          ① タネを装備<br>
-          ② 畑をタップで植える<br>
-          ③ 時間で収穫<br><br>
-          ⚠ 放置すると焼ける
+        <div class="howtoBlock">
+          <div class="howtoTitle">たこ焼きファームの遊び方</div>
+
+          <div class="howtoSec">
+            <b>① 資材屋で準備する</b><br>
+            資材屋では、育成に使う <b>タネ・ミズ・ヒリョウ</b> を購入できます。<br>
+            まずはここで育てたい組み合わせをそろえます。
+          </div>
+
+          <div class="howtoSec">
+            <b>② 装備を選ぶ</b><br>
+            上の装備欄をタップすると、使いたい資材を変更できます。<br>
+            <b>タネ・ミズ・ヒリョウの組み合わせ</b>によって、出やすいカードや育成時間、結果が変わります。
+          </div>
+
+          <div class="howtoSec">
+            <b>③ 畑に植える</b><br>
+            「植える」と表示された空きマスをタップすると育成開始です。<br>
+            1つのマスにつき1回ずつ育成できます。
+          </div>
+
+          <div class="howtoSec">
+            <b>④ 時間経過で成長する</b><br>
+            育成中のマスには残り時間が表示されます。<br>
+            時間が0になると収穫や回収ができる状態になります。
+          </div>
+
+          <div class="howtoSec">
+            <b>⑤ 放置しすぎると焦げることがある</b><br>
+            たこ焼きは放置しすぎると焦げることがあります。<br>
+            焦げた場合は、通常とは違う結果になることがあります。
+          </div>
+
+          <div class="howtoSec">
+            <b>⑥ 回収して図鑑に集める</b><br>
+            収穫・回収したカードは図鑑に記録されます。<br>
+            いろいろな組み合わせを試して、図鑑コンプリートを目指してください。
+          </div>
+
+          <div class="howtoSec">
+            <b>⑦ マイ露店で売る</b><br>
+            マイ露店では、自分が収穫したカードを並べて売ることができます。<br>
+            育てるだけでなく、売って楽しむのもこのゲームのポイントです。
+          </div>
         </div>
       `;
+      removeInnerCloseButtons();
     };
 
     mClose.onclick = closeModal;
@@ -194,6 +245,15 @@
       if (e.key === "Escape" && modal.getAttribute("aria-hidden") === "false") {
         closeModal();
       }
+    });
+
+    const observer = new MutationObserver(() => {
+      removeInnerCloseButtons();
+    });
+
+    observer.observe(mBody, {
+      childList: true,
+      subtree: true
     });
   </script>
 </body>
