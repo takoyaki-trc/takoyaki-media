@@ -301,6 +301,11 @@
           カメラを起動しています…
         </div>
 
+        <div style="margin-top:12px;">
+          <button class="cta cta-sub" type="button" id="scanImageBtn">画像からQRを読む</button>
+          <input id="qrImageInput" type="file" accept="image/*" style="display:none;">
+        </div>
+
         <div class="modal-actions">
           <button class="cta cta-sub" type="button" id="closeScannerBtn">閉じる</button>
         </div>
@@ -397,6 +402,8 @@
       const scannerModal = $("#scannerModal");
       const scannerStatus = $("#scannerStatus");
       const closeScannerBtn = $("#closeScannerBtn");
+      const scanImageBtn = $("#scanImageBtn");
+      const qrImageInput = $("#qrImageInput");
 
       let qrScanner = null;
       let scannerRunning = false;
@@ -691,9 +698,9 @@
         modalMainText.innerHTML = text;
         modalRewardIcon.textContent = "⚠️";
         modalRewardName.textContent = "処理できませんでした";
-        modalRewardNote.textContent = "時間をおいて再度お試しください";
+        modalRewardNote.textContent = "確認後に再度お試しください";
         modalStampText.textContent = "追加なし";
-        modalSpeech.textContent = "読み取り内容を確認のうえ、もう一度お試しください。";
+        modalSpeech.textContent = "読み取り環境を確認のうえ、もう一度お試しください。";
         bonusBox.style.display = "none";
         bonusBox.innerHTML = "";
         openResultModal();
@@ -708,6 +715,7 @@
         await stopScanner();
         scannerModal.classList.remove("show");
         scannerModal.setAttribute("aria-hidden", "true");
+        scannerStatus.textContent = "カメラを起動しています…";
       }
 
       async function stopScanner() {
@@ -731,19 +739,14 @@
         scanLocked = false;
       }
 
+      function isLikelyInAppBrowser() {
+        const ua = navigator.userAgent || "";
+        return /Line|Instagram|FBAN|FBAV|Twitter|X\/|wv/i.test(ua);
+      }
+
       async function startScanner() {
         if (!window.Html5Qrcode) {
           showErrorModal("QRライブラリが読み込めません", "ネットワーク状態を確認してから、もう一度お試しください。");
-          return;
-        }
-
-        if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-          showErrorModal("HTTPSが必要です", "カメラ起動は HTTPS のページでのみ動作します。");
-          return;
-        }
-
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          showErrorModal("このブラウザでは使えません", "カメラ機能に対応したブラウザで開いてください。Chrome推奨です。");
           return;
         }
 
@@ -752,31 +755,63 @@
           return;
         }
 
+        if (location.protocol === "file:") {
+          showErrorModal("この開き方ではカメラが使えません", "HTMLファイル直開きではなく、GitHub Pagesなどの <strong>https://</strong> URL で開いてください。");
+          return;
+        }
+
+        if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+          showErrorModal("HTTPSが必要です", "カメラ起動は <strong>https://</strong> のページでのみ動作します。");
+          return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showErrorModal("このブラウザでは使えません", "Chromeなど、カメラ対応ブラウザで開いてください。");
+          return;
+        }
+
+        if (isLikelyInAppBrowser()) {
+          showErrorModal("アプリ内ブラウザでは不安定です", "LINE・Instagram・Xなどの内蔵ブラウザではなく、<strong>Chromeで直接開いて</strong>お試しください。");
+          return;
+        }
+
         openScannerModal();
-        scannerStatus.textContent = "カメラを起動しています…";
+        scannerStatus.textContent = "カメラ権限を確認しています…";
         scanLocked = false;
 
         try {
-          const cameras = await Html5Qrcode.getCameras();
-
-          if (!cameras || cameras.length === 0) {
-            scannerStatus.textContent = "使えるカメラが見つかりませんでした。";
-            return;
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: { ideal: "environment" } },
+              audio: false
+            });
+            stream.getTracks().forEach(track => track.stop());
+          } catch (permErr) {
+            const msg = String(permErr || "");
+            if (msg.includes("NotAllowedError") || msg.includes("Permission")) {
+              scannerStatus.textContent = "カメラ権限が拒否されています。ブラウザ設定でカメラを許可してください。";
+              return;
+            }
+            if (msg.includes("NotFoundError")) {
+              scannerStatus.textContent = "利用できるカメラが見つかりませんでした。";
+              return;
+            }
           }
-
-          const backCamera =
-            cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[0];
 
           if (!qrScanner) {
             qrScanner = new Html5Qrcode("scannerViewport");
           }
 
           await qrScanner.start(
-            backCamera.id,
+            { facingMode: "environment" },
             {
               fps: 10,
-              qrbox: { width: 230, height: 230 },
-              aspectRatio: 1.3333333
+              qrbox: (viewfinderWidth, viewfinderHeight) => {
+                const size = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.72);
+                return { width: size, height: size };
+              },
+              aspectRatio: 1.3333333,
+              disableFlip: false
             },
             async (decodedText) => {
               if (scanLocked) return;
@@ -794,13 +829,15 @@
           const message = String(err || "");
 
           if (message.includes("NotAllowedError") || message.includes("Permission")) {
-            scannerStatus.textContent = "カメラ権限が拒否されています。ブラウザ設定で許可してください。";
+            scannerStatus.textContent = "カメラ権限が拒否されています。ブラウザ設定でカメラを許可してください。";
           } else if (message.includes("NotFoundError")) {
             scannerStatus.textContent = "利用できるカメラが見つかりませんでした。";
           } else if (message.includes("NotReadableError")) {
-            scannerStatus.textContent = "カメラを他のアプリが使用中です。カメラアプリ等を閉じてください。";
+            scannerStatus.textContent = "カメラを他のアプリが使用中です。カメラアプリを閉じてから再度お試しください。";
+          } else if (message.includes("OverconstrainedError")) {
+            scannerStatus.textContent = "背面カメラ指定で起動できませんでした。端末との相性の可能性があります。";
           } else {
-            scannerStatus.textContent = "カメラを起動できませんでした。Chromeで開いて再度お試しください。";
+            scannerStatus.textContent = "カメラを起動できませんでした。ChromeでHTTPSページを開いて再度お試しください。";
           }
         }
       }
@@ -874,6 +911,33 @@
         showSuccessModal(mainReward, bonusReward, stampCurrentAfter, towerLevelAfter, towerBuilt);
       }
 
+      async function scanQrFromImageFile(file) {
+        if (!file) return;
+
+        try {
+          if (!window.Html5Qrcode) {
+            showErrorModal("QRライブラリが読み込めません", "ネットワーク状態を確認してから、もう一度お試しください。");
+            return;
+          }
+
+          scannerStatus.textContent = "画像からQRを解析しています…";
+
+          if (!qrScanner) {
+            qrScanner = new Html5Qrcode("scannerViewport");
+          }
+
+          const decodedText = await qrScanner.scanFile(file, true);
+          scannerStatus.textContent = "画像からQRを読み取りました。内容を確認しています…";
+          await handleScannedQr(decodedText);
+        } catch (err) {
+          console.error("scan image error:", err);
+          scannerStatus.textContent = "画像からQRを読み取れませんでした。別の画像でもう一度お試しください。";
+          scanLocked = false;
+        } finally {
+          qrImageInput.value = "";
+        }
+      }
+
       function resetAllForTest() {
         localStorage.removeItem(LS_KEYS.stampCurrent);
         localStorage.removeItem(LS_KEYS.towerLevel);
@@ -913,15 +977,31 @@
         if (e.target === resultModal) closeResultModal();
       });
 
-      closeScannerBtn.addEventListener("click", closeScannerModal);
+      closeScannerBtn.addEventListener("click", async () => {
+        await closeScannerModal();
+      });
+
       scannerModal.addEventListener("click", async (e) => {
         if (e.target === scannerModal) {
           await closeScannerModal();
         }
       });
 
-      window.addEventListener("beforeunload", async () => {
-        await stopScanner();
+      scanImageBtn.addEventListener("click", () => {
+        qrImageInput.click();
+      });
+
+      qrImageInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        await scanQrFromImageFile(file);
+      });
+
+      window.addEventListener("pagehide", () => {
+        stopScanner();
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stopScanner();
       });
 
       getOrCreateDeviceId();
