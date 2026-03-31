@@ -5,1086 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>焼き印スタンプ所</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/stamp.css">
 
-  <style>
-    :root{
-      --navy1:#081323;
-      --navy2:#0d1d35;
-      --navy3:#14294a;
-
-      --gold1:#fff0ba;
-      --gold2:#ffd869;
-      --gold3:#c98a1c;
-
-      --paper1:#fff9ee;
-      --paper2:#f3e6c8;
-      --paper3:#e4d0a5;
-
-      --wood1:#9b6334;
-      --wood2:#754520;
-      --wood3:#583113;
-
-      --red1:#ff8e68;
-      --red2:#e15a34;
-      --red3:#b13e1f;
-
-      --sky1:#78aee0;
-      --sky2:#cfe6ff;
-      --grass1:#87b95f;
-      --grass2:#6da04a;
-      --stone1:#ede3d2;
-      --stone2:#d9c7a8;
-
-      --text:#fff8ea;
-      --ink:#5a3718;
-      --muted:#8b6139;
-
-      --line:rgba(255,255,255,.12);
-      --line-dark:rgba(100,61,25,.12);
-
-      --shadow:0 14px 30px rgba(0,0,0,.24);
-      --safe-top:max(12px, env(safe-area-inset-top));
-      --safe-bottom:max(16px, env(safe-area-inset-bottom));
-    }
-
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-
-    body{
-      margin:0;
-      font-family:"DotGothic16", system-ui, sans-serif;
-      color:var(--text);
-      background:
-        linear-gradient(180deg, var(--sky1) 0 260px, var(--sky2) 260px 420px, #dfe9f6 420px 100%);
-      overflow-x:hidden;
-    }
-
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.16), transparent 160px),
-        radial-gradient(circle at 10% 8%, rgba(255,255,255,.24) 0 2px, transparent 2px 100%),
-        radial-gradient(circle at 84% 10%, rgba(255,255,255,.22) 0 2px, transparent 2px 100%);
-      opacity:.9;
-    }
-
-    .wrap{
-      width:min(100%, 860px);
-      margin:0 auto;
-      padding:
-        calc(var(--safe-top) + 10px)
-        10px
-        calc(var(--safe-bottom) + 30px);
-      position:relative;
-      z-index:1;
-    }
-
-    /* =========================================================
-       上部HUD
-    ========================================================= */
-    .hud-shell{
-      position:relative;
-      border-radius:28px;
-      padding:10px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)),
-        linear-gradient(180deg, var(--navy3), var(--navy1));
-      border:2px solid rgba(255,255,255,.08);
-      box-shadow:
-        0 8px 22px rgba(0,0,0,.22),
-        inset 0 1px 0 rgba(255,255,255,.08);
-      overflow:hidden;
-      margin-bottom:14px;
-    }
-
-    .hud-shell::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255,210,110,.13), transparent 30%),
-        linear-gradient(180deg, rgba(255,255,255,.05), transparent 32%);
-    }
-
-    .hud-row{
-      position:relative;
-      z-index:1;
-      display:grid;
-      gap:8px;
-      margin-bottom:8px;
-    }
-    .hud-row:last-child{ margin-bottom:0; }
-
-    .hud-row.top{
-      grid-template-columns:auto 1fr auto auto;
-      align-items:center;
-    }
-
-    .hud-row.bottom{
-      grid-template-columns:1.1fr 1fr auto auto auto;
-      align-items:center;
-    }
-
-    .navbtn,
-    .chip,
-    .iconbtn{
-      min-height:54px;
-      border-radius:18px;
-      border:1px solid var(--line);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)),
-        linear-gradient(180deg, rgba(7,16,34,.72), rgba(4,10,22,.9));
-      color:var(--text);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.06),
-        0 8px 18px rgba(0,0,0,.14);
-    }
-
-    .navbtn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      padding:0 16px;
-      text-decoration:none;
-      white-space:nowrap;
-      font-size:16px;
-    }
-
-    .chip{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:0 14px;
-      min-width:0;
-    }
-
-    .chip-ico{
-      width:34px;
-      height:34px;
-      border-radius:12px;
-      display:grid;
-      place-items:center;
-      flex:0 0 auto;
-      font-size:18px;
-      background:linear-gradient(180deg, rgba(255,140,110,.22), rgba(255,140,110,.08));
-      border:1px solid rgba(255,255,255,.08);
-    }
-
-    .chip-label{
-      font-size:11px;
-      color:rgba(255,248,234,.72);
-      margin-bottom:3px;
-      line-height:1.3;
-    }
-
-    .chip-value{
-      font-size:16px;
-      line-height:1.35;
-      color:#ffe9a9;
-      word-break:break-word;
-    }
-
-    .chip-value.white{ color:var(--text); }
-
-    .iconbtn{
-      min-width:56px;
-      padding:0 12px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      font:inherit;
-      cursor:pointer;
-      text-decoration:none;
-      white-space:nowrap;
-      position:relative;
-    }
-
-    .iconbtn.wide{
-      min-width:0;
-      padding:0 14px;
-      gap:10px;
-      justify-content:flex-start;
-    }
-
-    .icon-emoji{
-      font-size:22px;
-      line-height:1;
-      flex:0 0 auto;
-    }
-
-    .icon-text{
-      display:flex;
-      flex-direction:column;
-      line-height:1.25;
-      min-width:0;
-    }
-
-    .icon-main{
-      font-size:15px;
-      color:var(--text);
-    }
-
-    .icon-sub{
-      font-size:10px;
-      color:rgba(255,248,234,.72);
-      margin-top:2px;
-    }
-
-    .badge{
-      position:absolute;
-      top:-4px;
-      right:-2px;
-      min-width:22px;
-      height:22px;
-      padding:0 6px;
-      border-radius:999px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-size:11px;
-      color:#fff;
-      background:linear-gradient(180deg, #ff7e84, #e14d55);
-      border:2px solid #14294a;
-      box-shadow:0 4px 10px rgba(0,0,0,.18);
-    }
-
-    /* =========================================================
-       メイン背景
-    ========================================================= */
-    .scene{
-      position:relative;
-      border-radius:28px;
-      overflow:hidden;
-      box-shadow:var(--shadow);
-      border:2px solid rgba(255,255,255,.10);
-      background:
-        linear-gradient(180deg, #76addf 0 108px, #d4e9ff 108px 198px, #85b95f 198px 57%, #e9e0cf 57% 100%);
-      min-height:1540px;
-    }
-
-    .scene::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(circle at 50% 40px, rgba(255,241,183,.28), transparent 190px),
-        linear-gradient(180deg, rgba(255,255,255,.10), transparent 180px);
-    }
-
-    .cloud{
-      position:absolute;
-      width:130px;
-      height:44px;
-      border-radius:999px;
-      background:rgba(255,255,255,.48);
-      opacity:.8;
-    }
-    .cloud::before,
-    .cloud::after{
-      content:"";
-      position:absolute;
-      background:inherit;
-      border-radius:999px;
-    }
-    .cloud::before{ width:58px; height:58px; left:16px; top:-22px; }
-    .cloud::after{ width:72px; height:72px; right:10px; top:-30px; }
-
-    .cloud.c1{ top:46px; left:50px; }
-    .cloud.c2{ top:76px; right:54px; transform:scale(.86); opacity:.68; }
-
-    .grass-band{
-      position:absolute;
-      left:0; right:0;
-      top:198px;
-      height:40%;
-      background:
-        radial-gradient(circle at 8px 8px, rgba(61,104,38,.18) 0 1px, transparent 1px 100%),
-        radial-gradient(circle at 16px 18px, rgba(61,104,38,.12) 0 1px, transparent 1px 100%),
-        linear-gradient(180deg, var(--grass1), var(--grass2));
-      background-size:22px 22px, 26px 26px, auto;
-      border-top:2px solid rgba(255,255,255,.12);
-      border-bottom:2px solid rgba(79,115,48,.18);
-    }
-
-    .ground{
-      position:absolute;
-      inset:auto 0 0 0;
-      height:47%;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.08), transparent 10px),
-        repeating-linear-gradient(
-          90deg,
-          rgba(255,255,255,.08) 0 2px,
-          transparent 2px 24px
-        ),
-        linear-gradient(180deg, var(--stone1), var(--stone2));
-      border-top:3px solid rgba(121,90,46,.10);
-    }
-
-    /* =========================================================
-       TOP画像 + タイトル帯
-    ========================================================= */
-    .top-hero{
-      position:absolute;
-      left:12px;
-      right:12px;
-      top:12px;
-      z-index:2;
-      border-radius:26px;
-      overflow:hidden;
-      box-shadow:0 12px 24px rgba(0,0,0,.16);
-      border:2px solid rgba(255,255,255,.10);
-      background:#fff;
-    }
-
-    .top-hero-image{
-      position:relative;
-      width:100%;
-      height:220px;
-      background:
-        linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.02)),
-        url("assets/images/stamp-top.jpg") center/cover no-repeat;
-    }
-
-    .top-hero-image::after{
-      content:"";
-      position:absolute;
-      inset:auto 0 0 0;
-      height:64%;
-      background:
-        linear-gradient(180deg, rgba(0,0,0,0), rgba(6,16,34,.52));
-      pointer-events:none;
-    }
-
-    .hero-overlay{
-      position:absolute;
-      left:0;
-      right:0;
-      bottom:0;
-      z-index:1;
-      padding:18px 16px 16px;
-      color:#fff8ea;
-    }
-
-    .hero-label{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:5px 10px;
-      border-radius:999px;
-      margin-bottom:10px;
-      font-size:11px;
-      line-height:1;
-      background:rgba(5,13,27,.58);
-      border:1px solid rgba(255,255,255,.14);
-      backdrop-filter:blur(4px);
-    }
-
-    .hero-title{
-      margin:0;
-      font-size:24px;
-      line-height:1.28;
-      text-shadow:0 2px 10px rgba(0,0,0,.20);
-    }
-
-    .hero-desc{
-      margin-top:8px;
-      font-size:12px;
-      line-height:1.8;
-      color:rgba(255,248,234,.92);
-      text-shadow:0 2px 10px rgba(0,0,0,.16);
-      max-width:92%;
-    }
-
-    .guide-strip{
-      position:relative;
-      z-index:2;
-      display:grid;
-      grid-template-columns:120px 1fr;
-      gap:12px;
-      align-items:end;
-      padding:14px;
-      background:
-        linear-gradient(180deg, #fffaf0, #f2e4c4);
-      border-top:2px solid rgba(110,68,28,.10);
-    }
-
-    .guide-char{
-      align-self:end;
-      justify-self:center;
-      width:110px;
-      max-width:100%;
-      height:auto;
-      image-rendering:auto;
-      filter:drop-shadow(0 8px 12px rgba(0,0,0,.10));
-    }
-
-    .guide-bubble{
-      min-height:110px;
-      background:linear-gradient(180deg, var(--paper1), var(--paper2));
-      border:2px solid rgba(162,122,69,.28);
-      border-radius:22px;
-      padding:14px 14px 13px;
-      box-shadow:0 8px 18px rgba(0,0,0,.08);
-      color:#58381c;
-    }
-
-    .guide-bubble.no-tail::after{
-      content:none;
-    }
-
-    .guide-tag{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:4px 8px;
-      border-radius:999px;
-      margin-bottom:8px;
-      background:#70401d;
-      color:#fff0cb;
-      font-size:11px;
-      line-height:1;
-    }
-
-    .guide-text{
-      margin:0;
-      font-size:12px;
-      line-height:1.9;
-    }
-
-    /* =========================================================
-       上に情報、下に体験
-    ========================================================= */
-    .dashboard{
-      position:absolute;
-      left:12px;
-      right:12px;
-      top:414px;
-      z-index:2;
-      display:grid;
-      grid-template-columns:1.18fr .86fr;
-      gap:12px;
-    }
-
-    .card{
-      border-radius:26px;
-      overflow:hidden;
-      border:2px solid rgba(95,57,24,.14);
-      background:
-        linear-gradient(180deg, #fff8ea, #f0dfb7);
-      box-shadow:0 12px 24px rgba(0,0,0,.10);
-    }
-
-    .card-head{
-      padding:14px 14px 12px;
-      border-bottom:2px dashed rgba(112,71,29,.14);
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-    }
-
-    .card-title{
-      font-size:18px;
-      line-height:1.35;
-      color:#5d3818;
-      margin:0 0 6px;
-    }
-
-    .card-desc{
-      font-size:11px;
-      line-height:1.7;
-      color:#8b6139;
-      margin:0;
-    }
-
-    .goal-badge{
-      min-width:96px;
-      padding:10px 10px 9px;
-      text-align:center;
-      border-radius:16px;
-      color:#fff8ef;
-      background:
-        linear-gradient(180deg, var(--red1), var(--red2));
-      border:2px solid rgba(125,58,30,.12);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.16);
-    }
-
-    .goal-badge small{
-      display:block;
-      font-size:10px;
-      margin-bottom:4px;
-      opacity:.92;
-    }
-
-    .goal-badge strong{
-      display:block;
-      font-size:19px;
-      line-height:1.1;
-      font-weight:400;
-    }
-
-    .stampbook{
-      position:relative;
-    }
-
-    .stampbook::before{
-      content:"";
-      position:absolute;
-      left:16px;
-      top:16px;
-      bottom:16px;
-      width:7px;
-      border-radius:999px;
-      background:
-        repeating-linear-gradient(180deg, #d0a365 0 9px, #efcca1 9px 18px);
-      box-shadow:0 0 0 2px rgba(121,77,30,.08);
-    }
-
-    .stampbook-body{
-      padding:14px 14px 14px 32px;
-    }
-
-    .stamp-grid{
-      display:grid;
-      grid-template-columns:repeat(5, 1fr);
-      gap:10px;
-      margin-bottom:14px;
-    }
-
-    .stamp{
-      aspect-ratio:1/1;
-      border-radius:18px;
-      position:relative;
-      display:grid;
-      place-items:center;
-      overflow:hidden;
-      background:
-        radial-gradient(circle at 50% 40%, #8d4f20 0 31%, #683a17 55%, #49260d 78%, #301708 100%);
-      border:2px solid rgba(79,42,13,.24);
-      box-shadow:inset 0 2px 3px rgba(255,255,255,.12);
-      color:#f7e8c8;
-    }
-
-    .stamp.done{
-      background:
-        radial-gradient(circle at 48% 34%, #ffe49a 0 18%, #d67e20 40%, #8e4714 73%, #612d0c 100%);
-      color:#fff9db;
-      box-shadow:
-        inset 0 2px 0 rgba(255,255,255,.34),
-        0 0 0 2px rgba(255,198,95,.10),
-        0 0 14px rgba(255,188,74,.16);
-    }
-
-    .stamp::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(180deg, rgba(255,255,255,.10), transparent 32%);
-      pointer-events:none;
-    }
-
-    .stamp .num{
-      position:absolute;
-      top:5px;
-      right:7px;
-      font-size:10px;
-      line-height:1;
-      color:rgba(255,250,235,.94);
-    }
-
-    .stamp .mark{
-      font-size:24px;
-      line-height:1;
-      transform:translateY(2px);
-    }
-
-    .stamp:not(.done) .mark{ opacity:.5; }
-
-    .progress-row{
-      display:grid;
-      grid-template-columns:repeat(3, 1fr);
-      gap:10px;
-      margin-bottom:14px;
-    }
-
-    .progress-card{
-      border-radius:18px;
-      padding:11px 10px 10px;
-      text-align:center;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.68), rgba(244,229,196,.98));
-      border:2px solid rgba(109,66,29,.08);
-      box-shadow:0 5px 12px rgba(102,53,11,.05);
-      color:#5b3718;
-    }
-
-    .progress-label{
-      font-size:10px;
-      color:#8d623a;
-      margin-bottom:4px;
-      line-height:1.35;
-    }
-
-    .progress-value{
-      font-size:15px;
-      line-height:1.35;
-      word-break:break-word;
-    }
-
-    .button-row{
-      display:grid;
-      grid-template-columns:1.1fr 1fr;
-      gap:10px;
-      margin-bottom:10px;
-    }
-
-    .cta{
-      min-height:58px;
-      border-radius:18px;
-      border:none;
-      font:inherit;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      box-shadow:0 10px 18px rgba(112,51,16,.14);
-    }
-
-    .cta-main{
-      color:#fff9ef;
-      background:
-        linear-gradient(180deg, #ff8d68, #e15c35 56%, #bf431e);
-      border:2px solid rgba(125,49,24,.12);
-    }
-
-    .cta-sub{
-      color:#69411f;
-      background:
-        linear-gradient(180deg, #fff7e8, #f1deba);
-      border:2px solid rgba(110,68,28,.12);
-    }
-
-    .sub-panels{
-      display:grid;
-      gap:10px;
-    }
-
-    .sub-card{
-      border-radius:18px;
-      padding:12px 12px 11px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.70), rgba(243,229,194,.98));
-      border:2px solid rgba(109,66,29,.08);
-      color:#5a3416;
-      box-shadow:0 5px 12px rgba(102,53,11,.05);
-    }
-
-    .sub-title{
-      font-size:13px;
-      margin:0 0 6px;
-      line-height:1.4;
-    }
-
-    .sub-text{
-      margin:0;
-      font-size:11px;
-      line-height:1.8;
-      color:#8b6139;
-    }
-
-    .reward-list{
-      display:grid;
-      gap:10px;
-      margin-top:10px;
-    }
-
-    .reward-item{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border-radius:16px;
-      padding:10px 10px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.74), rgba(243,229,194,.98));
-      border:2px solid rgba(109,66,29,.08);
-    }
-
-    .reward-left{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      min-width:0;
-    }
-
-    .reward-ico{
-      width:42px;
-      height:42px;
-      flex:0 0 auto;
-      border-radius:14px;
-      display:grid;
-      place-items:center;
-      font-size:20px;
-      color:#fff8ef;
-      background:
-        linear-gradient(180deg, #a8642e, #84491d);
-      border:2px solid rgba(255,246,210,.14);
-      box-shadow:inset 0 2px 0 rgba(255,255,255,.14);
-    }
-
-    .reward-name{
-      font-size:12px;
-      line-height:1.45;
-      color:#5a3416;
-    }
-
-    .reward-note{
-      margin-top:3px;
-      font-size:10px;
-      line-height:1.45;
-      color:#8b6139;
-    }
-
-    .reward-right{
-      font-size:10px;
-      line-height:1.5;
-      color:#9a5d21;
-      white-space:nowrap;
-      text-align:right;
-      flex:0 0 auto;
-    }
-
-    .history-grid{
-      display:grid;
-      gap:10px;
-      margin-top:10px;
-    }
-
-    .history-row{
-      border-radius:16px;
-      padding:11px 11px 10px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.72), rgba(243,229,194,.98));
-      border:2px solid rgba(109,66,29,.08);
-      font-size:11px;
-      line-height:1.8;
-      color:#8b6139;
-    }
-
-    .history-row strong{
-      color:#5c3516;
-      font-weight:400;
-    }
-
-    /* tower */
-    .tower-card{
-      min-height:790px;
-    }
-
-    .tower-body{
-      padding:14px;
-    }
-
-    .tower-stage{
-      position:relative;
-      height:500px;
-      border-radius:22px;
-      overflow:hidden;
-      background:
-        linear-gradient(180deg, #86b5e5 0 34%, #cfe5ff 34% 50%, #89bb63 50% 100%);
-      border:2px solid rgba(108,75,37,.12);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.36);
-    }
-
-    .tower-stage::before{
-      content:"";
-      position:absolute;
-      inset:auto 0 0 0;
-      height:44%;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.08), transparent 8px),
-        repeating-linear-gradient(
-          90deg,
-          rgba(255,255,255,.08) 0 2px,
-          transparent 2px 24px
-        ),
-        linear-gradient(180deg, #ece2d1, #ddd0b7);
-      border-top:2px solid rgba(121,90,46,.10);
-    }
-
-    .tower-base{
-      position:absolute;
-      left:50%;
-      bottom:26px;
-      transform:translateX(-50%);
-      width:170px;
-      height:42px;
-      border-radius:14px;
-      background:
-        linear-gradient(180deg, var(--wood1), var(--wood2));
-      border:2px solid rgba(87,48,18,.24);
-      box-shadow:0 8px 14px rgba(0,0,0,.10);
-      display:grid;
-      place-items:center;
-      color:#fff0c2;
-      font-size:12px;
-    }
-
-    .tower-stack{
-      position:absolute;
-      left:50%;
-      bottom:74px;
-      transform:translateX(-50%);
-      width:170px;
-      display:flex;
-      flex-direction:column-reverse;
-      align-items:center;
-      gap:6px;
-    }
-
-    .tower-piece{
-      width:74px;
-      height:44px;
-      border-radius:999px;
-      position:relative;
-      background:
-        radial-gradient(circle at 45% 35%, #ffe29e 0 12%, #d97f22 38%, #964d16 72%, #662e0d 100%);
-      box-shadow:
-        inset 0 2px 0 rgba(255,255,255,.28),
-        0 4px 8px rgba(0,0,0,.10);
-      border:2px solid rgba(97,51,16,.18);
-    }
-
-    .tower-piece::before{
-      content:"";
-      position:absolute;
-      left:50%;
-      top:50%;
-      width:24px;
-      height:24px;
-      border-radius:50%;
-      transform:translate(-50%,-50%);
-      background:rgba(67,28,7,.18);
-      box-shadow:
-        -20px 0 0 rgba(67,28,7,.12),
-        20px 0 0 rgba(67,28,7,.12);
-      opacity:.45;
-    }
-
-    .tower-piece.flag::after{
-      content:"★";
-      position:absolute;
-      right:-12px;
-      top:-10px;
-      width:24px;
-      height:24px;
-      border-radius:50%;
-      display:grid;
-      place-items:center;
-      font-size:13px;
-      color:#fff;
-      background:linear-gradient(180deg, #ff7d68, #d85133);
-      box-shadow:0 4px 10px rgba(0,0,0,.12);
-    }
-
-    .tower-footer{
-      display:grid;
-      gap:10px;
-      margin-top:12px;
-    }
-
-    /* modal */
-    .modal{
-      position:fixed;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-      background:rgba(18,26,44,.44);
-      backdrop-filter:blur(6px);
-      z-index:99;
-    }
-
-    .modal.show{ display:flex; }
-
-    .modal-card{
-      width:min(100%, 520px);
-      border-radius:28px;
-      overflow:hidden;
-      box-shadow:0 24px 48px rgba(0,0,0,.24);
-      border:2px solid rgba(255,255,255,.10);
-      background:
-        linear-gradient(180deg, #fff8ea, #f0ddb6);
-    }
-
-    .modal-top{
-      padding:18px 16px 16px;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255,236,158,.80), rgba(255,196,89,.64) 30%, rgba(255,196,89,0) 70%),
-        linear-gradient(180deg, #ffc97b, #ef9651);
-      border-bottom:2px solid rgba(105,61,20,.11);
-      text-align:center;
-    }
-
-    .modal-title{
-      margin:0;
-      font-size:21px;
-      line-height:1.35;
-      color:#fffaf0;
-      text-shadow:0 2px 0 rgba(124,60,18,.25);
-    }
-
-    .modal-body{
-      padding:16px 14px 16px;
-    }
-
-    .modal-main{
-      text-align:center;
-      font-size:13px;
-      line-height:1.9;
-      color:#5a381d;
-      margin-bottom:12px;
-    }
-
-    .bonus-box{
-      margin-top:10px;
-      border-radius:18px;
-      padding:12px 12px 11px;
-      background:
-        linear-gradient(180deg, rgba(255,230,155,.8), rgba(245,199,90,.5));
-      border:2px solid rgba(159,108,24,.18);
-      color:#6a3f15;
-      font-size:12px;
-      line-height:1.8;
-    }
-
-    .modal-actions{
-      display:grid;
-      gap:10px;
-      margin-top:14px;
-    }
-
-    @media (max-width: 820px){
-      .hud-row.top{
-        grid-template-columns:auto 1fr auto;
-      }
-      .hud-row.top .chip:last-child{
-        grid-column:1 / -1;
-      }
-      .hud-row.bottom{
-        grid-template-columns:1fr 1fr auto auto;
-      }
-      .hud-row.bottom .iconbtn:last-child{
-        grid-column:1 / -1;
-      }
-      .dashboard{
-        grid-template-columns:1fr;
-      }
-      .scene{
-        min-height:2140px;
-      }
-      .tower-card{
-        min-height:unset;
-      }
-    }
-
-    @media (max-width: 620px){
-      .guide-strip{
-        grid-template-columns:92px 1fr;
-        gap:10px;
-      }
-      .guide-char{
-        width:86px;
-      }
-      .top-hero-image{
-        height:190px;
-      }
-      .hero-title{
-        font-size:21px;
-      }
-      .hero-desc{
-        max-width:100%;
-      }
-    }
-
-    @media (max-width: 560px){
-      .hud-row.top{
-        grid-template-columns:1fr 1fr;
-      }
-      .hud-row.top .chip{
-        grid-column:1 / -1;
-      }
-      .hud-row.bottom{
-        grid-template-columns:1fr 1fr;
-      }
-      .navbtn,
-      .chip,
-      .iconbtn{
-        min-height:52px;
-      }
-      .top-hero{
-        left:10px;
-        right:10px;
-        top:10px;
-      }
-      .dashboard{
-        left:10px;
-        right:10px;
-        top:404px;
-      }
-      .scene{
-        min-height:2200px;
-      }
-      .guide-strip{
-        grid-template-columns:1fr;
-        align-items:start;
-      }
-      .guide-char{
-        width:100px;
-      }
-      .stampbook::before{
-        left:12px;
-      }
-      .stampbook-body{
-        padding-left:26px;
-      }
-      .button-row{
-        grid-template-columns:1fr;
-      }
-      .progress-row{
-        grid-template-columns:1fr;
-      }
-      .stamp-grid{
-        gap:8px;
-      }
-      .stamp .mark{
-        font-size:21px;
-      }
-      .tower-stage{
-        height:420px;
-      }
-    }
-  </style>
+  <!-- QR読み取りライブラリ -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
 </head>
+
 <body>
   <div class="wrap">
 
-    <!-- =====================================================
-         上部HUD
-    ====================================================== -->
+    <!-- ================= 上部HUD ================= -->
     <section class="hud-shell">
       <div class="hud-row top">
         <a class="navbtn" href="town.html">← 戻る</a>
@@ -1131,13 +62,8 @@
           </span>
         </button>
 
-        <button class="iconbtn" id="historyBtn" type="button" title="最近の記録">
-          <span class="icon-emoji">📒</span>
-        </button>
-
-        <button class="iconbtn" id="resetBtn" type="button" title="テスト初期化">
-          <span class="icon-emoji">↺</span>
-        </button>
+        <button class="iconbtn" id="historyBtn" type="button">📒</button>
+        <button class="iconbtn" id="resetBtn" type="button">↺</button>
 
         <button class="iconbtn wide" type="button" disabled>
           <span class="icon-emoji">📅</span>
@@ -1150,43 +76,29 @@
       </div>
     </section>
 
-    <!-- =====================================================
-         メイン
-    ====================================================== -->
+    <!-- ================= メイン ================= -->
     <section class="scene">
       <div class="cloud c1"></div>
       <div class="cloud c2"></div>
       <div class="grass-band"></div>
       <div class="ground"></div>
 
-      <!-- TOP画像 + 説明 -->
+      <!-- TOP -->
       <section class="top-hero">
         <div class="top-hero-image">
-          <!-- ここにスマホ横いっぱいのTOP画像を貼る
-               推奨画像パスを変更してください
-               例: assets/images/stamp-top.jpg -->
           <div class="hero-overlay">
             <div class="hero-label">📍 来店スタンプ案内</div>
             <h1 class="hero-title">焼き印スタンプ所</h1>
             <div class="hero-desc">
-              店内QRを読み込んで、来店の焼き印を記録できる案内ページです。<br>
-              スタンプカードが満タンになるたび、たこ焼きタワーが1段ずつ育っていきます。
+              店内QRを読み込んでスタンプを集めよう。<br>
+              10個でタワーが1段育つ！
             </div>
           </div>
         </div>
 
         <div class="guide-strip">
-          <!-- ナビタコ民画像
-               ここをあなたの画像パスに差し替えてください
-               例: town/assets/images/chara/navi_takomin.png -->
-          <img
-            id="guideChar"
-            class="guide-char"
-            src="assets/images/navi_takomin.png"
-            alt="ナビタコ民"
-          />
+          <img class="guide-char" src="assets/images/navi_takomin.png" alt="ナビタコ民">
 
-          <!-- シッポなし吹き出し -->
           <div class="guide-bubble no-tail">
             <div class="guide-tag">ナビタコ民</div>
             <p class="guide-text" id="guideText">
@@ -1196,21 +108,19 @@
         </div>
       </section>
 
-      <!-- 下の体験エリア -->
+      <!-- ================= ダッシュボード ================= -->
       <section class="dashboard">
+
+        <!-- スタンプ -->
         <div class="card stampbook">
           <div class="card-head">
             <div>
-              <h2 class="card-title">来店スタンプカード</h2>
-              <p class="card-desc">
-                5個で中間報酬、10個で1周達成です。<br>
-                10個たまるとカードは新しい1枚に切り替わり、たこ焼きタワーが1段増えます。
-              </p>
+              <h2 class="card-title">スタンプカード</h2>
+              <p class="card-desc">10個で1周、タワー1段追加です。</p>
             </div>
-
             <div class="goal-badge">
-              <small>つぎの節目</small>
-              <strong id="goalBadgeText">あと5</strong>
+              <small>あと</small>
+              <strong id="goalBadgeText">5</strong>
             </div>
           </div>
 
@@ -1219,28 +129,30 @@
 
             <div class="progress-row">
               <div class="progress-card">
-                <div class="progress-label">今のカード</div>
+                <div class="progress-label">進行</div>
                 <div class="progress-value"><span id="cardProgressText">0</span> / 10</div>
               </div>
               <div class="progress-card">
-                <div class="progress-label">つぎの節目まで</div>
+                <div class="progress-label">つぎの節目</div>
                 <div class="progress-value" id="nextGoalText">あと5</div>
               </div>
               <div class="progress-card">
                 <div class="progress-label">最後の報酬</div>
-                <div class="progress-value" id="lastRewardText">まだなし</div>
+                <div class="progress-value" id="lastRewardText">なし</div>
               </div>
             </div>
 
             <div class="button-row">
-              <button class="cta cta-main" id="checkinBtnMain" type="button">📷 チェックインする</button>
-              <button class="cta cta-sub" id="rewardToggleBtnMain" type="button">🎁 報酬一覧を見る</button>
+              <button class="cta cta-main" id="checkinBtnMain" type="button">📷 チェックイン</button>
+              <button class="cta cta-sub" id="rewardToggleBtnMain" type="button">🎁 報酬一覧</button>
             </div>
 
             <div class="sub-panels">
               <div class="sub-card">
                 <h3 class="sub-title">ご案内</h3>
-                <p class="sub-text" id="stampHint">5個で中間ボーナス、10個でタワー1段完成です。ご来店のたびに少しずつ景色が育っていきます。</p>
+                <p class="sub-text" id="stampHint">
+                  5個で中間ボーナス、10個でタワー1段完成です。
+                </p>
               </div>
 
               <div class="sub-card" id="rewardTableSection" style="display:none;">
@@ -1350,14 +262,12 @@
           </div>
         </div>
 
+        <!-- タワー -->
         <div class="card tower-card">
           <div class="card-head">
             <div>
               <h2 class="card-title">たこ焼きタワー</h2>
-              <p class="card-desc">
-                スタンプカードを満タンにするたび、たこ焼きが1段ずつ積み上がります。<br>
-                来店を重ねるほど、このページの景色が育っていきます。
-              </p>
+              <p class="card-desc">カードを満タンにするたび1段ずつ育ちます。</p>
             </div>
 
             <div class="goal-badge" style="background:linear-gradient(180deg,#7b4dd6,#5330a7); border-color:rgba(63,30,121,.18);">
@@ -1375,12 +285,7 @@
             <div class="tower-footer">
               <div class="sub-card">
                 <h3 class="sub-title">タワーのしくみ</h3>
-                <p class="sub-text">今のカードは10個で1周です。満タンになるとスタンプは0からに戻り、右のタワーだけが残って育っていきます。</p>
-              </div>
-
-              <div class="sub-card">
-                <h3 class="sub-title">おすすめ運用</h3>
-                <p class="sub-text">5個で中間報酬、10個で完走報酬＋タワー1段。あとで3段・5段・10段ごとの限定報酬も足しやすい設計です。</p>
+                <p class="sub-text">10個たまるとスタンプは0に戻り、タワーだけが残って育っていきます。</p>
               </div>
 
               <div class="sub-card">
@@ -1390,13 +295,12 @@
             </div>
           </div>
         </div>
+
       </section>
     </section>
   </div>
 
-  <!-- =======================================================
-       結果モーダル
-  ======================================================== -->
+  <!-- ================= 結果モーダル ================= -->
   <div class="modal" id="resultModal" aria-hidden="true">
     <div class="modal-card">
       <div class="modal-top">
@@ -1421,11 +325,39 @@
 
         <div class="guide-bubble no-tail" style="margin-top:14px;">
           <div class="guide-tag">ナビタコ民</div>
-          <p class="guide-text" id="modalSpeech">本日の焼き印を記録しました。引き続きスタンプ集めをお楽しみください。</p>
+          <p class="guide-text" id="modalSpeech">本日の焼き印を記録しました。</p>
         </div>
 
         <div class="modal-actions">
           <button class="cta cta-main" type="button" id="closeModalBtn">とじる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= QRスキャナーモーダル ================= -->
+  <div class="modal" id="scannerModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-top">
+        <h2 class="modal-title">QRを読み取る</h2>
+      </div>
+
+      <div class="modal-body">
+        <div class="guide-bubble no-tail" style="margin-bottom:12px;">
+          <div class="guide-tag">ナビタコ民</div>
+          <p class="guide-text" id="scannerGuideText">
+            店内のQRをカメラに映してください。読み取りに成功すると、自動で受付します。
+          </p>
+        </div>
+
+        <div id="scannerViewport" style="border-radius:18px; overflow:hidden; background:#111; min-height:260px;"></div>
+
+        <div id="scannerStatus" style="margin-top:12px; font-size:12px; line-height:1.8; color:#8b6139;">
+          カメラを起動しています…
+        </div>
+
+        <div class="modal-actions">
+          <button class="cta cta-sub" type="button" id="closeScannerBtn">閉じる</button>
         </div>
       </div>
     </div>
@@ -1442,18 +374,19 @@
       const MID_GOAL = 5;
       const OCTO_KEY = "roten_v1_octo";
 
+      // 店内QRの中身に合わせて変更
+      const VALID_QR_VALUE = "TAKOYAKI_CHECKIN_NANA";
+
       const LS_KEYS = {
-        stampCurrent: "ttc_stamp_current_v3",
-        towerLevel: "ttc_stamp_tower_level_v3",
-        totalCheckins: "ttc_stamp_total_checkins_v3",
-        lastCheckinDate: "ttc_stamp_last_checkin_date_v3",
-        lastReward: "ttc_stamp_last_reward_v3",
-        history: "ttc_stamp_history_v3",
+        stampCurrent: "ttc_stamp_current_v4",
+        towerLevel: "ttc_stamp_tower_level_v4",
+        totalCheckins: "ttc_stamp_total_checkins_v4",
+        lastCheckinDate: "ttc_stamp_last_checkin_date_v4",
+        lastReward: "ttc_stamp_last_reward_v4",
+        history: "ttc_stamp_history_v4",
         deviceId: "tf_v1_device_id",
         inv: "tf_v1_inv"
       };
-
-      const FIXED_QR_VALUE = "TAKOYAKI_CHECKIN_NANA";
 
       const REWARD_TABLE = [
         { type: "octo", id: "octo_100", icon: "🪙", label: "オクト +100", amount: 100, note: "軽めの基本報酬", weight: 26 },
@@ -1525,6 +458,18 @@
       const bonusBox = $("#bonusBox");
       const modalSpeech = $("#modalSpeech");
       const closeModalBtn = $("#closeModalBtn");
+
+      const scannerModal = $("#scannerModal");
+      const scannerViewport = $("#scannerViewport");
+      const scannerStatus = $("#scannerStatus");
+      const closeScannerBtn = $("#closeScannerBtn");
+
+      // =========================================================
+      // QR scanner state
+      // =========================================================
+      let qrScanner = null;
+      let scannerRunning = false;
+      let scanLocked = false;
 
       // =========================================================
       // Utility
@@ -1766,14 +711,14 @@
       }
 
       // =========================================================
-      // Modal
+      // Result modal
       // =========================================================
-      function openModal() {
+      function openResultModal() {
         resultModal.classList.add("show");
         resultModal.setAttribute("aria-hidden", "false");
       }
 
-      function closeModal() {
+      function closeResultModal() {
         resultModal.classList.remove("show");
         resultModal.setAttribute("aria-hidden", "true");
       }
@@ -1807,7 +752,7 @@
           bonusBox.innerHTML = "";
         }
 
-        openModal();
+        openResultModal();
       }
 
       function showAlreadyCheckedModal() {
@@ -1820,7 +765,7 @@
         modalSpeech.textContent = "本日の焼き印はすでに記録済みです。スタンプやタワーの確認は引き続きご利用いただけます。";
         bonusBox.style.display = "none";
         bonusBox.innerHTML = "";
-        openModal();
+        openResultModal();
       }
 
       function showErrorModal(title, text) {
@@ -1833,24 +778,120 @@
         modalSpeech.textContent = "読み取り内容を確認のうえ、もう一度お試しください。";
         bonusBox.style.display = "none";
         bonusBox.innerHTML = "";
-        openModal();
+        openResultModal();
       }
 
       // =========================================================
-      // Checkin mock
+      // Scanner modal
       // =========================================================
-      function doCheckinMock() {
+      function openScannerModal() {
+        scannerModal.classList.add("show");
+        scannerModal.setAttribute("aria-hidden", "false");
+      }
+
+      async function closeScannerModal() {
+        await stopScanner();
+        scannerModal.classList.remove("show");
+        scannerModal.setAttribute("aria-hidden", "true");
+      }
+
+      async function stopScanner() {
+        if (!qrScanner) return;
+        if (scannerRunning) {
+          try {
+            await qrScanner.stop();
+          } catch (_) {}
+        }
+        try {
+          await qrScanner.clear();
+        } catch (_) {}
+        scannerRunning = false;
+        scanLocked = false;
+      }
+
+      async function startScanner() {
+        if (!window.Html5Qrcode) {
+          showErrorModal("QRライブラリが読み込めません", "ネットワーク状態を確認してから、もう一度お試しください。");
+          return;
+        }
+
+        if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+          showErrorModal("HTTPSが必要です", "カメラ起動はHTTPS環境でのみ利用してください。");
+          return;
+        }
+
+        if (!canCheckinToday()) {
+          showAlreadyCheckedModal();
+          return;
+        }
+
+        openScannerModal();
+        scannerStatus.textContent = "カメラを起動しています…";
+        scanLocked = false;
+
+        if (!qrScanner) {
+          qrScanner = new Html5Qrcode("scannerViewport");
+        }
+
+        try {
+          await qrScanner.start(
+            { facingMode: "environment" },
+            {
+              fps: 10,
+              qrbox: { width: 230, height: 230 },
+              aspectRatio: 1.3333333,
+              disableFlip: false,
+              rememberLastUsedCamera: true
+            },
+            async (decodedText) => {
+              if (scanLocked) return;
+              scanLocked = true;
+              scannerStatus.textContent = "QRを読み取りました。内容を確認しています…";
+              await handleScannedQr(decodedText);
+            },
+            () => {
+              // エラーは連続で出るので表示しない
+            }
+          );
+          scannerRunning = true;
+          scannerStatus.textContent = "店内のQRを枠の中に合わせてください。";
+        } catch (err) {
+          scannerRunning = false;
+          const message = String(err || "");
+          if (message.includes("NotAllowedError")) {
+            scannerStatus.textContent = "カメラ権限が拒否されました。ブラウザ設定で許可してください。";
+          } else if (message.includes("NotFoundError")) {
+            scannerStatus.textContent = "利用できるカメラが見つかりませんでした。";
+          } else {
+            scannerStatus.textContent = "カメラを起動できませんでした。時間をおいてお試しください。";
+          }
+        }
+      }
+
+      async function handleScannedQr(decodedText) {
+        const value = String(decodedText || "").trim();
+
+        if (value !== VALID_QR_VALUE) {
+          scannerStatus.textContent = "このQRは対象外です。店内の専用QRを読み込んでください。";
+          scanLocked = false;
+          return;
+        }
+
+        await stopScanner();
+        scannerModal.classList.remove("show");
+        scannerModal.setAttribute("aria-hidden", "true");
+        applyCheckinSuccess();
+      }
+
+      // =========================================================
+      // Checkin logic
+      // =========================================================
+      function applyCheckinSuccess() {
         const today = getTodayLocalYMD();
 
         if (!canCheckinToday()) {
           showAlreadyCheckedModal();
           render();
-          return;
-        }
-
-        const scannedQrValue = FIXED_QR_VALUE;
-        if (scannedQrValue !== FIXED_QR_VALUE) {
-          showErrorModal("無効なQRです", "店内のQRを読み込んでください。");
           return;
         }
 
@@ -1906,7 +947,7 @@
         localStorage.removeItem(LS_KEYS.lastCheckinDate);
         localStorage.removeItem(LS_KEYS.lastReward);
         localStorage.removeItem(LS_KEYS.history);
-        closeModal();
+        closeResultModal();
         render();
       }
 
@@ -1924,8 +965,8 @@
         historySectionEl.style.display = shown ? "none" : "";
       }
 
-      checkinBtn.addEventListener("click", doCheckinMock);
-      checkinBtnMain.addEventListener("click", doCheckinMock);
+      checkinBtn.addEventListener("click", startScanner);
+      checkinBtnMain.addEventListener("click", startScanner);
 
       rewardToggleBtn.addEventListener("click", toggleRewards);
       rewardToggleBtnMain.addEventListener("click", toggleRewards);
@@ -1938,9 +979,20 @@
         resetAllForTest();
       });
 
-      closeModalBtn.addEventListener("click", closeModal);
+      closeModalBtn.addEventListener("click", closeResultModal);
       resultModal.addEventListener("click", (e) => {
-        if (e.target === resultModal) closeModal();
+        if (e.target === resultModal) closeResultModal();
+      });
+
+      closeScannerBtn.addEventListener("click", closeScannerModal);
+      scannerModal.addEventListener("click", async (e) => {
+        if (e.target === scannerModal) {
+          await closeScannerModal();
+        }
+      });
+
+      window.addEventListener("beforeunload", async () => {
+        await stopScanner();
       });
 
       // =========================================================
