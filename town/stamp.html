@@ -5,1002 +5,163 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>焼き印スタンプ所</title>
 
+  <!-- フォント -->
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+
+  <!-- CSS -->
   <link rel="stylesheet" href="assets/stamp.css">
 
-  <!-- QR読み取りライブラリ -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+  <!-- ✅ CDN変更済み（これが重要） -->
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
 </head>
 
 <body>
-  <div class="wrap">
+<div class="wrap">
 
-    <!-- ================= 上部HUD ================= -->
-    <section class="hud-shell">
-      <div class="hud-row top">
-        <a class="navbtn" href="town.html">← 戻る</a>
+  <!-- ================= HUD ================= -->
+  <section class="hud-shell">
+    <div class="hud-row top">
+      <a class="navbtn" href="town.html">← 戻る</a>
 
-        <div class="chip">
-          <div class="chip-ico">🐙</div>
-          <div>
-            <div class="chip-label">所持オクト</div>
-            <div class="chip-value" id="octoNow">0</div>
-          </div>
-        </div>
-
-        <div class="chip">
-          <div class="chip-ico">🔥</div>
-          <div>
-            <div class="chip-label">今のスタンプ</div>
-            <div class="chip-value white"><span id="stampNow">0</span> / 10</div>
-          </div>
-        </div>
-
-        <div class="chip">
-          <div class="chip-ico">🗼</div>
-          <div>
-            <div class="chip-label">たこ焼きタワー</div>
-            <div class="chip-value white"><span id="towerNow">0</span> 段</div>
-          </div>
+      <div class="chip">
+        <div class="chip-ico">🐙</div>
+        <div>
+          <div class="chip-label">所持オクト</div>
+          <div class="chip-value" id="octoNow">0</div>
         </div>
       </div>
 
-      <div class="hud-row bottom">
-        <button class="iconbtn wide" id="checkinBtn" type="button">
-          <span class="icon-emoji">📷</span>
-          <span class="icon-text">
-            <span class="icon-main">チェックイン</span>
-            <span class="icon-sub">店内QRを読む</span>
-          </span>
-        </button>
-
-        <button class="iconbtn wide" id="rewardToggleBtn" type="button">
-          <span class="icon-emoji">🎁</span>
-          <span class="icon-text">
-            <span class="icon-main">ごほうび案内</span>
-            <span class="icon-sub">通常・節目報酬</span>
-          </span>
-        </button>
-
-        <button class="iconbtn" id="historyBtn" type="button">📒</button>
-        <button class="iconbtn" id="resetBtn" type="button">↺</button>
-
-        <button class="iconbtn wide" type="button" disabled>
-          <span class="icon-emoji">📅</span>
-          <span class="icon-text">
-            <span class="icon-main" id="todayState">未チェックイン</span>
-            <span class="icon-sub">本日の状態</span>
-          </span>
-          <span class="badge" id="todayBadge">未</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- ================= メイン ================= -->
-    <section class="scene">
-      <div class="cloud c1"></div>
-      <div class="cloud c2"></div>
-      <div class="grass-band"></div>
-      <div class="ground"></div>
-
-      <!-- TOP -->
-      <section class="top-hero">
-        <div class="top-hero-image">
-          <div class="hero-overlay">
-            <div class="hero-label">📍 来店スタンプ案内</div>
-            <h1 class="hero-title">焼き印スタンプ所</h1>
-            <div class="hero-desc">
-              店内QRを読み込んでスタンプを集めよう。<br>
-              10個でタワーが1段育つ！
-            </div>
-          </div>
-        </div>
-
-        <div class="guide-strip">
-          <img class="guide-char" src="assets/images/navi_takomin.png" alt="ナビタコ民">
-
-          <div class="guide-bubble no-tail">
-            <div class="guide-tag">ナビタコ民</div>
-            <p class="guide-text" id="guideText">
-              いらっしゃいませ。こちらは来店スタンプの受付です。店内のQRを読み込むと、本日の焼き印を1つ押せます。
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= ダッシュボード ================= -->
-      <section class="dashboard">
-
-        <!-- スタンプ -->
-        <div class="card stampbook">
-          <div class="card-head">
-            <div>
-              <h2 class="card-title">スタンプカード</h2>
-              <p class="card-desc">10個で1周、タワー1段追加です。</p>
-            </div>
-            <div class="goal-badge">
-              <small>あと</small>
-              <strong id="goalBadgeText">5</strong>
-            </div>
-          </div>
-
-          <div class="stampbook-body">
-            <div class="stamp-grid" id="stampGrid"></div>
-
-            <div class="progress-row">
-              <div class="progress-card">
-                <div class="progress-label">進行</div>
-                <div class="progress-value"><span id="cardProgressText">0</span> / 10</div>
-              </div>
-              <div class="progress-card">
-                <div class="progress-label">つぎの節目</div>
-                <div class="progress-value" id="nextGoalText">あと5</div>
-              </div>
-              <div class="progress-card">
-                <div class="progress-label">最後の報酬</div>
-                <div class="progress-value" id="lastRewardText">なし</div>
-              </div>
-            </div>
-
-            <div class="button-row">
-              <button class="cta cta-main" id="checkinBtnMain" type="button">📷 チェックイン</button>
-              <button class="cta cta-sub" id="rewardToggleBtnMain" type="button">🎁 報酬一覧</button>
-            </div>
-
-            <div class="sub-panels">
-              <div class="sub-card">
-                <h3 class="sub-title">ご案内</h3>
-                <p class="sub-text" id="stampHint">
-                  5個で中間ボーナス、10個でタワー1段完成です。
-                </p>
-              </div>
-
-              <div class="sub-card" id="rewardTableSection" style="display:none;">
-                <h3 class="sub-title">通常報酬一覧</h3>
-                <p class="sub-text">チェックイン成功時、下の中から1つがランダムでもらえます。</p>
-
-                <div class="reward-list">
-                  <div class="reward-item">
-                    <div class="reward-left">
-                      <div class="reward-ico">🪙</div>
-                      <div>
-                        <div class="reward-name">オクト +100</div>
-                        <div class="reward-note">軽めの基本報酬</div>
-                      </div>
-                    </div>
-                    <div class="reward-right">よく出る</div>
-                  </div>
-
-                  <div class="reward-item">
-                    <div class="reward-left">
-                      <div class="reward-ico">🪙</div>
-                      <div>
-                        <div class="reward-name">オクト +200</div>
-                        <div class="reward-note">標準報酬</div>
-                      </div>
-                    </div>
-                    <div class="reward-right">ふつう</div>
-                  </div>
-
-                  <div class="reward-item">
-                    <div class="reward-left">
-                      <div class="reward-ico">🪙</div>
-                      <div>
-                        <div class="reward-name">オクト +300</div>
-                        <div class="reward-note">ちょっと嬉しい</div>
-                      </div>
-                    </div>
-                    <div class="reward-right">やや低確率</div>
-                  </div>
-
-                  <div class="reward-item">
-                    <div class="reward-left">
-                      <div class="reward-ico">💧</div>
-                      <div>
-                        <div class="reward-name">水 +1</div>
-                        <div class="reward-note">畑で使える想定</div>
-                      </div>
-                    </div>
-                    <div class="reward-right">ふつう</div>
-                  </div>
-
-                  <div class="reward-item">
-                    <div class="reward-left">
-                      <div class="reward-ico">🧪</div>
-                      <div>
-                        <div class="reward-name">ヒリョウ +1</div>
-                        <div class="reward-note">畑で使える想定</div>
-                      </div>
-                    </div>
-                    <div class="reward-right">ふつう</div>
-                  </div>
-
-                  <div class="reward-item">
-                    <div class="reward-left">
-                      <div class="reward-ico">🌱</div>
-                      <div>
-                        <div class="reward-name">ノーマルタネ +1</div>
-                        <div class="reward-note">定番の嬉しい報酬</div>
-                      </div>
-                    </div>
-                    <div class="reward-right">やや低確率</div>
-                  </div>
-
-                  <div class="reward-item">
-                    <div class="reward-left">
-                      <div class="reward-ico">✨</div>
-                      <div>
-                        <div class="reward-name">少し良いタネ +1</div>
-                        <div class="reward-note">低確率の当たり</div>
-                      </div>
-                    </div>
-                    <div class="reward-right">低確率</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="sub-card" id="historySection" style="display:none;">
-                <h3 class="sub-title">最近の記録</h3>
-                <p class="sub-text">今日の状態や最後に受け取った内容を確認できます。</p>
-
-                <div class="history-grid">
-                  <div class="history-row">
-                    <strong>最終チェックイン日：</strong>
-                    <span id="lastDateText">まだなし</span>
-                  </div>
-                  <div class="history-row">
-                    <strong>端末ID：</strong>
-                    <span id="deviceIdText">未生成</span>
-                  </div>
-                  <div class="history-row">
-                    <strong>累計チェックイン：</strong>
-                    <span id="totalCheckinsText">0</span> 回
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- タワー -->
-        <div class="card tower-card">
-          <div class="card-head">
-            <div>
-              <h2 class="card-title">たこ焼きタワー</h2>
-              <p class="card-desc">カードを満タンにするたび1段ずつ育ちます。</p>
-            </div>
-
-            <div class="goal-badge" style="background:linear-gradient(180deg,#7b4dd6,#5330a7); border-color:rgba(63,30,121,.18);">
-              <small>現在</small>
-              <strong id="towerCountBadge">0段</strong>
-            </div>
-          </div>
-
-          <div class="tower-body">
-            <div class="tower-stage">
-              <div class="tower-stack" id="towerStack"></div>
-              <div class="tower-base">たこ焼きタワー台</div>
-            </div>
-
-            <div class="tower-footer">
-              <div class="sub-card">
-                <h3 class="sub-title">タワーのしくみ</h3>
-                <p class="sub-text">10個たまるとスタンプは0に戻り、タワーだけが残って育っていきます。</p>
-              </div>
-
-              <div class="sub-card">
-                <h3 class="sub-title">現在の記録</h3>
-                <p class="sub-text">たこ焼きタワー：<strong id="towerNowHistory">0</strong> 段</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </section>
-    </section>
-  </div>
-
-  <!-- ================= 結果モーダル ================= -->
-  <div class="modal" id="resultModal" aria-hidden="true">
-    <div class="modal-card">
-      <div class="modal-top">
-        <h2 class="modal-title" id="modalTitle">チェックイン成功！</h2>
-      </div>
-
-      <div class="modal-body">
-        <div class="modal-main" id="modalMainText"></div>
-
-        <div class="reward-item">
-          <div class="reward-left">
-            <div class="reward-ico" id="modalRewardIcon">🎁</div>
-            <div>
-              <div class="reward-name" id="modalRewardName">報酬名</div>
-              <div class="reward-note" id="modalRewardNote">説明</div>
-            </div>
-          </div>
-          <div class="reward-right" id="modalStampText">+1 スタンプ</div>
-        </div>
-
-        <div class="bonus-box" id="bonusBox" style="display:none;"></div>
-
-        <div class="guide-bubble no-tail" style="margin-top:14px;">
-          <div class="guide-tag">ナビタコ民</div>
-          <p class="guide-text" id="modalSpeech">本日の焼き印を記録しました。</p>
-        </div>
-
-        <div class="modal-actions">
-          <button class="cta cta-main" type="button" id="closeModalBtn">とじる</button>
+      <div class="chip">
+        <div class="chip-ico">🔥</div>
+        <div>
+          <div class="chip-label">スタンプ</div>
+          <div class="chip-value"><span id="stampNow">0</span>/10</div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ================= QRスキャナーモーダル ================= -->
-  <div class="modal" id="scannerModal" aria-hidden="true">
-    <div class="modal-card">
-      <div class="modal-top">
-        <h2 class="modal-title">QRを読み取る</h2>
-      </div>
+    <div class="hud-row bottom">
+      <button class="iconbtn wide" id="checkinBtn">
+        📷 チェックイン
+      </button>
+    </div>
+  </section>
 
-      <div class="modal-body">
-        <div class="guide-bubble no-tail" style="margin-bottom:12px;">
-          <div class="guide-tag">ナビタコ民</div>
-          <p class="guide-text" id="scannerGuideText">
-            店内のQRをカメラに映してください。読み取りに成功すると、自動で受付します。
-          </p>
-        </div>
+  <!-- ================= メイン ================= -->
+  <section class="scene">
 
-        <div id="scannerViewport" style="border-radius:18px; overflow:hidden; background:#111; min-height:260px;"></div>
+    <div style="padding:20px;text-align:center;">
+      <h2>焼き印スタンプ所</h2>
+      <p>QRを読み込むとスタンプGET！</p>
+    </div>
 
-        <div id="scannerStatus" style="margin-top:12px; font-size:12px; line-height:1.8; color:#8b6139;">
-          カメラを起動しています…
-        </div>
+    <!-- スタンプ -->
+    <div id="stampGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:20px;"></div>
 
-        <div class="modal-actions">
-          <button class="cta cta-sub" type="button" id="closeScannerBtn">閉じる</button>
-        </div>
-      </div>
+  </section>
+</div>
+
+<!-- ================= QRモーダル ================= -->
+<div class="modal" id="scannerModal">
+  <div class="modal-card">
+    <div class="modal-top">
+      <h2>QRを読み取る</h2>
+    </div>
+
+    <div class="modal-body">
+      <div id="reader" style="width:100%;"></div>
+      <br>
+      <button onclick="closeScanner()">閉じる</button>
     </div>
   </div>
+</div>
 
-  <script>
-    (() => {
-      "use strict";
+<script>
+"use strict";
 
-      // =========================================================
-      // 設定
-      // =========================================================
-      const CARD_MAX = 10;
-      const MID_GOAL = 5;
-      const OCTO_KEY = "roten_v1_octo";
+/* ================= 設定 ================= */
+const VALID_QR_VALUE = "TAKOYAKI_CHECKIN_NANA";
 
-      // 店内QRの中身に合わせて変更
-      const VALID_QR_VALUE = "TAKOYAKI_CHECKIN_NANA";
+/* ================= 状態 ================= */
+let html5QrCode;
 
-      const LS_KEYS = {
-        stampCurrent: "ttc_stamp_current_v4",
-        towerLevel: "ttc_stamp_tower_level_v4",
-        totalCheckins: "ttc_stamp_total_checkins_v4",
-        lastCheckinDate: "ttc_stamp_last_checkin_date_v4",
-        lastReward: "ttc_stamp_last_reward_v4",
-        history: "ttc_stamp_history_v4",
-        deviceId: "tf_v1_device_id",
-        inv: "tf_v1_inv"
-      };
+/* ================= スタンプ ================= */
+function getStamp(){
+  return Number(localStorage.getItem("stamp") || 0);
+}
 
-      const REWARD_TABLE = [
-        { type: "octo", id: "octo_100", icon: "🪙", label: "オクト +100", amount: 100, note: "軽めの基本報酬", weight: 26 },
-        { type: "octo", id: "octo_200", icon: "🪙", label: "オクト +200", amount: 200, note: "標準報酬", weight: 24 },
-        { type: "octo", id: "octo_300", icon: "🪙", label: "オクト +300", amount: 300, note: "ちょっと嬉しい", weight: 14 },
-        { type: "water", id: "water_plain_free", icon: "💧", label: "水 +1", amount: 1, note: "畑で使える想定", weight: 14 },
-        { type: "fert", id: "fert_agedama", icon: "🧪", label: "ヒリョウ +1", amount: 1, note: "畑で使える想定", weight: 12 },
-        { type: "seed", id: "seed_random", icon: "🌱", label: "ノーマルタネ +1", amount: 1, note: "定番の嬉しい報酬", weight: 8 },
-        { type: "seed", id: "seed_shop", icon: "✨", label: "少し良いタネ +1", amount: 1, note: "低確率の当たり", weight: 2 }
-      ];
+function setStamp(v){
+  localStorage.setItem("stamp", v);
+}
 
-      const BONUS_REWARD = {
-        5:  { type: "seed", id: "seed_random", icon: "5️⃣", label: "5個ボーナス：ノーマルタネ +2", amount: 2, note: "中間報酬" },
-        10: { type: "seed", id: "seed_shop", icon: "🔟", label: "10個ボーナス：少し良いタネ +1", amount: 1, note: "完走報酬" }
-      };
+function render(){
+  const s = getStamp();
+  document.getElementById("stampNow").textContent = s;
 
-      const GUIDE_LINES = [
-        "いらっしゃいませ。こちらは来店スタンプの受付です。店内のQRを読み込むと、本日の焼き印を1つ押せます。",
-        "本日の来店記念に、焼き印スタンプをどうぞ。集めた数に応じて、たこ焼きタワーも育っていきます。",
-        "はじめての方も大丈夫です。まずはチェックインからどうぞ。5個と10個で節目のごほうびをご案内しています。",
-        "1日1回、焼き印を集めてタワーを育ててくださいね。スタンプが増えると景色も少しずつにぎやかになります。",
-        "ご来店の記録はこちらでご案内しています。スタンプ確認だけでもお気軽にどうぞ。"
-      ];
+  const grid = document.getElementById("stampGrid");
+  grid.innerHTML = "";
 
-      // =========================================================
-      // DOM
-      // =========================================================
-      const $ = (sel) => document.querySelector(sel);
+  for(let i=1;i<=10;i++){
+    const d = document.createElement("div");
+    d.style.height = "50px";
+    d.style.border = "2px solid #999";
+    d.style.display = "flex";
+    d.style.alignItems = "center";
+    d.style.justifyContent = "center";
+    d.style.background = i<=s ? "#ffcc66" : "#fff";
+    d.textContent = i<=s ? "🐙" : i;
+    grid.appendChild(d);
+  }
+}
 
-      const octoNowEl = $("#octoNow");
-      const stampNowEl = $("#stampNow");
-      const towerNowEl = $("#towerNow");
-      const towerNowHistoryEl = $("#towerNowHistory");
-      const towerCountBadgeEl = $("#towerCountBadge");
-      const totalCheckinsTextEl = $("#totalCheckinsText");
+/* ================= QR起動 ================= */
+document.getElementById("checkinBtn").onclick = () => {
+  document.getElementById("scannerModal").classList.add("show");
 
-      const todayStateEl = $("#todayState");
-      const todayBadgeEl = $("#todayBadge");
+  html5QrCode = new Html5Qrcode("reader");
 
-      const nextGoalTextEl = $("#nextGoalText");
-      const goalBadgeTextEl = $("#goalBadgeText");
-      const stampHintEl = $("#stampHint");
-      const guideTextEl = $("#guideText");
-      const lastDateTextEl = $("#lastDateText");
-      const lastRewardTextEl = $("#lastRewardText");
-      const deviceIdTextEl = $("#deviceIdText");
-      const cardProgressTextEl = $("#cardProgressText");
-
-      const stampGridEl = $("#stampGrid");
-      const towerStackEl = $("#towerStack");
-
-      const rewardTableSectionEl = $("#rewardTableSection");
-      const historySectionEl = $("#historySection");
-
-      const rewardToggleBtn = $("#rewardToggleBtn");
-      const rewardToggleBtnMain = $("#rewardToggleBtnMain");
-      const historyBtn = $("#historyBtn");
-      const resetBtn = $("#resetBtn");
-      const checkinBtn = $("#checkinBtn");
-      const checkinBtnMain = $("#checkinBtnMain");
-
-      const resultModal = $("#resultModal");
-      const modalTitle = $("#modalTitle");
-      const modalMainText = $("#modalMainText");
-      const modalRewardIcon = $("#modalRewardIcon");
-      const modalRewardName = $("#modalRewardName");
-      const modalRewardNote = $("#modalRewardNote");
-      const modalStampText = $("#modalStampText");
-      const bonusBox = $("#bonusBox");
-      const modalSpeech = $("#modalSpeech");
-      const closeModalBtn = $("#closeModalBtn");
-
-      const scannerModal = $("#scannerModal");
-      const scannerViewport = $("#scannerViewport");
-      const scannerStatus = $("#scannerStatus");
-      const closeScannerBtn = $("#closeScannerBtn");
-
-      // =========================================================
-      // QR scanner state
-      // =========================================================
-      let qrScanner = null;
-      let scannerRunning = false;
-      let scanLocked = false;
-
-      // =========================================================
-      // Utility
-      // =========================================================
-      function safeParse(json, fallback) {
-        try { return JSON.parse(json); }
-        catch { return fallback; }
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    (decodedText) => {
+      if(decodedText === VALID_QR_VALUE){
+        successCheckin();
+      }else{
+        alert("違うQRです");
       }
-
-      function loadNumber(key, fallback = 0) {
-        const raw = localStorage.getItem(key);
-        const n = Number(raw);
-        return Number.isFinite(n) ? n : fallback;
-      }
-
-      function saveNumber(key, value) {
-        localStorage.setItem(key, String(value));
-      }
-
-      function loadJSON(key, fallback) {
-        return safeParse(localStorage.getItem(key), fallback);
-      }
-
-      function saveJSON(key, value) {
-        localStorage.setItem(key, JSON.stringify(value));
-      }
-
-      function formatNumber(n) {
-        return Number(n || 0).toLocaleString("ja-JP");
-      }
-
-      function getTodayLocalYMD() {
-        const d = new Date();
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${y}-${m}-${day}`;
-      }
-
-      function getOrCreateDeviceId() {
-        let id = localStorage.getItem(LS_KEYS.deviceId);
-        if (id) return id;
-
-        if (window.crypto && crypto.randomUUID) {
-          id = crypto.randomUUID();
-        } else {
-          id = "dev_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-        }
-        localStorage.setItem(LS_KEYS.deviceId, id);
-        return id;
-      }
-
-      function getInventory() {
-        const inv = loadJSON(LS_KEYS.inv, null);
-        if (inv && typeof inv === "object") {
-          if (!inv.seed) inv.seed = {};
-          if (!inv.water) inv.water = {};
-          if (!inv.fert) inv.fert = {};
-          return inv;
-        }
-        return { ver:1, seed:{}, water:{}, fert:{} };
-      }
-
-      function saveInventory(inv) {
-        saveJSON(LS_KEYS.inv, inv);
-      }
-
-      function addInventoryItem(type, id, amount) {
-        const inv = getInventory();
-        if (type === "seed") inv.seed[id] = (inv.seed[id] || 0) + amount;
-        if (type === "water") inv.water[id] = (inv.water[id] || 0) + amount;
-        if (type === "fert") inv.fert[id] = (inv.fert[id] || 0) + amount;
-        saveInventory(inv);
-      }
-
-      function addOcto(amount) {
-        const now = loadNumber(OCTO_KEY, 0);
-        saveNumber(OCTO_KEY, now + amount);
-      }
-
-      function weightedPick(items) {
-        const total = items.reduce((sum, item) => sum + item.weight, 0);
-        let r = Math.random() * total;
-        for (const item of items) {
-          r -= item.weight;
-          if (r <= 0) return item;
-        }
-        return items[items.length - 1];
-      }
-
-      function getStampCurrent() {
-        const n = loadNumber(LS_KEYS.stampCurrent, 0);
-        return Math.max(0, Math.min(CARD_MAX - 1, n));
-      }
-
-      function setStampCurrent(n) {
-        saveNumber(LS_KEYS.stampCurrent, Math.max(0, Math.min(CARD_MAX - 1, n)));
-      }
-
-      function getTowerLevel() {
-        return Math.max(0, loadNumber(LS_KEYS.towerLevel, 0));
-      }
-
-      function setTowerLevel(n) {
-        saveNumber(LS_KEYS.towerLevel, Math.max(0, n));
-      }
-
-      function getTotalCheckins() {
-        return Math.max(0, loadNumber(LS_KEYS.totalCheckins, 0));
-      }
-
-      function setTotalCheckins(n) {
-        saveNumber(LS_KEYS.totalCheckins, Math.max(0, n));
-      }
-
-      function getLastCheckinDate() {
-        return localStorage.getItem(LS_KEYS.lastCheckinDate) || "";
-      }
-
-      function setLastCheckinDate(v) {
-        localStorage.setItem(LS_KEYS.lastCheckinDate, v);
-      }
-
-      function getLastReward() {
-        return loadJSON(LS_KEYS.lastReward, null);
-      }
-
-      function setLastReward(v) {
-        saveJSON(LS_KEYS.lastReward, v);
-      }
-
-      function getHistory() {
-        return loadJSON(LS_KEYS.history, []);
-      }
-
-      function pushHistory(entry) {
-        const arr = getHistory();
-        arr.unshift(entry);
-        saveJSON(LS_KEYS.history, arr.slice(0, 20));
-      }
-
-      function canCheckinToday() {
-        return getLastCheckinDate() !== getTodayLocalYMD();
-      }
-
-      function addReward(reward) {
-        if (!reward) return;
-        if (reward.type === "octo") {
-          addOcto(reward.amount);
-          return;
-        }
-        if (reward.type === "seed" || reward.type === "water" || reward.type === "fert") {
-          addInventoryItem(reward.type, reward.id, reward.amount);
-        }
-      }
-
-      function getNextGoalInfo(stampCurrent) {
-        if (stampCurrent < MID_GOAL) {
-          return {
-            remaining: MID_GOAL - stampCurrent,
-            text: `${MID_GOAL}個で中間ボーナスです。`
-          };
-        }
-        return {
-          remaining: CARD_MAX - stampCurrent,
-          text: `${CARD_MAX}個でタワーが1段完成します。`
-        };
-      }
-
-      function pickGuideLine(stampCurrent, towerLevel, checkedInToday) {
-        if (checkedInToday) return "本日の受付は完了しています。スタンプ確認やタワー見学はご自由にどうぞ。";
-        if (towerLevel >= 10) return "たこ焼きタワーはかなり立派になってきましたね。次のご来店もお待ちしております。";
-        if (stampCurrent >= 5) return "中間地点まで来ています。このまま1周達成を目指してみてください。";
-        return GUIDE_LINES[(stampCurrent + towerLevel) % GUIDE_LINES.length];
-      }
-
-      // =========================================================
-      // Render
-      // =========================================================
-      function renderStampGrid(stampCurrent) {
-        stampGridEl.innerHTML = "";
-        for (let i = 1; i <= CARD_MAX; i++) {
-          const done = i <= stampCurrent;
-          const el = document.createElement("div");
-          el.className = "stamp" + (done ? " done" : "");
-          el.innerHTML = `
-            <div class="num">${i}</div>
-            <div class="mark">${done ? "🐙" : "○"}</div>
-          `;
-          stampGridEl.appendChild(el);
-        }
-      }
-
-      function renderTower(towerLevel) {
-        towerStackEl.innerHTML = "";
-        const showCount = Math.min(towerLevel, 10);
-        for (let i = 1; i <= showCount; i++) {
-          const piece = document.createElement("div");
-          piece.className = "tower-piece" + ((i === 3 || i === 5 || i === 10) ? " flag" : "");
-          towerStackEl.appendChild(piece);
-        }
-      }
-
-      function render() {
-        const octo = loadNumber(OCTO_KEY, 0);
-        const stampCurrent = getStampCurrent();
-        const towerLevel = getTowerLevel();
-        const totalCheckins = getTotalCheckins();
-        const lastDate = getLastCheckinDate();
-        const lastReward = getLastReward();
-        const today = getTodayLocalYMD();
-        const checkedInToday = lastDate === today;
-        const deviceId = getOrCreateDeviceId();
-        const nextInfo = getNextGoalInfo(stampCurrent);
-
-        octoNowEl.textContent = formatNumber(octo);
-        stampNowEl.textContent = String(stampCurrent);
-        towerNowEl.textContent = String(towerLevel);
-        towerNowHistoryEl.textContent = String(towerLevel);
-        towerCountBadgeEl.textContent = `${towerLevel}段`;
-        totalCheckinsTextEl.textContent = formatNumber(totalCheckins);
-
-        cardProgressTextEl.textContent = String(stampCurrent);
-        lastDateTextEl.textContent = lastDate || "まだなし";
-        lastRewardTextEl.textContent = lastReward ? lastReward.label : "まだなし";
-        deviceIdTextEl.textContent = deviceId;
-
-        const todayText = checkedInToday ? "チェックイン済み" : "未チェックイン";
-        todayStateEl.textContent = todayText;
-        todayBadgeEl.textContent = checkedInToday ? "済" : "未";
-
-        nextGoalTextEl.textContent = `あと${nextInfo.remaining}`;
-        goalBadgeTextEl.textContent = `あと${nextInfo.remaining}`;
-        stampHintEl.textContent = nextInfo.text;
-        guideTextEl.textContent = pickGuideLine(stampCurrent, towerLevel, checkedInToday);
-
-        renderStampGrid(stampCurrent);
-        renderTower(towerLevel);
-      }
-
-      // =========================================================
-      // Result modal
-      // =========================================================
-      function openResultModal() {
-        resultModal.classList.add("show");
-        resultModal.setAttribute("aria-hidden", "false");
-      }
-
-      function closeResultModal() {
-        resultModal.classList.remove("show");
-        resultModal.setAttribute("aria-hidden", "true");
-      }
-
-      function showSuccessModal(mainReward, bonusReward, stampCurrentAfter, towerLevelAfter, towerBuilt) {
-        modalTitle.textContent = "チェックイン成功！";
-        modalRewardIcon.textContent = mainReward.icon;
-        modalRewardName.textContent = mainReward.label;
-        modalRewardNote.textContent = mainReward.note;
-
-        if (towerBuilt) {
-          modalMainText.innerHTML = `スタンプカードが1周しました。<br>たこ焼きタワーが <strong>${towerLevelAfter}段</strong> になりました。<br>新しいカードは <strong>${stampCurrentAfter} / ${CARD_MAX}</strong> からスタートです。`;
-          modalStampText.textContent = "タワー +1段";
-          modalSpeech.textContent = "1周達成おめでとうございます。たこ焼きタワーを1段追加しました。";
-        } else {
-          modalMainText.innerHTML = `本日の焼き印を1つ記録しました。<br>現在のカード進捗：<strong>${stampCurrentAfter} / ${CARD_MAX}</strong>`;
-          modalStampText.textContent = "+1 スタンプ";
-          modalSpeech.textContent = bonusReward
-            ? "節目のごほうびもご用意しております。引き続きお楽しみください。"
-            : "本日の受付は完了しました。次回のご来店もお待ちしております。";
-        }
-
-        if (bonusReward || towerBuilt) {
-          const lines = [];
-          if (bonusReward) lines.push(`🎁 <strong>${bonusReward.label}</strong><br>${bonusReward.note}`);
-          if (towerBuilt) lines.push(`🗼 <strong>たこ焼きタワー +1段</strong><br>スタンプカードは新しい1枚に切り替わりました。`);
-          bonusBox.style.display = "";
-          bonusBox.innerHTML = lines.join("<br><br>");
-        } else {
-          bonusBox.style.display = "none";
-          bonusBox.innerHTML = "";
-        }
-
-        openResultModal();
-      }
-
-      function showAlreadyCheckedModal() {
-        modalTitle.textContent = "今日はチェックイン済み";
-        modalMainText.innerHTML = `本日の受付は完了しています。<br>また明日のご来店をお待ちしております。`;
-        modalRewardIcon.textContent = "📅";
-        modalRewardName.textContent = "本日は受け取り済み";
-        modalRewardNote.textContent = "1日1回まで";
-        modalStampText.textContent = "追加なし";
-        modalSpeech.textContent = "本日の焼き印はすでに記録済みです。スタンプやタワーの確認は引き続きご利用いただけます。";
-        bonusBox.style.display = "none";
-        bonusBox.innerHTML = "";
-        openResultModal();
-      }
-
-      function showErrorModal(title, text) {
-        modalTitle.textContent = title;
-        modalMainText.innerHTML = text;
-        modalRewardIcon.textContent = "⚠️";
-        modalRewardName.textContent = "処理できませんでした";
-        modalRewardNote.textContent = "時間をおいて再度お試しください";
-        modalStampText.textContent = "追加なし";
-        modalSpeech.textContent = "読み取り内容を確認のうえ、もう一度お試しください。";
-        bonusBox.style.display = "none";
-        bonusBox.innerHTML = "";
-        openResultModal();
-      }
-
-      // =========================================================
-      // Scanner modal
-      // =========================================================
-      function openScannerModal() {
-        scannerModal.classList.add("show");
-        scannerModal.setAttribute("aria-hidden", "false");
-      }
-
-      async function closeScannerModal() {
-        await stopScanner();
-        scannerModal.classList.remove("show");
-        scannerModal.setAttribute("aria-hidden", "true");
-      }
-
-      async function stopScanner() {
-        if (!qrScanner) return;
-        if (scannerRunning) {
-          try {
-            await qrScanner.stop();
-          } catch (_) {}
-        }
-        try {
-          await qrScanner.clear();
-        } catch (_) {}
-        scannerRunning = false;
-        scanLocked = false;
-      }
-
-      async function startScanner() {
-        if (!window.Html5Qrcode) {
-          showErrorModal("QRライブラリが読み込めません", "ネットワーク状態を確認してから、もう一度お試しください。");
-          return;
-        }
-
-        if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-          showErrorModal("HTTPSが必要です", "カメラ起動はHTTPS環境でのみ利用してください。");
-          return;
-        }
-
-        if (!canCheckinToday()) {
-          showAlreadyCheckedModal();
-          return;
-        }
-
-        openScannerModal();
-        scannerStatus.textContent = "カメラを起動しています…";
-        scanLocked = false;
-
-        if (!qrScanner) {
-          qrScanner = new Html5Qrcode("scannerViewport");
-        }
-
-        try {
-          await qrScanner.start(
-            { facingMode: "environment" },
-            {
-              fps: 10,
-              qrbox: { width: 230, height: 230 },
-              aspectRatio: 1.3333333,
-              disableFlip: false,
-              rememberLastUsedCamera: true
-            },
-            async (decodedText) => {
-              if (scanLocked) return;
-              scanLocked = true;
-              scannerStatus.textContent = "QRを読み取りました。内容を確認しています…";
-              await handleScannedQr(decodedText);
-            },
-            () => {
-              // エラーは連続で出るので表示しない
-            }
-          );
-          scannerRunning = true;
-          scannerStatus.textContent = "店内のQRを枠の中に合わせてください。";
-        } catch (err) {
-          scannerRunning = false;
-          const message = String(err || "");
-          if (message.includes("NotAllowedError")) {
-            scannerStatus.textContent = "カメラ権限が拒否されました。ブラウザ設定で許可してください。";
-          } else if (message.includes("NotFoundError")) {
-            scannerStatus.textContent = "利用できるカメラが見つかりませんでした。";
-          } else {
-            scannerStatus.textContent = "カメラを起動できませんでした。時間をおいてお試しください。";
-          }
-        }
-      }
-
-      async function handleScannedQr(decodedText) {
-        const value = String(decodedText || "").trim();
-
-        if (value !== VALID_QR_VALUE) {
-          scannerStatus.textContent = "このQRは対象外です。店内の専用QRを読み込んでください。";
-          scanLocked = false;
-          return;
-        }
-
-        await stopScanner();
-        scannerModal.classList.remove("show");
-        scannerModal.setAttribute("aria-hidden", "true");
-        applyCheckinSuccess();
-      }
-
-      // =========================================================
-      // Checkin logic
-      // =========================================================
-      function applyCheckinSuccess() {
-        const today = getTodayLocalYMD();
-
-        if (!canCheckinToday()) {
-          showAlreadyCheckedModal();
-          render();
-          return;
-        }
-
-        const current = getStampCurrent();
-        const next = current + 1;
-        const totalCheckins = getTotalCheckins() + 1;
-        setTotalCheckins(totalCheckins);
-        setLastCheckinDate(today);
-
-        const mainReward = weightedPick(REWARD_TABLE);
-        addReward(mainReward);
-        setLastReward(mainReward);
-
-        let bonusReward = null;
-        let towerBuilt = false;
-        let towerLevelAfter = getTowerLevel();
-        let stampCurrentAfter = next;
-
-        if (next === MID_GOAL) {
-          bonusReward = BONUS_REWARD[5];
-          addReward(bonusReward);
-        }
-
-        if (next >= CARD_MAX) {
-          towerBuilt = true;
-          bonusReward = BONUS_REWARD[10];
-          addReward(bonusReward);
-          towerLevelAfter = getTowerLevel() + 1;
-          setTowerLevel(towerLevelAfter);
-          stampCurrentAfter = 0;
-          setStampCurrent(0);
-        } else {
-          setStampCurrent(next);
-        }
-
-        pushHistory({
-          date: today,
-          reward: mainReward,
-          bonus: bonusReward,
-          stampCurrentAfter,
-          towerLevelAfter,
-          towerBuilt
-        });
-
-        render();
-        showSuccessModal(mainReward, bonusReward, stampCurrentAfter, towerLevelAfter, towerBuilt);
-      }
-
-      function resetAllForTest() {
-        localStorage.removeItem(LS_KEYS.stampCurrent);
-        localStorage.removeItem(LS_KEYS.towerLevel);
-        localStorage.removeItem(LS_KEYS.totalCheckins);
-        localStorage.removeItem(LS_KEYS.lastCheckinDate);
-        localStorage.removeItem(LS_KEYS.lastReward);
-        localStorage.removeItem(LS_KEYS.history);
-        closeResultModal();
-        render();
-      }
-
-      // =========================================================
-      // Events
-      // =========================================================
-      function toggleRewards() {
-        const shown = rewardTableSectionEl.style.display !== "none";
-        rewardTableSectionEl.style.display = shown ? "none" : "";
-        rewardToggleBtnMain.textContent = shown ? "🎁 報酬一覧を見る" : "🎁 報酬一覧を閉じる";
-      }
-
-      function toggleHistory() {
-        const shown = historySectionEl.style.display !== "none";
-        historySectionEl.style.display = shown ? "none" : "";
-      }
-
-      checkinBtn.addEventListener("click", startScanner);
-      checkinBtnMain.addEventListener("click", startScanner);
-
-      rewardToggleBtn.addEventListener("click", toggleRewards);
-      rewardToggleBtnMain.addEventListener("click", toggleRewards);
-
-      historyBtn.addEventListener("click", toggleHistory);
-
-      resetBtn.addEventListener("click", () => {
-        const ok = confirm("スタンプ所ページのテスト状態を初期化する？");
-        if (!ok) return;
-        resetAllForTest();
-      });
-
-      closeModalBtn.addEventListener("click", closeResultModal);
-      resultModal.addEventListener("click", (e) => {
-        if (e.target === resultModal) closeResultModal();
-      });
-
-      closeScannerBtn.addEventListener("click", closeScannerModal);
-      scannerModal.addEventListener("click", async (e) => {
-        if (e.target === scannerModal) {
-          await closeScannerModal();
-        }
-      });
-
-      window.addEventListener("beforeunload", async () => {
-        await stopScanner();
-      });
-
-      // =========================================================
-      // Init
-      // =========================================================
-      getOrCreateDeviceId();
-      render();
-    })();
-  </script>
+    }
+  );
+};
+
+/* ================= 閉じる ================= */
+function closeScanner(){
+  if(html5QrCode){
+    html5QrCode.stop().then(()=> html5QrCode.clear());
+  }
+  document.getElementById("scannerModal").classList.remove("show");
+}
+
+/* ================= 成功処理 ================= */
+function successCheckin(){
+  closeScanner();
+
+  let s = getStamp();
+  s++;
+
+  if(s>=10){
+    s = 0;
+    alert("タワー完成🔥");
+  }else{
+    alert("スタンプGET！");
+  }
+
+  setStamp(s);
+  render();
+}
+
+/* ================= 初期 ================= */
+render();
+
+</script>
 </body>
 </html>
