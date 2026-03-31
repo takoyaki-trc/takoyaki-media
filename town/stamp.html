@@ -7,6 +7,227 @@
 
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/stamp.css">
+
+  <style>
+    /* =========================================================
+       追加分：獲得アイテム演出モーダル
+       ========================================================= */
+    .reward-splash-modal{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(16,10,6,.72);
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+    }
+    .reward-splash-modal.show{ display:flex; }
+
+    .reward-splash-card{
+      width:min(92vw, 560px);
+      border-radius:28px;
+      overflow:hidden;
+      position:relative;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255,243,180,.95) 0%, rgba(255,214,103,.92) 18%, rgba(255,144,48,.92) 40%, rgba(121,45,22,.96) 100%);
+      box-shadow:
+        0 30px 70px rgba(0,0,0,.38),
+        0 0 0 2px rgba(255,244,196,.72) inset,
+        0 0 42px rgba(255,202,74,.5);
+      color:#fffdf4;
+      font-family:"DotGothic16", system-ui, sans-serif;
+      transform:scale(.88);
+      opacity:0;
+      transition:transform .22s ease, opacity .22s ease;
+    }
+    .reward-splash-modal.show .reward-splash-card{
+      transform:scale(1);
+      opacity:1;
+    }
+
+    .reward-burst{
+      position:absolute;
+      inset:-12% -8% auto -8%;
+      height:74%;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at center, rgba(255,251,228,.95) 0 10%, rgba(255,233,123,.65) 10% 22%, rgba(255,193,64,.18) 22% 42%, transparent 42%),
+        conic-gradient(from 0deg,
+          rgba(255,245,194,.9) 0deg 10deg,
+          transparent 10deg 24deg,
+          rgba(255,214,95,.8) 24deg 34deg,
+          transparent 34deg 48deg,
+          rgba(255,245,194,.9) 48deg 58deg,
+          transparent 58deg 72deg,
+          rgba(255,214,95,.78) 72deg 82deg,
+          transparent 82deg 96deg,
+          rgba(255,245,194,.9) 96deg 106deg,
+          transparent 106deg 120deg,
+          rgba(255,214,95,.78) 120deg 130deg,
+          transparent 130deg 144deg,
+          rgba(255,245,194,.9) 144deg 154deg,
+          transparent 154deg 168deg,
+          rgba(255,214,95,.78) 168deg 178deg,
+          transparent 178deg 192deg,
+          rgba(255,245,194,.9) 192deg 202deg,
+          transparent 202deg 216deg,
+          rgba(255,214,95,.78) 216deg 226deg,
+          transparent 226deg 240deg,
+          rgba(255,245,194,.9) 240deg 250deg,
+          transparent 250deg 264deg,
+          rgba(255,214,95,.78) 264deg 274deg,
+          transparent 274deg 288deg,
+          rgba(255,245,194,.9) 288deg 298deg,
+          transparent 298deg 312deg,
+          rgba(255,214,95,.78) 312deg 322deg,
+          transparent 322deg 336deg,
+          rgba(255,245,194,.9) 336deg 346deg,
+          transparent 346deg 360deg);
+      filter:drop-shadow(0 0 24px rgba(255,235,145,.45));
+      animation: rewardSpin 9s linear infinite;
+      opacity:.92;
+    }
+    @keyframes rewardSpin{
+      from{ transform:rotate(0deg); }
+      to{ transform:rotate(360deg); }
+    }
+
+    .reward-splash-inner{
+      position:relative;
+      padding:22px 18px 18px;
+      text-align:center;
+    }
+
+    .reward-topline{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 12px;
+      border-radius:999px;
+      background:rgba(87,28,8,.34);
+      border:1px solid rgba(255,244,199,.55);
+      color:#fff9dc;
+      font-size:12px;
+      box-shadow:0 6px 18px rgba(0,0,0,.18);
+      position:relative;
+      z-index:1;
+    }
+
+    .reward-big-icon{
+      position:relative;
+      z-index:1;
+      margin:16px auto 8px;
+      width:132px;
+      height:132px;
+      display:grid;
+      place-items:center;
+      border-radius:32px;
+      background:
+        linear-gradient(180deg, rgba(255,252,241,.98), rgba(255,236,169,.92));
+      color:#6d2e08;
+      font-size:68px;
+      box-shadow:
+        0 20px 36px rgba(0,0,0,.26),
+        0 0 0 3px rgba(255,255,255,.48) inset,
+        0 0 26px rgba(255,248,174,.65);
+    }
+
+    .reward-big-title{
+      position:relative;
+      z-index:1;
+      font-size:16px;
+      line-height:1.7;
+      color:#fff9ea;
+      margin:8px 0 0;
+      text-shadow:0 2px 12px rgba(68,24,8,.38);
+    }
+
+    .reward-big-name{
+      position:relative;
+      z-index:1;
+      margin:10px 0 0;
+      font-size:24px;
+      line-height:1.6;
+      color:#ffffff;
+      text-shadow:
+        0 3px 0 rgba(120,43,12,.48),
+        0 0 20px rgba(255,239,166,.45);
+      word-break:break-word;
+    }
+
+    .reward-big-note{
+      position:relative;
+      z-index:1;
+      margin:10px auto 0;
+      max-width:420px;
+      font-size:12px;
+      line-height:1.9;
+      color:#fff7df;
+      opacity:.96;
+    }
+
+    .reward-chip-row{
+      position:relative;
+      z-index:1;
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:8px;
+      margin-top:16px;
+    }
+
+    .reward-chip{
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:11px;
+      line-height:1.4;
+      color:#fffef6;
+      background:rgba(91,31,12,.42);
+      border:1px solid rgba(255,241,188,.45);
+      box-shadow:0 8px 18px rgba(0,0,0,.14);
+    }
+
+    .reward-splash-actions{
+      position:relative;
+      z-index:1;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      margin-top:18px;
+    }
+
+    .reward-splash-btn{
+      appearance:none;
+      border:none;
+      border-radius:14px;
+      padding:12px 16px;
+      min-width:120px;
+      font:inherit;
+      cursor:pointer;
+      color:#fffdf3;
+      background:linear-gradient(180deg,#7e3514,#5c240d);
+      box-shadow:
+        0 10px 22px rgba(0,0,0,.2),
+        0 0 0 1px rgba(255,234,186,.35) inset;
+    }
+    .reward-splash-btn.primary{
+      background:linear-gradient(180deg,#a54f18,#792f10);
+    }
+
+    @media (max-width: 560px){
+      .reward-big-icon{
+        width:112px;
+        height:112px;
+        font-size:58px;
+      }
+      .reward-big-name{
+        font-size:20px;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -199,6 +420,50 @@
                     </div>
                     <div class="reward-right">やや低確率</div>
                   </div>
+
+                  <div class="reward-item">
+                    <div class="reward-left">
+                      <div class="reward-ico">💧</div>
+                      <div>
+                        <div class="reward-name">水 +1</div>
+                        <div class="reward-note">畑で使える想定</div>
+                      </div>
+                    </div>
+                    <div class="reward-right">ふつう</div>
+                  </div>
+
+                  <div class="reward-item">
+                    <div class="reward-left">
+                      <div class="reward-ico">🧪</div>
+                      <div>
+                        <div class="reward-name">ヒリョウ +1</div>
+                        <div class="reward-note">畑で使える想定</div>
+                      </div>
+                    </div>
+                    <div class="reward-right">ふつう</div>
+                  </div>
+
+                  <div class="reward-item">
+                    <div class="reward-left">
+                      <div class="reward-ico">🌱</div>
+                      <div>
+                        <div class="reward-name">ノーマルタネ +1</div>
+                        <div class="reward-note">定番の嬉しい報酬</div>
+                      </div>
+                    </div>
+                    <div class="reward-right">やや低確率</div>
+                  </div>
+
+                  <div class="reward-item">
+                    <div class="reward-left">
+                      <div class="reward-ico">✨</div>
+                      <div>
+                        <div class="reward-name">少し良いタネ +1</div>
+                        <div class="reward-note">低確率の当たり</div>
+                      </div>
+                    </div>
+                    <div class="reward-right">レア</div>
+                  </div>
                 </div>
               </div>
 
@@ -254,6 +519,32 @@
     </section>
   </div>
 
+  <!-- =========================================================
+       バンッと表示する獲得演出モーダル
+       ========================================================= -->
+  <div class="reward-splash-modal" id="rewardSplashModal" aria-hidden="true">
+    <div class="reward-splash-card">
+      <div class="reward-burst"></div>
+      <div class="reward-splash-inner">
+        <div class="reward-topline">🎉 チェックイン成功！</div>
+
+        <div class="reward-big-icon" id="rewardSplashIcon">🎁</div>
+        <div class="reward-big-title">本日の獲得アイテム</div>
+        <div class="reward-big-name" id="rewardSplashName">オクト +100</div>
+        <div class="reward-big-note" id="rewardSplashNote">軽めの基本報酬</div>
+
+        <div class="reward-chip-row" id="rewardSplashChips"></div>
+
+        <div class="reward-splash-actions">
+          <button class="reward-splash-btn primary" type="button" id="rewardSplashOkBtn">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       通常結果モーダル
+       ========================================================= -->
   <div class="modal" id="resultModal" aria-hidden="true">
     <div class="modal-card">
       <div class="modal-top">
@@ -374,6 +665,17 @@
       const bonusBox = $("#bonusBox");
       const modalSpeech = $("#modalSpeech");
       const closeModalBtn = $("#closeModalBtn");
+
+      const rewardSplashModal = $("#rewardSplashModal");
+      const rewardSplashIcon = $("#rewardSplashIcon");
+      const rewardSplashName = $("#rewardSplashName");
+      const rewardSplashNote = $("#rewardSplashNote");
+      const rewardSplashChips = $("#rewardSplashChips");
+      const rewardSplashOkBtn = $("#rewardSplashOkBtn");
+
+      let lastConsumedCode = null;
+      let consumeLock = false;
+      let pendingResultPayload = null;
 
       function safeParse(json, fallback) {
         try { return JSON.parse(json); }
@@ -616,7 +918,64 @@
         resultModal.setAttribute("aria-hidden", "true");
       }
 
-      function showSuccessModal(mainReward, bonusReward, stampCurrentAfter, towerLevelAfter, towerBuilt) {
+      function openRewardSplash() {
+        rewardSplashModal.classList.add("show");
+        rewardSplashModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeRewardSplash() {
+        rewardSplashModal.classList.remove("show");
+        rewardSplashModal.setAttribute("aria-hidden", "true");
+      }
+
+      function showRewardSplash(mainReward, bonusReward, stampCurrentAfter, towerLevelAfter, towerBuilt) {
+        rewardSplashIcon.textContent = mainReward.icon;
+        rewardSplashName.textContent = mainReward.label;
+        rewardSplashNote.textContent = mainReward.note || "本日のごほうびを受け取りました。";
+        rewardSplashChips.innerHTML = "";
+
+        const chips = [];
+        chips.push("🔥 スタンプ +1");
+
+        if (mainReward.type === "octo") {
+          chips.push(`🪙 オクト残高に反映`);
+        } else if (mainReward.type === "seed") {
+          chips.push(`🌱 持ちものに追加`);
+        } else if (mainReward.type === "water") {
+          chips.push(`💧 持ちものに追加`);
+        } else if (mainReward.type === "fert") {
+          chips.push(`🧪 持ちものに追加`);
+        }
+
+        if (bonusReward) {
+          chips.push(`🎁 ${bonusReward.label}`);
+        }
+        if (towerBuilt) {
+          chips.push(`🗼 タワー ${towerLevelAfter}段`);
+        }
+        if (!towerBuilt) {
+          chips.push(`📘 ${stampCurrentAfter} / ${CARD_MAX}`);
+        }
+
+        chips.forEach(text => {
+          const el = document.createElement("div");
+          el.className = "reward-chip";
+          el.textContent = text;
+          rewardSplashChips.appendChild(el);
+        });
+
+        pendingResultPayload = {
+          mainReward,
+          bonusReward,
+          stampCurrentAfter,
+          towerLevelAfter,
+          towerBuilt
+        };
+
+        openRewardSplash();
+      }
+
+      function showSuccessDetailModal(mainReward, bonusReward, stampCurrentAfter, towerLevelAfter, towerBuilt) {
         modalTitle.textContent = "チェックイン成功！";
         modalRewardIcon.textContent = mainReward.icon;
         modalRewardName.textContent = mainReward.label;
@@ -689,8 +1048,8 @@
         const today = getTodayLocalYMD();
 
         if (!canCheckinToday()) {
-          showAlreadyCheckedModal();
           render();
+          showAlreadyCheckedModal();
           return;
         }
 
@@ -736,28 +1095,45 @@
         });
 
         render();
-        showSuccessModal(mainReward, bonusReward, stampCurrentAfter, towerLevelAfter, towerBuilt);
+        showRewardSplash(mainReward, bonusReward, stampCurrentAfter, towerLevelAfter, towerBuilt);
+      }
+
+      function clearCodeFromUrl(urlObj) {
+        urlObj.searchParams.delete(CHECKIN_PARAM_NAME);
+        history.replaceState({}, "", urlObj.pathname + urlObj.search + urlObj.hash);
       }
 
       function consumeCheckinUrlParam() {
+        if (consumeLock) return false;
+
         const url = new URL(window.location.href);
         const code = (url.searchParams.get(CHECKIN_PARAM_NAME) || "").trim();
 
         if (!code) return false;
+        if (code === lastConsumedCode) return false;
 
-        if (code !== VALID_QR_VALUE) {
-          render();
-          showErrorModal("無効なチェックインURLです", "このURLはチェックイン用コードが一致しません。店内の正しいQRをご利用ください。");
-          url.searchParams.delete(CHECKIN_PARAM_NAME);
-          history.replaceState({}, "", url.pathname + url.search + url.hash);
+        consumeLock = true;
+
+        try {
+          if (code !== VALID_QR_VALUE) {
+            clearCodeFromUrl(url);
+            render();
+            showErrorModal("無効なチェックインURLです", "このURLはチェックイン用コードが一致しません。店内の正しいQRをご利用ください。");
+            lastConsumedCode = code;
+            return true;
+          }
+
+          clearCodeFromUrl(url);
+          lastConsumedCode = code;
+          applyCheckinSuccess();
           return true;
+        } finally {
+          consumeLock = false;
         }
+      }
 
-        applyCheckinSuccess();
-
-        url.searchParams.delete(CHECKIN_PARAM_NAME);
-        history.replaceState({}, "", url.pathname + url.search + url.hash);
-        return true;
+      function syncFromStorageOnly() {
+        render();
       }
 
       function resetAllForTest() {
@@ -767,7 +1143,9 @@
         localStorage.removeItem(LS_KEYS.lastCheckinDate);
         localStorage.removeItem(LS_KEYS.lastReward);
         localStorage.removeItem(LS_KEYS.history);
+        closeRewardSplash();
         closeResultModal();
+        pendingResultPayload = null;
         render();
       }
 
@@ -786,6 +1164,11 @@
         showInvalidAccessModal();
       }
 
+      function processEntryPoint() {
+        const consumed = consumeCheckinUrlParam();
+        if (!consumed) syncFromStorageOnly();
+      }
+
       checkinBtn.addEventListener("click", handleManualCheckinClick);
       checkinBtnMain.addEventListener("click", handleManualCheckinClick);
       rewardToggleBtn.addEventListener("click", toggleRewards);
@@ -798,14 +1181,68 @@
         resetAllForTest();
       });
 
+      rewardSplashOkBtn.addEventListener("click", () => {
+        closeRewardSplash();
+        if (pendingResultPayload) {
+          const p = pendingResultPayload;
+          pendingResultPayload = null;
+          showSuccessDetailModal(
+            p.mainReward,
+            p.bonusReward,
+            p.stampCurrentAfter,
+            p.towerLevelAfter,
+            p.towerBuilt
+          );
+        }
+      });
+
+      rewardSplashModal.addEventListener("click", (e) => {
+        if (e.target === rewardSplashModal) {
+          rewardSplashOkBtn.click();
+        }
+      });
+
       closeModalBtn.addEventListener("click", closeResultModal);
       resultModal.addEventListener("click", (e) => {
         if (e.target === resultModal) closeResultModal();
       });
 
+      window.addEventListener("pageshow", () => {
+        processEntryPoint();
+      });
+
+      window.addEventListener("focus", () => {
+        processEntryPoint();
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) processEntryPoint();
+      });
+
+      window.addEventListener("storage", (e) => {
+        if (!e.key) return;
+        if (
+          e.key === LS_KEYS.stampCurrent ||
+          e.key === LS_KEYS.towerLevel ||
+          e.key === LS_KEYS.totalCheckins ||
+          e.key === LS_KEYS.lastCheckinDate ||
+          e.key === LS_KEYS.lastReward ||
+          e.key === OCTO_KEY
+        ) {
+          render();
+        }
+      });
+
       getOrCreateDeviceId();
       render();
-      consumeCheckinUrlParam();
+
+      if (document.readyState === "complete" || document.readyState === "interactive") {
+        setTimeout(processEntryPoint, 0);
+      } else {
+        document.addEventListener("DOMContentLoaded", () => {
+          setTimeout(processEntryPoint, 0);
+        }, { once: true });
+      }
     })();
   </script>
 </body>
