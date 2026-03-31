@@ -1,4 +1,4 @@
-う<!doctype html>
+<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
@@ -7,7 +7,6 @@
 
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/stamp.css">
-  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -43,10 +42,10 @@
 
       <div class="hud-row bottom">
         <button class="iconbtn wide" id="checkinBtn" type="button">
-          <span class="icon-emoji">📷</span>
+          <span class="icon-emoji">📍</span>
           <span class="icon-text">
-            <span class="icon-main">チェックイン</span>
-            <span class="icon-sub">店内QRを読む</span>
+            <span class="icon-main">URLでチェックイン</span>
+            <span class="icon-sub">店内QRアクセス用</span>
           </span>
         </button>
 
@@ -84,7 +83,7 @@
             <div class="hero-label">📍 来店スタンプ案内</div>
             <h1 class="hero-title">焼き印スタンプ所</h1>
             <div class="hero-desc">
-              店内QRを読み込んで、来店の焼き印を記録できる案内ページです。<br>
+              店内のQRからこのページを開くと、来店の焼き印を記録できます。<br>
               スタンプカードが満タンになるたび、たこ焼きタワーが1段ずつ育っていきます。
             </div>
           </div>
@@ -101,7 +100,7 @@
           <div class="guide-bubble no-tail">
             <div class="guide-tag">ナビタコ民</div>
             <p class="guide-text" id="guideText">
-              いらっしゃいませ。こちらは来店スタンプの受付です。店内のQRを読み込むと、本日の焼き印を1つ押せます。
+              いらっしゃいませ。こちらは来店スタンプの受付です。店内のQRから開くと、本日の焼き印を1つ押せます。
             </p>
           </div>
         </div>
@@ -143,7 +142,7 @@
             </div>
 
             <div class="button-row">
-              <button class="cta cta-main" id="checkinBtnMain" type="button">📷 チェックインする</button>
+              <button class="cta cta-main" id="checkinBtnMain" type="button">📍 URLでチェックイン</button>
               <button class="cta cta-sub" id="rewardToggleBtnMain" type="button">🎁 報酬一覧を見る</button>
             </div>
 
@@ -152,6 +151,14 @@
                 <h3 class="sub-title">ご案内</h3>
                 <p class="sub-text" id="stampHint">
                   5個で中間ボーナス、10個でタワー1段完成です。ご来店のたびに少しずつ景色が育っていきます。
+                </p>
+              </div>
+
+              <div class="sub-card">
+                <h3 class="sub-title">使い方</h3>
+                <p class="sub-text">
+                  店内にあるQRをスマホの標準カメラで読み取って、このページを開いてください。<br>
+                  正しいURLで開かれた場合のみ、チェックインが反映されます。
                 </p>
               </div>
 
@@ -281,38 +288,6 @@
     </div>
   </div>
 
-  <div class="modal" id="scannerModal" aria-hidden="true">
-    <div class="modal-card">
-      <div class="modal-top">
-        <h2 class="modal-title">QRを読み取る</h2>
-      </div>
-
-      <div class="modal-body">
-        <div class="guide-bubble no-tail" style="margin-top:0; margin-bottom:12px;">
-          <div class="guide-tag">ナビタコ民</div>
-          <p class="guide-text" id="scannerGuideText">
-            店内のQRをカメラに映してください。読み取りに成功すると、自動で受付します。
-          </p>
-        </div>
-
-        <div id="scannerViewport" style="border-radius:18px; overflow:hidden; background:#111; min-height:260px;"></div>
-
-        <div id="scannerStatus" style="margin-top:12px; font-size:12px; line-height:1.8; color:#8b6139;">
-          カメラを起動しています…
-        </div>
-
-        <div style="margin-top:12px;">
-          <button class="cta cta-sub" type="button" id="scanImageBtn">画像からQRを読む</button>
-          <input id="qrImageInput" type="file" accept="image/*" style="display:none;">
-        </div>
-
-        <div class="modal-actions">
-          <button class="cta cta-sub" type="button" id="closeScannerBtn">閉じる</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
     (() => {
       "use strict";
@@ -321,6 +296,7 @@
       const MID_GOAL = 5;
       const OCTO_KEY = "roten_v1_octo";
       const VALID_QR_VALUE = "TAKOYAKI_CHECKIN_NANA";
+      const CHECKIN_PARAM_NAME = "code";
 
       const LS_KEYS = {
         stampCurrent: "ttc_stamp_current_v6",
@@ -349,9 +325,9 @@
       };
 
       const GUIDE_LINES = [
-        "いらっしゃいませ。こちらは来店スタンプの受付です。店内のQRを読み込むと、本日の焼き印を1つ押せます。",
+        "いらっしゃいませ。こちらは来店スタンプの受付です。店内のQRから開くと、本日の焼き印を1つ押せます。",
         "本日の来店記念に、焼き印スタンプをどうぞ。集めた数に応じて、たこ焼きタワーも育っていきます。",
-        "はじめての方も大丈夫です。まずはチェックインからどうぞ。5個と10個で節目のごほうびをご案内しています。"
+        "はじめての方も大丈夫です。まずは店内QRからアクセスしてください。5個と10個で節目のごほうびがあります。"
       ];
 
       const $ = (sel) => document.querySelector(sel);
@@ -398,16 +374,6 @@
       const bonusBox = $("#bonusBox");
       const modalSpeech = $("#modalSpeech");
       const closeModalBtn = $("#closeModalBtn");
-
-      const scannerModal = $("#scannerModal");
-      const scannerStatus = $("#scannerStatus");
-      const closeScannerBtn = $("#closeScannerBtn");
-      const scanImageBtn = $("#scanImageBtn");
-      const qrImageInput = $("#qrImageInput");
-
-      let qrScanner = null;
-      let scannerRunning = false;
-      let scanLocked = false;
 
       function safeParse(json, fallback) {
         try { return JSON.parse(json); }
@@ -693,6 +659,19 @@
         openResultModal();
       }
 
+      function showInvalidAccessModal() {
+        modalTitle.textContent = "店内QRからアクセスしてください";
+        modalMainText.innerHTML = `このページは、<strong>店内QR専用のURL</strong>からチェックインする方式です。<br>お店にあるQRをスマホの標準カメラで読み取って開いてください。`;
+        modalRewardIcon.textContent = "📍";
+        modalRewardName.textContent = "通常アクセス";
+        modalRewardNote.textContent = "チェックインは未実行です";
+        modalStampText.textContent = "追加なし";
+        modalSpeech.textContent = "店内のQRから開かれた場合のみ、本日の焼き印を記録します。";
+        bonusBox.style.display = "none";
+        bonusBox.innerHTML = "";
+        openResultModal();
+      }
+
       function showErrorModal(title, text) {
         modalTitle.textContent = title;
         modalMainText.innerHTML = text;
@@ -700,161 +679,10 @@
         modalRewardName.textContent = "処理できませんでした";
         modalRewardNote.textContent = "確認後に再度お試しください";
         modalStampText.textContent = "追加なし";
-        modalSpeech.textContent = "読み取り環境を確認のうえ、もう一度お試しください。";
+        modalSpeech.textContent = "条件を確認のうえ、もう一度お試しください。";
         bonusBox.style.display = "none";
         bonusBox.innerHTML = "";
         openResultModal();
-      }
-
-      function openScannerModal() {
-        scannerModal.classList.add("show");
-        scannerModal.setAttribute("aria-hidden", "false");
-      }
-
-      async function closeScannerModal() {
-        await stopScanner();
-        scannerModal.classList.remove("show");
-        scannerModal.setAttribute("aria-hidden", "true");
-        scannerStatus.textContent = "カメラを起動しています…";
-      }
-
-      async function stopScanner() {
-        if (!qrScanner) return;
-
-        if (scannerRunning) {
-          try {
-            await qrScanner.stop();
-          } catch (e) {
-            console.warn("scanner stop error", e);
-          }
-        }
-
-        try {
-          await qrScanner.clear();
-        } catch (e) {
-          console.warn("scanner clear error", e);
-        }
-
-        scannerRunning = false;
-        scanLocked = false;
-      }
-
-      function isLikelyInAppBrowser() {
-        const ua = navigator.userAgent || "";
-        return /Line|Instagram|FBAN|FBAV|Twitter|X\/|wv/i.test(ua);
-      }
-
-      async function startScanner() {
-        if (!window.Html5Qrcode) {
-          showErrorModal("QRライブラリが読み込めません", "ネットワーク状態を確認してから、もう一度お試しください。");
-          return;
-        }
-
-        if (!canCheckinToday()) {
-          showAlreadyCheckedModal();
-          return;
-        }
-
-        if (location.protocol === "file:") {
-          showErrorModal("この開き方ではカメラが使えません", "HTMLファイル直開きではなく、GitHub Pagesなどの <strong>https://</strong> URL で開いてください。");
-          return;
-        }
-
-        if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-          showErrorModal("HTTPSが必要です", "カメラ起動は <strong>https://</strong> のページでのみ動作します。");
-          return;
-        }
-
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          showErrorModal("このブラウザでは使えません", "Chromeなど、カメラ対応ブラウザで開いてください。");
-          return;
-        }
-
-        if (isLikelyInAppBrowser()) {
-          showErrorModal("アプリ内ブラウザでは不安定です", "LINE・Instagram・Xなどの内蔵ブラウザではなく、<strong>Chromeで直接開いて</strong>お試しください。");
-          return;
-        }
-
-        openScannerModal();
-        scannerStatus.textContent = "カメラ権限を確認しています…";
-        scanLocked = false;
-
-        try {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: { ideal: "environment" } },
-              audio: false
-            });
-            stream.getTracks().forEach(track => track.stop());
-          } catch (permErr) {
-            const msg = String(permErr || "");
-            if (msg.includes("NotAllowedError") || msg.includes("Permission")) {
-              scannerStatus.textContent = "カメラ権限が拒否されています。ブラウザ設定でカメラを許可してください。";
-              return;
-            }
-            if (msg.includes("NotFoundError")) {
-              scannerStatus.textContent = "利用できるカメラが見つかりませんでした。";
-              return;
-            }
-          }
-
-          if (!qrScanner) {
-            qrScanner = new Html5Qrcode("scannerViewport");
-          }
-
-          await qrScanner.start(
-            { facingMode: "environment" },
-            {
-              fps: 10,
-              qrbox: (viewfinderWidth, viewfinderHeight) => {
-                const size = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.72);
-                return { width: size, height: size };
-              },
-              aspectRatio: 1.3333333,
-              disableFlip: false
-            },
-            async (decodedText) => {
-              if (scanLocked) return;
-              scanLocked = true;
-              scannerStatus.textContent = "QRを読み取りました。内容を確認しています…";
-              await handleScannedQr(decodedText);
-            },
-            () => {}
-          );
-
-          scannerRunning = true;
-          scannerStatus.textContent = "店内のQRを枠の中に合わせてください。";
-        } catch (err) {
-          console.error("startScanner error:", err);
-          const message = String(err || "");
-
-          if (message.includes("NotAllowedError") || message.includes("Permission")) {
-            scannerStatus.textContent = "カメラ権限が拒否されています。ブラウザ設定でカメラを許可してください。";
-          } else if (message.includes("NotFoundError")) {
-            scannerStatus.textContent = "利用できるカメラが見つかりませんでした。";
-          } else if (message.includes("NotReadableError")) {
-            scannerStatus.textContent = "カメラを他のアプリが使用中です。カメラアプリを閉じてから再度お試しください。";
-          } else if (message.includes("OverconstrainedError")) {
-            scannerStatus.textContent = "背面カメラ指定で起動できませんでした。端末との相性の可能性があります。";
-          } else {
-            scannerStatus.textContent = "カメラを起動できませんでした。ChromeでHTTPSページを開いて再度お試しください。";
-          }
-        }
-      }
-
-      async function handleScannedQr(decodedText) {
-        const value = String(decodedText || "").trim();
-
-        if (value !== VALID_QR_VALUE) {
-          scannerStatus.textContent = "このQRは対象外です。店内の専用QRを読み込んでください。";
-          scanLocked = false;
-          return;
-        }
-
-        await stopScanner();
-        scannerModal.classList.remove("show");
-        scannerModal.setAttribute("aria-hidden", "true");
-        applyCheckinSuccess();
       }
 
       function applyCheckinSuccess() {
@@ -911,31 +739,25 @@
         showSuccessModal(mainReward, bonusReward, stampCurrentAfter, towerLevelAfter, towerBuilt);
       }
 
-      async function scanQrFromImageFile(file) {
-        if (!file) return;
+      function consumeCheckinUrlParam() {
+        const url = new URL(window.location.href);
+        const code = (url.searchParams.get(CHECKIN_PARAM_NAME) || "").trim();
 
-        try {
-          if (!window.Html5Qrcode) {
-            showErrorModal("QRライブラリが読み込めません", "ネットワーク状態を確認してから、もう一度お試しください。");
-            return;
-          }
+        if (!code) return false;
 
-          scannerStatus.textContent = "画像からQRを解析しています…";
-
-          if (!qrScanner) {
-            qrScanner = new Html5Qrcode("scannerViewport");
-          }
-
-          const decodedText = await qrScanner.scanFile(file, true);
-          scannerStatus.textContent = "画像からQRを読み取りました。内容を確認しています…";
-          await handleScannedQr(decodedText);
-        } catch (err) {
-          console.error("scan image error:", err);
-          scannerStatus.textContent = "画像からQRを読み取れませんでした。別の画像でもう一度お試しください。";
-          scanLocked = false;
-        } finally {
-          qrImageInput.value = "";
+        if (code !== VALID_QR_VALUE) {
+          render();
+          showErrorModal("無効なチェックインURLです", "このURLはチェックイン用コードが一致しません。店内の正しいQRをご利用ください。");
+          url.searchParams.delete(CHECKIN_PARAM_NAME);
+          history.replaceState({}, "", url.pathname + url.search + url.hash);
+          return true;
         }
+
+        applyCheckinSuccess();
+
+        url.searchParams.delete(CHECKIN_PARAM_NAME);
+        history.replaceState({}, "", url.pathname + url.search + url.hash);
+        return true;
       }
 
       function resetAllForTest() {
@@ -960,8 +782,12 @@
         historySectionEl.style.display = shown ? "none" : "";
       }
 
-      checkinBtn.addEventListener("click", startScanner);
-      checkinBtnMain.addEventListener("click", startScanner);
+      function handleManualCheckinClick() {
+        showInvalidAccessModal();
+      }
+
+      checkinBtn.addEventListener("click", handleManualCheckinClick);
+      checkinBtnMain.addEventListener("click", handleManualCheckinClick);
       rewardToggleBtn.addEventListener("click", toggleRewards);
       rewardToggleBtnMain.addEventListener("click", toggleRewards);
       historyBtn.addEventListener("click", toggleHistory);
@@ -977,35 +803,9 @@
         if (e.target === resultModal) closeResultModal();
       });
 
-      closeScannerBtn.addEventListener("click", async () => {
-        await closeScannerModal();
-      });
-
-      scannerModal.addEventListener("click", async (e) => {
-        if (e.target === scannerModal) {
-          await closeScannerModal();
-        }
-      });
-
-      scanImageBtn.addEventListener("click", () => {
-        qrImageInput.click();
-      });
-
-      qrImageInput.addEventListener("change", async (e) => {
-        const file = e.target.files && e.target.files[0];
-        await scanQrFromImageFile(file);
-      });
-
-      window.addEventListener("pagehide", () => {
-        stopScanner();
-      });
-
-      document.addEventListener("visibilitychange", () => {
-        if (document.hidden) stopScanner();
-      });
-
       getOrCreateDeviceId();
       render();
+      consumeCheckinUrlParam();
     })();
   </script>
 </body>
