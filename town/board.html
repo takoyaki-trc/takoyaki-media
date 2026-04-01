@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>カード募集板</title>
+  <title>カード募集板｜たこ焼きトレカ</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,34 +11,34 @@
 
   <style>
     :root{
-      --bg1:#130b1d;
-      --bg2:#2a1742;
-      --panel:#2c1b43;
-      --panel2:#1e122f;
-      --paper1:#f6ecd2;
-      --paper2:#e8d7b1;
-      --ink:#2b1d12;
+      --bg:#120b19;
+      --bg2:#261536;
+      --panel:rgba(22,12,30,.76);
+      --panel2:rgba(34,18,47,.88);
       --line:rgba(255,255,255,.14);
-      --gold1:#ffe39f;
-      --gold2:#eab648;
-      --gold3:#9c6b13;
-      --text:#fff6e4;
-      --muted:#d5c8ae;
-      --ok:#7af0aa;
-      --warn:#ffd56f;
-      --danger:#ff8181;
-      --btn:#f6edd5;
-      --btnText:#2b1d12;
-      --shadow:0 12px 28px rgba(0,0,0,.35);
-      --radius:18px;
-      --radiusSm:12px;
-      --cardW:84px;
-      --cardH:116px;
-      --boardWood1:#75451f;
-      --boardWood2:#5b3417;
-      --boardWood3:#3f230f;
-      --pin1:#d5b36a;
-      --pin2:#8d6521;
+      --line2:rgba(255,236,180,.18);
+      --text:#fff6e6;
+      --muted:#d8ceb7;
+      --ink:#2f1f12;
+      --paper1:#f7edd5;
+      --paper2:#ead9b0;
+      --gold1:#fff0b7;
+      --gold2:#f7c95c;
+      --gold3:#9f6a12;
+      --wood1:#75451f;
+      --wood2:#5d3417;
+      --wood3:#31190c;
+      --green:#7df0a7;
+      --red:#ff8d8d;
+      --cyan:#8cecff;
+      --purple:#d4a4ff;
+      --shadow:0 16px 38px rgba(0,0,0,.38);
+      --radius:22px;
+      --radiusSm:14px;
+      --cardW:82px;
+      --cardH:114px;
+      --safeTop:max(12px, env(safe-area-inset-top));
+      --safeBottom:max(12px, env(safe-area-inset-bottom));
     }
 
     *{box-sizing:border-box}
@@ -48,601 +48,827 @@
       color:var(--text);
       font-family:"DotGothic16", system-ui, sans-serif;
       background:
-        radial-gradient(circle at top, rgba(132,91,220,.30), transparent 30%),
-        linear-gradient(180deg,var(--bg2),var(--bg1));
+        radial-gradient(circle at top, rgba(160,121,255,.24), transparent 28%),
+        linear-gradient(180deg,var(--bg2),var(--bg));
       min-height:100dvh;
+      overflow-x:hidden;
     }
 
-    .wrap{
-      width:min(1100px, calc(100% - 24px));
-      margin:0 auto;
-      padding:16px 0 90px;
-    }
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:14px;
-      flex-wrap:wrap;
-    }
-
-    .leftTools,.rightTools{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    .pixel-btn{
-      appearance:none;
-      border:none;
-      cursor:pointer;
-      background:linear-gradient(180deg,#fff7e4,#ead8aa);
-      color:#2a1d12;
-      padding:10px 14px;
-      border-radius:14px;
-      box-shadow:var(--shadow);
-      font:inherit;
-      min-height:42px;
-    }
-    .pixel-btn:disabled{
-      opacity:.45;
-      cursor:not-allowed;
-    }
-
-    .titleBox{
-      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
-      border:1px solid var(--line);
-      border-radius:22px;
-      box-shadow:var(--shadow);
-      padding:18px;
-      display:grid;
-      grid-template-columns:1fr auto;
-      gap:12px;
-      align-items:center;
-      margin-bottom:14px;
-    }
-
-    .titleMain{
-      font-size:clamp(22px, 5vw, 34px);
-      line-height:1.2;
-      margin:0 0 8px;
-    }
-
-    .titleSub{
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.7;
-      margin:0;
-    }
-
-    .metaPanel{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      align-items:flex-end;
-    }
-
-    .pill{
-      background:rgba(255,255,255,.08);
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:8px 12px;
-      font-size:13px;
-      white-space:nowrap;
-    }
-
-    .inventoryBar{
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:12px;
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom:16px;
-      box-shadow:var(--shadow);
-    }
-
-    .invChip{
-      background:rgba(255,255,255,.08);
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:8px 10px;
-      font-size:13px;
-    }
-
-    /* =================================
-       Board stage
-    ================================= */
-    .boardStage{
-      position:relative;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255,236,175,.10), transparent 35%),
-        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border:1px solid var(--line);
-      border-radius:26px;
-      padding:18px;
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-
-    .boardHeader{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-    }
-
-    .boardHeaderTitle{
-      font-size:18px;
-      margin:0;
-    }
-
-    .boardHeaderSub{
-      font-size:12px;
-      color:var(--muted);
-      margin:4px 0 0;
-      line-height:1.6;
-    }
-
-    .boardCount{
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    .boardFrame{
-      position:relative;
-      min-height:760px;
-      border-radius:26px;
-      overflow:hidden;
-      padding:18px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0)),
-        linear-gradient(180deg, var(--boardWood1), var(--boardWood2));
-      border:8px solid #2e190a;
-      box-shadow:
-        inset 0 0 0 3px rgba(255,255,255,.06),
-        inset 0 0 40px rgba(0,0,0,.18),
-        0 18px 34px rgba(0,0,0,.28);
-    }
-
-    .boardFrame::before{
+    body::before{
       content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      background:
-        repeating-linear-gradient(
-          90deg,
-          rgba(255,255,255,.04) 0 10px,
-          rgba(0,0,0,.03) 10px 20px
-        ),
-        repeating-linear-gradient(
-          180deg,
-          transparent 0 80px,
-          rgba(0,0,0,.05) 80px 84px
-        );
-      mix-blend-mode:multiply;
-      opacity:.55;
-    }
-
-    .boardFrame::after{
-      content:"";
-      position:absolute;
-      inset:12px;
-      border-radius:18px;
-      pointer-events:none;
-      border:2px solid rgba(255,255,255,.08);
-    }
-
-    .boardInner{
-      position:relative;
-      min-height:720px;
-      z-index:1;
-    }
-
-    .boardInner.mobileLayout{
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0, 1fr));
-      gap:14px;
-      min-height:auto;
-    }
-
-    .boardInner.mobileLayout .paperNote{
-      position:relative !important;
-      left:auto !important;
-      top:auto !important;
-      width:100% !important;
-      transform:none !important;
-    }
-
-    .boardInner.mobileLayout .paperNote.span2{
-      grid-column:1 / -1;
-      width:min(320px, 100%) !important;
-      justify-self:center;
-    }
-
-    /* =================================
-       Note on board
-    ================================= */
-    .paperNote{
-      position:absolute;
-      width:220px;
-      min-height:210px;
-      border:none;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,0)),
-        linear-gradient(180deg,var(--paper1),var(--paper2));
-      color:var(--ink);
-      border-radius:8px 8px 12px 12px;
-      box-shadow:
-        0 10px 24px rgba(0,0,0,.26),
-        inset 0 0 0 1px rgba(90,58,20,.15);
-      padding:18px 14px 14px;
-      text-align:left;
-      cursor:pointer;
-      transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
-      overflow:hidden;
-    }
-
-    .paperNote:hover{
-      transform:translateY(-4px) rotate(var(--rot, 0deg)) scale(1.02) !important;
-      box-shadow:
-        0 18px 28px rgba(0,0,0,.30),
-        inset 0 0 0 1px rgba(90,58,20,.15);
-      filter:saturate(1.03);
-    }
-
-    .paperNote:active{
-      transform:translateY(-1px) rotate(var(--rot, 0deg)) scale(1.01) !important;
-    }
-
-    .paperNote::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      background:
-        linear-gradient(transparent 0 26px, rgba(0,0,0,.025) 26px 27px, transparent 27px),
-        linear-gradient(90deg, rgba(255,255,255,.15), transparent 65%);
-      background-size:100% 27px, 100% 100%;
-      mix-blend-mode:multiply;
-    }
-
-    .paperNote::after{
-      content:"";
-      position:absolute;
-      right:0;
-      bottom:0;
-      width:26px;
-      height:26px;
-      background:linear-gradient(135deg, transparent 0 49%, rgba(0,0,0,.10) 50% 100%);
-      clip-path:polygon(100% 0, 0 100%, 100% 100%);
-      opacity:.22;
-    }
-
-    .pin{
-      position:absolute;
-      top:8px;
-      left:50%;
-      transform:translateX(-50%);
-      width:22px;
-      height:22px;
-      border-radius:50%;
-      background:radial-gradient(circle at 32% 30%, #fff2b8, var(--pin1) 45%, var(--pin2) 100%);
-      box-shadow:
-        0 3px 0 rgba(0,0,0,.18),
-        inset 0 1px 1px rgba(255,255,255,.5);
-      z-index:2;
-    }
-
-    .noteTop{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:8px;
-      margin-bottom:10px;
-    }
-
-    .noteClient{
-      display:flex;
-      gap:8px;
-      min-width:0;
-    }
-
-    .noteAvatar{
-      width:42px;
-      height:42px;
-      border-radius:10px;
-      object-fit:cover;
-      background:#fff7ea;
-      border:2px solid rgba(90,58,20,.22);
-      flex:none;
-    }
-
-    .noteMeta{
-      min-width:0;
-    }
-
-    .noteName{
-      font-size:14px;
-      line-height:1.35;
-      margin:0 0 4px;
-      word-break:break-word;
-    }
-
-    .noteShort{
-      font-size:11px;
-      color:#5c4330;
-      line-height:1.45;
-      margin:0;
-    }
-
-    .noteStars{
-      font-size:14px;
-      line-height:1;
-      white-space:nowrap;
-      padding-top:2px;
-    }
-
-    .star-1,.star-2{color:#564132}
-    .star-3{color:#2050a5}
-    .star-4{color:#7f2ca3}
-    .star-5{color:#9a6911; text-shadow:0 1px 0 #fff3cc}
-
-    .noteWant{
-      font-size:13px;
-      line-height:1.6;
-      min-height:68px;
-      color:#3e2b1d;
-      margin-bottom:10px;
-      white-space:pre-line;
-    }
-
-    .noteReward{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      margin-bottom:10px;
-    }
-
-    .miniChip{
-      font-size:11px;
-      border-radius:999px;
-      padding:5px 8px;
-      background:rgba(255,255,255,.52);
-      border:1px solid rgba(0,0,0,.10);
-      color:#3a291a;
-    }
-
-    .noteFooter{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      margin-top:auto;
-    }
-
-    .noteTap{
-      font-size:11px;
-      color:#5c4330;
-    }
-
-    .noteStatus{
-      font-size:11px;
-      border-radius:999px;
-      padding:5px 8px;
-      border:1px solid rgba(0,0,0,.12);
-      background:rgba(255,255,255,.44);
-      color:#3a291a;
-    }
-
-    .noteStatus.ok{
-      background:rgba(122,240,170,.28);
-      color:#0f6e43;
-    }
-
-    .noteStatus.ng{
-      background:rgba(255,129,129,.18);
-      color:#9d2b2b;
-    }
-
-    .noteStatus.done{
-      background:rgba(170,24,24,.12);
-      color:#8d1717;
-    }
-
-    .noteStamp{
-      position:absolute;
-      right:10px;
-      bottom:14px;
-      transform:rotate(-10deg);
-      border:3px solid rgba(170,24,24,.78);
-      color:rgba(170,24,24,.82);
-      padding:5px 8px;
-      border-radius:10px;
-      font-size:15px;
-      font-weight:700;
-      background:rgba(255,255,255,.18);
-      display:none;
-      pointer-events:none;
-    }
-
-    .paperNote.completed{
-      filter:saturate(.86);
-      opacity:.92;
-    }
-
-    .paperNote.completed .noteStamp{
-      display:block;
-    }
-
-    .paperNote.completed .noteTap{
-      color:#8d1717;
-    }
-
-    /* =================================
-       Modal
-    ================================= */
-    .modal{
       position:fixed;
       inset:0;
-      z-index:9990;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:16px;
-      background:rgba(12,7,20,.72);
-      backdrop-filter:blur(4px);
-    }
-
-    .modal.show{
-      display:flex;
-    }
-
-    .modalCard{
-      width:min(840px, 100%);
-      max-height:min(90dvh, 900px);
-      overflow:auto;
-      background:linear-gradient(180deg,var(--paper1),var(--paper2));
-      color:var(--ink);
-      border-radius:22px;
-      border:4px solid #7f5a26;
-      box-shadow:0 24px 50px rgba(0,0,0,.42);
-      position:relative;
-    }
-
-    .modalCard::before{
-      content:"";
-      position:absolute;
-      inset:0;
       pointer-events:none;
       background:
-        linear-gradient(transparent 0 28px, rgba(0,0,0,.025) 28px 29px, transparent 29px),
-        linear-gradient(90deg, rgba(255,255,255,.14), transparent 70%);
-      background-size:100% 29px, 100% 100%;
-      mix-blend-mode:multiply;
-      border-radius:18px;
+        linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.18)),
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.06), transparent 36%);
+      z-index:0;
     }
 
-    .modalInner{
+    .page{
       position:relative;
       z-index:1;
-      padding:18px;
+      width:min(1180px, calc(100% - 20px));
+      margin:0 auto;
+      padding:var(--safeTop) 0 calc(24px + var(--safeBottom));
     }
 
-    .modalClose{
-      position:absolute;
-      right:12px;
-      top:12px;
-      z-index:2;
+    .hud{
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:10px;
+      align-items:center;
+      margin-bottom:12px;
+    }
+
+    .hud-left,.hud-right{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .btn{
       appearance:none;
       border:none;
       cursor:pointer;
-      background:rgba(0,0,0,.10);
-      color:#2b1d12;
-      width:42px;
-      height:42px;
-      border-radius:12px;
+      color:#2c1b0e;
       font:inherit;
+      min-height:44px;
+      padding:10px 14px;
+      border-radius:14px;
+      background:linear-gradient(180deg,#fff7e8,#ead6aa);
+      box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.8);
+      transition:transform .15s ease, filter .15s ease, opacity .15s ease;
     }
 
-    .noticeCard{
-      background:transparent;
-      color:var(--ink);
-      border-radius:22px;
-      box-shadow:none;
-      border:none;
-      overflow:visible;
-      position:relative;
+    .btn:hover{ transform:translateY(-1px); filter:saturate(1.03); }
+    .btn:active{ transform:translateY(0); }
+    .btn.subtle{
+      color:var(--text);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+    }
+    .btn.gold{
+      color:#2d1d0c;
+      background:linear-gradient(180deg,var(--gold1),var(--gold2));
+    }
+    .btn:disabled{
+      opacity:.5;
+      cursor:not-allowed;
+      transform:none;
+      filter:none;
     }
 
-    .noticeInner{
-      position:relative;
-      z-index:1;
-      padding:0;
-    }
-
-    .noticeHead{
-      display:grid;
-      grid-template-columns:76px 1fr auto;
-      gap:12px;
-      align-items:start;
-      margin-bottom:14px;
-    }
-
-    .clientAvatar{
-      width:76px;
-      height:76px;
-      border-radius:18px;
-      border:3px solid #694720;
-      background:#fff5dc;
-      object-fit:cover;
-      image-rendering:auto;
-      box-shadow:0 6px 14px rgba(0,0,0,.18);
-    }
-
-    .clientMeta{
+    .boardTitle{
       min-width:0;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      padding:12px 16px;
+      text-align:center;
     }
-
-    .clientName{
-      font-size:20px;
-      margin:0 0 6px;
-      line-height:1.2;
-    }
-
-    .clientLine{
+    .boardTitleMain{
       margin:0;
-      font-size:14px;
-      line-height:1.65;
-      color:#4a3422;
+      font-size:clamp(22px, 5vw, 34px);
+      line-height:1.15;
+      letter-spacing:.02em;
+    }
+    .boardTitleSub{
+      margin:6px 0 0;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.5;
     }
 
-    .difficultyBox{
-      text-align:right;
-      min-width:116px;
-    }
-
-    .starText{
-      font-size:18px;
-      letter-spacing:1px;
-      line-height:1.2;
-      margin-bottom:6px;
-      white-space:nowrap;
-    }
-
-    .tagRow{
+    .chips{
       display:flex;
       gap:8px;
       flex-wrap:wrap;
       justify-content:flex-end;
     }
 
-    .tag{
+    .chip{
+      min-height:42px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
       border-radius:999px;
-      padding:6px 10px;
-      font-size:12px;
-      border:1px solid rgba(0,0,0,.12);
-      background:rgba(255,255,255,.4);
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      box-shadow:var(--shadow);
+      white-space:nowrap;
+      font-size:13px;
+    }
+    .chip b{font-size:14px}
+
+    .hero{
+      position:relative;
+      border-radius:28px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+      border:1px solid var(--line);
+      margin-bottom:14px;
+      min-height:240px;
+      background:#1b1027;
     }
 
-    .wantTitle{
+    .heroBg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      filter:saturate(1.02) contrast(1.02);
+    }
+
+    .heroShade{
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(180deg, rgba(13,7,20,.18), rgba(12,7,18,.58)),
+        radial-gradient(circle at 50% 18%, rgba(255,244,201,.12), transparent 28%);
+    }
+
+    .heroInner{
+      position:relative;
+      z-index:1;
+      padding:18px;
+      display:grid;
+      grid-template-columns:120px 1fr auto;
+      gap:16px;
+      align-items:end;
+      min-height:240px;
+    }
+
+    .naviWrap{
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+    }
+
+    .naviImg{
+      width:min(118px, 24vw);
+      max-width:118px;
+      aspect-ratio:1/1.18;
+      object-fit:contain;
+      filter:drop-shadow(0 10px 18px rgba(0,0,0,.28));
+    }
+
+    .speech{
+      align-self:center;
+      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(244,233,209,.96));
+      color:#3a2616;
+      border-radius:22px;
+      padding:16px 16px 14px;
+      border:3px solid rgba(120,81,28,.35);
+      box-shadow:0 10px 24px rgba(0,0,0,.24);
+      max-width:760px;
+      position:relative;
+    }
+    .speech::before{
+      content:"";
+      position:absolute;
+      left:-14px;
+      bottom:24px;
+      width:22px;
+      height:22px;
+      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(244,233,209,.96));
+      border-left:3px solid rgba(120,81,28,.35);
+      border-bottom:3px solid rgba(120,81,28,.35);
+      transform:rotate(30deg);
+      border-bottom-left-radius:8px;
+    }
+
+    .speechBadge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:28px;
+      padding:4px 10px;
+      border-radius:999px;
+      margin-bottom:8px;
+      background:linear-gradient(180deg,var(--gold1),var(--gold2));
+      color:#3b240c;
+      border:1px solid rgba(111,70,9,.25);
+      font-size:12px;
+    }
+    .speechTitle{
+      margin:0 0 8px;
+      font-size:18px;
+      line-height:1.35;
+      color:#2e1e12;
+    }
+    .speechText{
+      margin:0;
+      line-height:1.75;
       font-size:14px;
+      color:#4a3520;
+      white-space:pre-line;
+    }
+
+    .heroMeta{
+      align-self:start;
+      display:grid;
+      gap:8px;
+      justify-items:end;
+    }
+
+    .heroCard{
+      background:linear-gradient(180deg, rgba(24,14,34,.76), rgba(22,12,30,.9));
+      border:1px solid var(--line2);
+      border-radius:18px;
+      padding:12px;
+      min-width:220px;
+      backdrop-filter:blur(4px);
+    }
+    .heroCardTitle{
+      margin:0 0 6px;
+      font-size:14px;
+      color:#ffe7a5;
+    }
+    .heroCardText{
+      margin:0;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.65;
+    }
+
+    .stockBar{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .stockItem{
+      flex:1 1 120px;
+      min-width:120px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border-radius:16px;
+      padding:10px 12px;
+      box-shadow:var(--shadow);
+    }
+    .stockLabel{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:4px;
+    }
+    .stockValue{
+      font-size:18px;
+    }
+
+    .stage{
+      position:relative;
+      border-radius:28px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      background:
+        radial-gradient(circle at top, rgba(255,236,176,.08), transparent 24%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      padding:16px;
+      margin-bottom:14px;
+    }
+
+    .stageTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .stageTitle{
+      margin:0;
+      font-size:20px;
+      line-height:1.2;
+    }
+    .stageSub{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.7;
+    }
+
+    .specialBox{
+      min-width:min(280px, 100%);
+      max-width:340px;
+      background:linear-gradient(180deg, rgba(56,24,14,.92), rgba(32,14,14,.92));
+      border:1px solid rgba(255,210,124,.22);
+      border-radius:20px;
+      padding:12px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.04) inset,
+        0 18px 28px rgba(0,0,0,.28);
+      position:relative;
+      overflow:hidden;
+    }
+    .specialBox::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,220,120,.14), transparent 42%),
+        linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent);
+    }
+    .specialCap{
+      display:inline-flex;
+      align-items:center;
+      padding:5px 10px;
+      border-radius:999px;
+      background:linear-gradient(180deg,var(--gold1),var(--gold2));
+      color:#301b0a;
+      font-size:11px;
+      margin-bottom:8px;
+    }
+    .specialTitle{
+      margin:0 0 6px;
+      font-size:16px;
+      color:#fff2bf;
+      line-height:1.4;
+    }
+    .specialDesc{
+      margin:0;
+      font-size:12px;
+      color:#f2dfbf;
+      line-height:1.65;
+    }
+
+    .plaza{
+      position:relative;
+      border-radius:24px;
+      overflow:hidden;
+      min-height:740px;
+      padding:18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0)),
+        linear-gradient(180deg,var(--wood1),var(--wood2));
+      border:8px solid var(--wood3);
+      box-shadow:
+        inset 0 0 0 2px rgba(255,255,255,.06),
+        inset 0 0 28px rgba(0,0,0,.16),
+        0 18px 34px rgba(0,0,0,.28);
+    }
+    .plaza::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 14px, rgba(0,0,0,.03) 14px 28px),
+        repeating-linear-gradient(180deg, transparent 0 72px, rgba(0,0,0,.04) 72px 76px);
+      opacity:.6;
+      mix-blend-mode:multiply;
+    }
+    .plaza::after{
+      content:"";
+      position:absolute;
+      inset:12px;
+      border-radius:18px;
+      border:2px solid rgba(255,255,255,.08);
+      pointer-events:none;
+    }
+
+    .plazaGrid{
+      position:relative;
+      min-height:688px;
+      z-index:1;
+    }
+
+    .visitorSpot{
+      position:absolute;
+      width:260px;
+      transform:translate(-50%, -50%);
+    }
+    .visitorSpot.featured{
+      width:300px;
+      z-index:4;
+    }
+
+    .visitorShadow{
+      position:absolute;
+      left:50%;
+      bottom:8px;
+      width:72%;
+      height:26px;
+      transform:translateX(-50%);
+      background:radial-gradient(circle, rgba(0,0,0,.34), rgba(0,0,0,0));
+      filter:blur(8px);
+      z-index:0;
+    }
+
+    .visitorBubble{
+      position:relative;
+      z-index:3;
+      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(246,235,210,.98));
+      color:#3b2616;
+      border:2px solid rgba(120,81,28,.26);
+      border-radius:18px;
+      padding:12px 12px 10px;
+      box-shadow:0 10px 22px rgba(0,0,0,.22);
+      margin:0 auto 10px;
+      width:min(100%, 240px);
+    }
+    .visitorBubble::after{
+      content:"";
+      position:absolute;
+      left:22px;
+      bottom:-10px;
+      width:18px;
+      height:18px;
+      transform:rotate(45deg);
+      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(246,235,210,.98));
+      border-right:2px solid rgba(120,81,28,.26);
+      border-bottom:2px solid rgba(120,81,28,.26);
+    }
+    .visitorBubbleDone{
+      background:linear-gradient(180deg, rgba(247,252,242,.98), rgba(225,246,214,.98));
+    }
+    .visitorBubbleText{
+      margin:0;
+      font-size:13px;
+      line-height:1.6;
+      color:#493522;
+    }
+
+    .visitorBody{
+      position:relative;
+      z-index:2;
+      display:grid;
+      justify-items:center;
+      gap:8px;
+    }
+
+    .visitorAvatarWrap{
+      position:relative;
+      width:132px;
+      height:132px;
+      display:grid;
+      place-items:end center;
+    }
+    .visitorSpot.featured .visitorAvatarWrap{ width:148px; height:148px; }
+
+    .visitorAura{
+      position:absolute;
+      inset:12px;
+      border-radius:50%;
+      opacity:0;
+      background:radial-gradient(circle, rgba(255,224,120,.24), rgba(255,224,120,0));
+      filter:blur(8px);
+      transition:.18s ease;
+    }
+    .visitorSpot.ready .visitorAura,
+    .visitorSpot.featured .visitorAura{
+      opacity:1;
+    }
+
+    .visitorAvatar{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      filter:drop-shadow(0 12px 20px rgba(0,0,0,.28));
+      position:relative;
+      z-index:2;
+    }
+
+    .visitorPanel{
+      width:100%;
+      background:linear-gradient(180deg, rgba(18,9,26,.92), rgba(26,14,35,.94));
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:0 14px 24px rgba(0,0,0,.25);
+      padding:12px;
+      text-align:center;
+      backdrop-filter:blur(4px);
+    }
+
+    .nameLine{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      margin-bottom:6px;
+      flex-wrap:wrap;
+    }
+    .visitorName{
+      margin:0;
+      font-size:15px;
+      line-height:1.35;
+    }
+
+    .star{
+      font-size:14px;
+      line-height:1;
+      letter-spacing:1px;
+    }
+    .star.s1,.star.s2{ color:#d6c6a4; }
+    .star.s3{ color:#99d3ff; }
+    .star.s4{ color:#dab2ff; }
+    .star.s5{ color:#ffe68d; text-shadow:0 0 8px rgba(255,224,120,.25); }
+
+    .statusPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:26px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      font-size:11px;
+      margin-bottom:8px;
+      background:rgba(255,255,255,.06);
+    }
+    .statusPill.ok{ color:#103f26; background:rgba(125,240,167,.86); border-color:rgba(50,120,72,.2); }
+    .statusPill.ng{ color:#652020; background:rgba(255,141,141,.88); border-color:rgba(100,30,30,.18); }
+    .statusPill.done{ color:#442009; background:rgba(255,217,126,.92); border-color:rgba(114,77,12,.24); }
+
+    .miniNeeds{
+      display:flex;
+      justify-content:center;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+
+    .miniCard{
+      width:48px;
+      height:66px;
+      border-radius:10px;
+      overflow:hidden;
+      position:relative;
+      border:2px solid rgba(255,255,255,.16);
+      background:#fff2d8;
+      box-shadow:0 4px 10px rgba(0,0,0,.18);
+      flex:none;
+    }
+    .miniCard img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .miniQty{
+      position:absolute;
+      right:4px;
+      bottom:4px;
+      min-width:20px;
+      height:20px;
+      padding:0 5px;
+      border-radius:999px;
+      background:rgba(0,0,0,.85);
+      color:#fff7e6;
+      display:grid;
+      place-items:center;
+      font-size:10px;
+      border:1px solid rgba(255,255,255,.16);
+    }
+
+    .miniRarity{
+      display:grid;
+      place-items:center;
+      text-align:center;
+      width:100%;
+      height:100%;
+      padding:6px;
+      color:#23160d;
+      font-size:10px;
+      line-height:1.35;
+      background:linear-gradient(180deg,#fff8eb,#efdcb2);
+    }
+    .miniRarity.N  { background:linear-gradient(180deg,#f7efe3,#e7dccb); }
+    .miniRarity.R  { background:linear-gradient(180deg,#e0f2ff,#bddcff); }
+    .miniRarity.SR { background:linear-gradient(180deg,#f0ddff,#d8b3ff); }
+    .miniRarity.UR { background:linear-gradient(180deg,#fff0c1,#ffd36d); }
+    .miniRarity.LR { background:linear-gradient(180deg,#fff4b9,#ffd64a); }
+    .miniRarity.SP { background:linear-gradient(180deg,#ffe4e7,#ff9ab4); }
+
+    .rewardLine{
+      display:flex;
+      justify-content:center;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+
+    .rewardMini{
+      min-height:24px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:11px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
+    }
+
+    .viewBtn{
+      width:100%;
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      font:inherit;
+      min-height:38px;
+      border-radius:12px;
+      background:linear-gradient(180deg,#fff7e8,#ead6aa);
+      color:#2e1b0d;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.75);
+    }
+    .viewBtn:hover{ filter:saturate(1.05); }
+
+    .legendCard{
+      margin-top:14px;
+      border:1px solid rgba(255,210,124,.18);
+      background:linear-gradient(180deg, rgba(43,19,19,.92), rgba(28,12,17,.96));
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      display:none;
+    }
+    .legendCard.show{ display:block; }
+
+    .legendInner{
+      position:relative;
+      z-index:1;
+      display:grid;
+      grid-template-columns:120px 1fr auto;
+      gap:16px;
+      align-items:center;
+      padding:14px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,227,123,.14), transparent 34%),
+        linear-gradient(90deg, rgba(255,255,255,.03), transparent);
+    }
+
+    .legendInner::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent);
+      opacity:.45;
+    }
+
+    .legendAvatar{
+      width:120px;
+      height:120px;
+      object-fit:contain;
+      filter:drop-shadow(0 10px 18px rgba(0,0,0,.34));
+    }
+    .legendCap{
+      display:inline-flex;
+      padding:5px 10px;
+      border-radius:999px;
+      background:linear-gradient(180deg,var(--gold1),var(--gold2));
+      color:#341d0b;
+      font-size:11px;
+      margin-bottom:8px;
+    }
+    .legendName{
+      margin:0 0 8px;
+      font-size:20px;
+      color:#fff0bf;
+    }
+    .legendText{
+      margin:0;
+      color:#f0dfbe;
+      font-size:13px;
+      line-height:1.7;
+    }
+    .legendRight{
+      display:grid;
+      gap:8px;
+      justify-items:end;
+    }
+
+    .helper{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.75;
+      margin:10px 2px 0;
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      z-index:9998;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(10,6,18,.76);
+      backdrop-filter:blur(6px);
+      padding:16px;
+    }
+    .modal.show{ display:flex; }
+
+    .modalCard{
+      width:min(920px, 100%);
+      max-height:min(92dvh, 960px);
+      overflow:auto;
+      background:linear-gradient(180deg,var(--paper1),var(--paper2));
+      color:var(--ink);
+      border-radius:24px;
+      border:4px solid #7f5a26;
+      box-shadow:0 26px 60px rgba(0,0,0,.44);
+      position:relative;
+    }
+
+    .modalClose{
+      position:absolute;
+      right:10px;
+      top:10px;
+      z-index:2;
+      width:42px;
+      height:42px;
+      border:none;
+      border-radius:12px;
+      font:inherit;
+      cursor:pointer;
+      background:rgba(0,0,0,.10);
+      color:#2d1d10;
+    }
+
+    .modalInner{
+      padding:18px;
+    }
+
+    .detailTop{
+      display:grid;
+      grid-template-columns:100px 1fr auto;
+      gap:14px;
+      align-items:start;
+      margin-bottom:14px;
+    }
+
+    .detailAvatar{
+      width:100px;
+      height:100px;
+      object-fit:contain;
+      background:#fff5df;
+      border-radius:18px;
+      border:3px solid rgba(105,71,32,.55);
+      box-shadow:0 8px 18px rgba(0,0,0,.16);
+    }
+
+    .detailName{
+      margin:0 0 8px;
+      font-size:22px;
+      line-height:1.2;
+    }
+
+    .detailLine{
+      margin:0;
+      color:#4b3520;
+      font-size:14px;
+      line-height:1.7;
+      white-space:pre-line;
+    }
+
+    .detailRight{
+      text-align:right;
+      min-width:120px;
+    }
+
+    .detailTags{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      margin-top:8px;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:28px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.55);
+      border:1px solid rgba(0,0,0,.10);
+      color:#3d2a18;
+      font-size:12px;
+    }
+
+    .sectionTitle{
       margin:0 0 10px;
-      color:#4e3924;
+      font-size:15px;
+      color:#4d3822;
     }
 
     .wantGrid{
       display:grid;
-      grid-template-columns:repeat(auto-fit, minmax(84px, max-content));
+      grid-template-columns:repeat(auto-fit, minmax(92px, max-content));
       gap:10px;
-      align-items:start;
       margin-bottom:14px;
     }
 
@@ -650,7 +876,7 @@
       width:var(--cardW);
     }
 
-    .miniCard{
+    .wantCard{
       width:var(--cardW);
       height:var(--cardH);
       border-radius:14px;
@@ -661,15 +887,14 @@
       box-shadow:0 6px 14px rgba(0,0,0,.15);
     }
 
-    .miniCard img{
+    .wantCard img{
       width:100%;
       height:100%;
-      display:block;
       object-fit:cover;
-      background:#fff7ea;
+      display:block;
     }
 
-    .qtyBadge{
+    .needQty{
       position:absolute;
       right:6px;
       bottom:6px;
@@ -685,7 +910,7 @@
       border:2px solid rgba(255,255,255,.18);
     }
 
-    .ownBadge{
+    .ownQty{
       position:absolute;
       left:6px;
       top:6px;
@@ -710,229 +935,330 @@
       min-height:32px;
     }
 
-    .rarityCard{
-      width:100%;
-      height:100%;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      padding:8px;
-      background:
-        radial-gradient(circle at top, rgba(255,255,255,.58), transparent 32%),
-        linear-gradient(180deg,#fff8eb,#efdcb2);
-    }
-
-    .rarityFrame{
-      border-color:#694720;
-    }
-
-    .rarityFrame.N  { background:linear-gradient(180deg,#f7efe3,#eadcc8); }
-    .rarityFrame.R  { background:linear-gradient(180deg,#dff0ff,#b8d8ff); }
-    .rarityFrame.SR { background:linear-gradient(180deg,#efd8ff,#d5a9ff); }
-    .rarityFrame.UR { background:linear-gradient(180deg,#ffe5ae,#ffc857); }
-    .rarityFrame.LR { background:linear-gradient(180deg,#fff0ad,#ffd54d); }
-
-    .rarityBig{
-      font-size:24px;
-      line-height:1;
-      margin-bottom:6px;
-      font-weight:700;
-    }
-
-    .raritySmall{
-      font-size:11px;
-      line-height:1.4;
-    }
-
-    .rewardBox{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
+    .rewardGrid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:10px;
       margin-bottom:14px;
     }
 
-    .rewardChip{
-      background:rgba(255,255,255,.52);
-      border:1px solid rgba(0,0,0,.10);
-      border-radius:999px;
-      padding:8px 10px;
-      font-size:12px;
-      color:#3a291a;
+    .rewardBox{
+      background:rgba(255,255,255,.50);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:16px;
+      padding:10px;
+    }
+    .rewardBoxLabel{
+      font-size:11px;
+      color:#6a533d;
+      margin-bottom:5px;
+    }
+    .rewardBoxValue{
+      font-size:14px;
+      color:#312013;
+      line-height:1.6;
+      white-space:pre-line;
     }
 
-    .noticeFoot{
+    .statusList{
+      background:rgba(255,255,255,.42);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:16px;
+      padding:12px;
+      margin-bottom:14px;
+    }
+    .statusLine{
+      font-size:13px;
+      line-height:1.7;
+      color:#523b25;
+    }
+    .statusLine.ok{ color:#0e7e47; }
+    .statusLine.ng{ color:#9d2b2b; }
+
+    .modalActions{
       display:flex;
-      gap:10px;
       align-items:center;
       justify-content:space-between;
+      gap:10px;
       flex-wrap:wrap;
     }
 
-    .statusText{
-      font-size:13px;
-      color:#4a3422;
-      line-height:1.6;
-    }
-
-    .statusOk{ color:#0e7e47; }
-    .statusNg{ color:#9d2b2b; }
-
-    .emptyState{
-      background:rgba(255,255,255,.08);
-      border:1px dashed var(--line);
-      border-radius:18px;
-      padding:20px;
-      color:var(--muted);
-      text-align:center;
-    }
-
-    .toast{
-      position:fixed;
-      left:12px;
-      right:12px;
-      bottom:calc(12px + env(safe-area-inset-bottom));
-      z-index:9999;
-      display:grid;
-      place-items:center;
-      pointer-events:none;
-      opacity:0;
-      transform:translateY(12px);
-      transition:.22s ease;
-    }
-
-    .toast.show{
-      opacity:1;
-      transform:translateY(0);
-    }
-
-    .toastInner{
-      max-width:min(560px, 100%);
-      background:rgba(20,12,30,.96);
-      color:#fff7eb;
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:16px;
-      padding:12px 14px;
-      box-shadow:var(--shadow);
-      font-size:14px;
-      text-align:center;
-    }
-
-    .helper{
-      color:var(--muted);
+    .modalNote{
+      color:#5b4530;
       font-size:12px;
       line-height:1.7;
-      margin-top:12px;
     }
 
-    .hidden{
-      display:none !important;
+    .rewardDrop{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:none;
+      place-items:center;
+      background:rgba(8,5,14,.72);
+      backdrop-filter:blur(6px);
+      padding:16px;
+    }
+    .rewardDrop.show{ display:grid; }
+
+    .rewardDropCard{
+      width:min(720px,100%);
+      background:linear-gradient(180deg, rgba(26,14,37,.98), rgba(18,10,27,.98));
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:24px;
+      box-shadow:0 24px 60px rgba(0,0,0,.45);
+      padding:18px;
+      text-align:center;
+    }
+
+    .rewardDropCap{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:6px 12px;
+      border-radius:999px;
+      background:linear-gradient(180deg,var(--gold1),var(--gold2));
+      color:#341e0d;
+      font-size:12px;
+      margin-bottom:10px;
+    }
+    .rewardDropTitle{
+      margin:0 0 10px;
+      font-size:24px;
+      line-height:1.3;
+    }
+    .rewardDropSub{
+      margin:0 0 12px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.7;
+      white-space:pre-line;
+    }
+
+    .rewardRevealList{
+      display:grid;
+      gap:8px;
+      margin:0 0 14px;
+    }
+
+    .rewardReveal{
+      opacity:0;
+      transform:translateY(8px) scale(.98);
+      transition:.2s ease;
+      min-height:44px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      border-radius:14px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      padding:10px 12px;
+      font-size:14px;
+    }
+    .rewardReveal.show{
+      opacity:1;
+      transform:translateY(0) scale(1);
+    }
+
+    .hidden{display:none !important}
+
+    @media (max-width:980px){
+      .heroInner{
+        grid-template-columns:100px 1fr;
+      }
+      .heroMeta{
+        grid-column:1 / -1;
+        justify-items:start;
+      }
+      .specialBox{
+        max-width:none;
+      }
+      .legendInner{
+        grid-template-columns:100px 1fr;
+      }
+      .legendRight{
+        grid-column:1 / -1;
+        justify-items:start;
+      }
     }
 
     @media (max-width:900px){
-      .boardFrame{
+      .plaza{
         min-height:auto;
       }
-      .boardInner{
+      .plazaGrid{
         min-height:auto;
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:14px;
       }
+      .visitorSpot{
+        position:relative;
+        width:100%;
+        left:auto !important;
+        top:auto !important;
+        transform:none !important;
+      }
+      .visitorSpot.featured{ width:100%; }
+      .visitorShadow{ bottom:38px; }
     }
 
     @media (max-width:720px){
-      .titleBox{
+      .hud{
         grid-template-columns:1fr;
       }
-      .metaPanel{
-        align-items:flex-start;
+      .chips{ justify-content:flex-start; }
+      .heroInner{
+        grid-template-columns:1fr;
+        justify-items:start;
+        gap:10px;
       }
-      .noticeHead{
-        grid-template-columns:76px 1fr;
+      .naviWrap{ justify-content:flex-start; }
+      .speech{ width:100%; }
+      .speech::before{
+        left:22px;
+        bottom:-10px;
+        transform:rotate(45deg);
+        border-left:none;
+        border-bottom:none;
+        border-right:3px solid rgba(120,81,28,.35);
+        border-bottom:3px solid rgba(120,81,28,.35);
       }
-      .difficultyBox{
+      .detailTop{
+        grid-template-columns:84px 1fr;
+      }
+      .detailRight{
         grid-column:1 / -1;
         text-align:left;
-        min-width:0;
       }
-      .tagRow{
-        justify-content:flex-start;
+      .detailTags{ justify-content:flex-start; }
+      .legendInner{
+        grid-template-columns:1fr;
       }
     }
 
     @media (max-width:560px){
-      .boardInner.mobileLayout{
+      .plazaGrid{
         grid-template-columns:1fr;
       }
-      .boardInner.mobileLayout .paperNote{
-        width:100% !important;
+      .hero{
+        min-height:280px;
       }
-      .boardInner.mobileLayout .paperNote.span2{
-        width:100% !important;
+      .heroInner{
+        min-height:280px;
+      }
+      .stockItem{
+        min-width:calc(50% - 4px);
+      }
+      .wantGrid{
+        grid-template-columns:repeat(3, minmax(0,max-content));
       }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="leftTools">
-        <button class="pixel-btn" id="backBtn">← 戻る</button>
-      </div>
-      <div class="rightTools">
-        <button class="pixel-btn" id="resetTodayBtn">本日の貼り紙を作り直す</button>
-      </div>
-    </div>
-
-    <section class="titleBox">
-      <div>
-        <h1 class="titleMain">カード募集板</h1>
-        <p class="titleSub">
-          タコ民たちが掲示板に貼った依頼書を確認できるたこ。<br>
-          貼り紙をタップすると、詳しい依頼内容と報酬が見られるたこ。
-        </p>
+  <div class="page">
+    <header class="hud">
+      <div class="hud-left">
+        <button class="btn" id="backBtn">← 戻る</button>
       </div>
 
-      <div class="metaPanel">
-        <div class="pill" id="todayLabel">本日: ----/--/--</div>
-        <div class="pill" id="doneLabel">達成 0 / 5</div>
+      <div class="boardTitle">
+        <h1 class="boardTitleMain">カード募集板</h1>
+        <p class="boardTitleSub">タコ民たちの探しもの依頼所</p>
+      </div>
+
+      <div class="hud-right">
+        <div class="chips">
+          <div class="chip">📅 <b id="todayLabel">----/--/--</b></div>
+          <div class="chip">✅ <b id="doneLabel">0 / 0</b></div>
+          <div class="chip">🪙 <b id="octoLabel">0</b></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="hero">
+      <img class="heroBg" id="heroBg" alt="">
+      <div class="heroShade"></div>
+
+      <div class="heroInner">
+        <div class="naviWrap">
+          <img class="naviImg" id="naviImg" alt="ナビタコ民">
+        </div>
+
+        <div class="speech">
+          <div class="speechBadge">案内役　たこぴの一言</div>
+          <h2 class="speechTitle" id="guideTitle">今日は依頼主が集まってるたこ</h2>
+          <p class="speechText" id="guideText">気になるタコ民を押して、依頼の中身を見てみるたこ。</p>
+        </div>
+
+        <div class="heroMeta">
+          <div class="heroCard">
+            <h3 class="heroCardTitle">今日のルール</h3>
+            <p class="heroCardText">
+              ・依頼達成でオクト＋資材がもらえるたこ。<br>
+              ・高難度ほど報酬が増えるたこ。<br>
+              ・シリアル限定のタネはここでは出ないたこ。
+            </p>
+          </div>
+          <button class="btn gold" id="rerollBtn">本日の依頼を作り直す</button>
+        </div>
       </div>
     </section>
 
-    <section class="inventoryBar" id="inventoryBar"></section>
+    <section class="stockBar" id="stockBar"></section>
 
-    <section class="boardStage">
-      <div class="boardHeader">
+    <section class="stage">
+      <div class="stageTop">
         <div>
-          <h2 class="boardHeaderTitle">募集掲示板</h2>
-          <p class="boardHeaderSub">
-            貼り紙をタップして依頼を見るたこ。<br>
-            達成済みの貼り紙には赤い判子が押されるたこ。
+          <h2 class="stageTitle">今日の依頼主たち</h2>
+          <p class="stageSub">
+            依頼主タコ民を押すと、欲しいカードと報酬の詳細が見られるたこ。<br>
+            カードが足りていれば、その場で納品できるたこ。
           </p>
         </div>
-        <div class="boardCount" id="boardCountText">貼り紙 0枚</div>
+
+        <aside class="specialBox">
+          <div class="specialCap">低確率で出現</div>
+          <h3 class="specialTitle">伝説指定依頼</h3>
+          <p class="specialDesc">
+            LRやSP相当の指定依頼は、通常依頼とは別枠で現れるたこ。<br>
+            出た日は報酬もかなりアツいたこ。
+          </p>
+        </aside>
       </div>
 
-      <div class="boardFrame">
-        <div class="boardInner" id="boardGrid"></div>
+      <div class="plaza">
+        <div class="plazaGrid" id="plazaGrid"></div>
       </div>
+
+      <section class="legendCard" id="legendCard"></section>
     </section>
 
     <p class="helper">
-      ※ この試作版は <code>tf_v1_book</code> の所持枚数を読んで判定します。<br>
-      ※ 条件依頼（SR以上など）は、所持中の該当カードから自動で消費されます。<br>
-      ※ タコ民画像・カード画像は今は仮画像です。あとで実画像URLに差し替えできます。
+      ※ 募集板は <code>tf_v1_book</code> の所持枚数を参照するたこ。<br>
+      ※ 報酬資材は <code>tf_v1_inv</code> に加算されるたこ。<br>
+      ※ コラボのタネ、ハーフアニバーサリーのタネは報酬に含めないたこ。
     </p>
   </div>
 
   <div class="modal" id="jobModal" aria-hidden="true">
-    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="jobModalTitle">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="jobTitle">
       <button class="modalClose" id="jobModalClose" aria-label="閉じる">✕</button>
       <div class="modalInner" id="jobModalBody"></div>
     </div>
   </div>
 
-  <div class="toast" id="toast">
-    <div class="toastInner" id="toastText"></div>
+  <div class="rewardDrop" id="rewardDrop">
+    <div class="rewardDropCard">
+      <div class="rewardDropCap">納品完了</div>
+      <h2 class="rewardDropTitle" id="rewardDropTitle">ありがとうたこ！</h2>
+      <p class="rewardDropSub" id="rewardDropSub">報酬を受け取ったたこ。</p>
+      <div class="rewardRevealList" id="rewardRevealList"></div>
+      <button class="btn gold" id="rewardDropClose">閉じる</button>
+    </div>
   </div>
 
   <script>
@@ -943,10 +1269,192 @@
     // Keys
     // =========================================================
     const KEY = {
-      board: "ttc_card_board_v1",
+      board: "ttc_card_board_v3",
       octo: "roten_v1_octo",
       player: "tf_v1_player",
-      book: "tf_v1_book"
+      book: "tf_v1_book",
+      inv: "tf_v1_inv"
+    };
+
+    // =========================================================
+    // Assets / visitors
+    // =========================================================
+    const ASSETS = {
+      bgDay:   "https://ul.h3z.jp/lqCNnwQH.png",
+      bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
+      visitors: [
+        { id:"v01", name:"つぶやきタコ民", type:"careful",   url:"https://ul.h3z.jp/RpLPCRTc.png" },
+        { id:"v02", name:"即決タコ民",     type:"impulse",   url:"https://ul.h3z.jp/TMXU9ztW.png" },
+        { id:"v03", name:"冷やかしタコ民", type:"looker",    url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku16.png" },
+        { id:"v04", name:"見えないタコ民", type:"picky",     url:"https://ul.h3z.jp/MZYfusKm.png" },
+        { id:"v05", name:"王様タコ民",     type:"king",      url:"https://ul.h3z.jp/wMM8PrcP.png" },
+        { id:"v06", name:"よっぱらいタコ民", type:"flipper", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku20.png" },
+        { id:"v07", name:"札束タコ民",     type:"rich",      url:"https://ul.h3z.jp/pZKu3lSE.png" },
+        { id:"v08", name:"踏破タコ民",     type:"climber",   url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku2.png" },
+        { id:"v09", name:"ナビタコ民",     type:"guide",     url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku3.png" },
+        { id:"v10", name:"ほぐしタコ民",   type:"relax",     url:"https://ul.h3z.jp/dbBbLypa.png" },
+        { id:"v11", name:"返し職人タコ民", type:"artisan",   url:"https://ul.h3z.jp/OA5StkvT.png" },
+        { id:"v12", name:"ゼロ理論タコ民", type:"diet",      url:"https://ul.h3z.jp/KVImBYZ8.png" },
+        { id:"v13", name:"枠外タコ民",     type:"overflow",  url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/kyaku7.png" },
+        { id:"v14", name:"未開封保護タコ民", type:"collector", url:"https://ul.h3z.jp/zSvGyVq9.png" },
+        { id:"v15", name:"防水タコ民",     type:"shadow",    url:"https://ul.h3z.jp/IBKDrVAm.png" },
+        { id:"v16", name:"替え玉タコ民",   type:"ramen",     url:"https://ul.h3z.jp/NViRwhdj.png" },
+        { id:"v17", name:"投げ銭タコ民",   type:"streamer",  url:"https://ul.h3z.jp/8PukOegd.png" },
+        { id:"v18", name:"舌判定タコ民",   type:"gourmet",   url:"https://ul.h3z.jp/We4UXFSI.png" },
+        { id:"v19", name:"即バリタコ民",   type:"opener",    url:"https://ul.h3z.jp/9usFHTdU.png" },
+        { id:"v20", name:"宴タコ民",       type:"party",     url:"https://ul.h3z.jp/pByCAUMC.png" },
+        { id:"v21", name:"覚悟タコ民",     type:"pilgrim",   url:"https://ul.h3z.jp/eW2dluw2.png" }
+      ]
+    };
+    const NAVI_VISITOR = ASSETS.visitors.find(v => v.type === "guide");
+
+    // =========================================================
+    // Card pools
+    // =========================================================
+    const CARD_POOLS = {
+      N: [
+        { no: "TN-005", name: "たこ焼きタワー112", img: "https://ul.h3z.jp/LoXMSiYd.jpg" },
+        { no: "TN-006", name: "塩顔パレード焼き", img: "https://ul.h3z.jp/7L7rcrnM.jpg" },
+        { no: "TN-009", name: "塩マヨ露天焼き", img: "https://ul.h3z.jp/bF9QmTE8.jpg" },
+        { no: "TN-011", name: "チーズ火山焼き", img: "https://ul.h3z.jp/BEj3BIcP.jpg" },
+        { no: "TN-012", name: "揚げ玉会議焼き", img: "https://ul.h3z.jp/vVw2FjQp.jpg" },
+        { no: "TN-013", name: "くたびれ塩こしょう焼き", img: "https://ul.h3z.jp/DlX5pLJ5.jpg" },
+        { no: "TN-016", name: "たこ焼き、発射オーライ", img: "https://ul.h3z.jp/50WYMkYw.jpg" },
+        { no: "TN-018", name: "ゆのかわの主", img: "https://ul.h3z.jp/mkLBMxIT.jpg" },
+        { no: "TN-019", name: "誤入店トラップ", img: "https://ul.h3z.jp/YfON5rBJ.jpg" },
+        { no: "TN-021", name: "たこ焼き、流れて候", img: "https://ul.h3z.jp/O4s1VpWd.jpg" },
+        { no: "TN-023", name: "芝生かたこ焼きか大会", img: "https://ul.h3z.jp/FZcOaXY8.jpg" },
+        { no: "TN-024", name: "温泉女神のありがた迷惑", img: "https://ul.h3z.jp/A6WhBsqj.jpg" },
+        { no: "TN-026", name: "たこ焼き48回リボ払い", img: "https://ul.h3z.jp/hz7JXyky.jpg" },
+        { no: "TN-027", name: "全身たこ焼きダイエット", img: "https://ul.h3z.jp/FQ3poZLg.jpg" },
+        { no: "TN-028", name: "自己啓発たこ塾《井上諒プロ🎯》", img: "https://ul.h3z.jp/sPChFFlG.jpg" },
+        { no: "TN-029", name: "カロリーゼロ理論《仁木治プロ🎯》", img: "https://ul.h3z.jp/4HEbt3YP.jpg" },
+        { no: "TN-031", name: "行列の最後尾が別県", img: "https://ul.h3z.jp/LBdFqlLI.jpg" },
+        { no: "TN-034", name: "エシカル過剰焼き", img: "https://ul.h3z.jp/KRkSq4WD.jpg" },
+        { no: "TN-036", name: "マヨネーズ詐欺", img: "https://ul.h3z.jp/NzVgPYdG.jpg" },
+        { no: "TN-037", name: "勘違いデート", img: "https://ul.h3z.jp/riYYAnEi.jpg" },
+        { no: "TN-041", name: "玉の上にも三年", img: "https://ul.h3z.jp/pQg0jZMy.jpg" },
+        { no: "TN-043", name: "転生したら即売れたこ焼き", img: "https://ul.h3z.jp/I3JWnpoL.jpg" },
+        { no: "TN-046", name: "ごますりたこ焼き", img: "https://ul.h3z.jp/tuLsTiaz.jpg" },
+        { no: "TN-048", name: "店主反撃レビュー《佐俣雄一郎🎯》", img: "https://ul.h3z.jp/ge8b4cQ5.jpg" },
+      ],
+      R: [
+        { no: "TN-002", name: "熱々地獄の給たこ所", img: "https://ul.h3z.jp/otr0dAQi.jpg" },
+        { no: "TN-003", name: "爆走！たこ焼きライダー菜々", img: "https://ul.h3z.jp/06HrUPMT.jpg" },
+        { no: "TN-008", name: "明太ギャラクシー焼き", img: "https://ul.h3z.jp/xye1uAfV.jpg" },
+        { no: "TN-014", name: "世界たこ焼き釣り選手権大会", img: "https://ul.h3z.jp/cyekwiam.jpg" },
+        { no: "TN-017", name: "たこ焼きマニフェスト", img: "https://ul.h3z.jp/zeSwFyjz.jpg" },
+        { no: "TN-022", name: "たこ焼きダーツインフェルノ《對馬裕佳子プロ🎯》", img: "https://ul.h3z.jp/Prf7KxRk.jpg" },
+        { no: "TN-032", name: "国境超えた恋", img: "https://ul.h3z.jp/9AZcVNmR.jpg" },
+        { no: "TN-035", name: "デリバリー長距離便", img: "https://ul.h3z.jp/z0xhODVy.jpg" },
+        { no: "TN-038", name: "恋落ちマッチング", img: "https://ul.h3z.jp/BPEoWjuY.jpg" },
+        { no: "TN-042", name: "たこ焼きループザループ", img: "https://ul.h3z.jp/vxKamb6f.jpg" },
+        { no: "TN-044", name: "白い契約(稲石裕プロ🎯)", img: "https://ul.h3z.jp/bC1B4WkQ.jpg" },
+        { no: "TN-047", name: "ボスゲート", img: "https://ul.h3z.jp/GHWrtaYk.jpg" },
+      ],
+      SR: [
+        { no: "TN-004", name: "見えるフリ焼き", img: "https://ul.h3z.jp/irs6Sxoy.jpg" },
+        { no: "TN-010", name: "焼ク者ノ証", img: "https://ul.h3z.jp/6A2LOn4A.jpg" },
+        { no: "TN-015", name: "顔コイン", img: "https://ul.h3z.jp/7GUyGDU1.jpg" },
+        { no: "TN-020", name: "ピック不要の真実", img: "https://ul.h3z.jp/Bu1pk4ul.jpg" },
+        { no: "TN-030", name: "ガチャたこ焼き", img: "https://ul.h3z.jp/kFpjcqSv.jpg" },
+        { no: "TN-039", name: "ドローン誤配達", img: "https://ul.h3z.jp/70A10oHf.jpg" },
+        { no: "TN-040", name: "推し活たこ団扇", img: "https://ul.h3z.jp/jY5MVsrt.jpg" },
+        { no: "TN-049", name: "たこ焼きの御神体", img: "https://ul.h3z.jp/GQ8H0lGq.jpg" },
+      ],
+      UR: [
+        { no: "TN-001", name: "黒き真珠イカさま焼き", img: "assets/images/1stcard/001ur1.png" },
+        { no: "TN-007", name: "ローソク出せ！", img: "assets/images/1stcard/007ur1.png" },
+        { no: "TN-033", name: "鉄板のビーナス", img: "assets/images/1stcard/033ur1.png" },
+        { no: "TN-045", name: "ドリームファイト", img: "assets/images/1stcard/045ur1.png" },
+      ],
+      LR: [
+        { no: "TN-025", name: "たこ焼き化石in函館山", img: "https://ul.h3z.jp/NEuFQ7PB.png" },
+        { no: "TN-050", name: "焼かれし記憶、ソースに還る", img: "assets/images/1stcard/050lr1.png" },
+      ],
+    };
+
+    const TAKOPI_SEED_POOL = [
+      { id: "TP-001", name: "届け！たこぴ便", img: "https://ul.h3z.jp/rjih1Em9.png", rarity: "N" },
+      { id: "TP-002", name: "ハロウィンたこぴ", img: "https://ul.h3z.jp/hIDWKss0.png", rarity: "N" },
+      { id: "TP-003", name: "紅葉たこぴ", img: "https://ul.h3z.jp/G05m1hbT.png", rarity: "N" },
+      { id: "TP-004", name: "クリスマスたこぴ", img: "https://ul.h3z.jp/FGEKvxhK.png", rarity: "N" },
+      { id: "TP-005", name: "お年玉たこぴ", img: "https://ul.h3z.jp/OPz58Wt6.png", rarity: "N" },
+      { id: "TP-006", name: "バレンタインたこぴ", img: "https://ul.h3z.jp/J0kj3CLb.png", rarity: "N" },
+      { id: "TP-007", name: "花見たこぴ", img: "https://ul.h3z.jp/KrCy4WQb.png", rarity: "N" },
+      { id: "TP-008", name: "入学たこぴ", img: "https://ul.h3z.jp/DidPdK9b.png", rarity: "UR" },
+    ];
+
+    const BUSSASARI_POOL = [
+      { id: "BS-001", name: "たこ焼きダーツインフェルノ《對馬裕佳子》", img: "https://ul.h3z.jp/l5roYZJ4.png", rarity: "N" },
+      { id: "BS-002", name: "店主反撃レビュー《佐俣雄一郎》", img: "https://ul.h3z.jp/BtOTLlSo.png", rarity: "N" },
+      { id: "BS-003", name: "自己啓発タコ塾《井上諒》", img: "https://ul.h3z.jp/P5vsAste.png", rarity: "N" },
+      { id: "BS-004", name: "カロリーゼロ理論《仁木治》", img: "https://ul.h3z.jp/ZGBzzH2r.png", rarity: "N" },
+      { id: "BS-005", name: "白い契約《稲石裕》", img: "https://ul.h3z.jp/nmiaCKae.png", rarity: "N" },
+    ];
+
+    const NAMARA_POOL = [
+      { id: "NK-001", name: "イカさま焼き", img: "https://ul.h3z.jp/1UB3EY1B.png", rarity: "LR" },
+      { id: "NK-002", name: "定番のソース", img: "https://ul.h3z.jp/MBZcFmq9.png", rarity: "N" },
+      { id: "NK-003", name: "すっぴん", img: "https://ul.h3z.jp/A6botkfp.png", rarity: "N" },
+      { id: "NK-004", name: "チーズソースマヨ", img: "https://ul.h3z.jp/MmkNjIJM.png", rarity: "SR" },
+      { id: "NK-005", name: "めんたいマヨ", img: "https://ul.h3z.jp/9oc1iVPt.png", rarity: "SR" },
+      { id: "NK-006", name: "ねぎ味噌", img: "https://ul.h3z.jp/vf60iccW.png", rarity: "SR" },
+      { id: "NK-007", name: "牡蠣だし醤油", img: "https://ul.h3z.jp/zwVHhrgx.png", rarity: "SR" },
+      { id: "NK-008", name: "塩こしょう", img: "https://ul.h3z.jp/KlgnlC2H.png", rarity: "UR" },
+      { id: "NK-009", name: "辛口ソース", img: "https://ul.h3z.jp/OavcxTBn.png", rarity: "R" },
+      { id: "NK-010", name: "ぶっかけ揚げ玉からしマヨ", img: "https://ul.h3z.jp/CcOw6yLq.png", rarity: "SR" },
+      { id: "NK-011", name: "塩マヨペッパー", img: "https://ul.h3z.jp/7UJoTCe7.png", rarity: "R" },
+      { id: "NK-012", name: "てりたま", img: "https://ul.h3z.jp/MU6ehdTH.png", rarity: "SR" },
+    ];
+
+    const WATER_SPECIAL_CARDS = {
+      rotten: [
+        { id: "SP-MIZU-001", name: "腐敗したカード", img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png", rarity: "SP", tier: "N", weight: 95 },
+        { id: "SP-MIZU-002", name: "浸食したカード", img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png", rarity: "SP", tier: "LR", weight: 5 }
+      ],
+      sea: [
+        { id: "SP-MIZU-001", name: "腐敗したカード", img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png", rarity: "SP", tier: "N", weight: 98 },
+        { id: "SP-MIZU-002", name: "浸食したカード", img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png", rarity: "SP", tier: "LR", weight: 2 }
+      ]
+    };
+
+    // =========================================================
+    // Rewards pools
+    // =========================================================
+    const SEEDS = [
+      { id: "seed_random", name: "なに出るタネ", img: "https://ul.h3z.jp/gnyvP580.png" },
+      { id: "seed_shop", name: "店頭タネ", img: "https://ul.h3z.jp/IjvuhWoY.png" },
+      { id: "seed_line", name: "回線タネ", img: "https://ul.h3z.jp/AonxB5x7.png" },
+      { id: "seed_special", name: "たこぴのタネ", img: "https://ul.h3z.jp/29OsEvjf.png" },
+      { id: "seed_bussasari", name: "ブッ刺さりタネ", img: "https://ul.h3z.jp/MjWkTaU3.png" },
+      { id: "seed_namara_kawasar", name: "なまら買わさるタネ", img: "https://ul.h3z.jp/yiqHzfi0.png" }
+    ];
+
+    const WATERS = [
+      { id: "water_plain_free", name: "ただの水", img: "https://ul.h3z.jp/13XdhuHi.png" },
+      { id: "water_nice", name: "なんか良さそうな水", img: "https://ul.h3z.jp/3z04ypEd.png" },
+      { id: "water_suspicious", name: "怪しい水", img: "https://ul.h3z.jp/wtCO9mec.png" },
+      { id: "water_overdo", name: "やりすぎな水", img: "https://ul.h3z.jp/vsL9ggf6.png" },
+      { id: "water_regret", name: "押さなきゃよかった水", img: "https://ul.h3z.jp/L0nafMOp.png" },
+      { id: "water_rotten", name: "腐ったミズ", img: "https://takoyaki-card.com/town/assets/images/mizu/6.png" },
+      { id: "water_sea", name: "海水", img: "https://takoyaki-card.com/town/assets/images/mizu/7.png" },
+      { id: "water_yunokawa", name: "ゆのかわの温泉ミズ", img: "https://takoyaki-card.com/town/assets/images/mizu/8.png" },
+      { id: "water_supergod", name: "超神水", img: "https://takoyaki-card.com/town/assets/images/mizu/9.png" },
+    ];
+
+    const FERTS = [
+      { id: "fert_agedama", name: "ただの揚げ玉", img: "https://ul.h3z.jp/9p5fx53n.png" },
+      { id: "fert_feel", name: "気のせい肥料", img: "https://ul.h3z.jp/XqFTb7sw.png" },
+      { id: "fert_guts", name: "根性論ぶち込み肥料", img: "https://ul.h3z.jp/bT9ZcNnS.png" },
+      { id: "fert_skip", name: "工程すっ飛ばし肥料", img: "https://ul.h3z.jp/FqPzx12Q.png" },
+      { id: "fert_timeno", name: "時間を信じない肥料", img: "https://ul.h3z.jp/l2njWY57.png" },
+    ];
+
+    const REWARD_ITEMS = {
+      seed: Object.fromEntries(SEEDS.map(v => [v.id, v])),
+      water: Object.fromEntries(WATERS.map(v => [v.id, v])),
+      fert: Object.fromEntries(FERTS.map(v => [v.id, v]))
     };
 
     // =========================================================
@@ -955,16 +1463,7 @@
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-    const pad2 = (n) => String(n).padStart(2, "0");
-    const todayKey = () => {
-      const d = new Date();
-      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-    };
-    const todayJP = () => {
-      const d = new Date();
-      return `${d.getFullYear()}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())}`;
-    };
-
+    function pad2(n){ return String(n).padStart(2, "0"); }
     function safeJSONParse(raw, fallback){
       try{
         const v = JSON.parse(raw);
@@ -973,28 +1472,23 @@
         return fallback;
       }
     }
-
     function loadJSON(key, fallback){
       return safeJSONParse(localStorage.getItem(key), fallback);
     }
-
     function saveJSON(key, value){
       localStorage.setItem(key, JSON.stringify(value));
     }
-
-    function randInt(min, max){
-      return Math.floor(Math.random() * (max - min + 1)) + min;
+    function nowTokyo(){
+      return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
     }
-
-    function showToast(msg){
-      const el = $("#toast");
-      const text = $("#toastText");
-      text.textContent = msg;
-      el.classList.add("show");
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => el.classList.remove("show"), 2200);
+    function todayKey(){
+      const d = nowTokyo();
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
     }
-
+    function todayLabel(){
+      const d = nowTokyo();
+      return `${d.getFullYear()}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())}`;
+    }
     function seededRandom(seedStr){
       let h = 2166136261;
       for(let i=0;i<seedStr.length;i++){
@@ -1008,15 +1502,20 @@
         return ((h >>> 0) / 4294967295);
       };
     }
-
-    function seededPick(arr, rnd){
+    function pick(arr, rnd){
       return arr[Math.floor(rnd() * arr.length)];
     }
-
+    function pickUnique(arr, count, rnd){
+      const src = arr.slice();
+      const out = [];
+      while(src.length && out.length < count){
+        out.push(src.splice(Math.floor(rnd() * src.length), 1)[0]);
+      }
+      return out;
+    }
     function stars(n){
       return "★".repeat(n) + "☆".repeat(5 - n);
     }
-
     function escapeHtml(str){
       return String(str).replace(/[&<>"']/g, s => ({
         "&":"&amp;",
@@ -1026,468 +1525,828 @@
         "'":"&#39;"
       })[s]);
     }
-
-    function isMobileBoardLayout(){
-      return window.innerWidth <= 900;
-    }
-
-    // =========================================================
-    // SVG helper
-    // =========================================================
-    function svgDataUri(svg){
-      return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
-    }
-
-    function makeClientAvatar(name, bg1, bg2){
-      return svgDataUri(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
-          <defs>
-            <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="${bg1}"/>
-              <stop offset="100%" stop-color="${bg2}"/>
-            </linearGradient>
-          </defs>
-          <rect width="160" height="160" rx="24" fill="url(#g)"/>
-          <circle cx="80" cy="86" r="40" fill="#ffdca8"/>
-          <circle cx="66" cy="80" r="5" fill="#2b1d12"/>
-          <circle cx="94" cy="80" r="5" fill="#2b1d12"/>
-          <path d="M67 102 Q80 112 93 102" fill="none" stroke="#2b1d12" stroke-width="4" stroke-linecap="round"/>
-          <ellipse cx="80" cy="30" rx="34" ry="18" fill="#d94747"/>
-          <circle cx="57" cy="26" r="9" fill="#d94747"/>
-          <circle cx="103" cy="26" r="9" fill="#d94747"/>
-          <text x="80" y="145" text-anchor="middle" font-size="16" font-family="sans-serif" fill="#fff">${name}</text>
-        </svg>
-      `);
-    }
-
-    function makeCardArt(name, rarity, bg1, bg2, accent="#ffffff"){
-      return svgDataUri(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420">
-          <defs>
-            <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="${bg1}"/>
-              <stop offset="100%" stop-color="${bg2}"/>
-            </linearGradient>
-          </defs>
-          <rect width="300" height="420" rx="24" fill="url(#g)"/>
-          <rect x="16" y="16" width="268" height="388" rx="18" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
-          <circle cx="150" cy="168" r="70" fill="${accent}" opacity=".18"/>
-          <circle cx="150" cy="168" r="46" fill="${accent}" opacity=".35"/>
-          <text x="150" y="74" text-anchor="middle" font-size="26" font-family="sans-serif" fill="white">${rarity}</text>
-          <text x="150" y="340" text-anchor="middle" font-size="24" font-family="sans-serif" fill="white">${name}</text>
-        </svg>
-      `);
-    }
-
-    // =========================================================
-    // Master data
-    // =========================================================
-    const CLIENTS = [
-      {
-        id: "normal",
-        name: "ふつうのタコ民",
-        minStar: 1, maxStar: 2,
-        lines: [
-          "このカード、探してるんだたこ",
-          "1枚だけでもうれしいたこ…",
-          "見つけたら売ってほしいたこ"
-        ],
-        avatar: makeClientAvatar("ふつう", "#8ec5ff", "#4a7bd9")
-      },
-      {
-        id: "collector",
-        name: "コレクタータコ民",
-        minStar: 2, maxStar: 4,
-        lines: [
-          "並べて眺めたいんだよね",
-          "できれば種類多めで頼むよ",
-          "図鑑欲が止まらないんだ"
-        ],
-        avatar: makeClientAvatar("収集家", "#c9a3ff", "#7c4fd8")
-      },
-      {
-        id: "regular",
-        name: "常連タコ民",
-        minStar: 2, maxStar: 4,
-        lines: [
-          "いつも世話になってるからね",
-          "今日はちょっと多めに払うよ",
-          "欲しいカードがあるんだ"
-        ],
-        avatar: makeClientAvatar("常連", "#8fe1b2", "#2e9a65")
-      },
-      {
-        id: "hurry",
-        name: "せっかちタコ民",
-        minStar: 2, maxStar: 3,
-        lines: [
-          "早く！今すぐ欲しい！",
-          "枚数多めでまとめて頼むよ！",
-          "急いでるんだ、急いで！"
-        ],
-        avatar: makeClientAvatar("せっかち", "#ffd79d", "#d78626")
-      },
-      {
-        id: "rich",
-        name: "札束タコ民",
-        minStar: 5, maxStar: 5,
-        lines: [
-          "安いのはいらない。光ってるやつを持ってこい",
-          "値段は気にするな。欲しいものが欲しい",
-          "高いカードほど心が落ち着くんだよねぇ"
-        ],
-        avatar: makeClientAvatar("札束", "#ffe59a", "#b9851c")
+    function weightedPick(list, rnd){
+      const total = list.reduce((s, v) => s + (v.weight || 1), 0);
+      let roll = rnd() * total;
+      for(const item of list){
+        roll -= (item.weight || 1);
+        if (roll <= 0) return item;
       }
+      return list[list.length - 1];
+    }
+
+    // =========================================================
+    // Card data
+    // =========================================================
+    const RARITY_ORDER = { N:1, R:2, SR:3, UR:4, LR:5, SP:6 };
+    const CARDS_ALL = [
+      ...CARD_POOLS.N.map(v => ({...v, rarity:"N", id:v.no })),
+      ...CARD_POOLS.R.map(v => ({...v, rarity:"R", id:v.no })),
+      ...CARD_POOLS.SR.map(v => ({...v, rarity:"SR", id:v.no })),
+      ...CARD_POOLS.UR.map(v => ({...v, rarity:"UR", id:v.no })),
+      ...CARD_POOLS.LR.map(v => ({...v, rarity:"LR", id:v.no })),
+      ...TAKOPI_SEED_POOL.map(v => ({...v, rarity:v.rarity, id:v.id, specialPool:"takopi"})),
+      ...BUSSASARI_POOL.map(v => ({...v, rarity:v.rarity, id:v.id, specialPool:"bussasari"})),
+      ...NAMARA_POOL.map(v => ({...v, rarity:v.rarity, id:v.id, specialPool:"namara"})),
+      ...WATER_SPECIAL_CARDS.rotten.map(v => ({...v, rarity:"SP", id:v.id + "_rotten", specialPool:"water_special"})),
+      ...WATER_SPECIAL_CARDS.sea.map(v => ({...v, rarity:"SP", id:v.id + "_sea", specialPool:"water_special"}))
     ];
+    const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
 
-    const CARD_CATALOG = [
-      { id:"TN-001", name:"店主反撃レビュー", rarity:"N",  image:makeCardArt("反撃レビュー","N","#6c7b8f","#404e60","#ffffff") },
-      { id:"TN-002", name:"生焼けたカード",   rarity:"N",  image:makeCardArt("生焼け","N","#9f7b54","#66452f","#fff0cf") },
-      { id:"TN-003", name:"焼きすぎたカード", rarity:"R",  image:makeCardArt("焼きすぎ","R","#8a403c","#4f201d","#ffd7a2") },
-      { id:"TN-004", name:"腐敗したカード",   rarity:"R",  image:makeCardArt("腐敗","R","#547d53","#2c4d2c","#dbffbf") },
-      { id:"TN-005", name:"浸食したカード",   rarity:"SR", image:makeCardArt("浸食","SR","#50567d","#282f51","#b5c6ff") },
-      { id:"TN-006", name:"行列召喚",         rarity:"SR", image:makeCardArt("行列召喚","SR","#7f4db5","#4b2978","#eed4ff") },
-      { id:"TN-007", name:"カウノカミ",       rarity:"UR", image:makeCardArt("カウノカミ","UR","#b78b35","#735412","#fff0a6") },
-      { id:"TN-008", name:"オチルカミ",       rarity:"UR", image:makeCardArt("オチルカミ","UR","#c26b1a","#6f3906","#ffe4ad") },
-      { id:"TN-009", name:"頂上神",           rarity:"LR", image:makeCardArt("頂上神","LR","#bca33a","#6d5a15","#fff6c4") },
-      { id:"TN-010", name:"幻塔神",           rarity:"LR", image:makeCardArt("幻塔神","LR","#cfb94f","#78651a","#fff6cc") }
-    ];
-
-    const CARD_MAP = Object.fromEntries(CARD_CATALOG.map(c => [c.id, c]));
-    const RARITY_ORDER = { N:1, R:2, SR:3, UR:4, LR:5 };
-
-    const RARITY_POOL_BY_STAR = {
-      1: ["N"],
-      2: ["N","R"],
-      3: ["R","SR"],
-      4: ["SR","UR"],
-      5: ["SR","UR","LR"]
+    // =========================================================
+    // Flavor / visitor personality
+    // =========================================================
+    const TYPE_CONFIG = {
+      careful: {
+        line: ["余ってるなら見せてほしいたこ", "今日はこのへんを探してるたこ", "ゆるく集めてる最中たこ"],
+        wantBias: ["N","N","R","SR"],
+        rewardProfile: "light"
+      },
+      impulse: {
+        line: ["見つけたらすぐ決めるたこ", "今日は勢いで買うたこ", "その場で決めたい気分たこ"],
+        wantBias: ["N","R","R","SR"],
+        rewardProfile: "quick"
+      },
+      looker: {
+        line: ["買うとは言ってないたこ", "見るだけのつもりだったたこ", "でも気になるカードはあるたこ"],
+        wantBias: ["N","N","R"],
+        rewardProfile: "mischief"
+      },
+      picky: {
+        line: ["普通のじゃ足りないたこ", "ちょっと傷んでるやつも嫌いじゃないたこ", "変な条件の依頼になるたこ"],
+        wantBias: ["SR","UR","SP"],
+        rewardProfile: "strange"
+      },
+      king: {
+        line: ["余にふさわしいカードを持てたこ", "見た目が良いものを優先するたこ", "安っぽいのは今日はやめるたこ"],
+        wantBias: ["R","SR","UR","LR"],
+        rewardProfile: "royal"
+      },
+      flipper: {
+        line: ["気分が変わる前に持ってくるたこ", "今日はノリで決めるたこ", "その場のテンションが大事たこ"],
+        wantBias: ["N","R","SR"],
+        rewardProfile: "swing"
+      },
+      rich: {
+        line: ["光ってるやつだけ持ってくるたこ", "欲しいものが欲しい、それだけたこ", "値段は気にしないたこ"],
+        wantBias: ["SR","UR","LR","SP"],
+        rewardProfile: "rich"
+      },
+      climber: {
+        line: ["ここまで来たからには集めたいたこ", "少し硬派な依頼になるたこ", "達成感があるやつを頼むたこ"],
+        wantBias: ["R","SR","UR"],
+        rewardProfile: "steady"
+      },
+      guide: {
+        line: ["今日は依頼の様子を見に来たたこ", "案内だけじゃなく、たまに頼みごともするたこ", "初心者向けの依頼を置くたこ"],
+        wantBias: ["N","R"],
+        rewardProfile: "starter"
+      },
+      relax: {
+        line: ["急ぎじゃないけど欲しいたこ", "のんびり集めてるたこ", "今日は軽めの依頼にしたたこ"],
+        wantBias: ["N","R","SR"],
+        rewardProfile: "light"
+      },
+      artisan: {
+        line: ["ちゃんと刺さるやつを探してるたこ", "雑なのはちょっと困るたこ", "職人目線で選びたいんだたこ"],
+        wantBias: ["R","SR","UR"],
+        rewardProfile: "fert"
+      },
+      diet: {
+        line: ["ゼロ理論に合うカードを持ってくるたこ", "気持ちの上では軽いやつがいいたこ", "妙に思想のある依頼たこ"],
+        wantBias: ["N","R","SR"],
+        rewardProfile: "odd"
+      },
+      overflow: {
+        line: ["枠の外から欲しくなったたこ", "少し怪しい依頼でも気にしないたこ", "今日は普通じゃないのを探してるたこ"],
+        wantBias: ["SR","UR","SP"],
+        rewardProfile: "strange"
+      },
+      collector: {
+        line: ["保存用まで考えてるたこ", "同じカードでも複数欲しいたこ", "並べて眺めたいんだたこ"],
+        wantBias: ["R","SR","UR"],
+        rewardProfile: "collector"
+      },
+      shadow: {
+        line: ["水っぽいやつが欲しいたこ", "しけった依頼でも受けてほしいたこ", "濡れてるくらいがちょうどいいたこ"],
+        wantBias: ["N","R","SP"],
+        rewardProfile: "water"
+      },
+      ramen: {
+        line: ["替え玉みたいに追加で欲しいたこ", "同じのを複数でも平気たこ", "数があると落ち着くたこ"],
+        wantBias: ["N","R","SR"],
+        rewardProfile: "bundle"
+      },
+      streamer: {
+        line: ["刺さったら報酬はずむたこ", "今日は景気よくいくたこ", "反応がよければ増やすたこ"],
+        wantBias: ["R","SR","UR"],
+        rewardProfile: "chaos"
+      },
+      gourmet: {
+        line: ["味のあるカードを探してるたこ", "食欲に刺さるのがいいたこ", "名前だけでも強いのを頼むたこ"],
+        wantBias: ["N","R","SR","UR"],
+        rewardProfile: "gourmet"
+      },
+      opener: {
+        line: ["未開封は待てないたこ", "開けて見たい気持ちが勝つたこ", "勢いで揃えたいんだたこ"],
+        wantBias: ["N","R","SR"],
+        rewardProfile: "quick"
+      },
+      party: {
+        line: ["今日はにぎやかなカードが欲しいたこ", "複数並べると映えるたこ", "祭り感があるやつを頼むたこ"],
+        wantBias: ["N","R","SR","UR"],
+        rewardProfile: "bundle"
+      },
+      pilgrim: {
+        line: ["覚悟のいる依頼になるたこ", "その1枚のために来たたこ", "軽い気持ちでは頼めないたこ"],
+        wantBias: ["SR","UR","LR","SP"],
+        rewardProfile: "legend"
+      }
     };
 
-    const REWARD_BY_STAR = {
-      1: { octo:[20,40],   exp:[1,2],   rep:[0,1] },
-      2: { octo:[40,80],   exp:[2,4],   rep:[1,2] },
-      3: { octo:[80,140],  exp:[4,7],   rep:[1,3] },
-      4: { octo:[140,240], exp:[7,12],  rep:[2,4] },
-      5: { octo:[250,500], exp:[10,18], rep:[3,6] }
-    };
-
-    const DAILY_PATTERNS = [
-      [1,1,2,3,5],
-      [1,2,2,4,5],
-      [1,2,3,3,5],
-      [1,2,3,4,4]
+    const GUIDE_LINES = [
+      { title:"今日は依頼主が集まってるたこ", text:"気になるタコ民を押して、欲しいカードと報酬を見てみるたこ。\n高難度ほど資材も増えるたこ。" },
+      { title:"余ってるカードが働く日たこ", text:"使ってないカードを納品して、オクトや水や肥料に変えるたこ。\n畑を進めたい日に便利たこ。" },
+      { title:"札束タコ民が来てたら当たりたこ", text:"あの人は要求も重いけど、報酬もかなり大きいたこ。\n見かけたら在庫を確認するたこ。" },
+      { title:"今日は資材狙いもアリたこ", text:"この募集板では、オクトだけじゃなくタネや水ももらえるたこ。\nただしシリアル限定のタネは出ないたこ。" }
     ];
 
-    // デスクトップ用 貼り紙位置
-    const NOTE_LAYOUTS = [
-      { left:"4%",  top:"4%",  rot:"-4deg" },
-      { left:"38%", top:"8%",  rot:"3deg" },
-      { left:"68%", top:"6%",  rot:"-2deg" },
-      { left:"12%", top:"42%", rot:"2deg" },
-      { left:"53%", top:"46%", rot:"-5deg" }
+    const DESKTOP_POS = [
+      { left:"20%", top:"21%" },
+      { left:"52%", top:"22%" },
+      { left:"80%", top:"24%" },
+      { left:"29%", top:"67%" },
+      { left:"70%", top:"68%" }
     ];
 
     // =========================================================
-    // Demo seed inventory
+    // Inventory / book
     // =========================================================
-    function ensureDemoBookIfMissing(){
-      const raw = localStorage.getItem(KEY.book);
-      if (raw) return;
-
-      const got = {};
-      for (const c of CARD_CATALOG){
-        let count = 0;
-        if (c.rarity === "N")  count = randInt(2, 6);
-        if (c.rarity === "R")  count = randInt(1, 4);
-        if (c.rarity === "SR") count = randInt(0, 3);
-        if (c.rarity === "UR") count = randInt(0, 2);
-        if (c.rarity === "LR") count = randInt(0, 1);
-
-        got[c.id] = {
-          count,
-          name: c.name,
-          rarity: c.rarity
-        };
-      }
-
-      saveJSON(KEY.book, { got });
-    }
-
-    function ensureMetaDefaults(){
+    function ensureDefaults(){
       if (localStorage.getItem(KEY.octo) == null) localStorage.setItem(KEY.octo, "1000");
-      if (!localStorage.getItem(KEY.player)){
-        saveJSON(KEY.player, { exp: 0, rep: 0 });
+
+      const inv = loadJSON(KEY.inv, null);
+      if (!inv){
+        saveJSON(KEY.inv, { ver:1, seed:{}, water:{}, fert:{} });
+      }else{
+        inv.ver = 1;
+        inv.seed = inv.seed || {};
+        inv.water = inv.water || {};
+        inv.fert = inv.fert || {};
+        saveJSON(KEY.inv, inv);
+      }
+
+      const player = loadJSON(KEY.player, null);
+      if (!player){
+        saveJSON(KEY.player, { exp:0, rep:0 });
+      }
+
+      const book = loadJSON(KEY.book, null);
+      if (!book){
+        const got = {};
+        CARDS_ALL.forEach(card => {
+          let count = 0;
+          if (card.rarity === "N") count = Math.random() < .6 ? Math.floor(Math.random()*4) : 0;
+          else if (card.rarity === "R") count = Math.random() < .45 ? Math.floor(Math.random()*3) : 0;
+          else if (card.rarity === "SR") count = Math.random() < .28 ? Math.floor(Math.random()*2) : 0;
+          else if (card.rarity === "UR") count = Math.random() < .12 ? 1 : 0;
+          else if (card.rarity === "LR") count = Math.random() < .05 ? 1 : 0;
+          else if (card.rarity === "SP") count = 0;
+          if (count > 0){
+            got[card.id] = { count, name: card.name, rarity: card.rarity };
+          }
+        });
+        saveJSON(KEY.book, { got });
       }
     }
 
-    // =========================================================
-    // Book / player
-    // =========================================================
-    function loadBook(){
+    function getBook(){
       const book = loadJSON(KEY.book, { got:{} });
-      if (!book.got || typeof book.got !== "object") book.got = {};
+      book.got = book.got || {};
       return book;
     }
-
-    function saveBook(book){
-      saveJSON(KEY.book, book);
-    }
+    function saveBook(book){ saveJSON(KEY.book, book); }
 
     function getOwnedCount(cardId){
-      const book = loadBook();
-      return Number(book?.got?.[cardId]?.count || 0);
+      const book = getBook();
+      return Number(book.got?.[cardId]?.count || 0);
     }
 
     function addOwned(cardId, delta){
-      const book = loadBook();
-      if (!book.got[cardId]){
-        const info = CARD_MAP[cardId] || { name: cardId, rarity:"N" };
-        book.got[cardId] = { count: 0, name: info.name, rarity: info.rarity };
-      }
-      const next = Math.max(0, Number(book.got[cardId].count || 0) + delta);
-      book.got[cardId].count = next;
+      const book = getBook();
+      const info = CARD_MAP[cardId] || { name:cardId, rarity:"N" };
+      if (!book.got[cardId]) book.got[cardId] = { count:0, name:info.name, rarity:info.rarity };
+      book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + delta);
+      if (book.got[cardId].count <= 0) delete book.got[cardId];
       saveBook(book);
     }
 
     function getOwnedCardsByRarityAtLeast(rarity){
       const min = RARITY_ORDER[rarity] || 1;
-      const book = loadBook();
-      return CARD_CATALOG
-        .filter(c => (RARITY_ORDER[c.rarity] || 0) >= min)
-        .map(c => ({
-          ...c,
-          count: Number(book?.got?.[c.id]?.count || 0)
-        }))
+      const book = getBook();
+      return CARDS_ALL.filter(c => (RARITY_ORDER[c.rarity] || 0) >= min)
+        .map(c => ({ ...c, count:Number(book.got?.[c.id]?.count || 0) }))
         .filter(c => c.count > 0)
         .sort((a,b) => (RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]) || a.name.localeCompare(b.name, "ja"));
     }
 
+    function getOcto(){ return Number(localStorage.getItem(KEY.octo) || 0); }
     function addOcto(delta){
-      const now = Number(localStorage.getItem(KEY.octo) || 0);
-      localStorage.setItem(KEY.octo, String(Math.max(0, now + delta)));
-    }
-
-    function getOcto(){
-      return Number(localStorage.getItem(KEY.octo) || 0);
-    }
-
-    function addPlayerStats(expDelta, repDelta){
-      const player = loadJSON(KEY.player, { exp:0, rep:0 });
-      player.exp = Number(player.exp || 0) + Number(expDelta || 0);
-      player.rep = Number(player.rep || 0) + Number(repDelta || 0);
-      saveJSON(KEY.player, player);
+      localStorage.setItem(KEY.octo, String(Math.max(0, getOcto() + Number(delta || 0))));
     }
 
     function getPlayer(){
       return loadJSON(KEY.player, { exp:0, rep:0 });
     }
+    function addPlayerStats(exp, rep){
+      const p = getPlayer();
+      p.exp = Number(p.exp || 0) + Number(exp || 0);
+      p.rep = Number(p.rep || 0) + Number(rep || 0);
+      saveJSON(KEY.player, p);
+    }
+
+    function getInv(){
+      const inv = loadJSON(KEY.inv, { ver:1, seed:{}, water:{}, fert:{} });
+      inv.seed = inv.seed || {};
+      inv.water = inv.water || {};
+      inv.fert = inv.fert || {};
+      return inv;
+    }
+    function saveInv(inv){ saveJSON(KEY.inv, inv); }
+
+    function addInventory(kind, id, qty){
+      const inv = getInv();
+      inv[kind] = inv[kind] || {};
+      inv[kind][id] = Number(inv[kind][id] || 0) + Number(qty || 0);
+      saveInv(inv);
+    }
+
+    function getInventoryCount(kind, id){
+      const inv = getInv();
+      return Number(inv?.[kind]?.[id] || 0);
+    }
 
     // =========================================================
-    // Board generation
+    // Job generation
     // =========================================================
-    function getBoardState(){
-      return loadJSON(KEY.board, null);
+    function getCardsByBias(biasArr){
+      const allowed = new Set(biasArr);
+      return CARDS_ALL.filter(card => allowed.has(card.rarity));
     }
 
-    function saveBoardState(state){
-      saveJSON(KEY.board, state);
+    function getDisplayPoolByType(type, legend=false){
+      if (legend) return CARDS_ALL.filter(c => ["LR","SP","UR"].includes(c.rarity));
+
+      if (type === "gourmet"){
+        return CARDS_ALL.filter(c => /焼き|ソース|マヨ|塩|明太|牡蠣|味噌|てり|イカ|温泉/.test(c.name));
+      }
+      if (type === "collector"){
+        return CARDS_ALL.filter(c => ["SR","UR","LR"].includes(c.rarity) || /御神体|証|真珠|ビーナス|記憶/.test(c.name));
+      }
+      if (type === "shadow" || type === "picky" || type === "overflow"){
+        return CARDS_ALL.filter(c => c.specialPool === "water_special" || ["SR","UR","SP"].includes(c.rarity));
+      }
+      if (type === "rich" || type === "king" || type === "pilgrim"){
+        return CARDS_ALL.filter(c => ["SR","UR","LR","SP"].includes(c.rarity));
+      }
+      if (type === "guide"){
+        return CARDS_ALL.filter(c => ["N","R"].includes(c.rarity));
+      }
+      return getCardsByBias(TYPE_CONFIG[type]?.wantBias || ["N","R","SR"]);
     }
 
-    function generateReward(star, rnd){
-      const src = REWARD_BY_STAR[star];
-      const ri = (a,b) => Math.floor(rnd() * (b - a + 1)) + a;
+    function makeWant(rnd, type, difficulty, usedIds, legend=false){
+      const pRarityQuest = legend ? 0.52 : (difficulty >= 4 ? 0.22 : 0.08);
+      if (rnd() < pRarityQuest){
+        const rarityPool = legend ? ["UR","LR","SP"] : (difficulty >= 5 ? ["SR","UR","LR"] : difficulty >= 4 ? ["SR","UR"] : ["R","SR"]);
+        const rarity = pick(rarityPool, rnd);
+        return {
+          type:"rarity",
+          rarity,
+          qty: difficulty >= 5 ? 2 : 1,
+          label: `${rarity}以上`
+        };
+      }
+
+      let pool = getDisplayPoolByType(type, legend).filter(c => !usedIds.has(c.id));
+      if (!pool.length) pool = getDisplayPoolByType(type, legend);
+
+      const card = pick(pool, rnd);
+      usedIds.add(card.id);
+
+      let qty = 1;
+      if (difficulty === 2 && rnd() < .35) qty = 2;
+      if (difficulty === 3 && rnd() < .45) qty = 2;
+      if (difficulty === 4) qty = rnd() < .5 ? 2 : 3;
+      if (difficulty >= 5) qty = rnd() < .4 ? 2 : 3;
+
+      if (["collector","ramen","party"].includes(type) && rnd() < .35) qty += 1;
+      if (legend) qty = 1;
+
       return {
-        octo: ri(src.octo[0], src.octo[1]),
-        exp: ri(src.exp[0], src.exp[1]),
-        rep: ri(src.rep[0], src.rep[1])
-      };
-    }
-
-    function generateWantCountByStar(star, rnd){
-      if (star === 1) return 1;
-      if (star === 2) return rnd() < 0.55 ? 1 : 2;
-      if (star === 3) return 2;
-      if (star === 4) return rnd() < 0.45 ? 2 : 3;
-      return rnd() < 0.35 ? 2 : 3;
-    }
-
-    function generateQtyByStar(star, rnd){
-      if (star === 1) return 1 + (rnd() < 0.35 ? 1 : 0);
-      if (star === 2) return 1 + (rnd() < 0.65 ? 1 : 0);
-      if (star === 3) return 2 + (rnd() < 0.4 ? 1 : 0);
-      if (star === 4) return 2 + Math.floor(rnd() * 3);
-      return 3 + Math.floor(rnd() * 3);
-    }
-
-    function maybeRarityQuest(star, rnd){
-      let p = 0;
-      if (star === 3) p = 0.18;
-      if (star === 4) p = 0.28;
-      if (star === 5) p = 0.40;
-      if (rnd() > p) return null;
-
-      const pool = RARITY_POOL_BY_STAR[star];
-      const rarity = seededPick(pool, rnd);
-      const qty = (star >= 4) ? (rnd() < 0.5 ? 1 : 2) : 1;
-      return {
-        type: "rarity",
-        rarity,
-        label: `${rarity}以上`,
+        type:"card",
+        cardId:card.id,
+        name:card.name,
+        img:card.img,
+        rarity:card.rarity,
         qty
       };
     }
 
-    function makeOneJob(star, idx, seedBase){
-      const rnd = seededRandom(`${seedBase}::job::${idx}`);
-      let clientPool = CLIENTS.filter(c => star >= c.minStar && star <= c.maxStar);
-      if (star === 5) clientPool = CLIENTS.filter(c => c.id === "rich");
-      const client = seededPick(clientPool, rnd);
+    function rewardOctoByDifficulty(difficulty, isLegend, type, rnd){
+      const base = isLegend ? [380, 620]
+        : difficulty === 1 ? [30, 60]
+        : difficulty === 2 ? [55, 90]
+        : difficulty === 3 ? [90, 150]
+        : difficulty === 4 ? [140, 240]
+        : [220, 360];
 
-      const wants = [];
-      const wantKinds = generateWantCountByStar(star, rnd);
-      const usedCardIds = new Set();
+      let val = Math.floor(rnd() * (base[1] - base[0] + 1)) + base[0];
+      if (type === "rich") val = Math.round(val * 1.35);
+      if (type === "streamer" && rnd() < .08) val *= 3;
+      return val;
+    }
 
-      for (let i=0;i<wantKinds;i++){
-        const rarityQuest = maybeRarityQuest(star, rnd);
-        if (rarityQuest){
-          wants.push(rarityQuest);
-          continue;
-        }
+    function rewardExpByDifficulty(difficulty, isLegend){
+      return isLegend ? 12 : Math.max(1, difficulty * 2);
+    }
 
-        const rarityPool = RARITY_POOL_BY_STAR[star];
-        let rarity = seededPick(rarityPool, rnd);
+    const REWARD_PROFILES = {
+      light: {
+        fixed: [["water","water_plain_free"],["fert","fert_feel"]],
+        rand: [
+          ["seed","seed_random",24],["water","water_plain_free",18],["fert","fert_feel",18],
+          ["water","water_nice",12],["seed","seed_shop",8]
+        ]
+      },
+      starter: {
+        fixed: [["water","water_plain_free"],["seed","seed_random"]],
+        rand: [
+          ["fert","fert_feel",18],["water","water_nice",12],["seed","seed_shop",10]
+        ]
+      },
+      quick: {
+        fixed: [["water","water_nice"]],
+        rand: [
+          ["seed","seed_shop",18],["seed","seed_line",10],["fert","fert_feel",14],["fert","fert_guts",10],["water","water_nice",16]
+        ]
+      },
+      mischief: {
+        fixed: [["water","water_plain_free"]],
+        rand: [
+          ["water","water_regret",8],["fert","fert_agedama",16],["seed","seed_random",18],["water","water_nice",8]
+        ]
+      },
+      royal: {
+        fixed: [["water","water_yunokawa"]],
+        rand: [
+          ["seed","seed_namara_kawasar",12],["seed","seed_special",8],["water","water_overdo",10],["fert","fert_skip",10],["water","water_yunokawa",18]
+        ]
+      },
+      rich: {
+        fixed: [["water","water_overdo"],["seed","seed_namara_kawasar"]],
+        rand: [
+          ["water","water_supergod",8],["seed","seed_bussasari",18],["seed","seed_special",12],["water","water_yunokawa",14],["fert","fert_timeno",12]
+        ]
+      },
+      steady: {
+        fixed: [["water","water_suspicious"]],
+        rand: [
+          ["fert","fert_guts",15],["fert","fert_skip",10],["water","water_nice",12],["seed","seed_line",10],["seed","seed_shop",12]
+        ]
+      },
+      fert: {
+        fixed: [["fert","fert_guts"]],
+        rand: [
+          ["fert","fert_skip",18],["fert","fert_timeno",6],["water","water_suspicious",10],["seed","seed_shop",12]
+        ]
+      },
+      odd: {
+        fixed: [["fert","fert_agedama"]],
+        rand: [
+          ["water","water_regret",10],["fert","fert_feel",12],["seed","seed_random",18],["water","water_nice",8]
+        ]
+      },
+      collector: {
+        fixed: [["seed","seed_special"]],
+        rand: [
+          ["water","water_yunokawa",10],["water","water_overdo",8],["seed","seed_namara_kawasar",10],["fert","fert_skip",8]
+        ]
+      },
+      water: {
+        fixed: [["water","water_suspicious"]],
+        rand: [
+          ["water","water_rotten",8],["water","water_sea",10],["water","water_yunokawa",12],["water","water_overdo",10]
+        ]
+      },
+      bundle: {
+        fixed: [["seed","seed_random"]],
+        rand: [
+          ["seed","seed_shop",12],["seed","seed_line",10],["water","water_nice",12],["fert","fert_guts",10],["fert","fert_feel",14]
+        ]
+      },
+      gourmet: {
+        fixed: [["water","water_yunokawa"]],
+        rand: [
+          ["water","water_nice",14],["seed","seed_namara_kawasar",10],["fert","fert_feel",10],["water","water_overdo",6]
+        ]
+      },
+      chaos: {
+        fixed: [],
+        rand: [
+          ["water","water_nice",12],["water","water_suspicious",10],["water","water_overdo",8],["seed","seed_special",8],["seed","seed_bussasari",10],["fert","fert_skip",8],["fert","fert_timeno",5]
+        ]
+      },
+      strange: {
+        fixed: [["water","water_rotten"]],
+        rand: [
+          ["water","water_sea",14],["water","water_regret",10],["fert","fert_timeno",8],["seed","seed_bussasari",6]
+        ]
+      },
+      legend: {
+        fixed: [["water","water_overdo"],["fert","fert_timeno"]],
+        rand: [
+          ["water","water_supergod",10],["seed","seed_special",10],["seed","seed_bussasari",14],["seed","seed_namara_kawasar",12],["water","water_rotten",8]
+        ]
+      }
+    };
 
-        if (star === 5 && rarity === "LR" && rnd() < 0.65) {
-          rarity = rnd() < 0.6 ? "SR" : "UR";
-        }
+    function makeRewardItems(profileName, difficulty, isLegend, rnd){
+      const profile = REWARD_PROFILES[profileName] || REWARD_PROFILES.light;
+      const out = [];
 
-        const cards = CARD_CATALOG.filter(c => c.rarity === rarity && !usedCardIds.has(c.id));
-        const card = seededPick(cards.length ? cards : CARD_CATALOG.filter(c => !usedCardIds.has(c.id)), rnd);
-        usedCardIds.add(card.id);
-
-        wants.push({
-          type: "card",
-          cardId: card.id,
-          name: card.name,
-          image: card.image,
-          rarity: card.rarity,
-          qty: generateQtyByStar(star, rnd)
-        });
+      for(const [kind, id] of profile.fixed){
+        out.push({ kind, id, qty: 1 });
       }
 
+      let randCount = difficulty <= 2 ? 1 : difficulty === 3 ? 1 : 2;
+      if (difficulty >= 4) randCount = 2;
+      if (difficulty >= 5) randCount = 3;
+      if (isLegend) randCount = 3;
+
+      const randPool = profile.rand.map(([kind,id,weight]) => ({ kind, id, weight }));
+      for(let i=0;i<randCount;i++){
+        const picked = weightedPick(randPool, rnd);
+        out.push({ kind:picked.kind, id:picked.id, qty:1 });
+      }
+
+      if (isLegend){
+        if (rnd() < .28) out.push({ kind:"water", id:"water_supergod", qty:1 });
+        if (rnd() < .18) out.push({ kind:"seed", id:"seed_special", qty:1 });
+      } else if (difficulty >= 5 && rnd() < .15){
+        out.push({ kind:"water", id:"water_supergod", qty:1 });
+      }
+
+      const map = new Map();
+      out.forEach(item => {
+        const key = `${item.kind}:${item.id}`;
+        map.set(key, { kind:item.kind, id:item.id, qty:(map.get(key)?.qty || 0) + item.qty });
+      });
+
+      return Array.from(map.values());
+    }
+
+    function getDifficultyForVisitor(type, rnd){
+      if (type === "rich") return 5;
+      if (type === "king" || type === "pilgrim") return rnd() < .52 ? 4 : 5;
+      if (type === "guide" || type === "careful" || type === "relax") return rnd() < .65 ? 2 : 3;
+      if (type === "looker" || type === "diet") return rnd() < .55 ? 2 : 3;
+      if (type === "collector" || type === "artisan" || type === "shadow" || type === "gourmet") return rnd() < .35 ? 3 : 4;
+      return rnd() < .34 ? 2 : rnd() < .72 ? 3 : 4;
+    }
+
+    function makeJob(visitor, idx, dateSeed, featured=false, legend=false){
+      const rnd = seededRandom(`${dateSeed}::job::${visitor.id}::${idx}::${legend ? "legend" : "normal"}`);
+      const conf = TYPE_CONFIG[visitor.type] || TYPE_CONFIG.careful;
+      const difficulty = legend ? 5 : Math.min(5, Math.max(featured ? 3 : 1, getDifficultyForVisitor(visitor.type, rnd)));
+      const wantCount = legend ? 1 : difficulty <= 2 ? 1 : difficulty === 3 ? 2 : 2 + (rnd() < .55 ? 1 : 0);
+      const usedIds = new Set();
+      const wants = [];
+      for(let i=0;i<wantCount;i++){
+        wants.push(makeWant(rnd, visitor.type, difficulty, usedIds, legend));
+      }
+
+      const rewards = {
+        octo: rewardOctoByDifficulty(difficulty, legend, visitor.type, rnd),
+        exp: rewardExpByDifficulty(difficulty, legend),
+        rep: legend ? 5 : Math.max(0, difficulty - 1),
+        items: makeRewardItems(
+          legend ? "legend" : (conf.rewardProfile || "light"),
+          difficulty,
+          legend,
+          rnd
+        )
+      };
+
       return {
-        id: `job_${idx + 1}`,
-        clientId: client.id,
-        clientName: client.name,
-        clientImage: client.avatar,
-        difficulty: star,
-        line: seededPick(client.lines, rnd),
+        id:`${legend ? "legend" : "job"}_${idx+1}_${visitor.id}`,
+        visitorId:visitor.id,
+        visitorName:visitor.name,
+        visitorType:visitor.type,
+        visitorImg:visitor.url,
+        difficulty,
+        featured,
+        legend,
+        line: pick(conf.line, rnd),
         wants,
-        rewards: generateReward(star, rnd),
-        completed: false,
-        completedAt: null
+        rewards,
+        completed:false,
+        completedAt:null
       };
     }
 
-    function generateDailyBoard(force=false){
+    function generateBoard(force=false){
       const today = todayKey();
-      const existing = getBoardState();
-      if (!force && existing && existing.date === today) return existing;
+      const old = loadJSON(KEY.board, null);
+      if (!force && old?.date === today) return old;
 
       const rnd = seededRandom(`board::${today}`);
-      const pattern = seededPick(DAILY_PATTERNS, rnd);
+      const selectable = ASSETS.visitors.filter(v => v.type !== "guide");
+      const chosen = pickUnique(selectable, 5, rnd);
 
-      const jobs = pattern.map((star, idx) => makeOneJob(star, idx, today));
+      const featuredIndex = Math.floor(rnd() * chosen.length);
+      const jobs = chosen.map((visitor, idx) => makeJob(visitor, idx, today, idx === featuredIndex, false));
+      const legendChance = 0.38;
+      let legendJob = null;
+
+      if (rnd() < legendChance){
+        const legendCandidates = selectable.filter(v => ["rich","king","pilgrim","picky","overflow"].includes(v.type));
+        const legendVisitor = pick(legendCandidates, rnd);
+        legendJob = makeJob(legendVisitor, 99, today, true, true);
+      }
 
       const state = {
-        date: today,
-        jobs
+        date:today,
+        jobs,
+        legendJob
       };
-      saveBoardState(state);
+      saveJSON(KEY.board, state);
       return state;
     }
 
-    // =========================================================
-    // Status / summary
-    // =========================================================
-    function getJobNeedStatus(job){
-      const result = {
-        ok: true,
-        lines: []
-      };
+    function getBoard(){
+      return loadJSON(KEY.board, null) || generateBoard(false);
+    }
 
-      for (const want of job.wants){
+    // =========================================================
+    // Need status / delivery logic
+    // =========================================================
+    function getNeedStatus(job){
+      const lines = [];
+      let ok = true;
+
+      for(const want of job.wants){
         if (want.type === "card"){
           const owned = getOwnedCount(want.cardId);
-          const ok = owned >= want.qty;
-          result.lines.push({
-            ok,
-            text: `${want.name}　${owned}/${want.qty}`
-          });
-          if (!ok) result.ok = false;
-        } else if (want.type === "rarity"){
-          const ownedList = getOwnedCardsByRarityAtLeast(want.rarity);
-          const total = ownedList.reduce((sum, c) => sum + c.count, 0);
-          const ok = total >= want.qty;
-          result.lines.push({
-            ok,
-            text: `${want.label}　${total}/${want.qty}`
-          });
-          if (!ok) result.ok = false;
+          const good = owned >= want.qty;
+          if (!good) ok = false;
+          lines.push({ ok:good, text:`${want.name}　${owned}/${want.qty}` });
+        }else{
+          const list = getOwnedCardsByRarityAtLeast(want.rarity);
+          const total = list.reduce((sum, c) => sum + c.count, 0);
+          const good = total >= want.qty;
+          if (!good) ok = false;
+          lines.push({ ok:good, text:`${want.label}　${total}/${want.qty}` });
         }
       }
 
-      return result;
+      return { ok, lines };
     }
 
-    function getShortWantText(job){
-      return job.wants.map(w => {
-        if (w.type === "card") return `・${w.name} ×${w.qty}`;
-        return `・${w.label} ×${w.qty}`;
-      }).join("\n");
-    }
-
-    function getPaperStatusLabel(job, need){
-      if (job.completed) return { cls:"done", text:"達成済み" };
-      if (need.ok) return { cls:"ok", text:"納品できる" };
-      return { cls:"ng", text:"カード不足" };
-    }
-
-    // =========================================================
-    // Render
-    // =========================================================
-    function renderInventoryBar(){
-      const bar = $("#inventoryBar");
-      const player = getPlayer();
-
-      const counts = { N:0, R:0, SR:0, UR:0, LR:0 };
-      const book = loadBook();
-      for (const c of CARD_CATALOG){
-        counts[c.rarity] += Number(book?.got?.[c.id]?.count || 0);
+    function consumeNeed(want){
+      if (want.type === "card"){
+        if (getOwnedCount(want.cardId) < want.qty) return false;
+        addOwned(want.cardId, -want.qty);
+        return true;
       }
 
-      bar.innerHTML = `
-        <div class="invChip">所持OCTO: ${getOcto()}</div>
-        <div class="invChip">EXP: ${Number(player.exp || 0)}</div>
-        <div class="invChip">評判: ${Number(player.rep || 0)}</div>
-        <div class="invChip">N: ${counts.N}</div>
-        <div class="invChip">R: ${counts.R}</div>
-        <div class="invChip">SR: ${counts.SR}</div>
-        <div class="invChip">UR: ${counts.UR}</div>
-        <div class="invChip">LR: ${counts.LR}</div>
+      let remain = want.qty;
+      const list = getOwnedCardsByRarityAtLeast(want.rarity);
+      const total = list.reduce((sum, c) => sum + c.count, 0);
+      if (total < remain) return false;
+
+      for(const c of list){
+        if (remain <= 0) break;
+        const use = Math.min(remain, c.count);
+        addOwned(c.id, -use);
+        remain -= use;
+      }
+      return remain === 0;
+    }
+
+    function applyRewards(job){
+      addOcto(job.rewards.octo);
+      addPlayerStats(job.rewards.exp, job.rewards.rep);
+
+      for(const item of job.rewards.items){
+        addInventory(item.kind, item.id, item.qty);
+      }
+    }
+
+    // =========================================================
+    // Rendering helpers
+    // =========================================================
+    function itemIcon(kind){
+      if (kind === "seed") return "🌱";
+      if (kind === "water") return "💧";
+      return "🧪";
+    }
+
+    function itemLabel(kind, id){
+      return REWARD_ITEMS[kind]?.[id]?.name || id;
+    }
+
+    function getTimeMode(){
+      const h = nowTokyo().getHours();
+      return (h >= 6 && h < 18) ? "day" : "night";
+    }
+
+    function renderTop(){
+      $("#todayLabel").textContent = todayLabel();
+      $("#octoLabel").textContent = getOcto().toLocaleString();
+
+      const state = getBoard();
+      const all = [...state.jobs, ...(state.legendJob ? [state.legendJob] : [])];
+      const done = all.filter(v => v.completed).length;
+      $("#doneLabel").textContent = `${done} / ${all.length}`;
+
+      const mode = getTimeMode();
+      $("#heroBg").src = mode === "day" ? ASSETS.bgDay : ASSETS.bgNight;
+      $("#heroBg").alt = mode === "day" ? "昼の背景" : "夜の背景";
+      $("#naviImg").src = NAVI_VISITOR.url;
+
+      const guideRnd = seededRandom(`guide::${todayKey()}`);
+      const guide = pick(GUIDE_LINES, guideRnd);
+      $("#guideTitle").textContent = guide.title;
+      $("#guideText").textContent = guide.text;
+    }
+
+    function renderStock(){
+      const inv = getInv();
+      const player = getPlayer();
+      const book = getBook();
+
+      let totalCards = 0;
+      let n=0,r=0,sr=0,ur=0,lr=0,sp=0;
+      Object.entries(book.got || {}).forEach(([id, entry]) => {
+        const cnt = Number(entry.count || 0);
+        totalCards += cnt;
+        const rarity = entry.rarity || CARD_MAP[id]?.rarity || "N";
+        if (rarity === "N") n += cnt;
+        else if (rarity === "R") r += cnt;
+        else if (rarity === "SR") sr += cnt;
+        else if (rarity === "UR") ur += cnt;
+        else if (rarity === "LR") lr += cnt;
+        else if (rarity === "SP") sp += cnt;
+      });
+
+      const totalSeeds = Object.values(inv.seed || {}).reduce((s, v) => s + Number(v || 0), 0);
+      const totalWaters = Object.values(inv.water || {}).reduce((s, v) => s + Number(v || 0), 0);
+      const totalFerts = Object.values(inv.fert || {}).reduce((s, v) => s + Number(v || 0), 0);
+
+      $("#stockBar").innerHTML = `
+        <div class="stockItem"><div class="stockLabel">📘 所持カード総数</div><div class="stockValue">${totalCards}</div></div>
+        <div class="stockItem"><div class="stockLabel">🌱 タネ所持</div><div class="stockValue">${totalSeeds}</div></div>
+        <div class="stockItem"><div class="stockLabel">💧 水所持</div><div class="stockValue">${totalWaters}</div></div>
+        <div class="stockItem"><div class="stockLabel">🧪 肥料所持</div><div class="stockValue">${totalFerts}</div></div>
+        <div class="stockItem"><div class="stockLabel">⭐ レア内訳</div><div class="stockValue">N ${n} / R ${r} / SR ${sr} / UR ${ur} / LR ${lr}${sp ? ` / SP ${sp}` : ""}</div></div>
+        <div class="stockItem"><div class="stockLabel">🏷️ 評判 / EXP</div><div class="stockValue">${Number(player.rep || 0)} / ${Number(player.exp || 0)}</div></div>
       `;
     }
 
-    function makeWantItemHTML(want){
+    function getVisitorStatus(job){
+      const need = getNeedStatus(job);
+      if (job.completed) return { cls:"done", text:"達成済み", bubble:"受け取ったたこ！" };
+      if (need.ok) return { cls:"ok", text:"納品できる", bubble:"そろってるなら今ほしいたこ" };
+      return { cls:"ng", text:"カード不足", bubble:job.line };
+    }
+
+    function miniWantHTML(want){
+      if (want.type === "card"){
+        return `
+          <div class="miniCard">
+            <img src="${want.img}" alt="${escapeHtml(want.name)}">
+            <div class="miniQty">×${want.qty}</div>
+          </div>
+        `;
+      }
+      return `
+        <div class="miniCard">
+          <div class="miniRarity ${escapeHtml(want.rarity)}">
+            <div>${escapeHtml(want.label)}</div>
+            <div>×${want.qty}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function rewardMiniHTML(job){
+      const items = job.rewards.items.slice(0, 2).map(item => {
+        return `<span class="rewardMini">${itemIcon(item.kind)} ${escapeHtml(itemLabel(item.kind, item.id))}×${item.qty}</span>`;
+      }).join("");
+      return `
+        <span class="rewardMini">🪙 ${job.rewards.octo}</span>
+        ${items}
+      `;
+    }
+
+    function renderJobs(){
+      const state = getBoard();
+      const root = $("#plazaGrid");
+      root.innerHTML = "";
+
+      state.jobs.forEach((job, idx) => {
+        const pos = DESKTOP_POS[idx] || DESKTOP_POS[DESKTOP_POS.length - 1];
+        const status = getVisitorStatus(job);
+        const isReady = status.cls === "ok";
+
+        const card = document.createElement("article");
+        card.className = `visitorSpot ${job.featured ? "featured" : ""} ${isReady ? "ready" : ""}`;
+        card.style.left = pos.left;
+        card.style.top = pos.top;
+
+        card.innerHTML = `
+          <div class="visitorBubble ${job.completed ? "visitorBubbleDone" : ""}">
+            <p class="visitorBubbleText">${escapeHtml(status.bubble)}</p>
+          </div>
+
+          <div class="visitorBody">
+            <div class="visitorAvatarWrap">
+              <div class="visitorAura"></div>
+              <img class="visitorAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
+            </div>
+
+            <div class="visitorPanel">
+              <div class="nameLine">
+                <h3 class="visitorName">${escapeHtml(job.visitorName)}</h3>
+                ${job.featured ? `<span class="statusPill">目玉</span>` : ``}
+              </div>
+
+              <div class="star s${job.difficulty}">${stars(job.difficulty)}</div>
+
+              <div class="statusPill ${status.cls}">${status.text}</div>
+
+              <div class="miniNeeds">${job.wants.slice(0,3).map(miniWantHTML).join("")}</div>
+
+              <div class="rewardLine">${rewardMiniHTML(job)}</div>
+
+              <button class="viewBtn" type="button" data-job-id="${job.id}">依頼を見る</button>
+            </div>
+          </div>
+
+          <div class="visitorShadow"></div>
+        `;
+
+        root.appendChild(card);
+      });
+
+      if (state.legendJob){
+        const job = state.legendJob;
+        const need = getNeedStatus(job);
+        $("#legendCard").classList.add("show");
+        $("#legendCard").innerHTML = `
+          <div class="legendInner">
+            <img class="legendAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
+            <div>
+              <div class="legendCap">本日の特別募集</div>
+              <h3 class="legendName">${escapeHtml(job.visitorName)} — 伝説指定依頼</h3>
+              <p class="legendText">
+                ${escapeHtml(job.line)}<br>
+                報酬：🪙 ${job.rewards.octo}
+                ${job.rewards.items.map(v => ` / ${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)}×${v.qty}`).join("")}
+              </p>
+            </div>
+            <div class="legendRight">
+              <div class="star s5">${stars(job.difficulty)}</div>
+              <div class="statusPill ${job.completed ? "done" : need.ok ? "ok" : "ng"}">${job.completed ? "達成済み" : need.ok ? "納品できる" : "カード不足"}</div>
+              <button class="btn gold" data-job-id="${job.id}">特別依頼を見る</button>
+            </div>
+          </div>
+        `;
+      } else {
+        $("#legendCard").classList.remove("show");
+        $("#legendCard").innerHTML = "";
+      }
+
+      $$("[data-job-id]", document).forEach(btn => {
+        btn.addEventListener("click", () => openJobModal(btn.dataset.jobId));
+      });
+    }
+
+    function findJobById(jobId){
+      const state = getBoard();
+      return state.jobs.find(v => v.id === jobId) || (state.legendJob?.id === jobId ? state.legendJob : null);
+    }
+
+    function wantDetailHTML(want){
       if (want.type === "card"){
         const owned = getOwnedCount(want.cardId);
         return `
           <div class="wantItem">
-            <div class="miniCard">
-              <img src="${want.image}" alt="${escapeHtml(want.name)}">
-              <div class="ownBadge">所持${owned}</div>
-              <div class="qtyBadge">×${want.qty}</div>
+            <div class="wantCard">
+              <img src="${want.img}" alt="${escapeHtml(want.name)}">
+              <div class="ownQty">所持${owned}</div>
+              <div class="needQty">×${want.qty}</div>
             </div>
             <div class="wantName">${escapeHtml(want.name)}</div>
           </div>
@@ -1496,169 +2355,100 @@
 
       const ownedList = getOwnedCardsByRarityAtLeast(want.rarity);
       const total = ownedList.reduce((sum, c) => sum + c.count, 0);
-
       return `
         <div class="wantItem">
-          <div class="miniCard rarityFrame ${want.rarity}">
-            <div class="rarityCard">
-              <div class="rarityBig">${escapeHtml(want.rarity)}</div>
-              <div class="raritySmall">${escapeHtml(want.label)}</div>
+          <div class="wantCard">
+            <div class="miniRarity ${escapeHtml(want.rarity)}" style="font-size:12px">
+              <div style="font-size:22px;margin-bottom:6px">${escapeHtml(want.rarity)}</div>
+              <div>${escapeHtml(want.label)}</div>
             </div>
-            <div class="ownBadge">所持${total}</div>
-            <div class="qtyBadge">×${want.qty}</div>
+            <div class="ownQty">所持${total}</div>
+            <div class="needQty">×${want.qty}</div>
           </div>
           <div class="wantName">${escapeHtml(want.label)}</div>
         </div>
       `;
     }
 
-    function renderBoard(){
-      const state = generateDailyBoard(false);
-      const root = $("#boardGrid");
-      $("#todayLabel").textContent = `本日: ${todayJP()}`;
-
-      if (!state.jobs?.length){
-        root.classList.remove("mobileLayout");
-        root.innerHTML = `<div class="emptyState">貼り紙はまだないたこ。</div>`;
-        $("#doneLabel").textContent = "達成 0 / 0";
-        $("#boardCountText").textContent = "貼り紙 0枚";
-        return;
-      }
-
-      const done = state.jobs.filter(j => j.completed).length;
-      $("#doneLabel").textContent = `達成 ${done} / ${state.jobs.length}`;
-      $("#boardCountText").textContent = `貼り紙 ${state.jobs.length}枚`;
-
-      const mobile = isMobileBoardLayout();
-      root.classList.toggle("mobileLayout", mobile);
-
-      root.innerHTML = state.jobs.map((job, idx) => {
-        const need = getJobNeedStatus(job);
-        const starCls = `star-${job.difficulty}`;
-        const status = getPaperStatusLabel(job, need);
-        const pos = NOTE_LAYOUTS[idx] || NOTE_LAYOUTS[NOTE_LAYOUTS.length - 1];
-
-        const style = mobile
-          ? ""
-          : `left:${pos.left}; top:${pos.top}; transform:rotate(${pos.rot}); --rot:${pos.rot};`;
-
-        const noteClass = mobile && idx === 4 ? "paperNote span2" : "paperNote";
-
-        return `
-          <button class="${noteClass} ${job.completed ? "completed" : ""}"
-                  type="button"
-                  data-job-id="${job.id}"
-                  style="${style}">
-            <div class="pin"></div>
-            <div class="noteTop">
-              <div class="noteClient">
-                <img class="noteAvatar" src="${job.clientImage}" alt="${escapeHtml(job.clientName)}">
-                <div class="noteMeta">
-                  <h3 class="noteName">${escapeHtml(job.clientName)}</h3>
-                  <p class="noteShort">${escapeHtml(job.line)}</p>
-                </div>
-              </div>
-              <div class="noteStars ${starCls}">${stars(job.difficulty)}</div>
-            </div>
-
-            <div class="noteWant">${escapeHtml(getShortWantText(job))}</div>
-
-            <div class="noteReward">
-              <span class="miniChip">OCTO +${job.rewards.octo}</span>
-              <span class="miniChip">EXP +${job.rewards.exp}</span>
-            </div>
-
-            <div class="noteFooter">
-              <div class="noteTap">${job.completed ? "完了した貼り紙" : "タップで依頼を見る"}</div>
-              <div class="noteStatus ${status.cls}">${status.text}</div>
-            </div>
-
-            <div class="noteStamp">達成済</div>
-          </button>
-        `;
-      }).join("");
-
-      $$(".paperNote", root).forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = btn.dataset.jobId;
-          openJobModal(id);
-        });
-      });
-    }
-
-    function renderJobDetail(job){
-      const need = getJobNeedStatus(job);
-      const starCls = `star-${job.difficulty}`;
+    function rewardDetailHTML(job){
+      const itemLines = job.rewards.items.map(v => {
+        const label = itemLabel(v.kind, v.id);
+        return `${itemIcon(v.kind)} ${label} ×${v.qty}`;
+      }).join("\n");
 
       return `
-        <article class="noticeCard ${job.completed ? "completed" : ""}" data-job-id="${job.id}">
-          <div class="noticeInner">
-            <div class="noticeHead">
-              <img class="clientAvatar" src="${job.clientImage}" alt="${escapeHtml(job.clientName)}">
-              <div class="clientMeta">
-                <h2 class="clientName" id="jobModalTitle">${escapeHtml(job.clientName)}</h2>
-                <p class="clientLine">${escapeHtml(job.line)}</p>
-              </div>
-
-              <div class="difficultyBox">
-                <div class="starText ${starCls}">${stars(job.difficulty)}</div>
-                <div class="tagRow">
-                  <span class="tag">難易度 ${job.difficulty}</span>
-                  <span class="tag">報酬大 ${job.difficulty >= 4 ? "あり" : "ふつう"}</span>
-                </div>
-              </div>
-            </div>
-
-            <p class="wantTitle">探しているカード</p>
-            <div class="wantGrid">
-              ${job.wants.map(makeWantItemHTML).join("")}
-            </div>
-
-            <div class="rewardBox">
-              <span class="rewardChip">OCTO +${job.rewards.octo}</span>
-              <span class="rewardChip">EXP +${job.rewards.exp}</span>
-              <span class="rewardChip">評判 +${job.rewards.rep}</span>
-            </div>
-
-            <div class="noticeFoot">
-              <div class="statusText">
-                ${need.lines.map(line => `
-                  <div class="${line.ok ? "statusOk" : "statusNg"}">${escapeHtml(line.text)}</div>
-                `).join("")}
-              </div>
-
-              <button class="pixel-btn"
-                      id="modalDeliverBtn"
-                      data-job-id="${job.id}"
-                      ${job.completed || !need.ok ? "disabled" : ""}>
-                ${job.completed ? "納品済み" : "納品する"}
-              </button>
-            </div>
+        <div class="rewardGrid">
+          <div class="rewardBox">
+            <div class="rewardBoxLabel">基本報酬</div>
+            <div class="rewardBoxValue">🪙 ${job.rewards.octo} オクト</div>
           </div>
-        </article>
+          <div class="rewardBox">
+            <div class="rewardBoxLabel">成長報酬</div>
+            <div class="rewardBoxValue">EXP +${job.rewards.exp}\n評判 +${job.rewards.rep}</div>
+          </div>
+          <div class="rewardBox" style="grid-column:1 / -1;">
+            <div class="rewardBoxLabel">追加資材</div>
+            <div class="rewardBoxValue">${escapeHtml(itemLines)}</div>
+          </div>
+        </div>
       `;
     }
 
-    // =========================================================
-    // Modal
-    // =========================================================
-    function openJobModal(jobId){
-      const state = getBoardState();
-      if (!state?.jobs?.length) return;
-      const job = state.jobs.find(j => j.id === jobId);
-      if (!job) return;
+    function renderModal(job){
+      const need = getNeedStatus(job);
+      $("#jobModalBody").innerHTML = `
+        <div class="detailTop">
+          <img class="detailAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
+          <div>
+            <h2 class="detailName" id="jobTitle">${escapeHtml(job.visitorName)}</h2>
+            <p class="detailLine">${escapeHtml(job.line)}</p>
+          </div>
+          <div class="detailRight">
+            <div class="star s${job.difficulty}">${stars(job.difficulty)}</div>
+            <div class="detailTags">
+              <span class="tag">難易度 ${job.difficulty}</span>
+              <span class="tag">${job.legend ? "特別依頼" : job.featured ? "目玉依頼" : "通常依頼"}</span>
+            </div>
+          </div>
+        </div>
 
-      $("#jobModalBody").innerHTML = renderJobDetail(job);
+        <section>
+          <h3 class="sectionTitle">探しているカード</h3>
+          <div class="wantGrid">
+            ${job.wants.map(wantDetailHTML).join("")}
+          </div>
+        </section>
+
+        <section>
+          <h3 class="sectionTitle">報酬</h3>
+          ${rewardDetailHTML(job)}
+        </section>
+
+        <section class="statusList">
+          ${need.lines.map(v => `<div class="statusLine ${v.ok ? "ok":"ng"}">${escapeHtml(v.text)}</div>`).join("")}
+        </section>
+
+        <div class="modalActions">
+          <div class="modalNote">
+            ${job.completed ? "この依頼はすでに達成済みたこ。" : need.ok ? "必要なカードが足りてるたこ。今すぐ納品できるたこ。" : "カードが足りないたこ。所持枚数が増えたらまた来るたこ。"}
+          </div>
+          <button class="btn gold" id="deliverBtn" ${job.completed || !need.ok ? "disabled" : ""}>${job.completed ? "納品済み" : "納品する"}</button>
+        </div>
+      `;
+
+      const deliverBtn = $("#deliverBtn");
+      if (deliverBtn){
+        deliverBtn.addEventListener("click", () => deliverJob(job.id));
+      }
+    }
+
+    function openJobModal(jobId){
+      const job = findJobById(jobId);
+      if (!job) return;
+      renderModal(job);
       $("#jobModal").classList.add("show");
       $("#jobModal").setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
-
-      const btn = $("#modalDeliverBtn");
-      if (btn){
-        btn.addEventListener("click", () => {
-          deliverJob(jobId, { keepModal:true });
-        });
-      }
     }
 
     function closeJobModal(){
@@ -1667,146 +2457,117 @@
       document.body.style.overflow = "";
     }
 
-    function refreshOpenedModalIfNeeded(){
-      const modal = $("#jobModal");
-      if (!modal.classList.contains("show")) return;
+    async function showRewardDrop(job){
+      const box = $("#rewardDrop");
+      const list = $("#rewardRevealList");
+      $("#rewardDropTitle").textContent = `${job.visitorName} が喜んでるたこ！`;
+      $("#rewardDropSub").textContent = `納品報酬を受け取ったたこ。\n下の順で追加されるたこ。`;
+      list.innerHTML = "";
 
-      const btn = $("#modalDeliverBtn");
-      const jobId = btn?.dataset?.jobId;
-      if (!jobId) return;
+      const lines = [
+        `🪙 ${job.rewards.octo} オクト`,
+        `EXP +${job.rewards.exp} / 評判 +${job.rewards.rep}`,
+        ...job.rewards.items.map(v => `${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)} ×${v.qty}`)
+      ];
 
-      const state = getBoardState();
-      const job = state?.jobs?.find(j => j.id === jobId);
-      if (!job){
-        closeJobModal();
-        return;
-      }
+      box.classList.add("show");
 
-      $("#jobModalBody").innerHTML = renderJobDetail(job);
-      const nextBtn = $("#modalDeliverBtn");
-      if (nextBtn){
-        nextBtn.addEventListener("click", () => {
-          deliverJob(jobId, { keepModal:true });
-        });
+      for(const line of lines){
+        const row = document.createElement("div");
+        row.className = "rewardReveal";
+        row.textContent = line;
+        list.appendChild(row);
+        await new Promise(r => setTimeout(r, 170));
+        row.classList.add("show");
       }
     }
 
-    // =========================================================
-    // Delivery
-    // =========================================================
-    function consumeWant(want){
-      if (want.type === "card"){
-        const owned = getOwnedCount(want.cardId);
-        if (owned < want.qty) return false;
-        addOwned(want.cardId, -want.qty);
-        return true;
-      }
-
-      if (want.type === "rarity"){
-        let remain = want.qty;
-        const ownedList = getOwnedCardsByRarityAtLeast(want.rarity);
-        const total = ownedList.reduce((sum, c) => sum + c.count, 0);
-        if (total < want.qty) return false;
-
-        for (const c of ownedList){
-          if (remain <= 0) break;
-          const use = Math.min(remain, c.count);
-          addOwned(c.id, -use);
-          remain -= use;
-        }
-        return remain === 0;
-      }
-
-      return false;
+    function hideRewardDrop(){
+      $("#rewardDrop").classList.remove("show");
+      $("#rewardRevealList").innerHTML = "";
     }
 
-    function deliverJob(jobId, opts = {}){
-      const state = getBoardState();
-      if (!state?.jobs?.length) return;
+    function saveBoardState(state){
+      saveJSON(KEY.board, state);
+    }
 
-      const job = state.jobs.find(j => j.id === jobId);
+    function deliverJob(jobId){
+      const state = getBoard();
+      const job = state.jobs.find(v => v.id === jobId) || (state.legendJob?.id === jobId ? state.legendJob : null);
       if (!job || job.completed) return;
 
-      const need = getJobNeedStatus(job);
+      const need = getNeedStatus(job);
       if (!need.ok){
-        showToast("カードが足りないたこ。");
         renderAll();
-        if (opts.keepModal) refreshOpenedModalIfNeeded();
         return;
       }
 
-      for (const want of job.wants){
-        const ok = consumeWant(want);
+      for(const want of job.wants){
+        const ok = consumeNeed(want);
         if (!ok){
-          showToast("納品に失敗したたこ。");
           renderAll();
-          if (opts.keepModal) refreshOpenedModalIfNeeded();
           return;
         }
       }
 
-      addOcto(job.rewards.octo);
-      addPlayerStats(job.rewards.exp, job.rewards.rep);
-
+      applyRewards(job);
       job.completed = true;
       job.completedAt = Date.now();
       saveBoardState(state);
 
-      if (job.clientId === "rich"){
-        showToast(`札束タコ民が大喜び！ OCTO +${job.rewards.octo}`);
-      } else {
-        showToast(`納品完了！ OCTO +${job.rewards.octo}`);
-      }
-
+      closeJobModal();
       renderAll();
-      if (opts.keepModal) refreshOpenedModalIfNeeded();
+      showRewardDrop(job);
     }
 
-    // =========================================================
-    // Boot
-    // =========================================================
     function renderAll(){
-      renderInventoryBar();
-      renderBoard();
+      renderTop();
+      renderStock();
+      renderJobs();
     }
 
+    // =========================================================
+    // UI events
+    // =========================================================
     function bindUI(){
       $("#backBtn").addEventListener("click", () => {
         if (history.length > 1) history.back();
         else location.href = "./";
       });
 
-      $("#resetTodayBtn").addEventListener("click", () => {
-        const ok = confirm("本日の貼り紙を作り直します。達成状態も今日の分はリセットされます。よろしいですか？");
-        if (!ok) return;
-        generateDailyBoard(true);
+      $("#rerollBtn").addEventListener("click", () => {
+        if (!confirm("本日の依頼を作り直します。今日の達成状態もこのページ分はリセットされます。よろしいですか？")) return;
+        generateBoard(true);
         closeJobModal();
         renderAll();
-        showToast("本日の貼り紙を作り直したたこ。");
       });
 
       $("#jobModalClose").addEventListener("click", closeJobModal);
-
       $("#jobModal").addEventListener("click", (e) => {
         if (e.target === $("#jobModal")) closeJobModal();
       });
 
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeJobModal();
+      $("#rewardDropClose").addEventListener("click", hideRewardDrop);
+      $("#rewardDrop").addEventListener("click", (e) => {
+        if (e.target === $("#rewardDrop")) hideRewardDrop();
       });
 
-      let resizeTimer = null;
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape"){
+          closeJobModal();
+          hideRewardDrop();
+        }
+      });
+
+      let rt = null;
       window.addEventListener("resize", () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-          renderBoard();
-        }, 80);
+        clearTimeout(rt);
+        rt = setTimeout(renderJobs, 80);
       });
     }
 
-    ensureMetaDefaults();
-    ensureDemoBookIfMissing();
-    generateDailyBoard(false);
+    ensureDefaults();
+    generateBoard(false);
     bindUI();
     renderAll();
   })();
