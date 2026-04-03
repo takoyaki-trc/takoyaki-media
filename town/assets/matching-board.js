@@ -5,11 +5,11 @@
   // Keys
   // =========================================================
   const KEY = {
-    board: "ttc_matching_board_v2",
+    board: "ttc_matching_board_v3",
     octo: "roten_v1_octo",
     book: "tf_v1_book",
     inv: "tf_v1_inv",
-    matchingMeta: "ttc_matching_meta_v2"
+    matchingMeta: "ttc_matching_meta_v3"
   };
 
   // =========================================================
@@ -56,7 +56,7 @@
     }
     return function () {
       h += h << 13; h ^= h >>> 7;
-      h += h << 3;  h ^= h >>> 17;
+      h += h << 3; h ^= h >>> 17;
       h += h << 5;
       return ((h >>> 0) / 4294967295);
     };
@@ -189,30 +189,6 @@
     pilgrim: 2
   };
 
-  const LOVE_TYPE_LABEL = {
-    impulse: "一目惚れ型",
-    picky: "幻影追跡型",
-    king: "理想高め型",
-    flipper: "感情ブレ型",
-    careful: "慎重片想い型",
-    looker: "未練ごまかし型",
-    rich: "執着課金型",
-    climber: "完走復縁型",
-    guide: "入口沼型",
-    relax: "安心依存型",
-    artisan: "審美本気型",
-    diet: "理屈敗北型",
-    overflow: "はみ出し恋型",
-    collector: "神格保存型",
-    shadow: "湿度記憶型",
-    ramen: "追加発注型",
-    streamer: "盛り上がり恋型",
-    gourmet: "味記憶型",
-    opener: "秘密暴き型",
-    party: "祭りのあと型",
-    pilgrim: "復縁執念型"
-  };
-
   const HERO_LINES = [
     "今日は誰に焼かれるたこ？",
     "条件が合えば、もうそれは運命たこ。",
@@ -224,7 +200,6 @@
     "……その相手、重いたこ",
     "ヒント見すぎると、恋が作業になるたこ",
     "一発で当てたら、かなりモテるたこ",
-    "まだ追いかけるの？ たこ",
     "今日は沼が多いたこ",
     "♥か💔かは、渡してからのお楽しみたこ"
   ];
@@ -234,137 +209,105 @@
       "忘れられない相手ほど、高くつくたこ",
       "もう誰かのものでも、気持ちは止まらないたこ",
       "値段が上がるほど、恋は本物に見えるたこ",
-      "手に入らない時間が、気持ちを育てたこ",
-      "遅すぎたって分かってる。でも欲しいたこ",
-      "一度離れたあの子に、今さら本気になったたこ"
+      "手に入らない時間が、気持ちを育てたこ"
     ],
     looker: [
       "別に未練なんてないたこ…ちょっと気になるだけたこ",
       "もう終わったはずなのに、目で追ってしまうたこ",
-      "買わないつもりなのに、見に来てしまったたこ",
-      "他でもいいのに、この一枚だけ残るたこ",
-      "見るだけで済む恋なら、楽だったたこ"
+      "買わないつもりなのに、見に来てしまったたこ"
     ],
     impulse: [
       "見つけた瞬間、もう決まってたこ",
       "逃したら一生後悔するやつたこ",
-      "理由はあとでいいたこ",
-      "これは運命たこ",
-      "考える前に手が伸びたたこ"
+      "これは運命たこ"
     ],
     careful: [
       "本当にこの子でいいのか、まだ迷ってるたこ",
       "欲しいけど、今じゃない気もするたこ",
-      "また傷つくくらいなら慎重になるたこ",
-      "似てるカードじゃダメなんだたこ",
       "決め手が足りないたこ"
     ],
     climber: [
       "ここまで来たら、あと一枚なんだたこ",
       "完成するまで終われないたこ",
-      "途中でやめるのが一番後悔するたこ",
-      "残り一枚が一番遠いたこ",
-      "ゴールが見えてるのに届かないたこ"
+      "残り一枚が一番遠いたこ"
     ],
     flipper: [
       "欲しい気もするし、やめといたほうがいい気もするたこ",
       "今は正しい気がするたこ（たぶん）",
-      "夜の判断は危ないたこ",
-      "でも今は欲しいたこ",
-      "明日の自分に任せるたこ"
+      "夜の判断は危ないたこ"
     ],
     relax: [
       "そばにあるだけで落ち着くたこ",
       "理由はないけど好きなたこ",
-      "こういうのが一番残るたこ",
-      "ゆっくり選びたい気分たこ",
-      "刺激じゃなくて安心たこ"
+      "こういうのが一番残るたこ"
     ],
     artisan: [
       "分かるやつにしか渡したくないたこ",
       "見た目じゃなくて中身たこ",
-      "雑に扱われるくらいなら渡さないたこ",
-      "これは作品たこ",
-      "価値が分かる相手に渡したいたこ"
+      "これは作品たこ"
     ],
     diet: [
       "欲しくないって言えば欲しくなくなるたこ",
       "理屈ではいらないたこ",
-      "でも感情が違うたこ",
-      "持たなければ傷つかないたこ",
       "結論：欲しいたこ"
     ],
     picky: [
       "あの日確かにそこにいたたこ",
-      "誰も信じてくれないたこ",
       "あの一枚じゃなきゃダメなたこ",
-      "見えてるのに届かないたこ",
       "まだどこかにあるはずたこ"
     ],
     king: [
       "余にふさわしい相手は、そう簡単には現れないたこ",
-      "一目で心を奪えないなら、恋としては弱いたこ",
       "格も見た目も揃って、ようやく想う価値があるたこ",
-      "安っぽい再会では、心は動かないたこ",
       "余が惹かれる以上、それはもう特別なたこ"
     ],
     guide: [
       "案内する側でも、忘れられない一枚くらいあるたこ",
-      "分かりやすい相手ほど、長く心に残ることもあるたこ",
       "最初の一枚って、だいたい一番忘れにくいたこ"
     ],
     overflow: [
       "ちゃんと並んでる子より、はみ出した一枚が気になるたこ",
-      "普通じゃ足りない心が、今日も勝ってしまったたこ",
-      "収まりの悪い恋ほど、長持ちするたこ"
+      "普通じゃ足りない心が、今日も勝ってしまったたこ"
     ],
     collector: [
       "紙の匂いが忘れられないたこ",
       "あの手ざわりを、まだ指先が覚えてるたこ",
-      "保存用まで欲しくなる相手って、だいたい本気なたこ",
-      "あの角の輝きが、まだ頭から離れないたこ"
+      "保存用まで欲しくなる相手って、だいたい本気なたこ"
     ],
     shadow: [
       "濡れた記憶ほど、乾いても残るたこ",
-      "しけった空気の中で出会った一枚が忘れられないたこ",
-      "乾いた恋より、湿った未練の方がしつこいたこ"
+      "しけった空気の中で出会った一枚が忘れられないたこ"
     ],
     ramen: [
       "一枚じゃ足りない恋もあるたこ",
-      "会えたら終わりじゃなくて、もっと欲しくなるたこ",
-      "好きって、だいたい追加注文されるたこ"
+      "会えたら終わりじゃなくて、もっと欲しくなるたこ"
     ],
     streamer: [
       "見せ方ひとつで、恋は何倍にも膨らむたこ",
-      "盛り上がる相手ほど、あとで本気になるたこ",
-      "反応が大きいほど、気持ちまで本物っぽくなるたこ"
+      "盛り上がる相手ほど、あとで本気になるたこ"
     ],
     gourmet: [
       "あの日食べたあの味が忘れられなくて…",
       "ソースの香りだけで、昔を思い出すたこ",
-      "あの焼き色を、もう一度見たいたこ",
       "味の記憶って、恋よりしつこいたこ"
     ],
     opener: [
       "中身を知る前から、惹かれてたたこ",
-      "未開封のまま終わるには、気持ちが強すぎたこ",
-      "知らないまま諦める方が、たぶん後悔するたこ"
+      "未開封のまま終わるには、気持ちが強すぎたこ"
     ],
     party: [
       "一枚だけじゃ、この気持ちは盛り上がらないたこ",
-      "にぎやかな恋ほど、あとで静かに刺さるたこ",
       "祭りのあとに気づく恋もあるたこ"
     ],
     pilgrim: [
       "置き忘れたあの日のカードをまた手に入れたくて",
       "一度手放したあの一枚を、まだ忘れられないたこ",
-      "昔の恋みたいに、気づけばまた追いかけてたこ",
       "片想いだって分かってても、探してしまうたこ"
     ]
   };
 
   // =========================================================
-  // Card pools / card master
+  // Card pools / master
   // =========================================================
   const CARD_POOLS = {
     N: [
@@ -502,19 +445,17 @@
     ]
   };
 
-  const RARITY_ORDER = { N: 1, R: 2, SR: 3, UR: 4, LR: 5, SP: 6 };
-
   const CARDS_ALL = [
     ...CARD_POOLS.N.map(v => ({ ...v, id: v.no, rarity: "N" })),
     ...CARD_POOLS.R.map(v => ({ ...v, id: v.no, rarity: "R" })),
     ...CARD_POOLS.SR.map(v => ({ ...v, id: v.no, rarity: "SR" })),
     ...CARD_POOLS.UR.map(v => ({ ...v, id: v.no, rarity: "UR" })),
     ...CARD_POOLS.LR.map(v => ({ ...v, id: v.no, rarity: "LR" })),
-    ...TAKOPI_SEED_POOL.map(v => ({ ...v, id: v.id, specialPool: "takopi" })),
-    ...BUSSASARI_POOL.map(v => ({ ...v, id: v.id, specialPool: "bussasari" })),
-    ...NAMARA_POOL.map(v => ({ ...v, id: v.id, specialPool: "namara" })),
-    ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id: `${v.id}_rotten`, specialPool: "water_special" })),
-    ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea`, specialPool: "water_special" }))
+    ...TAKOPI_SEED_POOL.map(v => ({ ...v, id: v.id })),
+    ...BUSSASARI_POOL.map(v => ({ ...v, id: v.id })),
+    ...NAMARA_POOL.map(v => ({ ...v, id: v.id })),
+    ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id: `${v.id}_rotten` })),
+    ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea` }))
   ];
 
   const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
@@ -644,120 +585,56 @@
     }
   };
 
-  // =========================================================
-  // Book / inv defaults
-  // =========================================================
-  function ensureDefaults() {
-    if (localStorage.getItem(KEY.octo) == null) localStorage.setItem(KEY.octo, "1000");
-
-    const inv = loadJSON(KEY.inv, null);
-    if (!inv) {
-      saveJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
-    } else {
-      inv.ver = 1;
-      inv.seed = inv.seed || {};
-      inv.water = inv.water || {};
-      inv.fert = inv.fert || {};
-      saveJSON(KEY.inv, inv);
-    }
-
-    const book = loadJSON(KEY.book, null);
-    if (!book) {
-      const got = {};
-      CARDS_ALL.forEach(card => {
-        let count = 0;
-        if (card.rarity === "N") count = Math.random() < 0.6 ? Math.floor(Math.random() * 4) : 0;
-        else if (card.rarity === "R") count = Math.random() < 0.45 ? Math.floor(Math.random() * 3) : 0;
-        else if (card.rarity === "SR") count = Math.random() < 0.28 ? Math.floor(Math.random() * 2) : 0;
-        else if (card.rarity === "UR") count = Math.random() < 0.12 ? 1 : 0;
-        else if (card.rarity === "LR") count = Math.random() < 0.05 ? 1 : 0;
-        else if (card.rarity === "SP") count = 0;
-        if (count > 0) got[card.id] = { count, name: card.name, rarity: card.rarity };
-      });
-      saveJSON(KEY.book, { got });
-    }
-
-    const meta = loadJSON(KEY.matchingMeta, null);
-    if (!meta) {
-      saveJSON(KEY.matchingMeta, {
-        statsByType: {},
-        reunionMap: {}
-      });
-    }
+  function itemIcon(kind) {
+    if (kind === "seed") return "🌱";
+    if (kind === "water") return "💧";
+    return "🧪";
   }
 
-  function getBook() {
-    const book = loadJSON(KEY.book, { got: {} });
-    book.got = book.got || {};
-    return book;
-  }
-
-  function saveBook(book) {
-    saveJSON(KEY.book, book);
-  }
-
-  function getOwnedCount(cardId) {
-    return Number(getBook().got?.[cardId]?.count || 0);
-  }
-
-  function addOwned(cardId, delta) {
-    const book = getBook();
-    const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
-    if (!book.got[cardId]) book.got[cardId] = { count: 0, name: info.name, rarity: info.rarity };
-    book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + Number(delta || 0));
-    if (book.got[cardId].count <= 0) delete book.got[cardId];
-    saveBook(book);
-  }
-
-  function getAllOwnedCards() {
-    const book = getBook();
-    return CARDS_ALL
-      .map(card => ({
-        ...card,
-        count: Number(book.got?.[card.id]?.count || 0)
-      }))
-      .filter(v => v.count > 0)
-      .sort((a, b) => {
-        const rd = (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0);
-        if (rd !== 0) return rd;
-        return a.name.localeCompare(b.name, "ja");
-      });
-  }
-
-  function getOcto() {
-    return Number(localStorage.getItem(KEY.octo) || 0);
-  }
-
-  function addOcto(delta) {
-    localStorage.setItem(KEY.octo, String(Math.max(0, getOcto() + Number(delta || 0))));
-  }
-
-  function getInv() {
-    const inv = loadJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
-    inv.seed = inv.seed || {};
-    inv.water = inv.water || {};
-    inv.fert = inv.fert || {};
-    return inv;
-  }
-
-  function saveInv(inv) {
-    saveJSON(KEY.inv, inv);
+  function itemLabel(kind, id) {
+    return REWARD_ITEMS[kind]?.[id]?.name || id;
   }
 
   function addInventory(kind, id, qty) {
-    const inv = getInv();
+    const inv = loadJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
     inv[kind] = inv[kind] || {};
     inv[kind][id] = Number(inv[kind][id] || 0) + Number(qty || 0);
-    saveInv(inv);
+    saveJSON(KEY.inv, inv);
   }
 
   // =========================================================
-  // Hint system
+  // Meta / stats
+  // =========================================================
+  function getMeta() {
+    return loadJSON(KEY.matchingMeta, {
+      totalAttempts: 0,
+      totalSuccess: 0,
+      totalFail: 0,
+      statsByType: {}
+    });
+  }
+
+  function saveMeta(meta) {
+    saveJSON(KEY.matchingMeta, meta);
+  }
+
+  function ensureTypeStats(meta, type) {
+    meta.statsByType[type] = meta.statsByType[type] || { attempts: 0, success: 0, fail: 0 };
+    return meta.statsByType[type];
+  }
+
+  function getOverallRate() {
+    const meta = getMeta();
+    if (!meta.totalAttempts) return 0;
+    return Math.round((meta.totalSuccess / meta.totalAttempts) * 100);
+  }
+
+  // =========================================================
+  // Hints
   // =========================================================
   function deriveTags(card) {
     const tags = new Set();
     const name = card.name || "";
-
     if (/ソース/.test(name)) tags.add("sauce");
     if (/塩/.test(name)) tags.add("salt");
     if (/マヨ/.test(name)) tags.add("mayo");
@@ -777,208 +654,144 @@
     if (/化石|記憶/.test(name)) tags.add("memory");
     if (/イカ/.test(name)) tags.add("ika");
     if (/焼き/.test(name)) tags.add("yaki");
-
-    if (card.rarity === "N") tags.add("normal");
-    if (card.rarity === "R") tags.add("rare");
-    if (card.rarity === "SR") tags.add("super");
-    if (card.rarity === "UR") tags.add("ultra");
-    if (card.rarity === "LR") tags.add("legend");
-    if (card.rarity === "SP") tags.add("special");
-
     return Array.from(tags);
   }
 
   const HINT_TEXTS = {
-    sauce: [
-      "ソースの香りだけで、昔を思い出すたこ",
-      "濃い匂いの記憶って、しつこく残るたこ",
-      "あの日の香りに、まだ引っ張られてるたこ"
-    ],
-    salt: [
-      "しょっぱい記憶ほど、あとで恋しくなるたこ",
-      "塩気のある思い出って、妙に刺さるたこ",
-      "淡いのに、なぜか忘れられないたこ"
-    ],
-    mayo: [
-      "やさしく包んでくれる感じに弱いたこ",
-      "丸くてやわらかい相手ほど残るたこ",
-      "見た目よりも余韻が長いたこ"
-    ],
-    mentai: [
-      "少し刺激がある相手に、まだ未練があるたこ",
-      "ピリッとした子ほど、記憶に残るたこ",
-      "大人しくない相手が忘れられないたこ"
-    ],
-    cheese: [
-      "濃厚すぎる相手って、だいたい忘れられないたこ",
-      "重たいのに、また会いたくなるたこ",
-      "とろける感じの記憶が残ってるたこ"
-    ],
-    miso: [
-      "少し深い味わいのある相手に弱いたこ",
-      "派手じゃないのに、妙に残るたこ"
-    ],
-    oyster: [
-      "だしみたいに静かに残る相手がいるたこ",
-      "旨みが遅れてくる感じ、まだ好きなたこ"
-    ],
-    onsen: [
-      "湯気の向こうにいるみたいな相手を探してるたこ",
-      "温かい記憶って、妙に戻りたくなるたこ",
-      "ご利益みたいな空気に弱いたこ"
-    ],
-    pearl: [
-      "黒く光る子って、忘れにくいたこ",
-      "真珠みたいな輝き、まだ目に残ってるたこ",
-      "ちょっと危ない匂いのする相手ほど惹かれるたこ"
-    ],
-    goddess: [
-      "女神っぽい相手って、だいたい距離感がおかしいたこ",
-      "ありがたいのに振り回されるたこ",
-      "高嶺なのに妙に近い相手が忘れられないたこ"
-    ],
-    god: [
-      "もう人じゃない感じの相手に弱いたこ",
-      "信仰みたいな気持ちになるたこ"
-    ],
-    love: [
-      "恋っぽい空気をまとった相手が忘れられないたこ",
-      "ちゃんと恋だった気がするたこ"
-    ],
-    loop: [
-      "何度でも戻ってくる相手に弱いたこ",
-      "終わったはずなのに、また会いたくなるたこ"
-    ],
-    darts: [
-      "刺さる相手って、ほんとに急に来るたこ",
-      "一撃で決まる恋、嫌いじゃないたこ"
-    ],
-    roten: [
-      "露店の灯りの下で会った気がするたこ",
-      "ふらっと出会ったのに、妙に残ってるたこ"
-    ],
-    fire: [
-      "熱すぎる相手ほど、あとで恋しくなるたこ",
-      "火傷みたいな記憶が残ってるたこ"
-    ],
-    memory: [
-      "昔の記憶に触れると、戻りたくなるたこ",
-      "思い出そのものみたいな相手を探してるたこ"
-    ],
-    ika: [
-      "ちょっとズルそうな相手、嫌いじゃないたこ",
-      "危ういのに光る相手を探してるたこ"
-    ],
-    yaki: [
-      "焼き色の記憶って、案外しつこいたこ",
-      "あの日の熱さを、まだ探してるたこ",
-      "香ばしい思い出ほど忘れにくいたこ"
-    ],
-    normal: [
-      "派手じゃないのに、なぜか残るたこ"
-    ],
-    rare: [
-      "手が届きそうで届かない距離が苦しいたこ"
-    ],
-    super: [
-      "少し背伸びした感じの相手を探してるたこ"
-    ],
-    ultra: [
-      "明らかに特別な相手って、隠せないたこ"
-    ],
-    legend: [
-      "もう伝説みたいな相手を、本気で探してるたこ"
-    ],
-    special: [
-      "普通じゃ説明できない相手に惹かれるたこ"
-    ]
+    sauce: ["ソースの香りだけで、昔を思い出すたこ", "濃い匂いの記憶って、しつこく残るたこ"],
+    salt: ["しょっぱい記憶ほど、あとで恋しくなるたこ", "淡いのに、なぜか忘れられないたこ"],
+    mayo: ["やさしく包んでくれる感じに弱いたこ", "丸くてやわらかい相手ほど残るたこ"],
+    mentai: ["少し刺激がある相手に、まだ未練があるたこ", "ピリッとした子ほど、記憶に残るたこ"],
+    cheese: ["濃厚すぎる相手って、だいたい忘れられないたこ", "とろける感じの記憶が残ってるたこ"],
+    miso: ["少し深い味わいのある相手に弱いたこ"],
+    oyster: ["だしみたいに静かに残る相手がいるたこ"],
+    onsen: ["湯気の向こうにいるみたいな相手を探してるたこ", "ご利益みたいな空気に弱いたこ"],
+    pearl: ["黒く光る子って、忘れにくいたこ", "真珠みたいな輝き、まだ目に残ってるたこ"],
+    goddess: ["高嶺なのに妙に近い相手が忘れられないたこ"],
+    god: ["もう人じゃない感じの相手に弱いたこ"],
+    love: ["恋っぽい空気をまとった相手が忘れられないたこ"],
+    loop: ["終わったはずなのに、また会いたくなるたこ"],
+    darts: ["刺さる相手って、ほんとに急に来るたこ"],
+    roten: ["露店の灯りの下で会った気がするたこ"],
+    fire: ["火傷みたいな記憶が残ってるたこ", "あの日の熱さを、まだ探してるたこ"],
+    memory: ["思い出そのものみたいな相手を探してるたこ"],
+    ika: ["危ういのに光る相手を探してるたこ"],
+    yaki: ["香ばしい思い出ほど忘れにくいたこ"]
   };
 
   function titleHint(card) {
-    const raw = (card.name || "").replace(/《.*?》/g, "").trim();
-    let key = raw;
-    if (raw.includes("の")) key = raw.split("の")[0];
-    if (key.length > 7) key = key.slice(0, 7);
-    if (!key) key = raw.slice(0, 6);
-    return `タイトルに「${key}」が入ってるたこ`;
-  }
-
-  function buildHintCandidates(card) {
-    const tags = deriveTags(card);
-    const lines = [];
-    tags.forEach(tag => {
-      (HINT_TEXTS[tag] || []).forEach(text => lines.push(text));
-    });
-    return lines.length ? lines : [
-      "忘れられない気配だけが残ってるたこ",
-      "名前までは言えないけど、まだ探してるたこ",
-      "あの時の空気ごと、戻ってきてほしいたこ"
-    ];
+    const cleaned = (card.name || "").replace(/《.*?》/g, "").trim();
+    let chunk = cleaned;
+    if (chunk.includes("の")) chunk = chunk.split("の")[0];
+    if (chunk.length > 7) chunk = chunk.slice(0, 7);
+    if (!chunk) chunk = cleaned.slice(0, 4);
+    return `タイトルに「${chunk}」が入ってるたこ`;
   }
 
   function makeHintsForCard(card, seed) {
     const rnd = randFromSeed(seed);
-    const pool = shuffle(buildHintCandidates(card), rnd);
-
-    const hint1 = pool[0] || "まだ忘れられないたこ";
-    let hint2 = pool.find(v => v !== hint1) || "少し特別な気配があるたこ";
-    if (hint2 === hint1) hint2 = "少し特別な気配があるたこ";
-    let hint3 = titleHint(card);
-    if (hint3 === hint1 || hint3 === hint2) {
-      hint3 = `タイトルのどこかに「${(card.name || "").slice(0, 3)}」があるたこ`;
-    }
-
+    const tags = deriveTags(card);
+    let base = [];
+    tags.forEach(tag => {
+      base = base.concat(HINT_TEXTS[tag] || []);
+    });
+    base = shuffle(base, rnd);
+    const hint1 = base[0] || "まだ忘れられないたこ";
+    let hint2 = base.find(v => v !== hint1) || "少し特別な気配があるたこ";
+    const hint3 = titleHint(card);
     return [hint1, hint2, hint3];
   }
 
   function makeHintTags(card) {
     const tags = deriveTags(card);
-    const nice = [];
-    if (tags.includes("sauce")) nice.push("#ソース系");
-    if (tags.includes("salt")) nice.push("#しょっぱい記憶");
-    if (tags.includes("mayo")) nice.push("#やわらか系");
-    if (tags.includes("mentai")) nice.push("#刺激あり");
-    if (tags.includes("cheese")) nice.push("#濃厚");
-    if (tags.includes("onsen")) nice.push("#温泉感");
-    if (tags.includes("pearl")) nice.push("#黒く光る");
-    if (tags.includes("goddess")) nice.push("#高嶺感");
-    if (tags.includes("god")) nice.push("#神格");
-    if (tags.includes("love")) nice.push("#恋っぽい");
-    if (tags.includes("loop")) nice.push("#戻ってくる");
-    if (tags.includes("roten")) nice.push("#露店感");
-    if (tags.includes("fire")) nice.push("#熱め");
-    if (tags.includes("memory")) nice.push("#記憶枠");
-    if (tags.includes("darts")) nice.push("#刺さる");
-    if (tags.includes("legend")) nice.push("#伝説級");
-    if (tags.includes("special")) nice.push("#説明不能");
-    return (nice.length ? nice : ["#未練あり", "#気になる", "#再会希望"]).slice(0, 3);
+    const out = [];
+    if (tags.includes("sauce")) out.push("#ソース系");
+    if (tags.includes("salt")) out.push("#しょっぱい記憶");
+    if (tags.includes("mayo")) out.push("#やわらか系");
+    if (tags.includes("mentai")) out.push("#刺激あり");
+    if (tags.includes("cheese")) out.push("#濃厚");
+    if (tags.includes("onsen")) out.push("#温泉感");
+    if (tags.includes("pearl")) out.push("#黒く光る");
+    if (tags.includes("goddess")) out.push("#高嶺感");
+    if (tags.includes("god")) out.push("#神格");
+    if (tags.includes("love")) out.push("#恋っぽい");
+    if (tags.includes("roten")) out.push("#露店感");
+    if (tags.includes("fire")) out.push("#熱め");
+    if (tags.includes("memory")) out.push("#記憶枠");
+    if (!out.length) out.push("#気になる", "#再会希望");
+    return out.slice(0, 3);
+  }
+
+  function makeTakopiThought(cardRarity, difficulty, seed) {
+    const rnd = randFromSeed(seed);
+
+    const byRarity = {
+      N: [
+        "……この条件ならすぐ見つかるたこ",
+        "……在庫でもなんとかなりそうなたこ",
+        "……これは優しい世界たこ"
+      ],
+      R: [
+        "……少し探せば見つかるたこ",
+        "……持ってる人はそこそこいるたこ",
+        "……軽い恋くらいの難易度たこ"
+      ],
+      SR: [
+        "……人によっては持ってないたこ",
+        "……ここから少し怪しくなるたこ",
+        "……選択ミスると痛いたこ"
+      ],
+      UR: [
+        "……現実はなかなか厳しいたこ",
+        "……持ってたらだいぶ強い手札たこ",
+        "……在庫というより覚悟の問題たこ"
+      ],
+      LR: [
+        "……それ、本気で言ってるたこ？",
+        "……これは“出会えたら奇跡”たこ",
+        "……覚悟ないなら触らない方がいいたこ"
+      ],
+      SP: [
+        "……それ、本気で言ってるたこ？",
+        "……もう運命の領域たこ",
+        "……持ってる人、かなり限られるたこ"
+      ]
+    };
+
+    const pool = byRarity[cardRarity] || byRarity.SR;
+    const line = pick(pool, rnd);
+
+    if (difficulty >= 5 && cardRarity !== "LR" && cardRarity !== "SP") {
+      return "……条件だけ見ると、かなり重いたこ";
+    }
+    return line;
   }
 
   // =========================================================
   // Reward helpers
   // =========================================================
-  function rewardOctoByDifficulty(difficulty, isLegend, type, rnd) {
-    const base = isLegend ? [900, 1500]
-      : difficulty === 1 ? [120, 200]
-      : difficulty === 2 ? [220, 360]
-      : difficulty === 3 ? [360, 620]
-      : difficulty === 4 ? [620, 980]
-      : [1000, 1600];
-
-    let value = Math.floor(rnd() * (base[1] - base[0] + 1)) + base[0];
-    if (type === "rich") value = Math.round(value * 1.15);
-    return value;
+  function rewardOctoByRarity(rarity, rnd) {
+    const map = {
+      N: [150, 320],
+      R: [320, 620],
+      SR: [650, 980],
+      UR: [1000, 1500],
+      LR: [2000, 2800],
+      SP: [2200, 3000]
+    };
+    const range = map[rarity] || [400, 800];
+    return Math.floor(rnd() * (range[1] - range[0] + 1)) + range[0];
   }
 
-  function rewardExpByDifficulty(difficulty, isLegend) {
-    return isLegend ? 18 : Math.max(2, difficulty * 3);
+  function rewardExpByDifficulty(difficulty) {
+    return Math.max(2, difficulty * 3);
   }
 
-  function rewardRepByDifficulty(difficulty, isLegend) {
-    return isLegend ? 8 : Math.max(1, difficulty);
+  function rewardRepByDifficulty(difficulty) {
+    return Math.max(1, difficulty);
   }
 
-  function makeRewardItems(type, difficulty, isLegend, rnd) {
+  function makeRewardItems(type, difficulty, rnd) {
     const profile = REWARD_PROFILES[type] || REWARD_PROFILES.careful;
     const out = [];
 
@@ -987,8 +800,6 @@
     }
 
     let count = difficulty <= 2 ? 2 : difficulty === 3 ? 2 : difficulty === 4 ? 3 : 4;
-    if (isLegend) count = 5;
-
     const randPool = profile.rand.map(([kind, id, weight]) => ({ kind, id, weight }));
 
     for (let i = 0; i < count; i++) {
@@ -1005,15 +816,6 @@
         qty: (merged.get(key)?.qty || 0) + item.qty
       });
     });
-
-    if (isLegend && rnd() < 0.4) {
-      const key = "water:water_supergod";
-      merged.set(key, {
-        kind: "water",
-        id: "water_supergod",
-        qty: (merged.get(key)?.qty || 0) + 1
-      });
-    }
 
     return Array.from(merged.values());
   }
@@ -1054,7 +856,7 @@
       return CARDS_ALL.filter(c => ["SR", "UR", "LR"].includes(c.rarity) || /御神体|真珠|記憶|神/.test(c.name));
     }
     if (type === "shadow" || type === "picky" || type === "overflow") {
-      return CARDS_ALL.filter(c => c.specialPool === "water_special" || ["SR", "UR", "SP", "LR"].includes(c.rarity));
+      return CARDS_ALL.filter(c => ["SR", "UR", "SP", "LR"].includes(c.rarity));
     }
     if (type === "rich" || type === "king" || type === "pilgrim") {
       return CARDS_ALL.filter(c => ["SR", "UR", "LR", "SP"].includes(c.rarity));
@@ -1109,20 +911,18 @@
       difficulty,
       featured,
       legend,
-      loveType: LOVE_TYPE_LABEL[type] || "未練型",
       line: getCustomerLine(type, rnd),
       targetCardId: wanted.card.id,
       targetQty: 1,
+      rewardOcto: rewardOctoByRarity(wanted.card.rarity, rnd),
+      rewardExp: rewardExpByDifficulty(difficulty),
+      rewardRep: rewardRepByDifficulty(difficulty),
+      rewardItems: makeRewardItems(type, difficulty, rnd),
       hintTags: makeHintTags(wanted.card),
       hints: makeHintsForCard(wanted.card, `${dateSeed}::hint::${type}::${idx}`),
       currentHintIndex: 0,
-      hintCosts: [0, 100, 100],
-      rewards: {
-        octo: rewardOctoByDifficulty(difficulty, legend, type, rnd),
-        exp: rewardExpByDifficulty(difficulty, legend),
-        rep: rewardRepByDifficulty(difficulty, legend),
-        items: makeRewardItems(type, difficulty, legend, rnd)
-      },
+      hintCosts: [0, 200, 300],
+      takopiThought: makeTakopiThought(wanted.card.rarity, difficulty, `${dateSeed}::thought::${type}::${idx}`),
       completed: false,
       completedAt: null,
       retryCount: 0
@@ -1139,7 +939,6 @@
     const featuredIndex = Math.floor(rnd() * chosen.length);
 
     const jobs = chosen.map((type, idx) => makeJob(type, idx, today, idx === featuredIndex, false));
-
     let legendJob = null;
     const legendCandidates = ["rich", "king", "pilgrim", "picky", "overflow", "shadow"];
     if (rnd() < 0.38) {
@@ -1163,31 +962,24 @@
     saveJSON(KEY.board, state);
   }
 
-  function getMeta() {
-    return loadJSON(KEY.matchingMeta, {
-      statsByType: {},
-      reunionMap: {}
-    });
+  function getJobById(jobId) {
+    const state = getBoard();
+    return state.jobs.find(v => v.id === jobId) || (state.legendJob?.id === jobId ? state.legendJob : null);
   }
 
-  function saveMeta(meta) {
-    saveJSON(KEY.matchingMeta, meta);
+  function updateJob(jobId, fn) {
+    const state = getBoard();
+    let target = state.jobs.find(v => v.id === jobId);
+    if (!target && state.legendJob?.id === jobId) target = state.legendJob;
+    if (!target) return null;
+    fn(target, state);
+    saveBoard(state);
+    return target;
   }
 
   // =========================================================
   // Status / scoring
   // =========================================================
-  function getTypeStats(type) {
-    const meta = getMeta();
-    return meta.statsByType[type] || { attempts: 0, success: 0 };
-  }
-
-  function getMatchRate(type) {
-    const stats = getTypeStats(type);
-    if (!stats.attempts) return 0;
-    return Math.round((stats.success / stats.attempts) * 100);
-  }
-
   function cardScoreAgainstJob(card, job) {
     const target = CARD_MAP[job.targetCardId];
     if (!target || !card) return 0;
@@ -1202,9 +994,10 @@
     b.forEach(tag => {
       if (a.has(tag)) overlap++;
     });
-    score += overlap * 11;
-
-    if ((RARITY_ORDER[card.rarity] || 0) >= (RARITY_ORDER[target.rarity] || 0)) score += 8;
+    score += overlap * 12;
+    if ((card.rarity === "UR" || card.rarity === "LR" || card.rarity === "SP") && (target.rarity === "UR" || target.rarity === "LR" || target.rarity === "SP")) {
+      score += 10;
+    }
     return Math.min(94, score);
   }
 
@@ -1221,24 +1014,75 @@
     if (job.retryCount >= 3) {
       return { cls: "ng", label: "本日終了", action: "本日終了", disabled: true };
     }
-    return { cls: "ok", label: "挑戦可能", action: `${job.retryCount + 1}回目のマッチ（${job.retryCount}/3）`, disabled: false };
-  }
-
-  function calcAttachment(job) {
-    return Math.min(5, Math.max(1, job.difficulty + (job.legend ? 1 : 0)));
+    return {
+      cls: "ok",
+      label: "挑戦可能",
+      action: `${job.retryCount + 1}回目のマッチ（${job.retryCount}/3）`,
+      disabled: false
+    };
   }
 
   // =========================================================
-  // UI render
+  // Hero / top meter
   // =========================================================
-  function itemIcon(kind) {
-    if (kind === "seed") return "🌱";
-    if (kind === "water") return "💧";
-    return "🧪";
+  function ensureHeroStatsShell() {
+    const hero = $(".hero");
+    if (!hero) return null;
+
+    let wrap = $("#heroStatsWrap");
+    if (wrap) return wrap;
+
+    wrap = document.createElement("div");
+    wrap.id = "heroStatsWrap";
+    wrap.className = "heroStatsWrap";
+    wrap.innerHTML = `
+      <div class="heroStatsNode">
+        <div class="heroStatsNodeNum" id="heroChallengeCount">0</div>
+        <div class="heroStatsNodeLabel">挑戦</div>
+      </div>
+      <div class="heroStatsBarWrap">
+        <div class="heroStatsBar" id="heroStatsBar">
+          <div class="heroStatsBarSuccess" id="heroStatsBarSuccess"></div>
+          <div class="heroStatsBarFail" id="heroStatsBarFail"></div>
+        </div>
+        <div class="heroStatsMeta">
+          <span id="heroStatsRate">成功率 0%</span>
+          <span id="heroStatsBreakdown">成功 0 / 失敗 0</span>
+        </div>
+      </div>
+    `;
+
+    const speechWrap = $(".heroSpeechWrap", hero);
+    if (speechWrap) {
+      speechWrap.insertAdjacentElement("afterend", wrap);
+    } else {
+      hero.appendChild(wrap);
+    }
+    return wrap;
   }
 
-  function itemLabel(kind, id) {
-    return REWARD_ITEMS[kind]?.[id]?.name || id;
+  function renderHeroStats() {
+    ensureHeroStatsShell();
+    const meta = getMeta();
+    const attempts = Number(meta.totalAttempts || 0);
+    const success = Number(meta.totalSuccess || 0);
+    const fail = Number(meta.totalFail || 0);
+    const rate = attempts ? Math.round((success / attempts) * 100) : 0;
+
+    const countEl = $("#heroChallengeCount");
+    const rateEl = $("#heroStatsRate");
+    const breakdownEl = $("#heroStatsBreakdown");
+    const successEl = $("#heroStatsBarSuccess");
+    const failEl = $("#heroStatsBarFail");
+
+    if (countEl) countEl.textContent = attempts;
+    if (rateEl) rateEl.textContent = `成功率 ${rate}%`;
+    if (breakdownEl) breakdownEl.textContent = `成功 ${success} / 失敗 ${fail}`;
+
+    const successW = attempts ? (success / attempts) * 100 : 0;
+    const failW = attempts ? (fail / attempts) * 100 : 0;
+    if (successEl) successEl.style.width = `${successW}%`;
+    if (failEl) failEl.style.width = `${failW}%`;
   }
 
   function renderHero() {
@@ -1252,31 +1096,38 @@
 
     const rnd = randFromSeed(`hero::${todayKey()}`);
     heroSpeechText.textContent = pick(HERO_LINES, rnd);
+    renderHeroStats();
+  }
+
+  // =========================================================
+  // Render board
+  // =========================================================
+  function renderRewardChips(job) {
+    const topItems = job.rewardItems.slice(0, 2);
+    return `
+      <div class="rewardShowcase">
+        <span class="rewardShowChip">🪙 ${job.rewardOcto.toLocaleString()}オクト</span>
+        ${topItems.map(item => `<span class="rewardShowChip">${itemIcon(item.kind)} ${escapeHtml(itemLabel(item.kind, item.id))}×${item.qty}</span>`).join("")}
+      </div>
+    `;
   }
 
   function renderHintSingle(job) {
     const idx = Number(job.currentHintIndex || 0);
-    const hintText = job.hints[idx];
+    const currentText = job.hints[idx];
     const nextIdx = idx + 1;
-
-    if (nextIdx >= job.hints.length) {
-      return `
-        <div class="matchHintSingle">
-          <div class="matchHintCurrent">${escapeHtml(hintText)}</div>
-          <div class="matchHintFooter">
-            <button class="matchHintNextBtn" disabled>これ以上ヒントなし</button>
-          </div>
-        </div>
-      `;
-    }
 
     return `
       <div class="matchHintSingle">
-        <div class="matchHintCurrent">${escapeHtml(hintText)}</div>
+        <div class="matchHintCurrent">${escapeHtml(currentText)}</div>
         <div class="matchHintFooter">
-          <button class="matchHintNextBtn" data-open-next-hint="${job.id}">
-            次のヒントへ（${job.hintCosts[nextIdx]}オクト）
-          </button>
+          ${
+            nextIdx < job.hints.length
+              ? `<button class="matchHintNextBtn" data-open-next-hint="${job.id}">
+                   次のヒントへ（${job.hintCosts[nextIdx]}オクト）
+                 </button>`
+              : `<button class="matchHintNextBtn" disabled>これ以上ヒントなし</button>`
+          }
         </div>
       </div>
     `;
@@ -1284,7 +1135,6 @@
 
   function renderJobCard(job) {
     const status = getJobStatus(job);
-    const reunionCount = Number(getMeta().reunionMap[job.type] || 0);
 
     return `
       <article class="matchCard ${job.completed ? "isDone" : ""}">
@@ -1300,8 +1150,6 @@
               <h3 class="matchName">${escapeHtml(job.visitorName)}</h3>
               <div class="metaRight">
                 <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
-                ${job.featured ? `<span class="matchBadge featured">目玉依頼</span>` : ""}
-                ${reunionCount > 0 ? `<span class="matchBadge featured">再会${reunionCount}</span>` : ""}
                 <span class="matchBadge ${status.cls}">${status.label}</span>
               </div>
             </div>
@@ -1309,11 +1157,12 @@
         </div>
 
         <div class="matchMain">
-          <div class="matchMetaStrip">
-            <span class="matchMetaChip">累計マッチ率 ${getMatchRate(job.type)}%</span>
-            <span class="matchMetaChip">${escapeHtml(job.loveType)}</span>
-            <span class="matchMetaChip">未練度 ${"★".repeat(calcAttachment(job))}${"☆".repeat(5 - calcAttachment(job))}</span>
-            ${job.hintTags.map(tag => `<span class="matchMetaChip">${escapeHtml(tag)}</span>`).join("")}
+          <div class="matchRewardTitle">マッチング報酬</div>
+          ${renderRewardChips(job)}
+
+          <div class="matchThoughtBox">
+            <div class="matchThoughtCap">🐙 たこぴの心の声</div>
+            <div class="matchThoughtText">${escapeHtml(job.takopiThought)}</div>
           </div>
 
           <div class="matchHintPanel">
@@ -1350,7 +1199,6 @@
     if (!list) return;
 
     list.innerHTML = state.jobs.map(renderJobCard).join("");
-
     if (legend) {
       if (state.legendJob) {
         legend.classList.remove("hidden");
@@ -1365,24 +1213,6 @@
   }
 
   // =========================================================
-  // Update helpers
-  // =========================================================
-  function getJobById(jobId) {
-    const state = getBoard();
-    return state.jobs.find(v => v.id === jobId) || (state.legendJob?.id === jobId ? state.legendJob : null);
-  }
-
-  function updateJob(jobId, fn) {
-    const state = getBoard();
-    let target = state.jobs.find(v => v.id === jobId);
-    if (!target && state.legendJob?.id === jobId) target = state.legendJob;
-    if (!target) return null;
-    fn(target, state);
-    saveBoard(state);
-    return target;
-  }
-
-  // =========================================================
   // Actions
   // =========================================================
   function openNextHint(jobId) {
@@ -1392,7 +1222,7 @@
     const nextIdx = Number(job.currentHintIndex || 0) + 1;
     if (nextIdx >= job.hints.length) return;
 
-    const cost = Number(job.hintCosts[nextIdx] || 100);
+    const cost = Number(job.hintCosts[nextIdx] || 0);
     if (getOcto() < cost) {
       showTakopiToast("オクトが足りないたこ");
       return;
@@ -1413,7 +1243,20 @@
     const status = getJobStatus(job);
     if (status.disabled) return;
 
-    const owned = getAllOwnedCards();
+    const owned = getBook();
+    const ownedCards = CARDS_ALL
+      .map(card => ({
+        ...card,
+        count: Number(owned.got?.[card.id]?.count || 0)
+      }))
+      .filter(v => v.count > 0)
+      .sort((a, b) => {
+        const rarityOrder = { SP: 6, LR: 5, UR: 4, SR: 3, R: 2, N: 1 };
+        const rd = (rarityOrder[b.rarity] || 0) - (rarityOrder[a.rarity] || 0);
+        if (rd !== 0) return rd;
+        return a.name.localeCompare(b.name, "ja");
+      });
+
     const modal = $("#jobModal");
     const body = $("#jobModalBody");
     if (!modal || !body) return;
@@ -1430,8 +1273,7 @@
         <div class="modalRight">
           <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
           <div class="modalTagRow">
-            <span class="modalTag">累計マッチ率 ${getMatchRate(job.type)}%</span>
-            <span class="modalTag">${escapeHtml(job.loveType)}</span>
+            <span class="modalTag">現在 ${status.action}</span>
           </div>
         </div>
       </div>
@@ -1439,9 +1281,9 @@
       <section>
         <h3 class="modalSectionTitle">所持カードから選ぶ</h3>
         ${
-          owned.length
+          ownedCards.length
             ? `<div class="modalCardGrid">
-                ${owned.map(card => `
+                ${ownedCards.map(card => `
                   <div class="selectCardItem">
                     <button class="selectCardBtn" data-choose-card="${job.id}" data-card-id="${card.id}">
                       <div class="selectCardBox">
@@ -1464,8 +1306,7 @@
 
     $$("[data-choose-card]", body).forEach(btn => {
       btn.addEventListener("click", () => {
-        const cardId = btn.getAttribute("data-card-id");
-        judgeCard(job.id, cardId);
+        judgeCard(job.id, btn.getAttribute("data-card-id"));
       });
     });
   }
@@ -1478,6 +1319,9 @@
     document.body.style.overflow = "";
   }
 
+  // =========================================================
+  // Suspense / result
+  // =========================================================
   function ensureJudgeLayers() {
     if (!$("#suspenseLayer")) {
       const suspense = document.createElement("div");
@@ -1511,9 +1355,9 @@
     const layer = $("#suspenseLayer");
     if (!layer) return;
     layer.classList.add("show");
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 1350));
     layer.classList.remove("show");
-    await new Promise(r => setTimeout(r, 140));
+    await new Promise(r => setTimeout(r, 120));
   }
 
   async function showJudge(judgement) {
@@ -1529,73 +1373,9 @@
     sub.textContent = judgement.text;
 
     layer.classList.add("show");
-    await new Promise(r => setTimeout(r, 1350));
+    await new Promise(r => setTimeout(r, 1450));
     layer.classList.remove("show");
-    await new Promise(r => setTimeout(r, 160));
-  }
-
-  async function judgeCard(jobId, cardId) {
-    const job = getJobById(jobId);
-    if (!job) return;
-
-    const status = getJobStatus(job);
-    if (status.disabled) return;
-
-    if (getOwnedCount(cardId) <= 0) {
-      showTakopiToast("そのカードは持ってないたこ");
-      return;
-    }
-
-    closeJobModal();
-
-    await showSuspense();
-
-    const card = CARD_MAP[cardId];
-    const score = cardScoreAgainstJob(card, job);
-    const judgement = judgeScore(score);
-
-    const meta = getMeta();
-    meta.statsByType[job.type] = meta.statsByType[job.type] || { attempts: 0, success: 0 };
-    meta.statsByType[job.type].attempts += 1;
-
-    if (judgement.verdict !== "fail") {
-      meta.statsByType[job.type].success += 1;
-    }
-
-    await showJudge(judgement);
-
-    if (judgement.verdict === "fail") {
-      updateJob(jobId, (j) => {
-        j.retryCount += 1;
-      });
-      saveMeta(meta);
-      renderBoard();
-
-      const current = getJobById(jobId);
-      if (current && current.retryCount >= 3) {
-        showTakopiToast("……今日はこの相手、もう心を開かないたこ");
-      } else {
-        showTakopiToast("……違う、それじゃないたこ");
-      }
-      return;
-    }
-
-    addOwned(cardId, -1);
-
-    updateJob(jobId, (j) => {
-      j.completed = true;
-      j.completedAt = Date.now();
-
-      addOcto(j.rewards.octo);
-      j.rewards.items.forEach(item => addInventory(item.kind, item.id, item.qty));
-    });
-
-    meta.reunionMap[job.type] = Number(meta.reunionMap[job.type] || 0) + 1;
-    saveMeta(meta);
-
-    renderBoard();
-    await showRewardModal(getJobById(jobId));
-    showTakopiToast("……焼けたね");
+    await new Promise(r => setTimeout(r, 150));
   }
 
   async function showRewardModal(job) {
@@ -1609,9 +1389,9 @@
     sub.textContent = `${job.visitorName} とマッチ成立たこ。`;
 
     const rows = [
-      `🪙 ${job.rewards.octo.toLocaleString()} オクト`,
-      `評判 +${job.rewards.rep} / 熱量 +${job.rewards.exp}`,
-      ...job.rewards.items.map(v => `${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)} ×${v.qty}`)
+      `🪙 ${job.rewardOcto.toLocaleString()} オクト`,
+      `評判 +${job.rewardRep} / 熱量 +${job.rewardExp}`,
+      ...job.rewardItems.map(v => `${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)} ×${v.qty}`)
     ];
 
     list.innerHTML = rows.map(v => `<div class="rewardItem">${escapeHtml(v)}</div>`).join("");
@@ -1632,6 +1412,71 @@
     modal.setAttribute("aria-hidden", "true");
     const list = $("#rewardList");
     if (list) list.innerHTML = "";
+  }
+
+  async function judgeCard(jobId, cardId) {
+    const job = getJobById(jobId);
+    if (!job) return;
+
+    const status = getJobStatus(job);
+    if (status.disabled) return;
+    if (getOwnedCount(cardId) <= 0) {
+      showTakopiToast("そのカードは持ってないたこ");
+      return;
+    }
+
+    closeJobModal();
+    await showSuspense();
+
+    const card = CARD_MAP[cardId];
+    const score = cardScoreAgainstJob(card, job);
+    const judgement = judgeScore(score);
+
+    const meta = getMeta();
+    meta.totalAttempts += 1;
+    const typeStats = ensureTypeStats(meta, job.type);
+    typeStats.attempts += 1;
+
+    await showJudge(judgement);
+
+    if (judgement.verdict === "fail") {
+      meta.totalFail += 1;
+      typeStats.fail += 1;
+      saveMeta(meta);
+
+      updateJob(jobId, (j) => {
+        j.retryCount += 1;
+      });
+
+      renderHeroStats();
+      renderBoard();
+
+      const latest = getJobById(jobId);
+      if (latest && latest.retryCount >= 3) {
+        showTakopiToast("……今日はこの相手、もう心を開かないたこ");
+      } else {
+        showTakopiToast("……違う、それじゃないたこ");
+      }
+      return;
+    }
+
+    meta.totalSuccess += 1;
+    typeStats.success += 1;
+    saveMeta(meta);
+
+    addOwned(cardId, -1);
+
+    updateJob(jobId, (j) => {
+      j.completed = true;
+      j.completedAt = Date.now();
+      addOcto(j.rewardOcto);
+      j.rewardItems.forEach(item => addInventory(item.kind, item.id, item.qty));
+    });
+
+    renderHeroStats();
+    renderBoard();
+    await showRewardModal(getJobById(jobId));
+    showTakopiToast("……焼けたね");
   }
 
   // =========================================================
@@ -1668,18 +1513,18 @@
       });
     }
 
-    const jobModalClose = $("#jobModalClose");
-    if (jobModalClose) jobModalClose.addEventListener("click", closeJobModal);
+    const closeBtn = $("#jobModalClose");
+    if (closeBtn) closeBtn.addEventListener("click", closeJobModal);
 
-    const jobModal = $("#jobModal");
-    if (jobModal) {
-      jobModal.addEventListener("click", (e) => {
-        if (e.target === jobModal) closeJobModal();
+    const modal = $("#jobModal");
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeJobModal();
       });
     }
 
-    const rewardCloseBtn = $("#rewardCloseBtn");
-    if (rewardCloseBtn) rewardCloseBtn.addEventListener("click", hideRewardModal);
+    const rewardClose = $("#rewardCloseBtn");
+    if (rewardClose) rewardClose.addEventListener("click", hideRewardModal);
 
     const rewardModal = $("#rewardModal");
     if (rewardModal) {
