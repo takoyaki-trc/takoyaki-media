@@ -5,11 +5,11 @@
   // Keys
   // =========================================================
   const KEY = {
-    board: "ttc_matching_board_v5",
+    board: "ttc_matching_board_v6",
     octo: "roten_v1_octo",
     book: "tf_v1_book",
     inv: "tf_v1_inv",
-    matchingMeta: "ttc_matching_meta_v5"
+    matchingMeta: "ttc_matching_meta_v6"
   };
 
   // =========================================================
@@ -29,6 +29,11 @@
   function todayKey() {
     const d = nowTokyo();
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+
+  function todayLabelJP() {
+    const d = nowTokyo();
+    return `${d.getMonth() + 1}月${d.getDate()}日の募集相手`;
   }
 
   function safeJSONParse(raw, fallback) {
@@ -377,8 +382,7 @@
     { id: "TP-007", name: "花見たこぴ", img: "https://ul.h3z.jp/KrCy4WQb.png", rarity: "N" },
     { id: "TP-008", name: "入学たこぴ", img: "https://ul.h3z.jp/DidPdK9b.png", rarity: "UR" }
   ];
-
-  const BUSSASARI_POOL = [
+const BUSSASARI_POOL = [
     { id: "BS-001", name: "たこ焼きダーツインフェルノ《對馬裕佳子》", img: "https://ul.h3z.jp/l5roYZJ4.png", rarity: "N" },
     { id: "BS-002", name: "店主反撃レビュー《佐俣雄一郎》", img: "https://ul.h3z.jp/BtOTLlSo.png", rarity: "N" },
     { id: "BS-003", name: "自己啓発タコ塾《井上諒》", img: "https://ul.h3z.jp/P5vsAste.png", rarity: "N" },
@@ -710,6 +714,24 @@
     return meta.statsByType[type];
   }
 
+  function commitFinalFail(meta, jobType) {
+    meta.totalAttempts += 1;
+    meta.totalFail += 1;
+    const typeStats = ensureTypeStats(meta, jobType);
+    typeStats.attempts += 1;
+    typeStats.fail += 1;
+    saveMeta(meta);
+  }
+
+  function commitSuccess(meta, jobType) {
+    meta.totalAttempts += 1;
+    meta.totalSuccess += 1;
+    const typeStats = ensureTypeStats(meta, jobType);
+    typeStats.attempts += 1;
+    typeStats.success += 1;
+    saveMeta(meta);
+  }
+
   // =========================================================
   // Hint generation
   // =========================================================
@@ -743,24 +765,35 @@
 
   function buildHint1(card) {
     const tags = deriveTags(card);
+    const rarity = card.rarity || "N";
+    const name = card.name || "";
 
-    if (tags.includes("god")) return "ヒント1　神・御神体・女神みたいな、格が高そうなカードたこ";
-    if (tags.includes("onsen")) return "ヒント1　温泉や湯気っぽい雰囲気を持つカードたこ";
-    if (tags.includes("love")) return "ヒント1　恋やデートっぽい空気のカードたこ";
+    if (/ソース/.test(name)) return "ヒント1　ソース系のカードたこ";
+    if (/塩/.test(name)) return "ヒント1　塩系のカードたこ";
+    if (/マヨ/.test(name)) return "ヒント1　マヨ系のカードたこ";
+    if (/明太/.test(name)) return "ヒント1　明太っぽさがあるカードたこ";
+    if (/チーズ/.test(name)) return "ヒント1　チーズ系のカードたこ";
+    if (/味噌/.test(name)) return "ヒント1　味噌っぽいカードたこ";
+    if (/牡蠣/.test(name)) return "ヒント1　牡蠣だし系のカードたこ";
+    if (tags.includes("onsen")) return "ヒント1　温泉・ゆのかわ系のカードたこ";
     if (tags.includes("darts")) return "ヒント1　ダーツに関係あるカードたこ";
-    if (tags.includes("shop")) return "ヒント1　店・露店・店主まわりの空気を持つカードたこ";
-    if (tags.includes("taste")) return "ヒント1　味つけや食べ方に関係あるカードたこ";
-    if (tags.includes("dark_special")) return "ヒント1　黒さやイカサマ感みたいな、危うい雰囲気のカードたこ";
-    if (tags.includes("heat")) return "ヒント1　熱さや火力を感じるカードたこ";
-    if (tags.includes("memory")) return "ヒント1　記憶や昔の出来事っぽさがあるカードたこ";
-    if (tags.includes("crowd")) return "ヒント1　人の集まりや騒がしさを感じるカードたこ";
-    if (tags.includes("speed")) return "ヒント1　走る・飛ぶ・勢いがある感じのカードたこ";
-    if (tags.includes("danger")) return "ヒント1　ちょっと危ない匂いのするカードたこ";
+    if (tags.includes("shop")) return "ヒント1　店主・露店・お店系のカードたこ";
+    if (tags.includes("love")) return "ヒント1　恋・デート・契約みたいな空気のカードたこ";
+    if (tags.includes("god")) return "ヒント1　神・御神体・ビーナス系のカードたこ";
+    if (tags.includes("dark_special")) return "ヒント1　黒さ・真珠・イカさま感のあるカードたこ";
+    if (tags.includes("heat")) return "ヒント1　熱い・火力高めのカードたこ";
+    if (tags.includes("memory")) return "ヒント1　記憶・化石・昔っぽさのあるカードたこ";
+    if (tags.includes("crowd")) return "ヒント1　大会・会議・行列みたいな人の多いカードたこ";
+    if (tags.includes("speed")) return "ヒント1　走る・飛ぶ・勢いのあるカードたこ";
+    if (tags.includes("danger")) return "ヒント1　ちょっと危ない感じのカードたこ";
 
-    return "ヒント1　第一弾の中でも、少し印象が強いタイプたこ";
+    if (rarity === "LR") return "ヒント1　かなり格の高いカードたこ";
+    if (rarity === "UR") return "ヒント1　目立つ上位レアのカードたこ";
+    if (rarity === "SR") return "ヒント1　第一弾の中でも印象が強いカードたこ";
+    if (rarity === "R") return "ヒント1　ちょっと珍しめのカードたこ";
+    return "ヒント1　第一弾の中では見つけやすいほうのカードたこ";
   }
-
-  function buildHint2(card, isExtraPool) {
+function buildHint2(card, isExtraPool) {
     if (isExtraPool) {
       return "ヒント2　第一弾以外の特別枠たこ。かなりレア寄りたこ";
     }
@@ -935,7 +968,11 @@
   }
 
   function getDisplayPoolByType(type, legend = false) {
-    if (legend) return EXTRA_SERIES_CARDS.length ? EXTRA_SERIES_CARDS : FIRST_SERIES_CARDS.filter(c => ["UR", "LR"].includes(c.rarity));
+    if (legend) {
+      return EXTRA_SERIES_CARDS.length
+        ? EXTRA_SERIES_CARDS
+        : FIRST_SERIES_CARDS.filter(c => ["UR", "LR"].includes(c.rarity));
+    }
 
     if (type === "gourmet") {
       return FIRST_SERIES_CARDS.filter(c => /焼き|ソース|マヨ|塩|明太|味噌|牡蠣|温泉|イカ/.test(c.name));
@@ -1098,8 +1135,10 @@
     });
     score += overlap * 12;
 
-    if ((card.rarity === "UR" || card.rarity === "LR" || card.rarity === "SP") &&
-        (target.rarity === "UR" || target.rarity === "LR" || target.rarity === "SP")) {
+    if (
+      (card.rarity === "UR" || card.rarity === "LR" || card.rarity === "SP") &&
+      (target.rarity === "UR" || target.rarity === "LR" || target.rarity === "SP")
+    ) {
       score += 10;
     }
 
@@ -1122,13 +1161,13 @@
     return {
       cls: "ok",
       label: "挑戦可能",
-      action: `マッチ ${job.retryCount + 1}/3`,
+      action: `マッチングする ${job.retryCount + 1}/3`,
       disabled: false
     };
   }
 
   // =========================================================
-  // Hero / top meter
+  // Hero / intro / legend
   // =========================================================
   function ensureHeroStatsShell() {
     const hero = $(".hero");
@@ -1205,6 +1244,61 @@
     const rnd = randFromSeed(`hero::${todayKey()}`);
     heroSpeechText.textContent = pick(HERO_LINES, rnd);
     renderHeroStats();
+  }
+
+  function ensurePlayGuideButton() {
+    const introLeft = $(".introLeft");
+    if (!introLeft) return;
+
+    let head = $("#boardDateHead");
+    if (!head) {
+      head = document.createElement("div");
+      head.id = "boardDateHead";
+      head.className = "boardDateHead";
+      head.innerHTML = `
+        <h2 id="boardDateTitle">${todayLabelJP()}</h2>
+        <button class="howToBtn" id="howToBtn" type="button">遊び方</button>
+      `;
+
+      const oldH2 = $("h2", introLeft);
+      if (oldH2) oldH2.replaceWith(head);
+      else introLeft.prepend(head);
+    } else {
+      const title = $("#boardDateTitle");
+      if (title) title.textContent = todayLabelJP();
+    }
+
+    const howToBtn = $("#howToBtn");
+    if (howToBtn && !howToBtn.dataset.bound) {
+      howToBtn.dataset.bound = "1";
+      howToBtn.addEventListener("click", openHowToModal);
+    }
+  }
+
+  function renderLegendNotice() {
+    const box = $(".legendNotice");
+    if (!box) return;
+    const state = getBoard();
+
+    if (state.legendJob) {
+      box.innerHTML = `
+        <div class="legendNoticeBadge">伝説マッチ出現中</div>
+        <h3>${escapeHtml(state.legendJob.visitorName)}</h3>
+        <p>
+          今日は特別な相手が来ているたこ。<br>
+          報酬は 🪙 ${state.legendJob.rewardOcto.toLocaleString()} オクトたこ。
+        </p>
+      `;
+    } else {
+      box.innerHTML = `
+        <div class="legendNoticeBadge">伝説マッチ</div>
+        <h3>本日、伝説マッチは見つからなかった</h3>
+        <p>
+          今日は静かな日だったたこ。<br>
+          また別の日に探してみるたこ。
+        </p>
+      `;
+    }
   }
 
   // =========================================================
@@ -1316,6 +1410,7 @@
       }
     }
 
+    renderLegendNotice();
     bindBoardButtons();
   }
 
@@ -1371,6 +1466,8 @@
     if (!modal || !body) return;
 
     body.innerHTML = `
+      <button class="modalSelectClose" id="modalSelectClose" aria-label="閉じる">✕</button>
+
       <div class="modalTop">
         <img class="modalAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
 
@@ -1413,6 +1510,9 @@
     modal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
 
+    const close = $("#modalSelectClose");
+    if (close) close.addEventListener("click", closeJobModal);
+
     $$("[data-choose-card]", body).forEach(btn => {
       btn.addEventListener("click", () => {
         judgeCard(job.id, btn.getAttribute("data-card-id"));
@@ -1422,6 +1522,57 @@
 
   function closeJobModal() {
     const modal = $("#jobModal");
+    if (!modal) return;
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  // =========================================================
+  // How to modal
+  // =========================================================
+  function ensureHowToModal() {
+    if ($("#howToModal")) return;
+
+    const div = document.createElement("div");
+    div.className = "modal";
+    div.id = "howToModal";
+    div.setAttribute("aria-hidden", "true");
+    div.innerHTML = `
+      <div class="modalCard modalCard--howto" role="dialog" aria-modal="true" aria-labelledby="howToTitle">
+        <button class="modalClose" id="howToClose" aria-label="閉じる">✕</button>
+        <div class="modalBody">
+          <h2 class="modalName" id="howToTitle">遊び方</h2>
+          <div class="modalStatusList">
+            <div class="modalStatusLine ok">① 相手のセリフとヒントを読むたこ</div>
+            <div class="modalStatusLine ok">② 所持カードから1枚選んで渡すたこ</div>
+            <div class="modalStatusLine ok">③ ぴったりなら ♥ でマッチ成立たこ</div>
+            <div class="modalStatusLine ok">④ 失敗しても3回まで挑戦できるたこ</div>
+            <div class="modalStatusLine ok">⑤ 失敗カウントは、3回全部だめだった時だけ上のパラメーターに反映たこ</div>
+            <div class="modalStatusLine ok">⑥ 伝説マッチが出る日は、かなりアツいたこ</div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(div);
+
+    $("#howToClose").addEventListener("click", closeHowToModal);
+    div.addEventListener("click", (e) => {
+      if (e.target === div) closeHowToModal();
+    });
+  }
+
+  function openHowToModal() {
+    ensureHowToModal();
+    const modal = $("#howToModal");
+    if (!modal) return;
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeHowToModal() {
+    const modal = $("#howToModal");
     if (!modal) return;
     modal.classList.remove("show");
     modal.setAttribute("aria-hidden", "true");
@@ -1545,37 +1696,30 @@
     const score = cardScoreAgainstJob(card, job);
     const judgement = judgeScore(score);
 
-    const meta = getMeta();
-    meta.totalAttempts += 1;
-    const typeStats = ensureTypeStats(meta, job.type);
-    typeStats.attempts += 1;
-
     await showJudge(judgement);
 
     if (judgement.verdict === "fail") {
-      meta.totalFail += 1;
-      typeStats.fail += 1;
-      saveMeta(meta);
-
       updateJob(jobId, (j) => {
         j.retryCount += 1;
       });
 
-      renderHeroStats();
-      renderBoard();
-
       const latest = getJobById(jobId);
+
       if (latest && latest.retryCount >= 3) {
+        const meta = getMeta();
+        commitFinalFail(meta, job.type);
+        renderHeroStats();
+        renderBoard();
         showTakopiToast("……今日はこの相手、もう心を開かないたこ");
       } else {
+        renderBoard();
         showTakopiToast("……違う、それじゃないたこ");
       }
       return;
     }
 
-    meta.totalSuccess += 1;
-    typeStats.success += 1;
-    saveMeta(meta);
+    const meta = getMeta();
+    commitSuccess(meta, job.type);
 
     addOwned(cardId, -1);
 
@@ -1650,6 +1794,7 @@
       if (e.key === "Escape") {
         closeJobModal();
         hideRewardModal();
+        closeHowToModal();
       }
     });
   }
@@ -1658,8 +1803,10 @@
   // Boot
   // =========================================================
   ensureDefaults();
+  ensureHowToModal();
   generateBoard(false);
   bindUI();
+  ensurePlayGuideButton();
   renderHero();
   renderBoard();
 })();
