@@ -5,11 +5,11 @@
   // Keys
   // =========================================================
   const KEY = {
-    board: "ttc_matching_board_v4",
+    board: "ttc_matching_board_v5",
     octo: "roten_v1_octo",
     book: "tf_v1_book",
     inv: "tf_v1_inv",
-    matchingMeta: "ttc_matching_meta_v4"
+    matchingMeta: "ttc_matching_meta_v5"
   };
 
   // =========================================================
@@ -76,15 +76,6 @@
     return list[list.length - 1];
   }
 
-  function shuffle(arr, rnd) {
-    const a = arr.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(rnd() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
-
   function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
   }
@@ -94,7 +85,7 @@
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
-      '"': "&quot;",
+      "\"": "&quot;",
       "'": "&#39;"
     })[s]);
   }
@@ -416,17 +407,13 @@
         id: "SP-MIZU-001",
         name: "腐敗したカード",
         img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png",
-        rarity: "SP",
-        tier: "N",
-        weight: 95
+        rarity: "SP"
       },
       {
         id: "SP-MIZU-002",
         name: "浸食したカード",
         img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png",
-        rarity: "SP",
-        tier: "LR",
-        weight: 5
+        rarity: "SP"
       }
     ],
     sea: [
@@ -434,32 +421,36 @@
         id: "SP-MIZU-001",
         name: "腐敗したカード",
         img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png",
-        rarity: "SP",
-        tier: "N",
-        weight: 98
+        rarity: "SP"
       },
       {
         id: "SP-MIZU-002",
         name: "浸食したカード",
         img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png",
-        rarity: "SP",
-        tier: "LR",
-        weight: 2
+        rarity: "SP"
       }
     ]
   };
 
-  const CARDS_ALL = [
+  const FIRST_SERIES_CARDS = [
     ...CARD_POOLS.N.map(v => ({ ...v, id: v.no, rarity: "N" })),
     ...CARD_POOLS.R.map(v => ({ ...v, id: v.no, rarity: "R" })),
     ...CARD_POOLS.SR.map(v => ({ ...v, id: v.no, rarity: "SR" })),
     ...CARD_POOLS.UR.map(v => ({ ...v, id: v.no, rarity: "UR" })),
-    ...CARD_POOLS.LR.map(v => ({ ...v, id: v.no, rarity: "LR" })),
-    ...TAKOPI_SEED_POOL.map(v => ({ ...v, id: v.id })),
-    ...BUSSASARI_POOL.map(v => ({ ...v, id: v.id })),
-    ...NAMARA_POOL.map(v => ({ ...v, id: v.id })),
-    ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id: `${v.id}_rotten` })),
-    ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea` }))
+    ...CARD_POOLS.LR.map(v => ({ ...v, id: v.no, rarity: "LR" }))
+  ];
+
+  const EXTRA_SERIES_CARDS = [
+    ...TAKOPI_SEED_POOL.map(v => ({ ...v, id: v.id, rarity: v.rarity || "UR" })),
+    ...BUSSASARI_POOL.map(v => ({ ...v, id: v.id, rarity: v.rarity || "UR" })),
+    ...NAMARA_POOL.map(v => ({ ...v, id: v.id, rarity: v.rarity || "UR" })),
+    ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id: `${v.id}_rotten`, rarity: v.rarity || "SP" })),
+    ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea`, rarity: v.rarity || "SP" }))
+  ];
+
+  const CARDS_ALL = [
+    ...FIRST_SERIES_CARDS,
+    ...EXTRA_SERIES_CARDS
   ];
 
   const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
@@ -630,7 +621,6 @@
   function addOwned(cardId, delta) {
     const book = getBook();
     const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
-
     if (!book.got[cardId]) {
       book.got[cardId] = {
         count: 0,
@@ -638,13 +628,10 @@
         rarity: info.rarity
       };
     }
-
     book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + Number(delta || 0));
-
     if (book.got[cardId].count <= 0) {
       delete book.got[cardId];
     }
-
     saveBook(book);
   }
 
@@ -688,7 +675,7 @@
         else if (card.rarity === "SR") count = Math.random() < 0.28 ? Math.floor(Math.random() * 2) : 0;
         else if (card.rarity === "UR") count = Math.random() < 0.12 ? 1 : 0;
         else if (card.rarity === "LR") count = Math.random() < 0.05 ? 1 : 0;
-        else if (card.rarity === "SP") count = 0;
+        else if (card.rarity === "SP") count = Math.random() < 0.04 ? 1 : 0;
 
         if (count > 0) {
           got[card.id] = {
@@ -750,7 +737,6 @@
     if (/行列|大会|会議/.test(name)) tags.add("crowd");
     if (/発射|爆走|ライダー|ドローン/.test(name)) tags.add("speed");
     if (/トラップ|詐欺|迷惑/.test(name)) tags.add("danger");
-    if (/塔|神/.test(name)) tags.add("epic");
 
     return Array.from(tags);
   }
@@ -758,39 +744,34 @@
   function buildHint1(card) {
     const tags = deriveTags(card);
 
-    if (tags.includes("god")) return "神・御神体・女神みたいな、格が高そうなカードたこ";
-    if (tags.includes("onsen")) return "温泉や湯気っぽい雰囲気を持つカードたこ";
-    if (tags.includes("love")) return "恋やデートっぽい空気のカードたこ";
-    if (tags.includes("darts")) return "ダーツに関係あるカードたこ";
-    if (tags.includes("shop")) return "店・露店・店主まわりの空気を持つカードたこ";
-    if (tags.includes("taste")) return "味つけや食べ方に関係あるカードたこ";
-    if (tags.includes("dark_special")) return "黒さやイカサマ感みたいな、危うい雰囲気のカードたこ";
-    if (tags.includes("heat")) return "熱さや火力を感じるカードたこ";
-    if (tags.includes("memory")) return "記憶や昔の出来事っぽさがあるカードたこ";
-    if (tags.includes("crowd")) return "人の集まりや騒がしさを感じるカードたこ";
-    if (tags.includes("speed")) return "走る・飛ぶ・勢いがある感じのカードたこ";
-    if (tags.includes("danger")) return "ちょっと危ない匂いのするカードたこ";
+    if (tags.includes("god")) return "ヒント1　神・御神体・女神みたいな、格が高そうなカードたこ";
+    if (tags.includes("onsen")) return "ヒント1　温泉や湯気っぽい雰囲気を持つカードたこ";
+    if (tags.includes("love")) return "ヒント1　恋やデートっぽい空気のカードたこ";
+    if (tags.includes("darts")) return "ヒント1　ダーツに関係あるカードたこ";
+    if (tags.includes("shop")) return "ヒント1　店・露店・店主まわりの空気を持つカードたこ";
+    if (tags.includes("taste")) return "ヒント1　味つけや食べ方に関係あるカードたこ";
+    if (tags.includes("dark_special")) return "ヒント1　黒さやイカサマ感みたいな、危うい雰囲気のカードたこ";
+    if (tags.includes("heat")) return "ヒント1　熱さや火力を感じるカードたこ";
+    if (tags.includes("memory")) return "ヒント1　記憶や昔の出来事っぽさがあるカードたこ";
+    if (tags.includes("crowd")) return "ヒント1　人の集まりや騒がしさを感じるカードたこ";
+    if (tags.includes("speed")) return "ヒント1　走る・飛ぶ・勢いがある感じのカードたこ";
+    if (tags.includes("danger")) return "ヒント1　ちょっと危ない匂いのするカードたこ";
 
-    return "たこ焼きトレカ第一弾の中でも、少し印象が強いタイプたこ";
+    return "ヒント1　第一弾の中でも、少し印象が強いタイプたこ";
   }
 
-  function buildHint2(card) {
-    const rarity = card.rarity || "N";
-    const name = card.name || "";
-
-    if (rarity === "SP") return "かなり特殊なたこ。普通の手札ではまず見かけないたこ";
-    if (rarity === "LR") return "最上位クラスたこ。持ってたらかなり強い手札たこ";
-    if (rarity === "UR") return "かなりレア寄りたこ。簡単には出てこないたこ";
-    if (rarity === "SR") return "そこそこレアなたこ。人によっては持ってないたこ";
-    if (rarity === "R") return "珍しすぎないけど、ちゃんと印象に残るたこ";
-    if (rarity === "N") {
-      if (/神|女神|真珠|ビーナス/.test(name)) {
-        return "レア度は高すぎないけど、言葉の圧は強いたこ";
-      }
-      return "比較的見つけやすい側たこ。図鑑を見れば案外いるたこ";
+  function buildHint2(card, isExtraPool) {
+    if (isExtraPool) {
+      return "ヒント2　第一弾以外の特別枠たこ。かなりレア寄りたこ";
     }
 
-    return "見た目や名前に少し特徴があるたこ";
+    const rarity = card.rarity || "N";
+    if (rarity === "SP") return "ヒント2　かなり特殊なたこ。普通の手札ではまず見かけないたこ";
+    if (rarity === "LR") return "ヒント2　最上位クラスたこ。持ってたらかなり強い手札たこ";
+    if (rarity === "UR") return "ヒント2　かなりレア寄りたこ。簡単には出てこないたこ";
+    if (rarity === "SR") return "ヒント2　そこそこレアなたこ。人によっては持ってないたこ";
+    if (rarity === "R") return "ヒント2　珍しすぎないけど、ちゃんと印象に残るたこ";
+    return "ヒント2　比較的見つけやすい側たこ。図鑑を見れば案外いるたこ";
   }
 
   function buildHint3(card) {
@@ -805,19 +786,23 @@
 
     keyword = keyword.trim();
     if (!keyword) keyword = cleaned.slice(0, 4);
-
-    return `タイトルに「${keyword}」が入ってるたこ`;
+    return `ヒント3　タイトルに「${keyword}」が入ってるたこ`;
   }
 
-  function makeHintsForCard(card) {
+  function makeHintsForCard(card, isExtraPool) {
     return [
       buildHint1(card),
-      buildHint2(card),
+      buildHint2(card, isExtraPool),
       buildHint3(card)
     ];
   }
 
-  function makeTakopiThought(cardRarity, difficulty) {
+  function makeTakopiThought(card, isExtraPool, difficulty) {
+    if (isExtraPool) {
+      return "……これは第一弾の外から来てるたこ。かなりアツいたこ";
+    }
+
+    const rarity = card.rarity || "N";
     const thoughtMap = {
       N: [
         "……この条件なら、すぐ見つかるたこ",
@@ -851,13 +836,12 @@
       ]
     };
 
-    const pool = thoughtMap[cardRarity] || thoughtMap.SR;
-    if (difficulty >= 5 && cardRarity !== "LR" && cardRarity !== "SP") {
+    if (difficulty >= 5 && rarity !== "LR" && rarity !== "SP") {
       return "……条件だけ見ると、かなり重いたこ";
     }
 
-    const rnd = randFromSeed(`${todayKey()}::thought::${cardRarity}::${difficulty}`);
-    return pick(pool, rnd);
+    const rnd = randFromSeed(`${todayKey()}::thought::${card.id}`);
+    return pick(thoughtMap[rarity] || thoughtMap.SR, rnd);
   }
 
   // =========================================================
@@ -876,6 +860,17 @@
     return Math.floor(rnd() * (range[1] - range[0] + 1)) + range[0];
   }
 
+  function rewardOctoHighExtra(rnd) {
+    const table = [
+      { value: 3000, weight: 70 },
+      { value: 4000, weight: 15 },
+      { value: 5000, weight: 7 },
+      { value: 6000, weight: 5 },
+      { value: 7777, weight: 3 }
+    ];
+    return weightedPick(table, rnd).value;
+  }
+
   function rewardExpByDifficulty(difficulty) {
     return Math.max(2, difficulty * 3);
   }
@@ -892,7 +887,7 @@
       out.push({ kind, id, qty: 1 });
     }
 
-    let count = difficulty <= 2 ? 2 : difficulty === 3 ? 2 : difficulty === 4 ? 3 : 4;
+    const count = difficulty <= 2 ? 2 : difficulty === 3 ? 2 : difficulty === 4 ? 3 : 4;
     const randPool = profile.rand.map(([kind, id, weight]) => ({ kind, id, weight }));
 
     for (let i = 0; i < count; i++) {
@@ -940,33 +935,33 @@
   }
 
   function getDisplayPoolByType(type, legend = false) {
-    if (legend) return CARDS_ALL.filter(c => ["LR", "SP", "UR"].includes(c.rarity));
+    if (legend) return EXTRA_SERIES_CARDS.length ? EXTRA_SERIES_CARDS : FIRST_SERIES_CARDS.filter(c => ["UR", "LR"].includes(c.rarity));
 
     if (type === "gourmet") {
-      return CARDS_ALL.filter(c => /焼き|ソース|マヨ|塩|明太|味噌|牡蠣|温泉|イカ/.test(c.name));
+      return FIRST_SERIES_CARDS.filter(c => /焼き|ソース|マヨ|塩|明太|味噌|牡蠣|温泉|イカ/.test(c.name));
     }
     if (type === "collector") {
-      return CARDS_ALL.filter(c => ["SR", "UR", "LR"].includes(c.rarity) || /御神体|真珠|記憶|神/.test(c.name));
+      return FIRST_SERIES_CARDS.filter(c => ["SR", "UR", "LR"].includes(c.rarity) || /御神体|真珠|記憶|神/.test(c.name));
     }
     if (type === "shadow" || type === "picky" || type === "overflow") {
-      return CARDS_ALL.filter(c => ["SR", "UR", "SP", "LR"].includes(c.rarity));
+      return FIRST_SERIES_CARDS.filter(c => ["SR", "UR", "LR"].includes(c.rarity));
     }
     if (type === "rich" || type === "king" || type === "pilgrim") {
-      return CARDS_ALL.filter(c => ["SR", "UR", "LR", "SP"].includes(c.rarity));
+      return FIRST_SERIES_CARDS.filter(c => ["SR", "UR", "LR"].includes(c.rarity));
     }
     if (type === "guide") {
-      return CARDS_ALL.filter(c => ["N", "R"].includes(c.rarity));
+      return FIRST_SERIES_CARDS.filter(c => ["N", "R"].includes(c.rarity));
     }
     if (type === "impulse" || type === "opener" || type === "streamer") {
-      return CARDS_ALL.filter(c => ["N", "R", "SR"].includes(c.rarity));
+      return FIRST_SERIES_CARDS.filter(c => ["N", "R", "SR"].includes(c.rarity));
     }
     if (type === "climber" || type === "artisan") {
-      return CARDS_ALL.filter(c => ["R", "SR", "UR"].includes(c.rarity));
+      return FIRST_SERIES_CARDS.filter(c => ["R", "SR", "UR"].includes(c.rarity));
     }
     if (type === "party" || type === "ramen") {
-      return CARDS_ALL.filter(c => ["N", "R", "SR", "UR"].includes(c.rarity));
+      return FIRST_SERIES_CARDS.filter(c => ["N", "R", "SR", "UR"].includes(c.rarity));
     }
-    return CARDS_ALL.filter(c => ["N", "R", "SR"].includes(c.rarity));
+    return FIRST_SERIES_CARDS.filter(c => ["N", "R", "SR"].includes(c.rarity));
   }
 
   function getDifficultyForType(type, rnd) {
@@ -981,18 +976,22 @@
   }
 
   function chooseWantedCard(type, difficulty, rnd, legend = false) {
-    const pool = getDisplayPoolByType(type, legend);
+    let pool = getDisplayPoolByType(type, legend);
+
+    if (legend && EXTRA_SERIES_CARDS.length) {
+      return { card: pick(EXTRA_SERIES_CARDS, rnd), qty: 1, isExtraPool: true };
+    }
 
     if (difficulty >= 5) {
-      const hardPool = pool.filter(c => ["UR", "LR", "SP", "SR"].includes(c.rarity));
-      if (hardPool.length) return { card: pick(hardPool, rnd), qty: 1 };
-    }
-    if (difficulty === 4) {
+      const hardPool = pool.filter(c => ["UR", "LR", "SR"].includes(c.rarity));
+      if (hardPool.length) pool = hardPool;
+    } else if (difficulty === 4) {
       const midPool = pool.filter(c => ["SR", "UR", "R", "LR"].includes(c.rarity));
-      if (midPool.length) return { card: pick(midPool, rnd), qty: 1 };
+      if (midPool.length) pool = midPool;
     }
 
-    return { card: pick(pool, rnd), qty: 1 };
+    const picked = pick(pool, rnd);
+    return { card: picked, qty: 1, isExtraPool: false };
   }
 
   function getCustomerLine(type, rnd) {
@@ -1016,14 +1015,15 @@
       line: getCustomerLine(type, rnd),
       targetCardId: wanted.card.id,
       targetQty: 1,
-      rewardOcto: rewardOctoByRarity(wanted.card.rarity, rnd),
+      isExtraPool: wanted.isExtraPool,
+      rewardOcto: wanted.isExtraPool ? rewardOctoHighExtra(rnd) : rewardOctoByRarity(wanted.card.rarity, rnd),
       rewardExp: rewardExpByDifficulty(difficulty),
       rewardRep: rewardRepByDifficulty(difficulty),
       rewardItems: makeRewardItems(type, difficulty, rnd),
-      hints: makeHintsForCard(wanted.card),
+      hints: makeHintsForCard(wanted.card, wanted.isExtraPool),
       currentHintIndex: 0,
       hintCosts: [0, 200, 300],
-      takopiThought: makeTakopiThought(wanted.card.rarity, difficulty),
+      takopiThought: makeTakopiThought(wanted.card, wanted.isExtraPool, difficulty),
       completed: false,
       completedAt: null,
       retryCount: 0
@@ -1040,6 +1040,7 @@
     const featuredIndex = Math.floor(rnd() * chosen.length);
 
     const jobs = chosen.map((type, idx) => makeJob(type, idx, today, idx === featuredIndex, false));
+
     let legendJob = null;
     const legendCandidates = ["rich", "king", "pilgrim", "picky", "overflow", "shadow"];
     if (rnd() < 0.38) {
@@ -1188,7 +1189,6 @@
 
     const successW = attempts ? (success / attempts) * 100 : 0;
     const failW = attempts ? (fail / attempts) * 100 : 0;
-
     if (successEl) successEl.style.width = `${successW}%`;
     if (failEl) failEl.style.width = `${failW}%`;
   }
@@ -1228,12 +1228,10 @@
 
     return `
       <div class="matchHintPanel">
-        <div class="matchHintHead">
-          <div class="matchHintTakopi">🐙</div>
-          <div class="matchHintTitle">今日の希望</div>
-        </div>
+        <div class="matchHintBadge">今日の希望は…</div>
 
-        <div class="matchHintSingle">
+        <div class="matchHintLargeBox">
+          <div class="matchHintLabel">ヒント${idx + 1}</div>
           <div class="matchHintCurrent">${escapeHtml(currentText)}</div>
         </div>
 
