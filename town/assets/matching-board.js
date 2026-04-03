@@ -5,7 +5,7 @@
   // Keys
   // =========================================================
   const KEY = {
-    board: "ttc_matching_board_v2",
+    board: "ttc_card_board_matching_v3",
     octo: "roten_v1_octo",
     player: "tf_v1_player",
     book: "tf_v1_book",
@@ -66,15 +66,6 @@
     return arr[Math.floor(rnd() * arr.length)];
   }
 
-  function pickUnique(arr, count, rnd) {
-    const src = arr.slice();
-    const out = [];
-    while (src.length && out.length < count) {
-      out.push(src.splice(Math.floor(rnd() * src.length), 1)[0]);
-    }
-    return out;
-  }
-
   function weightedPick(list, rnd) {
     const total = list.reduce((s, v) => s + (v.weight || 1), 0);
     let roll = rnd() * total;
@@ -105,34 +96,290 @@
   }
 
   // =========================================================
-  // Assets / visitors
+  // Maps
   // =========================================================
-  const ASSETS = {
-    bgDay: "https://ul.h3z.jp/lqCNnwQH.png",
-    bgNight: "https://ul.h3z.jp/UtPlWaZz.png",
-    visitors: [
-      { id:"v01", name:"つぶやきタコ民", type:"careful",   url:"https://ul.h3z.jp/RpLPCRTc.png" },
-      { id:"v02", name:"即決タコ民",     type:"impulse",   url:"https://ul.h3z.jp/TMXU9ztW.png" },
-      { id:"v03", name:"冷やかしタコ民", type:"looker",    url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku16.png" },
-      { id:"v04", name:"見えないタコ民", type:"picky",     url:"https://ul.h3z.jp/MZYfusKm.png" },
-      { id:"v05", name:"王様タコ民",     type:"king",      url:"https://ul.h3z.jp/wMM8PrcP.png" },
-      { id:"v06", name:"よっぱらいタコ民", type:"flipper", url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku20.png" },
-      { id:"v07", name:"札束タコ民",     type:"rich",      url:"https://ul.h3z.jp/pZKu3lSE.png" },
-      { id:"v08", name:"踏破タコ民",     type:"climber",   url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku2.png" },
-      { id:"v09", name:"ナビタコ民",     type:"guide",     url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku3.png" },
-      { id:"v10", name:"ほぐしタコ民",   type:"relax",     url:"https://ul.h3z.jp/dbBbLypa.png" },
-      { id:"v11", name:"返し職人タコ民", type:"artisan",   url:"https://ul.h3z.jp/OA5StkvT.png" },
-      { id:"v12", name:"ゼロ理論タコ民", type:"diet",      url:"https://ul.h3z.jp/KVImBYZ8.png" },
-      { id:"v13", name:"枠外タコ民",     type:"overflow",  url:"https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/kyaku7.png" },
-      { id:"v14", name:"未開封保護タコ民", type:"collector", url:"https://ul.h3z.jp/zSvGyVq9.png" },
-      { id:"v15", name:"防水タコ民",     type:"shadow",    url:"https://ul.h3z.jp/IBKDrVAm.png" },
-      { id:"v16", name:"替え玉タコ民",   type:"ramen",     url:"https://ul.h3z.jp/NViRwhdj.png" },
-      { id:"v17", name:"投げ銭タコ民",   type:"streamer",  url:"https://ul.h3z.jp/8PukOegd.png" },
-      { id:"v18", name:"舌判定タコ民",   type:"gourmet",   url:"https://ul.h3z.jp/We4UXFSI.png" },
-      { id:"v19", name:"即バリタコ民",   type:"opener",    url:"https://ul.h3z.jp/9usFHTdU.png" },
-      { id:"v20", name:"宴タコ民",       type:"party",     url:"https://ul.h3z.jp/pByCAUMC.png" },
-      { id:"v21", name:"覚悟タコ民",     type:"pilgrim",   url:"https://ul.h3z.jp/eW2dluw2.png" }
+  const CUSTOMER_NAME_MAP = {
+    impulse: "即決タコ民",
+    picky: "見えないタコ民",
+    king: "王様タコ民",
+    flipper: "よっぱらいタコ民",
+    careful: "つぶやきタコ民",
+    looker: "冷やかしタコ民",
+    rich: "札束タコ民",
+    climber: "踏破タコ民",
+    guide: "ナビタコ民",
+    relax: "ほぐしタコ民",
+    artisan: "返し職人タコ民",
+    diet: "ゼロ理論タコ民",
+    overflow: "枠外タコ民",
+    collector: "未開封保護タコ民",
+    shadow: "防水タコ民",
+    ramen: "替え玉タコ民",
+    streamer: "投げ銭タコ民",
+    gourmet: "舌判定タコ民",
+    opener: "即バリタコ民",
+    party: "宴タコ民",
+    pilgrim: "覚悟タコ民"
+  };
+
+  const CUSTOMER_ICON_MAP = {
+    careful:   "https://ul.h3z.jp/RpLPCRTc.png",
+    impulse:   "https://ul.h3z.jp/TMXU9ztW.png",
+    looker:    "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku16.png",
+    picky:     "https://ul.h3z.jp/MZYfusKm.png",
+    king:      "https://ul.h3z.jp/wMM8PrcP.png",
+    flipper:   "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku20.png",
+    rich:      "https://ul.h3z.jp/pZKu3lSE.png",
+    climber:   "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku2.png",
+    guide:     "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku3.png",
+    relax:     "https://ul.h3z.jp/dbBbLypa.png",
+    artisan:   "https://ul.h3z.jp/OA5StkvT.png",
+    diet:      "https://ul.h3z.jp/KVImBYZ8.png",
+    overflow:  "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/kyaku7.png",
+    collector: "https://ul.h3z.jp/zSvGyVq9.png",
+    shadow:    "https://ul.h3z.jp/IBKDrVAm.png",
+    ramen:     "https://ul.h3z.jp/NViRwhdj.png",
+    streamer:  "https://ul.h3z.jp/8PukOegd.png",
+    gourmet:   "https://ul.h3z.jp/We4UXFSI.png",
+    opener:    "https://ul.h3z.jp/9usFHTdU.png",
+    party:     "https://ul.h3z.jp/pByCAUMC.png",
+    pilgrim:   "https://ul.h3z.jp/eW2dluw2.png"
+  };
+
+  // =========================================================
+  // Hero / Takopi lines
+  // =========================================================
+  const HERO_LINES = [
+    "今日は誰に焼かれるたこ？",
+    "条件が合えば、もうそれは運命たこ。",
+    "恋じゃない、在庫のマッチングたこ。",
+    "今日の相手、たぶん全員ちょっと重いたこ。"
+  ];
+
+  const TAKOPI_LINES = [
+    "……この人、たぶん地雷たこ",
+    "条件、重すぎない？",
+    "SR以上×3とか、愛じゃないたこ",
+    "それ、恋じゃなくて在庫処分たこ",
+    "……焼けたね",
+    "足りないのはカードじゃなくて覚悟たこ",
+    "まだ探すの？",
+    "今日、運いいたこ",
+    "その相手、沼の匂いがするたこ",
+    "片想いが一番コスト高いたこ"
+  ];
+
+  // =========================================================
+  // Type lines
+  // =========================================================
+  const CUSTOMER_LINES = {
+    rich: [
+      "値段じゃない、この執着が問題なんだたこ",
+      "高いほど安心する。不思議だろう？たこ",
+      "手に入らないものほど、燃えるんだよたこ",
+      "欲しい理由？持ってないからだたこ",
+      "在庫がない？それが一番価値があるたこ",
+      "安く手に入るものに、興味はないたこ",
+      "思い出じゃない、“未所持”が許せないたこ",
+      "金で買えないなら、もっと出すだけだたこ"
+    ],
+    looker: [
+      "別に欲しいわけじゃないけど、気になるたこ",
+      "あればいいな〜くらいの気持ちたこ",
+      "いや、ほんとにいらない…けど、ちょっと欲しいたこ",
+      "買わないよ？でも見せてたこ",
+      "見てるだけで満足…すると思ったたこ",
+      "なんでだろ、毎回ここに来ちゃうたこ",
+      "今日は買わない日って決めてたのにたこ",
+      "気づいたら比較してる時点で負けたこ"
+    ],
+    impulse: [
+      "あ、これ欲しい。今すぐたこ",
+      "見た瞬間に決まってたたこ",
+      "今逃したら一生後悔するやつたこ",
+      "理由はあとで考えるたこ",
+      "欲しいって思った時が正解たこ",
+      "悩むくらいならもう決めてるたこ",
+      "これは“縁”ってやつだたこ",
+      "直感って、だいたい在庫切れの直前に来るたこ"
+    ],
+    careful: [
+      "本当に今買うべきか、まだ迷ってるたこ",
+      "この一枚でバランスが崩れる気がするたこ",
+      "欲しい。でも今じゃない気もするたこ",
+      "条件が揃いすぎて逆に怖いたこ",
+      "もう少し様子を見たいたこ",
+      "理想に近いけど、完璧じゃないたこ",
+      "妥協したくない。でも逃したくもないたこ",
+      "決め手が欲しいたこ"
+    ],
+    climber: [
+      "ここまで来たら、あと一歩なんだたこ",
+      "この一枚で完成するたこ",
+      "途中でやめるわけにはいかないたこ",
+      "足りないピースがこれなんだたこ",
+      "集めきるまで終われないたこ",
+      "これはゴールじゃなくて通過点たこ",
+      "全部揃って初めて意味があるたこ",
+      "登りきるまでは引き返さないたこ"
+    ],
+    flipper: [
+      "たぶん欲しい！いや、やっぱいらない！たこ",
+      "今なら全部買える気がするたこ",
+      "これ、明日見たら後悔するやつたこ",
+      "深夜の判断はだいたい間違うたこ",
+      "でも今は正しい気がするたこ",
+      "なんか…良く見えてきたたこ",
+      "判断力？どこかに置いてきたたこ",
+      "買った後に考えるたこ"
+    ],
+    relax: [
+      "見てるだけで落ち着くたこ",
+      "この一枚、なんか好きなたこ",
+      "ゆっくり選びたい気分たこ",
+      "焦らなくてもいい気がするたこ",
+      "手元にあったら幸せになれそうたこ",
+      "なんとなく惹かれてるたこ",
+      "理由はないけど、いいたこ",
+      "こういうのが一番長く残るたこ"
+    ],
+    artisan: [
+      "この焼き、この構図…分かるやつに渡したいたこ",
+      "雑な選び方はしたくないたこ",
+      "いいカードは、いい手に渡るべきたこ",
+      "この一枚、ちゃんと扱えるか？たこ",
+      "見た目じゃない、中身で選ぶたこ",
+      "これを選ぶやつは分かってるたこ",
+      "価値を理解してるやつに渡したいたこ",
+      "これは“作品”なんだたこ"
+    ],
+    diet: [
+      "持ってないから実質ゼロ、だから欲しいたこ",
+      "欲しくないって言えば欲しくなくなるたこ",
+      "手に入れた瞬間、価値は下がるたこ",
+      "買わなければ損はしないたこ（でも欲しい）",
+      "欲望は理論で抑えられるはずたこ",
+      "これは必要じゃない、でも必要たこ",
+      "理屈ではいらない。でも感情が違うたこ",
+      "結論：欲しいたこ"
+    ],
+    picky: [
+      "ずっと探してるのに、誰も気づかないたこ",
+      "それ、本当にそこにあるたこ？",
+      "前にも見た気がするたこ…同じ場所で",
+      "誰かが持ってるはずなんだたこ",
+      "見えてるのに、手に入らないたこ",
+      "もう一度だけ、触れさせてほしいたこ",
+      "忘れたはずなのに、思い出すたこ",
+      "それ、前は俺のだったたこ"
+    ],
+    king: [
+      "余にふさわしい一枚だけを持ってくるたこ",
+      "安っぽい条件では心が動かないたこ",
+      "王の目はごまかせないたこ",
+      "見た目も格も揃ってないと困るたこ",
+      "ただ欲しいんじゃない、ふさわしいか見てるたこ",
+      "余に似合うなら、それは価値があるたこ"
+    ],
+    guide: [
+      "今日は案内役じゃなく、客として来たたこ",
+      "軽く見えても、欲しいものはあるたこ",
+      "まずは条件を見せてほしいたこ",
+      "初見でも分かりやすい一枚が好きたこ"
+    ],
+    overflow: [
+      "枠の外から欲しくなったたこ",
+      "今日は普通じゃないのを探してるたこ",
+      "少し危ない感じも嫌いじゃないたこ",
+      "はみ出したものほど、気になるたこ",
+      "整ってるだけじゃ足りないたこ"
+    ],
+    collector: [
+      "保存用まで考えてるたこ",
+      "同じカードでも複数欲しいたこ",
+      "並べて眺めたいんだたこ",
+      "紙の匂いが忘れられないたこ",
+      "あの角の輝きが、まだ頭に残ってるたこ",
+      "触れずに持つのが一番難しいたこ"
+    ],
+    shadow: [
+      "濡れてるくらいがちょうどいいたこ",
+      "水っぽい気配のする一枚が欲しいたこ",
+      "少ししけってるくらいが記憶に残るたこ",
+      "乾いたままじゃ終われないたこ",
+      "濁った気配に、妙に安心するたこ"
+    ],
+    ramen: [
+      "一枚じゃ足りない、替え玉みたいに追加が欲しいたこ",
+      "同じのを複数でも平気たこ",
+      "数があると落ち着くたこ",
+      "揃ってる感じが好きたこ",
+      "足りるまで足す、それだけたこ"
+    ],
+    streamer: [
+      "刺さったら報酬はずむたこ",
+      "今日は景気よくいくたこ",
+      "反応がよければ増やすたこ",
+      "見せ方次第で全部アリたこ",
+      "今この瞬間が盛り上がれば勝ちたこ"
+    ],
+    gourmet: [
+      "あの日食べたあの味が忘れられなくて…",
+      "ソースの香りだけで、昔を思い出すたこ",
+      "あの焼き色を、もう一度見たいたこ",
+      "一口で終わったのに、記憶だけ残りすぎたこ",
+      "うまかった、だけじゃ片づけられないたこ",
+      "舌が覚えてるうちに、もう一度会いたいたこ"
+    ],
+    opener: [
+      "未開封は待てないたこ",
+      "開けて見たい気持ちが勝つたこ",
+      "勢いで揃えたいんだたこ",
+      "中身を知らずに終われないたこ",
+      "破る瞬間が一番好きたこ"
+    ],
+    party: [
+      "今日はにぎやかな相手が欲しいたこ",
+      "複数並べると映えるたこ",
+      "祭り感があるやつを頼むたこ",
+      "一枚じゃ足りない、場が持たないたこ",
+      "盛り上がるやつだけ連れてきてたこ"
+    ],
+    pilgrim: [
+      "置き忘れたあの日のカードをまた手に入れたくて",
+      "一度手放したあの一枚を、まだ忘れられないたこ",
+      "昔の恋みたいに、気づけばまた追いかけてたこ",
+      "なくしたのはカードなのに、心まで空いたたこ",
+      "もう会えないと思ってたのに、また探してるたこ",
+      "片想いだって分かってても、探してしまうたこ"
     ]
+  };
+
+  // =========================================================
+  // Appear rates
+  // =========================================================
+  const CUSTOMER_RATE = {
+    careful: 13,
+    impulse: 12,
+    looker: 12,
+    relax: 10,
+    gourmet: 10,
+    artisan: 8,
+    diet: 8,
+    climber: 8,
+    flipper: 7,
+    collector: 7,
+    opener: 6,
+    party: 6,
+    ramen: 6,
+    streamer: 5,
+    king: 5,
+    shadow: 4,
+    overflow: 4,
+    picky: 4,
+    rich: 3,
+    guide: 2,
+    pilgrim: 2
   };
 
   // =========================================================
@@ -275,7 +522,7 @@
   };
 
   // =========================================================
-  // Reward pools
+  // Reward items
   // =========================================================
   const SEEDS = [
     { id: "seed_random", name: "なに出るタネ" },
@@ -312,374 +559,90 @@
     fert: Object.fromEntries(FERTS.map(v => [v.id, v]))
   };
 
-  // =========================================================
-  // Flavor data
-  // =========================================================
-  const TYPE_CONFIG = {
+  const REWARD_PROFILES = {
     careful: {
-      line: [
-        "余ってるなら見せてほしいたこ",
-        "今日はこのへんを探してるたこ",
-        "ゆるく集めてる最中たこ"
-      ],
-      wantBias: ["N","N","R","SR"],
-      rewardProfile: "light"
+      fixed: [["water","water_plain_free"]],
+      rand: [["fert","fert_feel",18],["seed","seed_random",18],["water","water_nice",12]]
     },
     impulse: {
-      line: [
-        "見つけたらすぐ決めるたこ",
-        "今日は勢いで会いたいたこ",
-        "その場で条件を飲むたこ"
-      ],
-      wantBias: ["N","R","R","SR"],
-      rewardProfile: "quick"
+      fixed: [["water","water_nice"]],
+      rand: [["seed","seed_shop",18],["seed","seed_line",10],["fert","fert_guts",10]]
     },
     looker: {
-      line: [
-        "見るだけのつもりだったたこ",
-        "買うとは言ってないたこ",
-        "でも刺さる相手はいるたこ"
-      ],
-      wantBias: ["N","N","R"],
-      rewardProfile: "mischief"
+      fixed: [["water","water_plain_free"]],
+      rand: [["water","water_regret",8],["fert","fert_agedama",12],["seed","seed_random",16]]
     },
     picky: {
-      line: [
-        "普通のじゃ足りないたこ",
-        "条件が重いのは認めるたこ",
-        "少し怪しい相手でも平気たこ"
-      ],
-      wantBias: ["SR","UR","SP"],
-      rewardProfile: "strange"
+      fixed: [["water","water_rotten"]],
+      rand: [["water","water_sea",14],["fert","fert_timeno",8],["seed","seed_bussasari",6]]
     },
     king: {
-      line: [
-        "余にふさわしい相手を持てたこ",
-        "見た目がいいやつ優先たこ",
-        "安っぽいのは今日はやめるたこ"
-      ],
-      wantBias: ["R","SR","UR","LR"],
-      rewardProfile: "royal"
+      fixed: [["water","water_yunokawa"]],
+      rand: [["seed","seed_namara_kawasar",12],["seed","seed_special",8],["fert","fert_skip",10]]
     },
     flipper: {
-      line: [
-        "気分が変わる前に会いたいたこ",
-        "今日はノリで決めるたこ",
-        "テンション次第で成立たこ"
-      ],
-      wantBias: ["N","R","SR"],
-      rewardProfile: "swing"
-    },
-    rich: {
-      line: [
-        "光ってるやつだけ持ってくるたこ",
-        "欲しいものが欲しい、それだけたこ",
-        "値段は気にしないたこ"
-      ],
-      wantBias: ["SR","UR","LR","SP"],
-      rewardProfile: "rich"
-    },
-    climber: {
-      line: [
-        "ここまで来たからには集めたいたこ",
-        "達成感がある相手を頼むたこ",
-        "軽すぎる条件は興味ないたこ"
-      ],
-      wantBias: ["R","SR","UR"],
-      rewardProfile: "steady"
-    },
-    guide: {
-      line: [
-        "初心者向けの相手を置くたこ",
-        "案内だけじゃなく、たまに頼むたこ",
-        "今日は軽めから始めるたこ"
-      ],
-      wantBias: ["N","R"],
-      rewardProfile: "starter"
-    },
-    relax: {
-      line: [
-        "急ぎじゃないけど欲しいたこ",
-        "のんびりマッチしたいたこ",
-        "今日は軽めの相手たこ"
-      ],
-      wantBias: ["N","R","SR"],
-      rewardProfile: "light"
-    },
-    artisan: {
-      line: [
-        "ちゃんと刺さるやつを探してるたこ",
-        "雑なのはちょっと困るたこ",
-        "職人目線で見てるたこ"
-      ],
-      wantBias: ["R","SR","UR"],
-      rewardProfile: "fert"
-    },
-    diet: {
-      line: [
-        "ゼロ理論に合う相手を持ってくるたこ",
-        "軽そうに見えて重い条件たこ",
-        "思想が合えば成立たこ"
-      ],
-      wantBias: ["N","R","SR"],
-      rewardProfile: "odd"
-    },
-    overflow: {
-      line: [
-        "枠の外から欲しくなったたこ",
-        "今日は普通じゃないのを探してるたこ",
-        "少し危ない感じも嫌いじゃないたこ"
-      ],
-      wantBias: ["SR","UR","SP"],
-      rewardProfile: "strange"
-    },
-    collector: {
-      line: [
-        "保存用まで考えてるたこ",
-        "同じカードでも複数欲しいたこ",
-        "並べて眺めたいんだたこ"
-      ],
-      wantBias: ["R","SR","UR"],
-      rewardProfile: "collector"
-    },
-    shadow: {
-      line: [
-        "水っぽいやつが欲しいたこ",
-        "濡れてるくらいがちょうどいいたこ",
-        "しけった相手でも受け入れるたこ"
-      ],
-      wantBias: ["N","R","SP"],
-      rewardProfile: "water"
-    },
-    ramen: {
-      line: [
-        "替え玉みたいに追加で欲しいたこ",
-        "同じのを複数でも平気たこ",
-        "数があると落ち着くたこ"
-      ],
-      wantBias: ["N","R","SR"],
-      rewardProfile: "bundle"
-    },
-    streamer: {
-      line: [
-        "刺さったら報酬はずむたこ",
-        "今日は景気よくいくたこ",
-        "反応がよければ増やすたこ"
-      ],
-      wantBias: ["R","SR","UR"],
-      rewardProfile: "chaos"
-    },
-    gourmet: {
-      line: [
-        "味のある相手を探してるたこ",
-        "食欲に刺さるのがいいたこ",
-        "名前だけでも強いのを頼むたこ"
-      ],
-      wantBias: ["N","R","SR","UR"],
-      rewardProfile: "gourmet"
-    },
-    opener: {
-      line: [
-        "未開封は待てないたこ",
-        "開けて見たい気持ちが勝つたこ",
-        "勢いで揃えたいんだたこ"
-      ],
-      wantBias: ["N","R","SR"],
-      rewardProfile: "quick"
-    },
-    party: {
-      line: [
-        "今日はにぎやかな相手が欲しいたこ",
-        "複数並べると映えるたこ",
-        "祭り感があるやつを頼むたこ"
-      ],
-      wantBias: ["N","R","SR","UR"],
-      rewardProfile: "bundle"
-    },
-    pilgrim: {
-      line: [
-        "覚悟のいる相手になるたこ",
-        "その1枚のために来たたこ",
-        "軽い気持ちでは頼めないたこ"
-      ],
-      wantBias: ["SR","UR","LR","SP"],
-      rewardProfile: "legend"
-    }
-  };
-
-  const HERO_LINES = [
-    "今日は誰に焼かれるたこ？",
-    "条件が合えば、もうそれは運命たこ。",
-    "恋じゃない、在庫のマッチングたこ。",
-    "今日の相手、たぶん全員ちょっと重いたこ。"
-  ];
-
-  const TAKOPI_LINES = [
-    "……この人、たぶん地雷たこ",
-    "条件、重すぎない？",
-    "SR以上×3とか、愛じゃないたこ",
-    "それ、恋じゃなくて在庫処分たこ",
-    "……焼けたね",
-    "足りないのはカードじゃなくて覚悟たこ",
-    "まだ探すの？",
-    "今日、運いいたこ",
-    "その相手、沼の匂いがするたこ",
-    "片想いが一番コスト高いたこ"
-  ];
-
-  const REWARD_PROFILES = {
-    light: {
-      fixed: [["water","water_plain_free"],["fert","fert_feel"]],
-      rand: [
-        ["seed","seed_random",24],
-        ["water","water_plain_free",18],
-        ["fert","fert_feel",18],
-        ["water","water_nice",12],
-        ["seed","seed_shop",8]
-      ]
-    },
-    starter: {
-      fixed: [["water","water_plain_free"],["seed","seed_random"]],
-      rand: [
-        ["fert","fert_feel",18],
-        ["water","water_nice",12],
-        ["seed","seed_shop",10]
-      ]
-    },
-    quick: {
       fixed: [["water","water_nice"]],
-      rand: [
-        ["seed","seed_shop",18],
-        ["seed","seed_line",10],
-        ["fert","fert_feel",14],
-        ["fert","fert_guts",10],
-        ["water","water_nice",16]
-      ]
-    },
-    mischief: {
-      fixed: [["water","water_plain_free"]],
-      rand: [
-        ["water","water_regret",8],
-        ["fert","fert_agedama",16],
-        ["seed","seed_random",18],
-        ["water","water_nice",8]
-      ]
-    },
-    royal: {
-      fixed: [["water","water_yunokawa"]],
-      rand: [
-        ["seed","seed_namara_kawasar",12],
-        ["seed","seed_special",8],
-        ["water","water_overdo",10],
-        ["fert","fert_skip",10],
-        ["water","water_yunokawa",18]
-      ]
+      rand: [["fert","fert_feel",12],["water","water_regret",8],["seed","seed_random",14]]
     },
     rich: {
       fixed: [["water","water_overdo"],["seed","seed_namara_kawasar"]],
-      rand: [
-        ["water","water_supergod",8],
-        ["seed","seed_bussasari",18],
-        ["seed","seed_special",12],
-        ["water","water_yunokawa",14],
-        ["fert","fert_timeno",12]
-      ]
+      rand: [["water","water_supergod",8],["seed","seed_bussasari",18],["fert","fert_timeno",12]]
     },
-    steady: {
+    climber: {
       fixed: [["water","water_suspicious"]],
-      rand: [
-        ["fert","fert_guts",15],
-        ["fert","fert_skip",10],
-        ["water","water_nice",12],
-        ["seed","seed_line",10],
-        ["seed","seed_shop",12]
-      ]
+      rand: [["fert","fert_guts",15],["seed","seed_line",10],["seed","seed_shop",12]]
     },
-    fert: {
+    guide: {
+      fixed: [["water","water_plain_free"],["seed","seed_random"]],
+      rand: [["fert","fert_feel",18],["water","water_nice",12]]
+    },
+    relax: {
+      fixed: [["water","water_plain_free"]],
+      rand: [["seed","seed_random",16],["fert","fert_feel",16],["water","water_nice",8]]
+    },
+    artisan: {
       fixed: [["fert","fert_guts"]],
-      rand: [
-        ["fert","fert_skip",18],
-        ["fert","fert_timeno",6],
-        ["water","water_suspicious",10],
-        ["seed","seed_shop",12]
-      ]
+      rand: [["fert","fert_skip",18],["water","water_suspicious",10],["seed","seed_shop",12]]
     },
-    odd: {
+    diet: {
       fixed: [["fert","fert_agedama"]],
-      rand: [
-        ["water","water_regret",10],
-        ["fert","fert_feel",12],
-        ["seed","seed_random",18],
-        ["water","water_nice",8]
-      ]
+      rand: [["water","water_regret",10],["fert","fert_feel",12],["seed","seed_random",18]]
+    },
+    overflow: {
+      fixed: [["water","water_rotten"]],
+      rand: [["water","water_sea",12],["fert","fert_timeno",8],["seed","seed_bussasari",6]]
     },
     collector: {
       fixed: [["seed","seed_special"]],
-      rand: [
-        ["water","water_yunokawa",10],
-        ["water","water_overdo",8],
-        ["seed","seed_namara_kawasar",10],
-        ["fert","fert_skip",8]
-      ]
+      rand: [["water","water_yunokawa",10],["seed","seed_namara_kawasar",10],["fert","fert_skip",8]]
     },
-    water: {
+    shadow: {
       fixed: [["water","water_suspicious"]],
-      rand: [
-        ["water","water_rotten",8],
-        ["water","water_sea",10],
-        ["water","water_yunokawa",12],
-        ["water","water_overdo",10]
-      ]
+      rand: [["water","water_rotten",8],["water","water_sea",10],["water","water_overdo",8]]
     },
-    bundle: {
+    ramen: {
       fixed: [["seed","seed_random"]],
-      rand: [
-        ["seed","seed_shop",12],
-        ["seed","seed_line",10],
-        ["water","water_nice",12],
-        ["fert","fert_guts",10],
-        ["fert","fert_feel",14]
-      ]
+      rand: [["seed","seed_shop",12],["fert","fert_guts",10],["fert","fert_feel",12]]
+    },
+    streamer: {
+      fixed: [],
+      rand: [["water","water_nice",12],["seed","seed_special",8],["fert","fert_skip",8],["seed","seed_bussasari",10]]
     },
     gourmet: {
       fixed: [["water","water_yunokawa"]],
-      rand: [
-        ["water","water_nice",14],
-        ["seed","seed_namara_kawasar",10],
-        ["fert","fert_feel",10],
-        ["water","water_overdo",6]
-      ]
+      rand: [["water","water_nice",14],["seed","seed_namara_kawasar",10],["fert","fert_feel",10]]
     },
-    chaos: {
-      fixed: [],
-      rand: [
-        ["water","water_nice",12],
-        ["water","water_suspicious",10],
-        ["water","water_overdo",8],
-        ["seed","seed_special",8],
-        ["seed","seed_bussasari",10],
-        ["fert","fert_skip",8],
-        ["fert","fert_timeno",5]
-      ]
+    opener: {
+      fixed: [["water","water_nice"]],
+      rand: [["seed","seed_shop",16],["seed","seed_line",10],["fert","fert_skip",8]]
     },
-    strange: {
-      fixed: [["water","water_rotten"]],
-      rand: [
-        ["water","water_sea",14],
-        ["water","water_regret",10],
-        ["fert","fert_timeno",8],
-        ["seed","seed_bussasari",6]
-      ]
+    party: {
+      fixed: [["seed","seed_random"]],
+      rand: [["seed","seed_shop",12],["water","water_nice",12],["fert","fert_guts",10]]
     },
-    legend: {
+    pilgrim: {
       fixed: [["water","water_overdo"],["fert","fert_timeno"]],
-      rand: [
-        ["water","water_supergod",10],
-        ["seed","seed_special",10],
-        ["seed","seed_bussasari",14],
-        ["seed","seed_namara_kawasar",12],
-        ["water","water_rotten",8]
-      ]
+      rand: [["water","water_supergod",10],["seed","seed_special",10],["seed","seed_bussasari",14]]
     }
   };
 
@@ -704,7 +667,7 @@
   const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
 
   // =========================================================
-  // Defaults / shared storage
+  // Ensure defaults
   // =========================================================
   function ensureDefaults() {
     if (localStorage.getItem(KEY.octo) == null) localStorage.setItem(KEY.octo, "1000");
@@ -772,7 +735,6 @@
   function getOwnedCardsByRarityAtLeast(rarity) {
     const min = RARITY_ORDER[rarity] || 1;
     const book = getBook();
-
     return CARDS_ALL
       .filter(c => (RARITY_ORDER[c.rarity] || 0) >= min)
       .map(c => ({ ...c, count:Number(book.got?.[c.id]?.count || 0) }))
@@ -819,10 +781,36 @@
   }
 
   // =========================================================
-  // Pool selection
+  // Visitors / appearance
+  // =========================================================
+  const CUSTOMER_TYPES = Object.keys(CUSTOMER_NAME_MAP);
+
+  function buildWeightedCustomerPool() {
+    const out = [];
+    for (const type of CUSTOMER_TYPES) {
+      const weight = CUSTOMER_RATE[type] || 1;
+      for (let i = 0; i < weight; i++) out.push(type);
+    }
+    return out;
+  }
+
+  const CUSTOMER_WEIGHTED_POOL = buildWeightedCustomerPool();
+
+  function uniqueCustomerTypes(count, rnd) {
+    const selected = new Set();
+    let guard = 0;
+    while (selected.size < count && guard < 500) {
+      selected.add(pick(CUSTOMER_WEIGHTED_POOL, rnd));
+      guard++;
+    }
+    return Array.from(selected);
+  }
+
+  // =========================================================
+  // Selection rules
   // =========================================================
   function getDisplayPoolByType(type, legend = false) {
-    if (legend) return CARDS_ALL.filter(c => ["LR", "SP", "UR"].includes(c.rarity));
+    if (legend) return CARDS_ALL.filter(c => ["LR","SP","UR"].includes(c.rarity));
 
     if (type === "gourmet") {
       return CARDS_ALL.filter(c => /焼き|ソース|マヨ|塩|明太|牡蠣|味噌|てり|イカ|温泉/.test(c.name));
@@ -839,21 +827,38 @@
     if (type === "guide") {
       return CARDS_ALL.filter(c => ["N","R"].includes(c.rarity));
     }
+    if (type === "impulse" || type === "opener" || type === "streamer") {
+      return CARDS_ALL.filter(c => ["N","R","SR"].includes(c.rarity));
+    }
+    if (type === "climber" || type === "artisan") {
+      return CARDS_ALL.filter(c => ["R","SR","UR"].includes(c.rarity));
+    }
+    if (type === "party" || type === "ramen") {
+      return CARDS_ALL.filter(c => ["N","R","SR","UR"].includes(c.rarity));
+    }
+    return CARDS_ALL.filter(c => ["N","R","SR"].includes(c.rarity));
+  }
 
-    const allowed = new Set(TYPE_CONFIG[type]?.wantBias || ["N","R","SR"]);
-    return CARDS_ALL.filter(card => allowed.has(card.rarity));
+  function getDifficultyForType(type, rnd) {
+    if (type === "rich") return 5;
+    if (type === "pilgrim") return rnd() < .55 ? 4 : 5;
+    if (type === "king") return rnd() < .45 ? 4 : 5;
+    if (type === "picky" || type === "shadow" || type === "overflow") return rnd() < .4 ? 4 : 5;
+    if (type === "collector" || type === "artisan" || type === "climber" || type === "gourmet") return rnd() < .35 ? 3 : 4;
+    if (type === "guide" || type === "careful" || type === "relax") return rnd() < .6 ? 2 : 3;
+    if (type === "looker" || type === "diet") return rnd() < .55 ? 2 : 3;
+    return rnd() < .34 ? 2 : rnd() < .72 ? 3 : 4;
   }
 
   function makeWant(rnd, type, difficulty, usedIds, legend = false) {
-    const pRarityQuest = legend ? 0.52 : (difficulty >= 4 ? 0.22 : 0.08);
+    const rarityQuestChance = legend ? 0.55 : (difficulty >= 4 ? 0.22 : 0.08);
 
-    if (rnd() < pRarityQuest) {
+    if (rnd() < rarityQuestChance) {
       const rarityPool = legend
         ? ["UR","LR","SP"]
         : difficulty >= 5 ? ["SR","UR","LR"]
         : difficulty >= 4 ? ["SR","UR"]
         : ["R","SR"];
-
       const rarity = pick(rarityPool, rnd);
       return {
         type:"rarity",
@@ -874,7 +879,8 @@
     if (difficulty === 3 && rnd() < .45) qty = 2;
     if (difficulty === 4) qty = rnd() < .5 ? 2 : 3;
     if (difficulty >= 5) qty = rnd() < .4 ? 2 : 3;
-    if (["collector","ramen","party"].includes(type) && rnd() < .35) qty += 1;
+
+    if (type === "collector" || type === "ramen" || type === "party") qty += rnd() < .35 ? 1 : 0;
     if (legend) qty = 1;
 
     return {
@@ -905,8 +911,8 @@
     return isLegend ? 12 : Math.max(1, difficulty * 2);
   }
 
-  function makeRewardItems(profileName, difficulty, isLegend, rnd) {
-    const profile = REWARD_PROFILES[profileName] || REWARD_PROFILES.light;
+  function makeRewardItems(type, difficulty, isLegend, rnd) {
+    const profile = REWARD_PROFILES[type] || REWARD_PROFILES.careful;
     const out = [];
 
     for (const [kind, id] of profile.fixed) {
@@ -935,63 +941,44 @@
     const map = new Map();
     out.forEach(item => {
       const key = `${item.kind}:${item.id}`;
-      map.set(key, {
-        kind:item.kind,
-        id:item.id,
-        qty:(map.get(key)?.qty || 0) + item.qty
-      });
+      map.set(key, { kind:item.kind, id:item.id, qty:(map.get(key)?.qty || 0) + item.qty });
     });
 
     return Array.from(map.values());
   }
 
-  function getDifficultyForVisitor(type, rnd) {
-    if (type === "rich") return 5;
-    if (type === "king" || type === "pilgrim") return rnd() < .52 ? 4 : 5;
-    if (type === "guide" || type === "careful" || type === "relax") return rnd() < .65 ? 2 : 3;
-    if (type === "looker" || type === "diet") return rnd() < .55 ? 2 : 3;
-    if (type === "collector" || type === "artisan" || type === "shadow" || type === "gourmet") return rnd() < .35 ? 3 : 4;
-    return rnd() < .34 ? 2 : rnd() < .72 ? 3 : 4;
+  function getCustomerLine(type, rnd) {
+    const lines = CUSTOMER_LINES[type] || ["欲しい理由なんて、後からついてくるたこ"];
+    return pick(lines, rnd);
   }
 
-  function makeJob(visitor, idx, dateSeed, featured = false, legend = false) {
-    const rnd = seededRandom(`${dateSeed}::job::${visitor.id}::${idx}::${legend ? "legend" : "normal"}`);
-    const conf = TYPE_CONFIG[visitor.type] || TYPE_CONFIG.careful;
-    const difficulty = legend
-      ? 5
-      : Math.min(5, Math.max(featured ? 3 : 1, getDifficultyForVisitor(visitor.type, rnd)));
-
+  function makeJob(type, idx, dateSeed, featured = false, legend = false) {
+    const rnd = seededRandom(`${dateSeed}::job::${type}::${idx}::${legend ? "legend" : "normal"}`);
+    const difficulty = legend ? 5 : Math.min(5, Math.max(featured ? 3 : 1, getDifficultyForType(type, rnd)));
     const wantCount = legend ? 1 : difficulty <= 2 ? 1 : difficulty === 3 ? 2 : 2 + (rnd() < .55 ? 1 : 0);
+
     const usedIds = new Set();
     const wants = [];
     for (let i = 0; i < wantCount; i++) {
-      wants.push(makeWant(rnd, visitor.type, difficulty, usedIds, legend));
+      wants.push(makeWant(rnd, type, difficulty, usedIds, legend));
     }
 
-    const rewards = {
-      octo: rewardOctoByDifficulty(difficulty, legend, visitor.type, rnd),
-      exp: rewardExpByDifficulty(difficulty, legend),
-      rep: legend ? 5 : Math.max(0, difficulty - 1),
-      items: makeRewardItems(
-        legend ? "legend" : (conf.rewardProfile || "light"),
-        difficulty,
-        legend,
-        rnd
-      )
-    };
-
     return {
-      id:`${legend ? "legend" : "job"}_${idx + 1}_${visitor.id}`,
-      visitorId:visitor.id,
-      visitorName:visitor.name,
-      visitorType:visitor.type,
-      visitorImg:visitor.url,
+      id:`${legend ? "legend" : "job"}_${idx + 1}_${type}`,
+      type,
+      visitorName:CUSTOMER_NAME_MAP[type],
+      visitorImg:CUSTOMER_ICON_MAP[type],
       difficulty,
       featured,
       legend,
-      line:pick(conf.line, rnd),
+      line:getCustomerLine(type, rnd),
       wants,
-      rewards,
+      rewards:{
+        octo:rewardOctoByDifficulty(difficulty, legend, type, rnd),
+        exp:rewardExpByDifficulty(difficulty, legend),
+        rep:legend ? 5 : Math.max(0, difficulty - 1),
+        items:makeRewardItems(type, difficulty, legend, rnd)
+      },
       completed:false,
       completedAt:null
     };
@@ -1002,24 +989,24 @@
     const old = loadJSON(KEY.board, null);
     if (!force && old?.date === today) return old;
 
-    const rnd = seededRandom(`matching-board::${today}`);
-    const selectable = ASSETS.visitors.filter(v => v.type !== "guide");
-
-    const chosen = pickUnique(selectable, 5, rnd);
+    const rnd = seededRandom(`board::${today}`);
+    const chosen = uniqueCustomerTypes(5, rnd);
     const featuredIndex = Math.floor(rnd() * chosen.length);
 
-    const jobs = chosen.map((visitor, idx) => makeJob(visitor, idx, today, idx === featuredIndex, false));
+    const jobs = chosen.map((type, idx) => makeJob(type, idx, today, idx === featuredIndex, false));
 
     let legendJob = null;
+    const legendCandidates = ["rich","king","pilgrim","picky","overflow","shadow"];
     if (rnd() < 0.38) {
-      const legendCandidates = selectable.filter(v =>
-        ["rich","king","pilgrim","picky","overflow"].includes(v.type)
-      );
-      const legendVisitor = pick(legendCandidates, rnd);
-      legendJob = makeJob(legendVisitor, 99, today, true, true);
+      legendJob = makeJob(pick(legendCandidates, rnd), 99, today, true, true);
     }
 
-    const state = { date:today, jobs, legendJob };
+    const state = {
+      date:today,
+      jobs,
+      legendJob
+    };
+
     saveJSON(KEY.board, state);
     return state;
   }
@@ -1029,7 +1016,7 @@
   }
 
   // =========================================================
-  // Need / status / delivery
+  // Need / status
   // =========================================================
   function getNeedStatus(job) {
     const lines = [];
@@ -1071,7 +1058,6 @@
       addOwned(c.id, -use);
       remain -= use;
     }
-
     return remain === 0;
   }
 
@@ -1086,12 +1072,12 @@
   function getVisitorStatus(job) {
     const need = getNeedStatus(job);
     if (job.completed) {
-      return { cls:"done", text:"成立済み", button:"成立済み", line:"……受け取ったたこ！" };
+      return { cls:"done", text:"成立済み", button:"成立済み" };
     }
     if (need.ok) {
-      return { cls:"ok", text:"マッチ成立", button:"今すぐマッチ", line:"そろってるなら今ほしいたこ" };
+      return { cls:"ok", text:"マッチ成立", button:"今すぐマッチ" };
     }
-    return { cls:"ng", text:"片想い", button:"詳細を見る", line:job.line };
+    return { cls:"ng", text:"片想い", button:"詳細を見る" };
   }
 
   function sortJobs(jobs) {
@@ -1164,9 +1150,11 @@
 
   function renderHero() {
     const mode = getTimeMode();
-    $("#heroImage").src = mode === "day" ? ASSETS.bgDay : ASSETS.bgNight;
+    $("#heroImage").src = mode === "day"
+      ? "https://ul.h3z.jp/lqCNnwQH.png"
+      : "https://ul.h3z.jp/UtPlWaZz.png";
 
-    const rnd = seededRandom(`hero-speech::${todayKey()}`);
+    const rnd = seededRandom(`hero::${todayKey()}`);
     $("#heroSpeechText").textContent = pick(HERO_LINES, rnd);
   }
 
@@ -1180,25 +1168,25 @@
 
       return `
         <article class="matchCard ${job.completed ? "isDone" : ""}">
-          <div class="matchCardTop">
+          <div class="matchCardHead">
             <div class="matchAvatarFrame">
               <img class="matchAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
             </div>
 
-            <div class="matchProfile">
-              <div class="matchProfileHead">
-                <h3 class="matchName">${escapeHtml(job.visitorName)}</h3>
-                <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
-              </div>
+            <div class="matchHeadRight">
+              <div class="matchSpeech">${escapeHtml(job.line)}</div>
 
-              <div class="matchBadgeRow">
-                ${job.featured ? `<span class="matchBadge featured">目玉依頼</span>` : ""}
-                <span class="matchBadge ${status.cls}">${status.text}</span>
+              <div class="matchMetaRow">
+                <h3 class="matchName">${escapeHtml(job.visitorName)}</h3>
+
+                <div class="metaRight">
+                  <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
+                  ${job.featured ? `<span class="matchBadge featured">目玉依頼</span>` : ""}
+                  <span class="matchBadge ${status.cls}">${status.text}</span>
+                </div>
               </div>
             </div>
           </div>
-
-          <div class="matchSpeech">${escapeHtml(status.line)}</div>
 
           <div class="matchMain">
             <div class="matchMainGrid">
@@ -1485,7 +1473,9 @@
   // =========================================================
   function renderHero() {
     const mode = getTimeMode();
-    $("#heroImage").src = mode === "day" ? ASSETS.bgDay : ASSETS.bgNight;
+    $("#heroImage").src = mode === "day"
+      ? "https://ul.h3z.jp/lqCNnwQH.png"
+      : "https://ul.h3z.jp/UtPlWaZz.png";
 
     const rnd = seededRandom(`hero::${todayKey()}`);
     $("#heroSpeechText").textContent = pick(HERO_LINES, rnd);
