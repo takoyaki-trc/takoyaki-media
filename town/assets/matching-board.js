@@ -5,11 +5,11 @@
   // Keys
   // =========================================================
   const KEY = {
-    board: "ttc_matching_board_v1",
+    board: "ttc_matching_board_v2",
     octo: "roten_v1_octo",
     book: "tf_v1_book",
     inv: "tf_v1_inv",
-    matchingMeta: "ttc_matching_meta_v1"
+    matchingMeta: "ttc_matching_meta_v2"
   };
 
   // =========================================================
@@ -213,9 +213,6 @@
     pilgrim: "復縁執念型"
   };
 
-  // =========================================================
-  // Hero / takopi lines
-  // =========================================================
   const HERO_LINES = [
     "今日は誰に焼かれるたこ？",
     "条件が合えば、もうそれは運命たこ。",
@@ -225,17 +222,13 @@
 
   const TAKOPI_LINES = [
     "……その相手、重いたこ",
-    "ヒント見る前に当てたら、かなりモテるたこ",
-    "恋じゃなくて、だいたい未練たこ",
-    "焦ると外すたこ",
-    "また来てる相手、いるたこ",
-    "それ、たぶん沼たこ",
+    "ヒント見すぎると、恋が作業になるたこ",
+    "一発で当てたら、かなりモテるたこ",
+    "まだ追いかけるの？ たこ",
+    "今日は沼が多いたこ",
     "♥か💔かは、渡してからのお楽しみたこ"
   ];
 
-  // =========================================================
-  // Love lines by type
-  // =========================================================
   const CUSTOMER_LINES = {
     rich: [
       "忘れられない相手ほど、高くつくたこ",
@@ -243,207 +236,130 @@
       "値段が上がるほど、恋は本物に見えるたこ",
       "手に入らない時間が、気持ちを育てたこ",
       "遅すぎたって分かってる。でも欲しいたこ",
-      "一度離れたあの子に、今さら本気になったたこ",
-      "他のカードで埋まると思ったのに、全然だめだったたこ",
-      "相場を見てるふりして、見てるのは未練たこ"
+      "一度離れたあの子に、今さら本気になったたこ"
     ],
     looker: [
       "別に未練なんてないたこ…ちょっと気になるだけたこ",
       "もう終わったはずなのに、目で追ってしまうたこ",
       "買わないつもりなのに、見に来てしまったたこ",
       "他でもいいのに、この一枚だけ残るたこ",
-      "見るだけで済む恋なら、楽だったたこ",
-      "たまに思い出すだけのはずが、毎回来てるたこ",
-      "忘れたつもりでいたのに、また見つけてしまったたこ",
-      "本気じゃないと言いながら、名前を探してるたこ"
+      "見るだけで済む恋なら、楽だったたこ"
     ],
     impulse: [
       "見つけた瞬間、もう決まってたこ",
       "逃したら一生後悔するやつたこ",
       "理由はあとでいいたこ",
       "これは運命たこ",
-      "考える前に手が伸びたたこ",
-      "会えた時に迎えなきゃ、また誰かのものになるたこ",
-      "一目見た時から、もう戻れなかったたこ",
-      "迷ってる時間がいちばん失礼なたこ"
+      "考える前に手が伸びたたこ"
     ],
     careful: [
       "本当にこの子でいいのか、まだ迷ってるたこ",
       "欲しいけど、今じゃない気もするたこ",
       "また傷つくくらいなら慎重になるたこ",
       "似てるカードじゃダメなんだたこ",
-      "決め手が足りないたこ",
-      "迎えたい。でも今の自分でふさわしいのか迷うたこ",
-      "簡単に決めたくないからこそ、ずっと残ってるたこ",
-      "忘れられないのに、まだ言い訳を探してるたこ"
+      "決め手が足りないたこ"
     ],
     climber: [
       "ここまで来たら、あと一枚なんだたこ",
       "完成するまで終われないたこ",
       "途中でやめるのが一番後悔するたこ",
       "残り一枚が一番遠いたこ",
-      "ゴールが見えてるのに届かないたこ",
-      "足りないのは一枚だけなのに、心の距離は遠いたこ",
-      "揃った未来を想像して、今日まで登ってきたたこ",
-      "ここで引き返したら、一生忘れられないたこ"
+      "ゴールが見えてるのに届かないたこ"
     ],
     flipper: [
       "欲しい気もするし、やめといたほうがいい気もするたこ",
       "今は正しい気がするたこ（たぶん）",
       "夜の判断は危ないたこ",
       "でも今は欲しいたこ",
-      "明日の自分に任せるたこ",
-      "会いたい理由は分からない。でも会いたいたこ",
-      "酔ってる時の再会ほど、危ないものはないたこ",
-      "判断力より未練が勝ってる夜たこ"
+      "明日の自分に任せるたこ"
     ],
     relax: [
       "そばにあるだけで落ち着くたこ",
       "理由はないけど好きなたこ",
       "こういうのが一番残るたこ",
       "ゆっくり選びたい気分たこ",
-      "刺激じゃなくて安心たこ",
-      "手元にあった景色を、また見たくなったたこ",
-      "大げさじゃないけど、ちゃんと好きなたこ",
-      "気づけば、いちばん自然に心に残ってたこ"
+      "刺激じゃなくて安心たこ"
     ],
     artisan: [
       "分かるやつにしか渡したくないたこ",
       "見た目じゃなくて中身たこ",
       "雑に扱われるくらいなら渡さないたこ",
       "これは作品たこ",
-      "価値が分かる相手に渡したいたこ",
-      "細部まで見た時、初めて好きだと分かったたこ",
-      "これはただのカードじゃないたこ。出会い方まで含めて作品たこ",
-      "手に入れることより、ふさわしくありたいたこ"
+      "価値が分かる相手に渡したいたこ"
     ],
     diet: [
       "欲しくないって言えば欲しくなくなるたこ",
       "理屈ではいらないたこ",
       "でも感情が違うたこ",
       "持たなければ傷つかないたこ",
-      "結論：欲しいたこ",
-      "必要ないはずの相手が、いちばん心を乱すたこ",
-      "理性で閉じたはずのファイルが、勝手に開くたこ",
-      "忘れれば楽になるはずなのに、忘れないたこ"
+      "結論：欲しいたこ"
     ],
     picky: [
       "あの日確かにそこにいたたこ",
       "誰も信じてくれないたこ",
       "あの一枚じゃなきゃダメなたこ",
       "見えてるのに届かないたこ",
-      "まだどこかにあるはずたこ",
-      "たしかにあの日、そこにいたたこ",
-      "忘れたつもりなのに、気配だけ残ってるたこ",
-      "あの一枚は、まだどこかで俺を待ってるたこ"
+      "まだどこかにあるはずたこ"
     ],
     king: [
       "余にふさわしい相手は、そう簡単には現れないたこ",
       "一目で心を奪えないなら、恋としては弱いたこ",
       "格も見た目も揃って、ようやく想う価値があるたこ",
       "安っぽい再会では、心は動かないたこ",
-      "余が惹かれる以上、それはもう特別なたこ",
-      "求めているのは一枚じゃない。余に似合う運命たこ",
-      "王の恋は遅い。でも決まったら長いたこ",
-      "余に似合うなら、それは価値があるたこ"
+      "余が惹かれる以上、それはもう特別なたこ"
     ],
     guide: [
       "案内する側でも、忘れられない一枚くらいあるたこ",
-      "誰かのはじまりみたいな顔して、自分も会いたい子がいるたこ",
       "分かりやすい相手ほど、長く心に残ることもあるたこ",
-      "軽く見える恋ほど、あとから効いてくるたこ",
-      "人に勧めながら、自分も少し惹かれてるたこ",
       "最初の一枚って、だいたい一番忘れにくいたこ"
     ],
     overflow: [
       "ちゃんと並んでる子より、はみ出した一枚が気になるたこ",
       "普通じゃ足りない心が、今日も勝ってしまったたこ",
-      "整いすぎた恋より、少し危うい方が忘れられないたこ",
-      "枠の中に収まらない気持ちまで、好きになってしまったたこ",
-      "きれいに終わらなかった相手ほど、記憶に残るたこ",
-      "あの違和感ごと、もう一度会いたいたこ",
-      "欠けてるからこそ、完璧に見える時もあるたこ",
       "収まりの悪い恋ほど、長持ちするたこ"
     ],
     collector: [
       "紙の匂いが忘れられないたこ",
       "あの手ざわりを、まだ指先が覚えてるたこ",
       "保存用まで欲しくなる相手って、だいたい本気なたこ",
-      "同じ一枚でも、出会い直したくなる時があるたこ",
-      "あの角の輝きが、まだ頭から離れないたこ",
-      "触れずに持つのが一番難しいたこ",
-      "並べて眺めていた時間まで、恋しかったたこ",
-      "傷つけたくないのに、近くに置きたくなるたこ"
+      "あの角の輝きが、まだ頭から離れないたこ"
     ],
     shadow: [
       "濡れた記憶ほど、乾いても残るたこ",
       "しけった空気の中で出会った一枚が忘れられないたこ",
-      "少し曇ったままの思い出に、まだ惹かれてるたこ",
-      "乾いた恋より、湿った未練の方がしつこいたこ",
-      "水気を含んだみたいに、心だけ重いたこ",
-      "あの一枚には、まだ雨の匂いがするたこ",
-      "曖昧ににじんだ記憶の方が、きれいに見えるたこ",
-      "乾く前に、もう一度会いたいたこ"
+      "乾いた恋より、湿った未練の方がしつこいたこ"
     ],
     ramen: [
       "一枚じゃ足りない恋もあるたこ",
       "会えたら終わりじゃなくて、もっと欲しくなるたこ",
-      "同じ相手なのに、何度でもときめくたこ",
-      "足りるまで足せばいいと思ってた。気持ちも同じたこ",
-      "揃えば落ち着くと思ったのに、まだ足りないたこ",
-      "一度会えたら満足すると思ってたのに、逆だったたこ",
-      "好きって、だいたい追加注文されるたこ",
-      "満腹より、未練のほうが長持ちたこ"
+      "好きって、だいたい追加注文されるたこ"
     ],
     streamer: [
       "見せ方ひとつで、恋は何倍にも膨らむたこ",
       "盛り上がる相手ほど、あとで本気になるたこ",
-      "最初はノリだったのに、気づけば本命みたいなたこ",
-      "この出会い、たぶん人に話したくなるたこ",
-      "反応が大きいほど、気持ちまで本物っぽくなるたこ",
-      "軽い拍手のつもりが、心まで投げてたこ",
-      "楽しければいいと思ってたのに、妙に残るたこ",
-      "目立つ恋ほど、終わったあと静かに効くたこ"
+      "反応が大きいほど、気持ちまで本物っぽくなるたこ"
     ],
     gourmet: [
       "あの日食べたあの味が忘れられなくて…",
       "ソースの香りだけで、昔を思い出すたこ",
       "あの焼き色を、もう一度見たいたこ",
-      "一口で終わったのに、記憶だけ残りすぎたこ",
-      "うまかった、だけじゃ片づけられないたこ",
-      "舌が覚えてるうちに、もう一度会いたいたこ",
-      "あの熱さを、今でも心が探してるたこ",
       "味の記憶って、恋よりしつこいたこ"
     ],
     opener: [
       "中身を知る前から、惹かれてたたこ",
       "未開封のまま終わるには、気持ちが強すぎたこ",
-      "会う前が一番きれいって言うけど、確かめたいたこ",
-      "知らないまま諦める方が、たぶん後悔するたこ",
-      "開けた瞬間に終わる恋でも、見ないよりましなたこ",
-      "中身を知らない片想いって、意外と重いたこ",
-      "破る音まで含めて、運命だった気がするたこ",
-      "秘密のままじゃ、気持ちがほどけないたこ"
+      "知らないまま諦める方が、たぶん後悔するたこ"
     ],
     party: [
       "一枚だけじゃ、この気持ちは盛り上がらないたこ",
       "にぎやかな恋ほど、あとで静かに刺さるたこ",
-      "並べた時に映える相手って、だいたい忘れにくいたこ",
-      "楽しいだけのはずだったのに、ちゃんと残ったたこ",
-      "場を明るくする相手ほど、帰り道で恋しくなるたこ",
-      "一緒に並んだ景色ごと、思い出してしまうたこ",
-      "にぎやかだったからこそ、いなくなると目立つたこ",
       "祭りのあとに気づく恋もあるたこ"
     ],
     pilgrim: [
       "置き忘れたあの日のカードをまた手に入れたくて",
       "一度手放したあの一枚を、まだ忘れられないたこ",
       "昔の恋みたいに、気づけばまた追いかけてたこ",
-      "なくしたのはカードなのに、心まで空いたたこ",
-      "もう会えないと思ってたのに、また探してるたこ",
-      "片想いだって分かってても、探してしまうたこ",
-      "また会えたら、今度はちゃんと守れる気がするたこ",
-      "あの子を手放した日から、図鑑の空白だけ見ないふりしてるたこ"
+      "片想いだって分かってても、探してしまうたこ"
     ]
   };
 
@@ -729,296 +645,7 @@
   };
 
   // =========================================================
-  // Hint system
-  // =========================================================
-  function deriveTags(card) {
-    const tags = new Set();
-    const name = card.name || "";
-
-    if (/ソース/.test(name)) tags.add("sauce");
-    if (/塩/.test(name)) tags.add("salt");
-    if (/マヨ/.test(name)) tags.add("mayo");
-    if (/明太/.test(name)) tags.add("mentai");
-    if (/チーズ/.test(name)) tags.add("cheese");
-    if (/味噌/.test(name)) tags.add("miso");
-    if (/牡蠣/.test(name)) tags.add("oyster");
-    if (/温泉|ゆのかわ/.test(name)) tags.add("onsen");
-    if (/真珠|黒き/.test(name)) tags.add("pearl");
-    if (/女神|ビーナス/.test(name)) tags.add("goddess");
-    if (/神|御神体/.test(name)) tags.add("god");
-    if (/恋|デート/.test(name)) tags.add("love");
-    if (/ループ/.test(name)) tags.add("loop");
-    if (/ダーツ/.test(name)) tags.add("darts");
-    if (/露店/.test(name)) tags.add("roten");
-    if (/火山|地獄|インフェルノ/.test(name)) tags.add("fire");
-    if (/化石|記憶/.test(name)) tags.add("memory");
-    if (/ドローン|発射|爆走/.test(name)) tags.add("move");
-    if (/ガチャ/.test(name)) tags.add("gacha");
-    if (/顔|パレード|行列/.test(name)) tags.add("crowd");
-    if (/イカ/.test(name)) tags.add("ika");
-    if (/焼き/.test(name)) tags.add("yaki");
-
-    if (card.rarity === "N") tags.add("normal");
-    if (card.rarity === "R") tags.add("rare");
-    if (card.rarity === "SR") tags.add("super");
-    if (card.rarity === "UR") tags.add("ultra");
-    if (card.rarity === "LR") tags.add("legend");
-    if (card.rarity === "SP") tags.add("special");
-
-    return Array.from(tags);
-  }
-
-  const HINT_TEXTS = {
-    sauce: [
-      "ソースの香りだけで、昔を思い出すたこ",
-      "濃い匂いの記憶って、しつこく残るたこ",
-      "あの日の香りに、まだ引っ張られてるたこ"
-    ],
-    salt: [
-      "しょっぱい記憶ほど、あとで恋しくなるたこ",
-      "塩気のある思い出って、妙に刺さるたこ",
-      "淡いのに、なぜか忘れられないたこ"
-    ],
-    mayo: [
-      "やさしく包んでくれる感じに弱いたこ",
-      "丸くてやわらかい相手ほど残るたこ",
-      "見た目よりも余韻が長いたこ"
-    ],
-    mentai: [
-      "少し刺激がある相手に、まだ未練があるたこ",
-      "ピリッとした子ほど、記憶に残るたこ",
-      "大人しくない相手が忘れられないたこ"
-    ],
-    cheese: [
-      "濃厚すぎる相手って、だいたい忘れられないたこ",
-      "重たいのに、また会いたくなるたこ",
-      "とろける感じの記憶が残ってるたこ"
-    ],
-    miso: [
-      "少し深い味わいのある相手に弱いたこ",
-      "派手じゃないのに、妙に残るたこ",
-      "地味に見えて、あとで効いてくるたこ"
-    ],
-    oyster: [
-      "だしみたいに静かに残る相手がいるたこ",
-      "旨みが遅れてくる感じ、まだ好きなたこ",
-      "静かなのに、印象だけ濃いたこ"
-    ],
-    onsen: [
-      "湯気の向こうにいるみたいな相手を探してるたこ",
-      "温かい記憶って、妙に戻りたくなるたこ",
-      "ご利益みたいな空気に弱いたこ"
-    ],
-    pearl: [
-      "黒く光る子って、忘れにくいたこ",
-      "真珠みたいな輝き、まだ目に残ってるたこ",
-      "ちょっと危ない匂いのする相手ほど惹かれるたこ"
-    ],
-    goddess: [
-      "女神っぽい相手って、だいたい距離感がおかしいたこ",
-      "ありがたいのに振り回されるたこ",
-      "高嶺なのに妙に近い相手が忘れられないたこ"
-    ],
-    god: [
-      "もう人じゃない感じの相手に弱いたこ",
-      "信仰みたいな気持ちになるたこ",
-      "拝みたくなる相手を探してるたこ"
-    ],
-    love: [
-      "恋っぽい空気をまとった相手が忘れられないたこ",
-      "ちゃんと恋だった気がするたこ",
-      "気のせいじゃ済ませられないたこ"
-    ],
-    loop: [
-      "何度でも戻ってくる相手に弱いたこ",
-      "終わったはずなのに、また会いたくなるたこ",
-      "ぐるぐる回る気持ちを止められないたこ"
-    ],
-    darts: [
-      "刺さる相手って、ほんとに急に来るたこ",
-      "一撃で決まる恋、嫌いじゃないたこ",
-      "狙ったつもりはないのに、刺さってたこ"
-    ],
-    roten: [
-      "露店の灯りの下で会った気がするたこ",
-      "ふらっと出会ったのに、妙に残ってるたこ",
-      "お祭りみたいな空気を思い出すたこ"
-    ],
-    fire: [
-      "熱すぎる相手ほど、あとで恋しくなるたこ",
-      "火傷みたいな記憶が残ってるたこ",
-      "少し危ない熱さに、まだ惹かれてるたこ"
-    ],
-    memory: [
-      "昔の記憶に触れると、戻りたくなるたこ",
-      "思い出そのものみたいな相手を探してるたこ",
-      "今でも頭のどこかに残ってるたこ"
-    ],
-    move: [
-      "落ち着かない相手ほど、忘れられないたこ",
-      "走っていく背中がまだ見えるたこ",
-      "ちゃんと止まってくれない相手に弱いたこ"
-    ],
-    gacha: [
-      "何が出るか分からない感じに惹かれるたこ",
-      "運命まかせの出会い、嫌いじゃないたこ",
-      "偶然に期待してしまうたこ"
-    ],
-    crowd: [
-      "人混みの中でも目立つ相手っているたこ",
-      "にぎやかな景色ごと残ってるたこ",
-      "ひとりだけ妙に印象に残るたこ"
-    ],
-    ika: [
-      "ちょっとズルそうな相手、嫌いじゃないたこ",
-      "まっすぐじゃない感じに弱いたこ",
-      "危ういのに光る相手を探してるたこ"
-    ],
-    yaki: [
-      "焼き色の記憶って、案外しつこいたこ",
-      "あの日の熱さを、まだ探してるたこ",
-      "香ばしい思い出ほど忘れにくいたこ"
-    ],
-    normal: [
-      "派手じゃないのに、なぜか残るたこ",
-      "普通っぽい相手ほど、あとから効くたこ"
-    ],
-    rare: [
-      "ちょっと特別なくらいが、一番忘れられないたこ",
-      "手が届きそうで届かない距離が苦しいたこ"
-    ],
-    super: [
-      "光りすぎないのに、ちゃんと目立つ相手が好きなたこ",
-      "少し背伸びした感じの相手を探してるたこ"
-    ],
-    ultra: [
-      "明らかに特別な相手って、隠せないたこ",
-      "眩しいくらいの存在感が、まだ残ってるたこ"
-    ],
-    legend: [
-      "もう伝説みたいな相手を、本気で探してるたこ",
-      "会えたらたぶん、しばらく立ち直れないたこ"
-    ],
-    special: [
-      "普通じゃ説明できない相手に惹かれるたこ",
-      "ちょっとおかしいくらいが、ちょうどいいたこ"
-    ]
-  };
-
-  function buildHintCandidates(card) {
-    const tags = deriveTags(card);
-    const lines = [];
-    tags.forEach(tag => {
-      (HINT_TEXTS[tag] || []).forEach(text => lines.push(text));
-    });
-
-    if (!lines.length) {
-      lines.push("忘れられない気配だけが残ってるたこ");
-      lines.push("名前までは言えないけど、まだ探してるたこ");
-      lines.push("あの時の空気ごと、戻ってきてほしいたこ");
-    }
-    return lines;
-  }
-
-  function makeHintsForCard(card, seed) {
-    const rnd = randFromSeed(seed);
-    const pool = shuffle(buildHintCandidates(card), rnd);
-    const hints = pool.slice(0, 3);
-    while (hints.length < 3) hints.push(pool[0] || "まだ忘れられないたこ");
-    return hints;
-  }
-
-  function makeHintTags(card) {
-    const tags = deriveTags(card);
-    const nice = [];
-    if (tags.includes("sauce")) nice.push("#ソース系");
-    if (tags.includes("salt")) nice.push("#しょっぱい記憶");
-    if (tags.includes("mayo")) nice.push("#やわらか系");
-    if (tags.includes("mentai")) nice.push("#刺激あり");
-    if (tags.includes("cheese")) nice.push("#濃厚");
-    if (tags.includes("onsen")) nice.push("#温泉感");
-    if (tags.includes("pearl")) nice.push("#黒く光る");
-    if (tags.includes("goddess")) nice.push("#高嶺感");
-    if (tags.includes("god")) nice.push("#神格");
-    if (tags.includes("love")) nice.push("#恋っぽい");
-    if (tags.includes("loop")) nice.push("#戻ってくる");
-    if (tags.includes("roten")) nice.push("#露店感");
-    if (tags.includes("fire")) nice.push("#熱め");
-    if (tags.includes("memory")) nice.push("#記憶枠");
-    if (tags.includes("darts")) nice.push("#刺さる");
-    if (tags.includes("legend")) nice.push("#伝説級");
-    if (tags.includes("special")) nice.push("#説明不能");
-
-    const fallback = ["#未練あり", "#気になる", "#再会希望"];
-    return (nice.length ? nice : fallback).slice(0, 3);
-  }
-
-  // =========================================================
-  // Reward helpers
-  // =========================================================
-  function rewardOctoByDifficulty(difficulty, isLegend, type, rnd) {
-    const base = isLegend ? [800, 1400]
-      : difficulty === 1 ? [100, 180]
-      : difficulty === 2 ? [180, 300]
-      : difficulty === 3 ? [300, 520]
-      : difficulty === 4 ? [520, 900]
-      : [900, 1500];
-
-    let value = Math.floor(rnd() * (base[1] - base[0] + 1)) + base[0];
-    if (type === "rich") value = Math.round(value * 1.2);
-    if (type === "streamer" && rnd() < 0.08) value = Math.round(value * 1.5);
-    return value;
-  }
-
-  function rewardExpByDifficulty(difficulty, isLegend) {
-    return isLegend ? 18 : Math.max(2, difficulty * 3);
-  }
-
-  function rewardRepByDifficulty(difficulty, isLegend) {
-    return isLegend ? 8 : Math.max(1, difficulty);
-  }
-
-  function makeRewardItems(type, difficulty, isLegend, rnd) {
-    const profile = REWARD_PROFILES[type] || REWARD_PROFILES.careful;
-    const out = [];
-
-    for (const [kind, id] of profile.fixed) {
-      out.push({ kind, id, qty: 1 });
-    }
-
-    let count = difficulty <= 2 ? 2 : difficulty === 3 ? 2 : difficulty === 4 ? 3 : 4;
-    if (isLegend) count = 5;
-
-    const randPool = profile.rand.map(([kind, id, weight]) => ({ kind, id, weight }));
-    for (let i = 0; i < count; i++) {
-      const p = weightedPick(randPool, rnd);
-      out.push({ kind: p.kind, id: p.id, qty: 1 });
-    }
-
-    const merged = new Map();
-    out.forEach(item => {
-      const key = `${item.kind}:${item.id}`;
-      merged.set(key, {
-        kind: item.kind,
-        id: item.id,
-        qty: (merged.get(key)?.qty || 0) + item.qty
-      });
-    });
-
-    if (isLegend && rnd() < 0.4) {
-      const key = "water:water_supergod";
-      merged.set(key, {
-        kind: "water",
-        id: "water_supergod",
-        qty: (merged.get(key)?.qty || 0) + 1
-      });
-    }
-
-    return Array.from(merged.values());
-  }
-
-  // =========================================================
-  // Book / inv / player
+  // Book / inv defaults
   // =========================================================
   function ensureDefaults() {
     if (localStorage.getItem(KEY.octo) == null) localStorage.setItem(KEY.octo, "1000");
@@ -1048,6 +675,14 @@
         if (count > 0) got[card.id] = { count, name: card.name, rarity: card.rarity };
       });
       saveJSON(KEY.book, { got });
+    }
+
+    const meta = loadJSON(KEY.matchingMeta, null);
+    if (!meta) {
+      saveJSON(KEY.matchingMeta, {
+        statsByType: {},
+        reunionMap: {}
+      });
     }
   }
 
@@ -1114,6 +749,273 @@
     inv[kind] = inv[kind] || {};
     inv[kind][id] = Number(inv[kind][id] || 0) + Number(qty || 0);
     saveInv(inv);
+  }
+
+  // =========================================================
+  // Hint system
+  // =========================================================
+  function deriveTags(card) {
+    const tags = new Set();
+    const name = card.name || "";
+
+    if (/ソース/.test(name)) tags.add("sauce");
+    if (/塩/.test(name)) tags.add("salt");
+    if (/マヨ/.test(name)) tags.add("mayo");
+    if (/明太/.test(name)) tags.add("mentai");
+    if (/チーズ/.test(name)) tags.add("cheese");
+    if (/味噌/.test(name)) tags.add("miso");
+    if (/牡蠣/.test(name)) tags.add("oyster");
+    if (/温泉|ゆのかわ/.test(name)) tags.add("onsen");
+    if (/真珠|黒き/.test(name)) tags.add("pearl");
+    if (/女神|ビーナス/.test(name)) tags.add("goddess");
+    if (/神|御神体/.test(name)) tags.add("god");
+    if (/恋|デート/.test(name)) tags.add("love");
+    if (/ループ/.test(name)) tags.add("loop");
+    if (/ダーツ/.test(name)) tags.add("darts");
+    if (/露店/.test(name)) tags.add("roten");
+    if (/火山|地獄|インフェルノ/.test(name)) tags.add("fire");
+    if (/化石|記憶/.test(name)) tags.add("memory");
+    if (/イカ/.test(name)) tags.add("ika");
+    if (/焼き/.test(name)) tags.add("yaki");
+
+    if (card.rarity === "N") tags.add("normal");
+    if (card.rarity === "R") tags.add("rare");
+    if (card.rarity === "SR") tags.add("super");
+    if (card.rarity === "UR") tags.add("ultra");
+    if (card.rarity === "LR") tags.add("legend");
+    if (card.rarity === "SP") tags.add("special");
+
+    return Array.from(tags);
+  }
+
+  const HINT_TEXTS = {
+    sauce: [
+      "ソースの香りだけで、昔を思い出すたこ",
+      "濃い匂いの記憶って、しつこく残るたこ",
+      "あの日の香りに、まだ引っ張られてるたこ"
+    ],
+    salt: [
+      "しょっぱい記憶ほど、あとで恋しくなるたこ",
+      "塩気のある思い出って、妙に刺さるたこ",
+      "淡いのに、なぜか忘れられないたこ"
+    ],
+    mayo: [
+      "やさしく包んでくれる感じに弱いたこ",
+      "丸くてやわらかい相手ほど残るたこ",
+      "見た目よりも余韻が長いたこ"
+    ],
+    mentai: [
+      "少し刺激がある相手に、まだ未練があるたこ",
+      "ピリッとした子ほど、記憶に残るたこ",
+      "大人しくない相手が忘れられないたこ"
+    ],
+    cheese: [
+      "濃厚すぎる相手って、だいたい忘れられないたこ",
+      "重たいのに、また会いたくなるたこ",
+      "とろける感じの記憶が残ってるたこ"
+    ],
+    miso: [
+      "少し深い味わいのある相手に弱いたこ",
+      "派手じゃないのに、妙に残るたこ"
+    ],
+    oyster: [
+      "だしみたいに静かに残る相手がいるたこ",
+      "旨みが遅れてくる感じ、まだ好きなたこ"
+    ],
+    onsen: [
+      "湯気の向こうにいるみたいな相手を探してるたこ",
+      "温かい記憶って、妙に戻りたくなるたこ",
+      "ご利益みたいな空気に弱いたこ"
+    ],
+    pearl: [
+      "黒く光る子って、忘れにくいたこ",
+      "真珠みたいな輝き、まだ目に残ってるたこ",
+      "ちょっと危ない匂いのする相手ほど惹かれるたこ"
+    ],
+    goddess: [
+      "女神っぽい相手って、だいたい距離感がおかしいたこ",
+      "ありがたいのに振り回されるたこ",
+      "高嶺なのに妙に近い相手が忘れられないたこ"
+    ],
+    god: [
+      "もう人じゃない感じの相手に弱いたこ",
+      "信仰みたいな気持ちになるたこ"
+    ],
+    love: [
+      "恋っぽい空気をまとった相手が忘れられないたこ",
+      "ちゃんと恋だった気がするたこ"
+    ],
+    loop: [
+      "何度でも戻ってくる相手に弱いたこ",
+      "終わったはずなのに、また会いたくなるたこ"
+    ],
+    darts: [
+      "刺さる相手って、ほんとに急に来るたこ",
+      "一撃で決まる恋、嫌いじゃないたこ"
+    ],
+    roten: [
+      "露店の灯りの下で会った気がするたこ",
+      "ふらっと出会ったのに、妙に残ってるたこ"
+    ],
+    fire: [
+      "熱すぎる相手ほど、あとで恋しくなるたこ",
+      "火傷みたいな記憶が残ってるたこ"
+    ],
+    memory: [
+      "昔の記憶に触れると、戻りたくなるたこ",
+      "思い出そのものみたいな相手を探してるたこ"
+    ],
+    ika: [
+      "ちょっとズルそうな相手、嫌いじゃないたこ",
+      "危ういのに光る相手を探してるたこ"
+    ],
+    yaki: [
+      "焼き色の記憶って、案外しつこいたこ",
+      "あの日の熱さを、まだ探してるたこ",
+      "香ばしい思い出ほど忘れにくいたこ"
+    ],
+    normal: [
+      "派手じゃないのに、なぜか残るたこ"
+    ],
+    rare: [
+      "手が届きそうで届かない距離が苦しいたこ"
+    ],
+    super: [
+      "少し背伸びした感じの相手を探してるたこ"
+    ],
+    ultra: [
+      "明らかに特別な相手って、隠せないたこ"
+    ],
+    legend: [
+      "もう伝説みたいな相手を、本気で探してるたこ"
+    ],
+    special: [
+      "普通じゃ説明できない相手に惹かれるたこ"
+    ]
+  };
+
+  function titleHint(card) {
+    const raw = (card.name || "").replace(/《.*?》/g, "").trim();
+    let key = raw;
+    if (raw.includes("の")) key = raw.split("の")[0];
+    if (key.length > 7) key = key.slice(0, 7);
+    if (!key) key = raw.slice(0, 6);
+    return `タイトルに「${key}」が入ってるたこ`;
+  }
+
+  function buildHintCandidates(card) {
+    const tags = deriveTags(card);
+    const lines = [];
+    tags.forEach(tag => {
+      (HINT_TEXTS[tag] || []).forEach(text => lines.push(text));
+    });
+    return lines.length ? lines : [
+      "忘れられない気配だけが残ってるたこ",
+      "名前までは言えないけど、まだ探してるたこ",
+      "あの時の空気ごと、戻ってきてほしいたこ"
+    ];
+  }
+
+  function makeHintsForCard(card, seed) {
+    const rnd = randFromSeed(seed);
+    const pool = shuffle(buildHintCandidates(card), rnd);
+
+    const hint1 = pool[0] || "まだ忘れられないたこ";
+    let hint2 = pool.find(v => v !== hint1) || "少し特別な気配があるたこ";
+    if (hint2 === hint1) hint2 = "少し特別な気配があるたこ";
+    let hint3 = titleHint(card);
+    if (hint3 === hint1 || hint3 === hint2) {
+      hint3 = `タイトルのどこかに「${(card.name || "").slice(0, 3)}」があるたこ`;
+    }
+
+    return [hint1, hint2, hint3];
+  }
+
+  function makeHintTags(card) {
+    const tags = deriveTags(card);
+    const nice = [];
+    if (tags.includes("sauce")) nice.push("#ソース系");
+    if (tags.includes("salt")) nice.push("#しょっぱい記憶");
+    if (tags.includes("mayo")) nice.push("#やわらか系");
+    if (tags.includes("mentai")) nice.push("#刺激あり");
+    if (tags.includes("cheese")) nice.push("#濃厚");
+    if (tags.includes("onsen")) nice.push("#温泉感");
+    if (tags.includes("pearl")) nice.push("#黒く光る");
+    if (tags.includes("goddess")) nice.push("#高嶺感");
+    if (tags.includes("god")) nice.push("#神格");
+    if (tags.includes("love")) nice.push("#恋っぽい");
+    if (tags.includes("loop")) nice.push("#戻ってくる");
+    if (tags.includes("roten")) nice.push("#露店感");
+    if (tags.includes("fire")) nice.push("#熱め");
+    if (tags.includes("memory")) nice.push("#記憶枠");
+    if (tags.includes("darts")) nice.push("#刺さる");
+    if (tags.includes("legend")) nice.push("#伝説級");
+    if (tags.includes("special")) nice.push("#説明不能");
+    return (nice.length ? nice : ["#未練あり", "#気になる", "#再会希望"]).slice(0, 3);
+  }
+
+  // =========================================================
+  // Reward helpers
+  // =========================================================
+  function rewardOctoByDifficulty(difficulty, isLegend, type, rnd) {
+    const base = isLegend ? [900, 1500]
+      : difficulty === 1 ? [120, 200]
+      : difficulty === 2 ? [220, 360]
+      : difficulty === 3 ? [360, 620]
+      : difficulty === 4 ? [620, 980]
+      : [1000, 1600];
+
+    let value = Math.floor(rnd() * (base[1] - base[0] + 1)) + base[0];
+    if (type === "rich") value = Math.round(value * 1.15);
+    return value;
+  }
+
+  function rewardExpByDifficulty(difficulty, isLegend) {
+    return isLegend ? 18 : Math.max(2, difficulty * 3);
+  }
+
+  function rewardRepByDifficulty(difficulty, isLegend) {
+    return isLegend ? 8 : Math.max(1, difficulty);
+  }
+
+  function makeRewardItems(type, difficulty, isLegend, rnd) {
+    const profile = REWARD_PROFILES[type] || REWARD_PROFILES.careful;
+    const out = [];
+
+    for (const [kind, id] of profile.fixed) {
+      out.push({ kind, id, qty: 1 });
+    }
+
+    let count = difficulty <= 2 ? 2 : difficulty === 3 ? 2 : difficulty === 4 ? 3 : 4;
+    if (isLegend) count = 5;
+
+    const randPool = profile.rand.map(([kind, id, weight]) => ({ kind, id, weight }));
+
+    for (let i = 0; i < count; i++) {
+      const p = weightedPick(randPool, rnd);
+      out.push({ kind: p.kind, id: p.id, qty: 1 });
+    }
+
+    const merged = new Map();
+    out.forEach(item => {
+      const key = `${item.kind}:${item.id}`;
+      merged.set(key, {
+        kind: item.kind,
+        id: item.id,
+        qty: (merged.get(key)?.qty || 0) + item.qty
+      });
+    });
+
+    if (isLegend && rnd() < 0.4) {
+      const key = "water:water_supergod";
+      merged.set(key, {
+        kind: "water",
+        id: "water_supergod",
+        qty: (merged.get(key)?.qty || 0) + 1
+      });
+    }
+
+    return Array.from(merged.values());
   }
 
   // =========================================================
@@ -1186,15 +1088,7 @@
   function chooseWantedCard(type, difficulty, rnd, legend = false) {
     const pool = getDisplayPoolByType(type, legend);
     const picked = pick(pool, rnd);
-    let qty = 1;
-    if (!legend) {
-      if (difficulty === 2 && rnd() < 0.35) qty = 2;
-      if (difficulty === 3 && rnd() < 0.45) qty = 2;
-      if (difficulty === 4) qty = rnd() < 0.5 ? 2 : 3;
-      if (difficulty >= 5) qty = rnd() < 0.4 ? 2 : 3;
-      if (type === "collector" || type === "ramen" || type === "party") qty += rnd() < 0.35 ? 1 : 0;
-    }
-    return { card: picked, qty };
+    return { card: picked, qty: 1 };
   }
 
   function getCustomerLine(type, rnd) {
@@ -1206,7 +1100,6 @@
     const rnd = randFromSeed(`${dateSeed}::job::${type}::${idx}::${legend ? "legend" : "normal"}`);
     const difficulty = legend ? 5 : Math.min(5, Math.max(featured ? 3 : 1, getDifficultyForType(type, rnd)));
     const wanted = chooseWantedCard(type, difficulty, rnd, legend);
-    const hints = makeHintsForCard(wanted.card, `${dateSeed}::hint::${type}::${idx}`);
 
     return {
       id: `${legend ? "legend" : "job"}_${idx + 1}_${type}`,
@@ -1219,20 +1112,19 @@
       loveType: LOVE_TYPE_LABEL[type] || "未練型",
       line: getCustomerLine(type, rnd),
       targetCardId: wanted.card.id,
-      targetQty: wanted.qty,
+      targetQty: 1,
       hintTags: makeHintTags(wanted.card),
-      hints,
-      hintCosts: [0, 100, 200],
+      hints: makeHintsForCard(wanted.card, `${dateSeed}::hint::${type}::${idx}`),
+      currentHintIndex: 0,
+      hintCosts: [0, 100, 100],
       rewards: {
         octo: rewardOctoByDifficulty(difficulty, legend, type, rnd),
         exp: rewardExpByDifficulty(difficulty, legend),
         rep: rewardRepByDifficulty(difficulty, legend),
         items: makeRewardItems(type, difficulty, legend, rnd)
       },
-      revealedHints: 1,
       completed: false,
       completedAt: null,
-      favorite: false,
       retryCount: 0
     };
   }
@@ -1245,6 +1137,7 @@
     const rnd = randFromSeed(`board::${today}`);
     const chosen = uniqueCustomerTypes(5, rnd);
     const featuredIndex = Math.floor(rnd() * chosen.length);
+
     const jobs = chosen.map((type, idx) => makeJob(type, idx, today, idx === featuredIndex, false));
 
     let legendJob = null;
@@ -1270,41 +1163,38 @@
     saveJSON(KEY.board, state);
   }
 
-  function getMatchingMeta() {
-    return loadJSON(KEY.matchingMeta, { favoriteIds: [], reunionMap: {} });
+  function getMeta() {
+    return loadJSON(KEY.matchingMeta, {
+      statsByType: {},
+      reunionMap: {}
+    });
   }
 
-  function saveMatchingMeta(meta) {
+  function saveMeta(meta) {
     saveJSON(KEY.matchingMeta, meta);
   }
 
   // =========================================================
-  // Match / status / scoring
+  // Status / scoring
   // =========================================================
-  function getJobNeedStatus(job) {
-    const targetCount = getOwnedCount(job.targetCardId);
-    return {
-      ok: targetCount >= 1,
-      own: targetCount,
-      need: 1
-    };
+  function getTypeStats(type) {
+    const meta = getMeta();
+    return meta.statsByType[type] || { attempts: 0, success: 0 };
   }
 
-  function getJobStatus(job) {
-    const need = getJobNeedStatus(job);
-    if (job.completed) return { cls: "done", text: "成立済み", action: "成立済み" };
-    if (need.ok) return { cls: "ok", text: "挑戦可能", action: "カードを選ぶ" };
-    return { cls: "ng", text: "片想い", action: "カードを選ぶ" };
+  function getMatchRate(type) {
+    const stats = getTypeStats(type);
+    if (!stats.attempts) return 0;
+    return Math.round((stats.success / stats.attempts) * 100);
   }
 
   function cardScoreAgainstJob(card, job) {
     const target = CARD_MAP[job.targetCardId];
     if (!target || !card) return 0;
-
     if (card.id === target.id) return 100;
 
     let score = 0;
-    if (card.rarity === target.rarity) score += 30;
+    if (card.rarity === target.rarity) score += 28;
 
     const a = new Set(deriveTags(card));
     const b = new Set(deriveTags(target));
@@ -1312,10 +1202,10 @@
     b.forEach(tag => {
       if (a.has(tag)) overlap++;
     });
-    score += overlap * 12;
+    score += overlap * 11;
 
-    if ((RARITY_ORDER[card.rarity] || 0) >= (RARITY_ORDER[target.rarity] || 0)) score += 10;
-    return Math.min(95, score);
+    if ((RARITY_ORDER[card.rarity] || 0) >= (RARITY_ORDER[target.rarity] || 0)) score += 8;
+    return Math.min(94, score);
   }
 
   function judgeScore(score) {
@@ -1324,8 +1214,22 @@
     return { icon: "💔", verdict: "fail", text: "好みではなかったようだ" };
   }
 
+  function getJobStatus(job) {
+    if (job.completed) {
+      return { cls: "done", label: "成立済み", action: "成立済み", disabled: true };
+    }
+    if (job.retryCount >= 3) {
+      return { cls: "ng", label: "本日終了", action: "本日終了", disabled: true };
+    }
+    return { cls: "ok", label: "挑戦可能", action: `${job.retryCount + 1}回目のマッチ（${job.retryCount}/3）`, disabled: false };
+  }
+
+  function calcAttachment(job) {
+    return Math.min(5, Math.max(1, job.difficulty + (job.legend ? 1 : 0)));
+  }
+
   // =========================================================
-  // UI pieces
+  // UI render
   // =========================================================
   function itemIcon(kind) {
     if (kind === "seed") return "🌱";
@@ -1350,268 +1254,37 @@
     heroSpeechText.textContent = pick(HERO_LINES, rnd);
   }
 
-  function calcCompatibility(job) {
-    const owned = getAllOwnedCards();
-    if (!owned.length) return 0;
-    let best = 0;
-    owned.forEach(card => {
-      const s = cardScoreAgainstJob(card, job);
-      if (s > best) best = s;
-    });
-    return best;
-  }
+  function renderHintSingle(job) {
+    const idx = Number(job.currentHintIndex || 0);
+    const hintText = job.hints[idx];
+    const nextIdx = idx + 1;
 
-  function calcAttachment(job) {
-    return Math.min(5, Math.max(1, job.difficulty + (job.legend ? 1 : 0)));
-  }
-
-  function ensureStyleTag() {
-    if ($("#matchingBoardInlineStyle")) return;
-    const style = document.createElement("style");
-    style.id = "matchingBoardInlineStyle";
-    style.textContent = `
-      .matchHintPanel{
-        margin-top:10px;
-        background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-        border:1px solid rgba(255,255,255,.08);
-        border-radius:14px;
-        padding:10px;
-      }
-      .matchHintHead{
-        display:flex;
-        gap:10px;
-        align-items:center;
-        margin-bottom:8px;
-      }
-      .matchHintTakopi{
-        width:34px;
-        height:34px;
-        border-radius:10px;
-        display:grid;
-        place-items:center;
-        background:linear-gradient(180deg, #ffe6ef, #ffc9da);
-        box-shadow:0 4px 10px rgba(128,70,95,.10);
-        font-size:18px;
-      }
-      .matchHintTitle{
-        font-size:12px;
-        line-height:1.5;
-        color:#fff5f8;
-        font-weight:800;
-      }
-      .matchHintList{
-        display:grid;
-        gap:8px;
-      }
-      .matchHintRow{
-        display:flex;
-        gap:8px;
-        align-items:center;
-        justify-content:space-between;
-        flex-wrap:wrap;
-        padding:8px 10px;
-        border-radius:12px;
-        background:rgba(255,255,255,.08);
-        border:1px solid rgba(255,255,255,.07);
-      }
-      .matchHintText{
-        color:#fff5f8;
-        font-size:12px;
-        line-height:1.6;
-        font-weight:700;
-        flex:1 1 180px;
-      }
-      .matchHintBtn{
-        min-height:32px;
-        padding:6px 10px;
-        border:none;
-        border-radius:10px;
-        cursor:pointer;
-        background:linear-gradient(180deg, #fff1bc, #efc75b);
-        color:#5a3614;
-        font-size:11px;
-        font-weight:800;
-        box-shadow:0 4px 10px rgba(0,0,0,.10);
-      }
-      .matchHintBtn[disabled]{
-        opacity:.55;
-        cursor:not-allowed;
-      }
-      .matchMetaStrip{
-        display:flex;
-        flex-wrap:wrap;
-        gap:6px;
-        margin-top:8px;
-      }
-      .matchMetaChip{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        min-height:26px;
-        padding:4px 8px;
-        border-radius:8px;
-        background:rgba(255,255,255,.12);
-        color:#fff7f9;
-        font-size:11px;
-        font-weight:800;
-        border:1px solid rgba(255,255,255,.08);
-      }
-      .matchSecondaryRow{
-        display:flex;
-        gap:8px;
-        flex-wrap:wrap;
-        margin-top:10px;
-      }
-      .matchMiniBtn{
-        min-height:34px;
-        padding:6px 10px;
-        border:none;
-        border-radius:10px;
-        cursor:pointer;
-        background:rgba(255,255,255,.12);
-        color:#fff8ef;
-        font-size:11px;
-        font-weight:800;
-        border:1px solid rgba(255,255,255,.08);
-      }
-      .reunionBadge{
-        background:linear-gradient(180deg, #ffe8a8, #efc85a);
-        color:#5b3614;
-      }
-      .modalCardGrid{
-        display:grid;
-        grid-template-columns:repeat(auto-fit, minmax(88px, max-content));
-        gap:10px;
-      }
-      .selectCardItem{
-        width:82px;
-      }
-      .selectCardBtn{
-        width:82px;
-        border:none;
-        background:none;
-        padding:0;
-        cursor:pointer;
-      }
-      .selectCardBox{
-        width:82px;
-        height:114px;
-        position:relative;
-        overflow:hidden;
-        border-radius:6px;
-        background:#fff3db;
-        border:3px solid #7a5a28;
-        box-shadow:0 6px 14px rgba(0,0,0,.12);
-      }
-      .selectCardBox img{
-        width:100%;
-        height:100%;
-        object-fit:cover;
-        display:block;
-      }
-      .selectCardOwn{
-        position:absolute;
-        left:6px;
-        top:6px;
-        min-width:34px;
-        height:24px;
-        padding:0 6px;
-        border-radius:999px;
-        display:grid;
-        place-items:center;
-        background:rgba(255,255,255,.94);
-        color:#4d3623;
-        font-size:11px;
-        border:2px solid rgba(0,0,0,.08);
-      }
-      .selectCardName{
-        margin-top:6px;
-        min-height:32px;
-        word-break:break-word;
-        font-size:11px;
-        line-height:1.45;
-        color:#5b4650;
-        font-weight:700;
-      }
-      .heartJudgeLayer{
-        position:fixed;
-        inset:0;
-        z-index:130;
-        display:none;
-        align-items:center;
-        justify-content:center;
-        background:radial-gradient(circle at center, rgba(255,255,255,.08), rgba(33,13,24,.72));
-        backdrop-filter:blur(6px);
-      }
-      .heartJudgeLayer.show{
-        display:flex;
-      }
-      .heartJudgeInner{
-        text-align:center;
-        color:#fff9f5;
-        animation:judgeEnter .22s ease;
-      }
-      .heartJudgeIcon{
-        font-size:120px;
-        line-height:1;
-        filter:drop-shadow(0 12px 26px rgba(0,0,0,.25));
-        animation:judgePulse .95s ease;
-      }
-      .heartJudgeText{
-        margin-top:12px;
-        font-size:22px;
-        line-height:1.4;
-        font-weight:800;
-      }
-      .heartJudgeSub{
-        margin-top:8px;
-        font-size:14px;
-        line-height:1.7;
-        color:#ffeef4;
-        font-weight:700;
-      }
-      @keyframes judgeEnter{
-        from{ opacity:0; transform:scale(.92); }
-        to{ opacity:1; transform:scale(1); }
-      }
-      @keyframes judgePulse{
-        0%{ transform:scale(.7); opacity:0; }
-        30%{ transform:scale(1.18); opacity:1; }
-        55%{ transform:scale(.96); opacity:1; }
-        80%{ transform:scale(1.06); opacity:1; }
-        100%{ transform:scale(1); opacity:1; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function renderHintRows(job) {
-    return job.hints.map((hint, idx) => {
-      const opened = idx < job.revealedHints;
-      const cost = job.hintCosts[idx];
-      if (opened) {
-        return `
-          <div class="matchHintRow">
-            <div class="matchHintText">${escapeHtml(hint)}</div>
-            <button class="matchHintBtn" disabled>開示済み</button>
-          </div>
-        `;
-      }
+    if (nextIdx >= job.hints.length) {
       return `
-        <div class="matchHintRow">
-          <div class="matchHintText">次のヒント（有料 ${cost} オクト）</div>
-          <button class="matchHintBtn" data-open-hint="${job.id}" data-hint-index="${idx}">${cost}オクトで見る</button>
+        <div class="matchHintSingle">
+          <div class="matchHintCurrent">${escapeHtml(hintText)}</div>
+          <div class="matchHintFooter">
+            <button class="matchHintNextBtn" disabled>これ以上ヒントなし</button>
+          </div>
         </div>
       `;
-    }).join("");
+    }
+
+    return `
+      <div class="matchHintSingle">
+        <div class="matchHintCurrent">${escapeHtml(hintText)}</div>
+        <div class="matchHintFooter">
+          <button class="matchHintNextBtn" data-open-next-hint="${job.id}">
+            次のヒントへ（${job.hintCosts[nextIdx]}オクト）
+          </button>
+        </div>
+      </div>
+    `;
   }
 
-  function renderJobCard(job, isLegend = false) {
+  function renderJobCard(job) {
     const status = getJobStatus(job);
-    const compatibility = calcCompatibility(job);
-    const reunionMap = getMatchingMeta().reunionMap || {};
-    const reunionCount = Number(reunionMap[job.type] || 0);
-    const attachment = calcAttachment(job);
+    const reunionCount = Number(getMeta().reunionMap[job.type] || 0);
 
     return `
       <article class="matchCard ${job.completed ? "isDone" : ""}">
@@ -1628,8 +1301,8 @@
               <div class="metaRight">
                 <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
                 ${job.featured ? `<span class="matchBadge featured">目玉依頼</span>` : ""}
-                ${reunionCount > 0 ? `<span class="matchBadge reunionBadge">再会 ${reunionCount}</span>` : ""}
-                <span class="matchBadge ${status.cls}">${status.text}</span>
+                ${reunionCount > 0 ? `<span class="matchBadge featured">再会${reunionCount}</span>` : ""}
+                <span class="matchBadge ${status.cls}">${status.label}</span>
               </div>
             </div>
           </div>
@@ -1637,9 +1310,9 @@
 
         <div class="matchMain">
           <div class="matchMetaStrip">
-            <span class="matchMetaChip">相性 ${compatibility}%</span>
+            <span class="matchMetaChip">累計マッチ率 ${getMatchRate(job.type)}%</span>
             <span class="matchMetaChip">${escapeHtml(job.loveType)}</span>
-            <span class="matchMetaChip">未練度 ${"★".repeat(attachment)}${"☆".repeat(5 - attachment)}</span>
+            <span class="matchMetaChip">未練度 ${"★".repeat(calcAttachment(job))}${"☆".repeat(5 - calcAttachment(job))}</span>
             ${job.hintTags.map(tag => `<span class="matchMetaChip">${escapeHtml(tag)}</span>`).join("")}
           </div>
 
@@ -1649,18 +1322,21 @@
               <div class="matchHintTitle">今日の希望は……？</div>
             </div>
 
-            <div class="matchHintList">
-              ${renderHintRows(job)}
-            </div>
+            ${renderHintSingle(job)}
 
-            <div class="matchSecondaryRow">
-              <button class="matchBtn ${status.cls === "ok" && !job.completed ? "primary" : ""}" data-open-select="${job.id}">
+            <div class="matchActionRow">
+              <button class="matchPuffyBtn" data-open-select="${job.id}" ${status.disabled ? "disabled" : ""}>
                 ${status.action}
               </button>
-              <button class="matchMiniBtn" data-toggle-fav="${job.id}">
-                ${job.favorite ? "追跡中" : "気になる登録"}
-              </button>
             </div>
+
+            ${
+              !job.completed && job.retryCount > 0 && job.retryCount < 3
+                ? `<div class="matchRetryNote">失敗 ${job.retryCount}/3 回。あと ${3 - job.retryCount} 回たこ。</div>`
+                : !job.completed && job.retryCount >= 3
+                  ? `<div class="matchRetryNote isEnd">今日はこの相手とはもう挑戦できないたこ。</div>`
+                  : ""
+            }
           </div>
         </div>
       </article>
@@ -1673,12 +1349,12 @@
     const legend = $("#legendMatch");
     if (!list) return;
 
-    list.innerHTML = state.jobs.map(job => renderJobCard(job, false)).join("");
+    list.innerHTML = state.jobs.map(renderJobCard).join("");
 
     if (legend) {
       if (state.legendJob) {
         legend.classList.remove("hidden");
-        legend.innerHTML = renderJobCard(state.legendJob, true);
+        legend.innerHTML = renderJobCard(state.legendJob);
       } else {
         legend.classList.add("hidden");
         legend.innerHTML = "";
@@ -1689,53 +1365,53 @@
   }
 
   // =========================================================
-  // Actions
+  // Update helpers
   // =========================================================
-  function updateJob(jobId, updater) {
-    const state = getBoard();
-    let job = state.jobs.find(v => v.id === jobId);
-    let owner = "jobs";
-    if (!job && state.legendJob?.id === jobId) {
-      job = state.legendJob;
-      owner = "legend";
-    }
-    if (!job) return null;
-
-    updater(job, state, owner);
-    saveBoard(state);
-    return job;
-  }
-
-  function openHint(jobId, idx) {
-    const costMap = [0, 100, 200];
-    const cost = costMap[idx] ?? 100;
-    if (getOcto() < cost) {
-      showTakopiToast("オクトが足りないたこ");
-      return;
-    }
-    addOcto(-cost);
-    updateJob(jobId, (job) => {
-      job.revealedHints = Math.max(job.revealedHints, idx + 1);
-    });
-    renderBoard();
-    showTakopiToast(`ヒントを開いたたこ（-${cost}オクト）`);
-  }
-
-  function toggleFavorite(jobId) {
-    updateJob(jobId, (job) => {
-      job.favorite = !job.favorite;
-    });
-    renderBoard();
-  }
-
   function getJobById(jobId) {
     const state = getBoard();
     return state.jobs.find(v => v.id === jobId) || (state.legendJob?.id === jobId ? state.legendJob : null);
   }
 
+  function updateJob(jobId, fn) {
+    const state = getBoard();
+    let target = state.jobs.find(v => v.id === jobId);
+    if (!target && state.legendJob?.id === jobId) target = state.legendJob;
+    if (!target) return null;
+    fn(target, state);
+    saveBoard(state);
+    return target;
+  }
+
+  // =========================================================
+  // Actions
+  // =========================================================
+  function openNextHint(jobId) {
+    const job = getJobById(jobId);
+    if (!job) return;
+
+    const nextIdx = Number(job.currentHintIndex || 0) + 1;
+    if (nextIdx >= job.hints.length) return;
+
+    const cost = Number(job.hintCosts[nextIdx] || 100);
+    if (getOcto() < cost) {
+      showTakopiToast("オクトが足りないたこ");
+      return;
+    }
+
+    addOcto(-cost);
+    updateJob(jobId, (j) => {
+      j.currentHintIndex = nextIdx;
+    });
+    renderBoard();
+    showTakopiToast(`ヒントを見たたこ（-${cost}オクト）`);
+  }
+
   function openSelectModal(jobId) {
     const job = getJobById(jobId);
     if (!job) return;
+
+    const status = getJobStatus(job);
+    if (status.disabled) return;
 
     const owned = getAllOwnedCards();
     const modal = $("#jobModal");
@@ -1754,8 +1430,8 @@
         <div class="modalRight">
           <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
           <div class="modalTagRow">
+            <span class="modalTag">累計マッチ率 ${getMatchRate(job.type)}%</span>
             <span class="modalTag">${escapeHtml(job.loveType)}</span>
-            <span class="modalTag">相性 ${calcCompatibility(job)}%</span>
           </div>
         </div>
       </div>
@@ -1802,23 +1478,46 @@
     document.body.style.overflow = "";
   }
 
-  function ensureJudgeLayer() {
-    if ($("#heartJudgeLayer")) return;
-    const layer = document.createElement("div");
-    layer.id = "heartJudgeLayer";
-    layer.className = "heartJudgeLayer";
-    layer.innerHTML = `
-      <div class="heartJudgeInner">
-        <div class="heartJudgeIcon" id="heartJudgeIcon">♥</div>
-        <div class="heartJudgeText" id="heartJudgeText">……</div>
-        <div class="heartJudgeSub" id="heartJudgeSub">……</div>
-      </div>
-    `;
-    document.body.appendChild(layer);
+  function ensureJudgeLayers() {
+    if (!$("#suspenseLayer")) {
+      const suspense = document.createElement("div");
+      suspense.id = "suspenseLayer";
+      suspense.className = "suspenseLayer";
+      suspense.innerHTML = `
+        <div class="suspenseInner">
+          <div class="suspenseText">ドキドキドキドキ…</div>
+        </div>
+      `;
+      document.body.appendChild(suspense);
+    }
+
+    if (!$("#heartJudgeLayer")) {
+      const judge = document.createElement("div");
+      judge.id = "heartJudgeLayer";
+      judge.className = "heartJudgeLayer";
+      judge.innerHTML = `
+        <div class="heartJudgeInner">
+          <div class="heartJudgeIcon" id="heartJudgeIcon">♥</div>
+          <div class="heartJudgeText" id="heartJudgeText">……</div>
+          <div class="heartJudgeSub" id="heartJudgeSub">……</div>
+        </div>
+      `;
+      document.body.appendChild(judge);
+    }
+  }
+
+  async function showSuspense() {
+    ensureJudgeLayers();
+    const layer = $("#suspenseLayer");
+    if (!layer) return;
+    layer.classList.add("show");
+    await new Promise(r => setTimeout(r, 1200));
+    layer.classList.remove("show");
+    await new Promise(r => setTimeout(r, 140));
   }
 
   async function showJudge(judgement) {
-    ensureJudgeLayer();
+    ensureJudgeLayers();
     const layer = $("#heartJudgeLayer");
     const icon = $("#heartJudgeIcon");
     const text = $("#heartJudgeText");
@@ -1830,14 +1529,18 @@
     sub.textContent = judgement.text;
 
     layer.classList.add("show");
-    await new Promise(r => setTimeout(r, 1300));
+    await new Promise(r => setTimeout(r, 1350));
     layer.classList.remove("show");
-    await new Promise(r => setTimeout(r, 180));
+    await new Promise(r => setTimeout(r, 160));
   }
 
   async function judgeCard(jobId, cardId) {
     const job = getJobById(jobId);
     if (!job) return;
+
+    const status = getJobStatus(job);
+    if (status.disabled) return;
+
     if (getOwnedCount(cardId) <= 0) {
       showTakopiToast("そのカードは持ってないたこ");
       return;
@@ -1845,35 +1548,50 @@
 
     closeJobModal();
 
+    await showSuspense();
+
     const card = CARD_MAP[cardId];
     const score = cardScoreAgainstJob(card, job);
     const judgement = judgeScore(score);
+
+    const meta = getMeta();
+    meta.statsByType[job.type] = meta.statsByType[job.type] || { attempts: 0, success: 0 };
+    meta.statsByType[job.type].attempts += 1;
+
+    if (judgement.verdict !== "fail") {
+      meta.statsByType[job.type].success += 1;
+    }
 
     await showJudge(judgement);
 
     if (judgement.verdict === "fail") {
       updateJob(jobId, (j) => {
-        j.retryCount = Number(j.retryCount || 0) + 1;
+        j.retryCount += 1;
       });
+      saveMeta(meta);
       renderBoard();
-      showTakopiToast("……違う、それじゃないたこ");
+
+      const current = getJobById(jobId);
+      if (current && current.retryCount >= 3) {
+        showTakopiToast("……今日はこの相手、もう心を開かないたこ");
+      } else {
+        showTakopiToast("……違う、それじゃないたこ");
+      }
       return;
     }
 
     addOwned(cardId, -1);
 
-    updateJob(jobId, (j, state) => {
+    updateJob(jobId, (j) => {
       j.completed = true;
       j.completedAt = Date.now();
 
       addOcto(j.rewards.octo);
-      const invItems = j.rewards.items || [];
-      invItems.forEach(item => addInventory(item.kind, item.id, item.qty));
-
-      const meta = getMatchingMeta();
-      meta.reunionMap[j.type] = Number(meta.reunionMap[j.type] || 0) + 1;
-      saveMatchingMeta(meta);
+      j.rewards.items.forEach(item => addInventory(item.kind, item.id, item.qty));
     });
+
+    meta.reunionMap[job.type] = Number(meta.reunionMap[job.type] || 0) + 1;
+    saveMeta(meta);
 
     renderBoard();
     await showRewardModal(getJobById(jobId));
@@ -1890,20 +1608,20 @@
     title.textContent = "……焼けたね";
     sub.textContent = `${job.visitorName} とマッチ成立たこ。`;
 
-    const lines = [
+    const rows = [
       `🪙 ${job.rewards.octo.toLocaleString()} オクト`,
       `評判 +${job.rewards.rep} / 熱量 +${job.rewards.exp}`,
       ...job.rewards.items.map(v => `${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)} ×${v.qty}`)
     ];
 
-    list.innerHTML = lines.map(v => `<div class="rewardItem">${escapeHtml(v)}</div>`).join("");
+    list.innerHTML = rows.map(v => `<div class="rewardItem">${escapeHtml(v)}</div>`).join("");
     modal.classList.add("show");
     modal.setAttribute("aria-hidden", "false");
 
-    const rows = $$(".rewardItem", list);
-    for (let i = 0; i < rows.length; i++) {
+    const items = $$(".rewardItem", list);
+    for (let i = 0; i < items.length; i++) {
       await new Promise(r => setTimeout(r, 120));
-      rows[i].classList.add("show");
+      items[i].classList.add("show");
     }
   }
 
@@ -1917,28 +1635,18 @@
   }
 
   // =========================================================
-  // Event binding
+  // Bind
   // =========================================================
   function bindBoardButtons() {
-    $$("[data-open-hint]").forEach(btn => {
+    $$("[data-open-next-hint]").forEach(btn => {
       btn.addEventListener("click", () => {
-        const jobId = btn.getAttribute("data-open-hint");
-        const idx = Number(btn.getAttribute("data-hint-index"));
-        openHint(jobId, idx);
-      });
-    });
-
-    $$("[data-toggle-fav]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const jobId = btn.getAttribute("data-toggle-fav");
-        toggleFavorite(jobId);
+        openNextHint(btn.getAttribute("data-open-next-hint"));
       });
     });
 
     $$("[data-open-select]").forEach(btn => {
       btn.addEventListener("click", () => {
-        const jobId = btn.getAttribute("data-open-select");
-        openSelectModal(jobId);
+        openSelectModal(btn.getAttribute("data-open-select"));
       });
     });
   }
@@ -1960,18 +1668,18 @@
       });
     }
 
-    const closeBtn = $("#jobModalClose");
-    if (closeBtn) closeBtn.addEventListener("click", closeJobModal);
+    const jobModalClose = $("#jobModalClose");
+    if (jobModalClose) jobModalClose.addEventListener("click", closeJobModal);
 
-    const modal = $("#jobModal");
-    if (modal) {
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) closeJobModal();
+    const jobModal = $("#jobModal");
+    if (jobModal) {
+      jobModal.addEventListener("click", (e) => {
+        if (e.target === jobModal) closeJobModal();
       });
     }
 
-    const rewardClose = $("#rewardCloseBtn");
-    if (rewardClose) rewardClose.addEventListener("click", hideRewardModal);
+    const rewardCloseBtn = $("#rewardCloseBtn");
+    if (rewardCloseBtn) rewardCloseBtn.addEventListener("click", hideRewardModal);
 
     const rewardModal = $("#rewardModal");
     if (rewardModal) {
@@ -1992,7 +1700,6 @@
   // Boot
   // =========================================================
   ensureDefaults();
-  ensureStyleTag();
   generateBoard(false);
   bindUI();
   renderHero();
