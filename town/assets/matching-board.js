@@ -451,14 +451,23 @@
     ...CARD_POOLS.SR.map(v => ({ ...v, id: v.no, rarity: "SR" })),
     ...CARD_POOLS.UR.map(v => ({ ...v, id: v.no, rarity: "UR" })),
     ...CARD_POOLS.LR.map(v => ({ ...v, id: v.no, rarity: "LR" })),
-    ...TAKOPI_SEED_POOL.map(v => ({ ...v, id: v.id })),
-    ...BUSSASARI_POOL.map(v => ({ ...v, id: v.id })),
-    ...NAMARA_POOL.map(v => ({ ...v, id: v.id })),
-    ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id: `${v.id}_rotten` })),
-    ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea` }))
+    ...TAKOPI_SEED_POOL.map(v => ({ ...v, id: v.id, rarity: v.rarity || "N" })),
+    ...BUSSASARI_POOL.map(v => ({ ...v, id: v.id, rarity: v.rarity || "N" })),
+    ...NAMARA_POOL.map(v => ({ ...v, id: v.id, rarity: v.rarity || "N" })),
+    ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id: `${v.id}_rotten`, rarity: v.rarity || "SP" })),
+    ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea`, rarity: v.rarity || "SP" }))
   ];
 
   const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
+
+  const RARITY_ORDER = {
+    N: 1,
+    R: 2,
+    SR: 3,
+    UR: 4,
+    LR: 5,
+    SP: 6
+  };
 
   // =========================================================
   // Reward items
@@ -585,6 +594,88 @@
     }
   };
 
+  // =========================================================
+  // Book / octo / defaults
+  // =========================================================
+  function ensureDefaults() {
+    if (localStorage.getItem(KEY.octo) == null) {
+      localStorage.setItem(KEY.octo, "1000");
+    }
+
+    const inv = loadJSON(KEY.inv, null);
+    if (!inv) {
+      saveJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
+    } else {
+      inv.ver = 1;
+      inv.seed = inv.seed || {};
+      inv.water = inv.water || {};
+      inv.fert = inv.fert || {};
+      saveJSON(KEY.inv, inv);
+    }
+
+    const book = loadJSON(KEY.book, null);
+    if (!book) {
+      saveJSON(KEY.book, { got: {} });
+    } else {
+      book.got = book.got || {};
+      saveJSON(KEY.book, book);
+    }
+
+    const meta = loadJSON(KEY.matchingMeta, null);
+    if (!meta) {
+      saveJSON(KEY.matchingMeta, {
+        totalAttempts: 0,
+        totalSuccess: 0,
+        totalFail: 0,
+        statsByType: {}
+      });
+    }
+  }
+
+  function getBook() {
+    const book = loadJSON(KEY.book, { got: {} });
+    book.got = book.got || {};
+    return book;
+  }
+
+  function saveBook(book) {
+    saveJSON(KEY.book, book);
+  }
+
+  function getOwnedCount(cardId) {
+    const book = getBook();
+    return Number(book.got?.[cardId]?.count || 0);
+  }
+
+  function addOwned(cardId, delta) {
+    const book = getBook();
+    const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
+
+    if (!book.got[cardId]) {
+      book.got[cardId] = {
+        count: 0,
+        name: info.name,
+        rarity: info.rarity
+      };
+    }
+
+    book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + Number(delta || 0));
+
+    if (book.got[cardId].count <= 0) {
+      delete book.got[cardId];
+    }
+
+    saveBook(book);
+  }
+
+  function getOcto() {
+    return Number(localStorage.getItem(KEY.octo) || 0);
+  }
+
+  function addOcto(delta) {
+    localStorage.setItem(KEY.octo, String(Math.max(0, getOcto() + Number(delta || 0))));
+  }
+
   function itemIcon(kind) {
     if (kind === "seed") return "🌱";
     if (kind === "water") return "💧";
@@ -623,18 +714,13 @@
     return meta.statsByType[type];
   }
 
-  function getOverallRate() {
-    const meta = getMeta();
-    if (!meta.totalAttempts) return 0;
-    return Math.round((meta.totalSuccess / meta.totalAttempts) * 100);
-  }
-
   // =========================================================
   // Hints
   // =========================================================
   function deriveTags(card) {
     const tags = new Set();
     const name = card.name || "";
+
     if (/ソース/.test(name)) tags.add("sauce");
     if (/塩/.test(name)) tags.add("salt");
     if (/マヨ/.test(name)) tags.add("mayo");
@@ -698,6 +784,7 @@
     base = shuffle(base, rnd);
     const hint1 = base[0] || "まだ忘れられないたこ";
     let hint2 = base.find(v => v !== hint1) || "少し特別な気配があるたこ";
+    if (hint2 === hint1) hint2 = "少し特別な気配があるたこ";
     const hint3 = titleHint(card);
     return [hint1, hint2, hint3];
   }
@@ -994,10 +1081,16 @@
     b.forEach(tag => {
       if (a.has(tag)) overlap++;
     });
+
     score += overlap * 12;
-    if ((card.rarity === "UR" || card.rarity === "LR" || card.rarity === "SP") && (target.rarity === "UR" || target.rarity === "LR" || target.rarity === "SP")) {
+
+    if (
+      (card.rarity === "UR" || card.rarity === "LR" || card.rarity === "SP") &&
+      (target.rarity === "UR" || target.rarity === "LR" || target.rarity === "SP")
+    ) {
       score += 10;
     }
+
     return Math.min(94, score);
   }
 
@@ -1063,6 +1156,7 @@
 
   function renderHeroStats() {
     ensureHeroStatsShell();
+
     const meta = getMeta();
     const attempts = Number(meta.totalAttempts || 0);
     const success = Number(meta.totalSuccess || 0);
@@ -1081,6 +1175,7 @@
 
     const successW = attempts ? (success / attempts) * 100 : 0;
     const failW = attempts ? (fail / attempts) * 100 : 0;
+
     if (successEl) successEl.style.width = `${successW}%`;
     if (failEl) failEl.style.width = `${failW}%`;
   }
@@ -1199,6 +1294,7 @@
     if (!list) return;
 
     list.innerHTML = state.jobs.map(renderJobCard).join("");
+
     if (legend) {
       if (state.legendJob) {
         legend.classList.remove("hidden");
@@ -1251,8 +1347,7 @@
       }))
       .filter(v => v.count > 0)
       .sort((a, b) => {
-        const rarityOrder = { SP: 6, LR: 5, UR: 4, SR: 3, R: 2, N: 1 };
-        const rd = (rarityOrder[b.rarity] || 0) - (rarityOrder[a.rarity] || 0);
+        const rd = (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0);
         if (rd !== 0) return rd;
         return a.name.localeCompare(b.name, "ja");
       });
@@ -1340,7 +1435,7 @@
       judge.id = "heartJudgeLayer";
       judge.className = "heartJudgeLayer";
       judge.innerHTML = `
-        <div class="heartJudgeInner">
+        <div class="heartJudgeInner" id="heartJudgeInner">
           <div class="heartJudgeIcon" id="heartJudgeIcon">♥</div>
           <div class="heartJudgeText" id="heartJudgeText">……</div>
           <div class="heartJudgeSub" id="heartJudgeSub">……</div>
@@ -1363,11 +1458,13 @@
   async function showJudge(judgement) {
     ensureJudgeLayers();
     const layer = $("#heartJudgeLayer");
+    const inner = $("#heartJudgeInner");
     const icon = $("#heartJudgeIcon");
     const text = $("#heartJudgeText");
     const sub = $("#heartJudgeSub");
-    if (!layer || !icon || !text || !sub) return;
+    if (!layer || !inner || !icon || !text || !sub) return;
 
+    inner.classList.toggle("fail", judgement.verdict === "fail");
     icon.textContent = judgement.icon;
     text.textContent = judgement.verdict === "fail" ? "好みではなかったようだ" : "鼓動が重なった";
     sub.textContent = judgement.text;
@@ -1375,6 +1472,7 @@
     layer.classList.add("show");
     await new Promise(r => setTimeout(r, 1450));
     layer.classList.remove("show");
+    inner.classList.remove("fail");
     await new Promise(r => setTimeout(r, 150));
   }
 
@@ -1420,6 +1518,7 @@
 
     const status = getJobStatus(job);
     if (status.disabled) return;
+
     if (getOwnedCount(cardId) <= 0) {
       showTakopiToast("そのカードは持ってないたこ");
       return;
