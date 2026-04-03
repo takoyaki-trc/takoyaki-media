@@ -118,6 +118,10 @@
     return new Promise(r => setTimeout(r, ms));
   }
 
+  function scaleOcto(v) {
+    return Math.round(v * 1.3);
+  }
+
   // =========================================================
   // Customer master
   // =========================================================
@@ -207,108 +211,6 @@
     "今日は沼が多いたこ",
     "♥か💔かは、渡してからのお楽しみたこ"
   ];
-
-  const CUSTOMER_LINES = {
-    rich: [
-      "あの日のカードを、金じゃなくて本気で取り戻したいたこ",
-      "もう誰かの手にあっても、忘れられない恋があるたこ",
-      "高くてもいいたこ。会いたい気持ちのほうが重いたこ",
-      "一度逃したあのカードが、今も胸に刺さってるたこ"
-    ],
-    looker: [
-      "もう諦めたつもりなのに、また会いに来てしまったたこ",
-      "見てるだけでいいはずなのに、気持ちが残ってるたこ",
-      "忘れたいのに、あの日のカードの顔が浮かぶたこ"
-    ],
-    impulse: [
-      "見た瞬間に恋したたこ",
-      "逃したら一生後悔する恋だったたこ",
-      "このカード、もう運命の相手にしか見えないたこ"
-    ],
-    careful: [
-      "欲しいけど、今じゃない気もする恋たこ",
-      "本当にこのカードが運命なのか、まだ迷ってるたこ",
-      "会いたいけど、踏み出すのが少し怖いたこ"
-    ],
-    climber: [
-      "ここまで来たら、最後の一枚に会うまで終われないたこ",
-      "ずっと追いかけてきた恋が、あと一歩なんだたこ",
-      "完成の先に、やっと会いたいカードがいるたこ"
-    ],
-    flipper: [
-      "好きかどうかより、もう気になって眠れないたこ",
-      "会いたい気もするし、会ったら終わりな気もするたこ",
-      "夜になると、あのカードのことばかり考えるたこ"
-    ],
-    relax: [
-      "そばに置いておきたい恋ってあるたこ",
-      "理由はないけど、このカードといると落ち着くたこ",
-      "派手じゃないのに、ずっと好きでいられる相手たこ"
-    ],
-    artisan: [
-      "見た目だけじゃなくて、中身まで惚れたたこ",
-      "分かる人にしか伝わらない恋をしてるたこ",
-      "これはカードじゃないたこ、作品に恋してるたこ"
-    ],
-    diet: [
-      "いらないって言い聞かせても、気持ちが勝つたこ",
-      "理屈じゃないたこ。好きになったものは仕方ないたこ",
-      "会ったら最後、もう欲しくなると分かってるたこ"
-    ],
-    picky: [
-      "あの日のあのカードじゃなきゃダメなたこ",
-      "似てるだけじゃ足りないたこ。本命に会いたいたこ",
-      "まだどこかで待ってる気がして探してるたこ"
-    ],
-    king: [
-      "余が惚れる以上、それは特別なたこ",
-      "格も気配も揃った相手にしか心は動かないたこ",
-      "忘れられないカードは、王でも手放せないたこ"
-    ],
-    guide: [
-      "案内役でも、忘れられない一枚くらいあるたこ",
-      "最初に恋したカードって、だいたい一番忘れにくいたこ"
-    ],
-    overflow: [
-      "綺麗に並んでる子より、少しはみ出したあの子が気になるたこ",
-      "普通じゃないからこそ、恋に落ちたたこ"
-    ],
-    collector: [
-      "保存用まで欲しくなる相手って、もう本気なたこ",
-      "紙の匂いまで好きになってしまったたこ",
-      "あの手ざわりを、まだ指先が恋しがってるたこ"
-    ],
-    shadow: [
-      "濡れた記憶みたいに、あのカードが離れないたこ",
-      "しけった空気の中で出会った恋ほど、あとに残るたこ"
-    ],
-    ramen: [
-      "一枚じゃ足りないたこ。もっと近くで会いたいたこ",
-      "やっと会えたのに、また欲しくなる恋たこ"
-    ],
-    streamer: [
-      "見せ方ひとつで、恋は何倍にも膨らむたこ",
-      "盛り上がりから始まったのに、気づけば本気たこ"
-    ],
-    gourmet: [
-      "あの日の味みたいに、あのカードが忘れられないたこ",
-      "香りだけで昔の恋を思い出すたこ",
-      "味の記憶よりしつこく、あの一枚が残ってるたこ"
-    ],
-    opener: [
-      "中身を見る前から惹かれてたたこ",
-      "未開封のままじゃ終われない恋だったたこ"
-    ],
-    party: [
-      "祭りのあとでも、あのカードだけは残ってるたこ",
-      "盛り上がりの中で始まった恋ほど、後から効くたこ"
-    ],
-    pilgrim: [
-      "置き忘れた恋を、また手に入れたくて来たたこ",
-      "一度手放したあのカードを、まだ忘れられないたこ",
-      "片想いだって分かってても、また会いたいたこ"
-    ]
-  };
 
   // =========================================================
   // Card pools / master
@@ -638,9 +540,7 @@
       };
     }
     book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + Number(delta || 0));
-    if (book.got[cardId].count <= 0) {
-      delete book.got[cardId];
-    }
+    if (book.got[cardId].count <= 0) delete book.got[cardId];
     saveBook(book);
   }
 
@@ -768,119 +668,283 @@
     return Array.from(tags);
   }
 
-  function buildHint1(card) {
-    const tags = deriveTags(card);
-    const rarity = card.rarity || "N";
+  function pickVariant(seed, variants) {
+    return pick(variants, randFromSeed(seed));
+  }
+
+  function buildHint1(card, isExtraPool, jobType) {
     const name = card.name || "";
+    const tags = deriveTags(card);
 
-    if (/ソース/.test(name)) return "ソース系のカードたこ";
-    if (/塩/.test(name)) return "塩系のカードたこ";
-    if (/マヨ/.test(name)) return "マヨ系のカードたこ";
-    if (/明太/.test(name)) return "明太っぽさがあるカードたこ";
-    if (/チーズ/.test(name)) return "チーズ系のカードたこ";
-    if (/味噌/.test(name)) return "味噌っぽいカードたこ";
-    if (/牡蠣/.test(name)) return "牡蠣だし系のカードたこ";
-    if (tags.includes("onsen")) return "温泉・ゆのかわ系のカードたこ";
-    if (tags.includes("darts")) return "ダーツに関係あるカードたこ";
-    if (tags.includes("shop")) return "店主・露店・お店系のカードたこ";
-    if (tags.includes("love")) return "恋・デート・契約みたいな空気のカードたこ";
-    if (tags.includes("god")) return "神・御神体・ビーナス系のカードたこ";
-    if (tags.includes("dark_special")) return "黒さ・真珠・イカさま感のあるカードたこ";
-    if (tags.includes("heat")) return "熱い・火力高めのカードたこ";
-    if (tags.includes("memory")) return "記憶・化石・昔っぽさのあるカードたこ";
-    if (tags.includes("crowd")) return "大会・会議・行列みたいな人の多いカードたこ";
-    if (tags.includes("speed")) return "走る・飛ぶ・勢いのあるカードたこ";
-    if (tags.includes("danger")) return "ちょっと危ない感じのカードたこ";
+    const pools = [];
 
-    if (rarity === "LR") return "かなり格の高いカードたこ";
-    if (rarity === "UR") return "目立つ上位レアのカードたこ";
-    if (rarity === "SR") return "第一弾の中でも印象が強いカードたこ";
-    if (rarity === "R") return "ちょっと珍しめのカードたこ";
-    return "第一弾の中では見つけやすいほうのカードたこ";
+    if (/ソース|塩|マヨ|明太|チーズ|味噌|牡蠣/.test(name) || tags.includes("taste")) {
+      pools.push([
+        "味が主役のやつたこ",
+        "味つけで思い出せるタイプたこ",
+        "ソースや塩っぽい方向のやつたこ",
+        "食べ方の名前が入ってそうなたこ",
+        "味系の中から探すと近いたこ"
+      ]);
+    }
+
+    if (tags.includes("love")) {
+      pools.push([
+        "恋とか気持ち寄りのやつたこ",
+        "感情が入ってるタイプたこ",
+        "恋愛っぽい空気のやつたこ",
+        "気持ちで覚えやすいやつたこ",
+        "関係性を感じる名前のやつたこ"
+      ]);
+    }
+
+    if (tags.includes("darts")) {
+      pools.push([
+        "ダーツに関係あるやつたこ",
+        "プロっぽい空気あるやつたこ",
+        "競技寄りのタイプたこ",
+        "狙う感じがあるやつたこ",
+        "ダーツ系から探すと近いたこ"
+      ]);
+    }
+
+    if (tags.includes("shop")) {
+      pools.push([
+        "お店や店主寄りのやつたこ",
+        "現場感あるタイプたこ",
+        "店っぽい言葉が入るやつたこ",
+        "露店・店主系のやつたこ",
+        "お店まわりから探すと近いたこ"
+      ]);
+    }
+
+    if (tags.includes("god")) {
+      pools.push([
+        "特別感が強いやつたこ",
+        "神とか御神体寄りのやつたこ",
+        "格が高そうなタイプたこ",
+        "ありがたい空気のやつたこ",
+        "普通枠じゃない感じのやつたこ"
+      ]);
+    }
+
+    if (tags.includes("onsen")) {
+      pools.push([
+        "場所のイメージが強いやつたこ",
+        "温泉っぽさあるやつたこ",
+        "函館・ゆのかわ寄りのやつたこ",
+        "地名や温泉を思い出すやつたこ",
+        "場所から探すと見つけやすいたこ"
+      ]);
+    }
+
+    if (tags.includes("crowd")) {
+      pools.push([
+        "人が集まってそうなやつたこ",
+        "大会や行列っぽいやつたこ",
+        "賑やかさがあるタイプたこ",
+        "一人で完結しないやつたこ",
+        "人の多さを感じるやつたこ"
+      ]);
+    }
+
+    if (tags.includes("heat")) {
+      pools.push([
+        "熱そうなやつたこ",
+        "火力高めの空気あるたこ",
+        "アツさで覚えやすいやつたこ",
+        "熱量つよめのタイプたこ",
+        "燃えてそうなやつたこ"
+      ]);
+    }
+
+    if (tags.includes("memory")) {
+      pools.push([
+        "過去や記憶っぽいやつたこ",
+        "昔を思い出すタイプたこ",
+        "記憶寄りの言葉があるやつたこ",
+        "時間を感じるやつたこ",
+        "過去系から探すと近いたこ"
+      ]);
+    }
+
+    if (tags.includes("speed")) {
+      pools.push([
+        "勢いあるやつたこ",
+        "走る・飛ぶ感じのやつたこ",
+        "動きが強いやつたこ",
+        "スピード感あるタイプたこ",
+        "アクション寄りのやつたこ"
+      ]);
+    }
+
+    if (tags.includes("danger") || tags.includes("dark_special")) {
+      pools.push([
+        "ちょっと怪しいやつたこ",
+        "黒さや違和感あるやつたこ",
+        "普通じゃない空気のやつたこ",
+        "少し危ない感じのやつたこ",
+        "クセ強めから探すと近いたこ"
+      ]);
+    }
+
+    if (isExtraPool) {
+      pools.push([
+        "第一弾の外にいる特別枠たこ",
+        "特別セット寄りのやつたこ",
+        "通常枠じゃないほうたこ",
+        "外伝っぽい立ち位置たこ",
+        "第一弾以外から探すたこ"
+      ]);
+    }
+
+    if (!pools.length) {
+      const rarity = card.rarity || "N";
+      if (rarity === "LR" || rarity === "UR") {
+        pools.push([
+          "目立つやつたこ",
+          "上位っぽい空気のやつたこ",
+          "レア寄りから探すと近いたこ",
+          "印象強めのやつたこ",
+          "一発で覚えやすい側たこ"
+        ]);
+      } else {
+        pools.push([
+          "第一弾の中で見かけやすい側たこ",
+          "図鑑の前の方でも見つけやすいたこ",
+          "基本寄りのやつたこ",
+          "まずは広めに探すと近いたこ",
+          "王道寄りのやつたこ"
+        ]);
+      }
+    }
+
+    const basePool = pickVariant(`hint1-pool::${todayKey()}::${jobType}::${card.id}`, pools);
+    return pickVariant(`hint1-line::${todayKey()}::${jobType}::${card.id}`, basePool);
   }
 
-  function buildHint2(card, isExtraPool) {
+  function buildHint2(card, isExtraPool, jobType) {
     if (isExtraPool) {
-      return "第一弾以外の特別枠たこ。かなりレア寄りたこ";
+      const variants = [
+        "第一弾以外の特別枠たこ。かなりレア寄りたこ",
+        "通常枠じゃないやつたこ。見つけたら強いたこ",
+        "外伝っぽい特別枠たこ。手持ち次第でかなり差が出るたこ",
+        "第一弾以外から来てるやつたこ。持ってる人は限られるたこ",
+        "特別セット側のやつたこ。普通の図鑑だけだと見逃しやすいたこ"
+      ];
+      return pickVariant(`hint2-extra::${todayKey()}::${jobType}::${card.id}`, variants);
     }
 
     const rarity = card.rarity || "N";
-    if (rarity === "SP") return "かなり特殊なたこ。普通の手札ではまず見かけないたこ";
-    if (rarity === "LR") return "最上位クラスたこ。持ってたらかなり強い手札たこ";
-    if (rarity === "UR") return "かなりレア寄りたこ。簡単には出てこないたこ";
-    if (rarity === "SR") return "そこそこレアなたこ。人によっては持ってないたこ";
-    if (rarity === "R") return "珍しすぎないけど、ちゃんと印象に残るたこ";
-    return "比較的見つけやすい側たこ。図鑑を見れば案外いるたこ";
-  }
-
-  function buildHint3(card) {
-    const cleaned = (card.name || "").replace(/《.*?》/g, "").trim();
-    let keyword = cleaned;
-
-    if (cleaned.includes("の")) {
-      keyword = cleaned.split("の")[0];
-    } else if (cleaned.length > 7) {
-      keyword = cleaned.slice(0, 7);
-    }
-
-    keyword = keyword.trim();
-    if (!keyword) keyword = cleaned.slice(0, 4);
-    return `タイトルに「${keyword}」が入ってるたこ`;
-  }
-
-  function makeHintsForCard(card, isExtraPool) {
-    return [
-      buildHint1(card),
-      buildHint2(card, isExtraPool),
-      buildHint3(card)
-    ];
-  }
-
-  function makeTakopiThought(card, isExtraPool, difficulty) {
-    if (isExtraPool) {
-      return "……これは第一弾の外から来てるたこ。かなりアツいたこ";
-    }
-
-    const rarity = card.rarity || "N";
-    const thoughtMap = {
+    const variantMap = {
       N: [
-        "……この恋なら、まだ追いつけるたこ",
-        "……会える可能性は高いたこ",
-        "……手を伸ばせば届きそうなたこ"
+        "比較的見つけやすい側たこ",
+        "図鑑を広く見れば案外いるたこ",
+        "持ってる人はそこそこいるたこ",
+        "まずは手持ちの基本側を見てみるたこ",
+        "難しすぎないほうたこ"
       ],
       R: [
-        "……少し探せば、また会えそうなたこ",
-        "……想ってる人はそこそこいるたこ",
-        "……軽い恋より、ちょっと深いたこ"
+        "珍しすぎないけど印象に残るたこ",
+        "ちょっと探す必要あるたこ",
+        "人によっては持ってるたこ",
+        "基本より一段上を見ると近いたこ",
+        "軽く迷うレベルたこ"
       ],
       SR: [
-        "……ここから急に本気の恋になるたこ",
-        "……人によってはまだ会えてないたこ",
-        "……選ぶ相手を間違えると痛いたこ"
+        "そこそこレアなたこ",
+        "人によっては持ってないたこ",
+        "ここから少し怪しくなるたこ",
+        "SR帯を見ると近いたこ",
+        "手持ちによって差が出るたこ"
       ],
       UR: [
-        "……現実はなかなか厳しい恋たこ",
-        "……会えたら相当強い気持ちたこ",
-        "……在庫より覚悟の問題たこ"
+        "かなりレア寄りたこ",
+        "簡単には出てこないたこ",
+        "持ってたら強い手札たこ",
+        "上位レア側から見るたこ",
+        "ここは運も絡むたこ"
       ],
       LR: [
-        "……それ、本気で惚れてるたこ？",
-        "……会えたらもう奇跡たこ",
-        "……かなり本気の恋たこ"
+        "最上位クラスたこ",
+        "出会えたらかなりアツいたこ",
+        "かなり限られてるたこ",
+        "本気で探す側たこ",
+        "覚悟がいるやつたこ"
       ],
       SP: [
-        "……もう運命の領域たこ",
-        "……普通の恋愛難易度じゃないたこ",
-        "……会える人かなり限られるたこ"
+        "かなり特殊なたこ",
+        "普通の手札では見かけにくいたこ",
+        "特殊枠から探すたこ",
+        "通常とは別物寄りたこ",
+        "持ってる人かなり少なめたこ"
       ]
     };
 
-    if (difficulty >= 5 && rarity !== "LR" && rarity !== "SP") {
-      return "……条件だけでもう重たい恋たこ";
+    return pickVariant(`hint2-line::${todayKey()}::${jobType}::${card.id}`, variantMap[rarity] || variantMap.SR);
+  }
+
+  function takeMid3(text) {
+    if (text.length <= 3) return text;
+    const start = Math.max(0, Math.floor((text.length - 3) / 2));
+    return text.slice(start, start + 3);
+  }
+
+  function buildHint3(card, jobType) {
+    const cleaned = (card.name || "").replace(/《.*?》/g, "").trim();
+    if (!cleaned) return "名前の中にヒントがあるたこ";
+
+    const parts = [];
+    if (cleaned.length <= 3) {
+      parts.push({ where: "そのまま", value: cleaned });
+    } else {
+      parts.push({ where: "最初", value: cleaned.slice(0, 3) });
+      parts.push({ where: "真ん中", value: takeMid3(cleaned) });
+      parts.push({ where: "最後", value: cleaned.slice(-3) });
     }
 
-    const rnd = randFromSeed(`${todayKey()}::thought::${card.id}`);
-    return pick(thoughtMap[rarity] || thoughtMap.SR, rnd);
+    const picked = pickVariant(`hint3-part::${todayKey()}::${jobType}::${card.id}`, parts);
+
+    const templates = {
+      "最初": [
+        `名前の最初に「${picked.value}」があるたこ`,
+        `名前の出だしは「${picked.value}」たこ`,
+        `最初の3文字は「${picked.value}」たこ`,
+        `タイトルの頭に「${picked.value}」が来るたこ`,
+        `最初の方を見ると「${picked.value}」たこ`
+      ],
+      "真ん中": [
+        `名前の真ん中あたりに「${picked.value}」があるたこ`,
+        `真ん中の3文字は「${picked.value}」たこ`,
+        `タイトルの中央寄りに「${picked.value}」が入るたこ`,
+        `中ほどを見ると「${picked.value}」たこ`,
+        `真ん中あたりのヒントは「${picked.value}」たこ`
+      ],
+      "最後": [
+        `名前の最後に「${picked.value}」があるたこ`,
+        `最後の3文字は「${picked.value}」たこ`,
+        `タイトルの終わりは「${picked.value}」たこ`,
+        `しっぽ側を見ると「${picked.value}」たこ`,
+        `名前の後ろのヒントは「${picked.value}」たこ`
+      ],
+      "そのまま": [
+        `名前のヒントは「${picked.value}」たこ`,
+        `タイトルの中に「${picked.value}」があるたこ`,
+        `名前を見ると「${picked.value}」たこ`,
+        `言葉のヒントは「${picked.value}」たこ`,
+        `そのまま読むと「${picked.value}」たこ`
+      ]
+    };
+
+    return pickVariant(`hint3-line::${todayKey()}::${jobType}::${card.id}`, templates[picked.where] || templates["そのまま"]);
+  }
+
+  function makeHintsForCard(card, isExtraPool, jobType) {
+    return [
+      buildHint1(card, isExtraPool, jobType),
+      buildHint2(card, isExtraPool, jobType),
+      buildHint3(card, jobType)
+    ];
   }
 
   // =========================================================
@@ -896,7 +960,7 @@
       SP: [2200, 3200]
     };
     const range = map[rarity] || [400, 800];
-    return Math.floor(rnd() * (range[1] - range[0] + 1)) + range[0];
+    return scaleOcto(Math.floor(rnd() * (range[1] - range[0] + 1)) + range[0]);
   }
 
   function rewardOctoHighExtra(rnd) {
@@ -907,7 +971,7 @@
       { value: 6000, weight: 5 },
       { value: 7777, weight: 3 }
     ];
-    return weightedPick(table, rnd).value;
+    return scaleOcto(weightedPick(table, rnd).value);
   }
 
   function rewardExpByDifficulty(difficulty) {
@@ -1037,11 +1101,6 @@
     return { card: picked, qty: 1, isExtraPool: false };
   }
 
-  function getCustomerLine(type, rnd) {
-    const lines = CUSTOMER_LINES[type] || ["まだ忘れられないたこ"];
-    return pick(lines, rnd);
-  }
-
   function makeJob(type, idx, dateSeed, featured = false, legend = false) {
     const rnd = randFromSeed(`${dateSeed}::job::${type}::${idx}::${legend ? "legend" : "normal"}`);
     const difficulty = legend ? 5 : Math.min(5, Math.max(featured ? 3 : 1, getDifficultyForType(type, rnd)));
@@ -1055,7 +1114,6 @@
       difficulty,
       featured,
       legend,
-      line: getCustomerLine(type, rnd),
       targetCardId: wanted.card.id,
       targetQty: 1,
       isExtraPool: wanted.isExtraPool,
@@ -1063,13 +1121,13 @@
       rewardExp: rewardExpByDifficulty(difficulty),
       rewardRep: rewardRepByDifficulty(difficulty),
       rewardItems: makeRewardItems(type, difficulty, rnd),
-      hints: makeHintsForCard(wanted.card, wanted.isExtraPool),
+      hints: makeHintsForCard(wanted.card, wanted.isExtraPool, type),
       currentHintIndex: 0,
       hintCosts: [0, 200, 300],
-      takopiThought: makeTakopiThought(wanted.card, wanted.isExtraPool, difficulty),
       completed: false,
       completedAt: null,
-      retryCount: 0
+      retryCount: 0,
+      lastBonusOcto: 0
     };
   }
 
@@ -1170,6 +1228,10 @@
       action: `マッチングする ${job.retryCount + 1}/3`,
       disabled: false
     };
+  }
+
+  function calcFirstTryBonus(job) {
+    return Math.max(180, Math.round(job.rewardOcto * 0.35));
   }
 
   // =========================================================
@@ -1328,18 +1390,12 @@
 
     return `
       <div class="matchHintPanel">
-        <div class="matchHintBadge">今日の希望は…</div>
-
         <div class="matchHintLargeBox">
           <div class="matchHintLabel">ヒント${idx + 1}</div>
           <div class="matchHintCurrent">${escapeHtml(currentText)}</div>
         </div>
 
         <div class="matchActionRow">
-          <button class="matchPuffyBtn" data-open-select="${job.id}" ${status.disabled ? "disabled" : ""}>
-            ${status.action}
-          </button>
-
           ${
             nextIdx < job.hints.length
               ? `<button class="matchHintNextBtn" data-open-next-hint="${job.id}">
@@ -1347,6 +1403,10 @@
                  </button>`
               : `<button class="matchHintNextBtn" disabled>ヒント終了</button>`
           }
+
+          <button class="matchPuffyBtn" data-open-select="${job.id}" ${status.disabled ? "disabled" : ""}>
+            ${status.action}
+          </button>
         </div>
 
         ${
@@ -1367,12 +1427,14 @@
       <article class="matchCard ${job.completed ? "isDone" : ""}">
         <div class="matchCardHead">
           <div class="matchAvatarFrame">
-            <img class="matchAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
+            <img
+              class="matchAvatar"
+              src="${job.visitorImg}"
+              alt="${escapeHtml(job.visitorName)}"
+              style="width:84px;height:84px;object-fit:contain;transform:scale(1.08);filter:drop-shadow(0 6px 10px rgba(126,70,92,.16));">
           </div>
 
           <div class="matchHeadRight">
-            <div class="matchSpeech">${escapeHtml(job.line)}</div>
-
             <div class="matchMetaRow">
               <h3 class="matchName">${escapeHtml(job.visitorName)}</h3>
               <div class="metaRight">
@@ -1386,12 +1448,6 @@
         <div class="matchMain">
           <div class="matchRewardTitle">マッチング報酬</div>
           ${renderRewardChips(job)}
-
-          <div class="matchThoughtBox">
-            <div class="matchThoughtCap">🐙 たこぴの心の声</div>
-            <div class="matchThoughtText">${escapeHtml(job.takopiThought)}</div>
-          </div>
-
           ${renderHintBlock(job)}
         </div>
       </article>
@@ -1477,7 +1533,7 @@
 
         <div>
           <h2 class="modalName" id="modalJobName">${escapeHtml(job.visitorName)}</h2>
-          <p class="modalLine">この恋を届けるなら、どのカードを渡すたこ？</p>
+          <p class="modalLine">どのカードを渡すたこ？</p>
         </div>
 
         <div class="modalRight">
@@ -1498,7 +1554,21 @@
                     <button class="selectCardBtn" data-choose-card="${job.id}" data-card-id="${card.id}">
                       <div class="selectCardBox">
                         <img src="${card.img}" alt="${escapeHtml(card.name)}">
-                        <div class="selectCardOwn">所持${card.count}</div>
+                        <div
+                          class="selectCardOwn"
+                          style="
+                            right:4px;
+                            bottom:4px;
+                            min-width:28px;
+                            padding:1px 4px;
+                            border-radius:4px;
+                            font-size:9px;
+                            font-weight:900;
+                            background:linear-gradient(180deg,#ffea71,#ffb300);
+                            color:#4d2400;
+                            box-shadow:0 0 0 1px rgba(255,255,255,.8),0 6px 10px rgba(0,0,0,.18);
+                          "
+                        >所持${card.count}</div>
                       </div>
                       <div class="selectCardName">${escapeHtml(card.name)}</div>
                     </button>
@@ -1545,12 +1615,12 @@
         <div class="modalBody">
           <h2 class="modalName" id="howToTitle">遊び方</h2>
           <div class="modalStatusList">
-            <div class="modalStatusLine ok">① 相手のセリフとヒントを読むたこ</div>
+            <div class="modalStatusLine ok">① ヒントを見て相手が探しているカードを読むたこ</div>
             <div class="modalStatusLine ok">② 所持カードから1枚選んで渡すたこ</div>
             <div class="modalStatusLine ok">③ ぴったりなら ♥ でマッチ成立たこ</div>
             <div class="modalStatusLine ok">④ 失敗しても3回まで挑戦できるたこ</div>
-            <div class="modalStatusLine ok">⑤ 失敗カウントは、3回全部だめだった時だけ上のパラメーターに反映たこ</div>
-            <div class="modalStatusLine ok">⑥ 伝説マッチが出る日は、かなりアツいたこ</div>
+            <div class="modalStatusLine ok">⑤ ヒント2を見る前に一発で当てると +報酬 たこ</div>
+            <div class="modalStatusLine ok">⑥ 失敗カウントは3回全部だめだった時だけ反映たこ</div>
           </div>
         </div>
       </div>
@@ -1589,8 +1659,18 @@
       suspense.id = "suspenseLayer";
       suspense.className = "suspenseLayer";
       suspense.innerHTML = `
-        <div class="suspenseInner">
-          <div class="suspenseText">ドキドキドキドキ…</div>
+        <div class="suspenseInner" style="display:flex;align-items:center;justify-content:center;width:100vw;padding:0 10px;">
+          <div
+            class="suspenseText"
+            style="
+              white-space:nowrap;
+              font-size:min(12vw,56px);
+              line-height:1;
+              letter-spacing:.06em;
+              text-align:center;
+              transform-origin:center center;
+            "
+          >ドキドキドキドキ…</div>
         </div>
       `;
       document.body.appendChild(suspense);
@@ -1655,20 +1735,37 @@
     title.textContent = "……焼けたね";
     sub.textContent = `${job.visitorName} とマッチ成立たこ。`;
 
-    const rows = [
-      `🪙 ${job.rewardOcto.toLocaleString()} オクト`,
-      `評判 +${job.rewardRep} / 熱量 +${job.rewardExp}`,
-      ...job.rewardItems.map(v => `${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)} ×${v.qty}`)
-    ];
+    const rows = [];
 
-    list.innerHTML = rows.map(v => `<div class="rewardItem">${escapeHtml(v)}</div>`).join("");
+    if (job.lastBonusOcto > 0) {
+      rows.push(`
+        <div class="rewardItem show" style="
+          opacity:1;
+          transform:none;
+          background:linear-gradient(180deg,#fff6b7,#ffd86b);
+          color:#6a4300;
+          font-weight:900;
+          font-size:15px;
+          border:1px solid rgba(160,110,0,.18);
+          box-shadow:0 10px 18px rgba(255,210,70,.22);
+        ">✨ +報酬　一発正解ボーナス +${job.lastBonusOcto.toLocaleString()} オクト</div>
+      `);
+    }
+
+    rows.push(`<div class="rewardItem">🪙 ${job.rewardOcto.toLocaleString()} オクト</div>`);
+    rows.push(`<div class="rewardItem">評判 +${job.rewardRep} / 熱量 +${job.rewardExp}</div>`);
+    rows.push(...job.rewardItems.map(v => `<div class="rewardItem">${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)} ×${v.qty}</div>`));
+
+    list.innerHTML = rows.join("");
     modal.classList.add("show");
     modal.setAttribute("aria-hidden", "false");
 
     const items = $$(".rewardItem", list);
     for (let i = 0; i < items.length; i++) {
-      await wait(120);
-      items[i].classList.add("show");
+      if (!items[i].classList.contains("show")) {
+        await wait(120);
+        items[i].classList.add("show");
+      }
     }
   }
 
@@ -1692,6 +1789,8 @@
       showTakopiToast("そのカードは持ってないたこ");
       return;
     }
+
+    const isFirstTryNoHint2 = Number(job.currentHintIndex || 0) === 0 && Number(job.retryCount || 0) === 0;
 
     closeJobModal();
     await showSuspense();
@@ -1728,16 +1827,23 @@
     addOwned(cardId, -1);
 
     updateJob(jobId, (j) => {
+      const bonus = isFirstTryNoHint2 ? calcFirstTryBonus(j) : 0;
       j.completed = true;
       j.completedAt = Date.now();
-      addOcto(j.rewardOcto);
+      j.lastBonusOcto = bonus;
+      addOcto(j.rewardOcto + bonus);
       j.rewardItems.forEach(item => addInventory(item.kind, item.id, item.qty));
     });
 
     renderHeroStats();
     renderBoard();
     await showRewardModal(getJobById(jobId));
-    showTakopiToast("……焼けたね");
+
+    if (isFirstTryNoHint2) {
+      showTakopiToast("一発正解！ +報酬 つきたこ");
+    } else {
+      showTakopiToast("……焼けたね");
+    }
   }
 
   // =========================================================
