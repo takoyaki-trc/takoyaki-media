@@ -170,158 +170,176 @@
   ];
 
   // =========================================================
-  // Type lines
+  // Type lines（カードを恋愛対象に見立てた版）
   // =========================================================
   const CUSTOMER_LINES = {
     rich: [
-      "値段じゃない、この執着が問題なんだたこ",
-      "高いほど安心する。不思議だろう？たこ",
-      "手に入らないものほど、燃えるんだよたこ",
-      "欲しい理由？持ってないからだたこ",
-      "在庫がない？それが一番価値があるたこ",
-      "安く手に入るものに、興味はないたこ",
-      "思い出じゃない、“未所持”が許せないたこ",
-      "金で買えないなら、もっと出すだけだたこ"
+      "忘れられない相手ほど、高くつくたこ",
+      "もう誰かのものでも、気持ちは止まらないたこ",
+      "値段が上がるほど、恋は本物に見えるたこ",
+      "手に入らない時間が、気持ちを育てたこ",
+      "遅すぎたって分かってる。でも欲しいたこ",
+      "一度離れたあの子に、今さら本気になったたこ",
+      "他のカードで埋まると思ったのに、全然だめだったたこ",
+      "相場を見てるふりして、見てるのは未練たこ"
     ],
     looker: [
-      "別に欲しいわけじゃないけど、気になるたこ",
-      "あればいいな〜くらいの気持ちたこ",
-      "いや、ほんとにいらない…けど、ちょっと欲しいたこ",
-      "買わないよ？でも見せてたこ",
-      "見てるだけで満足…すると思ったたこ",
-      "なんでだろ、毎回ここに来ちゃうたこ",
-      "今日は買わない日って決めてたのにたこ",
-      "気づいたら比較してる時点で負けたこ"
+      "別に未練なんてないたこ…ちょっと気になるだけたこ",
+      "もう終わったはずなのに、目で追ってしまうたこ",
+      "買わないつもりなのに、見に来てしまったたこ",
+      "他でもいいのに、この一枚だけ残るたこ",
+      "見るだけで済む恋なら、楽だったたこ",
+      "たまに思い出すだけのはずが、毎回来てるたこ",
+      "忘れたつもりでいたのに、また見つけてしまったたこ",
+      "本気じゃないと言いながら、名前を探してるたこ"
     ],
     impulse: [
-      "あ、これ欲しい。今すぐたこ",
-      "見た瞬間に決まってたたこ",
-      "今逃したら一生後悔するやつたこ",
-      "理由はあとで考えるたこ",
-      "欲しいって思った時が正解たこ",
-      "悩むくらいならもう決めてるたこ",
-      "これは“縁”ってやつだたこ",
-      "直感って、だいたい在庫切れの直前に来るたこ"
+      "見つけた瞬間、もう決まってたこ",
+      "逃したら一生後悔するやつたこ",
+      "理由はあとでいいたこ",
+      "これは運命たこ",
+      "考える前に手が伸びたたこ",
+      "会えた時に迎えなきゃ、また誰かのものになるたこ",
+      "一目見た時から、もう戻れなかったたこ",
+      "迷ってる時間がいちばん失礼なたこ"
     ],
     careful: [
-      "本当に今買うべきか、まだ迷ってるたこ",
-      "この一枚でバランスが崩れる気がするたこ",
-      "欲しい。でも今じゃない気もするたこ",
-      "条件が揃いすぎて逆に怖いたこ",
-      "もう少し様子を見たいたこ",
-      "理想に近いけど、完璧じゃないたこ",
-      "妥協したくない。でも逃したくもないたこ",
-      "決め手が欲しいたこ"
+      "本当にこの子でいいのか、まだ迷ってるたこ",
+      "欲しいけど、今じゃない気もするたこ",
+      "また傷つくくらいなら慎重になるたこ",
+      "似てるカードじゃダメなんだたこ",
+      "決め手が足りないたこ",
+      "迎えたい。でも今の自分でふさわしいのか迷うたこ",
+      "簡単に決めたくないからこそ、ずっと残ってるたこ",
+      "忘れられないのに、まだ言い訳を探してるたこ"
     ],
     climber: [
-      "ここまで来たら、あと一歩なんだたこ",
-      "この一枚で完成するたこ",
-      "途中でやめるわけにはいかないたこ",
-      "足りないピースがこれなんだたこ",
-      "集めきるまで終われないたこ",
-      "これはゴールじゃなくて通過点たこ",
-      "全部揃って初めて意味があるたこ",
-      "登りきるまでは引き返さないたこ"
+      "ここまで来たら、あと一枚なんだたこ",
+      "完成するまで終われないたこ",
+      "途中でやめるのが一番後悔するたこ",
+      "残り一枚が一番遠いたこ",
+      "ゴールが見えてるのに届かないたこ",
+      "足りないのは一枚だけなのに、心の距離は遠いたこ",
+      "揃った未来を想像して、今日まで登ってきたたこ",
+      "ここで引き返したら、一生忘れられないたこ"
     ],
     flipper: [
-      "たぶん欲しい！いや、やっぱいらない！たこ",
-      "今なら全部買える気がするたこ",
-      "これ、明日見たら後悔するやつたこ",
-      "深夜の判断はだいたい間違うたこ",
-      "でも今は正しい気がするたこ",
-      "なんか…良く見えてきたたこ",
-      "判断力？どこかに置いてきたたこ",
-      "買った後に考えるたこ"
+      "欲しい気もするし、やめといたほうがいい気もするたこ",
+      "今は正しい気がするたこ（たぶん）",
+      "夜の判断は危ないたこ",
+      "でも今は欲しいたこ",
+      "明日の自分に任せるたこ",
+      "会いたい理由は分からない。でも会いたいたこ",
+      "酔ってる時の再会ほど、危ないものはないたこ",
+      "判断力より未練が勝ってる夜たこ"
     ],
     relax: [
-      "見てるだけで落ち着くたこ",
-      "この一枚、なんか好きなたこ",
+      "そばにあるだけで落ち着くたこ",
+      "理由はないけど好きなたこ",
+      "こういうのが一番残るたこ",
       "ゆっくり選びたい気分たこ",
-      "焦らなくてもいい気がするたこ",
-      "手元にあったら幸せになれそうたこ",
-      "なんとなく惹かれてるたこ",
-      "理由はないけど、いいたこ",
-      "こういうのが一番長く残るたこ"
+      "刺激じゃなくて安心たこ",
+      "手元にあった景色を、また見たくなったたこ",
+      "大げさじゃないけど、ちゃんと好きなたこ",
+      "気づけば、いちばん自然に心に残ってたこ"
     ],
     artisan: [
-      "この焼き、この構図…分かるやつに渡したいたこ",
-      "雑な選び方はしたくないたこ",
-      "いいカードは、いい手に渡るべきたこ",
-      "この一枚、ちゃんと扱えるか？たこ",
-      "見た目じゃない、中身で選ぶたこ",
-      "これを選ぶやつは分かってるたこ",
-      "価値を理解してるやつに渡したいたこ",
-      "これは“作品”なんだたこ"
+      "分かるやつにしか渡したくないたこ",
+      "見た目じゃなくて中身たこ",
+      "雑に扱われるくらいなら渡さないたこ",
+      "これは作品たこ",
+      "価値が分かる相手に渡したいたこ",
+      "細部まで見た時、初めて好きだと分かったたこ",
+      "これはただのカードじゃないたこ。出会い方まで含めて作品たこ",
+      "手に入れることより、ふさわしくありたいたこ"
     ],
     diet: [
-      "持ってないから実質ゼロ、だから欲しいたこ",
       "欲しくないって言えば欲しくなくなるたこ",
-      "手に入れた瞬間、価値は下がるたこ",
-      "買わなければ損はしないたこ（でも欲しい）",
-      "欲望は理論で抑えられるはずたこ",
-      "これは必要じゃない、でも必要たこ",
-      "理屈ではいらない。でも感情が違うたこ",
-      "結論：欲しいたこ"
+      "理屈ではいらないたこ",
+      "でも感情が違うたこ",
+      "持たなければ傷つかないたこ",
+      "結論：欲しいたこ",
+      "必要ないはずの相手が、いちばん心を乱すたこ",
+      "理性で閉じたはずのファイルが、勝手に開くたこ",
+      "忘れれば楽になるはずなのに、忘れないたこ"
     ],
     picky: [
-      "ずっと探してるのに、誰も気づかないたこ",
-      "それ、本当にそこにあるたこ？",
-      "前にも見た気がするたこ…同じ場所で",
-      "誰かが持ってるはずなんだたこ",
-      "見えてるのに、手に入らないたこ",
-      "もう一度だけ、触れさせてほしいたこ",
-      "忘れたはずなのに、思い出すたこ",
-      "それ、前は俺のだったたこ"
+      "あの日確かにそこにいたたこ",
+      "誰も信じてくれないたこ",
+      "あの一枚じゃなきゃダメなたこ",
+      "見えてるのに届かないたこ",
+      "まだどこかにあるはずたこ",
+      "たしかにあの日、そこにいたたこ",
+      "忘れたつもりなのに、気配だけ残ってるたこ",
+      "あの一枚は、まだどこかで俺を待ってるたこ"
     ],
     king: [
-      "余にふさわしい一枚だけを持ってくるたこ",
-      "安っぽい条件では心が動かないたこ",
-      "王の目はごまかせないたこ",
-      "見た目も格も揃ってないと困るたこ",
-      "ただ欲しいんじゃない、ふさわしいか見てるたこ",
+      "余にふさわしい相手は、そう簡単には現れないたこ",
+      "一目で心を奪えないなら、恋としては弱いたこ",
+      "格も見た目も揃って、ようやく想う価値があるたこ",
+      "安っぽい再会では、心は動かないたこ",
+      "余が惹かれる以上、それはもう特別なたこ",
+      "求めているのは一枚じゃない。余に似合う運命たこ",
+      "王の恋は遅い。でも決まったら長いたこ",
       "余に似合うなら、それは価値があるたこ"
     ],
     guide: [
-      "今日は案内役じゃなく、客として来たたこ",
-      "軽く見えても、欲しいものはあるたこ",
-      "まずは条件を見せてほしいたこ",
-      "初見でも分かりやすい一枚が好きたこ"
+      "案内する側でも、忘れられない一枚くらいあるたこ",
+      "誰かのはじまりみたいな顔して、自分も会いたい子がいるたこ",
+      "分かりやすい相手ほど、長く心に残ることもあるたこ",
+      "軽く見える恋ほど、あとから効いてくるたこ",
+      "人に勧めながら、自分も少し惹かれてるたこ",
+      "最初の一枚って、だいたい一番忘れにくいたこ"
     ],
     overflow: [
-      "枠の外から欲しくなったたこ",
-      "今日は普通じゃないのを探してるたこ",
-      "少し危ない感じも嫌いじゃないたこ",
-      "はみ出したものほど、気になるたこ",
-      "整ってるだけじゃ足りないたこ"
+      "ちゃんと並んでる子より、はみ出した一枚が気になるたこ",
+      "普通じゃ足りない心が、今日も勝ってしまったたこ",
+      "整いすぎた恋より、少し危うい方が忘れられないたこ",
+      "枠の中に収まらない気持ちまで、好きになってしまったたこ",
+      "きれいに終わらなかった相手ほど、記憶に残るたこ",
+      "あの違和感ごと、もう一度会いたいたこ",
+      "欠けてるからこそ、完璧に見える時もあるたこ",
+      "収まりの悪い恋ほど、長持ちするたこ"
     ],
     collector: [
-      "保存用まで考えてるたこ",
-      "同じカードでも複数欲しいたこ",
-      "並べて眺めたいんだたこ",
       "紙の匂いが忘れられないたこ",
-      "あの角の輝きが、まだ頭に残ってるたこ",
-      "触れずに持つのが一番難しいたこ"
+      "あの手ざわりを、まだ指先が覚えてるたこ",
+      "保存用まで欲しくなる相手って、だいたい本気なたこ",
+      "同じ一枚でも、出会い直したくなる時があるたこ",
+      "あの角の輝きが、まだ頭から離れないたこ",
+      "触れずに持つのが一番難しいたこ",
+      "並べて眺めていた時間まで、恋しかったたこ",
+      "傷つけたくないのに、近くに置きたくなるたこ"
     ],
     shadow: [
-      "濡れてるくらいがちょうどいいたこ",
-      "水っぽい気配のする一枚が欲しいたこ",
-      "少ししけってるくらいが記憶に残るたこ",
-      "乾いたままじゃ終われないたこ",
-      "濁った気配に、妙に安心するたこ"
+      "濡れた記憶ほど、乾いても残るたこ",
+      "しけった空気の中で出会った一枚が忘れられないたこ",
+      "少し曇ったままの思い出に、まだ惹かれてるたこ",
+      "乾いた恋より、湿った未練の方がしつこいたこ",
+      "水気を含んだみたいに、心だけ重いたこ",
+      "あの一枚には、まだ雨の匂いがするたこ",
+      "曖昧ににじんだ記憶の方が、きれいに見えるたこ",
+      "乾く前に、もう一度会いたいたこ"
     ],
     ramen: [
-      "一枚じゃ足りない、替え玉みたいに追加が欲しいたこ",
-      "同じのを複数でも平気たこ",
-      "数があると落ち着くたこ",
-      "揃ってる感じが好きたこ",
-      "足りるまで足す、それだけたこ"
+      "一枚じゃ足りない恋もあるたこ",
+      "会えたら終わりじゃなくて、もっと欲しくなるたこ",
+      "同じ相手なのに、何度でもときめくたこ",
+      "足りるまで足せばいいと思ってた。気持ちも同じたこ",
+      "揃えば落ち着くと思ったのに、まだ足りないたこ",
+      "一度会えたら満足すると思ってたのに、逆だったたこ",
+      "好きって、だいたい追加注文されるたこ",
+      "満腹より、未練のほうが長持ちたこ"
     ],
     streamer: [
-      "刺さったら報酬はずむたこ",
-      "今日は景気よくいくたこ",
-      "反応がよければ増やすたこ",
-      "見せ方次第で全部アリたこ",
-      "今この瞬間が盛り上がれば勝ちたこ"
+      "見せ方ひとつで、恋は何倍にも膨らむたこ",
+      "盛り上がる相手ほど、あとで本気になるたこ",
+      "最初はノリだったのに、気づけば本命みたいなたこ",
+      "この出会い、たぶん人に話したくなるたこ",
+      "反応が大きいほど、気持ちまで本物っぽくなるたこ",
+      "軽い拍手のつもりが、心まで投げてたこ",
+      "楽しければいいと思ってたのに、妙に残るたこ",
+      "目立つ恋ほど、終わったあと静かに効くたこ"
     ],
     gourmet: [
       "あの日食べたあの味が忘れられなくて…",
@@ -329,21 +347,29 @@
       "あの焼き色を、もう一度見たいたこ",
       "一口で終わったのに、記憶だけ残りすぎたこ",
       "うまかった、だけじゃ片づけられないたこ",
-      "舌が覚えてるうちに、もう一度会いたいたこ"
+      "舌が覚えてるうちに、もう一度会いたいたこ",
+      "あの熱さを、今でも心が探してるたこ",
+      "味の記憶って、恋よりしつこいたこ"
     ],
     opener: [
-      "未開封は待てないたこ",
-      "開けて見たい気持ちが勝つたこ",
-      "勢いで揃えたいんだたこ",
-      "中身を知らずに終われないたこ",
-      "破る瞬間が一番好きたこ"
+      "中身を知る前から、惹かれてたたこ",
+      "未開封のまま終わるには、気持ちが強すぎたこ",
+      "会う前が一番きれいって言うけど、確かめたいたこ",
+      "知らないまま諦める方が、たぶん後悔するたこ",
+      "開けた瞬間に終わる恋でも、見ないよりましなたこ",
+      "中身を知らない片想いって、意外と重いたこ",
+      "破る音まで含めて、運命だった気がするたこ",
+      "秘密のままじゃ、気持ちがほどけないたこ"
     ],
     party: [
-      "今日はにぎやかな相手が欲しいたこ",
-      "複数並べると映えるたこ",
-      "祭り感があるやつを頼むたこ",
-      "一枚じゃ足りない、場が持たないたこ",
-      "盛り上がるやつだけ連れてきてたこ"
+      "一枚だけじゃ、この気持ちは盛り上がらないたこ",
+      "にぎやかな恋ほど、あとで静かに刺さるたこ",
+      "並べた時に映える相手って、だいたい忘れにくいたこ",
+      "楽しいだけのはずだったのに、ちゃんと残ったたこ",
+      "場を明るくする相手ほど、帰り道で恋しくなるたこ",
+      "一緒に並んだ景色ごと、思い出してしまうたこ",
+      "にぎやかだったからこそ、いなくなると目立つたこ",
+      "祭りのあとに気づく恋もあるたこ"
     ],
     pilgrim: [
       "置き忘れたあの日のカードをまた手に入れたくて",
@@ -351,7 +377,9 @@
       "昔の恋みたいに、気づけばまた追いかけてたこ",
       "なくしたのはカードなのに、心まで空いたたこ",
       "もう会えないと思ってたのに、また探してるたこ",
-      "片想いだって分かってても、探してしまうたこ"
+      "片想いだって分かってても、探してしまうたこ",
+      "また会えたら、今度はちゃんと守れる気がするたこ",
+      "あの子を手放した日から、図鑑の空白だけ見ないふりしてるたこ"
     ]
   };
 
@@ -561,107 +589,107 @@
 
   const REWARD_PROFILES = {
     careful: {
-      fixed: [["water","water_plain_free"]],
-      rand: [["fert","fert_feel",18],["seed","seed_random",18],["water","water_nice",12]]
+      fixed: [["water", "water_plain_free"]],
+      rand: [["fert", "fert_feel", 18], ["seed", "seed_random", 18], ["water", "water_nice", 12]]
     },
     impulse: {
-      fixed: [["water","water_nice"]],
-      rand: [["seed","seed_shop",18],["seed","seed_line",10],["fert","fert_guts",10]]
+      fixed: [["water", "water_nice"]],
+      rand: [["seed", "seed_shop", 18], ["seed", "seed_line", 10], ["fert", "fert_guts", 10]]
     },
     looker: {
-      fixed: [["water","water_plain_free"]],
-      rand: [["water","water_regret",8],["fert","fert_agedama",12],["seed","seed_random",16]]
+      fixed: [["water", "water_plain_free"]],
+      rand: [["water", "water_regret", 8], ["fert", "fert_agedama", 12], ["seed", "seed_random", 16]]
     },
     picky: {
-      fixed: [["water","water_rotten"]],
-      rand: [["water","water_sea",14],["fert","fert_timeno",8],["seed","seed_bussasari",6]]
+      fixed: [["water", "water_rotten"]],
+      rand: [["water", "water_sea", 14], ["fert", "fert_timeno", 8], ["seed", "seed_bussasari", 6]]
     },
     king: {
-      fixed: [["water","water_yunokawa"]],
-      rand: [["seed","seed_namara_kawasar",12],["seed","seed_special",8],["fert","fert_skip",10]]
+      fixed: [["water", "water_yunokawa"]],
+      rand: [["seed", "seed_namara_kawasar", 12], ["seed", "seed_special", 8], ["fert", "fert_skip", 10]]
     },
     flipper: {
-      fixed: [["water","water_nice"]],
-      rand: [["fert","fert_feel",12],["water","water_regret",8],["seed","seed_random",14]]
+      fixed: [["water", "water_nice"]],
+      rand: [["fert", "fert_feel", 12], ["water", "water_regret", 8], ["seed", "seed_random", 14]]
     },
     rich: {
-      fixed: [["water","water_overdo"],["seed","seed_namara_kawasar"]],
-      rand: [["water","water_supergod",8],["seed","seed_bussasari",18],["fert","fert_timeno",12]]
+      fixed: [["water", "water_overdo"], ["seed", "seed_namara_kawasar"]],
+      rand: [["water", "water_supergod", 8], ["seed", "seed_bussasari", 18], ["fert", "fert_timeno", 12]]
     },
     climber: {
-      fixed: [["water","water_suspicious"]],
-      rand: [["fert","fert_guts",15],["seed","seed_line",10],["seed","seed_shop",12]]
+      fixed: [["water", "water_suspicious"]],
+      rand: [["fert", "fert_guts", 15], ["seed", "seed_line", 10], ["seed", "seed_shop", 12]]
     },
     guide: {
-      fixed: [["water","water_plain_free"],["seed","seed_random"]],
-      rand: [["fert","fert_feel",18],["water","water_nice",12]]
+      fixed: [["water", "water_plain_free"], ["seed", "seed_random"]],
+      rand: [["fert", "fert_feel", 18], ["water", "water_nice", 12]]
     },
     relax: {
-      fixed: [["water","water_plain_free"]],
-      rand: [["seed","seed_random",16],["fert","fert_feel",16],["water","water_nice",8]]
+      fixed: [["water", "water_plain_free"]],
+      rand: [["seed", "seed_random", 16], ["fert", "fert_feel", 16], ["water", "water_nice", 8]]
     },
     artisan: {
-      fixed: [["fert","fert_guts"]],
-      rand: [["fert","fert_skip",18],["water","water_suspicious",10],["seed","seed_shop",12]]
+      fixed: [["fert", "fert_guts"]],
+      rand: [["fert", "fert_skip", 18], ["water", "water_suspicious", 10], ["seed", "seed_shop", 12]]
     },
     diet: {
-      fixed: [["fert","fert_agedama"]],
-      rand: [["water","water_regret",10],["fert","fert_feel",12],["seed","seed_random",18]]
+      fixed: [["fert", "fert_agedama"]],
+      rand: [["water", "water_regret", 10], ["fert", "fert_feel", 12], ["seed", "seed_random", 18]]
     },
     overflow: {
-      fixed: [["water","water_rotten"]],
-      rand: [["water","water_sea",12],["fert","fert_timeno",8],["seed","seed_bussasari",6]]
+      fixed: [["water", "water_rotten"]],
+      rand: [["water", "water_sea", 12], ["fert", "fert_timeno", 8], ["seed", "seed_bussasari", 6]]
     },
     collector: {
-      fixed: [["seed","seed_special"]],
-      rand: [["water","water_yunokawa",10],["seed","seed_namara_kawasar",10],["fert","fert_skip",8]]
+      fixed: [["seed", "seed_special"]],
+      rand: [["water", "water_yunokawa", 10], ["seed", "seed_namara_kawasar", 10], ["fert", "fert_skip", 8]]
     },
     shadow: {
-      fixed: [["water","water_suspicious"]],
-      rand: [["water","water_rotten",8],["water","water_sea",10],["water","water_overdo",8]]
+      fixed: [["water", "water_suspicious"]],
+      rand: [["water", "water_rotten", 8], ["water", "water_sea", 10], ["water", "water_overdo", 8]]
     },
     ramen: {
-      fixed: [["seed","seed_random"]],
-      rand: [["seed","seed_shop",12],["fert","fert_guts",10],["fert","fert_feel",12]]
+      fixed: [["seed", "seed_random"]],
+      rand: [["seed", "seed_shop", 12], ["fert", "fert_guts", 10], ["fert", "fert_feel", 12]]
     },
     streamer: {
       fixed: [],
-      rand: [["water","water_nice",12],["seed","seed_special",8],["fert","fert_skip",8],["seed","seed_bussasari",10]]
+      rand: [["water", "water_nice", 12], ["seed", "seed_special", 8], ["fert", "fert_skip", 8], ["seed", "seed_bussasari", 10]]
     },
     gourmet: {
-      fixed: [["water","water_yunokawa"]],
-      rand: [["water","water_nice",14],["seed","seed_namara_kawasar",10],["fert","fert_feel",10]]
+      fixed: [["water", "water_yunokawa"]],
+      rand: [["water", "water_nice", 14], ["seed", "seed_namara_kawasar", 10], ["fert", "fert_feel", 10]]
     },
     opener: {
-      fixed: [["water","water_nice"]],
-      rand: [["seed","seed_shop",16],["seed","seed_line",10],["fert","fert_skip",8]]
+      fixed: [["water", "water_nice"]],
+      rand: [["seed", "seed_shop", 16], ["seed", "seed_line", 10], ["fert", "fert_skip", 8]]
     },
     party: {
-      fixed: [["seed","seed_random"]],
-      rand: [["seed","seed_shop",12],["water","water_nice",12],["fert","fert_guts",10]]
+      fixed: [["seed", "seed_random"]],
+      rand: [["seed", "seed_shop", 12], ["water", "water_nice", 12], ["fert", "fert_guts", 10]]
     },
     pilgrim: {
-      fixed: [["water","water_overdo"],["fert","fert_timeno"]],
-      rand: [["water","water_supergod",10],["seed","seed_special",10],["seed","seed_bussasari",14]]
+      fixed: [["water", "water_overdo"], ["fert", "fert_timeno"]],
+      rand: [["water", "water_supergod", 10], ["seed", "seed_special", 10], ["seed", "seed_bussasari", 14]]
     }
   };
 
   // =========================================================
   // Card normalization
   // =========================================================
-  const RARITY_ORDER = { N:1, R:2, SR:3, UR:4, LR:5, SP:6 };
+  const RARITY_ORDER = { N: 1, R: 2, SR: 3, UR: 4, LR: 5, SP: 6 };
 
   const CARDS_ALL = [
-    ...CARD_POOLS.N.map(v => ({ ...v, id:v.no, rarity:"N" })),
-    ...CARD_POOLS.R.map(v => ({ ...v, id:v.no, rarity:"R" })),
-    ...CARD_POOLS.SR.map(v => ({ ...v, id:v.no, rarity:"SR" })),
-    ...CARD_POOLS.UR.map(v => ({ ...v, id:v.no, rarity:"UR" })),
-    ...CARD_POOLS.LR.map(v => ({ ...v, id:v.no, rarity:"LR" })),
-    ...TAKOPI_SEED_POOL.map(v => ({ ...v, id:v.id, specialPool:"takopi" })),
-    ...BUSSASARI_POOL.map(v => ({ ...v, id:v.id, specialPool:"bussasari" })),
-    ...NAMARA_POOL.map(v => ({ ...v, id:v.id, specialPool:"namara" })),
-    ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id:`${v.id}_rotten`, specialPool:"water_special" })),
-    ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id:`${v.id}_sea`, specialPool:"water_special" }))
+    ...CARD_POOLS.N.map(v => ({ ...v, id: v.no, rarity: "N" })),
+    ...CARD_POOLS.R.map(v => ({ ...v, id: v.no, rarity: "R" })),
+    ...CARD_POOLS.SR.map(v => ({ ...v, id: v.no, rarity: "SR" })),
+    ...CARD_POOLS.UR.map(v => ({ ...v, id: v.no, rarity: "UR" })),
+    ...CARD_POOLS.LR.map(v => ({ ...v, id: v.no, rarity: "LR" })),
+    ...TAKOPI_SEED_POOL.map(v => ({ ...v, id: v.id, specialPool: "takopi" })),
+    ...BUSSASARI_POOL.map(v => ({ ...v, id: v.id, specialPool: "bussasari" })),
+    ...NAMARA_POOL.map(v => ({ ...v, id: v.id, specialPool: "namara" })),
+    ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id: `${v.id}_rotten`, specialPool: "water_special" })),
+    ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea`, specialPool: "water_special" }))
   ];
 
   const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
@@ -674,7 +702,7 @@
 
     const inv = loadJSON(KEY.inv, null);
     if (!inv) {
-      saveJSON(KEY.inv, { ver:1, seed:{}, water:{}, fert:{} });
+      saveJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
     } else {
       inv.ver = 1;
       inv.seed = inv.seed || {};
@@ -685,7 +713,7 @@
 
     const player = loadJSON(KEY.player, null);
     if (!player) {
-      saveJSON(KEY.player, { exp:0, rep:0 });
+      saveJSON(KEY.player, { exp: 0, rep: 0 });
     }
 
     const book = loadJSON(KEY.book, null);
@@ -693,11 +721,11 @@
       const got = {};
       CARDS_ALL.forEach(card => {
         let count = 0;
-        if (card.rarity === "N") count = Math.random() < .6 ? Math.floor(Math.random()*4) : 0;
-        else if (card.rarity === "R") count = Math.random() < .45 ? Math.floor(Math.random()*3) : 0;
-        else if (card.rarity === "SR") count = Math.random() < .28 ? Math.floor(Math.random()*2) : 0;
-        else if (card.rarity === "UR") count = Math.random() < .12 ? 1 : 0;
-        else if (card.rarity === "LR") count = Math.random() < .05 ? 1 : 0;
+        if (card.rarity === "N") count = Math.random() < 0.6 ? Math.floor(Math.random() * 4) : 0;
+        else if (card.rarity === "R") count = Math.random() < 0.45 ? Math.floor(Math.random() * 3) : 0;
+        else if (card.rarity === "SR") count = Math.random() < 0.28 ? Math.floor(Math.random() * 2) : 0;
+        else if (card.rarity === "UR") count = Math.random() < 0.12 ? 1 : 0;
+        else if (card.rarity === "LR") count = Math.random() < 0.05 ? 1 : 0;
         else if (card.rarity === "SP") count = 0;
 
         if (count > 0) {
@@ -709,7 +737,7 @@
   }
 
   function getBook() {
-    const book = loadJSON(KEY.book, { got:{} });
+    const book = loadJSON(KEY.book, { got: {} });
     book.got = book.got || {};
     return book;
   }
@@ -725,8 +753,8 @@
 
   function addOwned(cardId, delta) {
     const book = getBook();
-    const info = CARD_MAP[cardId] || { name:cardId, rarity:"N" };
-    if (!book.got[cardId]) book.got[cardId] = { count:0, name:info.name, rarity:info.rarity };
+    const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
+    if (!book.got[cardId]) book.got[cardId] = { count: 0, name: info.name, rarity: info.rarity };
     book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + delta);
     if (book.got[cardId].count <= 0) delete book.got[cardId];
     saveBook(book);
@@ -737,9 +765,9 @@
     const book = getBook();
     return CARDS_ALL
       .filter(c => (RARITY_ORDER[c.rarity] || 0) >= min)
-      .map(c => ({ ...c, count:Number(book.got?.[c.id]?.count || 0) }))
+      .map(c => ({ ...c, count: Number(book.got?.[c.id]?.count || 0) }))
       .filter(c => c.count > 0)
-      .sort((a,b) => (RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]) || a.name.localeCompare(b.name, "ja"));
+      .sort((a, b) => (RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]) || a.name.localeCompare(b.name, "ja"));
   }
 
   function getOcto() {
@@ -751,7 +779,7 @@
   }
 
   function getPlayer() {
-    return loadJSON(KEY.player, { exp:0, rep:0 });
+    return loadJSON(KEY.player, { exp: 0, rep: 0 });
   }
 
   function addPlayerStats(exp, rep) {
@@ -762,7 +790,7 @@
   }
 
   function getInv() {
-    const inv = loadJSON(KEY.inv, { ver:1, seed:{}, water:{}, fert:{} });
+    const inv = loadJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
     inv.seed = inv.seed || {};
     inv.water = inv.water || {};
     inv.fert = inv.fert || {};
@@ -810,44 +838,44 @@
   // Selection rules
   // =========================================================
   function getDisplayPoolByType(type, legend = false) {
-    if (legend) return CARDS_ALL.filter(c => ["LR","SP","UR"].includes(c.rarity));
+    if (legend) return CARDS_ALL.filter(c => ["LR", "SP", "UR"].includes(c.rarity));
 
     if (type === "gourmet") {
       return CARDS_ALL.filter(c => /焼き|ソース|マヨ|塩|明太|牡蠣|味噌|てり|イカ|温泉/.test(c.name));
     }
     if (type === "collector") {
-      return CARDS_ALL.filter(c => ["SR","UR","LR"].includes(c.rarity) || /御神体|証|真珠|ビーナス|記憶/.test(c.name));
+      return CARDS_ALL.filter(c => ["SR", "UR", "LR"].includes(c.rarity) || /御神体|証|真珠|ビーナス|記憶/.test(c.name));
     }
     if (type === "shadow" || type === "picky" || type === "overflow") {
-      return CARDS_ALL.filter(c => c.specialPool === "water_special" || ["SR","UR","SP"].includes(c.rarity));
+      return CARDS_ALL.filter(c => c.specialPool === "water_special" || ["SR", "UR", "SP"].includes(c.rarity));
     }
     if (type === "rich" || type === "king" || type === "pilgrim") {
-      return CARDS_ALL.filter(c => ["SR","UR","LR","SP"].includes(c.rarity));
+      return CARDS_ALL.filter(c => ["SR", "UR", "LR", "SP"].includes(c.rarity));
     }
     if (type === "guide") {
-      return CARDS_ALL.filter(c => ["N","R"].includes(c.rarity));
+      return CARDS_ALL.filter(c => ["N", "R"].includes(c.rarity));
     }
     if (type === "impulse" || type === "opener" || type === "streamer") {
-      return CARDS_ALL.filter(c => ["N","R","SR"].includes(c.rarity));
+      return CARDS_ALL.filter(c => ["N", "R", "SR"].includes(c.rarity));
     }
     if (type === "climber" || type === "artisan") {
-      return CARDS_ALL.filter(c => ["R","SR","UR"].includes(c.rarity));
+      return CARDS_ALL.filter(c => ["R", "SR", "UR"].includes(c.rarity));
     }
     if (type === "party" || type === "ramen") {
-      return CARDS_ALL.filter(c => ["N","R","SR","UR"].includes(c.rarity));
+      return CARDS_ALL.filter(c => ["N", "R", "SR", "UR"].includes(c.rarity));
     }
-    return CARDS_ALL.filter(c => ["N","R","SR"].includes(c.rarity));
+    return CARDS_ALL.filter(c => ["N", "R", "SR"].includes(c.rarity));
   }
 
   function getDifficultyForType(type, rnd) {
     if (type === "rich") return 5;
-    if (type === "pilgrim") return rnd() < .55 ? 4 : 5;
-    if (type === "king") return rnd() < .45 ? 4 : 5;
-    if (type === "picky" || type === "shadow" || type === "overflow") return rnd() < .4 ? 4 : 5;
-    if (type === "collector" || type === "artisan" || type === "climber" || type === "gourmet") return rnd() < .35 ? 3 : 4;
-    if (type === "guide" || type === "careful" || type === "relax") return rnd() < .6 ? 2 : 3;
-    if (type === "looker" || type === "diet") return rnd() < .55 ? 2 : 3;
-    return rnd() < .34 ? 2 : rnd() < .72 ? 3 : 4;
+    if (type === "pilgrim") return rnd() < 0.55 ? 4 : 5;
+    if (type === "king") return rnd() < 0.45 ? 4 : 5;
+    if (type === "picky" || type === "shadow" || type === "overflow") return rnd() < 0.4 ? 4 : 5;
+    if (type === "collector" || type === "artisan" || type === "climber" || type === "gourmet") return rnd() < 0.35 ? 3 : 4;
+    if (type === "guide" || type === "careful" || type === "relax") return rnd() < 0.6 ? 2 : 3;
+    if (type === "looker" || type === "diet") return rnd() < 0.55 ? 2 : 3;
+    return rnd() < 0.34 ? 2 : rnd() < 0.72 ? 3 : 4;
   }
 
   function makeWant(rnd, type, difficulty, usedIds, legend = false) {
@@ -855,16 +883,16 @@
 
     if (rnd() < rarityQuestChance) {
       const rarityPool = legend
-        ? ["UR","LR","SP"]
-        : difficulty >= 5 ? ["SR","UR","LR"]
-        : difficulty >= 4 ? ["SR","UR"]
-        : ["R","SR"];
+        ? ["UR", "LR", "SP"]
+        : difficulty >= 5 ? ["SR", "UR", "LR"]
+        : difficulty >= 4 ? ["SR", "UR"]
+        : ["R", "SR"];
       const rarity = pick(rarityPool, rnd);
       return {
-        type:"rarity",
+        type: "rarity",
         rarity,
         qty: difficulty >= 5 ? 2 : 1,
-        label:`${rarity}以上`
+        label: `${rarity}以上`
       };
     }
 
@@ -875,20 +903,19 @@
     usedIds.add(card.id);
 
     let qty = 1;
-    if (difficulty === 2 && rnd() < .35) qty = 2;
-    if (difficulty === 3 && rnd() < .45) qty = 2;
-    if (difficulty === 4) qty = rnd() < .5 ? 2 : 3;
-    if (difficulty >= 5) qty = rnd() < .4 ? 2 : 3;
-
-    if (type === "collector" || type === "ramen" || type === "party") qty += rnd() < .35 ? 1 : 0;
+    if (difficulty === 2 && rnd() < 0.35) qty = 2;
+    if (difficulty === 3 && rnd() < 0.45) qty = 2;
+    if (difficulty === 4) qty = rnd() < 0.5 ? 2 : 3;
+    if (difficulty >= 5) qty = rnd() < 0.4 ? 2 : 3;
+    if (type === "collector" || type === "ramen" || type === "party") qty += rnd() < 0.35 ? 1 : 0;
     if (legend) qty = 1;
 
     return {
-      type:"card",
-      cardId:card.id,
-      name:card.name,
-      img:card.img,
-      rarity:card.rarity,
+      type: "card",
+      cardId: card.id,
+      name: card.name,
+      img: card.img,
+      rarity: card.rarity,
       qty
     };
   }
@@ -903,7 +930,7 @@
 
     let val = Math.floor(rnd() * (base[1] - base[0] + 1)) + base[0];
     if (type === "rich") val = Math.round(val * 1.35);
-    if (type === "streamer" && rnd() < .08) val *= 3;
+    if (type === "streamer" && rnd() < 0.08) val *= 3;
     return val * 3;
   }
 
@@ -916,7 +943,7 @@
     const out = [];
 
     for (const [kind, id] of profile.fixed) {
-      out.push({ kind, id, qty:1 });
+      out.push({ kind, id, qty: 1 });
     }
 
     let randCount = difficulty <= 2 ? 1 : difficulty === 3 ? 1 : 2;
@@ -924,38 +951,42 @@
     if (difficulty >= 5) randCount = 3;
     if (isLegend) randCount = 3;
 
-    const randPool = profile.rand.map(([kind,id,weight]) => ({ kind, id, weight }));
+    const randPool = profile.rand.map(([kind, id, weight]) => ({ kind, id, weight }));
 
     for (let i = 0; i < randCount; i++) {
       const picked = weightedPick(randPool, rnd);
-      out.push({ kind:picked.kind, id:picked.id, qty:1 });
+      out.push({ kind: picked.kind, id: picked.id, qty: 1 });
     }
 
     if (isLegend) {
-      if (rnd() < .28) out.push({ kind:"water", id:"water_supergod", qty:1 });
-      if (rnd() < .18) out.push({ kind:"seed", id:"seed_special", qty:1 });
-    } else if (difficulty >= 5 && rnd() < .15) {
-      out.push({ kind:"water", id:"water_supergod", qty:1 });
+      if (rnd() < 0.28) out.push({ kind: "water", id: "water_supergod", qty: 1 });
+      if (rnd() < 0.18) out.push({ kind: "seed", id: "seed_special", qty: 1 });
+    } else if (difficulty >= 5 && rnd() < 0.15) {
+      out.push({ kind: "water", id: "water_supergod", qty: 1 });
     }
 
     const map = new Map();
     out.forEach(item => {
       const key = `${item.kind}:${item.id}`;
-      map.set(key, { kind:item.kind, id:item.id, qty:(map.get(key)?.qty || 0) + item.qty });
+      map.set(key, {
+        kind: item.kind,
+        id: item.id,
+        qty: (map.get(key)?.qty || 0) + item.qty
+      });
     });
 
     return Array.from(map.values());
   }
 
   function getCustomerLine(type, rnd) {
-    const lines = CUSTOMER_LINES[type] || ["欲しい理由なんて、後からついてくるたこ"];
+    const lines = CUSTOMER_LINES[type] || ["あの一枚に、まだ気持ちが残ってるたこ"];
     return pick(lines, rnd);
   }
 
   function makeJob(type, idx, dateSeed, featured = false, legend = false) {
     const rnd = seededRandom(`${dateSeed}::job::${type}::${idx}::${legend ? "legend" : "normal"}`);
     const difficulty = legend ? 5 : Math.min(5, Math.max(featured ? 3 : 1, getDifficultyForType(type, rnd)));
-    const wantCount = legend ? 1 : difficulty <= 2 ? 1 : difficulty === 3 ? 2 : 2 + (rnd() < .55 ? 1 : 0);
+    const wantCount = legend ? 1 : difficulty <= 2 ? 1 : difficulty === 3 ? 2 : 2 + (rnd() < 0.55 ? 1 : 0);
 
     const usedIds = new Set();
     const wants = [];
@@ -964,23 +995,23 @@
     }
 
     return {
-      id:`${legend ? "legend" : "job"}_${idx + 1}_${type}`,
+      id: `${legend ? "legend" : "job"}_${idx + 1}_${type}`,
       type,
-      visitorName:CUSTOMER_NAME_MAP[type],
-      visitorImg:CUSTOMER_ICON_MAP[type],
+      visitorName: CUSTOMER_NAME_MAP[type],
+      visitorImg: CUSTOMER_ICON_MAP[type],
       difficulty,
       featured,
       legend,
-      line:getCustomerLine(type, rnd),
+      line: getCustomerLine(type, rnd),
       wants,
-      rewards:{
-        octo:rewardOctoByDifficulty(difficulty, legend, type, rnd),
-        exp:rewardExpByDifficulty(difficulty, legend),
-        rep:legend ? 5 : Math.max(0, difficulty - 1),
-        items:makeRewardItems(type, difficulty, legend, rnd)
+      rewards: {
+        octo: rewardOctoByDifficulty(difficulty, legend, type, rnd),
+        exp: rewardExpByDifficulty(difficulty, legend),
+        rep: legend ? 5 : Math.max(0, difficulty - 1),
+        items: makeRewardItems(type, difficulty, legend, rnd)
       },
-      completed:false,
-      completedAt:null
+      completed: false,
+      completedAt: null
     };
   }
 
@@ -996,13 +1027,13 @@
     const jobs = chosen.map((type, idx) => makeJob(type, idx, today, idx === featuredIndex, false));
 
     let legendJob = null;
-    const legendCandidates = ["rich","king","pilgrim","picky","overflow","shadow"];
+    const legendCandidates = ["rich", "king", "pilgrim", "picky", "overflow", "shadow"];
     if (rnd() < 0.38) {
       legendJob = makeJob(pick(legendCandidates, rnd), 99, today, true, true);
     }
 
     const state = {
-      date:today,
+      date: today,
       jobs,
       legendJob
     };
@@ -1027,13 +1058,13 @@
         const owned = getOwnedCount(want.cardId);
         const good = owned >= want.qty;
         if (!good) ok = false;
-        lines.push({ ok:good, text:`${want.name}　${owned}/${want.qty}` });
+        lines.push({ ok: good, text: `${want.name}　${owned}/${want.qty}` });
       } else {
         const list = getOwnedCardsByRarityAtLeast(want.rarity);
         const total = list.reduce((sum, c) => sum + c.count, 0);
         const good = total >= want.qty;
         if (!good) ok = false;
-        lines.push({ ok:good, text:`${want.label}　${total}/${want.qty}` });
+        lines.push({ ok: good, text: `${want.label}　${total}/${want.qty}` });
       }
     }
 
@@ -1072,16 +1103,16 @@
   function getVisitorStatus(job) {
     const need = getNeedStatus(job);
     if (job.completed) {
-      return { cls:"done", text:"成立済み", button:"成立済み" };
+      return { cls: "done", text: "成立済み", button: "成立済み" };
     }
     if (need.ok) {
-      return { cls:"ok", text:"マッチ成立", button:"今すぐマッチ" };
+      return { cls: "ok", text: "マッチ成立", button: "今すぐマッチ" };
     }
-    return { cls:"ng", text:"片想い", button:"詳細を見る" };
+    return { cls: "ng", text: "片想い", button: "詳細を見る" };
   }
 
   function sortJobs(jobs) {
-    return jobs.slice().sort((a,b) => {
+    return jobs.slice().sort((a, b) => {
       const sa = getVisitorStatus(a);
       const sb = getVisitorStatus(b);
 
@@ -1341,11 +1372,13 @@
 
       <div class="modalActions">
         <div class="modalNote">
-          ${job.completed
-            ? "この相手とはすでに成立済みたこ。"
-            : need.ok
-              ? "条件が合ってるたこ。今すぐマッチできるたこ。"
-              : "条件が足りないたこ。片想い解消には在庫が必要たこ。"}
+          ${
+            job.completed
+              ? "この相手とはすでに成立済みたこ。"
+              : need.ok
+                ? "条件が合ってるたこ。今すぐマッチできるたこ。"
+                : "条件が足りないたこ。片想い解消には在庫が必要たこ。"
+          }
         </div>
 
         <button class="modalPrimaryBtn" id="modalPrimaryBtn" ${job.completed || !need.ok ? "disabled" : ""}>
@@ -1471,16 +1504,6 @@
   // =========================================================
   // Render
   // =========================================================
-  function renderHero() {
-    const mode = getTimeMode();
-    $("#heroImage").src = mode === "day"
-      ? "https://ul.h3z.jp/lqCNnwQH.png"
-      : "https://ul.h3z.jp/UtPlWaZz.png";
-
-    const rnd = seededRandom(`hero::${todayKey()}`);
-    $("#heroSpeechText").textContent = pick(HERO_LINES, rnd);
-  }
-
   function renderAll() {
     renderHero();
     renderMatchList();
