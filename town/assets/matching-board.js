@@ -382,7 +382,8 @@
     { id: "TP-007", name: "花見たこぴ", img: "https://ul.h3z.jp/KrCy4WQb.png", rarity: "N" },
     { id: "TP-008", name: "入学たこぴ", img: "https://ul.h3z.jp/DidPdK9b.png", rarity: "UR" }
   ];
-const BUSSASARI_POOL = [
+
+  const BUSSASARI_POOL = [
     { id: "BS-001", name: "たこ焼きダーツインフェルノ《對馬裕佳子》", img: "https://ul.h3z.jp/l5roYZJ4.png", rarity: "N" },
     { id: "BS-002", name: "店主反撃レビュー《佐俣雄一郎》", img: "https://ul.h3z.jp/BtOTLlSo.png", rarity: "N" },
     { id: "BS-003", name: "自己啓発タコ塾《井上諒》", img: "https://ul.h3z.jp/P5vsAste.png", rarity: "N" },
@@ -793,7 +794,8 @@ const BUSSASARI_POOL = [
     if (rarity === "R") return "ヒント1　ちょっと珍しめのカードたこ";
     return "ヒント1　第一弾の中では見つけやすいほうのカードたこ";
   }
-function buildHint2(card, isExtraPool) {
+
+  function buildHint2(card, isExtraPool) {
     if (isExtraPool) {
       return "ヒント2　第一弾以外の特別枠たこ。かなりレア寄りたこ";
     }
