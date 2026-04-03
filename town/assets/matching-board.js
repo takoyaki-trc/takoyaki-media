@@ -114,6 +114,10 @@
     showTakopiToast._t = setTimeout(() => wrap.classList.remove("show"), ms);
   }
 
+  function wait(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  }
+
   // =========================================================
   // Customer master
   // =========================================================
@@ -206,103 +210,103 @@
 
   const CUSTOMER_LINES = {
     rich: [
-      "忘れられない相手ほど、高くつくたこ",
-      "もう誰かのものでも、気持ちは止まらないたこ",
-      "値段が上がるほど、恋は本物に見えるたこ",
-      "手に入らない時間が、気持ちを育てたこ"
+      "あの日のカードを、金じゃなくて本気で取り戻したいたこ",
+      "もう誰かの手にあっても、忘れられない恋があるたこ",
+      "高くてもいいたこ。会いたい気持ちのほうが重いたこ",
+      "一度逃したあのカードが、今も胸に刺さってるたこ"
     ],
     looker: [
-      "別に未練なんてないたこ…ちょっと気になるだけたこ",
-      "もう終わったはずなのに、目で追ってしまうたこ",
-      "買わないつもりなのに、見に来てしまったたこ"
+      "もう諦めたつもりなのに、また会いに来てしまったたこ",
+      "見てるだけでいいはずなのに、気持ちが残ってるたこ",
+      "忘れたいのに、あの日のカードの顔が浮かぶたこ"
     ],
     impulse: [
-      "見つけた瞬間、もう決まってたこ",
-      "逃したら一生後悔するやつたこ",
-      "これは運命たこ"
+      "見た瞬間に恋したたこ",
+      "逃したら一生後悔する恋だったたこ",
+      "このカード、もう運命の相手にしか見えないたこ"
     ],
     careful: [
-      "本当にこの子でいいのか、まだ迷ってるたこ",
-      "欲しいけど、今じゃない気もするたこ",
-      "決め手が足りないたこ"
+      "欲しいけど、今じゃない気もする恋たこ",
+      "本当にこのカードが運命なのか、まだ迷ってるたこ",
+      "会いたいけど、踏み出すのが少し怖いたこ"
     ],
     climber: [
-      "ここまで来たら、あと一枚なんだたこ",
-      "完成するまで終われないたこ",
-      "残り一枚が一番遠いたこ"
+      "ここまで来たら、最後の一枚に会うまで終われないたこ",
+      "ずっと追いかけてきた恋が、あと一歩なんだたこ",
+      "完成の先に、やっと会いたいカードがいるたこ"
     ],
     flipper: [
-      "欲しい気もするし、やめといたほうがいい気もするたこ",
-      "今は正しい気がするたこ（たぶん）",
-      "夜の判断は危ないたこ"
+      "好きかどうかより、もう気になって眠れないたこ",
+      "会いたい気もするし、会ったら終わりな気もするたこ",
+      "夜になると、あのカードのことばかり考えるたこ"
     ],
     relax: [
-      "そばにあるだけで落ち着くたこ",
-      "理由はないけど好きなたこ",
-      "こういうのが一番残るたこ"
+      "そばに置いておきたい恋ってあるたこ",
+      "理由はないけど、このカードといると落ち着くたこ",
+      "派手じゃないのに、ずっと好きでいられる相手たこ"
     ],
     artisan: [
-      "分かるやつにしか渡したくないたこ",
-      "見た目じゃなくて中身たこ",
-      "これは作品たこ"
+      "見た目だけじゃなくて、中身まで惚れたたこ",
+      "分かる人にしか伝わらない恋をしてるたこ",
+      "これはカードじゃないたこ、作品に恋してるたこ"
     ],
     diet: [
-      "欲しくないって言えば欲しくなくなるたこ",
-      "理屈ではいらないたこ",
-      "結論：欲しいたこ"
+      "いらないって言い聞かせても、気持ちが勝つたこ",
+      "理屈じゃないたこ。好きになったものは仕方ないたこ",
+      "会ったら最後、もう欲しくなると分かってるたこ"
     ],
     picky: [
-      "あの日確かにそこにいたたこ",
-      "あの一枚じゃなきゃダメなたこ",
-      "まだどこかにあるはずたこ"
+      "あの日のあのカードじゃなきゃダメなたこ",
+      "似てるだけじゃ足りないたこ。本命に会いたいたこ",
+      "まだどこかで待ってる気がして探してるたこ"
     ],
     king: [
-      "余にふさわしい相手は、そう簡単には現れないたこ",
-      "格も見た目も揃って、ようやく想う価値があるたこ",
-      "余が惹かれる以上、それはもう特別なたこ"
+      "余が惚れる以上、それは特別なたこ",
+      "格も気配も揃った相手にしか心は動かないたこ",
+      "忘れられないカードは、王でも手放せないたこ"
     ],
     guide: [
-      "案内する側でも、忘れられない一枚くらいあるたこ",
-      "最初の一枚って、だいたい一番忘れにくいたこ"
+      "案内役でも、忘れられない一枚くらいあるたこ",
+      "最初に恋したカードって、だいたい一番忘れにくいたこ"
     ],
     overflow: [
-      "ちゃんと並んでる子より、はみ出した一枚が気になるたこ",
-      "普通じゃ足りない心が、今日も勝ってしまったたこ"
+      "綺麗に並んでる子より、少しはみ出したあの子が気になるたこ",
+      "普通じゃないからこそ、恋に落ちたたこ"
     ],
     collector: [
-      "紙の匂いが忘れられないたこ",
-      "あの手ざわりを、まだ指先が覚えてるたこ",
-      "保存用まで欲しくなる相手って、だいたい本気なたこ"
+      "保存用まで欲しくなる相手って、もう本気なたこ",
+      "紙の匂いまで好きになってしまったたこ",
+      "あの手ざわりを、まだ指先が恋しがってるたこ"
     ],
     shadow: [
-      "濡れた記憶ほど、乾いても残るたこ",
-      "しけった空気の中で出会った一枚が忘れられないたこ"
+      "濡れた記憶みたいに、あのカードが離れないたこ",
+      "しけった空気の中で出会った恋ほど、あとに残るたこ"
     ],
     ramen: [
-      "一枚じゃ足りない恋もあるたこ",
-      "会えたら終わりじゃなくて、もっと欲しくなるたこ"
+      "一枚じゃ足りないたこ。もっと近くで会いたいたこ",
+      "やっと会えたのに、また欲しくなる恋たこ"
     ],
     streamer: [
       "見せ方ひとつで、恋は何倍にも膨らむたこ",
-      "盛り上がる相手ほど、あとで本気になるたこ"
+      "盛り上がりから始まったのに、気づけば本気たこ"
     ],
     gourmet: [
-      "あの日食べたあの味が忘れられなくて…",
-      "ソースの香りだけで、昔を思い出すたこ",
-      "味の記憶って、恋よりしつこいたこ"
+      "あの日の味みたいに、あのカードが忘れられないたこ",
+      "香りだけで昔の恋を思い出すたこ",
+      "味の記憶よりしつこく、あの一枚が残ってるたこ"
     ],
     opener: [
-      "中身を知る前から、惹かれてたたこ",
-      "未開封のまま終わるには、気持ちが強すぎたこ"
+      "中身を見る前から惹かれてたたこ",
+      "未開封のままじゃ終われない恋だったたこ"
     ],
     party: [
-      "一枚だけじゃ、この気持ちは盛り上がらないたこ",
-      "祭りのあとに気づく恋もあるたこ"
+      "祭りのあとでも、あのカードだけは残ってるたこ",
+      "盛り上がりの中で始まった恋ほど、後から効くたこ"
     ],
     pilgrim: [
-      "置き忘れたあの日のカードをまた手に入れたくて",
-      "一度手放したあの一枚を、まだ忘れられないたこ",
-      "片想いだって分かってても、探してしまうたこ"
+      "置き忘れた恋を、また手に入れたくて来たたこ",
+      "一度手放したあのカードを、まだ忘れられないたこ",
+      "片想いだって分かってても、また会いたいたこ"
     ]
   };
 
@@ -769,44 +773,44 @@
     const rarity = card.rarity || "N";
     const name = card.name || "";
 
-    if (/ソース/.test(name)) return "ヒント1　ソース系のカードたこ";
-    if (/塩/.test(name)) return "ヒント1　塩系のカードたこ";
-    if (/マヨ/.test(name)) return "ヒント1　マヨ系のカードたこ";
-    if (/明太/.test(name)) return "ヒント1　明太っぽさがあるカードたこ";
-    if (/チーズ/.test(name)) return "ヒント1　チーズ系のカードたこ";
-    if (/味噌/.test(name)) return "ヒント1　味噌っぽいカードたこ";
-    if (/牡蠣/.test(name)) return "ヒント1　牡蠣だし系のカードたこ";
-    if (tags.includes("onsen")) return "ヒント1　温泉・ゆのかわ系のカードたこ";
-    if (tags.includes("darts")) return "ヒント1　ダーツに関係あるカードたこ";
-    if (tags.includes("shop")) return "ヒント1　店主・露店・お店系のカードたこ";
-    if (tags.includes("love")) return "ヒント1　恋・デート・契約みたいな空気のカードたこ";
-    if (tags.includes("god")) return "ヒント1　神・御神体・ビーナス系のカードたこ";
-    if (tags.includes("dark_special")) return "ヒント1　黒さ・真珠・イカさま感のあるカードたこ";
-    if (tags.includes("heat")) return "ヒント1　熱い・火力高めのカードたこ";
-    if (tags.includes("memory")) return "ヒント1　記憶・化石・昔っぽさのあるカードたこ";
-    if (tags.includes("crowd")) return "ヒント1　大会・会議・行列みたいな人の多いカードたこ";
-    if (tags.includes("speed")) return "ヒント1　走る・飛ぶ・勢いのあるカードたこ";
-    if (tags.includes("danger")) return "ヒント1　ちょっと危ない感じのカードたこ";
+    if (/ソース/.test(name)) return "ソース系のカードたこ";
+    if (/塩/.test(name)) return "塩系のカードたこ";
+    if (/マヨ/.test(name)) return "マヨ系のカードたこ";
+    if (/明太/.test(name)) return "明太っぽさがあるカードたこ";
+    if (/チーズ/.test(name)) return "チーズ系のカードたこ";
+    if (/味噌/.test(name)) return "味噌っぽいカードたこ";
+    if (/牡蠣/.test(name)) return "牡蠣だし系のカードたこ";
+    if (tags.includes("onsen")) return "温泉・ゆのかわ系のカードたこ";
+    if (tags.includes("darts")) return "ダーツに関係あるカードたこ";
+    if (tags.includes("shop")) return "店主・露店・お店系のカードたこ";
+    if (tags.includes("love")) return "恋・デート・契約みたいな空気のカードたこ";
+    if (tags.includes("god")) return "神・御神体・ビーナス系のカードたこ";
+    if (tags.includes("dark_special")) return "黒さ・真珠・イカさま感のあるカードたこ";
+    if (tags.includes("heat")) return "熱い・火力高めのカードたこ";
+    if (tags.includes("memory")) return "記憶・化石・昔っぽさのあるカードたこ";
+    if (tags.includes("crowd")) return "大会・会議・行列みたいな人の多いカードたこ";
+    if (tags.includes("speed")) return "走る・飛ぶ・勢いのあるカードたこ";
+    if (tags.includes("danger")) return "ちょっと危ない感じのカードたこ";
 
-    if (rarity === "LR") return "ヒント1　かなり格の高いカードたこ";
-    if (rarity === "UR") return "ヒント1　目立つ上位レアのカードたこ";
-    if (rarity === "SR") return "ヒント1　第一弾の中でも印象が強いカードたこ";
-    if (rarity === "R") return "ヒント1　ちょっと珍しめのカードたこ";
-    return "ヒント1　第一弾の中では見つけやすいほうのカードたこ";
+    if (rarity === "LR") return "かなり格の高いカードたこ";
+    if (rarity === "UR") return "目立つ上位レアのカードたこ";
+    if (rarity === "SR") return "第一弾の中でも印象が強いカードたこ";
+    if (rarity === "R") return "ちょっと珍しめのカードたこ";
+    return "第一弾の中では見つけやすいほうのカードたこ";
   }
 
   function buildHint2(card, isExtraPool) {
     if (isExtraPool) {
-      return "ヒント2　第一弾以外の特別枠たこ。かなりレア寄りたこ";
+      return "第一弾以外の特別枠たこ。かなりレア寄りたこ";
     }
 
     const rarity = card.rarity || "N";
-    if (rarity === "SP") return "ヒント2　かなり特殊なたこ。普通の手札ではまず見かけないたこ";
-    if (rarity === "LR") return "ヒント2　最上位クラスたこ。持ってたらかなり強い手札たこ";
-    if (rarity === "UR") return "ヒント2　かなりレア寄りたこ。簡単には出てこないたこ";
-    if (rarity === "SR") return "ヒント2　そこそこレアなたこ。人によっては持ってないたこ";
-    if (rarity === "R") return "ヒント2　珍しすぎないけど、ちゃんと印象に残るたこ";
-    return "ヒント2　比較的見つけやすい側たこ。図鑑を見れば案外いるたこ";
+    if (rarity === "SP") return "かなり特殊なたこ。普通の手札ではまず見かけないたこ";
+    if (rarity === "LR") return "最上位クラスたこ。持ってたらかなり強い手札たこ";
+    if (rarity === "UR") return "かなりレア寄りたこ。簡単には出てこないたこ";
+    if (rarity === "SR") return "そこそこレアなたこ。人によっては持ってないたこ";
+    if (rarity === "R") return "珍しすぎないけど、ちゃんと印象に残るたこ";
+    return "比較的見つけやすい側たこ。図鑑を見れば案外いるたこ";
   }
 
   function buildHint3(card) {
@@ -821,7 +825,7 @@
 
     keyword = keyword.trim();
     if (!keyword) keyword = cleaned.slice(0, 4);
-    return `ヒント3　タイトルに「${keyword}」が入ってるたこ`;
+    return `タイトルに「${keyword}」が入ってるたこ`;
   }
 
   function makeHintsForCard(card, isExtraPool) {
@@ -840,39 +844,39 @@
     const rarity = card.rarity || "N";
     const thoughtMap = {
       N: [
-        "……この条件なら、すぐ見つかるたこ",
-        "……在庫でもなんとかなりそうなたこ",
-        "……やさしめ条件たこ"
+        "……この恋なら、まだ追いつけるたこ",
+        "……会える可能性は高いたこ",
+        "……手を伸ばせば届きそうなたこ"
       ],
       R: [
-        "……少し探せば見つかるたこ",
-        "……持ってる人はそこそこいるたこ",
-        "……軽い恋くらいの難しさたこ"
+        "……少し探せば、また会えそうなたこ",
+        "……想ってる人はそこそこいるたこ",
+        "……軽い恋より、ちょっと深いたこ"
       ],
       SR: [
-        "……ここから少し怪しくなるたこ",
-        "……人によっては持ってないたこ",
-        "……選択ミスると痛いたこ"
+        "……ここから急に本気の恋になるたこ",
+        "……人によってはまだ会えてないたこ",
+        "……選ぶ相手を間違えると痛いたこ"
       ],
       UR: [
-        "……現実はなかなか厳しいたこ",
-        "……持ってたら、だいぶ強い手札たこ",
-        "……在庫というより覚悟の問題たこ"
+        "……現実はなかなか厳しい恋たこ",
+        "……会えたら相当強い気持ちたこ",
+        "……在庫より覚悟の問題たこ"
       ],
       LR: [
-        "……それ、本気で言ってるたこ？",
-        "……出会えたら奇跡たこ",
-        "……かなり本気の条件たこ"
+        "……それ、本気で惚れてるたこ？",
+        "……会えたらもう奇跡たこ",
+        "……かなり本気の恋たこ"
       ],
       SP: [
         "……もう運命の領域たこ",
         "……普通の恋愛難易度じゃないたこ",
-        "……持ってる人かなり限られるたこ"
+        "……会える人かなり限られるたこ"
       ]
     };
 
     if (difficulty >= 5 && rarity !== "LR" && rarity !== "SP") {
-      return "……条件だけ見ると、かなり重いたこ";
+      return "……条件だけでもう重たい恋たこ";
     }
 
     const rnd = randFromSeed(`${todayKey()}::thought::${card.id}`);
@@ -1149,8 +1153,8 @@
 
   function judgeScore(score) {
     if (score >= 100) return { icon: "♥", verdict: "perfect", text: "運命の一枚だったようだ" };
-    if (score >= 65) return { icon: "♥", verdict: "success", text: "好みだったようだ" };
-    return { icon: "💔", verdict: "fail", text: "好みではなかったようだ" };
+    if (score >= 65) return { icon: "♥", verdict: "success", text: "想いが届いたようだ" };
+    return { icon: "💔", verdict: "fail", text: "片想いのままだったようだ" };
   }
 
   function getJobStatus(job) {
@@ -1468,14 +1472,12 @@
     if (!modal || !body) return;
 
     body.innerHTML = `
-      <button class="modalSelectClose" id="modalSelectClose" aria-label="閉じる">✕</button>
-
       <div class="modalTop">
         <img class="modalAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
 
         <div>
           <h2 class="modalName" id="modalJobName">${escapeHtml(job.visitorName)}</h2>
-          <p class="modalLine">この一枚で、あの人は振り向くたこ？</p>
+          <p class="modalLine">この恋を届けるなら、どのカードを渡すたこ？</p>
         </div>
 
         <div class="modalRight">
@@ -1511,9 +1513,6 @@
     modal.classList.add("show");
     modal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
-
-    const close = $("#modalSelectClose");
-    if (close) close.addEventListener("click", closeJobModal);
 
     $$("[data-choose-card]", body).forEach(btn => {
       btn.addEventListener("click", () => {
@@ -1617,9 +1616,9 @@
     const layer = $("#suspenseLayer");
     if (!layer) return;
     layer.classList.add("show");
-    await new Promise(r => setTimeout(r, 1350));
+    await wait(2000);
     layer.classList.remove("show");
-    await new Promise(r => setTimeout(r, 120));
+    await wait(120);
   }
 
   async function showJudge(judgement) {
@@ -1632,15 +1631,18 @@
     const sub = $("#heartJudgeSub");
     if (!layer || !inner || !icon || !text || !sub) return;
 
-    inner.classList.toggle("fail", judgement.verdict === "fail");
+    inner.classList.remove("success", "fail");
+    inner.classList.add(judgement.verdict === "fail" ? "fail" : "success");
+
     icon.textContent = judgement.icon;
-    text.textContent = judgement.verdict === "fail" ? "好みではなかったようだ" : "鼓動が重なった";
+    icon.style.color = "#ff2a52";
+    text.textContent = judgement.verdict === "fail" ? "片想いだった" : "恋が届いた";
     sub.textContent = judgement.text;
 
     layer.classList.add("show");
-    await new Promise(r => setTimeout(r, 1450));
+    await wait(1550);
     layer.classList.remove("show");
-    await new Promise(r => setTimeout(r, 150));
+    await wait(150);
   }
 
   async function showRewardModal(job) {
@@ -1665,7 +1667,7 @@
 
     const items = $$(".rewardItem", list);
     for (let i = 0; i < items.length; i++) {
-      await new Promise(r => setTimeout(r, 120));
+      await wait(120);
       items[i].classList.add("show");
     }
   }
