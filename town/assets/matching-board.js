@@ -122,6 +122,10 @@
     return Math.round(v * 1.3);
   }
 
+  function pickVariant(seed, variants) {
+    return pick(variants, randFromSeed(seed));
+  }
+
   // =========================================================
   // Customer master
   // =========================================================
@@ -211,6 +215,114 @@
     "今日は沼が多いたこ",
     "♥か💔かは、渡してからのお楽しみたこ"
   ];
+
+  const FALLBACK_LINES = {
+    rich: [
+      "高くてもいいたこ。忘れられないたこ",
+      "手に入らないほど会いたいたこ",
+      "逃した恋ほど値が上がるたこ"
+    ],
+    looker: [
+      "見てるだけのつもりで来たたこ",
+      "もう終わったはずなのに目で追うたこ",
+      "諦めたふりだけ上手くなったたこ"
+    ],
+    impulse: [
+      "見た瞬間に恋したたこ",
+      "逃したら一生後悔するたこ",
+      "もう運命にしか見えないたこ"
+    ],
+    careful: [
+      "欲しいけど、今じゃない気もするたこ",
+      "踏み出したら戻れない気がするたこ",
+      "大事だからこそ迷うたこ"
+    ],
+    climber: [
+      "あと一歩まで来たたこ",
+      "最後の一枚に会うまで終われないたこ",
+      "追いかけてる時間の方が長いたこ"
+    ],
+    flipper: [
+      "夜になると会いたくなるたこ",
+      "好きかどうかより気になって眠れないたこ",
+      "会いたい気も、終わりたい気もするたこ"
+    ],
+    relax: [
+      "理由はないけど落ち着くたこ",
+      "派手じゃないのに残るたこ",
+      "そばに置きたい相手たこ"
+    ],
+    artisan: [
+      "見た目だけじゃなく中身に惚れたたこ",
+      "分かる人にしか伝わらない恋たこ",
+      "これは作品に恋してるたこ"
+    ],
+    diet: [
+      "いらないって言い聞かせてるだけたこ",
+      "理屈ではいらないのに欲しいたこ",
+      "我慢するほど気になるたこ"
+    ],
+    picky: [
+      "あの日の君じゃなきゃダメなたこ",
+      "似てるだけじゃ足りないたこ",
+      "まだどこかで待ってる気がするたこ"
+    ],
+    king: [
+      "余が惚れる以上、それは特別たこ",
+      "格も気配も揃った相手たこ",
+      "王でも手放せない恋があるたこ"
+    ],
+    guide: [
+      "案内役でも忘れられない一枚があるたこ",
+      "最初に恋した相手が残るたこ",
+      "始まりが一番終わらないたこ"
+    ],
+    overflow: [
+      "普通じゃないから惹かれたたこ",
+      "少しはみ出したあの子が気になるたこ",
+      "ズレてるのに忘れられないたこ"
+    ],
+    collector: [
+      "保存用まで欲しくなるたこ",
+      "紙の匂いまで好きになったたこ",
+      "手ざわりがまだ指に残るたこ"
+    ],
+    shadow: [
+      "濡れた記憶みたいに離れないたこ",
+      "暗い場所ほど思い出すたこ",
+      "影みたいに残るたこ"
+    ],
+    ramen: [
+      "一回じゃ足りないたこ",
+      "会うほど欲しくなるたこ",
+      "もう一度だけが止まらないたこ"
+    ],
+    streamer: [
+      "盛り上がりから始まったのに本気たこ",
+      "見せ方ひとつで膨らむたこ",
+      "演出じゃなかったたこ"
+    ],
+    gourmet: [
+      "あの日の味みたいに忘れられないたこ",
+      "香りだけで思い出すたこ",
+      "味の記憶よりしつこいたこ"
+    ],
+    opener: [
+      "中身を見る前から惹かれてたこ",
+      "開けた瞬間に戻れなくなったたこ",
+      "未開封のままじゃ終われないたこ"
+    ],
+    party: [
+      "祭りのあとでも残るたこ",
+      "盛り上がりのあとに効くたこ",
+      "楽しいまま終われなかったたこ"
+    ],
+    pilgrim: [
+      "置き忘れた恋を探してるたこ",
+      "一度手放した相手が忘れられないたこ",
+      "会えないから終われないたこ"
+    ]
+  };
 
   // =========================================================
   // Card pools / master
@@ -668,14 +780,9 @@
     return Array.from(tags);
   }
 
-  function pickVariant(seed, variants) {
-    return pick(variants, randFromSeed(seed));
-  }
-
   function buildHint1(card, isExtraPool, jobType) {
     const name = card.name || "";
     const tags = deriveTags(card);
-
     const pools = [];
 
     if (/ソース|塩|マヨ|明太|チーズ|味噌|牡蠣/.test(name) || tags.includes("taste")) {
@@ -1101,6 +1208,17 @@
     return { card: picked, qty: 1, isExtraPool: false };
   }
 
+  function getSpeechLines(type) {
+    const external = (window.LOVE_LINES && window.LOVE_LINES[type]) || null;
+    if (Array.isArray(external) && external.length) return external;
+    return FALLBACK_LINES[type] || ["まだ忘れられないたこ"];
+  }
+
+  function getCustomerLine(type, rnd) {
+    const lines = getSpeechLines(type);
+    return pick(lines, rnd);
+  }
+
   function makeJob(type, idx, dateSeed, featured = false, legend = false) {
     const rnd = randFromSeed(`${dateSeed}::job::${type}::${idx}::${legend ? "legend" : "normal"}`);
     const difficulty = legend ? 5 : Math.min(5, Math.max(featured ? 3 : 1, getDifficultyForType(type, rnd)));
@@ -1114,6 +1232,7 @@
       difficulty,
       featured,
       legend,
+      line: getCustomerLine(type, rnd),
       targetCardId: wanted.card.id,
       targetQty: 1,
       isExtraPool: wanted.isExtraPool,
@@ -1435,6 +1554,8 @@
           </div>
 
           <div class="matchHeadRight">
+            <div class="matchSpeech" data-love-rotate="${job.id}">${escapeHtml(job.line)}</div>
+
             <div class="matchMetaRow">
               <h3 class="matchName">${escapeHtml(job.visitorName)}</h3>
               <div class="metaRight">
@@ -1452,6 +1573,39 @@
         </div>
       </article>
     `;
+  }
+
+  function startLoveLineRotation(job, el) {
+    if (!job || !el) return;
+
+    const lines = getSpeechLines(job.type);
+    if (!lines || !lines.length) return;
+
+    const seedRnd = randFromSeed(`${todayKey()}::love-index::${job.id}`);
+    let i = Math.floor(seedRnd() * lines.length);
+
+    el.textContent = lines[i];
+    el.style.opacity = "1";
+
+    if (el._timer) clearInterval(el._timer);
+
+    el._timer = setInterval(() => {
+      i = (i + 1) % lines.length;
+      el.style.opacity = "0";
+
+      setTimeout(() => {
+        el.textContent = lines[i];
+        el.style.opacity = "1";
+      }, 180);
+    }, 10000);
+  }
+
+  function bindLoveLineRotation() {
+    $$("[data-love-rotate]").forEach(el => {
+      const jobId = el.getAttribute("data-love-rotate");
+      const job = getJobById(jobId);
+      startLoveLineRotation(job, el);
+    });
   }
 
   function renderBoard() {
@@ -1474,6 +1628,7 @@
 
     renderLegendNotice();
     bindBoardButtons();
+    bindLoveLineRotation();
   }
 
   // =========================================================
@@ -1554,21 +1709,7 @@
                     <button class="selectCardBtn" data-choose-card="${job.id}" data-card-id="${card.id}">
                       <div class="selectCardBox">
                         <img src="${card.img}" alt="${escapeHtml(card.name)}">
-                        <div
-                          class="selectCardOwn"
-                          style="
-                            right:4px;
-                            bottom:4px;
-                            min-width:28px;
-                            padding:1px 4px;
-                            border-radius:4px;
-                            font-size:9px;
-                            font-weight:900;
-                            background:linear-gradient(180deg,#ffea71,#ffb300);
-                            color:#4d2400;
-                            box-shadow:0 0 0 1px rgba(255,255,255,.8),0 6px 10px rgba(0,0,0,.18);
-                          "
-                        >所持${card.count}</div>
+                        <div class="selectCardOwn">所持${card.count}</div>
                       </div>
                       <div class="selectCardName">${escapeHtml(card.name)}</div>
                     </button>
@@ -1615,11 +1756,11 @@
         <div class="modalBody">
           <h2 class="modalName" id="howToTitle">遊び方</h2>
           <div class="modalStatusList">
-            <div class="modalStatusLine ok">① ヒントを見て相手が探しているカードを読むたこ</div>
+            <div class="modalStatusLine ok">① 相手のセリフとヒントを見るたこ</div>
             <div class="modalStatusLine ok">② 所持カードから1枚選んで渡すたこ</div>
             <div class="modalStatusLine ok">③ ぴったりなら ♥ でマッチ成立たこ</div>
             <div class="modalStatusLine ok">④ 失敗しても3回まで挑戦できるたこ</div>
-            <div class="modalStatusLine ok">⑤ ヒント2を見る前に一発で当てると +報酬 たこ</div>
+            <div class="modalStatusLine ok">⑤ ヒント2を見る前に一発正解すると +報酬 たこ</div>
             <div class="modalStatusLine ok">⑥ 失敗カウントは3回全部だめだった時だけ反映たこ</div>
           </div>
         </div>
@@ -1659,18 +1800,8 @@
       suspense.id = "suspenseLayer";
       suspense.className = "suspenseLayer";
       suspense.innerHTML = `
-        <div class="suspenseInner" style="display:flex;align-items:center;justify-content:center;width:100vw;padding:0 10px;">
-          <div
-            class="suspenseText"
-            style="
-              white-space:nowrap;
-              font-size:min(12vw,56px);
-              line-height:1;
-              letter-spacing:.06em;
-              text-align:center;
-              transform-origin:center center;
-            "
-          >ドキドキドキドキ…</div>
+        <div class="suspenseInner">
+          <div class="suspenseText">ドキドキドキドキ…</div>
         </div>
       `;
       document.body.appendChild(suspense);
@@ -1739,16 +1870,7 @@
 
     if (job.lastBonusOcto > 0) {
       rows.push(`
-        <div class="rewardItem show" style="
-          opacity:1;
-          transform:none;
-          background:linear-gradient(180deg,#fff6b7,#ffd86b);
-          color:#6a4300;
-          font-weight:900;
-          font-size:15px;
-          border:1px solid rgba(160,110,0,.18);
-          box-shadow:0 10px 18px rgba(255,210,70,.22);
-        ">✨ +報酬　一発正解ボーナス +${job.lastBonusOcto.toLocaleString()} オクト</div>
+        <div class="rewardItem show rewardItemBonus">✨ +報酬　一発正解ボーナス +${job.lastBonusOcto.toLocaleString()} オクト</div>
       `);
     }
 
