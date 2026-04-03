@@ -5,11 +5,11 @@
   // Keys
   // =========================================================
   const KEY = {
-    board: "ttc_card_board_matching_v3",
+    board: "ttc_matching_board_v1",
     octo: "roten_v1_octo",
-    player: "tf_v1_player",
     book: "tf_v1_book",
-    inv: "tf_v1_inv"
+    inv: "tf_v1_inv",
+    matchingMeta: "ttc_matching_meta_v1"
   };
 
   // =========================================================
@@ -20,6 +20,15 @@
 
   function pad2(n) {
     return String(n).padStart(2, "0");
+  }
+
+  function nowTokyo() {
+    return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+  }
+
+  function todayKey() {
+    const d = nowTokyo();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
 
   function safeJSONParse(raw, fallback) {
@@ -39,16 +48,7 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
-  function nowTokyo() {
-    return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
-  }
-
-  function todayKey() {
-    const d = nowTokyo();
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-
-  function seededRandom(seedStr) {
+  function randFromSeed(seedStr) {
     let h = 2166136261;
     for (let i = 0; i < seedStr.length; i++) {
       h ^= seedStr.charCodeAt(i);
@@ -56,7 +56,7 @@
     }
     return function () {
       h += h << 13; h ^= h >>> 7;
-      h += h << 3; h ^= h >>> 17;
+      h += h << 3;  h ^= h >>> 17;
       h += h << 5;
       return ((h >>> 0) / 4294967295);
     };
@@ -67,13 +67,22 @@
   }
 
   function weightedPick(list, rnd) {
-    const total = list.reduce((s, v) => s + (v.weight || 1), 0);
+    const total = list.reduce((sum, item) => sum + (item.weight || 1), 0);
     let roll = rnd() * total;
     for (const item of list) {
       roll -= (item.weight || 1);
       if (roll <= 0) return item;
     }
     return list[list.length - 1];
+  }
+
+  function shuffle(arr, rnd) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
   }
 
   function escapeHtml(str) {
@@ -95,8 +104,18 @@
     return (h >= 6 && h < 18) ? "day" : "night";
   }
 
+  function showTakopiToast(text, ms = 2400) {
+    const wrap = $("#takopiToast");
+    const inner = $("#takopiToastInner");
+    if (!wrap || !inner) return;
+    inner.textContent = text;
+    wrap.classList.add("show");
+    clearTimeout(showTakopiToast._t);
+    showTakopiToast._t = setTimeout(() => wrap.classList.remove("show"), ms);
+  }
+
   // =========================================================
-  // Maps
+  // Customer master
   // =========================================================
   const CUSTOMER_NAME_MAP = {
     impulse: "即決タコ民",
@@ -146,8 +165,56 @@
     pilgrim:   "https://ul.h3z.jp/eW2dluw2.png"
   };
 
+  const CUSTOMER_RATE = {
+    careful: 13,
+    impulse: 12,
+    looker: 12,
+    relax: 10,
+    gourmet: 10,
+    artisan: 8,
+    diet: 8,
+    climber: 8,
+    flipper: 7,
+    collector: 7,
+    opener: 6,
+    party: 6,
+    ramen: 6,
+    streamer: 5,
+    king: 5,
+    shadow: 4,
+    overflow: 4,
+    picky: 4,
+    rich: 3,
+    guide: 2,
+    pilgrim: 2
+  };
+
+  const LOVE_TYPE_LABEL = {
+    impulse: "一目惚れ型",
+    picky: "幻影追跡型",
+    king: "理想高め型",
+    flipper: "感情ブレ型",
+    careful: "慎重片想い型",
+    looker: "未練ごまかし型",
+    rich: "執着課金型",
+    climber: "完走復縁型",
+    guide: "入口沼型",
+    relax: "安心依存型",
+    artisan: "審美本気型",
+    diet: "理屈敗北型",
+    overflow: "はみ出し恋型",
+    collector: "神格保存型",
+    shadow: "湿度記憶型",
+    ramen: "追加発注型",
+    streamer: "盛り上がり恋型",
+    gourmet: "味記憶型",
+    opener: "秘密暴き型",
+    party: "祭りのあと型",
+    pilgrim: "復縁執念型"
+  };
+
   // =========================================================
-  // Hero / Takopi lines
+  // Hero / takopi lines
   // =========================================================
   const HERO_LINES = [
     "今日は誰に焼かれるたこ？",
@@ -157,20 +224,17 @@
   ];
 
   const TAKOPI_LINES = [
-    "……この人、たぶん地雷たこ",
-    "条件、重すぎない？",
-    "SR以上×3とか、愛じゃないたこ",
-    "それ、恋じゃなくて在庫処分たこ",
-    "……焼けたね",
-    "足りないのはカードじゃなくて覚悟たこ",
-    "まだ探すの？",
-    "今日、運いいたこ",
-    "その相手、沼の匂いがするたこ",
-    "片想いが一番コスト高いたこ"
+    "……その相手、重いたこ",
+    "ヒント見る前に当てたら、かなりモテるたこ",
+    "恋じゃなくて、だいたい未練たこ",
+    "焦ると外すたこ",
+    "また来てる相手、いるたこ",
+    "それ、たぶん沼たこ",
+    "♥か💔かは、渡してからのお楽しみたこ"
   ];
 
   // =========================================================
-  // Type lines（カードを恋愛対象に見立てた版）
+  // Love lines by type
   // =========================================================
   const CUSTOMER_LINES = {
     rich: [
@@ -384,34 +448,7 @@
   };
 
   // =========================================================
-  // Appear rates
-  // =========================================================
-  const CUSTOMER_RATE = {
-    careful: 13,
-    impulse: 12,
-    looker: 12,
-    relax: 10,
-    gourmet: 10,
-    artisan: 8,
-    diet: 8,
-    climber: 8,
-    flipper: 7,
-    collector: 7,
-    opener: 6,
-    party: 6,
-    ramen: 6,
-    streamer: 5,
-    king: 5,
-    shadow: 4,
-    overflow: 4,
-    picky: 4,
-    rich: 3,
-    guide: 2,
-    pilgrim: 2
-  };
-
-  // =========================================================
-  // Card pools
+  // Card pools / card master
   // =========================================================
   const CARD_POOLS = {
     N: [
@@ -549,6 +586,23 @@
     ]
   };
 
+  const RARITY_ORDER = { N: 1, R: 2, SR: 3, UR: 4, LR: 5, SP: 6 };
+
+  const CARDS_ALL = [
+    ...CARD_POOLS.N.map(v => ({ ...v, id: v.no, rarity: "N" })),
+    ...CARD_POOLS.R.map(v => ({ ...v, id: v.no, rarity: "R" })),
+    ...CARD_POOLS.SR.map(v => ({ ...v, id: v.no, rarity: "SR" })),
+    ...CARD_POOLS.UR.map(v => ({ ...v, id: v.no, rarity: "UR" })),
+    ...CARD_POOLS.LR.map(v => ({ ...v, id: v.no, rarity: "LR" })),
+    ...TAKOPI_SEED_POOL.map(v => ({ ...v, id: v.id, specialPool: "takopi" })),
+    ...BUSSASARI_POOL.map(v => ({ ...v, id: v.id, specialPool: "bussasari" })),
+    ...NAMARA_POOL.map(v => ({ ...v, id: v.id, specialPool: "namara" })),
+    ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id: `${v.id}_rotten`, specialPool: "water_special" })),
+    ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea`, specialPool: "water_special" }))
+  ];
+
+  const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
+
   // =========================================================
   // Reward items
   // =========================================================
@@ -675,27 +729,296 @@
   };
 
   // =========================================================
-  // Card normalization
+  // Hint system
   // =========================================================
-  const RARITY_ORDER = { N: 1, R: 2, SR: 3, UR: 4, LR: 5, SP: 6 };
+  function deriveTags(card) {
+    const tags = new Set();
+    const name = card.name || "";
 
-  const CARDS_ALL = [
-    ...CARD_POOLS.N.map(v => ({ ...v, id: v.no, rarity: "N" })),
-    ...CARD_POOLS.R.map(v => ({ ...v, id: v.no, rarity: "R" })),
-    ...CARD_POOLS.SR.map(v => ({ ...v, id: v.no, rarity: "SR" })),
-    ...CARD_POOLS.UR.map(v => ({ ...v, id: v.no, rarity: "UR" })),
-    ...CARD_POOLS.LR.map(v => ({ ...v, id: v.no, rarity: "LR" })),
-    ...TAKOPI_SEED_POOL.map(v => ({ ...v, id: v.id, specialPool: "takopi" })),
-    ...BUSSASARI_POOL.map(v => ({ ...v, id: v.id, specialPool: "bussasari" })),
-    ...NAMARA_POOL.map(v => ({ ...v, id: v.id, specialPool: "namara" })),
-    ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id: `${v.id}_rotten`, specialPool: "water_special" })),
-    ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea`, specialPool: "water_special" }))
-  ];
+    if (/ソース/.test(name)) tags.add("sauce");
+    if (/塩/.test(name)) tags.add("salt");
+    if (/マヨ/.test(name)) tags.add("mayo");
+    if (/明太/.test(name)) tags.add("mentai");
+    if (/チーズ/.test(name)) tags.add("cheese");
+    if (/味噌/.test(name)) tags.add("miso");
+    if (/牡蠣/.test(name)) tags.add("oyster");
+    if (/温泉|ゆのかわ/.test(name)) tags.add("onsen");
+    if (/真珠|黒き/.test(name)) tags.add("pearl");
+    if (/女神|ビーナス/.test(name)) tags.add("goddess");
+    if (/神|御神体/.test(name)) tags.add("god");
+    if (/恋|デート/.test(name)) tags.add("love");
+    if (/ループ/.test(name)) tags.add("loop");
+    if (/ダーツ/.test(name)) tags.add("darts");
+    if (/露店/.test(name)) tags.add("roten");
+    if (/火山|地獄|インフェルノ/.test(name)) tags.add("fire");
+    if (/化石|記憶/.test(name)) tags.add("memory");
+    if (/ドローン|発射|爆走/.test(name)) tags.add("move");
+    if (/ガチャ/.test(name)) tags.add("gacha");
+    if (/顔|パレード|行列/.test(name)) tags.add("crowd");
+    if (/イカ/.test(name)) tags.add("ika");
+    if (/焼き/.test(name)) tags.add("yaki");
 
-  const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
+    if (card.rarity === "N") tags.add("normal");
+    if (card.rarity === "R") tags.add("rare");
+    if (card.rarity === "SR") tags.add("super");
+    if (card.rarity === "UR") tags.add("ultra");
+    if (card.rarity === "LR") tags.add("legend");
+    if (card.rarity === "SP") tags.add("special");
+
+    return Array.from(tags);
+  }
+
+  const HINT_TEXTS = {
+    sauce: [
+      "ソースの香りだけで、昔を思い出すたこ",
+      "濃い匂いの記憶って、しつこく残るたこ",
+      "あの日の香りに、まだ引っ張られてるたこ"
+    ],
+    salt: [
+      "しょっぱい記憶ほど、あとで恋しくなるたこ",
+      "塩気のある思い出って、妙に刺さるたこ",
+      "淡いのに、なぜか忘れられないたこ"
+    ],
+    mayo: [
+      "やさしく包んでくれる感じに弱いたこ",
+      "丸くてやわらかい相手ほど残るたこ",
+      "見た目よりも余韻が長いたこ"
+    ],
+    mentai: [
+      "少し刺激がある相手に、まだ未練があるたこ",
+      "ピリッとした子ほど、記憶に残るたこ",
+      "大人しくない相手が忘れられないたこ"
+    ],
+    cheese: [
+      "濃厚すぎる相手って、だいたい忘れられないたこ",
+      "重たいのに、また会いたくなるたこ",
+      "とろける感じの記憶が残ってるたこ"
+    ],
+    miso: [
+      "少し深い味わいのある相手に弱いたこ",
+      "派手じゃないのに、妙に残るたこ",
+      "地味に見えて、あとで効いてくるたこ"
+    ],
+    oyster: [
+      "だしみたいに静かに残る相手がいるたこ",
+      "旨みが遅れてくる感じ、まだ好きなたこ",
+      "静かなのに、印象だけ濃いたこ"
+    ],
+    onsen: [
+      "湯気の向こうにいるみたいな相手を探してるたこ",
+      "温かい記憶って、妙に戻りたくなるたこ",
+      "ご利益みたいな空気に弱いたこ"
+    ],
+    pearl: [
+      "黒く光る子って、忘れにくいたこ",
+      "真珠みたいな輝き、まだ目に残ってるたこ",
+      "ちょっと危ない匂いのする相手ほど惹かれるたこ"
+    ],
+    goddess: [
+      "女神っぽい相手って、だいたい距離感がおかしいたこ",
+      "ありがたいのに振り回されるたこ",
+      "高嶺なのに妙に近い相手が忘れられないたこ"
+    ],
+    god: [
+      "もう人じゃない感じの相手に弱いたこ",
+      "信仰みたいな気持ちになるたこ",
+      "拝みたくなる相手を探してるたこ"
+    ],
+    love: [
+      "恋っぽい空気をまとった相手が忘れられないたこ",
+      "ちゃんと恋だった気がするたこ",
+      "気のせいじゃ済ませられないたこ"
+    ],
+    loop: [
+      "何度でも戻ってくる相手に弱いたこ",
+      "終わったはずなのに、また会いたくなるたこ",
+      "ぐるぐる回る気持ちを止められないたこ"
+    ],
+    darts: [
+      "刺さる相手って、ほんとに急に来るたこ",
+      "一撃で決まる恋、嫌いじゃないたこ",
+      "狙ったつもりはないのに、刺さってたこ"
+    ],
+    roten: [
+      "露店の灯りの下で会った気がするたこ",
+      "ふらっと出会ったのに、妙に残ってるたこ",
+      "お祭りみたいな空気を思い出すたこ"
+    ],
+    fire: [
+      "熱すぎる相手ほど、あとで恋しくなるたこ",
+      "火傷みたいな記憶が残ってるたこ",
+      "少し危ない熱さに、まだ惹かれてるたこ"
+    ],
+    memory: [
+      "昔の記憶に触れると、戻りたくなるたこ",
+      "思い出そのものみたいな相手を探してるたこ",
+      "今でも頭のどこかに残ってるたこ"
+    ],
+    move: [
+      "落ち着かない相手ほど、忘れられないたこ",
+      "走っていく背中がまだ見えるたこ",
+      "ちゃんと止まってくれない相手に弱いたこ"
+    ],
+    gacha: [
+      "何が出るか分からない感じに惹かれるたこ",
+      "運命まかせの出会い、嫌いじゃないたこ",
+      "偶然に期待してしまうたこ"
+    ],
+    crowd: [
+      "人混みの中でも目立つ相手っているたこ",
+      "にぎやかな景色ごと残ってるたこ",
+      "ひとりだけ妙に印象に残るたこ"
+    ],
+    ika: [
+      "ちょっとズルそうな相手、嫌いじゃないたこ",
+      "まっすぐじゃない感じに弱いたこ",
+      "危ういのに光る相手を探してるたこ"
+    ],
+    yaki: [
+      "焼き色の記憶って、案外しつこいたこ",
+      "あの日の熱さを、まだ探してるたこ",
+      "香ばしい思い出ほど忘れにくいたこ"
+    ],
+    normal: [
+      "派手じゃないのに、なぜか残るたこ",
+      "普通っぽい相手ほど、あとから効くたこ"
+    ],
+    rare: [
+      "ちょっと特別なくらいが、一番忘れられないたこ",
+      "手が届きそうで届かない距離が苦しいたこ"
+    ],
+    super: [
+      "光りすぎないのに、ちゃんと目立つ相手が好きなたこ",
+      "少し背伸びした感じの相手を探してるたこ"
+    ],
+    ultra: [
+      "明らかに特別な相手って、隠せないたこ",
+      "眩しいくらいの存在感が、まだ残ってるたこ"
+    ],
+    legend: [
+      "もう伝説みたいな相手を、本気で探してるたこ",
+      "会えたらたぶん、しばらく立ち直れないたこ"
+    ],
+    special: [
+      "普通じゃ説明できない相手に惹かれるたこ",
+      "ちょっとおかしいくらいが、ちょうどいいたこ"
+    ]
+  };
+
+  function buildHintCandidates(card) {
+    const tags = deriveTags(card);
+    const lines = [];
+    tags.forEach(tag => {
+      (HINT_TEXTS[tag] || []).forEach(text => lines.push(text));
+    });
+
+    if (!lines.length) {
+      lines.push("忘れられない気配だけが残ってるたこ");
+      lines.push("名前までは言えないけど、まだ探してるたこ");
+      lines.push("あの時の空気ごと、戻ってきてほしいたこ");
+    }
+    return lines;
+  }
+
+  function makeHintsForCard(card, seed) {
+    const rnd = randFromSeed(seed);
+    const pool = shuffle(buildHintCandidates(card), rnd);
+    const hints = pool.slice(0, 3);
+    while (hints.length < 3) hints.push(pool[0] || "まだ忘れられないたこ");
+    return hints;
+  }
+
+  function makeHintTags(card) {
+    const tags = deriveTags(card);
+    const nice = [];
+    if (tags.includes("sauce")) nice.push("#ソース系");
+    if (tags.includes("salt")) nice.push("#しょっぱい記憶");
+    if (tags.includes("mayo")) nice.push("#やわらか系");
+    if (tags.includes("mentai")) nice.push("#刺激あり");
+    if (tags.includes("cheese")) nice.push("#濃厚");
+    if (tags.includes("onsen")) nice.push("#温泉感");
+    if (tags.includes("pearl")) nice.push("#黒く光る");
+    if (tags.includes("goddess")) nice.push("#高嶺感");
+    if (tags.includes("god")) nice.push("#神格");
+    if (tags.includes("love")) nice.push("#恋っぽい");
+    if (tags.includes("loop")) nice.push("#戻ってくる");
+    if (tags.includes("roten")) nice.push("#露店感");
+    if (tags.includes("fire")) nice.push("#熱め");
+    if (tags.includes("memory")) nice.push("#記憶枠");
+    if (tags.includes("darts")) nice.push("#刺さる");
+    if (tags.includes("legend")) nice.push("#伝説級");
+    if (tags.includes("special")) nice.push("#説明不能");
+
+    const fallback = ["#未練あり", "#気になる", "#再会希望"];
+    return (nice.length ? nice : fallback).slice(0, 3);
+  }
 
   // =========================================================
-  // Ensure defaults
+  // Reward helpers
+  // =========================================================
+  function rewardOctoByDifficulty(difficulty, isLegend, type, rnd) {
+    const base = isLegend ? [800, 1400]
+      : difficulty === 1 ? [100, 180]
+      : difficulty === 2 ? [180, 300]
+      : difficulty === 3 ? [300, 520]
+      : difficulty === 4 ? [520, 900]
+      : [900, 1500];
+
+    let value = Math.floor(rnd() * (base[1] - base[0] + 1)) + base[0];
+    if (type === "rich") value = Math.round(value * 1.2);
+    if (type === "streamer" && rnd() < 0.08) value = Math.round(value * 1.5);
+    return value;
+  }
+
+  function rewardExpByDifficulty(difficulty, isLegend) {
+    return isLegend ? 18 : Math.max(2, difficulty * 3);
+  }
+
+  function rewardRepByDifficulty(difficulty, isLegend) {
+    return isLegend ? 8 : Math.max(1, difficulty);
+  }
+
+  function makeRewardItems(type, difficulty, isLegend, rnd) {
+    const profile = REWARD_PROFILES[type] || REWARD_PROFILES.careful;
+    const out = [];
+
+    for (const [kind, id] of profile.fixed) {
+      out.push({ kind, id, qty: 1 });
+    }
+
+    let count = difficulty <= 2 ? 2 : difficulty === 3 ? 2 : difficulty === 4 ? 3 : 4;
+    if (isLegend) count = 5;
+
+    const randPool = profile.rand.map(([kind, id, weight]) => ({ kind, id, weight }));
+    for (let i = 0; i < count; i++) {
+      const p = weightedPick(randPool, rnd);
+      out.push({ kind: p.kind, id: p.id, qty: 1 });
+    }
+
+    const merged = new Map();
+    out.forEach(item => {
+      const key = `${item.kind}:${item.id}`;
+      merged.set(key, {
+        kind: item.kind,
+        id: item.id,
+        qty: (merged.get(key)?.qty || 0) + item.qty
+      });
+    });
+
+    if (isLegend && rnd() < 0.4) {
+      const key = "water:water_supergod";
+      merged.set(key, {
+        kind: "water",
+        id: "water_supergod",
+        qty: (merged.get(key)?.qty || 0) + 1
+      });
+    }
+
+    return Array.from(merged.values());
+  }
+
+  // =========================================================
+  // Book / inv / player
   // =========================================================
   function ensureDefaults() {
     if (localStorage.getItem(KEY.octo) == null) localStorage.setItem(KEY.octo, "1000");
@@ -711,11 +1034,6 @@
       saveJSON(KEY.inv, inv);
     }
 
-    const player = loadJSON(KEY.player, null);
-    if (!player) {
-      saveJSON(KEY.player, { exp: 0, rep: 0 });
-    }
-
     const book = loadJSON(KEY.book, null);
     if (!book) {
       const got = {};
@@ -727,10 +1045,7 @@
         else if (card.rarity === "UR") count = Math.random() < 0.12 ? 1 : 0;
         else if (card.rarity === "LR") count = Math.random() < 0.05 ? 1 : 0;
         else if (card.rarity === "SP") count = 0;
-
-        if (count > 0) {
-          got[card.id] = { count, name: card.name, rarity: card.rarity };
-        }
+        if (count > 0) got[card.id] = { count, name: card.name, rarity: card.rarity };
       });
       saveJSON(KEY.book, { got });
     }
@@ -747,27 +1062,31 @@
   }
 
   function getOwnedCount(cardId) {
-    const book = getBook();
-    return Number(book.got?.[cardId]?.count || 0);
+    return Number(getBook().got?.[cardId]?.count || 0);
   }
 
   function addOwned(cardId, delta) {
     const book = getBook();
     const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
     if (!book.got[cardId]) book.got[cardId] = { count: 0, name: info.name, rarity: info.rarity };
-    book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + delta);
+    book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + Number(delta || 0));
     if (book.got[cardId].count <= 0) delete book.got[cardId];
     saveBook(book);
   }
 
-  function getOwnedCardsByRarityAtLeast(rarity) {
-    const min = RARITY_ORDER[rarity] || 1;
+  function getAllOwnedCards() {
     const book = getBook();
     return CARDS_ALL
-      .filter(c => (RARITY_ORDER[c.rarity] || 0) >= min)
-      .map(c => ({ ...c, count: Number(book.got?.[c.id]?.count || 0) }))
-      .filter(c => c.count > 0)
-      .sort((a, b) => (RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]) || a.name.localeCompare(b.name, "ja"));
+      .map(card => ({
+        ...card,
+        count: Number(book.got?.[card.id]?.count || 0)
+      }))
+      .filter(v => v.count > 0)
+      .sort((a, b) => {
+        const rd = (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0);
+        if (rd !== 0) return rd;
+        return a.name.localeCompare(b.name, "ja");
+      });
   }
 
   function getOcto() {
@@ -776,17 +1095,6 @@
 
   function addOcto(delta) {
     localStorage.setItem(KEY.octo, String(Math.max(0, getOcto() + Number(delta || 0))));
-  }
-
-  function getPlayer() {
-    return loadJSON(KEY.player, { exp: 0, rep: 0 });
-  }
-
-  function addPlayerStats(exp, rep) {
-    const p = getPlayer();
-    p.exp = Number(p.exp || 0) + Number(exp || 0);
-    p.rep = Number(p.rep || 0) + Number(rep || 0);
-    saveJSON(KEY.player, p);
   }
 
   function getInv() {
@@ -809,7 +1117,7 @@
   }
 
   // =========================================================
-  // Visitors / appearance
+  // Board generation
   // =========================================================
   const CUSTOMER_TYPES = Object.keys(CUSTOMER_NAME_MAP);
 
@@ -825,29 +1133,26 @@
   const CUSTOMER_WEIGHTED_POOL = buildWeightedCustomerPool();
 
   function uniqueCustomerTypes(count, rnd) {
-    const selected = new Set();
+    const set = new Set();
     let guard = 0;
-    while (selected.size < count && guard < 500) {
-      selected.add(pick(CUSTOMER_WEIGHTED_POOL, rnd));
+    while (set.size < count && guard < 500) {
+      set.add(pick(CUSTOMER_WEIGHTED_POOL, rnd));
       guard++;
     }
-    return Array.from(selected);
+    return Array.from(set);
   }
 
-  // =========================================================
-  // Selection rules
-  // =========================================================
   function getDisplayPoolByType(type, legend = false) {
     if (legend) return CARDS_ALL.filter(c => ["LR", "SP", "UR"].includes(c.rarity));
 
     if (type === "gourmet") {
-      return CARDS_ALL.filter(c => /焼き|ソース|マヨ|塩|明太|牡蠣|味噌|てり|イカ|温泉/.test(c.name));
+      return CARDS_ALL.filter(c => /焼き|ソース|マヨ|塩|明太|味噌|牡蠣|温泉|イカ/.test(c.name));
     }
     if (type === "collector") {
-      return CARDS_ALL.filter(c => ["SR", "UR", "LR"].includes(c.rarity) || /御神体|証|真珠|ビーナス|記憶/.test(c.name));
+      return CARDS_ALL.filter(c => ["SR", "UR", "LR"].includes(c.rarity) || /御神体|真珠|記憶|神/.test(c.name));
     }
     if (type === "shadow" || type === "picky" || type === "overflow") {
-      return CARDS_ALL.filter(c => c.specialPool === "water_special" || ["SR", "UR", "SP"].includes(c.rarity));
+      return CARDS_ALL.filter(c => c.specialPool === "water_special" || ["SR", "UR", "SP", "LR"].includes(c.rarity));
     }
     if (type === "rich" || type === "king" || type === "pilgrim") {
       return CARDS_ALL.filter(c => ["SR", "UR", "LR", "SP"].includes(c.rarity));
@@ -878,121 +1183,30 @@
     return rnd() < 0.34 ? 2 : rnd() < 0.72 ? 3 : 4;
   }
 
-  function makeWant(rnd, type, difficulty, usedIds, legend = false) {
-    const rarityQuestChance = legend ? 0.55 : (difficulty >= 4 ? 0.22 : 0.08);
-
-    if (rnd() < rarityQuestChance) {
-      const rarityPool = legend
-        ? ["UR", "LR", "SP"]
-        : difficulty >= 5 ? ["SR", "UR", "LR"]
-        : difficulty >= 4 ? ["SR", "UR"]
-        : ["R", "SR"];
-      const rarity = pick(rarityPool, rnd);
-      return {
-        type: "rarity",
-        rarity,
-        qty: difficulty >= 5 ? 2 : 1,
-        label: `${rarity}以上`
-      };
-    }
-
-    let pool = getDisplayPoolByType(type, legend).filter(c => !usedIds.has(c.id));
-    if (!pool.length) pool = getDisplayPoolByType(type, legend);
-
-    const card = pick(pool, rnd);
-    usedIds.add(card.id);
-
+  function chooseWantedCard(type, difficulty, rnd, legend = false) {
+    const pool = getDisplayPoolByType(type, legend);
+    const picked = pick(pool, rnd);
     let qty = 1;
-    if (difficulty === 2 && rnd() < 0.35) qty = 2;
-    if (difficulty === 3 && rnd() < 0.45) qty = 2;
-    if (difficulty === 4) qty = rnd() < 0.5 ? 2 : 3;
-    if (difficulty >= 5) qty = rnd() < 0.4 ? 2 : 3;
-    if (type === "collector" || type === "ramen" || type === "party") qty += rnd() < 0.35 ? 1 : 0;
-    if (legend) qty = 1;
-
-    return {
-      type: "card",
-      cardId: card.id,
-      name: card.name,
-      img: card.img,
-      rarity: card.rarity,
-      qty
-    };
-  }
-
-  function rewardOctoByDifficulty(difficulty, isLegend, type, rnd) {
-    const base = isLegend ? [380, 620]
-      : difficulty === 1 ? [30, 60]
-      : difficulty === 2 ? [55, 90]
-      : difficulty === 3 ? [90, 150]
-      : difficulty === 4 ? [140, 240]
-      : [220, 360];
-
-    let val = Math.floor(rnd() * (base[1] - base[0] + 1)) + base[0];
-    if (type === "rich") val = Math.round(val * 1.35);
-    if (type === "streamer" && rnd() < 0.08) val *= 3;
-    return val * 3;
-  }
-
-  function rewardExpByDifficulty(difficulty, isLegend) {
-    return isLegend ? 12 : Math.max(1, difficulty * 2);
-  }
-
-  function makeRewardItems(type, difficulty, isLegend, rnd) {
-    const profile = REWARD_PROFILES[type] || REWARD_PROFILES.careful;
-    const out = [];
-
-    for (const [kind, id] of profile.fixed) {
-      out.push({ kind, id, qty: 1 });
+    if (!legend) {
+      if (difficulty === 2 && rnd() < 0.35) qty = 2;
+      if (difficulty === 3 && rnd() < 0.45) qty = 2;
+      if (difficulty === 4) qty = rnd() < 0.5 ? 2 : 3;
+      if (difficulty >= 5) qty = rnd() < 0.4 ? 2 : 3;
+      if (type === "collector" || type === "ramen" || type === "party") qty += rnd() < 0.35 ? 1 : 0;
     }
-
-    let randCount = difficulty <= 2 ? 1 : difficulty === 3 ? 1 : 2;
-    if (difficulty >= 4) randCount = 2;
-    if (difficulty >= 5) randCount = 3;
-    if (isLegend) randCount = 3;
-
-    const randPool = profile.rand.map(([kind, id, weight]) => ({ kind, id, weight }));
-
-    for (let i = 0; i < randCount; i++) {
-      const picked = weightedPick(randPool, rnd);
-      out.push({ kind: picked.kind, id: picked.id, qty: 1 });
-    }
-
-    if (isLegend) {
-      if (rnd() < 0.28) out.push({ kind: "water", id: "water_supergod", qty: 1 });
-      if (rnd() < 0.18) out.push({ kind: "seed", id: "seed_special", qty: 1 });
-    } else if (difficulty >= 5 && rnd() < 0.15) {
-      out.push({ kind: "water", id: "water_supergod", qty: 1 });
-    }
-
-    const map = new Map();
-    out.forEach(item => {
-      const key = `${item.kind}:${item.id}`;
-      map.set(key, {
-        kind: item.kind,
-        id: item.id,
-        qty: (map.get(key)?.qty || 0) + item.qty
-      });
-    });
-
-    return Array.from(map.values());
+    return { card: picked, qty };
   }
 
   function getCustomerLine(type, rnd) {
-    const lines = CUSTOMER_LINES[type] || ["あの一枚に、まだ気持ちが残ってるたこ"];
+    const lines = CUSTOMER_LINES[type] || ["まだ忘れられないたこ"];
     return pick(lines, rnd);
   }
 
   function makeJob(type, idx, dateSeed, featured = false, legend = false) {
-    const rnd = seededRandom(`${dateSeed}::job::${type}::${idx}::${legend ? "legend" : "normal"}`);
+    const rnd = randFromSeed(`${dateSeed}::job::${type}::${idx}::${legend ? "legend" : "normal"}`);
     const difficulty = legend ? 5 : Math.min(5, Math.max(featured ? 3 : 1, getDifficultyForType(type, rnd)));
-    const wantCount = legend ? 1 : difficulty <= 2 ? 1 : difficulty === 3 ? 2 : 2 + (rnd() < 0.55 ? 1 : 0);
-
-    const usedIds = new Set();
-    const wants = [];
-    for (let i = 0; i < wantCount; i++) {
-      wants.push(makeWant(rnd, type, difficulty, usedIds, legend));
-    }
+    const wanted = chooseWantedCard(type, difficulty, rnd, legend);
+    const hints = makeHintsForCard(wanted.card, `${dateSeed}::hint::${type}::${idx}`);
 
     return {
       id: `${legend ? "legend" : "job"}_${idx + 1}_${type}`,
@@ -1002,16 +1216,24 @@
       difficulty,
       featured,
       legend,
+      loveType: LOVE_TYPE_LABEL[type] || "未練型",
       line: getCustomerLine(type, rnd),
-      wants,
+      targetCardId: wanted.card.id,
+      targetQty: wanted.qty,
+      hintTags: makeHintTags(wanted.card),
+      hints,
+      hintCosts: [0, 100, 200],
       rewards: {
         octo: rewardOctoByDifficulty(difficulty, legend, type, rnd),
         exp: rewardExpByDifficulty(difficulty, legend),
-        rep: legend ? 5 : Math.max(0, difficulty - 1),
+        rep: rewardRepByDifficulty(difficulty, legend),
         items: makeRewardItems(type, difficulty, legend, rnd)
       },
+      revealedHints: 1,
       completed: false,
-      completedAt: null
+      completedAt: null,
+      favorite: false,
+      retryCount: 0
     };
   }
 
@@ -1020,10 +1242,9 @@
     const old = loadJSON(KEY.board, null);
     if (!force && old?.date === today) return old;
 
-    const rnd = seededRandom(`board::${today}`);
+    const rnd = randFromSeed(`board::${today}`);
     const chosen = uniqueCustomerTypes(5, rnd);
     const featuredIndex = Math.floor(rnd() * chosen.length);
-
     const jobs = chosen.map((type, idx) => makeJob(type, idx, today, idx === featuredIndex, false));
 
     let legendJob = null;
@@ -1037,7 +1258,6 @@
       jobs,
       legendJob
     };
-
     saveJSON(KEY.board, state);
     return state;
   }
@@ -1046,97 +1266,66 @@
     return loadJSON(KEY.board, null) || generateBoard(false);
   }
 
+  function saveBoard(state) {
+    saveJSON(KEY.board, state);
+  }
+
+  function getMatchingMeta() {
+    return loadJSON(KEY.matchingMeta, { favoriteIds: [], reunionMap: {} });
+  }
+
+  function saveMatchingMeta(meta) {
+    saveJSON(KEY.matchingMeta, meta);
+  }
+
   // =========================================================
-  // Need / status
+  // Match / status / scoring
   // =========================================================
-  function getNeedStatus(job) {
-    const lines = [];
-    let ok = true;
-
-    for (const want of job.wants) {
-      if (want.type === "card") {
-        const owned = getOwnedCount(want.cardId);
-        const good = owned >= want.qty;
-        if (!good) ok = false;
-        lines.push({ ok: good, text: `${want.name}　${owned}/${want.qty}` });
-      } else {
-        const list = getOwnedCardsByRarityAtLeast(want.rarity);
-        const total = list.reduce((sum, c) => sum + c.count, 0);
-        const good = total >= want.qty;
-        if (!good) ok = false;
-        lines.push({ ok: good, text: `${want.label}　${total}/${want.qty}` });
-      }
-    }
-
-    return { ok, lines };
+  function getJobNeedStatus(job) {
+    const targetCount = getOwnedCount(job.targetCardId);
+    return {
+      ok: targetCount >= 1,
+      own: targetCount,
+      need: 1
+    };
   }
 
-  function consumeNeed(want) {
-    if (want.type === "card") {
-      if (getOwnedCount(want.cardId) < want.qty) return false;
-      addOwned(want.cardId, -want.qty);
-      return true;
-    }
-
-    let remain = want.qty;
-    const list = getOwnedCardsByRarityAtLeast(want.rarity);
-    const total = list.reduce((sum, c) => sum + c.count, 0);
-    if (total < remain) return false;
-
-    for (const c of list) {
-      if (remain <= 0) break;
-      const use = Math.min(remain, c.count);
-      addOwned(c.id, -use);
-      remain -= use;
-    }
-    return remain === 0;
+  function getJobStatus(job) {
+    const need = getJobNeedStatus(job);
+    if (job.completed) return { cls: "done", text: "成立済み", action: "成立済み" };
+    if (need.ok) return { cls: "ok", text: "挑戦可能", action: "カードを選ぶ" };
+    return { cls: "ng", text: "片想い", action: "カードを選ぶ" };
   }
 
-  function applyRewards(job) {
-    addOcto(job.rewards.octo);
-    addPlayerStats(job.rewards.exp, job.rewards.rep);
-    for (const item of job.rewards.items) {
-      addInventory(item.kind, item.id, item.qty);
-    }
-  }
+  function cardScoreAgainstJob(card, job) {
+    const target = CARD_MAP[job.targetCardId];
+    if (!target || !card) return 0;
 
-  function getVisitorStatus(job) {
-    const need = getNeedStatus(job);
-    if (job.completed) {
-      return { cls: "done", text: "成立済み", button: "成立済み" };
-    }
-    if (need.ok) {
-      return { cls: "ok", text: "マッチ成立", button: "今すぐマッチ" };
-    }
-    return { cls: "ng", text: "片想い", button: "詳細を見る" };
-  }
+    if (card.id === target.id) return 100;
 
-  function sortJobs(jobs) {
-    return jobs.slice().sort((a, b) => {
-      const sa = getVisitorStatus(a);
-      const sb = getVisitorStatus(b);
+    let score = 0;
+    if (card.rarity === target.rarity) score += 30;
 
-      const weight = (job, status) => {
-        if (job.completed) return 2;
-        if (status.cls === "ok") return 0;
-        return 1;
-      };
-
-      const wa = weight(a, sa);
-      const wb = weight(b, sb);
-      if (wa !== wb) return wa - wb;
-      if (a.featured !== b.featured) return a.featured ? -1 : 1;
-      return b.difficulty - a.difficulty;
+    const a = new Set(deriveTags(card));
+    const b = new Set(deriveTags(target));
+    let overlap = 0;
+    b.forEach(tag => {
+      if (a.has(tag)) overlap++;
     });
+    score += overlap * 12;
+
+    if ((RARITY_ORDER[card.rarity] || 0) >= (RARITY_ORDER[target.rarity] || 0)) score += 10;
+    return Math.min(95, score);
   }
 
-  function findJobById(jobId) {
-    const state = getBoard();
-    return state.jobs.find(v => v.id === jobId) || (state.legendJob?.id === jobId ? state.legendJob : null);
+  function judgeScore(score) {
+    if (score >= 100) return { icon: "♥", verdict: "perfect", text: "運命の一枚だったようだ" };
+    if (score >= 65) return { icon: "♥", verdict: "success", text: "好みだったようだ" };
+    return { icon: "💔", verdict: "fail", text: "好みではなかったようだ" };
   }
 
   // =========================================================
-  // Render helpers
+  // UI pieces
   // =========================================================
   function itemIcon(kind) {
     if (kind === "seed") return "🌱";
@@ -1148,387 +1337,648 @@
     return REWARD_ITEMS[kind]?.[id]?.name || id;
   }
 
-  function miniWantHTML(want) {
-    if (want.type === "card") {
-      return `
-        <div class="wantMini">
-          <img src="${want.img}" alt="${escapeHtml(want.name)}">
-          <div class="wantMiniQty">×${want.qty}</div>
-        </div>
-      `;
-    }
-
-    return `
-      <div class="wantMini">
-        <div class="wantMiniRarity ${escapeHtml(want.rarity)}">
-          <div>${escapeHtml(want.label)}</div>
-          <div>×${want.qty}</div>
-        </div>
-      </div>
-    `;
-  }
-
-  function rewardMiniHTML(job) {
-    const items = job.rewards.items.slice(0, 2).map(item => {
-      return `<span class="rewardChip">${itemIcon(item.kind)} ${escapeHtml(itemLabel(item.kind, item.id))}×${item.qty}</span>`;
-    }).join("");
-
-    return `
-      <span class="rewardChip">🪙 ${job.rewards.octo.toLocaleString()}</span>
-      ${items}
-    `;
-  }
-
   function renderHero() {
-    const mode = getTimeMode();
-    $("#heroImage").src = mode === "day"
+    const heroImage = $("#heroImage");
+    const heroSpeechText = $("#heroSpeechText");
+    if (!heroImage || !heroSpeechText) return;
+
+    heroImage.src = getTimeMode() === "day"
       ? "https://ul.h3z.jp/lqCNnwQH.png"
       : "https://ul.h3z.jp/UtPlWaZz.png";
 
-    const rnd = seededRandom(`hero::${todayKey()}`);
-    $("#heroSpeechText").textContent = pick(HERO_LINES, rnd);
+    const rnd = randFromSeed(`hero::${todayKey()}`);
+    heroSpeechText.textContent = pick(HERO_LINES, rnd);
   }
 
-  function renderMatchList() {
-    const state = getBoard();
-    const jobs = sortJobs(state.jobs);
-    const root = $("#matchList");
+  function calcCompatibility(job) {
+    const owned = getAllOwnedCards();
+    if (!owned.length) return 0;
+    let best = 0;
+    owned.forEach(card => {
+      const s = cardScoreAgainstJob(card, job);
+      if (s > best) best = s;
+    });
+    return best;
+  }
 
-    root.innerHTML = jobs.map(job => {
-      const status = getVisitorStatus(job);
+  function calcAttachment(job) {
+    return Math.min(5, Math.max(1, job.difficulty + (job.legend ? 1 : 0)));
+  }
 
+  function ensureStyleTag() {
+    if ($("#matchingBoardInlineStyle")) return;
+    const style = document.createElement("style");
+    style.id = "matchingBoardInlineStyle";
+    style.textContent = `
+      .matchHintPanel{
+        margin-top:10px;
+        background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:14px;
+        padding:10px;
+      }
+      .matchHintHead{
+        display:flex;
+        gap:10px;
+        align-items:center;
+        margin-bottom:8px;
+      }
+      .matchHintTakopi{
+        width:34px;
+        height:34px;
+        border-radius:10px;
+        display:grid;
+        place-items:center;
+        background:linear-gradient(180deg, #ffe6ef, #ffc9da);
+        box-shadow:0 4px 10px rgba(128,70,95,.10);
+        font-size:18px;
+      }
+      .matchHintTitle{
+        font-size:12px;
+        line-height:1.5;
+        color:#fff5f8;
+        font-weight:800;
+      }
+      .matchHintList{
+        display:grid;
+        gap:8px;
+      }
+      .matchHintRow{
+        display:flex;
+        gap:8px;
+        align-items:center;
+        justify-content:space-between;
+        flex-wrap:wrap;
+        padding:8px 10px;
+        border-radius:12px;
+        background:rgba(255,255,255,.08);
+        border:1px solid rgba(255,255,255,.07);
+      }
+      .matchHintText{
+        color:#fff5f8;
+        font-size:12px;
+        line-height:1.6;
+        font-weight:700;
+        flex:1 1 180px;
+      }
+      .matchHintBtn{
+        min-height:32px;
+        padding:6px 10px;
+        border:none;
+        border-radius:10px;
+        cursor:pointer;
+        background:linear-gradient(180deg, #fff1bc, #efc75b);
+        color:#5a3614;
+        font-size:11px;
+        font-weight:800;
+        box-shadow:0 4px 10px rgba(0,0,0,.10);
+      }
+      .matchHintBtn[disabled]{
+        opacity:.55;
+        cursor:not-allowed;
+      }
+      .matchMetaStrip{
+        display:flex;
+        flex-wrap:wrap;
+        gap:6px;
+        margin-top:8px;
+      }
+      .matchMetaChip{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-height:26px;
+        padding:4px 8px;
+        border-radius:8px;
+        background:rgba(255,255,255,.12);
+        color:#fff7f9;
+        font-size:11px;
+        font-weight:800;
+        border:1px solid rgba(255,255,255,.08);
+      }
+      .matchSecondaryRow{
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+        margin-top:10px;
+      }
+      .matchMiniBtn{
+        min-height:34px;
+        padding:6px 10px;
+        border:none;
+        border-radius:10px;
+        cursor:pointer;
+        background:rgba(255,255,255,.12);
+        color:#fff8ef;
+        font-size:11px;
+        font-weight:800;
+        border:1px solid rgba(255,255,255,.08);
+      }
+      .reunionBadge{
+        background:linear-gradient(180deg, #ffe8a8, #efc85a);
+        color:#5b3614;
+      }
+      .modalCardGrid{
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(88px, max-content));
+        gap:10px;
+      }
+      .selectCardItem{
+        width:82px;
+      }
+      .selectCardBtn{
+        width:82px;
+        border:none;
+        background:none;
+        padding:0;
+        cursor:pointer;
+      }
+      .selectCardBox{
+        width:82px;
+        height:114px;
+        position:relative;
+        overflow:hidden;
+        border-radius:6px;
+        background:#fff3db;
+        border:3px solid #7a5a28;
+        box-shadow:0 6px 14px rgba(0,0,0,.12);
+      }
+      .selectCardBox img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        display:block;
+      }
+      .selectCardOwn{
+        position:absolute;
+        left:6px;
+        top:6px;
+        min-width:34px;
+        height:24px;
+        padding:0 6px;
+        border-radius:999px;
+        display:grid;
+        place-items:center;
+        background:rgba(255,255,255,.94);
+        color:#4d3623;
+        font-size:11px;
+        border:2px solid rgba(0,0,0,.08);
+      }
+      .selectCardName{
+        margin-top:6px;
+        min-height:32px;
+        word-break:break-word;
+        font-size:11px;
+        line-height:1.45;
+        color:#5b4650;
+        font-weight:700;
+      }
+      .heartJudgeLayer{
+        position:fixed;
+        inset:0;
+        z-index:130;
+        display:none;
+        align-items:center;
+        justify-content:center;
+        background:radial-gradient(circle at center, rgba(255,255,255,.08), rgba(33,13,24,.72));
+        backdrop-filter:blur(6px);
+      }
+      .heartJudgeLayer.show{
+        display:flex;
+      }
+      .heartJudgeInner{
+        text-align:center;
+        color:#fff9f5;
+        animation:judgeEnter .22s ease;
+      }
+      .heartJudgeIcon{
+        font-size:120px;
+        line-height:1;
+        filter:drop-shadow(0 12px 26px rgba(0,0,0,.25));
+        animation:judgePulse .95s ease;
+      }
+      .heartJudgeText{
+        margin-top:12px;
+        font-size:22px;
+        line-height:1.4;
+        font-weight:800;
+      }
+      .heartJudgeSub{
+        margin-top:8px;
+        font-size:14px;
+        line-height:1.7;
+        color:#ffeef4;
+        font-weight:700;
+      }
+      @keyframes judgeEnter{
+        from{ opacity:0; transform:scale(.92); }
+        to{ opacity:1; transform:scale(1); }
+      }
+      @keyframes judgePulse{
+        0%{ transform:scale(.7); opacity:0; }
+        30%{ transform:scale(1.18); opacity:1; }
+        55%{ transform:scale(.96); opacity:1; }
+        80%{ transform:scale(1.06); opacity:1; }
+        100%{ transform:scale(1); opacity:1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function renderHintRows(job) {
+    return job.hints.map((hint, idx) => {
+      const opened = idx < job.revealedHints;
+      const cost = job.hintCosts[idx];
+      if (opened) {
+        return `
+          <div class="matchHintRow">
+            <div class="matchHintText">${escapeHtml(hint)}</div>
+            <button class="matchHintBtn" disabled>開示済み</button>
+          </div>
+        `;
+      }
       return `
-        <article class="matchCard ${job.completed ? "isDone" : ""}">
-          <div class="matchCardHead">
-            <div class="matchAvatarFrame">
-              <img class="matchAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
-            </div>
-
-            <div class="matchHeadRight">
-              <div class="matchSpeech">${escapeHtml(job.line)}</div>
-
-              <div class="matchMetaRow">
-                <h3 class="matchName">${escapeHtml(job.visitorName)}</h3>
-
-                <div class="metaRight">
-                  <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
-                  ${job.featured ? `<span class="matchBadge featured">目玉依頼</span>` : ""}
-                  <span class="matchBadge ${status.cls}">${status.text}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="matchMain">
-            <div class="matchMainGrid">
-              <div class="wantCol">
-                <div class="wantCards">${job.wants.slice(0, 3).map(miniWantHTML).join("")}</div>
-                <div class="rewardRow">${rewardMiniHTML(job)}</div>
-              </div>
-
-              <div class="actionCol">
-                <button class="matchBtn ${status.cls === "ok" && !job.completed ? "primary" : ""}" data-job-id="${job.id}">
-                  ${status.button}
-                </button>
-              </div>
-            </div>
-          </div>
-        </article>
+        <div class="matchHintRow">
+          <div class="matchHintText">次のヒント（有料 ${cost} オクト）</div>
+          <button class="matchHintBtn" data-open-hint="${job.id}" data-hint-index="${idx}">${cost}オクトで見る</button>
+        </div>
       `;
     }).join("");
+  }
 
-    if (state.legendJob) {
-      const job = state.legendJob;
-      const need = getNeedStatus(job);
-      const label = job.completed ? "成立済み" : need.ok ? "マッチ成立" : "片想い";
+  function renderJobCard(job, isLegend = false) {
+    const status = getJobStatus(job);
+    const compatibility = calcCompatibility(job);
+    const reunionMap = getMatchingMeta().reunionMap || {};
+    const reunionCount = Number(reunionMap[job.type] || 0);
+    const attachment = calcAttachment(job);
 
-      $("#legendMatch").classList.remove("hidden");
-      $("#legendMatch").innerHTML = `
-        <div class="legendMatchInner">
-          <img class="legendAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
-
-          <div>
-            <div class="legendCap">本日の特別依頼</div>
-            <h3 class="legendName">${escapeHtml(job.visitorName)}</h3>
-            <p class="legendText">
-              ${escapeHtml(job.line)}<br>
-              報酬：🪙 ${job.rewards.octo.toLocaleString()}
-              ${job.rewards.items.map(v => ` / ${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)}×${v.qty}`).join("")}
-            </p>
+    return `
+      <article class="matchCard ${job.completed ? "isDone" : ""}">
+        <div class="matchCardHead">
+          <div class="matchAvatarFrame">
+            <img class="matchAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
           </div>
 
-          <div style="display:grid; gap:8px; justify-items:end;">
-            <span class="matchBadge ${job.completed ? "done" : need.ok ? "ok" : "ng"}">${label}</span>
-            <button class="matchBtn primary" data-job-id="${job.id}">詳細を見る</button>
+          <div class="matchHeadRight">
+            <div class="matchSpeech">${escapeHtml(job.line)}</div>
+
+            <div class="matchMetaRow">
+              <h3 class="matchName">${escapeHtml(job.visitorName)}</h3>
+              <div class="metaRight">
+                <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
+                ${job.featured ? `<span class="matchBadge featured">目玉依頼</span>` : ""}
+                ${reunionCount > 0 ? `<span class="matchBadge reunionBadge">再会 ${reunionCount}</span>` : ""}
+                <span class="matchBadge ${status.cls}">${status.text}</span>
+              </div>
+            </div>
           </div>
         </div>
-      `;
-    } else {
-      $("#legendMatch").classList.add("hidden");
-      $("#legendMatch").innerHTML = "";
+
+        <div class="matchMain">
+          <div class="matchMetaStrip">
+            <span class="matchMetaChip">相性 ${compatibility}%</span>
+            <span class="matchMetaChip">${escapeHtml(job.loveType)}</span>
+            <span class="matchMetaChip">未練度 ${"★".repeat(attachment)}${"☆".repeat(5 - attachment)}</span>
+            ${job.hintTags.map(tag => `<span class="matchMetaChip">${escapeHtml(tag)}</span>`).join("")}
+          </div>
+
+          <div class="matchHintPanel">
+            <div class="matchHintHead">
+              <div class="matchHintTakopi">🐙</div>
+              <div class="matchHintTitle">今日の希望は……？</div>
+            </div>
+
+            <div class="matchHintList">
+              ${renderHintRows(job)}
+            </div>
+
+            <div class="matchSecondaryRow">
+              <button class="matchBtn ${status.cls === "ok" && !job.completed ? "primary" : ""}" data-open-select="${job.id}">
+                ${status.action}
+              </button>
+              <button class="matchMiniBtn" data-toggle-fav="${job.id}">
+                ${job.favorite ? "追跡中" : "気になる登録"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderBoard() {
+    const state = getBoard();
+    const list = $("#matchList");
+    const legend = $("#legendMatch");
+    if (!list) return;
+
+    list.innerHTML = state.jobs.map(job => renderJobCard(job, false)).join("");
+
+    if (legend) {
+      if (state.legendJob) {
+        legend.classList.remove("hidden");
+        legend.innerHTML = renderJobCard(state.legendJob, true);
+      } else {
+        legend.classList.add("hidden");
+        legend.innerHTML = "";
+      }
     }
 
-    $$("[data-job-id]").forEach(btn => {
-      btn.addEventListener("click", () => openJobModal(btn.dataset.jobId));
+    bindBoardButtons();
+  }
+
+  // =========================================================
+  // Actions
+  // =========================================================
+  function updateJob(jobId, updater) {
+    const state = getBoard();
+    let job = state.jobs.find(v => v.id === jobId);
+    let owner = "jobs";
+    if (!job && state.legendJob?.id === jobId) {
+      job = state.legendJob;
+      owner = "legend";
+    }
+    if (!job) return null;
+
+    updater(job, state, owner);
+    saveBoard(state);
+    return job;
+  }
+
+  function openHint(jobId, idx) {
+    const costMap = [0, 100, 200];
+    const cost = costMap[idx] ?? 100;
+    if (getOcto() < cost) {
+      showTakopiToast("オクトが足りないたこ");
+      return;
+    }
+    addOcto(-cost);
+    updateJob(jobId, (job) => {
+      job.revealedHints = Math.max(job.revealedHints, idx + 1);
     });
+    renderBoard();
+    showTakopiToast(`ヒントを開いたたこ（-${cost}オクト）`);
   }
 
-  function modalWantHTML(want) {
-    if (want.type === "card") {
-      const owned = getOwnedCount(want.cardId);
-      return `
-        <div class="modalWantItem">
-          <div class="modalWantCard">
-            <img src="${want.img}" alt="${escapeHtml(want.name)}">
-            <div class="modalOwnQty">所持${owned}</div>
-            <div class="modalNeedQty">×${want.qty}</div>
-          </div>
-          <div class="modalWantName">${escapeHtml(want.name)}</div>
-        </div>
-      `;
-    }
-
-    const ownedList = getOwnedCardsByRarityAtLeast(want.rarity);
-    const total = ownedList.reduce((sum, c) => sum + c.count, 0);
-
-    return `
-      <div class="modalWantItem">
-        <div class="modalWantCard">
-          <div class="wantMiniRarity ${escapeHtml(want.rarity)}" style="font-size:12px;">
-            <div style="font-size:22px;margin-bottom:6px;">${escapeHtml(want.rarity)}</div>
-            <div>${escapeHtml(want.label)}</div>
-          </div>
-          <div class="modalOwnQty">所持${total}</div>
-          <div class="modalNeedQty">×${want.qty}</div>
-        </div>
-        <div class="modalWantName">${escapeHtml(want.label)}</div>
-      </div>
-    `;
+  function toggleFavorite(jobId) {
+    updateJob(jobId, (job) => {
+      job.favorite = !job.favorite;
+    });
+    renderBoard();
   }
 
-  function modalRewardHTML(job) {
-    const itemLines = job.rewards.items.map(v => {
-      const label = itemLabel(v.kind, v.id);
-      return `${itemIcon(v.kind)} ${label} ×${v.qty}`;
-    }).join("\n");
-
-    return `
-      <div class="modalRewardGrid">
-        <div class="modalRewardBox">
-          <div class="modalRewardBoxLabel">成立報酬</div>
-          <div class="modalRewardBoxValue">🪙 ${job.rewards.octo.toLocaleString()} オクト</div>
-        </div>
-
-        <div class="modalRewardBox">
-          <div class="modalRewardBoxLabel">成長</div>
-          <div class="modalRewardBoxValue">EXP +${job.rewards.exp}\n評判 +${job.rewards.rep}</div>
-        </div>
-
-        <div class="modalRewardBox" style="grid-column:1 / -1;">
-          <div class="modalRewardBoxLabel">追加資材</div>
-          <div class="modalRewardBoxValue">${escapeHtml(itemLines)}</div>
-        </div>
-      </div>
-    `;
+  function getJobById(jobId) {
+    const state = getBoard();
+    return state.jobs.find(v => v.id === jobId) || (state.legendJob?.id === jobId ? state.legendJob : null);
   }
 
-  function renderModal(job) {
-    const need = getNeedStatus(job);
-    const status = getVisitorStatus(job);
+  function openSelectModal(jobId) {
+    const job = getJobById(jobId);
+    if (!job) return;
 
-    $("#jobModalBody").innerHTML = `
+    const owned = getAllOwnedCards();
+    const modal = $("#jobModal");
+    const body = $("#jobModalBody");
+    if (!modal || !body) return;
+
+    body.innerHTML = `
       <div class="modalTop">
         <img class="modalAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
 
         <div>
           <h2 class="modalName" id="modalJobName">${escapeHtml(job.visitorName)}</h2>
-          <p class="modalLine">${escapeHtml(job.line)}</p>
+          <p class="modalLine">この一枚で、あの人は振り向くたこ？</p>
         </div>
 
         <div class="modalRight">
           <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
           <div class="modalTagRow">
-            <span class="modalTag">難易度 ${job.difficulty}</span>
-            <span class="modalTag">${job.legend ? "特別依頼" : job.featured ? "目玉依頼" : "通常依頼"}</span>
+            <span class="modalTag">${escapeHtml(job.loveType)}</span>
+            <span class="modalTag">相性 ${calcCompatibility(job)}%</span>
           </div>
         </div>
       </div>
 
       <section>
-        <h3 class="modalSectionTitle">希望条件</h3>
-        <div class="modalWantGrid">
-          ${job.wants.map(modalWantHTML).join("")}
-        </div>
+        <h3 class="modalSectionTitle">所持カードから選ぶ</h3>
+        ${
+          owned.length
+            ? `<div class="modalCardGrid">
+                ${owned.map(card => `
+                  <div class="selectCardItem">
+                    <button class="selectCardBtn" data-choose-card="${job.id}" data-card-id="${card.id}">
+                      <div class="selectCardBox">
+                        <img src="${card.img}" alt="${escapeHtml(card.name)}">
+                        <div class="selectCardOwn">所持${card.count}</div>
+                      </div>
+                      <div class="selectCardName">${escapeHtml(card.name)}</div>
+                    </button>
+                  </div>
+                `).join("")}
+               </div>`
+            : `<div class="modalStatusList"><div class="modalStatusLine ng">所持カードがないたこ。</div></div>`
+        }
       </section>
-
-      <section>
-        <h3 class="modalSectionTitle">成立報酬</h3>
-        ${modalRewardHTML(job)}
-      </section>
-
-      <section class="modalStatusList">
-        ${need.lines.map(v => `<div class="modalStatusLine ${v.ok ? "ok" : "ng"}">${escapeHtml(v.text)}</div>`).join("")}
-      </section>
-
-      <div class="modalActions">
-        <div class="modalNote">
-          ${
-            job.completed
-              ? "この相手とはすでに成立済みたこ。"
-              : need.ok
-                ? "条件が合ってるたこ。今すぐマッチできるたこ。"
-                : "条件が足りないたこ。片想い解消には在庫が必要たこ。"
-          }
-        </div>
-
-        <button class="modalPrimaryBtn" id="modalPrimaryBtn" ${job.completed || !need.ok ? "disabled" : ""}>
-          ${job.completed ? "成立済み" : status.cls === "ok" ? "今すぐマッチ" : "詳細を見る"}
-        </button>
-      </div>
     `;
 
-    const btn = $("#modalPrimaryBtn");
-    if (btn) {
-      btn.addEventListener("click", () => deliverJob(job.id));
-    }
-  }
-
-  function openJobModal(jobId) {
-    const job = findJobById(jobId);
-    if (!job) return;
-    renderModal(job);
-    $("#jobModal").classList.add("show");
-    $("#jobModal").setAttribute("aria-hidden", "false");
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+
+    $$("[data-choose-card]", body).forEach(btn => {
+      btn.addEventListener("click", () => {
+        const cardId = btn.getAttribute("data-card-id");
+        judgeCard(job.id, cardId);
+      });
+    });
   }
 
   function closeJobModal() {
-    $("#jobModal").classList.remove("show");
-    $("#jobModal").setAttribute("aria-hidden", "true");
+    const modal = $("#jobModal");
+    if (!modal) return;
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
   }
 
-  async function showRewardModal(job) {
-    $("#rewardTitle").textContent = "……焼けたね";
-    $("#rewardSub").textContent = `${job.visitorName} とマッチ成立たこ。\n報酬を順番に追加するたこ。`;
+  function ensureJudgeLayer() {
+    if ($("#heartJudgeLayer")) return;
+    const layer = document.createElement("div");
+    layer.id = "heartJudgeLayer";
+    layer.className = "heartJudgeLayer";
+    layer.innerHTML = `
+      <div class="heartJudgeInner">
+        <div class="heartJudgeIcon" id="heartJudgeIcon">♥</div>
+        <div class="heartJudgeText" id="heartJudgeText">……</div>
+        <div class="heartJudgeSub" id="heartJudgeSub">……</div>
+      </div>
+    `;
+    document.body.appendChild(layer);
+  }
 
+  async function showJudge(judgement) {
+    ensureJudgeLayer();
+    const layer = $("#heartJudgeLayer");
+    const icon = $("#heartJudgeIcon");
+    const text = $("#heartJudgeText");
+    const sub = $("#heartJudgeSub");
+    if (!layer || !icon || !text || !sub) return;
+
+    icon.textContent = judgement.icon;
+    text.textContent = judgement.verdict === "fail" ? "好みではなかったようだ" : "鼓動が重なった";
+    sub.textContent = judgement.text;
+
+    layer.classList.add("show");
+    await new Promise(r => setTimeout(r, 1300));
+    layer.classList.remove("show");
+    await new Promise(r => setTimeout(r, 180));
+  }
+
+  async function judgeCard(jobId, cardId) {
+    const job = getJobById(jobId);
+    if (!job) return;
+    if (getOwnedCount(cardId) <= 0) {
+      showTakopiToast("そのカードは持ってないたこ");
+      return;
+    }
+
+    closeJobModal();
+
+    const card = CARD_MAP[cardId];
+    const score = cardScoreAgainstJob(card, job);
+    const judgement = judgeScore(score);
+
+    await showJudge(judgement);
+
+    if (judgement.verdict === "fail") {
+      updateJob(jobId, (j) => {
+        j.retryCount = Number(j.retryCount || 0) + 1;
+      });
+      renderBoard();
+      showTakopiToast("……違う、それじゃないたこ");
+      return;
+    }
+
+    addOwned(cardId, -1);
+
+    updateJob(jobId, (j, state) => {
+      j.completed = true;
+      j.completedAt = Date.now();
+
+      addOcto(j.rewards.octo);
+      const invItems = j.rewards.items || [];
+      invItems.forEach(item => addInventory(item.kind, item.id, item.qty));
+
+      const meta = getMatchingMeta();
+      meta.reunionMap[j.type] = Number(meta.reunionMap[j.type] || 0) + 1;
+      saveMatchingMeta(meta);
+    });
+
+    renderBoard();
+    await showRewardModal(getJobById(jobId));
+    showTakopiToast("……焼けたね");
+  }
+
+  async function showRewardModal(job) {
+    const modal = $("#rewardModal");
+    const title = $("#rewardTitle");
+    const sub = $("#rewardSub");
     const list = $("#rewardList");
-    list.innerHTML = "";
+    if (!modal || !title || !sub || !list || !job) return;
+
+    title.textContent = "……焼けたね";
+    sub.textContent = `${job.visitorName} とマッチ成立たこ。`;
 
     const lines = [
       `🪙 ${job.rewards.octo.toLocaleString()} オクト`,
-      `EXP +${job.rewards.exp} / 評判 +${job.rewards.rep}`,
+      `評判 +${job.rewards.rep} / 熱量 +${job.rewards.exp}`,
       ...job.rewards.items.map(v => `${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)} ×${v.qty}`)
     ];
 
-    $("#rewardModal").classList.add("show");
-    $("#rewardModal").setAttribute("aria-hidden", "false");
+    list.innerHTML = lines.map(v => `<div class="rewardItem">${escapeHtml(v)}</div>`).join("");
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
 
-    for (const line of lines) {
-      const row = document.createElement("div");
-      row.className = "rewardItem";
-      row.textContent = line;
-      list.appendChild(row);
-      await new Promise(r => setTimeout(r, 170));
-      row.classList.add("show");
+    const rows = $$(".rewardItem", list);
+    for (let i = 0; i < rows.length; i++) {
+      await new Promise(r => setTimeout(r, 120));
+      rows[i].classList.add("show");
     }
   }
 
   function hideRewardModal() {
-    $("#rewardModal").classList.remove("show");
-    $("#rewardModal").setAttribute("aria-hidden", "true");
-    $("#rewardList").innerHTML = "";
-  }
-
-  function deliverJob(jobId) {
-    const state = getBoard();
-    const job = state.jobs.find(v => v.id === jobId) || (state.legendJob?.id === jobId ? state.legendJob : null);
-    if (!job || job.completed) return;
-
-    const need = getNeedStatus(job);
-    if (!need.ok) {
-      showTakopiLine("……足りないのはカードじゃなくて覚悟たこ");
-      renderAll();
-      return;
-    }
-
-    for (const want of job.wants) {
-      const ok = consumeNeed(want);
-      if (!ok) {
-        showTakopiLine("……交渉決裂たこ");
-        renderAll();
-        return;
-      }
-    }
-
-    applyRewards(job);
-    job.completed = true;
-    job.completedAt = Date.now();
-    saveJSON(KEY.board, state);
-
-    closeJobModal();
-    renderAll();
-    showRewardModal(job);
-    showTakopiLine("……焼けたね");
+    const modal = $("#rewardModal");
+    if (!modal) return;
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+    const list = $("#rewardList");
+    if (list) list.innerHTML = "";
   }
 
   // =========================================================
-  // Takopi
+  // Event binding
   // =========================================================
-  let takopiTimer = null;
+  function bindBoardButtons() {
+    $$("[data-open-hint]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const jobId = btn.getAttribute("data-open-hint");
+        const idx = Number(btn.getAttribute("data-hint-index"));
+        openHint(jobId, idx);
+      });
+    });
 
-  function showTakopiLine(text) {
-    $("#takopiToastInner").textContent = text;
-    $("#takopiToast").classList.add("show");
-    clearTimeout(takopiTimer);
-    takopiTimer = setTimeout(() => {
-      $("#takopiToast").classList.remove("show");
-    }, 2600);
-  }
+    $$("[data-toggle-fav]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const jobId = btn.getAttribute("data-toggle-fav");
+        toggleFavorite(jobId);
+      });
+    });
 
-  function randomTakopiLine() {
-    const rnd = seededRandom(`${todayKey()}::takopi::${Date.now()}`);
-    showTakopiLine(pick(TAKOPI_LINES, rnd));
-  }
-
-  function bindTakopiAutoTalk() {
-    const queue = [7000, 15000, 26000];
-    queue.forEach((delay, idx) => {
-      setTimeout(() => {
-        const rnd = seededRandom(`${todayKey()}::takopi-auto::${idx}`);
-        showTakopiLine(pick(TAKOPI_LINES, rnd));
-      }, delay);
+    $$("[data-open-select]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const jobId = btn.getAttribute("data-open-select");
+        openSelectModal(jobId);
+      });
     });
   }
 
-  // =========================================================
-  // Render
-  // =========================================================
-  function renderAll() {
-    renderHero();
-    renderMatchList();
-  }
-
-  // =========================================================
-  // UI bind
-  // =========================================================
   function bindUI() {
-    $("#backBtn").addEventListener("click", () => {
-      if (history.length > 1) history.back();
-      else location.href = "./";
-    });
+    const backBtn = $("#backBtn");
+    if (backBtn) {
+      backBtn.addEventListener("click", () => {
+        if (history.length > 1) history.back();
+        else location.href = "./";
+      });
+    }
 
-    $("#takopiFloat").addEventListener("click", randomTakopiLine);
+    const takopiFloat = $("#takopiFloat");
+    if (takopiFloat) {
+      takopiFloat.addEventListener("click", () => {
+        const rnd = randFromSeed(`${todayKey()}::takopi::${Date.now()}`);
+        showTakopiToast(pick(TAKOPI_LINES, rnd));
+      });
+    }
 
-    $("#jobModalClose").addEventListener("click", closeJobModal);
-    $("#jobModal").addEventListener("click", (e) => {
-      if (e.target === $("#jobModal")) closeJobModal();
-    });
+    const closeBtn = $("#jobModalClose");
+    if (closeBtn) closeBtn.addEventListener("click", closeJobModal);
 
-    $("#rewardCloseBtn").addEventListener("click", hideRewardModal);
-    $("#rewardModal").addEventListener("click", (e) => {
-      if (e.target === $("#rewardModal")) hideRewardModal();
-    });
+    const modal = $("#jobModal");
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeJobModal();
+      });
+    }
+
+    const rewardClose = $("#rewardCloseBtn");
+    if (rewardClose) rewardClose.addEventListener("click", hideRewardModal);
+
+    const rewardModal = $("#rewardModal");
+    if (rewardModal) {
+      rewardModal.addEventListener("click", (e) => {
+        if (e.target === rewardModal) hideRewardModal();
+      });
+    }
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
@@ -1542,8 +1992,9 @@
   // Boot
   // =========================================================
   ensureDefaults();
+  ensureStyleTag();
   generateBoard(false);
   bindUI();
-  renderAll();
-  bindTakopiAutoTalk();
+  renderHero();
+  renderBoard();
 })();
