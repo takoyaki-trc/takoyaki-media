@@ -458,6 +458,10 @@
     return parsed;
   }
 
+  function saveAffectionState(state) {
+    localStorage.setItem(AFFECTION_LS_KEY, JSON.stringify(state));
+  }
+
   function getDefaultAffectionGuest() {
     return {
       love: 0,
@@ -467,6 +471,28 @@
       lastTalkAt: 0,
       lastSeenAt: 0
     };
+  }
+
+  function patchAffectionGuest(id, patch) {
+    const state = loadAffectionState();
+    if (!state.guests[id]) {
+      state.guests[id] = getDefaultAffectionGuest();
+    }
+    Object.assign(state.guests[id], patch || {});
+    state.guests[id].love = clamp(Number(state.guests[id].love || 0), 0, 100);
+    saveAffectionState(state);
+    return state.guests[id];
+  }
+
+  function addAffection(id, delta) {
+    const state = loadAffectionState();
+    if (!state.guests[id]) {
+      state.guests[id] = getDefaultAffectionGuest();
+    }
+    state.guests[id].love = clamp(Number(state.guests[id].love || 0) + Number(delta || 0), 0, 100);
+    state.guests[id].lastSeenAt = Date.now();
+    saveAffectionState(state);
+    return state.guests[id].love;
   }
 
   function heartsFromLove(love) {
@@ -572,10 +598,7 @@
         <article class="affectionItem">
           <div class="affectionItemTop">
             <div class="affectionIcon">
-              ${row.icon
-                ? `<img src="${escapeHtml(row.icon)}" alt="${escapeHtml(row.name)}">`
-                : ``
-              }
+              ${row.icon ? `<img src="${escapeHtml(row.icon)}" alt="${escapeHtml(row.name)}">` : ``}
             </div>
 
             <div class="affectionMain">
@@ -700,6 +723,11 @@
         if (count > 0) got[card.id] = { count, name: card.name, rarity: card.rarity };
       });
       saveJSON(KEY.book, { got });
+    }
+
+    const affection = loadAffectionState();
+    if (!affection || !affection.guests) {
+      saveAffectionState({ ver: 1, guests: {} });
     }
   }
 
@@ -1059,7 +1087,7 @@
     return Math.max(4, difficulty * 4);
   }
 
-  function rewardRepByDifficulty(difficulty) {
+  function rewardAffectionByDifficulty(difficulty) {
     return Math.max(2, difficulty + 1);
   }
 
@@ -1215,7 +1243,7 @@
       isExtraPool: wanted.isExtraPool,
       rewardOcto: wanted.isExtraPool ? rewardOctoHighExtra(rnd) : rewardOctoByRarity(wanted.card.rarity, rnd),
       rewardExp: rewardExpByDifficulty(difficulty),
-      rewardRep: rewardRepByDifficulty(difficulty),
+      rewardAffection: rewardAffectionByDifficulty(difficulty),
       rewardItems: makeRewardItems(type, difficulty, rnd),
       hints: makeHintsForCard(wanted.card, wanted.isExtraPool),
       currentHintIndex: 0,
@@ -1224,7 +1252,8 @@
       completed: false,
       completedAt: null,
       retryCount: 0,
-      lastBonusOcto: 0
+      lastBonusOcto: 0,
+      lastAffectionGain: 0
     };
   }
 
@@ -1654,7 +1683,7 @@
 
         <div>
           <h2 class="modalName" id="modalJobName">${escapeHtml(job.visitorName)}</h2>
-          <p class="modalLine">どのカードを渡すたこ？</p>
+          <p class="modalLine">どのカードを渡す？</p>
         </div>
 
         <div class="modalRight">
@@ -1682,7 +1711,7 @@
                   </div>
                 `).join("")}
                </div>`
-            : `<div class="modalStatusList"><div class="modalStatusLine ng">所持カードがないたこ。</div></div>`
+            : `<div class="modalStatusList"><div class="modalStatusLine ng">所持カードがない。</div></div>`
         }
       </section>
     `;
@@ -1722,12 +1751,12 @@
         <div class="modalBody">
           <h2 class="modalName" id="howToTitle">遊び方</h2>
           <div class="modalStatusList">
-            <div class="modalStatusLine ok">① 相手のセリフとヒントを見るたこ</div>
-            <div class="modalStatusLine ok">② 所持カードから1枚選んで渡すたこ</div>
-            <div class="modalStatusLine ok">③ ぴったりなら ♥ でマッチ成立たこ</div>
-            <div class="modalStatusLine ok">④ 失敗しても3回まで挑戦できるたこ</div>
-            <div class="modalStatusLine ok">⑤ ヒント2を見る前に一発正解すると +報酬 たこ</div>
-            <div class="modalStatusLine ok">⑥ 失敗カウントは3回全部だめだった時だけ反映たこ</div>
+            <div class="modalStatusLine ok">① 相手のセリフとヒントを見る</div>
+            <div class="modalStatusLine ok">② 所持カードから1枚選んで渡す</div>
+            <div class="modalStatusLine ok">③ ぴったりなら ♥ でマッチ成立</div>
+            <div class="modalStatusLine ok">④ 失敗しても3回まで挑戦できる</div>
+            <div class="modalStatusLine ok">⑤ ヒント2を見る前に一発正解すると +報酬</div>
+            <div class="modalStatusLine ok">⑥ 失敗カウントは3回全部だめだった時だけ反映</div>
           </div>
         </div>
       </div>
@@ -1830,7 +1859,7 @@
     if (!modal || !title || !sub || !list || !job) return;
 
     title.textContent = "……焼けたね";
-    sub.textContent = `${job.visitorName} とマッチ成立たこ。`;
+    sub.textContent = `${job.visitorName} とマッチ成立。`;
 
     const rows = [];
 
@@ -1839,7 +1868,7 @@
     }
 
     rows.push(`<div class="rewardItem">🪙 ${job.rewardOcto.toLocaleString()} オクト</div>`);
-    rows.push(`<div class="rewardItem">評判 +${job.rewardRep} / 熱量 +${job.rewardExp}</div>`);
+    rows.push(`<div class="rewardItem">好感度 +${job.lastAffectionGain} / 熱量 +${job.rewardExp}</div>`);
     rows.push(...job.rewardItems.map(v => `<div class="rewardItem">${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)} ×${v.qty}</div>`));
 
     list.innerHTML = rows.join("");
@@ -1914,15 +1943,21 @@
 
     updateJob(jobId, (j) => {
       const bonus = isFirstTryNoHint2 ? calcFirstTryBonus(j) : 0;
+      const affectionGain = Number(j.rewardAffection || 0);
+
       j.completed = true;
       j.completedAt = Date.now();
       j.lastBonusOcto = bonus;
+      j.lastAffectionGain = affectionGain;
+
       addOcto(j.rewardOcto + bonus);
       j.rewardItems.forEach(item => addInventory(item.kind, item.id, item.qty));
+      addAffection(j.type, affectionGain);
     });
 
     renderHeroStats();
     renderBoard();
+    renderAffectionModal();
     await showRewardModal(getJobById(jobId));
 
     if (isFirstTryNoHint2) {
@@ -1959,8 +1994,7 @@
     }
 
     const affectionBtn = $("#affectionBtn");
-    if (affectionBtn && !affectionBtn.dataset.bound) {
-      affectionBtn.dataset.bound = "1";
+    if (affectionBtn) {
       affectionBtn.addEventListener("click", (e) => {
         e.preventDefault();
         openAffectionModal();
@@ -1968,20 +2002,17 @@
     }
 
     const affectionClose = $("#affectionClose");
-    if (affectionClose && !affectionClose.dataset.bound) {
-      affectionClose.dataset.bound = "1";
+    if (affectionClose) {
       affectionClose.addEventListener("click", closeAffectionModal);
     }
 
     const affectionOk = $("#affectionOk");
-    if (affectionOk && !affectionOk.dataset.bound) {
-      affectionOk.dataset.bound = "1";
+    if (affectionOk) {
       affectionOk.addEventListener("click", closeAffectionModal);
     }
 
     const affectionModal = $("#affectionModal");
-    if (affectionModal && !affectionModal.dataset.bound) {
-      affectionModal.dataset.bound = "1";
+    if (affectionModal) {
       affectionModal.addEventListener("click", (e) => {
         if (e.target === affectionModal) closeAffectionModal();
       });
@@ -2035,4 +2066,5 @@
   ensurePlayGuideButton();
   renderHero();
   renderBoard();
+  renderAffectionModal();
 })();
