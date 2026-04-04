@@ -340,32 +340,12 @@
 
   const WATER_SPECIAL_CARDS = {
     rotten: [
-      {
-        id: "SP-MIZU-001",
-        name: "腐敗したカード",
-        img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png",
-        rarity: "SP"
-      },
-      {
-        id: "SP-MIZU-002",
-        name: "浸食したカード",
-        img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png",
-        rarity: "SP"
-      }
+      { id: "SP-MIZU-001", name: "腐敗したカード", img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png", rarity: "SP" },
+      { id: "SP-MIZU-002", name: "浸食したカード", img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png", rarity: "SP" }
     ],
     sea: [
-      {
-        id: "SP-MIZU-001",
-        name: "腐敗したカード",
-        img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png",
-        rarity: "SP"
-      },
-      {
-        id: "SP-MIZU-002",
-        name: "浸食したカード",
-        img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png",
-        rarity: "SP"
-      }
+      { id: "SP-MIZU-001", name: "腐敗したカード", img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png", rarity: "SP" },
+      { id: "SP-MIZU-002", name: "浸食したカード", img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png", rarity: "SP" }
     ]
   };
 
@@ -385,11 +365,7 @@
     ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea`, rarity: v.rarity || "SP" }))
   ];
 
-  const CARDS_ALL = [
-    ...FIRST_SERIES_CARDS,
-    ...EXTRA_SERIES_CARDS
-  ];
-
+  const CARDS_ALL = [...FIRST_SERIES_CARDS, ...EXTRA_SERIES_CARDS];
   const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
 
   // =========================================================
@@ -431,90 +407,27 @@
   };
 
   const REWARD_PROFILES = {
-    careful: {
-      fixed: [["water", "water_plain_free"]],
-      rand: [["fert", "fert_feel", 18], ["seed", "seed_random", 18], ["water", "water_nice", 12]]
-    },
-    impulse: {
-      fixed: [["water", "water_nice"]],
-      rand: [["seed", "seed_shop", 18], ["seed", "seed_line", 10], ["fert", "fert_guts", 10]]
-    },
-    looker: {
-      fixed: [["water", "water_plain_free"]],
-      rand: [["water", "water_regret", 8], ["fert", "fert_agedama", 12], ["seed", "seed_random", 16]]
-    },
-    picky: {
-      fixed: [["water", "water_rotten"]],
-      rand: [["water", "water_sea", 14], ["fert", "fert_timeno", 8], ["seed", "seed_bussasari", 6]]
-    },
-    king: {
-      fixed: [["water", "water_yunokawa"]],
-      rand: [["seed", "seed_namara_kawasar", 12], ["seed", "seed_special", 8], ["fert", "fert_skip", 10]]
-    },
-    flipper: {
-      fixed: [["water", "water_nice"]],
-      rand: [["fert", "fert_feel", 12], ["water", "water_regret", 8], ["seed", "seed_random", 14]]
-    },
-    rich: {
-      fixed: [["water", "water_overdo"], ["seed", "seed_namara_kawasar"]],
-      rand: [["water", "water_supergod", 8], ["seed", "seed_bussasari", 18], ["fert", "fert_timeno", 12]]
-    },
-    climber: {
-      fixed: [["water", "water_suspicious"]],
-      rand: [["fert", "fert_guts", 15], ["seed", "seed_line", 10], ["seed", "seed_shop", 12]]
-    },
-    guide: {
-      fixed: [["water", "water_plain_free"], ["seed", "seed_random"]],
-      rand: [["fert", "fert_feel", 18], ["water", "water_nice", 12]]
-    },
-    relax: {
-      fixed: [["water", "water_plain_free"]],
-      rand: [["seed", "seed_random", 16], ["fert", "fert_feel", 16], ["water", "water_nice", 8]]
-    },
-    artisan: {
-      fixed: [["fert", "fert_guts"]],
-      rand: [["fert", "fert_skip", 18], ["water", "water_suspicious", 10], ["seed", "seed_shop", 12]]
-    },
-    diet: {
-      fixed: [["fert", "fert_agedama"]],
-      rand: [["water", "water_regret", 10], ["fert", "fert_feel", 12], ["seed", "seed_random", 18]]
-    },
-    overflow: {
-      fixed: [["water", "water_rotten"]],
-      rand: [["water", "water_sea", 12], ["fert", "fert_timeno", 8], ["seed", "seed_bussasari", 6]]
-    },
-    collector: {
-      fixed: [["seed", "seed_special"]],
-      rand: [["water", "water_yunokawa", 10], ["seed", "seed_namara_kawasar", 10], ["fert", "fert_skip", 8]]
-    },
-    shadow: {
-      fixed: [["water", "water_suspicious"]],
-      rand: [["water", "water_rotten", 8], ["water", "water_sea", 10], ["water", "water_overdo", 8]]
-    },
-    ramen: {
-      fixed: [["seed", "seed_random"]],
-      rand: [["seed", "seed_shop", 12], ["fert", "fert_guts", 10], ["fert", "fert_feel", 12]]
-    },
-    streamer: {
-      fixed: [],
-      rand: [["water", "water_nice", 12], ["seed", "seed_special", 8], ["fert", "fert_skip", 8], ["seed", "seed_bussasari", 10]]
-    },
-    gourmet: {
-      fixed: [["water", "water_yunokawa"]],
-      rand: [["water", "water_nice", 14], ["seed", "seed_namara_kawasar", 10], ["fert", "fert_feel", 10]]
-    },
-    opener: {
-      fixed: [["water", "water_nice"]],
-      rand: [["seed", "seed_shop", 16], ["seed", "seed_line", 10], ["fert", "fert_skip", 8]]
-    },
-    party: {
-      fixed: [["seed", "seed_random"]],
-      rand: [["seed", "seed_shop", 12], ["water", "water_nice", 12], ["fert", "fert_guts", 10]]
-    },
-    pilgrim: {
-      fixed: [["water", "water_overdo"], ["fert", "fert_timeno"]],
-      rand: [["water", "water_supergod", 10], ["seed", "seed_special", 10], ["seed", "seed_bussasari", 14]]
-    }
+    careful: { fixed: [["water", "water_plain_free"]], rand: [["fert", "fert_feel", 18], ["seed", "seed_random", 18], ["water", "water_nice", 12]] },
+    impulse: { fixed: [["water", "water_nice"]], rand: [["seed", "seed_shop", 18], ["seed", "seed_line", 10], ["fert", "fert_guts", 10]] },
+    looker: { fixed: [["water", "water_plain_free"]], rand: [["water", "water_regret", 8], ["fert", "fert_agedama", 12], ["seed", "seed_random", 16]] },
+    picky: { fixed: [["water", "water_rotten"]], rand: [["water", "water_sea", 14], ["fert", "fert_timeno", 8], ["seed", "seed_bussasari", 6]] },
+    king: { fixed: [["water", "water_yunokawa"]], rand: [["seed", "seed_namara_kawasar", 12], ["seed", "seed_special", 8], ["fert", "fert_skip", 10]] },
+    flipper: { fixed: [["water", "water_nice"]], rand: [["fert", "fert_feel", 12], ["water", "water_regret", 8], ["seed", "seed_random", 14]] },
+    rich: { fixed: [["water", "water_overdo"], ["seed", "seed_namara_kawasar"]], rand: [["water", "water_supergod", 8], ["seed", "seed_bussasari", 18], ["fert", "fert_timeno", 12]] },
+    climber: { fixed: [["water", "water_suspicious"]], rand: [["fert", "fert_guts", 15], ["seed", "seed_line", 10], ["seed", "seed_shop", 12]] },
+    guide: { fixed: [["water", "water_plain_free"], ["seed", "seed_random"]], rand: [["fert", "fert_feel", 18], ["water", "water_nice", 12]] },
+    relax: { fixed: [["water", "water_plain_free"]], rand: [["seed", "seed_random", 16], ["fert", "fert_feel", 16], ["water", "water_nice", 8]] },
+    artisan: { fixed: [["fert", "fert_guts"]], rand: [["fert", "fert_skip", 18], ["water", "water_suspicious", 10], ["seed", "seed_shop", 12]] },
+    diet: { fixed: [["fert", "fert_agedama"]], rand: [["water", "water_regret", 10], ["fert", "fert_feel", 12], ["seed", "seed_random", 18]] },
+    overflow: { fixed: [["water", "water_rotten"]], rand: [["water", "water_sea", 12], ["fert", "fert_timeno", 8], ["seed", "seed_bussasari", 6]] },
+    collector: { fixed: [["seed", "seed_special"]], rand: [["water", "water_yunokawa", 10], ["seed", "seed_namara_kawasar", 10], ["fert", "fert_skip", 8]] },
+    shadow: { fixed: [["water", "water_suspicious"]], rand: [["water", "water_rotten", 8], ["water", "water_sea", 10], ["water", "water_overdo", 8]] },
+    ramen: { fixed: [["seed", "seed_random"]], rand: [["seed", "seed_shop", 12], ["fert", "fert_guts", 10], ["fert", "fert_feel", 12]] },
+    streamer: { fixed: [], rand: [["water", "water_nice", 12], ["seed", "seed_special", 8], ["fert", "fert_skip", 8], ["seed", "seed_bussasari", 10]] },
+    gourmet: { fixed: [["water", "water_yunokawa"]], rand: [["water", "water_nice", 14], ["seed", "seed_namara_kawasar", 10], ["fert", "fert_feel", 10]] },
+    opener: { fixed: [["water", "water_nice"]], rand: [["seed", "seed_shop", 16], ["seed", "seed_line", 10], ["fert", "fert_skip", 8]] },
+    party: { fixed: [["seed", "seed_random"]], rand: [["seed", "seed_shop", 12], ["water", "water_nice", 12], ["fert", "fert_guts", 10]] },
+    pilgrim: { fixed: [["water", "water_overdo"], ["fert", "fert_timeno"]], rand: [["water", "water_supergod", 10], ["seed", "seed_special", 10], ["seed", "seed_bussasari", 14]] }
   };
 
   function itemIcon(kind) {
@@ -559,11 +472,7 @@
     const book = getBook();
     const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
     if (!book.got[cardId]) {
-      book.got[cardId] = {
-        count: 0,
-        name: info.name,
-        rarity: info.rarity
-      };
+      book.got[cardId] = { count: 0, name: info.name, rarity: info.rarity };
     }
     book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + Number(delta || 0));
     if (book.got[cardId].count <= 0) delete book.got[cardId];
@@ -581,14 +490,10 @@
   }
 
   function ensureDefaults() {
-    if (localStorage.getItem(KEY.octo) == null) {
-      localStorage.setItem(KEY.octo, "1000");
-    }
+    if (localStorage.getItem(KEY.octo) == null) localStorage.setItem(KEY.octo, "1000");
 
     const inv = loadJSON(KEY.inv, null);
-    if (!inv) {
-      saveJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
-    }
+    if (!inv) saveJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
 
     const meta = loadJSON(KEY.matchingMeta, null);
     if (!meta) {
@@ -612,13 +517,7 @@
         else if (card.rarity === "LR") count = Math.random() < 0.05 ? 1 : 0;
         else if (card.rarity === "SP") count = Math.random() < 0.04 ? 1 : 0;
 
-        if (count > 0) {
-          got[card.id] = {
-            count,
-            name: card.name,
-            rarity: card.rarity
-          };
-        }
+        if (count > 0) got[card.id] = { count, name: card.name, rarity: card.rarity };
       });
       saveJSON(KEY.book, { got });
     }
@@ -697,7 +596,6 @@
   function buildHint1(card, isExtraPool) {
     const name = card.name || "";
     const tags = deriveTags(card);
-
     const candidates = [];
 
     if (isExtraPool) {
@@ -718,17 +616,17 @@
 
     if (tags.includes("love")) {
       candidates.push(
-        "恋愛っぽい雰囲気のカードたこ",
+        "恋愛っぽい名前のカードたこ",
         "気持ちや関係を感じる名前のカードたこ",
-        "恋・デート・契約みたいな空気のカードたこ"
+        "恋・デート・契約みたいな雰囲気のカードたこ"
       );
     }
 
     if (tags.includes("darts")) {
       candidates.push(
         "ダーツやプロ選手に関係あるカードたこ",
-        "競技っぽい空気のカードたこ",
-        "ダーツ系から探すと分かりやすいたこ"
+        "競技っぽい雰囲気のカードたこ",
+        "ダーツ系から探すと近いたこ"
       );
     }
 
@@ -759,8 +657,8 @@
     if (tags.includes("crowd")) {
       candidates.push(
         "大会・会議・行列みたいに人が多いカードたこ",
-        "人が集まってる感じのカードたこ",
-        "にぎやかな場面のカードたこ"
+        "人が集まってる場面のカードたこ",
+        "にぎやかな感じのカードたこ"
       );
     }
 
@@ -830,8 +728,8 @@
     if (card.rarity === "N") {
       candidates.push(
         "かなり見つけやすいほうたこ",
-        "手持ちに入ってる人が多いほうたこ",
-        "まず最初に探すと見つけやすいレベルたこ"
+        "手持ちにある人が多いほうたこ",
+        "最初に探すと見つけやすいレベルたこ"
       );
     } else if (card.rarity === "R") {
       candidates.push(
@@ -843,7 +741,7 @@
       candidates.push(
         "そこそこレアなたこ",
         "人によっては持ってないレベルたこ",
-        "ここから少し本気で探す側たこ"
+        "少し本気で探す側たこ"
       );
     } else if (card.rarity === "UR") {
       candidates.push(
@@ -855,7 +753,7 @@
       candidates.push(
         "最上位クラスのかなりレアなたこ",
         "出会えたらかなりアツいレベルたこ",
-        "かなり持ってる人が少ないたこ"
+        "持ってる人がかなり少ないたこ"
       );
     } else if (card.rarity === "SP") {
       candidates.push(
@@ -955,34 +853,34 @@
   // =========================================================
   function rewardOctoByRarity(rarity, rnd) {
     const map = {
-      N: [260, 480],
-      R: [520, 900],
-      SR: [950, 1450],
-      UR: [1500, 2200],
-      LR: [2600, 3600],
-      SP: [2800, 4200]
+      N: [320, 560],
+      R: [620, 980],
+      SR: [1100, 1600],
+      UR: [1700, 2400],
+      LR: [2900, 3900],
+      SP: [3200, 4600]
     };
-    const range = map[rarity] || [500, 900];
+    const range = map[rarity] || [600, 1000];
     return Math.floor(rnd() * (range[1] - range[0] + 1)) + range[0];
   }
 
   function rewardOctoHighExtra(rnd) {
     const table = [
-      { value: 4200, weight: 55 },
-      { value: 5000, weight: 22 },
-      { value: 6000, weight: 12 },
-      { value: 7777, weight: 7 },
-      { value: 9999, weight: 4 }
+      { value: 4500, weight: 48 },
+      { value: 5500, weight: 22 },
+      { value: 6500, weight: 14 },
+      { value: 7777, weight: 10 },
+      { value: 9999, weight: 6 }
     ];
     return weightedPick(table, rnd).value;
   }
 
   function rewardExpByDifficulty(difficulty) {
-    return Math.max(3, difficulty * 4);
+    return Math.max(4, difficulty * 4);
   }
 
   function rewardRepByDifficulty(difficulty) {
-    return Math.max(1, difficulty + 1);
+    return Math.max(2, difficulty + 1);
   }
 
   function makeRewardItems(type, difficulty, rnd) {
@@ -993,7 +891,7 @@
       out.push({ kind, id, qty: difficulty >= 4 ? 2 : 1 });
     }
 
-    const count = difficulty <= 2 ? 3 : difficulty === 3 ? 4 : difficulty === 4 ? 5 : 6;
+    const count = difficulty <= 2 ? 4 : difficulty === 3 ? 5 : difficulty === 4 ? 6 : 7;
     const randPool = profile.rand.map(([kind, id, weight]) => ({ kind, id, weight }));
 
     for (let i = 0; i < count; i++) {
@@ -1020,7 +918,7 @@
   }
 
   function calcFirstTryBonus(job) {
-    return Math.max(300, Math.round(job.rewardOcto * 0.35));
+    return Math.max(400, Math.round(job.rewardOcto * 0.4));
   }
 
   // =========================================================
@@ -1167,11 +1065,7 @@
       legendJob = makeJob(pick(legendCandidates, rnd), 99, today, true, true);
     }
 
-    const state = {
-      date: today,
-      jobs,
-      legendJob
-    };
+    const state = { date: today, jobs, legendJob };
     saveJSON(KEY.board, state);
     return state;
   }
@@ -1213,9 +1107,7 @@
     const a = new Set(deriveTags(card));
     const b = new Set(deriveTags(target));
     let overlap = 0;
-    b.forEach(tag => {
-      if (a.has(tag)) overlap++;
-    });
+    b.forEach(tag => { if (a.has(tag)) overlap++; });
     score += overlap * 12;
 
     if (
@@ -1283,11 +1175,9 @@
     `;
 
     const speechWrap = $(".heroSpeechWrap", hero);
-    if (speechWrap) {
-      speechWrap.insertAdjacentElement("afterend", wrap);
-    } else {
-      hero.appendChild(wrap);
-    }
+    if (speechWrap) speechWrap.insertAdjacentElement("afterend", wrap);
+    else hero.appendChild(wrap);
+
     return wrap;
   }
 
@@ -1408,7 +1298,7 @@
         <div class="matchHintBadge">今日の希望のカードは…</div>
 
         <div class="matchHintLargeBox">
-         <div class="matchHintLabel">ヒント${idx + 1}</div>
+          <div class="matchHintLabel">ヒント${idx + 1}</div>
           <div class="matchHintCurrent">${escapeHtml(currentText)}</div>
         </div>
 
@@ -1442,6 +1332,14 @@
 
     return `
       <article class="matchCard ${job.completed ? "isDone" : ""}">
+        <div class="matchTopRow">
+          <h3 class="matchName">${escapeHtml(job.visitorName)}</h3>
+          <div class="metaRight">
+            <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
+            <span class="matchBadge ${status.cls}">${status.label}</span>
+          </div>
+        </div>
+
         <div class="matchCardHead">
           <div class="matchAvatarFrame">
             <img class="matchAvatar" src="${job.visitorImg}" alt="${escapeHtml(job.visitorName)}">
@@ -1449,14 +1347,6 @@
 
           <div class="matchHeadRight">
             <div class="matchSpeech" data-love-rotate="${job.id}">${escapeHtml(job.line)}</div>
-
-            <div class="matchMetaRow">
-              <h3 class="matchName">${escapeHtml(job.visitorName)}</h3>
-              <div class="metaRight">
-                <div class="matchStars s${job.difficulty}">${stars(job.difficulty)}</div>
-                <span class="matchBadge ${status.cls}">${status.label}</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -1492,7 +1382,6 @@
     el._timer = setInterval(() => {
       i = (i + 1) % lines.length;
       el.style.opacity = "0";
-
       setTimeout(() => {
         el.textContent = lines[i];
         el.style.opacity = "1";
@@ -1567,10 +1456,7 @@
     const rarityOrder = { SP: 6, LR: 5, UR: 4, SR: 3, R: 2, N: 1 };
 
     const ownedCards = CARDS_ALL
-      .map(card => ({
-        ...card,
-        count: Number(owned.got?.[card.id]?.count || 0)
-      }))
+      .map(card => ({ ...card, count: Number(owned.got?.[card.id]?.count || 0) }))
       .filter(v => v.count > 0)
       .sort((a, b) => {
         const rd = (rarityOrder[b.rarity] || 0) - (rarityOrder[a.rarity] || 0);
@@ -1929,34 +1815,6 @@
     });
   }
 
-  function bindLoveLineRotation() {
-    $$("[data-love-rotate]").forEach(el => {
-      const jobId = el.getAttribute("data-love-rotate");
-      const job = getJobById(jobId);
-      if (!job) return;
-
-      const lines = getSpeechLines(job.type);
-      if (!lines || !lines.length) return;
-
-      let i = 0;
-      el.textContent = lines[i];
-
-      if (el._loveTimer) {
-        clearInterval(el._loveTimer);
-      }
-
-      el._loveTimer = setInterval(() => {
-        i = (i + 1) % lines.length;
-        el.style.opacity = "0";
-
-        setTimeout(() => {
-          el.textContent = lines[i];
-          el.style.opacity = "1";
-        }, 180);
-      }, 10000);
-    });
-  }
-
   // =========================================================
   // Boot
   // =========================================================
@@ -1967,5 +1825,4 @@
   ensurePlayGuideButton();
   renderHero();
   renderBoard();
-  bindLoveLineRotation();
 })();
