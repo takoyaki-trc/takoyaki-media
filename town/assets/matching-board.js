@@ -5,7 +5,7 @@
   // Keys
   // =========================================================
   const KEY = {
-    board: "ttc_matching_board_v6",
+    board: "ttc_matching_board_v7",
     octo: "roten_v1_octo",
     book: "tf_v1_book",
     inv: "tf_v1_inv",
