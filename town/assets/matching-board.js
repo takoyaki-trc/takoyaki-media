@@ -1,3 +1,7 @@
+旧js
+
+
+
 (() => {
   "use strict";
 
@@ -5,7 +9,7 @@
   // Keys
   // =========================================================
   const KEY = {
-    board: "ttc_matching_board_v8",
+    board: "ttc_matching_board_v7",
     octo: "roten_v1_octo",
     book: "tf_v1_book",
     inv: "tf_v1_inv",
@@ -473,37 +477,26 @@
     };
   }
 
-  function getAffectionGuest(type) {
+  function patchAffectionGuest(id, patch) {
     const state = loadAffectionState();
-    const current = state.guests[type];
-    return { ...getDefaultAffectionGuest(), ...(current || {}) };
-  }
-
-  function patchAffectionGuest(type, patch) {
-    const state = loadAffectionState();
-    if (!state.guests[type]) state.guests[type] = getDefaultAffectionGuest();
-    Object.assign(state.guests[type], patch || {});
-    state.guests[type].love = clamp(Number(state.guests[type].love || 0), 0, 100);
-    state.guests[type].lastSeenAt = Date.now();
+    if (!state.guests[id]) {
+      state.guests[id] = getDefaultAffectionGuest();
+    }
+    Object.assign(state.guests[id], patch || {});
+    state.guests[id].love = clamp(Number(state.guests[id].love || 0), 0, 100);
     saveAffectionState(state);
-    return state.guests[type];
+    return state.guests[id];
   }
 
-  function addAffection(type, delta) {
-    const prev = getAffectionGuest(type);
-    const nextLove = clamp(Number(prev.love || 0) + Number(delta || 0), 0, 100);
-    patchAffectionGuest(type, { love: nextLove });
-    return nextLove;
-  }
-
-  function calcAffectionGainByHintIndex(hintIndex, rnd) {
-    if (hintIndex <= 0) {
-      return Math.floor(rnd() * 6) + 5; // 5-10
+  function addAffection(id, delta) {
+    const state = loadAffectionState();
+    if (!state.guests[id]) {
+      state.guests[id] = getDefaultAffectionGuest();
     }
-    if (hintIndex === 1) {
-      return Math.floor(rnd() * 5) + 3; // 3-7
-    }
-    return Math.floor(rnd() * 5) + 1; // 1-5
+    state.guests[id].love = clamp(Number(state.guests[id].love || 0) + Number(delta || 0), 0, 100);
+    state.guests[id].lastSeenAt = Date.now();
+    saveAffectionState(state);
+    return state.guests[id].love;
   }
 
   function heartsFromLove(love) {
@@ -734,6 +727,11 @@
         if (count > 0) got[card.id] = { count, name: card.name, rarity: card.rarity };
       });
       saveJSON(KEY.book, { got });
+    }
+
+    const affection = loadAffectionState();
+    if (!affection || !affection.guests) {
+      saveAffectionState({ ver: 1, guests: {} });
     }
   }
 
@@ -1093,7 +1091,7 @@
     return Math.max(4, difficulty * 4);
   }
 
-  function rewardRepByDifficulty(difficulty) {
+  function rewardAffectionByDifficulty(difficulty) {
     return Math.max(2, difficulty + 1);
   }
 
@@ -1249,7 +1247,7 @@
       isExtraPool: wanted.isExtraPool,
       rewardOcto: wanted.isExtraPool ? rewardOctoHighExtra(rnd) : rewardOctoByRarity(wanted.card.rarity, rnd),
       rewardExp: rewardExpByDifficulty(difficulty),
-      rewardRep: rewardRepByDifficulty(difficulty),
+      rewardAffection: rewardAffectionByDifficulty(difficulty),
       rewardItems: makeRewardItems(type, difficulty, rnd),
       hints: makeHintsForCard(wanted.card, wanted.isExtraPool),
       currentHintIndex: 0,
@@ -1689,7 +1687,7 @@
 
         <div>
           <h2 class="modalName" id="modalJobName">${escapeHtml(job.visitorName)}</h2>
-          <p class="modalLine">どのカードを渡すたこ？</p>
+          <p class="modalLine">どのカードを渡す？</p>
         </div>
 
         <div class="modalRight">
@@ -1717,7 +1715,7 @@
                   </div>
                 `).join("")}
                </div>`
-            : `<div class="modalStatusList"><div class="modalStatusLine ng">所持カードがないたこ。</div></div>`
+            : `<div class="modalStatusList"><div class="modalStatusLine ng">所持カードがない。</div></div>`
         }
       </section>
     `;
@@ -1757,12 +1755,12 @@
         <div class="modalBody">
           <h2 class="modalName" id="howToTitle">遊び方</h2>
           <div class="modalStatusList">
-            <div class="modalStatusLine ok">① 相手のセリフとヒントを見るたこ</div>
-            <div class="modalStatusLine ok">② 所持カードから1枚選んで渡すたこ</div>
-            <div class="modalStatusLine ok">③ ぴったりなら ♥ でマッチ成立たこ</div>
-            <div class="modalStatusLine ok">④ 失敗しても3回まで挑戦できるたこ</div>
-            <div class="modalStatusLine ok">⑤ 一発成功ほど好感度が大きく上がるたこ</div>
-            <div class="modalStatusLine ok">⑥ 失敗カウントは3回全部だめだった時だけ反映たこ</div>
+            <div class="modalStatusLine ok">① 相手のセリフとヒントを見る</div>
+            <div class="modalStatusLine ok">② 所持カードから1枚選んで渡す</div>
+            <div class="modalStatusLine ok">③ ぴったりなら ♥ でマッチ成立</div>
+            <div class="modalStatusLine ok">④ 失敗しても3回まで挑戦できる</div>
+            <div class="modalStatusLine ok">⑤ ヒント2を見る前に一発正解すると +報酬</div>
+            <div class="modalStatusLine ok">⑥ 失敗カウントは3回全部だめだった時だけ反映</div>
           </div>
         </div>
       </div>
@@ -1911,8 +1909,7 @@
       return;
     }
 
-    const hintIndex = Number(job.currentHintIndex || 0);
-    const isFirstTryNoHint2 = hintIndex === 0 && Number(job.retryCount || 0) === 0;
+    const isFirstTryNoHint2 = Number(job.currentHintIndex || 0) === 0 && Number(job.retryCount || 0) === 0;
 
     closeJobModal();
     await showSuspense();
@@ -1948,28 +1945,29 @@
 
     addOwned(cardId, -1);
 
-    const affectionRnd = randFromSeed(`${todayKey()}::affection_gain::${job.id}::${cardId}::${hintIndex}`);
-    const affectionGain = calcAffectionGainByHintIndex(hintIndex, affectionRnd);
-    addAffection(job.type, affectionGain);
-
     updateJob(jobId, (j) => {
       const bonus = isFirstTryNoHint2 ? calcFirstTryBonus(j) : 0;
+      const affectionGain = Number(j.rewardAffection || 0);
+
       j.completed = true;
       j.completedAt = Date.now();
       j.lastBonusOcto = bonus;
       j.lastAffectionGain = affectionGain;
+
       addOcto(j.rewardOcto + bonus);
       j.rewardItems.forEach(item => addInventory(item.kind, item.id, item.qty));
+      addAffection(j.type, affectionGain);
     });
 
     renderHeroStats();
     renderBoard();
+    renderAffectionModal();
     await showRewardModal(getJobById(jobId));
 
     if (isFirstTryNoHint2) {
-      showTakopiToast(`一発正解！ 好感度+${affectionGain} / +報酬つきたこ`);
+      showTakopiToast("一発正解！ +報酬 つきたこ");
     } else {
-      showTakopiToast(`……焼けたね。好感度+${affectionGain}`);
+      showTakopiToast("……焼けたね");
     }
   }
 
@@ -2001,7 +1999,10 @@
 
     const affectionBtn = $("#affectionBtn");
     if (affectionBtn) {
-      affectionBtn.addEventListener("click", openAffectionModal);
+      affectionBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openAffectionModal();
+      });
     }
 
     const affectionClose = $("#affectionClose");
@@ -2012,7 +2013,6 @@
     const affectionOk = $("#affectionOk");
     if (affectionOk) {
       affectionOk.addEventListener("click", closeAffectionModal);
-      affectionOk.onclick = closeAffectionModal;
     }
 
     const affectionModal = $("#affectionModal");
@@ -2070,4 +2070,5 @@
   ensurePlayGuideButton();
   renderHero();
   renderBoard();
+  renderAffectionModal();
 })();
