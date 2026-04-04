@@ -12,6 +12,9 @@
     matchingMeta: "ttc_matching_meta_v6"
   };
 
+  const AFFECTION_LS_KEY = "roten_v1_guest_affection";
+  const REGULAR_LOVE_THRESHOLD = 80;
+
   // =========================================================
   // Utils
   // =========================================================
@@ -438,6 +441,183 @@
 
   function itemLabel(kind, id) {
     return REWARD_ITEMS[kind]?.[id]?.name || id;
+  }
+
+  // =========================================================
+  // Affection
+  // =========================================================
+  function loadAffectionState() {
+    const raw = localStorage.getItem(AFFECTION_LS_KEY);
+    const parsed = safeJSONParse(raw, null);
+    if (!parsed || typeof parsed !== "object") {
+      return { ver: 1, guests: {} };
+    }
+    if (!parsed.guests || typeof parsed.guests !== "object") {
+      parsed.guests = {};
+    }
+    return parsed;
+  }
+
+  function getDefaultAffectionGuest() {
+    return {
+      love: 0,
+      talkCount: 0,
+      buyCount: 0,
+      ignoreCount: 0,
+      lastTalkAt: 0,
+      lastSeenAt: 0
+    };
+  }
+
+  function heartsFromLove(love) {
+    const n = Number(love || 0);
+    if (n >= 80) return 5;
+    if (n >= 60) return 4;
+    if (n >= 40) return 3;
+    if (n >= 20) return 2;
+    if (n >= 8) return 1;
+    return 0;
+  }
+
+  function isRegularLove(love) {
+    return Number(love || 0) >= REGULAR_LOVE_THRESHOLD;
+  }
+
+  function affectionLabel(type, love) {
+    const n = Number(love || 0);
+
+    const map = {
+      impulse: ["まだ勢いで来ている。", "ノリが合う店だと思い始めている。", "勢いで来て、愛着で帰る常連。"],
+      picky: ["まだ厳しく見定めている。", "少しずつ認め始めている。", "うるさいけど、かなり気に入っている。"],
+      king: ["まだ試す目で見ている。", "店の格を認め始めている。", "王が認めた相手。かなり強い。"],
+      flipper: ["まだ打算で見ている。", "数字以外の価値も少し見えてきた。", "打算から始まったのに、なぜか情がある。"],
+      careful: ["まだ警戒しながら様子見。", "少しずつ安心してきている。", "かなり信頼している。"],
+      looker: ["まだ“見るだけ”の距離感。", "眺めるだけでは済まなくなってきた。", "口では軽いが、かなり好き。"],
+      rich: ["金で測っている。", "値段以外の面白さも認め始めた。", "財布より先に心が動いている。"],
+      climber: ["まだ試練の棚だと思っている。", "登る価値のある相手だと思い始めた。", "景色の見える常連ポジション。"],
+      guide: ["まだ外から案内している。", "語りたくなる相手になってきた。", "もう半分この店の広報。"],
+      relax: ["まだ様子見で空気を読んでいる。", "居心地の良さを感じ始めている。", "癒やし目的でも来ている。"],
+      artisan: ["仕事として見ている。", "腕前を認めてきている。", "技術も空気も含めて評価している。"],
+      diet: ["理屈で距離を取っている。", "理論の中に好意が混ざり始めた。", "もはや理屈を超えて好き。"],
+      overflow: ["まだ枠外から見ている。", "ズレた会話を楽しみ始めている。", "規格外どうしで相性が良い。"],
+      collector: ["まだ管理対象として見ている。", "保存以上の感情が生まれ始めた。", "かなり大切な相手認定。"],
+      shadow: ["まだ慎重に距離を測っている。", "守れる価値を感じ始めている。", "信用しているから近づいている。"],
+      ramen: ["まだ濃さだけ見ている。", "味わうように通い始めている。", "締めに寄りたくなる相手になった。"],
+      streamer: ["まだネタとして見ている。", "映え以上の面白さを感じている。", "本気で推したくなっている。"],
+      gourmet: ["まだ厳しく品定めしている。", "余韻のある相手だと感じ始めた。", "かなり深く気に入っている。"],
+      opener: ["まだ勢いだけで近づいている。", "テンション以上に楽しみ始めた。", "勢い込みでかなり好き。"],
+      party: ["まだ祭りのノリで来ている。", "ノリ以上の居場所感が出てきた。", "騒がしいけど本気で好き。"],
+      pilgrim: ["まだ巡礼先のひとつ。", "来た意味がある場所だと思い始めた。", "わざわざ来る価値があると確信している。"]
+    };
+
+    const row = map[type] || ["まだ距離を測っている。", "少しずつ距離が縮んでいる。", "かなり気に入っている。"];
+    if (n >= 80) return row[2];
+    if (n >= 40) return row[1];
+    return row[0];
+  }
+
+  function getAffectionRows() {
+    const state = loadAffectionState();
+
+    const rows = Object.keys(state.guests).map((id) => {
+      const g = { ...getDefaultAffectionGuest(), ...(state.guests[id] || {}) };
+      const love = Number(g.love || 0);
+
+      return {
+        id,
+        name: CUSTOMER_NAME_MAP[id] || id,
+        icon: CUSTOMER_ICON_MAP[id] || "",
+        love,
+        hearts: heartsFromLove(love),
+        talkCount: Number(g.talkCount || 0),
+        buyCount: Number(g.buyCount || 0),
+        ignoreCount: Number(g.ignoreCount || 0),
+        isRegular: isRegularLove(love),
+        label: affectionLabel(id, love),
+        lastSeenAt: Number(g.lastSeenAt || 0)
+      };
+    });
+
+    rows.sort((a, b) =>
+      (Number(b.isRegular) - Number(a.isRegular)) ||
+      (b.love - a.love) ||
+      (b.lastSeenAt - a.lastSeenAt) ||
+      String(a.name).localeCompare(String(b.name), "ja")
+    );
+
+    return rows;
+  }
+
+  function renderAffectionModal() {
+    const list = $("#affectionList");
+    const empty = $("#affectionEmpty");
+    if (!list || !empty) return;
+
+    const rows = getAffectionRows();
+    list.innerHTML = "";
+
+    if (!rows.length) {
+      empty.classList.remove("hidden");
+      return;
+    }
+
+    empty.classList.add("hidden");
+
+    list.innerHTML = rows.map(row => {
+      const hearts = Array.from({ length: 5 }, (_, i) =>
+        `<span class="${i < row.hearts ? "on" : "off"}">♥</span>`
+      ).join("");
+
+      return `
+        <article class="affectionItem">
+          <div class="affectionItemTop">
+            <div class="affectionIcon">
+              ${row.icon
+                ? `<img src="${escapeHtml(row.icon)}" alt="${escapeHtml(row.name)}">`
+                : ``
+              }
+            </div>
+
+            <div class="affectionMain">
+              <div class="affectionNameRow">
+                <div class="affectionName">${escapeHtml(row.name)}</div>
+                ${row.isRegular ? `<span class="affectionRegular">常連</span>` : ``}
+              </div>
+              <div class="affectionDesc">${escapeHtml(row.label)}</div>
+              <div class="affectionSub">会話 ${row.talkCount}回 ・ 放置 ${row.ignoreCount}回</div>
+            </div>
+
+            <div class="affectionMeta">
+              <div class="affectionLove">好感度 ${row.love}/100</div>
+              <div class="affectionHearts">${hearts}</div>
+            </div>
+          </div>
+
+          <div class="affectionGaugeWrap">
+            <div class="affectionGauge">
+              <div class="affectionGaugeBar" style="width:${clamp(row.love, 0, 100)}%"></div>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function openAffectionModal() {
+    const modal = $("#affectionModal");
+    if (!modal) return;
+    renderAffectionModal();
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeAffectionModal() {
+    const modal = $("#affectionModal");
+    if (!modal) return;
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
   }
 
   // =========================================================
@@ -1778,6 +1958,35 @@
       });
     }
 
+    const affectionBtn = $("#affectionBtn");
+    if (affectionBtn && !affectionBtn.dataset.bound) {
+      affectionBtn.dataset.bound = "1";
+      affectionBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openAffectionModal();
+      });
+    }
+
+    const affectionClose = $("#affectionClose");
+    if (affectionClose && !affectionClose.dataset.bound) {
+      affectionClose.dataset.bound = "1";
+      affectionClose.addEventListener("click", closeAffectionModal);
+    }
+
+    const affectionOk = $("#affectionOk");
+    if (affectionOk && !affectionOk.dataset.bound) {
+      affectionOk.dataset.bound = "1";
+      affectionOk.addEventListener("click", closeAffectionModal);
+    }
+
+    const affectionModal = $("#affectionModal");
+    if (affectionModal && !affectionModal.dataset.bound) {
+      affectionModal.dataset.bound = "1";
+      affectionModal.addEventListener("click", (e) => {
+        if (e.target === affectionModal) closeAffectionModal();
+      });
+    }
+
     const takopiFloat = $("#takopiFloat");
     if (takopiFloat) {
       takopiFloat.addEventListener("click", () => {
@@ -1811,6 +2020,7 @@
         closeJobModal();
         hideRewardModal();
         closeHowToModal();
+        closeAffectionModal();
       }
     });
   }
