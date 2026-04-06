@@ -1631,7 +1631,7 @@
         { id:"fert_feel",    name:"気のせい肥料", desc:"早くなった気がする。\n気のせいかもしれない。", img:"https://ul.h3z.jp/XqFTb7sw.png", fx:"時短 5%" },
         { id:"fert_guts",    name:"根性論ぶち込み肥料", desc:"理由はない。\n気合いだ。", img:"https://ul.h3z.jp/bT9ZcNnS.png", fx:"時短 20%" },
         { id:"fert_skip",    name:"工程すっ飛ばし肥料", desc:"途中は、\n見なかったことにした。", img:"https://ul.h3z.jp/FqPzx12Q.png", fx:"時短 40%" },
-        { id:"fert_timeno",  name:"時間を信じない肥料", desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》", img:"https://ul.h3z.jp/l2njWY57.png", fx:"時短 90〜100%" }
+        { id:"fert_timeno",  name:"時間を信じない肥料", desc:"最終兵器・禁忌。\n稀に《ドロドロ生焼けカード》", img:"https://ul.h3z.jp/l2njWY57.png", fx:"時短 70%" }
       ];
 
       const PRICE = {
@@ -1715,7 +1715,7 @@
       ];
 
       let currentKind = "seed";
-      let lastGridActionTs = 0;
+      let isBuying = false;
 
       function getModalEls(){
         return {
@@ -1824,10 +1824,15 @@
 
       function refreshHUD(){
         const inv = ensureInvKeys();
-        $("#octoNow").textContent = String(getOcto());
-        $("#chipSeed").textContent = String(totalKindVisible(inv, "seed"));
-        $("#chipWater").textContent = String(totalKindVisible(inv, "water"));
-        $("#chipFert").textContent = String(totalKindVisible(inv, "fert"));
+        const octoEl = $("#octoNow");
+        const seedEl = $("#chipSeed");
+        const waterEl = $("#chipWater");
+        const fertEl = $("#chipFert");
+
+        if(octoEl) octoEl.textContent = String(getOcto());
+        if(seedEl) seedEl.textContent = String(totalKindVisible(inv, "seed"));
+        if(waterEl) waterEl.textContent = String(totalKindVisible(inv, "water"));
+        if(fertEl) fertEl.textContent = String(totalKindVisible(inv, "fert"));
       }
 
       function clamp(n, min, max){
@@ -1878,29 +1883,40 @@
       }
 
       function buyMany(item, qty){
-        qty = clamp(qty, 1, 99);
-        const price = Math.max(0, Number(item.price || 0));
-        const total = price * qty;
-        const octo = getOcto();
+        if(isBuying) return { ok:false };
+        isBuying = true;
 
-        if(octo < total) return { ok:false };
+        try{
+          qty = clamp(qty, 1, 99);
+          const price = Math.max(0, Number(item.price || 0));
+          const total = price * qty;
+          const octo = getOcto();
 
-        const inv = ensureInvKeys();
-        inv[item.kind] = inv[item.kind] || {};
-        inv[item.kind][item.id] = Number(inv[item.kind][item.id] || 0) + qty;
-        saveInv(inv);
+          if(octo < total){
+            return { ok:false };
+          }
 
-        setOcto(octo - total);
-        addMonthlySales(total);
-        pushLog(`購入：${item.name} ×${qty} -${total}オクト`);
+          const inv = ensureInvKeys();
+          inv[item.kind] = inv[item.kind] || {};
+          inv[item.kind][item.id] = Number(inv[item.kind][item.id] || 0) + qty;
+          saveInv(inv);
 
-        refreshHUD();
-        renderGoods();
-        setTakopiBuySay();
-        showPurchasePop(item.name, qty, total);
-        pulseBoughtCard(item.kind, item.id);
+          setOcto(octo - total);
+          addMonthlySales(total);
+          pushLog(`購入：${item.name} ×${qty} -${total}オクト`);
 
-        return { ok:true, total, qty };
+          refreshHUD();
+          renderGoods();
+          pulseBoughtCard(item.kind, item.id);
+          setTakopiBuySay();
+          showPurchasePop(item.name, qty, total);
+
+          return { ok:true, total, qty };
+        } finally {
+          setTimeout(() => {
+            isBuying = false;
+          }, 120);
+        }
       }
 
       function getItemByCard(card){
@@ -1976,19 +1992,6 @@
         grid.addEventListener("click", (e) => {
           if(handleGoodsGridAction(e.target)){
             e.preventDefault();
-            lastGridActionTs = Date.now();
-          }
-        });
-
-        grid.addEventListener("pointerup", (e) => {
-          if(!(e.pointerType === "touch" || e.pointerType === "pen")) return;
-
-          const now = Date.now();
-          if(now - lastGridActionTs < 350) return;
-
-          if(handleGoodsGridAction(e.target)){
-            e.preventDefault();
-            lastGridActionTs = now;
           }
         });
 
@@ -1999,7 +2002,6 @@
           if((e.key === "Enter" || e.key === " ") && target.closest(".qtyminus, .qtyplus, .buybtn")){
             if(handleGoodsGridAction(target)){
               e.preventDefault();
-              lastGridActionTs = Date.now();
             }
           }
         });
