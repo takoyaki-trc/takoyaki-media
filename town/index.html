@@ -1449,17 +1449,27 @@ html.is-night .boss-gate{
   };
 
   const EXIST = {
-    farmBook:   "tf_v1_book",
-    farmInv:    "tf_v1_inv",
-    rotenOcto:  "roten_v1_octo",
-    tower:      "tower_v1_state",
-    fish:       "fish_v1_state",
+    farmBook:      "tf_v1_book",
+    farmInv:       "tf_v1_inv",
+    rotenOcto:     "roten_v1_octo",
+    tower:         "tower_v1_state",
+    fish:          "fish_v1_state",
 
-    // ★追加：称号の頂
-    monthly:    "ttc_monthly_stats_v1",
-    history:    "ttc_monthly_history_v1",
-    godfarm:    "ttc_godfarm_v1",
-    godbonus:   "ttc_god_bonus_v1"
+    // ★称号の頂
+    monthly:       "ttc_monthly_stats_v1",
+    history:       "ttc_monthly_history_v1",
+    godfarm:       "ttc_godfarm_v1",
+    godbonus:      "ttc_god_bonus_v1",
+
+    // ★募集板 / 熱量 / 好感度
+    matchingBoard: "ttc_matching_board_v7",
+    matchingMeta:  "ttc_matching_meta_v6",
+    matchingHeat:  "matching_heat_v1",
+    affection:     "roten_v1_guest_affection",
+
+    // ★かすみぴガチャ
+    kasumiGacha:   "kasumipi_gacha_v2",
+    kasumiBook:    "kasumipi_gacha_book_v2"
   };
 
   // ===== utils =====
@@ -1486,9 +1496,26 @@ html.is-night .boss-gate{
     return out;
   }
 
+  function getUA() {
+    return navigator.userAgent || "";
+  }
+
   function isInstagramInAppBrowser() {
-    const ua = navigator.userAgent || "";
-    return /Instagram/i.test(ua);
+    return /Instagram/i.test(getUA());
+  }
+
+  function isYahooInAppBrowser() {
+    const ua = getUA();
+    return /YJApp/i.test(ua) || /Yahoo/i.test(ua);
+  }
+
+  function isFirefoxLike() {
+    const ua = getUA();
+    return /Firefox/i.test(ua) || /FxiOS/i.test(ua);
+  }
+
+  function isLikelyRestrictedBrowser() {
+    return isInstagramInAppBrowser() || isYahooInAppBrowser() || isFirefoxLike();
   }
 
   // ===== 図鑑slim（count+img等） =====
@@ -1570,7 +1597,8 @@ html.is-night .boss-gate{
       "roten_v1_market",
       "roten_v1_state",
       "roten_v1_shelves",
-      "roten_v1_octo"
+      "roten_v1_octo",
+      "roten_v1_guest_affection"
     ];
 
     const ordered = [];
@@ -1582,6 +1610,52 @@ html.is-night .boss-gate{
     }
 
     return ordered.slice(0, 90);
+  }
+
+  function findMatchingKeys() {
+    const out = [];
+
+    const exact = [
+      EXIST.matchingBoard,
+      EXIST.matchingMeta,
+      EXIST.matchingHeat
+    ];
+
+    for (const k of exact) {
+      const v = getRaw(k);
+      if (v != null && !out.includes(k)) out.push(k);
+    }
+
+    for (const k of listKeysByRegex(/^ttc_matching_/i)) {
+      if (!out.includes(k)) out.push(k);
+    }
+
+    for (const k of listKeysByRegex(/^matching_heat_/i)) {
+      if (!out.includes(k)) out.push(k);
+    }
+
+    return out.slice(0, 30);
+  }
+
+  function findKasumiGachaKeys() {
+    const out = [];
+
+    const exact = [
+      EXIST.kasumiGacha,
+      EXIST.kasumiBook,
+      EXIST.matchingHeat
+    ];
+
+    for (const k of exact) {
+      const v = getRaw(k);
+      if (v != null && !out.includes(k)) out.push(k);
+    }
+
+    for (const k of listKeysByRegex(/^kasumipi_gacha_/i)) {
+      if (!out.includes(k)) out.push(k);
+    }
+
+    return out.slice(0, 30);
   }
 
   // ===== バックアップ作成 =====
@@ -1622,297 +1696,38 @@ html.is-night .boss-gate{
     if (getRaw(EXIST.godfarm)  != null) keys[EXIST.godfarm]  = getRaw(EXIST.godfarm);
     if (getRaw(EXIST.godbonus) != null) keys[EXIST.godbonus] = getRaw(EXIST.godbonus);
 
+    for (const k of findMatchingKeys()) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
+    if (getRaw(EXIST.affection) != null) keys[EXIST.affection] = getRaw(EXIST.affection);
+
+    for (const k of findKasumiGachaKeys()) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
+
     for (const k of Object.keys(keys)) {
       if (keys[k] === null || keys[k] === undefined) delete keys[k];
     }
 
     return {
       app: "takoyaki-trc",
-      ver: 6,
-      kind: "slim+roten+title-compatible",
+      ver: 8,
+      kind: "slim+roten+title+matching+gacha-compatible",
       exportedAt: new Date().toISOString(),
-      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り/称号の頂 を保存。旧keys形式バックアップの復元にも対応。",
+      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り/称号の頂/募集板/熱量/好感度/かすみぴガチャ を保存。旧keys形式バックアップの復元にも対応。",
       keys
     };
   }
 
-  // ===== Instagram内ブラウザ向け fallback UI =====
-  function showBackupFallbackModal(jsonText, filename) {
-    let modal = document.getElementById("trcBackupFallbackModal");
-
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "trcBackupFallbackModal";
-      modal.style.cssText = `
-        position: fixed;
-        inset: 0;
-        z-index: 999999;
-        background: rgba(0,0,0,.82);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-        box-sizing: border-box;
-      `;
-
-      modal.innerHTML = `
-        <div style="
-          width:min(720px, 96vw);
-          max-height:90vh;
-          overflow:auto;
-          background:#111827;
-          color:#fff;
-          border:2px solid rgba(255,255,255,.18);
-          border-radius:16px;
-          box-shadow:0 20px 60px rgba(0,0,0,.5);
-          padding:16px;
-          box-sizing:border-box;
-        ">
-          <div style="font-size:18px;font-weight:900;margin-bottom:10px;">
-            バックアップ保存
-          </div>
-
-          <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.85);margin-bottom:12px;">
-            Instagram内ブラウザでは、ファイル保存が失敗することがあります。<br>
-            下のJSONをコピーして、メモ帳などに
-            <b style="color:#ffd166;">${filename}</b>
-            という名前で保存してください。<br><br>
-            いちばん確実なのは、右上メニューから
-            <b style="color:#8ecae6;">外部ブラウザで開いてバックアップ</b>
-            です。
-          </div>
-
-          <textarea id="trcBackupFallbackText" readonly style="
-            width:100%;
-            min-height:280px;
-            resize:vertical;
-            border-radius:12px;
-            border:1px solid rgba(255,255,255,.2);
-            background:#0b1220;
-            color:#dff3ff;
-            padding:12px;
-            box-sizing:border-box;
-            font-size:12px;
-            line-height:1.5;
-          "></textarea>
-
-          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
-            <button id="trcBackupCopyBtn" type="button" style="
-              border:0;
-              border-radius:12px;
-              padding:12px 14px;
-              font-weight:900;
-              cursor:pointer;
-              background:#60a5fa;
-              color:#08111f;
-            ">コピー</button>
-
-            <button id="trcBackupCloseBtn" type="button" style="
-              border:1px solid rgba(255,255,255,.22);
-              border-radius:12px;
-              padding:12px 14px;
-              font-weight:900;
-              cursor:pointer;
-              background:rgba(255,255,255,.08);
-              color:#fff;
-            ">閉じる</button>
-          </div>
-        </div>
-      `;
-
-      document.body.appendChild(modal);
-
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) modal.remove();
-      });
-
-      modal.querySelector("#trcBackupCloseBtn").addEventListener("click", () => {
-        modal.remove();
-      });
-
-      modal.querySelector("#trcBackupCopyBtn").addEventListener("click", async () => {
-        const ta = modal.querySelector("#trcBackupFallbackText");
-        ta.focus();
-        ta.select();
-
-        let copied = false;
-
-        try {
-          if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(ta.value);
-            copied = true;
-          }
-        } catch (_) {}
-
-        if (!copied) {
-          try {
-            document.execCommand("copy");
-            copied = true;
-          } catch (_) {}
-        }
-
-        alert(copied ? "バックアップJSONをコピーしました。" : "コピーに失敗しました。長押しで手動コピーしてください。");
-      });
-    }
-
-    const ta = modal.querySelector("#trcBackupFallbackText");
-    ta.value = jsonText;
-  }
-
-  // ===== ダウンロード / 共有 / fallback =====
-  async function saveBackupCrossBrowser(obj, filename) {
-    const jsonText = JSON.stringify(obj, null, 2);
-    const blob = new Blob([jsonText], { type: "application/json" });
-
-    // 1) 通常ダウンロード
-    try {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.rel = "noopener";
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-
-      setTimeout(() => {
-        a.remove();
-        URL.revokeObjectURL(url);
-      }, 1200);
-
-      if (!isInstagramInAppBrowser()) {
-        return { mode: "download" };
-      }
-    } catch (_) {}
-
-    // 2) 共有
-    try {
-      if (navigator.share && typeof File !== "undefined") {
-        const file = new File([jsonText], filename, { type: "application/json" });
-
-        if (!navigator.canShare || navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: "たこ焼きトレカ バックアップ",
-            text: "バックアップファイルを保存してください。",
-            files: [file]
-          });
-          return { mode: "share" };
-        }
-      }
-    } catch (_) {}
-
-    // 3) fallback
-    showBackupFallbackModal(jsonText, filename);
-    return { mode: "fallback" };
-  }
-
-  async function backupSlim() {
-    const payload = buildSlimBackupPayload();
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const filename = `takoyaki-trc-backup_${stamp}.json`;
-
-    const result = await saveBackupCrossBrowser(payload, filename);
-
-    if (result.mode === "download") {
-      if (isInstagramInAppBrowser()) {
-        alert("Instagram内ブラウザでは保存に失敗する場合があります。保存されていない場合は、右上メニューから外部ブラウザで開いて再度バックアップしてください。");
-      }
-    } else if (result.mode === "share") {
-      alert("共有画面を開きました。ファイルアプリやドライブ等に保存してください。");
-    }
-  }
-
-  // ===== 共通復元 =====
-  function restoreFromParsedData(data) {
-    if (!data || typeof data !== "object") {
-      alert("この内容はバックアップ形式ではありません。");
-      return false;
-    }
-
-    const source =
-      (data.keys && typeof data.keys === "object") ? data.keys :
-      (data.storage && typeof data.storage === "object") ? data.storage :
-      null;
-
-    if (!source) {
-      alert("この内容はバックアップ形式ではありません。");
-      return false;
-    }
-
-    const keys = Object.keys(source);
-    const exportedAt = String(data.exportedAt || data.exported || "");
-
-    const ok = confirm(
-      "バックアップから復元します。\n" +
-      "現在のデータは上書きされます（元に戻せません）。\n\n" +
-      `復元キー数: ${keys.length}\n` +
-      `書き出し日時: ${exportedAt}\n\n` +
-      "続行しますか？"
-    );
-    if (!ok) return false;
-
-    for (const k of keys) {
-      const v = source[k];
-      if (v === null || v === undefined) {
-        localStorage.removeItem(k);
-      } else {
-        localStorage.setItem(k, String(v));
-      }
-    }
-
-    alert("復元しました。ページを再読み込みします。");
-    location.reload();
-    return true;
-  }
-
-  // ===== ファイル復元 =====
-  async function restoreFromFile(file) {
-    const text = await file.text();
-    const data = safeJSONParse(text, null);
-
-    if (!data) {
-      alert("このファイルはバックアップ形式ではありません。");
-      return;
-    }
-
-    restoreFromParsedData(data);
-  }
-
-  // ===== 貼り付け復元 =====
-  function normalizePastedText(text) {
-    let t = String(text || "").trim();
-
-    if (t.startsWith("takoyaki-trc-backup.json")) {
-      t = t.replace(/^takoyaki-trc-backup\.json\s*/i, "").trim();
-    }
-
-    return t;
-  }
-
-  function restoreFromPastedText(text) {
-    const normalized = normalizePastedText(text);
-
-    if (!normalized) {
-      alert("貼り付け内容が空です。");
-      return;
-    }
-
-    const data = safeJSONParse(normalized, null);
-    if (!data) {
-      alert("JSONの形式が正しくありません。最初の { から最後の } まで貼り付けてください。");
-      return;
-    }
-
-    restoreFromParsedData(data);
-  }
-
-  // ===== 復元モーダル生成 =====
-  function ensureRestoreChoiceModal() {
-    let modal = document.getElementById("trcRestoreChoiceModal");
+  // ===== 共通モーダル基礎 =====
+  function createOverlayModal(id, innerHtml) {
+    let modal = document.getElementById(id);
     if (modal) return modal;
 
     modal = document.createElement("div");
-    modal.id = "trcRestoreChoiceModal";
+    modal.id = id;
     modal.style.cssText = `
       position:fixed;
       inset:0;
@@ -1924,8 +1739,227 @@ html.is-night .boss-gate{
       padding:16px;
       box-sizing:border-box;
     `;
+    modal.innerHTML = innerHtml;
+    document.body.appendChild(modal);
 
-    modal.innerHTML = `
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) modal.style.display = "none";
+    });
+
+    return modal;
+  }
+
+  // ===== JSON表示保存モーダル =====
+  function ensureBackupTextModal() {
+    return createOverlayModal("trcBackupTextModal", `
+      <div style="
+        width:min(720px, 96vw);
+        max-height:90vh;
+        overflow:auto;
+        background:#111827;
+        color:#fff;
+        border:2px solid rgba(255,255,255,.18);
+        border-radius:16px;
+        box-shadow:0 20px 60px rgba(0,0,0,.5);
+        padding:16px;
+        box-sizing:border-box;
+      ">
+        <div style="font-size:18px;font-weight:900;margin-bottom:10px;">
+          バックアップJSON
+        </div>
+
+        <div id="trcBackupTextDesc" style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.85);margin-bottom:12px;">
+          下の内容をコピーして、メモ帳などに保存してください。
+        </div>
+
+        <div id="trcBackupFilenameBox" style="
+          margin-bottom:10px;
+          padding:10px 12px;
+          border-radius:10px;
+          background:rgba(255,255,255,.06);
+          border:1px solid rgba(255,255,255,.12);
+          color:#ffd166;
+          font-weight:900;
+          font-size:12px;
+          line-height:1.5;
+          word-break:break-all;
+        "></div>
+
+        <textarea id="trcBackupTextArea" readonly style="
+          width:100%;
+          min-height:280px;
+          resize:vertical;
+          border-radius:12px;
+          border:1px solid rgba(255,255,255,.2);
+          background:#0b1220;
+          color:#dff3ff;
+          padding:12px;
+          box-sizing:border-box;
+          font-size:12px;
+          line-height:1.5;
+        "></textarea>
+
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
+          <button id="trcBackupCopyBtn" type="button" style="
+            border:0;
+            border-radius:12px;
+            padding:12px 14px;
+            font-weight:900;
+            cursor:pointer;
+            background:#60a5fa;
+            color:#08111f;
+          ">コピー</button>
+
+          <button id="trcBackupSaveFileBtn" type="button" style="
+            border:0;
+            border-radius:12px;
+            padding:12px 14px;
+            font-weight:900;
+            cursor:pointer;
+            background:#a7f3d0;
+            color:#06261b;
+          ">ファイル保存を再試行</button>
+
+          <button id="trcBackupTextCloseBtn" type="button" style="
+            border:1px solid rgba(255,255,255,.22);
+            border-radius:12px;
+            padding:12px 14px;
+            font-weight:900;
+            cursor:pointer;
+            background:rgba(255,255,255,.08);
+            color:#fff;
+          ">閉じる</button>
+        </div>
+      </div>
+    `);
+  }
+
+  function openBackupTextModal(jsonText, filename, message) {
+    const modal = ensureBackupTextModal();
+    modal.style.display = "flex";
+
+    const ta = modal.querySelector("#trcBackupTextArea");
+    const desc = modal.querySelector("#trcBackupTextDesc");
+    const filenameBox = modal.querySelector("#trcBackupFilenameBox");
+    const btnCopy = modal.querySelector("#trcBackupCopyBtn");
+    const btnRetry = modal.querySelector("#trcBackupSaveFileBtn");
+    const btnClose = modal.querySelector("#trcBackupTextCloseBtn");
+
+    ta.value = jsonText;
+    desc.innerHTML = message || "下の内容をコピーして、メモ帳などに保存してください。";
+    filenameBox.textContent = `保存名の例：${filename}`;
+
+    btnClose.onclick = () => {
+      modal.style.display = "none";
+    };
+
+    btnCopy.onclick = async () => {
+      ta.focus();
+      ta.select();
+
+      let copied = false;
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(ta.value);
+          copied = true;
+        }
+      } catch (_) {}
+
+      if (!copied) {
+        try {
+          document.execCommand("copy");
+          copied = true;
+        } catch (_) {}
+      }
+
+      alert(copied ? "バックアップJSONをコピーしました。" : "コピーに失敗しました。長押しや手動コピーをしてください。");
+    };
+
+    btnRetry.onclick = async () => {
+      const result = await tryFileDownload(jsonText, filename);
+      if (result.ok) {
+        modal.style.display = "none";
+        alert("ファイル保存を開始しました。");
+      } else {
+        alert("このブラウザではファイル保存に失敗しました。コピー保存をおすすめします。");
+      }
+    };
+  }
+
+  // ===== バックアップ方法選択モーダル =====
+  function ensureBackupChoiceModal() {
+    return createOverlayModal("trcBackupChoiceModal", `
+      <div style="
+        width:min(640px,96vw);
+        background:#111827;
+        color:#fff;
+        border:2px solid rgba(255,255,255,.18);
+        border-radius:16px;
+        box-shadow:0 20px 60px rgba(0,0,0,.5);
+        padding:16px;
+        box-sizing:border-box;
+      ">
+        <div style="font-size:18px;font-weight:900;margin-bottom:10px;">
+          バックアップ方法を選んでください
+        </div>
+
+        <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.88);margin-bottom:14px;">
+          Chrome以外やアプリ内ブラウザでは、ファイル保存に失敗することがあります。<br>
+          その場合は「テキストで保存」がいちばん確実です。
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button id="trcChoiceBackupFile" type="button" style="
+            border:0;
+            border-radius:12px;
+            padding:14px 16px;
+            font-weight:900;
+            cursor:pointer;
+            background:#a7f3d0;
+            color:#06261b;
+            text-align:left;
+          ">ファイル保存</button>
+
+          <button id="trcChoiceBackupText" type="button" style="
+            border:0;
+            border-radius:12px;
+            padding:14px 16px;
+            font-weight:900;
+            cursor:pointer;
+            background:#60a5fa;
+            color:#08111f;
+            text-align:left;
+          ">テキストで保存（確実）</button>
+
+          <button id="trcChoiceBackupShare" type="button" style="
+            border:0;
+            border-radius:12px;
+            padding:14px 16px;
+            font-weight:900;
+            cursor:pointer;
+            background:#fcd34d;
+            color:#3a2a00;
+            text-align:left;
+          ">共有</button>
+
+          <button id="trcChoiceBackupClose" type="button" style="
+            border:1px solid rgba(255,255,255,.22);
+            border-radius:12px;
+            padding:12px 14px;
+            font-weight:900;
+            cursor:pointer;
+            background:rgba(255,255,255,.08);
+            color:#fff;
+          ">閉じる</button>
+        </div>
+      </div>
+    `);
+  }
+
+  // ===== 復元モーダル生成 =====
+  function ensureRestoreChoiceModal() {
+    return createOverlayModal("trcRestoreChoiceModal", `
       <div style="
         width:min(640px,96vw);
         background:#111827;
@@ -1979,31 +2013,11 @@ html.is-night .boss-gate{
           ">閉じる</button>
         </div>
       </div>
-    `;
-
-    document.body.appendChild(modal);
-    return modal;
+    `);
   }
 
   function ensurePasteRestoreModal() {
-    let modal = document.getElementById("trcPasteRestoreModal");
-    if (modal) return modal;
-
-    modal = document.createElement("div");
-    modal.id = "trcPasteRestoreModal";
-    modal.style.cssText = `
-      position:fixed;
-      inset:0;
-      z-index:999999;
-      background:rgba(0,0,0,.82);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:16px;
-      box-sizing:border-box;
-    `;
-
-    modal.innerHTML = `
+    return createOverlayModal("trcPasteRestoreModal", `
       <div style="
         width:min(720px,96vw);
         max-height:90vh;
@@ -2061,12 +2075,223 @@ html.is-night .boss-gate{
           ">閉じる</button>
         </div>
       </div>
-    `;
-
-    document.body.appendChild(modal);
-    return modal;
+    `);
   }
 
+  // ===== 保存処理 =====
+  async function tryFileDownload(jsonText, filename) {
+    try {
+      const blob = new Blob([jsonText], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.rel = "noopener";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        a.remove();
+        URL.revokeObjectURL(url);
+      }, 1200);
+
+      return { ok: true, mode: "download" };
+    } catch (e) {
+      return { ok: false, mode: "download", error: e };
+    }
+  }
+
+  async function tryShareFile(jsonText, filename) {
+    try {
+      if (!navigator.share || typeof File === "undefined") {
+        return { ok: false, mode: "share" };
+      }
+
+      const file = new File([jsonText], filename, { type: "application/json" });
+
+      if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+        return { ok: false, mode: "share" };
+      }
+
+      await navigator.share({
+        title: "たこ焼きトレカ バックアップ",
+        text: "バックアップファイルを保存してください。",
+        files: [file]
+      });
+
+      return { ok: true, mode: "share" };
+    } catch (e) {
+      return { ok: false, mode: "share", error: e };
+    }
+  }
+
+  async function backupAsFile(payload, filename) {
+    const jsonText = JSON.stringify(payload, null, 2);
+    const result = await tryFileDownload(jsonText, filename);
+
+    if (result.ok) {
+      if (isLikelyRestrictedBrowser()) {
+        setTimeout(() => {
+          alert("このブラウザでは、保存できていない場合があります。保存されていない時は『テキストで保存』を使ってください。");
+        }, 180);
+      }
+      return true;
+    }
+
+    openBackupTextModal(
+      jsonText,
+      filename,
+      "このブラウザではファイル保存に失敗しました。<br>下のJSONをコピーして、メモ帳などに保存してください。"
+    );
+    return false;
+  }
+
+  async function backupAsText(payload, filename) {
+    const jsonText = JSON.stringify(payload, null, 2);
+    openBackupTextModal(
+      jsonText,
+      filename,
+      "下のJSONをコピーして、メモ帳などに保存してください。<br>Yahoo・Firefox・アプリ内ブラウザではこの方法がいちばん確実です。"
+    );
+    return true;
+  }
+
+  async function backupAsShare(payload, filename) {
+    const jsonText = JSON.stringify(payload, null, 2);
+    const result = await tryShareFile(jsonText, filename);
+
+    if (result.ok) {
+      alert("共有画面を開きました。ファイルアプリやドライブ等に保存してください。");
+      return true;
+    }
+
+    openBackupTextModal(
+      jsonText,
+      filename,
+      "共有に失敗しました。<br>下のJSONをコピーして、メモ帳などに保存してください。"
+    );
+    return false;
+  }
+
+  // ===== 復元 =====
+  function restoreFromParsedData(data) {
+    if (!data || typeof data !== "object") {
+      alert("この内容はバックアップ形式ではありません。");
+      return false;
+    }
+
+    const source =
+      (data.keys && typeof data.keys === "object") ? data.keys :
+      (data.storage && typeof data.storage === "object") ? data.storage :
+      null;
+
+    if (!source) {
+      alert("この内容はバックアップ形式ではありません。");
+      return false;
+    }
+
+    const keys = Object.keys(source);
+    const exportedAt = String(data.exportedAt || data.exported || "");
+
+    const ok = confirm(
+      "バックアップから復元します。\n" +
+      "現在のデータは上書きされます（元に戻せません）。\n\n" +
+      `復元キー数: ${keys.length}\n` +
+      `書き出し日時: ${exportedAt}\n\n` +
+      "続行しますか？"
+    );
+    if (!ok) return false;
+
+    for (const k of keys) {
+      const v = source[k];
+      if (v === null || v === undefined) {
+        localStorage.removeItem(k);
+      } else {
+        localStorage.setItem(k, String(v));
+      }
+    }
+
+    alert("復元しました。ページを再読み込みします。");
+    location.reload();
+    return true;
+  }
+
+  async function restoreFromFile(file) {
+    const text = await file.text();
+    const data = safeJSONParse(text, null);
+
+    if (!data) {
+      alert("このファイルはバックアップ形式ではありません。");
+      return;
+    }
+
+    restoreFromParsedData(data);
+  }
+
+  function normalizePastedText(text) {
+    let t = String(text || "").trim();
+
+    if (t.startsWith("takoyaki-trc-backup.json")) {
+      t = t.replace(/^takoyaki-trc-backup\.json\s*/i, "").trim();
+    }
+
+    return t;
+  }
+
+  function restoreFromPastedText(text) {
+    const normalized = normalizePastedText(text);
+
+    if (!normalized) {
+      alert("貼り付け内容が空です。");
+      return;
+    }
+
+    const data = safeJSONParse(normalized, null);
+    if (!data) {
+      alert("JSONの形式が正しくありません。最初の { から最後の } まで貼り付けてください。");
+      return;
+    }
+
+    restoreFromParsedData(data);
+  }
+
+  // ===== バックアップ方法選択 =====
+  function openBackupChoiceModal() {
+    const modal = ensureBackupChoiceModal();
+    modal.style.display = "flex";
+
+    const payload = buildSlimBackupPayload();
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = `takoyaki-trc-backup_${stamp}.json`;
+
+    const btnFile  = modal.querySelector("#trcChoiceBackupFile");
+    const btnText  = modal.querySelector("#trcChoiceBackupText");
+    const btnShare = modal.querySelector("#trcChoiceBackupShare");
+    const btnClose = modal.querySelector("#trcChoiceBackupClose");
+
+    btnClose.onclick = () => {
+      modal.style.display = "none";
+    };
+
+    btnFile.onclick = async () => {
+      modal.style.display = "none";
+      await backupAsFile(payload, filename);
+    };
+
+    btnText.onclick = async () => {
+      modal.style.display = "none";
+      await backupAsText(payload, filename);
+    };
+
+    btnShare.onclick = async () => {
+      modal.style.display = "none";
+      await backupAsShare(payload, filename);
+    };
+  }
+
+  // ===== 復元方法選択 =====
   function openRestoreChoiceModal() {
     const choiceModal = ensureRestoreChoiceModal();
     const pasteModal  = ensurePasteRestoreModal();
@@ -2077,19 +2302,12 @@ html.is-night .boss-gate{
     const btnFile  = choiceModal.querySelector("#trcChoiceFile");
     const btnClose = choiceModal.querySelector("#trcChoiceClose");
 
-    const closeChoice = () => {
+    btnClose.onclick = () => {
       choiceModal.style.display = "none";
     };
 
-    const handleOverlayChoice = (e) => {
-      if (e.target === choiceModal) closeChoice();
-    };
-
-    choiceModal.onclick = handleOverlayChoice;
-    btnClose.onclick = closeChoice;
-
     btnPaste.onclick = () => {
-      closeChoice();
+      choiceModal.style.display = "none";
       pasteModal.style.display = "flex";
       const ta = pasteModal.querySelector("#trcPasteRestoreText");
       if (ta) {
@@ -2099,7 +2317,7 @@ html.is-night .boss-gate{
     };
 
     btnFile.onclick = () => {
-      closeChoice();
+      choiceModal.style.display = "none";
       const inp = document.getElementById("trcFooterRestoreFile");
       if (inp) inp.click();
     };
@@ -2107,10 +2325,6 @@ html.is-night .boss-gate{
     const pasteText  = pasteModal.querySelector("#trcPasteRestoreText");
     const pasteRun   = pasteModal.querySelector("#trcPasteRestoreRun");
     const pasteClose = pasteModal.querySelector("#trcPasteRestoreClose");
-
-    pasteModal.onclick = (e) => {
-      if (e.target === pasteModal) pasteModal.style.display = "none";
-    };
 
     pasteClose.onclick = () => {
       pasteModal.style.display = "none";
@@ -2131,13 +2345,13 @@ html.is-night .boss-gate{
   btnBackup.addEventListener("click", async () => {
     const normal = btnBackup.textContent;
     btnBackup.disabled = true;
-    btnBackup.textContent = "作成中…";
+    btnBackup.textContent = "準備中…";
 
     try {
-      await backupSlim();
+      openBackupChoiceModal();
     } catch (err) {
       console.error(err);
-      alert("バックアップの作成に失敗しました。外部ブラウザでお試しください。");
+      alert("バックアップ画面の表示に失敗しました。");
     } finally {
       btnBackup.disabled = false;
       btnBackup.textContent = normal;
