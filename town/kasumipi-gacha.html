@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>かすみぴガチャ</title>
+
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  font-family:"DotGothic16",sans-serif;
+  background:#0e0f14;
+  color:#fff;
+}
+
+.wrap{
+  max-width:420px;
+  margin:auto;
+  padding:12px;
+}
+
+/* 上部 */
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.btn{
+  background:#222;
+  border:2px solid #555;
+  padding:6px 10px;
+  cursor:pointer;
+}
+
+/* 熱量 */
+.heatBox{
+  background:#111;
+  border:2px solid #666;
+  padding:10px;
+  margin-bottom:12px;
+}
+.heatMain{
+  font-size:28px;
+}
+
+/* ステージ */
+.stage{
+  text-align:center;
+  margin-bottom:12px;
+}
+.stage img{
+  width:100%;
+  border:2px solid #555;
+}
+
+/* ガチャボタン */
+.gachaBtn{
+  width:100%;
+  padding:14px;
+  font-size:18px;
+  background:#ff5a8a;
+  border:none;
+  cursor:pointer;
+}
+
+/* 結果 */
+.result{
+  margin-top:20px;
+  text-align:center;
+}
+.result img{
+  width:80%;
+}
+
+/* コレクション */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:6px;
+  margin-top:12px;
+}
+.item{
+  border:2px solid #555;
+  padding:6px;
+  text-align:center;
+}
+.lock{
+  opacity:.3;
+}
+
+/* 演出 */
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.8);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+}
+.overlay.show{
+  display:flex;
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<div class="top">
+  <button class="btn" onclick="history.back()">←</button>
+  <div>かすみぴガチャ</div>
+  <div></div>
+</div>
+
+<div class="heatBox">
+  <div>熱量</div>
+  <div class="heatMain" id="heat">0</div>
+</div>
+
+<div class="stage">
+  <img src="https://ul.h3z.jp/UtPlWaZz.png">
+</div>
+
+<button class="gachaBtn" id="drawBtn">
+  500で引く
+</button>
+
+<div class="result" id="result"></div>
+
+<div class="grid" id="collection"></div>
+
+</div>
+
+<div class="overlay" id="overlay">
+  ……引いているたこ……
+</div>
+
+<script>
+const KEY_HEAT="matching_heat_v1";
+const KEY_BOOK="tf_v1_book";
+const KEY_GACHA="kasumi_gacha_v1";
+
+const COST=500;
+const SP_POOL=[
+ {id:"KSP-01",name:"かすみぴ覚醒"},
+ {id:"KSP-02",name:"かすみぴ闇"},
+ {id:"KSP-03",name:"かすみぴ余韻"},
+ {id:"KSP-04",name:"かすみぴ幻"}
+];
+
+function getHeat(){
+ return Number(localStorage.getItem(KEY_HEAT)||0);
+}
+function setHeat(v){
+ localStorage.setItem(KEY_HEAT,v);
+}
+
+function getGacha(){
+ return JSON.parse(localStorage.getItem(KEY_GACHA)||'{"count":0}');
+}
+function setGacha(v){
+ localStorage.setItem(KEY_GACHA,JSON.stringify(v));
+}
+
+function getBook(){
+ return JSON.parse(localStorage.getItem(KEY_BOOK)||'{"got":{}}');
+}
+function saveBook(b){
+ localStorage.setItem(KEY_BOOK,JSON.stringify(b));
+}
+
+function addCard(id,name){
+ const b=getBook();
+ if(!b.got[id]) b.got[id]={count:0,name};
+ b.got[id].count++;
+ saveBook(b);
+}
+
+function render(){
+ document.getElementById("heat").textContent=getHeat();
+ renderCollection();
+}
+
+function renderCollection(){
+ const b=getBook();
+ const grid=document.getElementById("collection");
+ grid.innerHTML="";
+ SP_POOL.forEach(v=>{
+  const owned=b.got[v.id];
+  grid.innerHTML+=`
+   <div class="item ${!owned?"lock":""}">
+     ${owned?v.name:"???"}
+   </div>
+  `;
+ });
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function draw(){
+ let heat=getHeat();
+ if(heat<COST){
+  alert("熱量不足");
+  return;
+ }
+
+ heat-=COST;
+ setHeat(heat);
+
+ const g=getGacha();
+ g.count++;
+ setGacha(g);
+
+ document.getElementById("overlay").classList.add("show");
+
+ await sleep(1200);
+
+ let card;
+
+ // 天井
+ if(g.count%10===0){
+  card=SP_POOL[Math.floor(Math.random()*SP_POOL.length)];
+ }else{
+  card=SP_POOL[Math.floor(Math.random()*SP_POOL.length)];
+ }
+
+ addCard(card.id,card.name);
+
+ document.getElementById("overlay").classList.remove("show");
+
+ document.getElementById("result").innerHTML=`
+  <h2>SP</h2>
+  <div>${card.name}</div>
+ `;
+
+ render();
+}
+
+document.getElementById("drawBtn").onclick=draw;
+
+render();
+</script>
+
+</body>
+</html>
