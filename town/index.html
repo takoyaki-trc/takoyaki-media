@@ -1449,17 +1449,27 @@ html.is-night .boss-gate{
   };
 
   const EXIST = {
-    farmBook:   "tf_v1_book",
-    farmInv:    "tf_v1_inv",
-    rotenOcto:  "roten_v1_octo",
-    tower:      "tower_v1_state",
-    fish:       "fish_v1_state",
+    farmBook:      "tf_v1_book",
+    farmInv:       "tf_v1_inv",
+    rotenOcto:     "roten_v1_octo",
+    tower:         "tower_v1_state",
+    fish:          "fish_v1_state",
 
     // ★追加：称号の頂
-    monthly:    "ttc_monthly_stats_v1",
-    history:    "ttc_monthly_history_v1",
-    godfarm:    "ttc_godfarm_v1",
-    godbonus:   "ttc_god_bonus_v1"
+    monthly:       "ttc_monthly_stats_v1",
+    history:       "ttc_monthly_history_v1",
+    godfarm:       "ttc_godfarm_v1",
+    godbonus:      "ttc_god_bonus_v1",
+
+    // ★追加：募集板
+    matchingBoard: "ttc_matching_board_v7",
+    matchingMeta:  "ttc_matching_meta_v6",
+    matchingHeat:  "matching_heat_v1",
+    affection:     "roten_v1_guest_affection",
+
+    // ★追加：かすみぴガチャ
+    kasumiGacha:   "kasumipi_gacha_v2",
+    kasumiBook:    "kasumipi_gacha_book_v2"
   };
 
   // ===== utils =====
@@ -1570,7 +1580,8 @@ html.is-night .boss-gate{
       "roten_v1_market",
       "roten_v1_state",
       "roten_v1_shelves",
-      "roten_v1_octo"
+      "roten_v1_octo",
+      "roten_v1_guest_affection"
     ];
 
     const ordered = [];
@@ -1582,6 +1593,52 @@ html.is-night .boss-gate{
     }
 
     return ordered.slice(0, 90);
+  }
+
+  function findMatchingKeys() {
+    const out = [];
+
+    const exact = [
+      EXIST.matchingBoard,
+      EXIST.matchingMeta,
+      EXIST.matchingHeat
+    ];
+
+    for (const k of exact) {
+      const v = getRaw(k);
+      if (v != null && !out.includes(k)) out.push(k);
+    }
+
+    for (const k of listKeysByRegex(/^ttc_matching_/i)) {
+      if (!out.includes(k)) out.push(k);
+    }
+
+    for (const k of listKeysByRegex(/^matching_heat_/i)) {
+      if (!out.includes(k)) out.push(k);
+    }
+
+    return out.slice(0, 30);
+  }
+
+  function findKasumiGachaKeys() {
+    const out = [];
+
+    const exact = [
+      EXIST.kasumiGacha,
+      EXIST.kasumiBook,
+      EXIST.matchingHeat
+    ];
+
+    for (const k of exact) {
+      const v = getRaw(k);
+      if (v != null && !out.includes(k)) out.push(k);
+    }
+
+    for (const k of listKeysByRegex(/^kasumipi_gacha_/i)) {
+      if (!out.includes(k)) out.push(k);
+    }
+
+    return out.slice(0, 30);
   }
 
   // ===== バックアップ作成 =====
@@ -1622,16 +1679,31 @@ html.is-night .boss-gate{
     if (getRaw(EXIST.godfarm)  != null) keys[EXIST.godfarm]  = getRaw(EXIST.godfarm);
     if (getRaw(EXIST.godbonus) != null) keys[EXIST.godbonus] = getRaw(EXIST.godbonus);
 
+    // ★追加：募集板 / 熱量 / 好感度
+    for (const k of findMatchingKeys()) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
+    if (getRaw(EXIST.affection) != null) {
+      keys[EXIST.affection] = getRaw(EXIST.affection);
+    }
+
+    // ★追加：かすみぴガチャ
+    for (const k of findKasumiGachaKeys()) {
+      const v = getRaw(k);
+      if (v != null) keys[k] = v;
+    }
+
     for (const k of Object.keys(keys)) {
       if (keys[k] === null || keys[k] === undefined) delete keys[k];
     }
 
     return {
       app: "takoyaki-trc",
-      ver: 6,
-      kind: "slim+roten+title-compatible",
+      ver: 7,
+      kind: "slim+roten+title+matching+gacha-compatible",
       exportedAt: new Date().toISOString(),
-      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り/称号の頂 を保存。旧keys形式バックアップの復元にも対応。",
+      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り/称号の頂/募集板/熱量/好感度/かすみぴガチャ を保存。旧keys形式バックアップの復元にも対応。",
       keys
     };
   }
