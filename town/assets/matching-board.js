@@ -1408,6 +1408,7 @@
 
   function renderHeroStats() {
     ensureHeroStatsShell();
+
     const meta = getMeta();
     const attempts = Number(meta.totalAttempts || 0);
     const success = Number(meta.totalSuccess || 0);
@@ -1430,6 +1431,81 @@
     if (failEl) failEl.style.width = `${failW}%`;
   }
 
+  function heatRankLabel(value) {
+    const n = Number(value || 0);
+    if (n >= 5000) return "爆発寸前";
+    if (n >= 3000) return "灼熱";
+    if (n >= 1500) return "高熱";
+    if (n >= 500) return "中熱";
+    if (n >= 100) return "微熱";
+    return "平熱";
+  }
+
+  function ensureHeatMeterShell() {
+    const hero = $(".hero");
+    if (!hero) return null;
+
+    let wrap = $("#heroHeatWrap");
+    if (wrap) return wrap;
+
+    wrap = document.createElement("div");
+    wrap.id = "heroHeatWrap";
+    wrap.className = "heroHeatWrap";
+    wrap.innerHTML = `
+      <div class="heroHeatNode">
+        <div>
+          <div class="heroHeatNodeNum" id="heroHeatNow">0</div>
+          <div class="heroHeatNodeLabel">熱量</div>
+        </div>
+      </div>
+
+      <div class="heroHeatBarWrap">
+        <div class="heroHeatBar" id="heroHeatBar">
+          <div class="heroHeatBarFill" id="heroHeatBarFill"></div>
+        </div>
+        <div class="heroHeatMeta">
+          <span id="heroHeatRank">平熱</span>
+          <span id="heroHeatGuide">500でガチャ1回</span>
+        </div>
+      </div>
+    `;
+
+    const statsWrap = $("#heroStatsWrap");
+    if (statsWrap) {
+      statsWrap.insertAdjacentElement("afterend", wrap);
+    } else {
+      const speechWrap = $(".heroSpeechWrap", hero);
+      if (speechWrap) speechWrap.insertAdjacentElement("afterend", wrap);
+      else hero.appendChild(wrap);
+    }
+
+    return wrap;
+  }
+
+  function renderHeatMeter() {
+    ensureHeatMeterShell();
+
+    const heat = getHeat();
+    const nowEl = $("#heroHeatNow");
+    const fillEl = $("#heroHeatBarFill");
+    const rankEl = $("#heroHeatRank");
+    const guideEl = $("#heroHeatGuide");
+
+    if (nowEl) nowEl.textContent = heat.toLocaleString();
+    if (rankEl) rankEl.textContent = heatRankLabel(heat);
+
+    const gaugeMax = 500;
+    const percent = Math.max(0, Math.min(100, (heat / gaugeMax) * 100));
+    if (fillEl) fillEl.style.width = `${percent}%`;
+
+    const remain = Math.max(0, 500 - heat);
+    if (guideEl) {
+      guideEl.textContent = remain === 0
+        ? "ガチャが引けるたこ"
+        : `あと ${remain} でガチャ1回`;
+    }
+  }
+
   function renderHero() {
     const heroImage = $("#heroImage");
     const heroSpeechText = $("#heroSpeechText");
@@ -1441,7 +1517,9 @@
 
     const rnd = randFromSeed(`hero::${todayKey()}`);
     heroSpeechText.textContent = pick(HERO_LINES, rnd);
+
     renderHeroStats();
+    renderHeatMeter();
   }
 
   function ensurePlayGuideButton() {
@@ -1945,6 +2023,7 @@
         const meta = getMeta();
         commitFinalFail(meta, job.type);
         renderHeroStats();
+        renderHeatMeter();
         renderBoard();
         showTakopiToast("……今日はこの相手、もう心を開かないたこ");
       } else {
@@ -1975,6 +2054,7 @@
     });
 
     renderHeroStats();
+    renderHeatMeter();
     renderBoard();
     renderAffectionModal();
     await showRewardModal(getJobById(jobId));
