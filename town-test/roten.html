@@ -67,6 +67,7 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border-bottom:1px solid rgba(255,255,255,.08);
+      isolation:isolate;
     }
 
     .roten-head-inner{
@@ -146,6 +147,9 @@
       transition:transform .15s ease, filter .15s ease;
       font-weight:900;
       font-family:inherit;
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
     }
 
     .btn:active{
@@ -232,6 +236,8 @@
       border:1px solid rgba(255,255,255,.08);
       box-shadow:var(--shadow);
       margin-bottom:12px;
+      position:relative;
+      z-index:1;
     }
 
     .hud-line{
@@ -281,6 +287,8 @@
       min-width:0;
       cursor:pointer;
       user-select:none;
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
     }
 
     .hud-resources b{
@@ -289,6 +297,8 @@
 
     .shop-hero{
       margin-bottom:14px;
+      position:relative;
+      z-index:1;
     }
 
     .hero-card{
@@ -400,6 +410,8 @@
         linear-gradient(180deg, rgba(78,47,31,.92), rgba(47,27,18,.95));
       border:1px solid rgba(255,255,255,.08);
       box-shadow:var(--shadow);
+      position:relative;
+      z-index:1;
     }
 
     .block-head{
@@ -454,6 +466,7 @@
       padding:8px 0;
       backdrop-filter:blur(8px);
       -webkit-backdrop-filter:blur(8px);
+      isolation:isolate;
     }
 
     .goods-tab{
@@ -473,6 +486,8 @@
         0 6px 14px rgba(0,0,0,.16);
       transition:.15s ease;
       opacity:.82;
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
     }
 
     .goods-tab:hover{
@@ -499,6 +514,8 @@
       display:grid;
       grid-template-columns:repeat(2,1fr);
       gap:10px;
+      position:relative;
+      z-index:1;
     }
 
     @media (min-width:860px){
@@ -514,6 +531,8 @@
       border:1px solid rgba(255,255,255,.08);
       box-shadow:0 10px 24px rgba(0,0,0,.2);
       transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+      position:relative;
+      z-index:1;
     }
 
     .good.is-bought{
@@ -564,6 +583,9 @@
       width:78px;
       image-rendering:pixelated;
       display:block;
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-drag:none;
     }
 
     .ownBadge{
@@ -624,10 +646,14 @@
       display:flex;
       justify-content:space-between;
       padding:0 10px 10px;
+      position:relative;
+      z-index:1;
     }
 
     .good-buy{
       width:100%;
+      position:relative;
+      z-index:1;
     }
 
     .buybar{
@@ -637,6 +663,8 @@
       justify-content:flex-end !important;
       gap:8px !important;
       flex-wrap:nowrap !important;
+      position:relative;
+      z-index:1;
     }
 
     .qty{
@@ -674,6 +702,14 @@
       font-weight:900 !important;
       font-size:14px !important;
       outline:none;
+      appearance:textfield;
+      -moz-appearance:textfield;
+    }
+
+    .qtyin::-webkit-outer-spin-button,
+    .qtyin::-webkit-inner-spin-button{
+      -webkit-appearance:none;
+      margin:0;
     }
 
     .buybtn{
@@ -718,10 +754,12 @@
       position:fixed;
       inset:0;
       display:none;
+      pointer-events:none;
     }
 
     .modal.is-open{
       display:block;
+      pointer-events:auto;
     }
 
     .modal__backdrop{
@@ -865,7 +903,7 @@
       position:fixed;
       inset:0;
       z-index:2147483647;
-      display:flex;
+      display:none;
       align-items:center;
       justify-content:center;
       padding:20px;
@@ -876,8 +914,10 @@
     }
 
     .purchase-pop.is-show{
+      display:flex;
       opacity:1;
       visibility:visible;
+      pointer-events:none;
     }
 
     .purchase-pop__bg{
@@ -1674,6 +1714,9 @@
         "「買った瞬間は静かでも、結果はだいたい騒がしい…たこ。」"
       ];
 
+      let currentKind = "seed";
+      let lastGridActionTs = 0;
+
       function getModalEls(){
         return {
           modal: document.getElementById("modal"),
@@ -1733,8 +1776,8 @@
 
       function wireModalClose(){
         const { bg, x } = getModalEls();
-        bg?.addEventListener("click", closeModal);
-        x?.addEventListener("click", closeModal);
+        bg?.addEventListener("click", closeModal, { passive:true });
+        x?.addEventListener("click", closeModal, { passive:true });
         document.addEventListener("keydown", (e) => {
           if(e.key === "Escape") closeModal();
         });
@@ -1860,7 +1903,107 @@
         return { ok:true, total, qty };
       }
 
-      let currentKind = "seed";
+      function getItemByCard(card){
+        if(!card) return null;
+        const kind = card.getAttribute("data-kind");
+        const id = card.getAttribute("data-id");
+        return GOODS.find(x => x.kind === kind && x.id === id) || null;
+      }
+
+      function getQtyInput(card){
+        return $(".qtyin", card);
+      }
+
+      function getCardQty(card){
+        const qtyIn = getQtyInput(card);
+        return clamp(Number(qtyIn?.value || 1), 1, 99);
+      }
+
+      function setCardQty(card, v){
+        const qtyIn = getQtyInput(card);
+        if(!qtyIn) return;
+        qtyIn.value = String(clamp(v, 1, 99));
+      }
+
+      function handleGoodsGridAction(target){
+        const actionEl = target.closest(".qtyminus, .qtyplus, .buybtn");
+        if(!actionEl) return false;
+
+        const card = actionEl.closest(".good");
+        if(!card) return false;
+
+        const item = getItemByCard(card);
+        if(!item) return false;
+
+        if(actionEl.classList.contains("qtyminus")){
+          setCardQty(card, getCardQty(card) - 1);
+          return true;
+        }
+
+        if(actionEl.classList.contains("qtyplus")){
+          setCardQty(card, getCardQty(card) + 1);
+          return true;
+        }
+
+        if(actionEl.classList.contains("buybtn")){
+          buyMany(item, getCardQty(card));
+          return true;
+        }
+
+        return false;
+      }
+
+      function wireGoodsGrid(){
+        const grid = $("#goodsGrid");
+        if(!grid) return;
+
+        grid.addEventListener("input", (e) => {
+          const input = e.target.closest(".qtyin");
+          if(!input) return;
+          const card = input.closest(".good");
+          if(!card) return;
+          setCardQty(card, input.value);
+        });
+
+        grid.addEventListener("change", (e) => {
+          const input = e.target.closest(".qtyin");
+          if(!input) return;
+          const card = input.closest(".good");
+          if(!card) return;
+          setCardQty(card, input.value);
+        });
+
+        grid.addEventListener("click", (e) => {
+          if(handleGoodsGridAction(e.target)){
+            e.preventDefault();
+            lastGridActionTs = Date.now();
+          }
+        });
+
+        grid.addEventListener("pointerup", (e) => {
+          if(!(e.pointerType === "touch" || e.pointerType === "pen")) return;
+
+          const now = Date.now();
+          if(now - lastGridActionTs < 350) return;
+
+          if(handleGoodsGridAction(e.target)){
+            e.preventDefault();
+            lastGridActionTs = now;
+          }
+        });
+
+        grid.addEventListener("keydown", (e) => {
+          const target = e.target;
+          if(!target) return;
+
+          if((e.key === "Enter" || e.key === " ") && target.closest(".qtyminus, .qtyplus, .buybtn")){
+            if(handleGoodsGridAction(target)){
+              e.preventDefault();
+              lastGridActionTs = Date.now();
+            }
+          }
+        });
+      }
 
       function renderGoods(){
         const inv = ensureInvKeys();
@@ -1878,7 +2021,7 @@
               <div class="good-top">
                 <div class="good-img">
                   <span class="ownBadge">×<b>${own}</b></span>
-                  <img src="${g.img}" alt="${g.name}" loading="lazy">
+                  <img src="${g.img}" alt="${g.name}" loading="lazy" draggable="false">
                 </div>
                 <div class="good-meta">
                   <div class="good-name">${g.name} ${badge}</div>
@@ -1891,11 +2034,11 @@
                 <div class="good-buy">
                   <div class="buybar">
                     <div class="qty">
-                      <button class="btn qtybtn qtyminus" type="button">−</button>
-                      <input class="qtyin" type="number" inputmode="numeric" min="1" max="99" value="1">
-                      <button class="btn qtybtn qtyplus" type="button">＋</button>
+                      <button class="btn qtybtn qtyminus" type="button" aria-label="数量を減らす">−</button>
+                      <input class="qtyin" type="number" inputmode="numeric" min="1" max="99" step="1" value="1" aria-label="数量">
+                      <button class="btn qtybtn qtyplus" type="button" aria-label="数量を増やす">＋</button>
                     </div>
-                    <button class="btn buybtn" type="button">買う</button>
+                    <button class="btn buybtn" type="button" aria-label="${g.name}を購入">買う</button>
                   </div>
                   <div class="priceline">単価 <b>${g.price}</b> オクト</div>
                 </div>
@@ -1903,45 +2046,6 @@
             </article>
           `;
         }).join("");
-
-        $$(".good", grid).forEach(card => {
-          const kind = card.getAttribute("data-kind");
-          const id = card.getAttribute("data-id");
-          const item = GOODS.find(x => x.kind === kind && x.id === id);
-          if(!item) return;
-
-          const btn   = $(".buybtn", card);
-          const minus = $(".qtyminus", card);
-          const plus  = $(".qtyplus", card);
-          const qtyIn = $(".qtyin", card);
-
-          function getQty(){
-            return clamp(Number(qtyIn.value || 1), 1, 99);
-          }
-
-          function setQty(v){
-            qtyIn.value = String(clamp(v, 1, 99));
-          }
-
-          minus?.addEventListener("click", (e) => {
-            e.preventDefault();
-            setQty(getQty() - 1);
-          });
-
-          plus?.addEventListener("click", (e) => {
-            e.preventDefault();
-            setQty(getQty() + 1);
-          });
-
-          qtyIn?.addEventListener("input", () => {
-            setQty(getQty());
-          });
-
-          btn?.addEventListener("click", (e) => {
-            e.preventDefault();
-            buyMany(item, getQty());
-          });
-        });
       }
 
       function wireResourceSummary(){
@@ -1949,6 +2053,8 @@
         if(!el) return;
 
         const open = () => {
+          const inv = loadInv();
+
           openModal("📦 所持資材の内訳", `
             <div class="mikuji-wrap">
               <div class="inv-box">
@@ -1956,7 +2062,7 @@
                 ${GOODS.filter(g => g.kind === "seed").map(g => `
                   <div class="inv-row">
                     <div class="inv-left"><span class="inv-name">${g.name}</span></div>
-                    <div class="inv-right">×<b>${ownedCount(loadInv(), "seed", g.id)}</b></div>
+                    <div class="inv-right">×<b>${ownedCount(inv, "seed", g.id)}</b></div>
                   </div>
                 `).join("")}
               </div>
@@ -1966,7 +2072,7 @@
                 ${GOODS.filter(g => g.kind === "water").map(g => `
                   <div class="inv-row">
                     <div class="inv-left"><span class="inv-name">${g.name}</span></div>
-                    <div class="inv-right">×<b>${ownedCount(loadInv(), "water", g.id)}</b></div>
+                    <div class="inv-right">×<b>${ownedCount(inv, "water", g.id)}</b></div>
                   </div>
                 `).join("")}
               </div>
@@ -1976,7 +2082,7 @@
                 ${GOODS.filter(g => g.kind === "fert").map(g => `
                   <div class="inv-row">
                     <div class="inv-left"><span class="inv-name">${g.name}</span></div>
-                    <div class="inv-right">×<b>${ownedCount(loadInv(), "fert", g.id)}</b></div>
+                    <div class="inv-right">×<b>${ownedCount(inv, "fert", g.id)}</b></div>
                   </div>
                 `).join("")}
               </div>
@@ -1987,7 +2093,7 @@
             </div>
           `);
 
-          $("#okSummary", document.getElementById("modalBody"))?.addEventListener("click", closeModal);
+          $("#okSummary", document.getElementById("modalBody"))?.addEventListener("click", closeModal, { passive:true });
           setTakopiSayRandom();
         };
 
@@ -2050,7 +2156,7 @@
           </div>
         `);
 
-        $("#okAbout", document.getElementById("modalBody"))?.addEventListener("click", closeModal);
+        $("#okAbout", document.getElementById("modalBody"))?.addEventListener("click", closeModal, { passive:true });
       }
 
       function wireTabs(){
@@ -2087,6 +2193,7 @@
         wireTabs();
         wireButtons();
         wireResourceSummary();
+        wireGoodsGrid();
         refreshHUD();
         renderGoods();
       }
