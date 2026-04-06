@@ -2,248 +2,954 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>かすみぴガチャ</title>
-
-<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>焼け残りの想い｜かすみぴガチャ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+JP:wght@500;700;800&display=swap" rel="stylesheet">
 
 <style>
+:root{
+  --bg1:#120d22;
+  --bg2:#201233;
+  --bg3:#2d1a45;
+  --ink:#fff7ef;
+  --muted:#d8c9df;
+
+  --gold1:#fff0b5;
+  --gold2:#ffd55e;
+  --gold3:#d89a1d;
+
+  --pink1:#ff7eb2;
+  --pink2:#ff5f9f;
+  --pink3:#c94177;
+
+  --panel:rgba(255,255,255,.07);
+  --panel2:rgba(255,255,255,.11);
+  --line:rgba(255,255,255,.12);
+
+  --shadow:0 16px 36px rgba(0,0,0,.35);
+  --shadow2:0 8px 18px rgba(0,0,0,.28);
+
+  --safeTop:max(12px, env(safe-area-inset-top));
+  --safeBottom:max(14px, env(safe-area-inset-bottom));
+}
+
+*{ box-sizing:border-box; }
+html,body{ min-height:100%; }
 body{
   margin:0;
-  font-family:"DotGothic16",sans-serif;
-  background:#0e0f14;
-  color:#fff;
+  color:var(--ink);
+  font-family:"Noto Sans JP",system-ui,sans-serif;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,190,110,.10), transparent 18%),
+    radial-gradient(circle at 20% 10%, rgba(255,120,180,.10), transparent 22%),
+    radial-gradient(circle at 80% 20%, rgba(140,120,255,.12), transparent 26%),
+    linear-gradient(180deg,var(--bg3),var(--bg2) 45%, #090814 100%);
+  overflow-x:hidden;
 }
 
-.wrap{
-  max-width:420px;
-  margin:auto;
-  padding:12px;
+button{ font:inherit; }
+.hidden{ display:none !important; }
+
+.page{
+  width:min(920px, calc(100% - 14px));
+  margin:0 auto;
+  padding:var(--safeTop) 0 calc(24px + var(--safeBottom));
 }
 
-/* 上部 */
-.top{
-  display:flex;
-  justify-content:space-between;
+/* ===================== Top ===================== */
+.topbar{
+  display:grid;
+  grid-template-columns:60px 1fr 86px;
+  gap:8px;
   align-items:center;
-  margin-bottom:10px;
-}
-.btn{
-  background:#222;
-  border:2px solid #555;
-  padding:6px 10px;
-  cursor:pointer;
-}
-
-/* 熱量 */
-.heatBox{
-  background:#111;
-  border:2px solid #666;
-  padding:10px;
   margin-bottom:12px;
 }
-.heatMain{
-  font-size:28px;
-}
 
-/* ステージ */
-.stage{
-  text-align:center;
-  margin-bottom:12px;
-}
-.stage img{
-  width:100%;
-  border:2px solid #555;
-}
-
-/* ガチャボタン */
-.gachaBtn{
-  width:100%;
-  padding:14px;
-  font-size:18px;
-  background:#ff5a8a;
+.topBtn{
+  min-height:52px;
   border:none;
   cursor:pointer;
+  border-radius:14px;
+  color:#3d260e;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.72)),
+    linear-gradient(180deg,var(--gold1),var(--gold2));
+  box-shadow:
+    inset 0 0 0 2px rgba(255,255,255,.40),
+    inset 0 -4px 0 rgba(183,133,39,.35),
+    0 8px 18px rgba(0,0,0,.18);
+  font-weight:800;
 }
 
-/* 結果 */
-.result{
-  margin-top:20px;
+.topBtn--back{
+  font-size:22px;
+}
+
+.topBtn--link{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:1px;
+  text-decoration:none;
+}
+
+.topBtnMain{ font-size:14px; font-weight:800; }
+.topBtnSub{ font-size:10px; font-weight:700; }
+
+.topTitle{
   text-align:center;
+  padding:10px 12px;
+  border-radius:16px;
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+  border:1px solid var(--line);
+  box-shadow:var(--shadow2);
 }
-.result img{
-  width:80%;
+.topTitle h1{
+  margin:0;
+  font-family:"DotGothic16",sans-serif;
+  font-size:24px;
+  line-height:1.1;
+  letter-spacing:.02em;
+}
+.topTitle p{
+  margin:4px 0 0;
+  font-size:11px;
+  line-height:1.5;
+  color:var(--muted);
+  font-weight:700;
 }
 
-/* コレクション */
-.grid{
+/* ===================== Heat ===================== */
+.heatPanel{
+  padding:12px;
+  border-radius:20px;
+  margin-bottom:12px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05)),
+    linear-gradient(180deg, rgba(255,212,92,.10), rgba(255,121,175,.06));
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+
+.heatTop{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:6px;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  align-items:center;
+}
+
+.heatMainLabel{
+  font-size:12px;
+  color:#ffe9c1;
+  font-weight:800;
+  margin-bottom:4px;
+}
+
+.heatMainValue{
+  font-family:"DotGothic16",sans-serif;
+  font-size:36px;
+  line-height:1;
+  color:#fff7dc;
+  text-shadow:0 0 14px rgba(255,214,94,.25);
+}
+
+.heatNeed{
+  text-align:right;
+  font-size:12px;
+  line-height:1.6;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.heatMiniGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
   margin-top:12px;
 }
-.item{
-  border:2px solid #555;
-  padding:6px;
+
+.heatMini{
+  padding:10px 8px;
+  border-radius:12px;
   text-align:center;
-}
-.lock{
-  opacity:.3;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
 }
 
-/* 演出 */
-.overlay{
+.heatMiniLabel{
+  font-size:10px;
+  color:#d9c8d7;
+  margin-bottom:4px;
+  font-weight:700;
+}
+
+.heatMiniValue{
+  font-size:16px;
+  font-weight:800;
+  color:#fff7ef;
+}
+
+/* ===================== Test Tools ===================== */
+.testPanel{
+  margin-bottom:12px;
+  padding:12px;
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  border:1px solid var(--line);
+  box-shadow:var(--shadow2);
+}
+
+.testHead{
+  font-size:12px;
+  font-weight:800;
+  color:#ffdca8;
+  margin-bottom:10px;
+}
+
+.testBtns{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.testBtn{
+  min-height:42px;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  color:#fff8ef;
+  font-size:12px;
+  font-weight:800;
+  background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 6px 12px rgba(0,0,0,.18);
+}
+.testBtn.reset{
+  background:linear-gradient(180deg, rgba(255,130,150,.35), rgba(255,90,120,.20));
+}
+
+/* ===================== Stage ===================== */
+.stagePanel{
+  margin-bottom:14px;
+}
+
+.stageFrame{
+  overflow:hidden;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:var(--shadow);
+  background:#090814;
+}
+.stageImage{
+  display:block;
+  width:100%;
+  aspect-ratio:16/10;
+  object-fit:cover;
+}
+
+.stageCaption{
+  margin-top:10px;
+  padding:12px 14px;
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+  border:1px solid var(--line);
+}
+.stageBadge{
+  display:inline-flex;
+  min-height:24px;
+  align-items:center;
+  justify-content:center;
+  padding:3px 8px;
+  border-radius:999px;
+  margin-bottom:8px;
+  background:linear-gradient(180deg,var(--gold1),var(--gold2));
+  color:#4c2f0f;
+  font-size:11px;
+  font-weight:800;
+}
+.stageMessage{
+  margin:0;
+  font-size:13px;
+  line-height:1.7;
+  color:#f3eaf3;
+  font-weight:700;
+}
+
+/* ===================== Draw Action ===================== */
+.drawPanel{
+  margin-bottom:14px;
+}
+
+.drawBtn{
+  width:100%;
+  min-height:66px;
+  border:none;
+  cursor:pointer;
+  border-radius:22px;
+  color:#5d3114;
+  font-size:22px;
+  font-weight:800;
+  letter-spacing:.02em;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,255,255,.50), transparent 38%),
+    linear-gradient(180deg, #fff6cb 0%, #ffd96d 50%, #f0b62d 100%);
+  box-shadow:
+    inset 0 4px 0 rgba(255,255,255,.58),
+    inset 0 -5px 0 rgba(171,118,22,.35),
+    0 14px 26px rgba(255,190,40,.18),
+    0 10px 20px rgba(0,0,0,.18);
+}
+.drawBtn:active{ transform:translateY(1px); }
+.drawBtn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.drawHint{
+  margin:8px 2px 0;
+  text-align:center;
+  font-size:12px;
+  line-height:1.6;
+  color:#d1c1d8;
+  font-weight:700;
+}
+
+/* ===================== Result ===================== */
+.resultPanel{
+  margin-bottom:14px;
+  padding:14px;
+  border-radius:20px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05)),
+    linear-gradient(180deg, rgba(255,214,100,.07), rgba(255,130,180,.05));
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+
+.resultHead{
+  margin-bottom:10px;
+}
+.resultBadge{
+  display:inline-flex;
+  min-height:24px;
+  align-items:center;
+  justify-content:center;
+  padding:3px 8px;
+  border-radius:999px;
+  margin-bottom:8px;
+  background:linear-gradient(180deg, #ffb6d0, #ff8eaf);
+  color:#5d2237;
+  font-size:11px;
+  font-weight:800;
+}
+.resultHead h2{
+  margin:0;
+  font-family:"DotGothic16",sans-serif;
+  font-size:22px;
+  line-height:1.2;
+}
+
+.resultBody{
+  display:grid;
+  grid-template-columns:140px 1fr;
+  gap:12px;
+  align-items:start;
+}
+
+.resultVisual{
+  border-radius:16px;
+  overflow:hidden;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  min-height:180px;
+  display:grid;
+  place-items:center;
+}
+.resultCardImage{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.resultPlaceholder{
+  padding:14px;
+  text-align:center;
+  font-size:12px;
+  line-height:1.7;
+  color:#d0c0d5;
+  font-weight:700;
+}
+
+.resultRarity{
+  display:inline-flex;
+  min-height:26px;
+  padding:4px 10px;
+  border-radius:999px;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg,var(--gold1),var(--gold2));
+  color:#5a3415;
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+.resultName{
+  margin:0 0 8px;
+  font-size:20px;
+  line-height:1.35;
+  color:#fff8ec;
+  font-weight:800;
+}
+.resultText{
+  margin:0;
+  font-size:13px;
+  line-height:1.75;
+  color:#e3d6e6;
+  font-weight:700;
+  white-space:pre-line;
+}
+
+/* ===================== Collection ===================== */
+.collectionPanel{
+  padding:14px;
+  border-radius:20px;
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+
+.collectionHead{
+  margin-bottom:10px;
+}
+.collectionBadge{
+  display:inline-flex;
+  min-height:24px;
+  align-items:center;
+  justify-content:center;
+  padding:3px 8px;
+  border-radius:999px;
+  margin-bottom:8px;
+  background:linear-gradient(180deg, #a79cff, #7e72ea);
+  color:#20174f;
+  font-size:11px;
+  font-weight:800;
+}
+.collectionHead h2{
+  margin:0;
+  font-family:"DotGothic16",sans-serif;
+  font-size:21px;
+  line-height:1.2;
+}
+
+.collectionGrid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.collectionItem{
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  min-height:118px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)),
+    linear-gradient(180deg, #38274a, #24182f);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:var(--shadow2);
+  padding:10px;
+}
+
+.collectionItem.locked{
+  filter:saturate(.4);
+}
+
+.collectionThumb{
+  height:56px;
+  border-radius:10px;
+  margin-bottom:8px;
+  display:grid;
+  place-items:center;
+  background:rgba(255,255,255,.05);
+  color:#fff3b2;
+  font-size:20px;
+  font-weight:800;
+}
+
+.collectionCode{
+  font-size:11px;
+  color:#ffe09d;
+  font-weight:800;
+  margin-bottom:4px;
+}
+.collectionName{
+  font-size:12px;
+  line-height:1.55;
+  color:#f2eaf5;
+  font-weight:700;
+}
+
+/* ===================== Overlay ===================== */
+.overlay,
+.bigOverlay{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.8);
   display:none;
   align-items:center;
   justify-content:center;
-  font-size:22px;
+  padding:18px;
+  z-index:100;
 }
-.overlay.show{
+
+.overlay.show,
+.bigOverlay.show{
   display:flex;
+}
+
+.overlay{
+  background:rgba(10,8,20,.76);
+  backdrop-filter:blur(4px);
+}
+
+.overlayText{
+  text-align:center;
+  font-family:"DotGothic16",sans-serif;
+  font-size:28px;
+  line-height:1.5;
+  color:#fff8d8;
+  text-shadow:0 0 18px rgba(255,215,100,.28);
+  animation:pulse 1s ease infinite;
+}
+
+.bigOverlay{
+  background:radial-gradient(circle at center, rgba(255,220,120,.10), rgba(0,0,0,.78));
+  backdrop-filter:blur(6px);
+}
+
+.bigResult{
+  text-align:center;
+  color:#fff8ef;
+  animation:pop .22s ease;
+}
+.bigResultRarity{
+  font-size:20px;
+  font-weight:800;
+  color:#ffd96e;
+  margin-bottom:8px;
+  letter-spacing:.08em;
+}
+.bigResultName{
+  font-family:"DotGothic16",sans-serif;
+  font-size:34px;
+  line-height:1.35;
+  text-shadow:0 0 20px rgba(255,210,80,.30);
+}
+
+@keyframes pulse{
+  0%{ transform:scale(1); opacity:.72; }
+  50%{ transform:scale(1.05); opacity:1; }
+  100%{ transform:scale(1); opacity:.72; }
+}
+@keyframes pop{
+  from{ opacity:0; transform:scale(.92); }
+  to{ opacity:1; transform:scale(1); }
+}
+
+/* ===================== Responsive ===================== */
+@media (max-width:560px){
+  .topbar{
+    grid-template-columns:56px 1fr 78px;
+  }
+  .topTitle h1{ font-size:20px; }
+  .heatMiniGrid{ grid-template-columns:repeat(3,1fr); }
+  .testBtns{ grid-template-columns:repeat(2,1fr); }
+  .resultBody{ grid-template-columns:1fr; }
+  .resultVisual{ min-height:220px; }
+  .drawBtn{ font-size:19px; min-height:60px; }
+  .bigResultName{ font-size:28px; }
 }
 </style>
 </head>
-
 <body>
-<div class="wrap">
+<div class="page">
 
-<div class="top">
-  <button class="btn" onclick="history.back()">←</button>
-  <div>かすみぴガチャ</div>
-  <div></div>
+  <header class="topbar">
+    <button class="topBtn topBtn--back" id="backBtn" aria-label="戻る">←</button>
+
+    <div class="topTitle">
+      <h1>焼け残りの想い</h1>
+      <p>熱量を使って、かすみぴのSPカードを引くたこ</p>
+    </div>
+
+    <a class="topBtn topBtn--link" href="./matching-board.html" aria-label="募集板へ戻る">
+      <span class="topBtnMain">募集板</span>
+      <span class="topBtnSub">戻る</span>
+    </a>
+  </header>
+
+  <section class="heatPanel">
+    <div class="heatTop">
+      <div>
+        <div class="heatMainLabel">現在の熱量</div>
+        <div class="heatMainValue" id="heatNow">0</div>
+      </div>
+
+      <div class="heatNeed">
+        1回：500熱量<br>
+        あと <span id="heatNeed">500</span>
+      </div>
+    </div>
+
+    <div class="heatMiniGrid">
+      <div class="heatMini">
+        <div class="heatMiniLabel">総ガチャ回数</div>
+        <div class="heatMiniValue" id="gachaTotal">0</div>
+      </div>
+      <div class="heatMini">
+        <div class="heatMiniLabel">SP確定まで</div>
+        <div class="heatMiniValue" id="pityRemain">10</div>
+      </div>
+      <div class="heatMini">
+        <div class="heatMiniLabel">所持SP数</div>
+        <div class="heatMiniValue" id="ownedCount">0</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="testPanel">
+    <div class="testHead">テスト用：熱量を手動で増やす</div>
+    <div class="testBtns">
+      <button class="testBtn" data-add-heat="100">+100</button>
+      <button class="testBtn" data-add-heat="500">+500</button>
+      <button class="testBtn" data-add-heat="5000">+5000</button>
+      <button class="testBtn reset" id="resetHeatBtn">リセット</button>
+    </div>
+  </section>
+
+  <section class="stagePanel">
+    <div class="stageFrame">
+      <img id="stageImage" class="stageImage" src="https://ul.h3z.jp/UtPlWaZz.png" alt="かすみぴガチャ演出">
+    </div>
+    <div class="stageCaption">
+      <div class="stageBadge">深層マッチング</div>
+      <p class="stageMessage" id="stageMessage">イカ墨の底で、まだ焼け残った想いを探しているたこ……</p>
+    </div>
+  </section>
+
+  <section class="drawPanel">
+    <button class="drawBtn" id="drawBtn">500熱量で引く</button>
+    <p class="drawHint" id="drawHint">熱量が足りないと引けないたこ。</p>
+  </section>
+
+  <section class="resultPanel">
+    <div class="resultHead">
+      <div class="resultBadge">今回の結果</div>
+      <h2>排出カード</h2>
+    </div>
+
+    <div class="resultBody">
+      <div class="resultVisual">
+        <img id="resultImage" class="resultCardImage hidden" src="" alt="排出カード">
+        <div id="resultPlaceholder" class="resultPlaceholder">
+          まだ引いていないたこ。<br>
+          光る想いが浮かび上がるのを待っているたこ。
+        </div>
+      </div>
+
+      <div class="resultInfo">
+        <div class="resultRarity" id="resultRarity">---</div>
+        <h3 class="resultName" id="resultName">---</h3>
+        <p class="resultText" id="resultText">ここに排出結果が表示されるたこ。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="collectionPanel">
+    <div class="collectionHead">
+      <div class="collectionBadge">コレクション</div>
+      <h2>かすみぴSP一覧</h2>
+    </div>
+
+    <div class="collectionGrid" id="collectionGrid"></div>
+  </section>
+
 </div>
 
-<div class="heatBox">
-  <div>熱量</div>
-  <div class="heatMain" id="heat">0</div>
+<div class="overlay" id="drawOverlay" aria-hidden="true">
+  <div class="overlayText" id="overlayText">イカ墨の底を探っているたこ……</div>
 </div>
 
-<div class="stage">
-  <img src="https://ul.h3z.jp/UtPlWaZz.png">
-</div>
-
-<button class="gachaBtn" id="drawBtn">
-  500で引く
-</button>
-
-<div class="result" id="result"></div>
-
-<div class="grid" id="collection"></div>
-
-</div>
-
-<div class="overlay" id="overlay">
-  ……引いているたこ……
+<div class="bigOverlay" id="bigResultOverlay" aria-hidden="true">
+  <div class="bigResult">
+    <div class="bigResultRarity" id="bigResultRarity">SP</div>
+    <div class="bigResultName" id="bigResultName">かすみぴSP</div>
+  </div>
 </div>
 
 <script>
-const KEY_HEAT="matching_heat_v1";
-const KEY_BOOK="tf_v1_book";
-const KEY_GACHA="kasumi_gacha_v1";
+(() => {
+  "use strict";
 
-const COST=500;
-const SP_POOL=[
- {id:"KSP-01",name:"かすみぴ覚醒"},
- {id:"KSP-02",name:"かすみぴ闇"},
- {id:"KSP-03",name:"かすみぴ余韻"},
- {id:"KSP-04",name:"かすみぴ幻"}
-];
+  const KEY_HEAT = "matching_heat_v1";
+  const KEY_GACHA = "kasumipi_gacha_v1";
+  const KEY_BOOK = "kasumipi_gacha_book_v1";
 
-function getHeat(){
- return Number(localStorage.getItem(KEY_HEAT)||0);
-}
-function setHeat(v){
- localStorage.setItem(KEY_HEAT,v);
-}
+  const COST = 500;
+  const PITY_MAX = 10;
 
-function getGacha(){
- return JSON.parse(localStorage.getItem(KEY_GACHA)||'{"count":0}');
-}
-function setGacha(v){
- localStorage.setItem(KEY_GACHA,JSON.stringify(v));
-}
+  const SP_POOL = [
+    {
+      id: "KSP-01",
+      rarity: "SP",
+      name: "かすみぴ《浮上》",
+      text: "イカ墨の底から、まだ燃えている想いがゆっくり浮かび上がったたこ。",
+      img: "https://files.catbox.moe/9m5q8j.jpg"
+    },
+    {
+      id: "KSP-02",
+      rarity: "SP",
+      name: "かすみぴ《抱えた記憶》",
+      text: "手の中で抱えたその一枚は、簡単に手放せない熱を持っていたたこ。",
+      img: "https://files.catbox.moe/t2l2o8.jpg"
+    },
+    {
+      id: "KSP-03",
+      rarity: "SP",
+      name: "かすみぴ《選別》",
+      text: "どのカードと結ばれるべきか、まだ迷っている目をしているたこ。",
+      img: "https://files.catbox.moe/v1rrsx.jpg"
+    },
+    {
+      id: "KSP-04",
+      rarity: "SP",
+      name: "かすみぴ《深層》",
+      text: "沈んだ想いの底で、ようやくこちらを見て笑ったたこ。",
+      img: "https://files.catbox.moe/o7x1k3.jpg"
+    }
+  ];
 
-function getBook(){
- return JSON.parse(localStorage.getItem(KEY_BOOK)||'{"got":{}}');
-}
-function saveBook(b){
- localStorage.setItem(KEY_BOOK,JSON.stringify(b));
-}
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-function addCard(id,name){
- const b=getBook();
- if(!b.got[id]) b.got[id]={count:0,name};
- b.got[id].count++;
- saveBook(b);
-}
+  function safeParse(raw, fallback) {
+    try {
+      const v = JSON.parse(raw);
+      return v ?? fallback;
+    } catch {
+      return fallback;
+    }
+  }
 
-function render(){
- document.getElementById("heat").textContent=getHeat();
- renderCollection();
-}
+  function getHeat() {
+    return Number(localStorage.getItem(KEY_HEAT) || 0);
+  }
 
-function renderCollection(){
- const b=getBook();
- const grid=document.getElementById("collection");
- grid.innerHTML="";
- SP_POOL.forEach(v=>{
-  const owned=b.got[v.id];
-  grid.innerHTML+=`
-   <div class="item ${!owned?"lock":""}">
-     ${owned?v.name:"???"}
-   </div>
-  `;
- });
-}
+  function setHeat(v) {
+    localStorage.setItem(KEY_HEAT, String(Math.max(0, Number(v || 0))));
+  }
 
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+  function addHeat(v) {
+    setHeat(getHeat() + Number(v || 0));
+  }
 
-async function draw(){
- let heat=getHeat();
- if(heat<COST){
-  alert("熱量不足");
-  return;
- }
+  function getGacha() {
+    return safeParse(localStorage.getItem(KEY_GACHA), {
+      total: 0,
+      pity: 0,
+      lastId: null
+    });
+  }
 
- heat-=COST;
- setHeat(heat);
+  function saveGacha(v) {
+    localStorage.setItem(KEY_GACHA, JSON.stringify(v));
+  }
 
- const g=getGacha();
- g.count++;
- setGacha(g);
+  function getBook() {
+    return safeParse(localStorage.getItem(KEY_BOOK), {
+      owned: {}
+    });
+  }
 
- document.getElementById("overlay").classList.add("show");
+  function saveBook(v) {
+    localStorage.setItem(KEY_BOOK, JSON.stringify(v));
+  }
 
- await sleep(1200);
+  function addOwned(card) {
+    const book = getBook();
+    if (!book.owned[card.id]) {
+      book.owned[card.id] = {
+        count: 0,
+        name: card.name,
+        rarity: card.rarity,
+        img: card.img
+      };
+    }
+    book.owned[card.id].count += 1;
+    saveBook(book);
+  }
 
- let card;
+  function ownedTotal() {
+    const book = getBook();
+    return Object.keys(book.owned).length;
+  }
 
- // 天井
- if(g.count%10===0){
-  card=SP_POOL[Math.floor(Math.random()*SP_POOL.length)];
- }else{
-  card=SP_POOL[Math.floor(Math.random()*SP_POOL.length)];
- }
+  function weightedPick() {
+    // 今は均等。あとでレア差も付けやすい形にしておく
+    return SP_POOL[Math.floor(Math.random() * SP_POOL.length)];
+  }
 
- addCard(card.id,card.name);
+  function pityPick() {
+    // 天井でも4種ランダム
+    return SP_POOL[Math.floor(Math.random() * SP_POOL.length)];
+  }
 
- document.getElementById("overlay").classList.remove("show");
+  function renderCollection() {
+    const book = getBook();
+    const root = $("#collectionGrid");
+    root.innerHTML = "";
 
- document.getElementById("result").innerHTML=`
-  <h2>SP</h2>
-  <div>${card.name}</div>
- `;
+    SP_POOL.forEach(card => {
+      const owned = book.owned[card.id];
+      const item = document.createElement("article");
+      item.className = "collectionItem" + (owned ? "" : " locked");
+      item.innerHTML = `
+        <div class="collectionThumb">${owned ? "★" : "?"}</div>
+        <div class="collectionCode">${card.id}</div>
+        <div class="collectionName">${owned ? card.name : "未所持"}</div>
+      `;
+      root.appendChild(item);
+    });
+  }
 
- render();
-}
+  function renderHeat() {
+    const heat = getHeat();
+    const g = getGacha();
 
-document.getElementById("drawBtn").onclick=draw;
+    $("#heatNow").textContent = heat.toLocaleString();
+    $("#heatNeed").textContent = String(Math.max(0, COST - heat));
+    $("#gachaTotal").textContent = String(g.total || 0);
+    $("#pityRemain").textContent = String(Math.max(1, PITY_MAX - (g.pity || 0)));
+    $("#ownedCount").textContent = String(ownedTotal());
 
-render();
+    const btn = $("#drawBtn");
+    const hint = $("#drawHint");
+    if (heat >= COST) {
+      btn.disabled = false;
+      hint.textContent = "今なら引けるたこ。深層に沈んだ想いをすくい上げるたこ。";
+    } else {
+      btn.disabled = true;
+      hint.textContent = `あと ${Math.max(0, COST - heat)} 熱量で引けるたこ。`;
+    }
+  }
+
+  function renderIdleStage() {
+    $("#stageImage").src = "https://ul.h3z.jp/UtPlWaZz.png";
+    $("#stageMessage").textContent = "イカ墨の底で、まだ焼け残った想いを探しているたこ……";
+  }
+
+  function renderResult(card) {
+    const img = $("#resultImage");
+    const ph = $("#resultPlaceholder");
+
+    img.src = card.img;
+    img.classList.remove("hidden");
+    ph.classList.add("hidden");
+
+    $("#resultRarity").textContent = card.rarity;
+    $("#resultName").textContent = card.name;
+    $("#resultText").textContent = card.text;
+  }
+
+  function bindHeatTools() {
+    document.querySelectorAll("[data-add-heat]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        addHeat(Number(btn.dataset.addHeat || 0));
+        renderHeat();
+      });
+    });
+
+    $("#resetHeatBtn").addEventListener("click", () => {
+      setHeat(0);
+      renderHeat();
+    });
+  }
+
+  async function playDraw(card) {
+    const overlay = $("#drawOverlay");
+    const big = $("#bigResultOverlay");
+
+    overlay.classList.add("show");
+    $("#overlayText").textContent = "イカ墨の底を探っているたこ……";
+    await sleep(1100);
+
+    $("#stageImage").src = "https://files.catbox.moe/9m5q8j.jpg";
+    $("#stageMessage").textContent = "光る一枚が、ゆっくりこちらへ浮かび上がってくるたこ……";
+    await sleep(650);
+
+    $("#overlayText").textContent = "……来るたこ";
+    await sleep(650);
+
+    overlay.classList.remove("show");
+
+    $("#bigResultRarity").textContent = card.rarity;
+    $("#bigResultName").textContent = card.name;
+    big.classList.add("show");
+    await sleep(1400);
+    big.classList.remove("show");
+
+    renderResult(card);
+    $("#stageImage").src = card.img;
+    $("#stageMessage").textContent = card.text;
+  }
+
+  async function drawOnce() {
+    const heat = getHeat();
+    if (heat < COST) {
+      renderHeat();
+      return;
+    }
+
+    setHeat(heat - COST);
+
+    const g = getGacha();
+    g.total += 1;
+    g.pity += 1;
+
+    let card;
+    if (g.pity >= PITY_MAX) {
+      card = pityPick();
+      g.pity = 0;
+    } else {
+      card = weightedPick();
+    }
+
+    g.lastId = card.id;
+    saveGacha(g);
+    addOwned(card);
+
+    renderHeat();
+    await playDraw(card);
+    renderCollection();
+  }
+
+  function bindUI() {
+    $("#backBtn").addEventListener("click", () => {
+      if (history.length > 1) history.back();
+      else location.href = "./";
+    });
+
+    $("#drawBtn").addEventListener("click", drawOnce);
+  }
+
+  renderIdleStage();
+  renderHeat();
+  renderCollection();
+  bindHeatTools();
+  bindUI();
+})();
 </script>
-
 </body>
 </html>
