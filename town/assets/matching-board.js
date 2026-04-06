@@ -9,7 +9,8 @@
     octo: "roten_v1_octo",
     book: "tf_v1_book",
     inv: "tf_v1_inv",
-    matchingMeta: "ttc_matching_meta_v6"
+    matchingMeta: "ttc_matching_meta_v6",
+    heat: "matching_heat_v1"
   };
 
   const AFFECTION_LS_KEY = "roten_v1_guest_affection";
@@ -656,6 +657,20 @@
     return next;
   }
 
+  function getHeat() {
+    return Number(localStorage.getItem(KEY.heat) || 0);
+  }
+
+  function setHeat(value) {
+    const next = Math.max(0, Number(value || 0));
+    localStorage.setItem(KEY.heat, String(next));
+    return next;
+  }
+
+  function addHeat(delta) {
+    return setHeat(getHeat() + Number(delta || 0));
+  }
+
   function getBook() {
     const book = loadJSON(KEY.book, { got: {} });
     if (!book.got || typeof book.got !== "object") book.got = {};
@@ -694,6 +709,7 @@
 
   function ensureDefaults() {
     if (localStorage.getItem(KEY.octo) == null) localStorage.setItem(KEY.octo, "1000");
+    if (localStorage.getItem(KEY.heat) == null) localStorage.setItem(KEY.heat, "0");
 
     const inv = loadJSON(KEY.inv, null);
     if (!inv) saveJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
@@ -1491,6 +1507,7 @@
     return `
       <div class="rewardShowcase">
         <span class="rewardShowChip">🪙 ${job.rewardOcto.toLocaleString()}オクト</span>
+        <span class="rewardShowChip">🔥 ${job.rewardExp}熱量</span>
         ${topItems.map(item => `<span class="rewardShowChip">${itemIcon(item.kind)} ${escapeHtml(itemLabel(item.kind, item.id))}×${item.qty}</span>`).join("")}
       </div>
     `;
@@ -1868,7 +1885,8 @@
     }
 
     rows.push(`<div class="rewardItem">🪙 ${job.rewardOcto.toLocaleString()} オクト</div>`);
-    rows.push(`<div class="rewardItem">好感度 +${job.lastAffectionGain} / 熱量 +${job.rewardExp}</div>`);
+    rows.push(`<div class="rewardItem">🔥 熱量 +${job.rewardExp}</div>`);
+    rows.push(`<div class="rewardItem">好感度 +${job.lastAffectionGain}</div>`);
     rows.push(...job.rewardItems.map(v => `<div class="rewardItem">${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)} ×${v.qty}</div>`));
 
     list.innerHTML = rows.join("");
@@ -1951,6 +1969,7 @@
       j.lastAffectionGain = affectionGain;
 
       addOcto(j.rewardOcto + bonus);
+      addHeat(j.rewardExp);
       j.rewardItems.forEach(item => addInventory(item.kind, item.id, item.qty));
       addAffection(j.type, affectionGain);
     });
