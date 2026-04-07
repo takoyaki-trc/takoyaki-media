@@ -15,6 +15,8 @@
 
   const AFFECTION_LS_KEY = "roten_v1_guest_affection";
   const REGULAR_LOVE_THRESHOLD = 80;
+  const GACHA_HEAT_COST = 500;
+  const GACHA_URL = "kasumipi-gacha.html";
 
   // =========================================================
   // Utils
@@ -120,6 +122,85 @@
 
   function wait(ms) {
     return new Promise(r => setTimeout(r, ms));
+  }
+
+  // =========================================================
+  // Dynamic style for heat meter + gacha button
+  // =========================================================
+  function ensureDynamicStyles() {
+    if ($("#matchingDynamicStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "matchingDynamicStyles";
+    style.textContent = `
+      .heroHeatWrap{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        width:100%;
+        min-width:0;
+      }
+
+      .heroHeatNode{
+        flex:0 0 auto;
+      }
+
+      .heroHeatBarWrap{
+        flex:1 1 auto;
+        min-width:0;
+      }
+
+      .heroHeatBar{
+        width:100%;
+      }
+
+      .heroHeatAction{
+        flex:0 0 auto;
+        display:flex;
+        align-items:center;
+      }
+
+      .heroHeatGachaBtn{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-width:112px;
+        height:42px;
+        padding:0 14px;
+        border-radius:12px;
+        text-decoration:none;
+        font-weight:800;
+        font-size:13px;
+        line-height:1;
+        white-space:nowrap;
+        user-select:none;
+        transition:transform .15s ease, opacity .15s ease, filter .15s ease;
+      }
+
+      .heroHeatGachaBtn.isDisabled{
+        pointer-events:none;
+        opacity:.45;
+        filter:grayscale(.18);
+      }
+
+      .heroHeatGachaBtn.isEnabled:hover{
+        transform:translateY(-1px);
+      }
+
+      @media (max-width: 640px){
+        .heroHeatWrap{
+          gap:8px;
+        }
+        .heroHeatGachaBtn{
+          min-width:94px;
+          height:38px;
+          padding:0 10px;
+          font-size:12px;
+          border-radius:10px;
+        }
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   // =========================================================
@@ -1107,15 +1188,16 @@
     return Math.max(2, difficulty + 1);
   }
 
+  // 報酬資材を少し減量
   function makeRewardItems(type, difficulty, rnd) {
     const profile = REWARD_PROFILES[type] || REWARD_PROFILES.careful;
     const out = [];
 
     for (const [kind, id] of profile.fixed) {
-      out.push({ kind, id, qty: difficulty >= 4 ? 2 : 1 });
+      out.push({ kind, id, qty: 1 });
     }
 
-    const count = difficulty <= 2 ? 4 : difficulty === 3 ? 5 : difficulty === 4 ? 6 : 7;
+    const count = difficulty <= 2 ? 2 : difficulty === 3 ? 3 : difficulty === 4 ? 4 : 5;
     const randPool = profile.rand.map(([kind, id, weight]) => ({ kind, id, weight }));
 
     for (let i = 0; i < count; i++) {
@@ -1123,9 +1205,9 @@
       out.push({ kind: p.kind, id: p.id, qty: 1 });
     }
 
-    if (difficulty >= 4) {
+    if (difficulty >= 5 && rnd() < 0.45) {
       const bonusPick = weightedPick(randPool, rnd);
-      out.push({ kind: bonusPick.kind, id: bonusPick.id, qty: 2 });
+      out.push({ kind: bonusPick.kind, id: bonusPick.id, qty: 1 });
     }
 
     const merged = new Map();
@@ -1442,6 +1524,8 @@
   }
 
   function ensureHeatMeterShell() {
+    ensureDynamicStyles();
+
     const hero = $(".hero");
     if (!hero) return null;
 
@@ -1468,6 +1552,17 @@
           <span id="heroHeatGuide">500でガチャ1回</span>
         </div>
       </div>
+
+      <div class="heroHeatAction">
+        <a
+          id="heroHeatGachaBtn"
+          class="heroHeatGachaBtn isDisabled"
+          href="#"
+          aria-disabled="true"
+          tabindex="-1"
+          title="熱量が足りないたこ"
+        >かすみぴガチャ</a>
+      </div>
     `;
 
     const statsWrap = $("#heroStatsWrap");
@@ -1490,19 +1585,30 @@
     const fillEl = $("#heroHeatBarFill");
     const rankEl = $("#heroHeatRank");
     const guideEl = $("#heroHeatGuide");
+    const gachaBtn = $("#heroHeatGachaBtn");
 
     if (nowEl) nowEl.textContent = heat.toLocaleString();
     if (rankEl) rankEl.textContent = heatRankLabel(heat);
 
-    const gaugeMax = 500;
+    const gaugeMax = GACHA_HEAT_COST;
     const percent = Math.max(0, Math.min(100, (heat / gaugeMax) * 100));
     if (fillEl) fillEl.style.width = `${percent}%`;
 
-    const remain = Math.max(0, 500 - heat);
+    const remain = Math.max(0, GACHA_HEAT_COST - heat);
     if (guideEl) {
       guideEl.textContent = remain === 0
         ? "ガチャが引けるたこ"
         : `あと ${remain} でガチャ1回`;
+    }
+
+    if (gachaBtn) {
+      const enabled = heat >= GACHA_HEAT_COST;
+      gachaBtn.classList.toggle("isEnabled", enabled);
+      gachaBtn.classList.toggle("isDisabled", !enabled);
+      gachaBtn.setAttribute("aria-disabled", enabled ? "false" : "true");
+      gachaBtn.tabIndex = enabled ? 0 : -1;
+      gachaBtn.href = enabled ? GACHA_URL : "#";
+      gachaBtn.title = enabled ? "かすみぴガチャへ" : "熱量が足りないたこ";
     }
   }
 
@@ -2145,6 +2251,17 @@
       });
     }
 
+    const gachaBtn = $("#heroHeatGachaBtn");
+    if (gachaBtn && !gachaBtn.dataset.bound) {
+      gachaBtn.dataset.bound = "1";
+      gachaBtn.addEventListener("click", (e) => {
+        if (getHeat() < GACHA_HEAT_COST) {
+          e.preventDefault();
+          showTakopiToast(`あと ${Math.max(0, GACHA_HEAT_COST - getHeat())} 熱量でガチャたこ`);
+        }
+      });
+    }
+
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         closeJobModal();
@@ -2158,6 +2275,7 @@
   // =========================================================
   // Boot
   // =========================================================
+  ensureDynamicStyles();
   ensureDefaults();
   ensureHowToModal();
   generateBoard(false);
