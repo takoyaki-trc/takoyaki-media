@@ -18,6 +18,9 @@
   const GACHA_HEAT_COST = 500;
   const GACHA_URL = "kasumipi-gacha.html";
 
+  const KASUMIPI_FLOAT_ICON = "https://ul.h3z.jp/eUMxATXQ.png";
+  const HERO_IMAGE_URL = "https://ul.h3z.jp/KyGJh82d.png";
+
   // =========================================================
   // Utils
   // =========================================================
@@ -105,27 +108,31 @@
     return "★".repeat(n) + "☆".repeat(5 - n);
   }
 
-  function getTimeMode() {
-    const h = nowTokyo().getHours();
-    return (h >= 6 && h < 18) ? "day" : "night";
-  }
-
-  function showTakopiToast(text, ms = 2400) {
+  function showKasumipiToast(text, ms = 2400) {
     const wrap = $("#takopiToast");
     const inner = $("#takopiToastInner");
     if (!wrap || !inner) return;
     inner.textContent = text;
     wrap.classList.add("show");
-    clearTimeout(showTakopiToast._t);
-    showTakopiToast._t = setTimeout(() => wrap.classList.remove("show"), ms);
+    clearTimeout(showKasumipiToast._t);
+    showKasumipiToast._t = setTimeout(() => wrap.classList.remove("show"), ms);
   }
 
   function wait(ms) {
     return new Promise(r => setTimeout(r, ms));
   }
 
+  function groupRewardItems(items) {
+    const out = { seed: 0, water: 0, fert: 0 };
+    (items || []).forEach(item => {
+      if (!out[item.kind]) out[item.kind] = 0;
+      out[item.kind] += Number(item.qty || 0);
+    });
+    return out;
+  }
+
   // =========================================================
-  // Dynamic style for heat meter + gacha button
+  // Dynamic style
   // =========================================================
   function ensureDynamicStyles() {
     if ($("#matchingDynamicStyles")) return;
@@ -279,48 +286,48 @@
   };
 
   const HERO_LINES = [
-    "今日は誰に焼かれるたこ？",
-    "条件が合えば、もうそれは運命たこ。",
-    "恋じゃない、在庫のマッチングたこ。",
-    "今日の相手、たぶん全員ちょっと重いたこ。"
+    "今日は、どの願いが深く沈んでるじゃなイカ？",
+    "条件が揃えば、それはもう運命じゃなイカ？",
+    "恋じゃなくて執着かもしれないじゃなイカ。",
+    "今日の相手、だいたいみんな重ためじゃなイカ？"
   ];
 
-  const TAKOPI_LINES = [
-    "……その相手、重いたこ",
-    "ヒント見すぎると、恋が作業になるたこ",
-    "一発で当てたら、かなりモテるたこ",
-    "今日は沼が多いたこ",
-    "♥か💔かは、渡してからのお楽しみたこ"
+  const KASUMIPI_LINES = [
+    "……その願い、深く沈んでるじゃなイカ",
+    "ヒントを見すぎると、ロマンが作業になるじゃなイカ",
+    "一発で当てたら、かなり冴えてるじゃなイカ",
+    "今日は沼っぽい相手が多いじゃなイカ",
+    "♥か💔か、渡してみるまで分からないじゃなイカ"
   ];
 
   const FALLBACK_LINES = {
-    impulse: ["一瞬触れただけなのに、まだ忘れられないたこ"],
-    picky: ["あの日の君じゃなきゃダメなたこ"],
-    king: ["選ぶ側だったのに、選ばれなかったたこ"],
-    flipper: ["好きだったのか、ただの記憶か分からないたこ"],
-    careful: ["好きって言葉にすると終わりそうなたこ"],
-    looker: ["あの日どこかに置き忘れた君を探してるたこ"],
-    rich: ["いくら払えば、あの頃に戻れるたこ"],
-    climber: ["あと一歩だったのに届かないたこ"],
-    guide: ["案内してる側なのに迷ってるたこ"],
-    relax: ["理由もなく好きだったのが一番残るたこ"],
-    artisan: ["触れた質感まで覚えてるたこ"],
-    diet: ["欲しくないって言い聞かせてるだけたこ"],
-    overflow: ["普通じゃ足りなかったたこ"],
-    collector: ["手元に置いておきたかったたこ"],
-    shadow: ["濡れた記憶ほど残るたこ"],
-    ramen: ["一回じゃ足りなかったたこ"],
-    streamer: ["軽いはずだったたこ"],
-    gourmet: ["あの日の味が忘れられないたこ"],
-    opener: ["中身を知らないまま惹かれてたこ"],
-    party: ["祭りのあとに残るやつたこ"],
-    pilgrim: ["あの日に置いてきた気持ちを探してるたこ"]
+    impulse: ["一瞬だったのに、まだ忘れられないじゃなイカ"],
+    picky: ["あの日のそれじゃなきゃダメじゃなイカ"],
+    king: ["選ぶ側のはずが、心を持っていかれたじゃなイカ"],
+    flipper: ["好きなのか執着なのか、自分でも怪しいじゃなイカ"],
+    careful: ["言葉にしたら壊れそうで、まだ黙ってるじゃなイカ"],
+    looker: ["見てるだけのはずが、ずっと目で追ってるじゃなイカ"],
+    rich: ["いくら積めば、あの時に戻れるじゃなイカ"],
+    climber: ["あと少しだったのに届かなかったじゃなイカ"],
+    guide: ["案内してるのに、自分が迷ってるじゃなイカ"],
+    relax: ["理由もなく惹かれたものほど残るじゃなイカ"],
+    artisan: ["触れた感触まで覚えてるじゃなイカ"],
+    diet: ["欲しくないって言い聞かせてるだけじゃなイカ"],
+    overflow: ["普通の枠には収まらなかったじゃなイカ"],
+    collector: ["手元に置いておきたい気持ちが強すぎるじゃなイカ"],
+    shadow: ["濡れた記憶ほど、乾かないじゃなイカ"],
+    ramen: ["一回じゃ足りなかったじゃなイカ"],
+    streamer: ["軽い気持ちのはずが、妙に残るじゃなイカ"],
+    gourmet: ["あの日の余韻が忘れられないじゃなイカ"],
+    opener: ["中身も知らないのに惹かれてるじゃなイカ"],
+    party: ["祭りのあとほど、本音が残るじゃなイカ"],
+    pilgrim: ["置いてきた気持ちを、まだ探してるじゃなイカ"]
   };
 
   function getSpeechLines(type) {
     const external = (window.LOVE_LINES && window.LOVE_LINES[type]) || null;
     if (Array.isArray(external) && external.length) return external;
-    return FALLBACK_LINES[type] || ["まだ忘れられないたこ"];
+    return FALLBACK_LINES[type] || ["まだ忘れられないじゃなイカ"];
   }
 
   // =========================================================
@@ -555,17 +562,6 @@
     };
   }
 
-  function patchAffectionGuest(id, patch) {
-    const state = loadAffectionState();
-    if (!state.guests[id]) {
-      state.guests[id] = getDefaultAffectionGuest();
-    }
-    Object.assign(state.guests[id], patch || {});
-    state.guests[id].love = clamp(Number(state.guests[id].love || 0), 0, 100);
-    saveAffectionState(state);
-    return state.guests[id];
-  }
-
   function addAffection(id, delta) {
     const state = loadAffectionState();
     if (!state.guests[id]) {
@@ -595,30 +591,30 @@
     const n = Number(love || 0);
 
     const map = {
-      impulse: ["まだ勢いで来ている。", "ノリが合う店だと思い始めている。", "勢いで来て、愛着で帰る常連。"],
-      picky: ["まだ厳しく見定めている。", "少しずつ認め始めている。", "うるさいけど、かなり気に入っている。"],
-      king: ["まだ試す目で見ている。", "店の格を認め始めている。", "王が認めた相手。かなり強い。"],
-      flipper: ["まだ打算で見ている。", "数字以外の価値も少し見えてきた。", "打算から始まったのに、なぜか情がある。"],
-      careful: ["まだ警戒しながら様子見。", "少しずつ安心してきている。", "かなり信頼している。"],
-      looker: ["まだ“見るだけ”の距離感。", "眺めるだけでは済まなくなってきた。", "口では軽いが、かなり好き。"],
-      rich: ["金で測っている。", "値段以外の面白さも認め始めた。", "財布より先に心が動いている。"],
-      climber: ["まだ試練の棚だと思っている。", "登る価値のある相手だと思い始めた。", "景色の見える常連ポジション。"],
-      guide: ["まだ外から案内している。", "語りたくなる相手になってきた。", "もう半分この店の広報。"],
-      relax: ["まだ様子見で空気を読んでいる。", "居心地の良さを感じ始めている。", "癒やし目的でも来ている。"],
-      artisan: ["仕事として見ている。", "腕前を認めてきている。", "技術も空気も含めて評価している。"],
-      diet: ["理屈で距離を取っている。", "理論の中に好意が混ざり始めた。", "もはや理屈を超えて好き。"],
-      overflow: ["まだ枠外から見ている。", "ズレた会話を楽しみ始めている。", "規格外どうしで相性が良い。"],
-      collector: ["まだ管理対象として見ている。", "保存以上の感情が生まれ始めた。", "かなり大切な相手認定。"],
-      shadow: ["まだ慎重に距離を測っている。", "守れる価値を感じ始めている。", "信用しているから近づいている。"],
-      ramen: ["まだ濃さだけ見ている。", "味わうように通い始めている。", "締めに寄りたくなる相手になった。"],
-      streamer: ["まだネタとして見ている。", "映え以上の面白さを感じている。", "本気で推したくなっている。"],
-      gourmet: ["まだ厳しく品定めしている。", "余韻のある相手だと感じ始めた。", "かなり深く気に入っている。"],
-      opener: ["まだ勢いだけで近づいている。", "テンション以上に楽しみ始めた。", "勢い込みでかなり好き。"],
-      party: ["まだ祭りのノリで来ている。", "ノリ以上の居場所感が出てきた。", "騒がしいけど本気で好き。"],
-      pilgrim: ["まだ巡礼先のひとつ。", "来た意味がある場所だと思い始めた。", "わざわざ来る価値があると確信している。"]
+      impulse: ["まだ勢いだけで来てるじゃなイカ。", "ノリだけじゃない相性を感じ始めてるじゃなイカ。", "勢いで来て、情で通う常連じゃなイカ。"],
+      picky: ["まだ厳しく見定めてるじゃなイカ。", "少しずつ認め始めてるじゃなイカ。", "うるさいけど、かなり気に入ってるじゃなイカ。"],
+      king: ["まだ試してる側じゃなイカ。", "価値を認め始めてるじゃなイカ。", "王が認めた相手、かなり強いじゃなイカ。"],
+      flipper: ["まだ打算で見てるじゃなイカ。", "数字以外も少し見えてきたじゃなイカ。", "打算のはずが、情まで乗ってるじゃなイカ。"],
+      careful: ["まだ慎重に様子見してるじゃなイカ。", "少しずつ安心してるじゃなイカ。", "かなり信頼してるじゃなイカ。"],
+      looker: ["まだ“見るだけ”の距離感じゃなイカ。", "眺めるだけでは済まなくなってるじゃなイカ。", "口では軽いのに、かなり好きじゃなイカ。"],
+      rich: ["まだ値段で測ってるじゃなイカ。", "値段以外の面白さも認め始めてるじゃなイカ。", "財布より先に心が動いてるじゃなイカ。"],
+      climber: ["まだ試練として見てるじゃなイカ。", "登る価値があると感じ始めてるじゃなイカ。", "景色が見える位置まで来てるじゃなイカ。"],
+      guide: ["まだ外から案内してるじゃなイカ。", "語りたくなる相手になってきたじゃなイカ。", "もう半分この店の語り部じゃなイカ。"],
+      relax: ["まだ様子見じゃなイカ。", "居心地の良さを感じ始めてるじゃなイカ。", "癒やし目当てでも来てるじゃなイカ。"],
+      artisan: ["まだ仕事目線じゃなイカ。", "腕を認め始めてるじゃなイカ。", "技術ごと信頼してるじゃなイカ。"],
+      diet: ["まだ理屈で距離を取ってるじゃなイカ。", "理論の中に好意が混ざってるじゃなイカ。", "もはや理屈を超えてるじゃなイカ。"],
+      overflow: ["まだ枠外から見てるじゃなイカ。", "ズレまで楽しみ始めてるじゃなイカ。", "規格外どうし、相性がいいじゃなイカ。"],
+      collector: ["まだ管理対象じゃなイカ。", "保存以上の感情が出てきてるじゃなイカ。", "かなり大切な相手認定じゃなイカ。"],
+      shadow: ["まだ慎重に距離を測ってるじゃなイカ。", "守る価値を感じ始めてるじゃなイカ。", "信用してるから近いじゃなイカ。"],
+      ramen: ["まだ濃さだけ見てるじゃなイカ。", "味わうように通ってるじゃなイカ。", "締めに寄りたくなる相手じゃなイカ。"],
+      streamer: ["まだネタとして見てるじゃなイカ。", "映え以上の面白さを感じてるじゃなイカ。", "本気で推したくなってるじゃなイカ。"],
+      gourmet: ["まだ厳しく品定めしてるじゃなイカ。", "余韻を感じ始めてるじゃなイカ。", "かなり深く気に入ってるじゃなイカ。"],
+      opener: ["まだ勢いで近づいてるじゃなイカ。", "テンション以上に楽しんでるじゃなイカ。", "勢い込みでかなり好きじゃなイカ。"],
+      party: ["まだ祭りのノリじゃなイカ。", "ノリ以上の居場所感が出てきたじゃなイカ。", "騒がしいけど本気じゃなイカ。"],
+      pilgrim: ["まだ巡礼先のひとつじゃなイカ。", "来た意味がある場所だと思い始めてるじゃなイカ。", "わざわざ来る価値があると確信してるじゃなイカ。"]
     };
 
-    const row = map[type] || ["まだ距離を測っている。", "少しずつ距離が縮んでいる。", "かなり気に入っている。"];
+    const row = map[type] || ["まだ距離を測ってるじゃなイカ。", "少しずつ距離が縮んでるじゃなイカ。", "かなり気に入ってるじゃなイカ。"];
     if (n >= 80) return row[2];
     if (n >= 40) return row[1];
     return row[0];
@@ -824,7 +820,7 @@
 
     const affection = loadAffectionState();
     if (!affection || !affection.guests) {
-      saveAffectionState({ ver: 1, guests: {} });
+      saveJSON(AFFECTION_LS_KEY, { ver: 1, guests: {} });
     }
   }
 
@@ -905,112 +901,112 @@
 
     if (isExtraPool) {
       candidates.push(
-        "第一弾の外にいる特別な相手たこ",
-        "普通の第一弾とは別枠のカードたこ",
-        "特別セット側を探すと近いたこ"
+        "第一弾の外から来た特別枠じゃなイカ",
+        "普通の第一弾とは別の流れにいるじゃなイカ",
+        "特別セット側を探すと近いじゃなイカ"
       );
     }
 
     if (/ソース|塩|マヨ|明太|チーズ|味噌|牡蠣/.test(name) || tags.includes("taste")) {
       candidates.push(
-        "味つけやメニュー名っぽいカードたこ",
-        "食べ方や味の名前が入るカードたこ",
-        "ソース・塩・マヨ系から探すと近いたこ"
+        "味つけやメニュー名っぽいカードじゃなイカ",
+        "食べ方や味の名前が入るカードじゃなイカ",
+        "ソース・塩・マヨ系から探すと近いじゃなイカ"
       );
     }
 
     if (tags.includes("love")) {
       candidates.push(
-        "恋愛っぽい名前のカードたこ",
-        "気持ちや関係を感じる名前のカードたこ",
-        "恋・デート・契約みたいな雰囲気のカードたこ"
+        "恋愛っぽい名前のカードじゃなイカ",
+        "気持ちや関係を感じる名前じゃなイカ",
+        "恋・デート・契約っぽい空気じゃなイカ"
       );
     }
 
     if (tags.includes("darts")) {
       candidates.push(
-        "ダーツやプロ選手に関係あるカードたこ",
-        "競技っぽい雰囲気のカードたこ",
-        "ダーツ系から探すと近いたこ"
+        "ダーツやプロ選手に関係あるカードじゃなイカ",
+        "競技っぽい雰囲気のカードじゃなイカ",
+        "ダーツ系から探すと近いじゃなイカ"
       );
     }
 
     if (tags.includes("shop")) {
       candidates.push(
-        "お店・露店・店主に関係あるカードたこ",
-        "店っぽい言葉が入るカードたこ",
-        "お店まわりのカードたこ"
+        "お店・露店・店主に関係あるカードじゃなイカ",
+        "店っぽい言葉が入るカードじゃなイカ",
+        "お店まわりのカードじゃなイカ"
       );
     }
 
     if (tags.includes("onsen")) {
       candidates.push(
-        "温泉や場所のイメージが強いカードたこ",
-        "ゆのかわ・温泉寄りのカードたこ",
-        "場所を思い出すと近いたこ"
+        "温泉や場所のイメージが強いカードじゃなイカ",
+        "ゆのかわ寄りの気配じゃなイカ",
+        "場所を思い出すと近いじゃなイカ"
       );
     }
 
     if (tags.includes("god")) {
       candidates.push(
-        "特別感が強いカードたこ",
-        "神・女神・御神体っぽいカードたこ",
-        "ありがたそうな空気のカードたこ"
+        "特別感が強いカードじゃなイカ",
+        "神・女神・御神体っぽい空気じゃなイカ",
+        "ありがたそうな気配じゃなイカ"
       );
     }
 
     if (tags.includes("crowd")) {
       candidates.push(
-        "大会・会議・行列みたいに人が多いカードたこ",
-        "人が集まってる場面のカードたこ",
-        "にぎやかな感じのカードたこ"
+        "大会・会議・行列みたいに人が多いじゃなイカ",
+        "人が集まってる場面のカードじゃなイカ",
+        "にぎやかな感じじゃなイカ"
       );
     }
 
     if (tags.includes("heat")) {
       candidates.push(
-        "熱さや火力を感じるカードたこ",
-        "アツい雰囲気のカードたこ",
-        "火力高めのイメージのカードたこ"
+        "熱さや火力を感じるカードじゃなイカ",
+        "アツい雰囲気のカードじゃなイカ",
+        "火力高めのイメージじゃなイカ"
       );
     }
 
     if (tags.includes("memory")) {
       candidates.push(
-        "昔・記憶・過去っぽいカードたこ",
-        "時間や思い出を感じるカードたこ",
-        "懐かしさがあるカードたこ"
+        "昔・記憶・過去っぽいカードじゃなイカ",
+        "時間や思い出を感じるカードじゃなイカ",
+        "懐かしさのあるカードじゃなイカ"
       );
     }
 
     if (tags.includes("speed")) {
       candidates.push(
-        "走る・飛ぶ・勢いがあるカードたこ",
-        "動きが強いカードたこ",
-        "スピード感があるカードたこ"
+        "走る・飛ぶ・勢いがあるカードじゃなイカ",
+        "動きが強いカードじゃなイカ",
+        "スピード感があるじゃなイカ"
       );
     }
 
     if (tags.includes("danger") || tags.includes("dark_special")) {
       candidates.push(
-        "ちょっと怪しい感じのカードたこ",
-        "普通じゃない空気のカードたこ",
-        "クセ強めのカードたこ"
+        "ちょっと怪しい感じのカードじゃなイカ",
+        "普通じゃない空気があるじゃなイカ",
+        "クセ強めのカードじゃなイカ"
       );
     }
 
     if (!candidates.length) {
       if (card.rarity === "N" || card.rarity === "R") {
         candidates.push(
-          "第一弾の中でも探しやすい側のカードたこ",
-          "基本寄りのカードたこ",
-          "図鑑を広く見れば見つけやすいたこ"
+          "第一弾の中でも探しやすい側じゃなイカ",
+          "基本寄りのカードじゃなイカ",
+          "図鑑を広く見れば見つけやすいじゃなイカ"
         );
       } else {
         candidates.push(
-          "第一弾の中でも印象が強いカードたこ",
-          "目立つタイプのカードたこ",
-          "ちょっと特別感のあるカードたこ"
+          "第一弾の中でも印象が強いじゃなイカ",
+          "目立つタイプのカードじゃなイカ",
+          "ちょっと特別感があるじゃなイカ"
         );
       }
     }
@@ -1023,48 +1019,48 @@
 
     if (isExtraPool) {
       candidates.push(
-        "かなり特別でレア寄りなたこ",
-        "普通の手札ではあまり見かけないたこ",
-        "特別枠なので持ってる人が少なめなたこ"
+        "かなり特別でレア寄りじゃなイカ",
+        "普通の手札ではあまり見かけないじゃなイカ",
+        "特別枠だから持ってる人が少なめじゃなイカ"
       );
       return pick(candidates, randFromSeed(`hint2-extra::${todayKey()}::${card.id}`));
     }
 
     if (card.rarity === "N") {
       candidates.push(
-        "かなり見つけやすいほうたこ",
-        "手持ちにある人が多いほうたこ",
-        "最初に探すと見つけやすいレベルたこ"
+        "かなり見つけやすいほうじゃなイカ",
+        "手持ちにある人が多いほうじゃなイカ",
+        "最初に探すと見つけやすいレベルじゃなイカ"
       );
     } else if (card.rarity === "R") {
       candidates.push(
-        "少し珍しいけど、まだ見つけやすいほうたこ",
-        "Nより一段だけ珍しいたこ",
-        "ちょっと探せば見つかるレベルたこ"
+        "少し珍しいけど、まだ見つけやすいじゃなイカ",
+        "Nより一段だけ珍しいじゃなイカ",
+        "ちょっと探せば見つかるレベルじゃなイカ"
       );
     } else if (card.rarity === "SR") {
       candidates.push(
-        "そこそこレアなたこ",
-        "人によっては持ってないレベルたこ",
-        "少し本気で探す側たこ"
+        "そこそこレアじゃなイカ",
+        "人によってはまだ持ってないじゃなイカ",
+        "少し本気で探す側じゃなイカ"
       );
     } else if (card.rarity === "UR") {
       candidates.push(
-        "かなりレアなたこ",
-        "上位レア寄りで持ってると強いたこ",
-        "簡単には出てこない側たこ"
+        "かなりレアじゃなイカ",
+        "上位レア寄りじゃなイカ",
+        "簡単には出てこない側じゃなイカ"
       );
     } else if (card.rarity === "LR") {
       candidates.push(
-        "最上位クラスのかなりレアなたこ",
-        "出会えたらかなりアツいレベルたこ",
-        "持ってる人がかなり少ないたこ"
+        "最上位クラスでかなりレアじゃなイカ",
+        "出会えたらかなりアツいじゃなイカ",
+        "持ってる人がかなり少ないじゃなイカ"
       );
     } else if (card.rarity === "SP") {
       candidates.push(
-        "特殊枠レベルのかなり珍しいたこ",
-        "普通のレアよりさらに特別なたこ",
-        "かなり限られた人しか持ってないたこ"
+        "特殊枠レベルでかなり珍しいじゃなイカ",
+        "普通のレアよりさらに特別じゃなイカ",
+        "かなり限られた人しか持ってないじゃなイカ"
       );
     }
 
@@ -1080,12 +1076,12 @@
 
   function buildHint3(card) {
     const cleaned = (card.name || "").replace(/《.*?》/g, "").trim();
-    if (!cleaned) return "名前の中にヒントがあるたこ";
+    if (!cleaned) return "名前の中にヒントがあるじゃなイカ";
 
     const variants = [
-      `タイトルの最初の3文字は「${cleaned.slice(0, 3)}」たこ`,
-      `タイトルの真ん中の3文字は「${getMiddle3(cleaned)}」たこ`,
-      `タイトルの最後の3文字は「${cleaned.slice(-3)}」たこ`
+      `タイトルの最初の3文字は「${cleaned.slice(0, 3)}」じゃなイカ`,
+      `タイトルの真ん中の3文字は「${getMiddle3(cleaned)}」じゃなイカ`,
+      `タイトルの最後の3文字は「${cleaned.slice(-3)}」じゃなイカ`
     ];
 
     return pick(variants, randFromSeed(`hint3::${todayKey()}::${card.id}`));
@@ -1102,12 +1098,12 @@
   // =========================================================
   // Thoughts
   // =========================================================
-  function makeTakopiThought(card, isExtraPool, difficulty) {
+  function makeKasumipiThought(card, isExtraPool, difficulty) {
     if (isExtraPool) {
       const lines = [
-        "……これは第一弾の外から来てるたこ。かなりアツいたこ",
-        "……特別枠の恋は、だいたい重いたこ",
-        "……普通の手札じゃ届かない相手たこ"
+        "……これは第一弾の外から漂ってきた特別枠じゃなイカ",
+        "……特別枠の願いは、だいたい重たいじゃなイカ",
+        "……普通の手札じゃ届きにくい相手じゃなイカ"
       ];
       return pick(lines, randFromSeed(`${todayKey()}::thought-extra::${card.id}`));
     }
@@ -1115,39 +1111,39 @@
     const rarity = card.rarity || "N";
     const thoughtMap = {
       N: [
-        "……この恋なら、まだ追いつけるたこ",
-        "……会える可能性は高いたこ",
-        "……手を伸ばせば届きそうなたこ"
+        "……この願いなら、まだ追いつけるじゃなイカ",
+        "……会える可能性は高いじゃなイカ",
+        "……手を伸ばせば届きそうじゃなイカ"
       ],
       R: [
-        "……少し探せば、また会えそうなたこ",
-        "……想ってる人はそこそこいるたこ",
-        "……軽い恋より、ちょっと深いたこ"
+        "……少し探せば、また会えそうじゃなイカ",
+        "……思ってる人はそこそこ多いじゃなイカ",
+        "……軽い願いより、ちょっと深いじゃなイカ"
       ],
       SR: [
-        "……ここから急に本気の恋になるたこ",
-        "……人によってはまだ会えてないたこ",
-        "……選ぶ相手を間違えると痛いたこ"
+        "……ここから急に本気度が上がるじゃなイカ",
+        "……人によってはまだ会えてないじゃなイカ",
+        "……選ぶ相手を間違えると刺さるじゃなイカ"
       ],
       UR: [
-        "……現実はなかなか厳しい恋たこ",
-        "……会えたら相当強い気持ちたこ",
-        "……在庫より覚悟の問題たこ"
+        "……現実はなかなか厳しいじゃなイカ",
+        "……会えたらかなり強いじゃなイカ",
+        "……在庫より覚悟の問題じゃなイカ"
       ],
       LR: [
-        "……それ、本気で惚れてるたこ？",
-        "……会えたらもう奇跡たこ",
-        "……かなり本気の恋たこ"
+        "……それ、本気で惚れてるんじゃなイカ？",
+        "……会えたらもう奇跡じゃなイカ",
+        "……かなり本気の願いじゃなイカ"
       ],
       SP: [
-        "……もう運命の領域たこ",
-        "……普通の恋愛難易度じゃないたこ",
-        "……会える人かなり限られるたこ"
+        "……もう運命の領域じゃなイカ",
+        "……普通の難易度じゃないじゃなイカ",
+        "……会える人、かなり限られるじゃなイカ"
       ]
     };
 
     if (difficulty >= 5 && rarity !== "LR" && rarity !== "SP") {
-      return "……条件だけでもう重たい恋たこ";
+      return "……条件だけでもう重たいじゃなイカ";
     }
 
     return pick(thoughtMap[rarity] || thoughtMap.SR, randFromSeed(`${todayKey()}::thought::${card.id}`));
@@ -1188,7 +1184,6 @@
     return Math.max(2, difficulty + 1);
   }
 
-  // 報酬資材を少し減量
   function makeRewardItems(type, difficulty, rnd) {
     const profile = REWARD_PROFILES[type] || REWARD_PROFILES.careful;
     const out = [];
@@ -1346,7 +1341,7 @@
       hints: makeHintsForCard(wanted.card, wanted.isExtraPool),
       currentHintIndex: 0,
       hintCosts: [0, 200, 300],
-      takopiThought: makeTakopiThought(wanted.card, wanted.isExtraPool, difficulty),
+      kasumipiThought: makeKasumipiThought(wanted.card, wanted.isExtraPool, difficulty),
       completed: false,
       completedAt: null,
       retryCount: 0,
@@ -1560,7 +1555,7 @@
           href="#"
           aria-disabled="true"
           tabindex="-1"
-          title="熱量が足りないたこ"
+          title="熱量が足りないじゃなイカ"
         >かすみぴガチャ</a>
       </div>
     `;
@@ -1590,14 +1585,13 @@
     if (nowEl) nowEl.textContent = heat.toLocaleString();
     if (rankEl) rankEl.textContent = heatRankLabel(heat);
 
-    const gaugeMax = GACHA_HEAT_COST;
-    const percent = Math.max(0, Math.min(100, (heat / gaugeMax) * 100));
+    const percent = Math.max(0, Math.min(100, (heat / GACHA_HEAT_COST) * 100));
     if (fillEl) fillEl.style.width = `${percent}%`;
 
     const remain = Math.max(0, GACHA_HEAT_COST - heat);
     if (guideEl) {
       guideEl.textContent = remain === 0
-        ? "ガチャが引けるたこ"
+        ? "ガチャが引けるじゃなイカ"
         : `あと ${remain} でガチャ1回`;
     }
 
@@ -1608,18 +1602,18 @@
       gachaBtn.setAttribute("aria-disabled", enabled ? "false" : "true");
       gachaBtn.tabIndex = enabled ? 0 : -1;
       gachaBtn.href = enabled ? GACHA_URL : "#";
-      gachaBtn.title = enabled ? "かすみぴガチャへ" : "熱量が足りないたこ";
+      gachaBtn.title = enabled ? "かすみぴガチャへ" : "熱量が足りないじゃなイカ";
     }
   }
 
   function renderHero() {
     const heroImage = $("#heroImage");
     const heroSpeechText = $("#heroSpeechText");
-    if (!heroImage || !heroSpeechText) return;
+    if (!heroSpeechText) return;
 
-    heroImage.src = getTimeMode() === "day"
-      ? "https://ul.h3z.jp/lqCNnwQH.png"
-      : "https://ul.h3z.jp/UtPlWaZz.png";
+    if (heroImage) {
+      heroImage.src = HERO_IMAGE_URL;
+    }
 
     const rnd = randFromSeed(`hero::${todayKey()}`);
     heroSpeechText.textContent = pick(HERO_LINES, rnd);
@@ -1667,8 +1661,8 @@
         <div class="legendNoticeBadge">伝説マッチ出現中</div>
         <h3>${escapeHtml(state.legendJob.visitorName)}</h3>
         <p>
-          今日は特別な相手が来ているたこ。<br>
-          報酬は 🪙 ${state.legendJob.rewardOcto.toLocaleString()} オクトたこ。
+          今日は特別な相手が来ているじゃなイカ。<br>
+          報酬は 🪙 ${state.legendJob.rewardOcto.toLocaleString()} オクトじゃなイカ。
         </p>
       `;
     } else {
@@ -1676,23 +1670,52 @@
         <div class="legendNoticeBadge">伝説マッチ</div>
         <h3>本日、伝説マッチは見つからなかった</h3>
         <p>
-          今日は静かな日だったたこ。<br>
-          また別の日に探してみるたこ。
+          今日は静かな海じゃなイカ。<br>
+          また別の日に探してみるじゃなイカ。
         </p>
       `;
     }
+  }
+
+  function applyKasumipiCharacter() {
+    const floatBtn = $("#takopiFloat");
+    if (floatBtn) {
+      floatBtn.setAttribute("aria-label", "かすみぴ");
+      floatBtn.setAttribute("title", "かすみぴ");
+      floatBtn.innerHTML = `<img src="${KASUMIPI_FLOAT_ICON}" alt="かすみぴ" style="width:100%;height:100%;object-fit:contain;display:block;">`;
+    }
+
+    const titles = $$("[data-character-title]");
+    titles.forEach(el => {
+      el.textContent = "かすみぴ";
+    });
+
+    const thoughtCaps = $$(".matchThoughtCap");
+    thoughtCaps.forEach(el => {
+      el.textContent = "🦑 かすみぴの心の声";
+    });
   }
 
   // =========================================================
   // Render board
   // =========================================================
   function renderRewardChips(job) {
-    const topItems = job.rewardItems.slice(0, 2);
+    const grouped = groupRewardItems(job.rewardItems);
+    const extraKinds = [];
+    if (grouped.seed > 0) extraKinds.push(`🌱${grouped.seed}`);
+    if (grouped.water > 0) extraKinds.push(`💧${grouped.water}`);
+    if (grouped.fert > 0) extraKinds.push(`🧪${grouped.fert}`);
+
     return `
       <div class="rewardShowcase">
         <span class="rewardShowChip">🪙 ${job.rewardOcto.toLocaleString()}オクト</span>
         <span class="rewardShowChip">🔥 ${job.rewardExp}熱量</span>
-        ${topItems.map(item => `<span class="rewardShowChip">${itemIcon(item.kind)} ${escapeHtml(itemLabel(item.kind, item.id))}×${item.qty}</span>`).join("")}
+        <span class="rewardShowChip">🎁 追加報酬あり</span>
+        ${
+          extraKinds.length
+            ? `<span class="rewardShowChip">📦 ${extraKinds.join(" / ")}</span>`
+            : ``
+        }
       </div>
     `;
   }
@@ -1728,9 +1751,9 @@
 
         ${
           !job.completed && job.retryCount > 0 && job.retryCount < 3
-            ? `<div class="matchRetryNote">失敗 ${job.retryCount}/3 回。あと ${3 - job.retryCount} 回たこ。</div>`
+            ? `<div class="matchRetryNote">失敗 ${job.retryCount}/3 回。あと ${3 - job.retryCount} 回じゃなイカ。</div>`
             : !job.completed && job.retryCount >= 3
-              ? `<div class="matchRetryNote isEnd">今日はこの相手とはもう挑戦できないたこ。</div>`
+              ? `<div class="matchRetryNote isEnd">今日はこの相手とはもう挑戦できないじゃなイカ。</div>`
               : ""
         }
       </div>
@@ -1765,8 +1788,8 @@
           ${renderRewardChips(job)}
 
           <div class="matchThoughtBox">
-            <div class="matchThoughtCap">🐙 たこぴの心の声</div>
-            <div class="matchThoughtText">${escapeHtml(job.takopiThought)}</div>
+            <div class="matchThoughtCap">🦑 かすみぴの心の声</div>
+            <div class="matchThoughtText">${escapeHtml(job.kasumipiThought)}</div>
           </div>
 
           ${renderHintBlock(job)}
@@ -1828,6 +1851,7 @@
     renderLegendNotice();
     bindBoardButtons();
     bindLoveLineRotation();
+    applyKasumipiCharacter();
   }
 
   // =========================================================
@@ -1842,7 +1866,7 @@
 
     const cost = Number(job.hintCosts[nextIdx] || 0);
     if (getOcto() < cost) {
-      showTakopiToast("オクトが足りないたこ");
+      showKasumipiToast("オクトが足りないじゃなイカ");
       return;
     }
 
@@ -1852,7 +1876,7 @@
     });
 
     renderBoard();
-    showTakopiToast(`ヒントを見たたこ（-${cost}オクト）`);
+    showKasumipiToast(`ヒントを見たじゃなイカ（-${cost}オクト）`);
   }
 
   function openSelectModal(jobId) {
@@ -1884,7 +1908,7 @@
 
         <div>
           <h2 class="modalName" id="modalJobName">${escapeHtml(job.visitorName)}</h2>
-          <p class="modalLine">どのカードを渡す？</p>
+          <p class="modalLine">どのカードを渡すじゃなイカ？</p>
         </div>
 
         <div class="modalRight">
@@ -1957,7 +1981,7 @@
             <div class="modalStatusLine ok">③ ぴったりなら ♥ でマッチ成立</div>
             <div class="modalStatusLine ok">④ 失敗しても3回まで挑戦できる</div>
             <div class="modalStatusLine ok">⑤ ヒント2を見る前に一発正解すると +報酬</div>
-            <div class="modalStatusLine ok">⑥ 失敗カウントは3回全部だめだった時だけ反映</div>
+            <div class="modalStatusLine ok">⑥ 追加報酬は🎁表示つきで、成立後に全部開く</div>
           </div>
         </div>
       </div>
@@ -1997,7 +2021,7 @@
       suspense.className = "suspenseLayer";
       suspense.innerHTML = `
         <div class="suspenseInner">
-          <div class="suspenseText">ドキドキドキドキ…</div>
+          <div class="suspenseText">ざわ……ざわ……</div>
         </div>
       `;
       document.body.appendChild(suspense);
@@ -2043,7 +2067,7 @@
 
     icon.textContent = judgement.icon;
     icon.style.color = "#ff2a52";
-    text.textContent = judgement.verdict === "fail" ? "片想いだった" : "恋が届いた";
+    text.textContent = judgement.verdict === "fail" ? "届かなかったじゃなイカ" : "願いが届いたじゃなイカ";
     sub.textContent = judgement.text;
 
     layer.classList.add("show");
@@ -2059,18 +2083,18 @@
     const list = $("#rewardList");
     if (!modal || !title || !sub || !list || !job) return;
 
-    title.textContent = "……焼けたね";
+    title.textContent = "……深く刺さったじゃなイカ";
     sub.textContent = `${job.visitorName} とマッチ成立。`;
 
     const rows = [];
 
     if (job.lastBonusOcto > 0) {
-      rows.push(`<div class="rewardItem show rewardItemBonus">✨ +報酬　一発正解ボーナス +${job.lastBonusOcto.toLocaleString()} オクト</div>`);
+      rows.push(`<div class="rewardItem show rewardItemBonus">✨ 一発正解ボーナス +${job.lastBonusOcto.toLocaleString()} オクト</div>`);
     }
 
     rows.push(`<div class="rewardItem">🪙 ${job.rewardOcto.toLocaleString()} オクト</div>`);
     rows.push(`<div class="rewardItem">🔥 熱量 +${job.rewardExp}</div>`);
-    rows.push(`<div class="rewardItem">好感度 +${job.lastAffectionGain}</div>`);
+    rows.push(`<div class="rewardItem">💞 好感度 +${job.lastAffectionGain}</div>`);
     rows.push(...job.rewardItems.map(v => `<div class="rewardItem">${itemIcon(v.kind)} ${itemLabel(v.kind, v.id)} ×${v.qty}</div>`));
 
     list.innerHTML = rows.join("");
@@ -2103,7 +2127,7 @@
     if (status.disabled) return;
 
     if (getOwnedCount(cardId) <= 0) {
-      showTakopiToast("そのカードは持ってないたこ");
+      showKasumipiToast("そのカードは持ってないじゃなイカ");
       return;
     }
 
@@ -2131,10 +2155,10 @@
         renderHeroStats();
         renderHeatMeter();
         renderBoard();
-        showTakopiToast("……今日はこの相手、もう心を開かないたこ");
+        showKasumipiToast("……今日はもう心を開かないじゃなイカ");
       } else {
         renderBoard();
-        showTakopiToast("……違う、それじゃないたこ");
+        showKasumipiToast("……その一枚じゃなかったじゃなイカ");
       }
       return;
     }
@@ -2166,9 +2190,9 @@
     await showRewardModal(getJobById(jobId));
 
     if (isFirstTryNoHint2) {
-      showTakopiToast("一発正解！ +報酬 つきたこ");
+      showKasumipiToast("一発正解、かなり冴えてるじゃなイカ");
     } else {
-      showTakopiToast("……焼けたね");
+      showKasumipiToast("……願いが届いたじゃなイカ");
     }
   }
 
@@ -2223,11 +2247,11 @@
       });
     }
 
-    const takopiFloat = $("#takopiFloat");
-    if (takopiFloat) {
-      takopiFloat.addEventListener("click", () => {
-        const rnd = randFromSeed(`${todayKey()}::takopi::${Date.now()}`);
-        showTakopiToast(pick(TAKOPI_LINES, rnd));
+    const floatBtn = $("#takopiFloat");
+    if (floatBtn) {
+      floatBtn.addEventListener("click", () => {
+        const rnd = randFromSeed(`${todayKey()}::kasumipi::${Date.now()}`);
+        showKasumipiToast(pick(KASUMIPI_LINES, rnd));
       });
     }
 
@@ -2257,7 +2281,7 @@
       gachaBtn.addEventListener("click", (e) => {
         if (getHeat() < GACHA_HEAT_COST) {
           e.preventDefault();
-          showTakopiToast(`あと ${Math.max(0, GACHA_HEAT_COST - getHeat())} 熱量でガチャたこ`);
+          showKasumipiToast(`あと ${Math.max(0, GACHA_HEAT_COST - getHeat())} 熱量でガチャじゃなイカ`);
         }
       });
     }
@@ -2284,4 +2308,5 @@
   renderHero();
   renderBoard();
   renderAffectionModal();
+  applyKasumipiCharacter();
 })();
