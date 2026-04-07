@@ -122,12 +122,13 @@
     return new Promise(r => setTimeout(r, ms));
   }
 
-  function groupRewardItems(items) {
-    const out = { seed: 0, water: 0, fert: 0 };
-    (items || []).forEach(item => {
-      if (!out[item.kind]) out[item.kind] = 0;
-      out[item.kind] += Number(item.qty || 0);
-    });
+  function getRepresentativeRewardLabels(items, limit = 2) {
+    const out = [];
+    for (const item of (items || [])) {
+      const label = `${itemIcon(item.kind)} ${itemLabel(item.kind, item.id)}×${item.qty}`;
+      out.push(label);
+      if (out.length >= limit) break;
+    }
     return out;
   }
 
@@ -547,29 +548,21 @@
     return parsed;
   }
 
-  function saveAffectionState(state) {
-    localStorage.setItem(AFFECTION_LS_KEY, JSON.stringify(state));
-  }
-
-  function getDefaultAffectionGuest() {
-    return {
-      love: 0,
-      talkCount: 0,
-      buyCount: 0,
-      ignoreCount: 0,
-      lastTalkAt: 0,
-      lastSeenAt: 0
-    };
-  }
-
   function addAffection(id, delta) {
     const state = loadAffectionState();
     if (!state.guests[id]) {
-      state.guests[id] = getDefaultAffectionGuest();
+      state.guests[id] = {
+        love: 0,
+        talkCount: 0,
+        buyCount: 0,
+        ignoreCount: 0,
+        lastTalkAt: 0,
+        lastSeenAt: 0
+      };
     }
     state.guests[id].love = clamp(Number(state.guests[id].love || 0) + Number(delta || 0), 0, 100);
     state.guests[id].lastSeenAt = Date.now();
-    saveAffectionState(state);
+    localStorage.setItem(AFFECTION_LS_KEY, JSON.stringify(state));
     return state.guests[id].love;
   }
 
@@ -589,7 +582,6 @@
 
   function affectionLabel(type, love) {
     const n = Number(love || 0);
-
     const map = {
       impulse: ["まだ勢いだけで来てるじゃなイカ。", "ノリだけじゃない相性を感じ始めてるじゃなイカ。", "勢いで来て、情で通う常連じゃなイカ。"],
       picky: ["まだ厳しく見定めてるじゃなイカ。", "少しずつ認め始めてるじゃなイカ。", "うるさいけど、かなり気に入ってるじゃなイカ。"],
@@ -613,7 +605,6 @@
       party: ["まだ祭りのノリじゃなイカ。", "ノリ以上の居場所感が出てきたじゃなイカ。", "騒がしいけど本気じゃなイカ。"],
       pilgrim: ["まだ巡礼先のひとつじゃなイカ。", "来た意味がある場所だと思い始めてるじゃなイカ。", "わざわざ来る価値があると確信してるじゃなイカ。"]
     };
-
     const row = map[type] || ["まだ距離を測ってるじゃなイカ。", "少しずつ距離が縮んでるじゃなイカ。", "かなり気に入ってるじゃなイカ。"];
     if (n >= 80) return row[2];
     if (n >= 40) return row[1];
@@ -622,11 +613,9 @@
 
   function getAffectionRows() {
     const state = loadAffectionState();
-
     const rows = Object.keys(state.guests).map((id) => {
-      const g = { ...getDefaultAffectionGuest(), ...(state.guests[id] || {}) };
+      const g = state.guests[id] || {};
       const love = Number(g.love || 0);
-
       return {
         id,
         name: CUSTOMER_NAME_MAP[id] || id,
@@ -818,9 +807,9 @@
       saveJSON(KEY.book, { got });
     }
 
-    const affection = loadAffectionState();
+    const affection = loadJSON(AFFECTION_LS_KEY, null);
     if (!affection || !affection.guests) {
-      saveJSON(AFFECTION_LS_KEY, { ver: 1, guests: {} });
+      localStorage.setItem(AFFECTION_LS_KEY, JSON.stringify({ ver: 1, guests: {} }));
     }
   }
 
@@ -1609,14 +1598,14 @@
   function renderHero() {
     const heroImage = $("#heroImage");
     const heroSpeechText = $("#heroSpeechText");
-    if (!heroSpeechText) return;
+    const heroSpeechBadge = $(".heroSpeechBadge");
 
-    if (heroImage) {
-      heroImage.src = HERO_IMAGE_URL;
+    if (heroImage) heroImage.src = HERO_IMAGE_URL;
+    if (heroSpeechBadge) heroSpeechBadge.textContent = "かすみぴ";
+    if (heroSpeechText) {
+      const rnd = randFromSeed(`hero::${todayKey()}`);
+      heroSpeechText.textContent = pick(HERO_LINES, rnd);
     }
-
-    const rnd = randFromSeed(`hero::${todayKey()}`);
-    heroSpeechText.textContent = pick(HERO_LINES, rnd);
 
     renderHeroStats();
     renderHeatMeter();
@@ -1680,15 +1669,13 @@
   function applyKasumipiCharacter() {
     const floatBtn = $("#takopiFloat");
     if (floatBtn) {
-      floatBtn.setAttribute("aria-label", "かすみぴ");
+      floatBtn.setAttribute("aria-label", "かすみぴのひとこと");
       floatBtn.setAttribute("title", "かすみぴ");
-      floatBtn.innerHTML = `<img src="${KASUMIPI_FLOAT_ICON}" alt="かすみぴ" style="width:100%;height:100%;object-fit:contain;display:block;">`;
+      floatBtn.innerHTML = `<img src="${KASUMIPI_FLOAT_ICON}" alt="かすみぴ">`;
     }
 
-    const titles = $$("[data-character-title]");
-    titles.forEach(el => {
-      el.textContent = "かすみぴ";
-    });
+    const heroSpeechBadge = $(".heroSpeechBadge");
+    if (heroSpeechBadge) heroSpeechBadge.textContent = "かすみぴ";
 
     const thoughtCaps = $$(".matchThoughtCap");
     thoughtCaps.forEach(el => {
@@ -1700,22 +1687,21 @@
   // Render board
   // =========================================================
   function renderRewardChips(job) {
-    const grouped = groupRewardItems(job.rewardItems);
-    const extraKinds = [];
-    if (grouped.seed > 0) extraKinds.push(`🌱${grouped.seed}`);
-    if (grouped.water > 0) extraKinds.push(`💧${grouped.water}`);
-    if (grouped.fert > 0) extraKinds.push(`🧪${grouped.fert}`);
+    const rep = getRepresentativeRewardLabels(job.rewardItems, 2);
+
+    let extraHtml = "";
+    if (rep.length > 0) {
+      extraHtml = `
+        <span class="rewardShowChip">🎁 追加報酬あり</span>
+        ${rep.map(v => `<span class="rewardShowChip">${escapeHtml(v)}</span>`).join("")}
+      `;
+    }
 
     return `
       <div class="rewardShowcase">
         <span class="rewardShowChip">🪙 ${job.rewardOcto.toLocaleString()}オクト</span>
         <span class="rewardShowChip">🔥 ${job.rewardExp}熱量</span>
-        <span class="rewardShowChip">🎁 追加報酬あり</span>
-        ${
-          extraKinds.length
-            ? `<span class="rewardShowChip">📦 ${extraKinds.join(" / ")}</span>`
-            : ``
-        }
+        ${extraHtml}
       </div>
     `;
   }
@@ -1981,7 +1967,7 @@
             <div class="modalStatusLine ok">③ ぴったりなら ♥ でマッチ成立</div>
             <div class="modalStatusLine ok">④ 失敗しても3回まで挑戦できる</div>
             <div class="modalStatusLine ok">⑤ ヒント2を見る前に一発正解すると +報酬</div>
-            <div class="modalStatusLine ok">⑥ 追加報酬は🎁表示つきで、成立後に全部開く</div>
+            <div class="modalStatusLine ok">⑥ 追加報酬は成立後に全部開くじゃなイカ</div>
           </div>
         </div>
       </div>
@@ -2154,7 +2140,7 @@
         commitFinalFail(meta, job.type);
         renderHeroStats();
         renderHeatMeter();
-        renderBoard();
+renderBoard();
         showKasumipiToast("……今日はもう心を開かないじゃなイカ");
       } else {
         renderBoard();
