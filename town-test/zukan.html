@@ -1,0 +1,1195 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>たこ焼き図鑑</title>
+
+  <style>
+    :root{
+      --text:#f5f7ff;
+      --muted:#c8d2ee;
+      --border:rgba(255,255,255,.12);
+      --shadow:0 12px 30px rgba(0,0,0,.28);
+      --radius:16px;
+      --gap:10px;
+
+      --tile:84px;
+      --thumbPad:5px;
+
+      /* レアリティ色 */
+      --rarN-bg: rgba(60, 170, 255, .30);
+      --rarN-bd: rgba(60, 170, 255, .55);
+
+      --rarR-bg: rgba(255, 80, 90, .22);
+      --rarR-bd: rgba(255, 110, 120, .50);
+
+      --rarSR-bg: rgba(205, 127, 50, .22);
+      --rarSR-bd: rgba(205, 127, 50, .52);
+
+      --rarUR-bg: rgba(210, 220, 235, .18);
+      --rarUR-bd: rgba(220, 230, 245, .42);
+
+      --rarLR-bg: rgba(255, 205, 85, .22);
+      --rarLR-bd: rgba(255, 215, 120, .52);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", sans-serif;
+
+      background:
+        radial-gradient(circle at 16% 22%, rgba(255,255,255,.10) 0 2px, transparent 3px),
+        radial-gradient(circle at 82% 18%, rgba(255,255,255,.08) 0 2px, transparent 3px),
+        radial-gradient(circle at 72% 66%, rgba(255,255,255,.06) 0 2px, transparent 3px),
+        radial-gradient(circle at 28% 82%, rgba(255,255,255,.08) 0 2px, transparent 3px),
+        radial-gradient(circle at 56% 42%, rgba(255,255,255,.05) 0 1px, transparent 2px),
+
+        radial-gradient(1000px 620px at 18% -8%, rgba(255,120,210,.26), transparent 60%),
+        radial-gradient(900px 540px at 86% 8%, rgba(110,210,255,.24), transparent 64%),
+        radial-gradient(760px 480px at 50% 100%, rgba(255,205,120,.20), transparent 68%),
+        radial-gradient(680px 420px at 50% 35%, rgba(160,120,255,.14), transparent 72%),
+
+        linear-gradient(180deg, #111733 0%, #151c3e 45%, #1b2146 100%);
+      background-attachment: fixed;
+      position:relative;
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size:40px 40px;
+      mask-image:linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.18));
+      -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.18));
+    }
+
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      background:
+        radial-gradient(500px 180px at 50% 0%, rgba(255,255,255,.08), transparent 70%);
+      opacity:.8;
+    }
+
+    .wrap{
+      position:relative;
+      z-index:1;
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 14px 36px;
+    }
+
+    a{color:inherit}
+
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .leftHead{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      min-width:0;
+    }
+
+    .backBtn{
+      display:inline-flex;
+      flex-direction:row;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      white-space:nowrap;
+      padding:9px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      color:var(--text);
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      box-shadow:0 10px 18px rgba(0,0,0,.16);
+      line-height:1;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .backBtn:active{transform:translateY(1px)}
+    .backBtn .ico{
+      width:18px;height:18px;
+      display:inline-grid;
+      place-items:center;
+      border-radius:6px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      line-height:1;
+      font-weight:900;
+      flex:0 0 auto;
+    }
+    .backBtn span:last-child{
+      display:inline-block;
+      line-height:1;
+    }
+
+    .title{
+      text-align:center;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:2px;
+      padding:0;
+      margin:0;
+    }
+
+    .title h1{
+      margin:0;
+      padding:0;
+      line-height:1.1;
+      font-size:22px;
+      letter-spacing:.03em;
+      text-shadow:
+        0 0 10px rgba(255,255,255,.10),
+        0 0 22px rgba(160,210,255,.10);
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:var(--radius);
+      padding:12px;
+      box-shadow:var(--shadow);
+      margin-bottom:12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:170px;
+      flex:1 1 220px;
+    }
+
+    .label{
+      font-size:11px;
+      color:var(--muted);
+      letter-spacing:.03em;
+    }
+
+    input[type="search"], select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(20,24,52,.45);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    input[type="search"]::placeholder{color:rgba(255,255,255,.40)}
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex:1 1 220px;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      color:#eef4ff;
+      font-size:12px;
+      white-space:nowrap;
+      box-shadow:0 10px 18px rgba(0,0,0,.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .btn{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      color:var(--text);
+      font-size:13px;
+      cursor:pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .btn.small{padding:8px 10px;font-size:12px}
+
+    .btn.primary{
+      background:
+        linear-gradient(180deg, rgba(255,205,120,.28), rgba(255,255,255,.08));
+      border-color: rgba(255,230,170,.45);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,.16),
+        0 0 0 1px rgba(255,240,180,.10) inset,
+        0 0 18px rgba(255,210,120,.08);
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    .btn.primary:hover{filter:brightness(1.06)}
+    .btn:hover{filter:brightness(1.05)}
+    .btn:active{transform:translateY(1px)}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(var(--tile), 1fr));
+      gap:var(--gap);
+      align-items:stretch;
+    }
+
+    .card{
+      position:relative;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.10));
+      overflow:hidden;
+      box-shadow:0 10px 18px rgba(0,0,0,.18);
+      cursor:pointer;
+      min-height:calc(var(--tile) + 34px);
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      transition:transform .12s ease, filter .12s ease, box-shadow .12s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .card:hover{
+      box-shadow:
+        0 12px 22px rgba(0,0,0,.20),
+        0 0 20px rgba(160,220,255,.08);
+    }
+
+    .card:active{transform:scale(.985)}
+
+    .thumb{
+      width:100%;
+      height:var(--tile);
+      display:block;
+      object-fit:contain;
+      padding:var(--thumbPad);
+      background:rgba(9,12,28,.24);
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    .meta{
+      padding:7px 8px 9px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    .name{
+      font-size:12px;
+      line-height:1.2;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .mini{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:6px;
+      color:var(--muted);
+      font-size:11px;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.16);
+      color:var(--muted);
+      max-width:100%;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .tag b{color:var(--text);font-weight:700}
+    .id{opacity:.95}
+
+    .tag.rarity{
+      color: rgba(255,255,255,.95);
+      border-color: rgba(255,255,255,.20);
+      background: rgba(0,0,0,.22);
+      text-shadow: 0 1px 0 rgba(0,0,0,.35);
+    }
+    .tag.rarity[data-r="N"]{  background:var(--rarN-bg);  border-color:var(--rarN-bd); }
+    .tag.rarity[data-r="R"]{  background:var(--rarR-bg);  border-color:var(--rarR-bd); }
+    .tag.rarity[data-r="SR"]{ background:var(--rarSR-bg); border-color:var(--rarSR-bd); }
+    .tag.rarity[data-r="UR"]{ background:var(--rarUR-bg); border-color:var(--rarUR-bd); color:rgba(10,16,26,.92); text-shadow:none; }
+    .tag.rarity[data-r="LR"]{ background:var(--rarLR-bg); border-color:var(--rarLR-bd); color:rgba(30,20,0,.92); text-shadow:none; }
+    .tag.rarity[data-r="SP"]{ background: rgba(140,200,255,.18); border-color: rgba(180,220,255,.35); }
+    .tag.rarity[data-r="OT"]{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
+
+    .countBadge{
+      position:absolute;
+      right:6px;
+      top:6px;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(7,10,24,.58);
+      color:rgba(255,255,255,.94);
+      font-size:11px;
+      line-height:1;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      pointer-events:none;
+      user-select:none;
+      z-index:5;
+      box-shadow:0 4px 12px rgba(0,0,0,.14);
+    }
+
+    .card.is-glow{
+      border-color:rgba(255,230,120,.38);
+      transform: translateZ(0);
+      box-shadow:
+        0 0 0 1px rgba(255,230,120,.14) inset,
+        0 10px 18px rgba(0,0,0,.22),
+        0 0 18px rgba(255,210,90,.12),
+        0 0 34px rgba(120,210,255,.07);
+      filter:saturate(1.06) brightness(1.015);
+    }
+
+    .card.is-glow::before{
+      content:"";
+      position:absolute;
+      inset:-3px;
+      border-radius:18px;
+      pointer-events:none;
+      background:conic-gradient(from 200deg,
+        rgba(255,215,90,0.00),
+        rgba(255,215,90,0.30),
+        rgba(150,220,255,0.18),
+        rgba(255,170,235,0.10),
+        rgba(255,215,90,0.00)
+      );
+      filter: blur(10px);
+      opacity: .55;
+      animation: holoSpin 7.5s linear infinite;
+      mix-blend-mode: screen;
+      z-index:1;
+    }
+
+    .card.is-glow::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.12), transparent 58%),
+        radial-gradient(150px 120px at 25% 18%, rgba(255,240,170,.12), transparent 62%),
+        radial-gradient(190px 150px at 80% 30%, rgba(160,220,255,.10), transparent 66%);
+      opacity:.75;
+      mix-blend-mode: screen;
+      z-index:2;
+    }
+
+    .card.is-glow .meta{position:relative;z-index:4;}
+    .card.is-glow .thumb{position:relative;z-index:3;}
+
+    .card.is-glow .thumb::after{
+      content:"";
+      position:absolute;
+      inset:-35% -55%;
+      pointer-events:none;
+      background: linear-gradient(115deg,
+        rgba(255,255,255,0.00) 46%,
+        rgba(255,255,255,0.10) 49%,
+        rgba(255,255,255,0.26) 50.5%,
+        rgba(255,255,255,0.10) 52%,
+        rgba(255,255,255,0.00) 56%
+      );
+      transform: translateX(-75%) translateY(20%);
+      opacity:.65;
+      mix-blend-mode: screen;
+      animation: shineSweep 6.8s ease-in-out infinite;
+    }
+
+    .card.is-glow .spark{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:4;
+      opacity:.35;
+      mix-blend-mode: screen;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(255,255,255,.85) 0 1.2px, transparent 2px),
+        radial-gradient(circle at 72% 20%, rgba(255,255,255,.75) 0 1.1px, transparent 2px),
+        radial-gradient(circle at 84% 48%, rgba(255,255,255,.70) 0 1.1px, transparent 2px),
+        radial-gradient(circle at 30% 70%, rgba(255,255,255,.62) 0 1.0px, transparent 2px),
+        radial-gradient(circle at 60% 78%, rgba(255,255,255,.68) 0 1.1px, transparent 2px);
+      filter: drop-shadow(0 0 5px rgba(255,255,255,.18));
+      animation: sparkTwinkle 2.6s ease-in-out infinite;
+    }
+
+    @keyframes holoSpin{
+      from{ transform: rotate(0deg); }
+      to{ transform: rotate(360deg); }
+    }
+
+    @keyframes shineSweep{
+      0%{ transform: translateX(-85%) translateY(25%); opacity:0; }
+      12%{ opacity:.35; }
+      22%{ opacity:.65; }
+      30%{ opacity:.30; }
+      100%{ transform: translateX(75%) translateY(-10%); opacity:0; }
+    }
+
+    @keyframes sparkTwinkle{
+      0%{ opacity:.10; transform: translateY(0); }
+      50%{ opacity:.45; }
+      100%{ opacity:.16; transform: translateY(-1px); }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .card.is-glow::before,
+      .card.is-glow .thumb::after,
+      .card.is-glow .spark{ animation:none !important; }
+    }
+
+    .empty{
+      margin-top:14px;
+      padding:16px;
+      border:1px dashed rgba(255,255,255,.20);
+      border-radius:var(--radius);
+      color:var(--muted);
+      background:rgba(255,255,255,.06);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .empty code{
+      color:var(--text);
+      background:rgba(255,255,255,.08);
+      padding:2px 6px;
+      border-radius:8px;
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      background:rgba(7,10,24,.74);
+      z-index:9999;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .modal[aria-hidden="false"]{display:flex}
+
+    .modal__panel{
+      width:min(92vw, 560px);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background:linear-gradient(180deg, rgba(32,38,78,.96), rgba(17,22,48,.98));
+      box-shadow:0 24px 60px rgba(0,0,0,.42);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .modal__img{
+      width:100%;
+      height:auto;
+      display:block;
+      background:rgba(255,255,255,.05);
+      image-rendering:pixelated;
+      image-rendering:crisp-edges;
+    }
+
+    .modal__body{
+      padding:12px 12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .modal__title{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .modal__title h2{
+      margin:0;
+      font-size:15px;
+      line-height:1.25;
+    }
+
+    .close{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-size:13px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns:110px 1fr;
+      gap:8px 10px;
+      font-size:12px;
+      color:var(--muted);
+      border-top:1px solid rgba(255,255,255,.10);
+      padding-top:10px;
+    }
+
+    .kv b{
+      color:var(--text);
+      font-weight:600
+    }
+
+    .srGlow{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,220,120,.35);
+      color:#ffe9b8;
+      background:rgba(255,220,120,.08);
+    }
+
+    .controls select{
+      font-size:13px;
+      transform: scale(.92);
+      transform-origin: left center;
+    }
+
+    @media (max-width: 520px){
+      :root{ --tile:96px; --gap:10px; --thumbPad:5px; }
+      .field{min-width:140px}
+      .backBtn{padding:8px 10px;font-size:12px}
+      .backBtn .ico{width:18px;height:18px}
+      .modal__panel{width:min(94vw, 560px)}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="leftHead">
+        <button class="backBtn" id="btnBack" type="button" aria-label="戻る">
+          <span class="ico">←</span>
+          <span>戻る</span>
+        </button>
+
+        <div class="title">
+          <h1>所有カード一覧</h1>
+        </div>
+      </div>
+
+      <div class="pill" id="statPill">読み込み中…</div>
+    </header>
+
+    <section class="controls" aria-label="検索と並び替え">
+      <div class="field" style="flex:2 1 360px">
+        <div class="label">検索（ID / 名前 / レアリティ）</div>
+        <input id="q" type="search" placeholder="例：TN-012 / ソース / SR" autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <div class="label">並び替え</div>
+        <select id="sort">
+          <option value="new">入手順（新しい順）</option>
+          <option value="dup">ダブり枚数順（所持枚数）</option>
+          <option value="tn_shop">店頭ナンバー（TN-001〜025）</option>
+          <option value="tn_net">通販ナンバー（TN-026〜050）</option>
+          <option value="tp">たこぴプロモ（TP）</option>
+          <option value="nk">限定ショップ（NK）</option>
+          <option value="bs">ダーツプロ（BS）</option>
+          <option value="sp">スペシャル（SPカテゴリ）</option>
+          <option value="col">コラボ（COL）</option>
+          <option value="craft">職人（5分ステージ）</option>
+          <option value="all_serial">全カード品番順（おすすめ）</option>
+        </select>
+      </div>
+
+      <div class="row" id="actionRow">
+        <button class="btn small primary" id="btnMyShop" type="button">露店でカードを売る</button>
+      </div>
+    </section>
+
+    <main>
+      <div id="grid" class="grid" aria-label="図鑑グリッド"></div>
+      <div id="empty" class="empty" style="display:none"></div>
+    </main>
+  </div>
+
+  <div class="modal" id="modal" aria-hidden="true" role="dialog" aria-label="カード拡大表示">
+    <div class="modal__panel" role="document">
+      <img id="mImg" class="modal__img" alt="">
+      <div class="modal__body">
+        <div class="modal__title">
+          <div>
+            <h2 id="mTitle">-</h2>
+            <div id="mGlow" style="margin-top:6px; display:none" class="srGlow">✨ SR以上</div>
+          </div>
+          <button class="close" id="mClose" type="button" aria-label="閉じる">閉じる</button>
+        </div>
+
+        <div class="kv" aria-label="カード情報">
+          <div>ID</div><div><b id="mId">-</b></div>
+          <div>レア</div><div><b id="mRarity">-</b></div>
+          <div>取得</div><div><b id="mAt">-</b></div>
+          <div>所持</div><div><b id="mCount">-</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LS_KEY = "tf_v1_book";
+    const MYSHOP_URL = "https://takoyaki-card.com/town/roten.html";
+
+    const elGrid = document.getElementById("grid");
+    const elEmpty = document.getElementById("empty");
+    const elPill = document.getElementById("statPill");
+    const elQ = document.getElementById("q");
+    const elSort = document.getElementById("sort");
+    const btnBack = document.getElementById("btnBack");
+    const btnMyShop = document.getElementById("btnMyShop");
+
+    const modal = document.getElementById("modal");
+    const mImg = document.getElementById("mImg");
+    const mTitle = document.getElementById("mTitle");
+    const mId = document.getElementById("mId");
+    const mRarity = document.getElementById("mRarity");
+    const mAt = document.getElementById("mAt");
+    const mGlow = document.getElementById("mGlow");
+    const mClose = document.getElementById("mClose");
+    const mCount = document.getElementById("mCount");
+
+    let all = [];
+    let view = [];
+    let countMap = {};
+
+    function safeJSONParse(str){
+      try { return JSON.parse(str); }
+      catch(e){ return null; }
+    }
+
+    function normalizeText(s){
+      return (s ?? "").toString().trim().toLowerCase();
+    }
+
+    function displayRarity(item){
+      const t = (item?.tier ?? "").toString().trim();
+      if(t) return t;
+      return (item?.rarity ?? "").toString().trim();
+    }
+
+    function parseCardId(id){
+      const s = (id ?? "").toString().trim().toUpperCase();
+
+      let m = s.match(/^([A-Z]+)[-_]?(\d+)$/);
+      if(m) return { prefix:m[1], num:Number(m[2] || 0) };
+
+      m = s.match(/^([A-Z]+)[-_].*?(\d+)$/);
+      if(m) return { prefix:m[1], num:Number(m[2] || 0) };
+
+      if(s.startsWith("CRAFT_") || s.startsWith("CRAFT-")){
+        const n = Number((s.split(/[_-]/)[1] || "0"));
+        return { prefix:"CRAFT", num:Number.isFinite(n) ? n : 9999 };
+      }
+
+      return { prefix:"ZZ", num:9999 };
+    }
+
+    function isHalfAnnivLike(item){
+      const id   = (item?.id ?? "").toString().trim().toUpperCase();
+      const name = (item?.name ?? "").toString().trim().toUpperCase();
+      const img  = (item?.img ?? "").toString().trim().toUpperCase();
+
+      const hits = [
+        "ハーフアニバーサリー", "HALFANNIV", "HALF_ANNIV", "HALF-ANNIV", "HALF ANNIV",
+        "HALF", "HAFU", "HALFANNIVERSARY",
+        "アニバーサリー", "ANNIVERSARY", "ANNIV", "ANV", "ANIV",
+        "HALF-ANNIVERSARY", "HALF_ANNIVERSARY"
+      ];
+
+      const hay = `${id} ${name} ${img}`;
+      const urlHints = [
+        "/ANNIVERSARY/", "/ANV/", "/ANNIV/", "/HALFANNIV/", "/HALF_ANNIV/", "/HALF-ANNIV/"
+      ];
+
+      if(urlHints.some(k => hay.includes(k))) return true;
+      if(hits.some(k => hay.includes(k))) return true;
+      if(id.includes("ANN_") || id.includes("ANV_") || id.includes("ANNIV_")) return true;
+
+      return false;
+    }
+
+    function isSpecialSPCard(item){
+      const id = (item?.id ?? "").toString().trim().toUpperCase();
+      const name = (item?.name ?? "").toString().trim();
+      const rarity = (item?.rarity ?? "").toString().trim().toUpperCase();
+
+      if(id.startsWith("SP")) return true;
+      if(rarity === "SP") return true;
+      if(isHalfAnnivLike(item)) return true;
+      if(name.includes("焦げ") || name.includes("生焼け")) return true;
+      if(id.includes("BURN") || id.includes("RAW") || id.includes("NAMA") || id.includes("KOGE")) return true;
+
+      return false;
+    }
+
+    function isCraftCard(item){
+      const id = (item?.id ?? "").toString().trim().toUpperCase();
+      const rar = (item?.rarity ?? "").toString().trim().toUpperCase();
+      return id.startsWith("CRAFT_") || id.startsWith("CRAFT-") || rar === "CRAFT";
+    }
+
+    function isSRPlusByItem(item){
+      const r = normalizeText(displayRarity(item));
+      if(!r) return false;
+      if(r.includes("sr")) return true;
+      if(r.includes("ur")) return true;
+      if(r.includes("lr")) return true;
+      if(r.includes("hr")) return true;
+      if(r.includes("xr")) return true;
+      return false;
+    }
+
+    function rarityCodeFromDisplay(displayRaw){
+      const r = (displayRaw ?? "").toString().trim().toUpperCase();
+      if(!r) return "OT";
+      if(r === "SP" || r.includes("SP")) return "SP";
+      if(r.includes("LR")) return "LR";
+      if(r.includes("UR")) return "UR";
+      if(r.includes("SR")) return "SR";
+      if(r === "R" || r.includes(" R") || r.endsWith("R")) return "R";
+      if(r === "N" || r.includes("N")) return "N";
+      return "OT";
+    }
+
+    function toDate(at){
+      if(at == null || at === "") return null;
+
+      if(typeof at === "number"){
+        return new Date(normalizeEpoch(at));
+      }
+
+      const s = String(at).trim();
+      if(/^\d+$/.test(s)){
+        const n = Number(s);
+        if(!Number.isFinite(n)) return null;
+        return new Date(normalizeEpoch(n));
+      }
+
+      const d = new Date(s);
+      if(isNaN(d.getTime())) return null;
+      return d;
+    }
+
+    function normalizeEpoch(n){
+      const abs = Math.abs(n);
+      if(abs < 1e11) return n * 1000;
+      return n;
+    }
+
+    function fmtTokyo(d){
+      try{
+        const fmt = new Intl.DateTimeFormat("ja-JP",{
+          timeZone:"Asia/Tokyo",
+          year:"numeric",
+          month:"2-digit",
+          day:"2-digit",
+          hour:"2-digit",
+          minute:"2-digit",
+          hour12:false
+        });
+        const parts = fmt.formatToParts(d);
+        const get = (t) => parts.find(p => p.type === t)?.value ?? "";
+        return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
+      }catch(e){
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2,"0");
+        const dd = String(d.getDate()).padStart(2,"0");
+        const hh = String(d.getHours()).padStart(2,"0");
+        const mi = String(d.getMinutes()).padStart(2,"0");
+        return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+      }
+    }
+
+    function formatAt(at){
+      const d = toDate(at);
+      if(!d) return "-";
+      return fmtTokyo(d);
+    }
+
+    function toTime(at){
+      const d = toDate(at);
+      return d ? d.getTime() : 0;
+    }
+
+    function buildCountMap(){
+      countMap = {};
+      for(const item of all){
+        const id = (item.id ?? "").toString();
+        if(!id) continue;
+        const c = Number(item.count);
+        countMap[id] = (Number.isFinite(c) && c > 0) ? c : 1;
+      }
+    }
+
+    function getCount(id){
+      const key = (id ?? "").toString();
+      return countMap[key] || 1;
+    }
+
+    function load(){
+      const raw = localStorage.getItem(LS_KEY);
+
+      if(!raw){
+        all = [];
+        render();
+        showEmpty("まだカードが登録されていないよ。<br>畑で収穫したり、カードを入手するとここに表示されるよ。");
+        elPill.textContent = "0 / 0";
+        return;
+      }
+
+      const obj = safeJSONParse(raw);
+
+      let gotArr = [];
+      if(obj && Array.isArray(obj.got)){
+        gotArr = obj.got;
+      }else if(obj && obj.got && typeof obj.got === "object"){
+        gotArr = Object.values(obj.got);
+      }else{
+        gotArr = [];
+      }
+
+      all = gotArr.map(x => ({
+        id: x?.id ?? "",
+        name: x?.name ?? "",
+        img: x?.img ?? "",
+        rarity: x?.rarity ?? "",
+        tier: x?.tier ?? "",
+        at: x?.at ?? "",
+        lastAt: x?.lastAt ?? "",
+        lastAddedAt: x?.lastAddedAt ?? "",
+        count: x?.count ?? 1
+      }));
+
+      buildCountMap();
+      render();
+    }
+
+    function applyFilterSort(){
+      const q = normalizeText(elQ.value);
+      const sort = elSort.value;
+
+      view = all.filter(item => {
+        if(!q) return true;
+        const hay = [
+          item.id,
+          item.name,
+          item.rarity,
+          displayRarity(item)
+        ].map(normalizeText).join(" ");
+        return hay.includes(q);
+      });
+
+      const timeOf = (it) => toTime(it.lastAt || it.lastAddedAt || it.at);
+
+      if(sort === "new"){
+        view.sort((a,b) => timeOf(b) - timeOf(a));
+
+      }else if(sort === "dup"){
+        view.sort((a,b) => {
+          const ca = getCount(a.id);
+          const cb = getCount(b.id);
+          if(cb !== ca) return cb - ca;
+
+          const A = parseCardId(a.id);
+          const B = parseCardId(b.id);
+          if(A.prefix !== B.prefix) return A.prefix.localeCompare(B.prefix);
+          if(A.num !== B.num) return A.num - B.num;
+
+          return timeOf(b) - timeOf(a);
+        });
+
+      }else if(sort === "tn_shop"){
+        view = view.filter(c => {
+          const p = parseCardId(c.id);
+          return p.prefix === "TN" && p.num >= 1 && p.num <= 25;
+        }).sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
+
+      }else if(sort === "tn_net"){
+        view = view.filter(c => {
+          const p = parseCardId(c.id);
+          return p.prefix === "TN" && p.num >= 26 && p.num <= 50;
+        }).sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
+
+      }else if(sort === "tp"){
+        view = view.filter(c => parseCardId(c.id).prefix === "TP")
+                   .sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
+
+      }else if(sort === "nk"){
+        view = view.filter(c => parseCardId(c.id).prefix === "NK")
+                   .sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
+
+      }else if(sort === "bs"){
+        view = view.filter(c => parseCardId(c.id).prefix === "BS")
+                   .sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
+
+      }else if(sort === "sp"){
+        view = view.filter(c => isSpecialSPCard(c))
+                   .sort((a,b) => {
+                     const A0 = parseCardId(a.id);
+                     const B0 = parseCardId(b.id);
+
+                     if(A0.prefix === "SP" && B0.prefix === "SP" && A0.num !== B0.num){
+                       return A0.num - B0.num;
+                     }
+                     return timeOf(b) - timeOf(a);
+                   });
+
+      }else if(sort === "col"){
+        view = view.filter(c => parseCardId(c.id).prefix === "COL")
+                   .sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
+
+      }else if(sort === "craft"){
+        view = view.filter(c => isCraftCard(c))
+                   .sort((a,b) => {
+                     const A = parseCardId(a.id);
+                     const B = parseCardId(b.id);
+                     if(A.num !== B.num) return A.num - B.num;
+                     return timeOf(b) - timeOf(a);
+                   });
+
+      }else if(sort === "all_serial"){
+        const prefixOrder = { TN:1, TP:2, NK:3, BS:4, COL:5, SP:6, CRAFT:7 };
+
+        view.sort((a,b) => {
+          const A0 = parseCardId(a.id);
+          const B0 = parseCardId(b.id);
+
+          const A = isSpecialSPCard(a) ? { prefix:"SP", num:A0.num } : A0;
+          const B = isSpecialSPCard(b) ? { prefix:"SP", num:B0.num } : B0;
+
+          const pa = prefixOrder[A.prefix] ?? 99;
+          const pb = prefixOrder[B.prefix] ?? 99;
+          if(pa !== pb) return pa - pb;
+          if(A.num !== B.num) return A.num - B.num;
+
+          return timeOf(b) - timeOf(a);
+        });
+
+      }else{
+        view.sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
+      }
+
+      elPill.textContent = `${view.length} / ${all.length}`;
+    }
+
+    function render(){
+      hideEmpty();
+      applyFilterSort();
+      elGrid.innerHTML = "";
+
+      if(view.length === 0){
+        showEmpty("該当カードがないよ（検索条件を変えてみてね）。");
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+
+      for(const item of view){
+        const card = document.createElement("div");
+        const glow = isSRPlusByItem(item);
+        card.className = "card" + (glow ? " is-glow" : "");
+        card.setAttribute("role","button");
+        card.setAttribute("tabindex","0");
+
+        const img = document.createElement("img");
+        img.className = "thumb";
+        img.alt = item.name || item.id || "card";
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.src = item.img || "";
+        img.onerror = () => {
+          img.removeAttribute("src");
+          img.alt = "画像なし";
+          img.style.display = "block";
+          img.style.objectFit = "contain";
+        };
+
+        if(glow){
+          const s1 = document.createElement("div");
+          s1.className = "spark";
+          card.appendChild(s1);
+        }
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = item.name || "(no name)";
+
+        const mini = document.createElement("div");
+        mini.className = "mini";
+
+        const tag = document.createElement("div");
+        tag.className = "tag";
+        tag.innerHTML = `<span class="id">#${escapeHTML(item.id || "-")}</span>`;
+
+        const rar = document.createElement("div");
+        const dispR = displayRarity(item) || "-";
+        const rcode = rarityCodeFromDisplay(dispR);
+        rar.className = "tag rarity";
+        rar.dataset.r = rcode;
+        rar.innerHTML = `<b>${escapeHTML(dispR)}</b>`;
+
+        mini.appendChild(tag);
+        mini.appendChild(rar);
+
+        meta.appendChild(name);
+        meta.appendChild(mini);
+
+        const cnt = getCount(item.id);
+        const badge = document.createElement("div");
+        badge.className = "countBadge";
+        badge.textContent = `×${cnt}`;
+
+        card.appendChild(img);
+        card.appendChild(meta);
+        card.appendChild(badge);
+
+        card.addEventListener("click", () => openModal(item));
+        card.addEventListener("keydown", (e) => {
+          if(e.key === "Enter" || e.key === " "){
+            e.preventDefault();
+            openModal(item);
+          }
+        });
+
+        frag.appendChild(card);
+      }
+
+      elGrid.appendChild(frag);
+    }
+
+    function escapeHTML(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function showEmpty(html){
+      elEmpty.style.display = "block";
+      elEmpty.innerHTML = html;
+    }
+
+    function hideEmpty(){
+      elEmpty.style.display = "none";
+      elEmpty.innerHTML = "";
+    }
+
+    function openModal(item){
+      const dispR = displayRarity(item) || "-";
+
+      mImg.src = item.img || "";
+      mImg.alt = item.name || item.id || "card";
+      mTitle.textContent = item.name || "(no name)";
+      mId.textContent = item.id || "-";
+      mRarity.textContent = dispR;
+      mAt.textContent = formatAt(item.lastAt || item.lastAddedAt || item.at);
+      mGlow.style.display = isSRPlusByItem(item) ? "inline-flex" : "none";
+      mCount.textContent = `${getCount(item.id)} 枚`;
+
+      modal.setAttribute("aria-hidden","false");
+      document.addEventListener("keydown", onEscClose, { once:false });
+    }
+
+    function closeModal(){
+      modal.setAttribute("aria-hidden","true");
+      mImg.removeAttribute("src");
+      document.removeEventListener("keydown", onEscClose);
+    }
+
+    function onEscClose(e){
+      if(e.key === "Escape") closeModal();
+    }
+
+    modal.addEventListener("click", (e) => {
+      if(e.target === modal) closeModal();
+    });
+
+    elQ.addEventListener("input", () => render());
+    elSort.addEventListener("change", () => render());
+
+    btnBack.addEventListener("click", () => {
+      if(history.length > 1) history.back();
+      else location.href = "./index.html";
+    });
+
+    btnMyShop.addEventListener("click", () => {
+      location.href = MYSHOP_URL;
+    });
+
+    mClose.addEventListener("click", closeModal);
+
+    load();
+  </script>
+</body>
+</html>
