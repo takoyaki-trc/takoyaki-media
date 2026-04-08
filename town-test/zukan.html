@@ -17,7 +17,6 @@
       --tile:84px;
       --thumbPad:5px;
 
-      /* レアリティ色 */
       --rarN-bg: rgba(60, 170, 255, .30);
       --rarN-bd: rgba(60, 170, 255, .55);
 
@@ -48,12 +47,10 @@
         radial-gradient(circle at 72% 66%, rgba(255,255,255,.06) 0 2px, transparent 3px),
         radial-gradient(circle at 28% 82%, rgba(255,255,255,.08) 0 2px, transparent 3px),
         radial-gradient(circle at 56% 42%, rgba(255,255,255,.05) 0 1px, transparent 2px),
-
         radial-gradient(1000px 620px at 18% -8%, rgba(255,120,210,.26), transparent 60%),
         radial-gradient(900px 540px at 86% 8%, rgba(110,210,255,.24), transparent 64%),
         radial-gradient(760px 480px at 50% 100%, rgba(255,205,120,.20), transparent 68%),
         radial-gradient(680px 420px at 50% 35%, rgba(160,120,255,.14), transparent 72%),
-
         linear-gradient(180deg, #111733 0%, #151c3e 45%, #1b2146 100%);
       background-attachment: fixed;
       position:relative;
@@ -131,7 +128,9 @@
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
+
     .backBtn:active{transform:translateY(1px)}
+
     .backBtn .ico{
       width:18px;height:18px;
       display:inline-grid;
@@ -143,6 +142,7 @@
       font-weight:900;
       flex:0 0 auto;
     }
+
     .backBtn span:last-child{
       display:inline-block;
       line-height:1;
@@ -174,8 +174,7 @@
       display:flex;
       flex-wrap:wrap;
       gap:10px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.05));
+      background:linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.05));
       border:1px solid rgba(255,255,255,.14);
       border-radius:var(--radius);
       padding:12px;
@@ -253,8 +252,7 @@
     .btn.small{padding:8px 10px;font-size:12px}
 
     .btn.primary{
-      background:
-        linear-gradient(180deg, rgba(255,205,120,.28), rgba(255,255,255,.08));
+      background:linear-gradient(180deg, rgba(255,205,120,.28), rgba(255,255,255,.08));
       border-color: rgba(255,230,170,.45);
       box-shadow:
         0 10px 18px rgba(0,0,0,.16),
@@ -263,6 +261,7 @@
       font-weight:900;
       letter-spacing:.02em;
     }
+
     .btn.primary:hover{filter:brightness(1.06)}
     .btn:hover{filter:brightness(1.05)}
     .btn:active{transform:translateY(1px)}
@@ -278,8 +277,7 @@
       position:relative;
       border-radius:14px;
       border:1px solid rgba(255,255,255,.14);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.10));
+      background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.10));
       overflow:hidden;
       box-shadow:0 10px 18px rgba(0,0,0,.18);
       cursor:pointer;
@@ -357,6 +355,7 @@
       background: rgba(0,0,0,.22);
       text-shadow: 0 1px 0 rgba(0,0,0,.35);
     }
+
     .tag.rarity[data-r="N"]{  background:var(--rarN-bg);  border-color:var(--rarN-bd); }
     .tag.rarity[data-r="R"]{  background:var(--rarR-bg);  border-color:var(--rarR-bd); }
     .tag.rarity[data-r="SR"]{ background:var(--rarSR-bg); border-color:var(--rarSR-bd); }
@@ -694,7 +693,7 @@
 
   <script>
     const LS_KEY = "tf_v1_book";
-    const MYSHOP_URL = "https://takoyaki-card.com/town/roten.html";
+    const MYSHOP_URL = "https://takoyaki-card.com/town/myshop.html";
 
     const elGrid = document.getElementById("grid");
     const elEmpty = document.getElementById("empty");
@@ -727,14 +726,38 @@
       return (s ?? "").toString().trim().toLowerCase();
     }
 
+    function cleanStr(v){
+      return (v ?? "").toString().trim();
+    }
+
+    function toPositiveInt(v){
+      const n = Number(v);
+      if(!Number.isFinite(n)) return 0;
+      return Math.floor(n);
+    }
+
+    function isValidCardData(x){
+      const id = cleanStr(x?.id);
+      const name = cleanStr(x?.name);
+      const img = cleanStr(x?.img);
+      const count = toPositiveInt(x?.count);
+
+      if(!id) return false;
+      if(!name) return false;
+      if(!img) return false;
+      if(count <= 0) return false;
+
+      return true;
+    }
+
     function displayRarity(item){
-      const t = (item?.tier ?? "").toString().trim();
+      const t = cleanStr(item?.tier);
       if(t) return t;
-      return (item?.rarity ?? "").toString().trim();
+      return cleanStr(item?.rarity);
     }
 
     function parseCardId(id){
-      const s = (id ?? "").toString().trim().toUpperCase();
+      const s = cleanStr(id).toUpperCase();
 
       let m = s.match(/^([A-Z]+)[-_]?(\d+)$/);
       if(m) return { prefix:m[1], num:Number(m[2] || 0) };
@@ -751,9 +774,9 @@
     }
 
     function isHalfAnnivLike(item){
-      const id   = (item?.id ?? "").toString().trim().toUpperCase();
-      const name = (item?.name ?? "").toString().trim().toUpperCase();
-      const img  = (item?.img ?? "").toString().trim().toUpperCase();
+      const id   = cleanStr(item?.id).toUpperCase();
+      const name = cleanStr(item?.name).toUpperCase();
+      const img  = cleanStr(item?.img).toUpperCase();
 
       const hits = [
         "ハーフアニバーサリー", "HALFANNIV", "HALF_ANNIV", "HALF-ANNIV", "HALF ANNIV",
@@ -775,9 +798,9 @@
     }
 
     function isSpecialSPCard(item){
-      const id = (item?.id ?? "").toString().trim().toUpperCase();
-      const name = (item?.name ?? "").toString().trim();
-      const rarity = (item?.rarity ?? "").toString().trim().toUpperCase();
+      const id = cleanStr(item?.id).toUpperCase();
+      const name = cleanStr(item?.name);
+      const rarity = cleanStr(item?.rarity).toUpperCase();
 
       if(id.startsWith("SP")) return true;
       if(rarity === "SP") return true;
@@ -789,8 +812,8 @@
     }
 
     function isCraftCard(item){
-      const id = (item?.id ?? "").toString().trim().toUpperCase();
-      const rar = (item?.rarity ?? "").toString().trim().toUpperCase();
+      const id = cleanStr(item?.id).toUpperCase();
+      const rar = cleanStr(item?.rarity).toUpperCase();
       return id.startsWith("CRAFT_") || id.startsWith("CRAFT-") || rar === "CRAFT";
     }
 
@@ -806,7 +829,7 @@
     }
 
     function rarityCodeFromDisplay(displayRaw){
-      const r = (displayRaw ?? "").toString().trim().toUpperCase();
+      const r = cleanStr(displayRaw).toUpperCase();
       if(!r) return "OT";
       if(r === "SP" || r.includes("SP")) return "SP";
       if(r.includes("LR")) return "LR";
@@ -880,16 +903,16 @@
     function buildCountMap(){
       countMap = {};
       for(const item of all){
-        const id = (item.id ?? "").toString();
-        if(!id) continue;
-        const c = Number(item.count);
-        countMap[id] = (Number.isFinite(c) && c > 0) ? c : 1;
+        const id = cleanStr(item.id);
+        const count = toPositiveInt(item.count);
+        if(!id || count <= 0) continue;
+        countMap[id] = count;
       }
     }
 
     function getCount(id){
-      const key = (id ?? "").toString();
-      return countMap[key] || 1;
+      const key = cleanStr(id);
+      return countMap[key] || 0;
     }
 
     function load(){
@@ -914,17 +937,19 @@
         gotArr = [];
       }
 
-      all = gotArr.map(x => ({
-        id: x?.id ?? "",
-        name: x?.name ?? "",
-        img: x?.img ?? "",
-        rarity: x?.rarity ?? "",
-        tier: x?.tier ?? "",
-        at: x?.at ?? "",
-        lastAt: x?.lastAt ?? "",
-        lastAddedAt: x?.lastAddedAt ?? "",
-        count: x?.count ?? 1
-      }));
+      all = gotArr
+        .map(x => ({
+          id: cleanStr(x?.id),
+          name: cleanStr(x?.name),
+          img: cleanStr(x?.img),
+          rarity: cleanStr(x?.rarity),
+          tier: cleanStr(x?.tier),
+          at: x?.at ?? "",
+          lastAt: x?.lastAt ?? "",
+          lastAddedAt: x?.lastAddedAt ?? "",
+          count: toPositiveInt(x?.count)
+        }))
+        .filter(isValidCardData);
 
       buildCountMap();
       render();
@@ -1064,10 +1089,7 @@
         img.decoding = "async";
         img.src = item.img || "";
         img.onerror = () => {
-          img.removeAttribute("src");
-          img.alt = "画像なし";
-          img.style.display = "block";
-          img.style.objectFit = "contain";
+          card.remove();
         };
 
         if(glow){
@@ -1124,6 +1146,11 @@
       }
 
       elGrid.appendChild(frag);
+
+      if(!elGrid.children.length){
+        showEmpty("まだ有効なカードデータがありません。");
+        elPill.textContent = "0 / 0";
+      }
     }
 
     function escapeHTML(s){
