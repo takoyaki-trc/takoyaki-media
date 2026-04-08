@@ -177,7 +177,7 @@
         padding:0 14px;
         border-radius:12px;
         text-decoration:none;
-        font-weight:800;
+        font-weight:900;
         font-size:13px;
         line-height:1;
         white-space:nowrap;
@@ -582,30 +582,32 @@
 
   function affectionLabel(type, love) {
     const n = Number(love || 0);
+
     const map = {
-      impulse: ["まだ勢いだけで来てるじゃなイカ。", "ノリだけじゃない相性を感じ始めてるじゃなイカ。", "勢いで来て、情で通う常連じゃなイカ。"],
-      picky: ["まだ厳しく見定めてるじゃなイカ。", "少しずつ認め始めてるじゃなイカ。", "うるさいけど、かなり気に入ってるじゃなイカ。"],
-      king: ["まだ試してる側じゃなイカ。", "価値を認め始めてるじゃなイカ。", "王が認めた相手、かなり強いじゃなイカ。"],
-      flipper: ["まだ打算で見てるじゃなイカ。", "数字以外も少し見えてきたじゃなイカ。", "打算のはずが、情まで乗ってるじゃなイカ。"],
-      careful: ["まだ慎重に様子見してるじゃなイカ。", "少しずつ安心してるじゃなイカ。", "かなり信頼してるじゃなイカ。"],
-      looker: ["まだ“見るだけ”の距離感じゃなイカ。", "眺めるだけでは済まなくなってるじゃなイカ。", "口では軽いのに、かなり好きじゃなイカ。"],
-      rich: ["まだ値段で測ってるじゃなイカ。", "値段以外の面白さも認め始めてるじゃなイカ。", "財布より先に心が動いてるじゃなイカ。"],
-      climber: ["まだ試練として見てるじゃなイカ。", "登る価値があると感じ始めてるじゃなイカ。", "景色が見える位置まで来てるじゃなイカ。"],
-      guide: ["まだ外から案内してるじゃなイカ。", "語りたくなる相手になってきたじゃなイカ。", "もう半分この店の語り部じゃなイカ。"],
-      relax: ["まだ様子見じゃなイカ。", "居心地の良さを感じ始めてるじゃなイカ。", "癒やし目当てでも来てるじゃなイカ。"],
-      artisan: ["まだ仕事目線じゃなイカ。", "腕を認め始めてるじゃなイカ。", "技術ごと信頼してるじゃなイカ。"],
-      diet: ["まだ理屈で距離を取ってるじゃなイカ。", "理論の中に好意が混ざってるじゃなイカ。", "もはや理屈を超えてるじゃなイカ。"],
-      overflow: ["まだ枠外から見てるじゃなイカ。", "ズレまで楽しみ始めてるじゃなイカ。", "規格外どうし、相性がいいじゃなイカ。"],
-      collector: ["まだ管理対象じゃなイカ。", "保存以上の感情が出てきてるじゃなイカ。", "かなり大切な相手認定じゃなイカ。"],
-      shadow: ["まだ慎重に距離を測ってるじゃなイカ。", "守る価値を感じ始めてるじゃなイカ。", "信用してるから近いじゃなイカ。"],
-      ramen: ["まだ濃さだけ見てるじゃなイカ。", "味わうように通ってるじゃなイカ。", "締めに寄りたくなる相手じゃなイカ。"],
-      streamer: ["まだネタとして見てるじゃなイカ。", "映え以上の面白さを感じてるじゃなイカ。", "本気で推したくなってるじゃなイカ。"],
-      gourmet: ["まだ厳しく品定めしてるじゃなイカ。", "余韻を感じ始めてるじゃなイカ。", "かなり深く気に入ってるじゃなイカ。"],
-      opener: ["まだ勢いで近づいてるじゃなイカ。", "テンション以上に楽しんでるじゃなイカ。", "勢い込みでかなり好きじゃなイカ。"],
-      party: ["まだ祭りのノリじゃなイカ。", "ノリ以上の居場所感が出てきたじゃなイカ。", "騒がしいけど本気じゃなイカ。"],
-      pilgrim: ["まだ巡礼先のひとつじゃなイカ。", "来た意味がある場所だと思い始めてるじゃなイカ。", "わざわざ来る価値があると確信してるじゃなイカ。"]
+      impulse: ["まだ勢いだけで来ています。", "ノリだけじゃない相性を感じ始めています。", "勢いで来て、情で通う常連です。"],
+      picky: ["まだ厳しく見定めています。", "少しずつ認め始めています。", "うるさいけど、かなり気に入っています。"],
+      king: ["まだ試している側です。", "価値を認め始めています。", "王が認めた相手。かなり強いです。"],
+      flipper: ["まだ打算で見ています。", "数字以外も少し見えてきています。", "打算のはずが、情まで乗っています。"],
+      careful: ["まだ慎重に様子見しています。", "少しずつ安心しています。", "かなり信頼しています。"],
+      looker: ["まだ“見るだけ”の距離感です。", "眺めるだけでは済まなくなっています。", "口では軽いのに、かなり好きです。"],
+      rich: ["まだ値段で測っています。", "値段以外の面白さも認め始めています。", "財布より先に心が動いています。"],
+      climber: ["まだ試練として見ています。", "登る価値があると感じ始めています。", "景色が見える位置まで来ています。"],
+      guide: ["まだ外から案内しています。", "語りたくなる相手になってきています。", "もう半分この店の語り部です。"],
+      relax: ["まだ様子見です。", "居心地の良さを感じ始めています。", "癒やし目当てでも来ています。"],
+      artisan: ["まだ仕事目線です。", "腕を認め始めています。", "技術ごと信頼しています。"],
+      diet: ["まだ理屈で距離を取っています。", "理論の中に好意が混ざっています。", "もはや理屈を超えています。"],
+      overflow: ["まだ枠外から見ています。", "ズレまで楽しみ始めています。", "規格外どうし、相性が良いです。"],
+      collector: ["まだ管理対象です。", "保存以上の感情が出てきています。", "かなり大切な相手認定です。"],
+      shadow: ["まだ慎重に距離を測っています。", "守る価値を感じ始めています。", "信用しているから近いです。"],
+      ramen: ["まだ濃さだけ見ています。", "味わうように通っています。", "締めに寄りたくなる相手です。"],
+      streamer: ["まだネタとして見ています。", "映え以上の面白さを感じています。", "本気で推したくなっています。"],
+      gourmet: ["まだ厳しく品定めしています。", "余韻を感じ始めています。", "かなり深く気に入っています。"],
+      opener: ["まだ勢いで近づいています。", "テンション以上に楽しんでいます。", "勢い込みでかなり好きです。"],
+      party: ["まだ祭りのノリです。", "ノリ以上の居場所感が出てきています。", "騒がしいけど本気です。"],
+      pilgrim: ["まだ巡礼先のひとつです。", "来た意味がある場所だと思い始めています。", "わざわざ来る価値があると確信しています。"]
     };
-    const row = map[type] || ["まだ距離を測ってるじゃなイカ。", "少しずつ距離が縮んでるじゃなイカ。", "かなり気に入ってるじゃなイカ。"];
+
+    const row = map[type] || ["まだ距離を測っています。", "少しずつ距離が縮んでいます。", "かなり気に入っています。"];
     if (n >= 80) return row[2];
     if (n >= 40) return row[1];
     return row[0];
@@ -1362,7 +1364,39 @@
   }
 
   function getBoard() {
-    return loadJSON(KEY.board, null) || generateBoard(false);
+    const state = loadJSON(KEY.board, null) || generateBoard(false);
+    let changed = false;
+
+    if (state && Array.isArray(state.jobs)) {
+      state.jobs.forEach(job => {
+        if (!job.kasumipiThought) {
+          if (job.takopiThought) {
+            job.kasumipiThought = job.takopiThought;
+          } else {
+            const card = CARD_MAP[job.targetCardId];
+            job.kasumipiThought = card
+              ? makeKasumipiThought(card, !!job.isExtraPool, Number(job.difficulty || 1))
+              : "……まだ深くは読めないじゃなイカ";
+          }
+          changed = true;
+        }
+      });
+    }
+
+    if (state && state.legendJob && !state.legendJob.kasumipiThought) {
+      if (state.legendJob.takopiThought) {
+        state.legendJob.kasumipiThought = state.legendJob.takopiThought;
+      } else {
+        const card = CARD_MAP[state.legendJob.targetCardId];
+        state.legendJob.kasumipiThought = card
+          ? makeKasumipiThought(card, !!state.legendJob.isExtraPool, Number(state.legendJob.difficulty || 1))
+          : "……まだ深くは読めないじゃなイカ";
+      }
+      changed = true;
+    }
+
+    if (changed) saveBoard(state);
+    return state;
   }
 
   function saveBoard(state) {
@@ -1748,6 +1782,7 @@
 
   function renderJobCard(job) {
     const status = getJobStatus(job);
+    const thoughtText = job.kasumipiThought || job.takopiThought || "……まだ深くは読めないじゃなイカ";
 
     return `
       <article class="matchCard ${job.completed ? "isDone" : ""}">
@@ -1775,7 +1810,7 @@
 
           <div class="matchThoughtBox">
             <div class="matchThoughtCap">🦑 かすみぴの心の声</div>
-            <div class="matchThoughtText">${escapeHtml(job.kasumipiThought)}</div>
+            <div class="matchThoughtText">${escapeHtml(thoughtText)}</div>
           </div>
 
           ${renderHintBlock(job)}
@@ -2007,7 +2042,7 @@
       suspense.className = "suspenseLayer";
       suspense.innerHTML = `
         <div class="suspenseInner">
-          <div class="suspenseText">ざわ……ざわ……</div>
+          <div class="suspenseText">ドキドキ…</div>
         </div>
       `;
       document.body.appendChild(suspense);
@@ -2018,6 +2053,8 @@
       judge.id = "heartJudgeLayer";
       judge.className = "heartJudgeLayer";
       judge.innerHTML = `
+        <div class="heartJudgeBurst heartJudgeBurst--success"></div>
+        <div class="heartJudgeBurst heartJudgeBurst--fail"></div>
         <div class="heartJudgeInner" id="heartJudgeInner">
           <div class="heartJudgeIcon" id="heartJudgeIcon">♥</div>
           <div class="heartJudgeText" id="heartJudgeText">……</div>
@@ -2033,7 +2070,7 @@
     const layer = $("#suspenseLayer");
     if (!layer) return;
     layer.classList.add("show");
-    await wait(2000);
+    await wait(1800);
     layer.classList.remove("show");
     await wait(120);
   }
@@ -2049,16 +2086,22 @@
     if (!layer || !inner || !icon || !text || !sub) return;
 
     inner.classList.remove("success", "fail");
+    layer.classList.remove("success", "fail");
+
     inner.classList.add(judgement.verdict === "fail" ? "fail" : "success");
+    layer.classList.add(judgement.verdict === "fail" ? "fail" : "success");
 
     icon.textContent = judgement.icon;
-    icon.style.color = "#ff2a52";
-    text.textContent = judgement.verdict === "fail" ? "届かなかったじゃなイカ" : "願いが届いたじゃなイカ";
-    sub.textContent = judgement.text;
+    icon.style.color = judgement.verdict === "fail" ? "#7aa8ff" : "#ff2a52";
+    text.textContent = judgement.verdict === "fail" ? "届かなかった…" : "願いが届いた";
+    sub.textContent = judgement.verdict === "fail"
+      ? "ドヨーーン…気まずい空気が流れている。"
+      : "パァーーッと眩しく刺さった。";
 
     layer.classList.add("show");
-    await wait(1550);
+    await wait(1650);
     layer.classList.remove("show");
+    layer.classList.remove("success", "fail");
     await wait(150);
   }
 
@@ -2140,7 +2183,7 @@
         commitFinalFail(meta, job.type);
         renderHeroStats();
         renderHeatMeter();
-renderBoard();
+        renderBoard();
         showKasumipiToast("……今日はもう心を開かないじゃなイカ");
       } else {
         renderBoard();
@@ -2176,7 +2219,7 @@ renderBoard();
     await showRewardModal(getJobById(jobId));
 
     if (isFirstTryNoHint2) {
-      showKasumipiToast("一発正解、かなり冴えてるじゃなイカ");
+      showKasumipiToast("一発で当てたら、かなり冴えてるじゃなイカ");
     } else {
       showKasumipiToast("……願いが届いたじゃなイカ");
     }
@@ -2237,7 +2280,7 @@ renderBoard();
     if (floatBtn) {
       floatBtn.addEventListener("click", () => {
         const rnd = randFromSeed(`${todayKey()}::kasumipi::${Date.now()}`);
-        showKasumipiToast(pick(KASUMIPI_LINES, rnd));
+        showKasumipiToast(pick(KASUMIPI_LINES, rnd), 2600);
       });
     }
 
@@ -2261,16 +2304,15 @@ renderBoard();
       });
     }
 
-    const gachaBtn = $("#heroHeatGachaBtn");
-    if (gachaBtn && !gachaBtn.dataset.bound) {
-      gachaBtn.dataset.bound = "1";
-      gachaBtn.addEventListener("click", (e) => {
-        if (getHeat() < GACHA_HEAT_COST) {
-          e.preventDefault();
-          showKasumipiToast(`あと ${Math.max(0, GACHA_HEAT_COST - getHeat())} 熱量でガチャじゃなイカ`);
-        }
-      });
-    }
+    document.addEventListener("click", (e) => {
+      const gachaBtn = $("#heroHeatGachaBtn");
+      if (!gachaBtn || e.target !== gachaBtn) return;
+
+      if (getHeat() < GACHA_HEAT_COST) {
+        e.preventDefault();
+        showKasumipiToast(`あと ${Math.max(0, GACHA_HEAT_COST - getHeat())} 熱量でガチャじゃなイカ`);
+      }
+    });
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
