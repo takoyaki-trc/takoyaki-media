@@ -7,18 +7,17 @@
 
   <style>
     :root{
-      --bg:#0b0f18;
-      --text:#e9f1ff;
-      --muted:#9fb0c9;
-      --border:rgba(255,255,255,.10);
-      --shadow:0 12px 30px rgba(0,0,0,.35);
+      --text:#f5f7ff;
+      --muted:#c8d2ee;
+      --border:rgba(255,255,255,.12);
+      --shadow:0 12px 30px rgba(0,0,0,.28);
       --radius:16px;
       --gap:10px;
 
       --tile:84px;
       --thumbPad:5px;
 
-      /* ✅ レアリティ色（枠/背景） */
+      /* レアリティ色 */
       --rarN-bg: rgba(60, 170, 255, .30);
       --rarN-bd: rgba(60, 170, 255, .55);
 
@@ -34,28 +33,83 @@
       --rarLR-bg: rgba(255, 205, 85, .22);
       --rarLR-bd: rgba(255, 215, 120, .52);
     }
+
     *{box-sizing:border-box}
+
     body{
       margin:0;
-      background:
-        radial-gradient(1200px 600px at 40% -10%, rgba(106,160,255,.18), transparent 60%),
-        radial-gradient(900px 500px at 90% 10%, rgba(255,180,80,.10), transparent 65%),
-        var(--bg);
+      min-height:100vh;
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", sans-serif;
+
+      background:
+        radial-gradient(circle at 16% 22%, rgba(255,255,255,.10) 0 2px, transparent 3px),
+        radial-gradient(circle at 82% 18%, rgba(255,255,255,.08) 0 2px, transparent 3px),
+        radial-gradient(circle at 72% 66%, rgba(255,255,255,.06) 0 2px, transparent 3px),
+        radial-gradient(circle at 28% 82%, rgba(255,255,255,.08) 0 2px, transparent 3px),
+        radial-gradient(circle at 56% 42%, rgba(255,255,255,.05) 0 1px, transparent 2px),
+
+        radial-gradient(1000px 620px at 18% -8%, rgba(255,120,210,.26), transparent 60%),
+        radial-gradient(900px 540px at 86% 8%, rgba(110,210,255,.24), transparent 64%),
+        radial-gradient(760px 480px at 50% 100%, rgba(255,205,120,.20), transparent 68%),
+        radial-gradient(680px 420px at 50% 35%, rgba(160,120,255,.14), transparent 72%),
+
+        linear-gradient(180deg, #111733 0%, #151c3e 45%, #1b2146 100%);
+      background-attachment: fixed;
+      position:relative;
+      overflow-x:hidden;
     }
-    .wrap{max-width:1100px;margin:0 auto;padding:18px 14px 36px;}
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size:40px 40px;
+      mask-image:linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.18));
+      -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.18));
+    }
+
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      background:
+        radial-gradient(500px 180px at 50% 0%, rgba(255,255,255,.08), transparent 70%);
+      opacity:.8;
+    }
+
+    .wrap{
+      position:relative;
+      z-index:1;
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 14px 36px;
+    }
+
     a{color:inherit}
 
     header{
-      display:flex;align-items:flex-start;justify-content:space-between;
-      gap:12px;margin-bottom:14px;
-    }
-    .leftHead{
-      display:flex;align-items:flex-start;gap:10px;min-width:0;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
     }
 
-    /* ✅ 戻る：必ず横並び */
+    .leftHead{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      min-width:0;
+    }
+
     .backBtn{
       display:inline-flex;
       flex-direction:row;
@@ -65,15 +119,17 @@
       white-space:nowrap;
       padding:9px 12px;
       border-radius:999px;
-      border:1px solid var(--border);
-      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.16);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
       color:var(--text);
       font-size:13px;
       cursor:pointer;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
-      box-shadow:0 10px 18px rgba(0,0,0,.18);
+      box-shadow:0 10px 18px rgba(0,0,0,.16);
       line-height:1;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
     .backBtn:active{transform:translateY(1px)}
     .backBtn .ico{
@@ -81,8 +137,8 @@
       display:inline-grid;
       place-items:center;
       border-radius:6px;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
       line-height:1;
       font-weight:900;
       flex:0 0 auto;
@@ -92,31 +148,70 @@
       line-height:1;
     }
 
-    .title{display:flex;flex-direction:column;gap:4px;min-width:0;}
-    h1{margin:0;font-size:20px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .title{
+      text-align:center;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:2px;
+      padding:0;
+      margin:0;
+    }
+
+    .title h1{
+      margin:0;
+      padding:0;
+      line-height:1.1;
+      font-size:22px;
+      letter-spacing:.03em;
+      text-shadow:
+        0 0 10px rgba(255,255,255,.10),
+        0 0 22px rgba(160,210,255,.10);
+    }
 
     .controls{
-      display:flex;flex-wrap:wrap;gap:10px;
-      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--border);
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.14);
       border-radius:var(--radius);
       padding:12px;
       box-shadow:var(--shadow);
       margin-bottom:12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
-    .field{display:flex;flex-direction:column;gap:6px;min-width:170px;flex:1 1 220px;}
-    .label{font-size:11px;color:var(--muted);letter-spacing:.03em;}
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:170px;
+      flex:1 1 220px;
+    }
+
+    .label{
+      font-size:11px;
+      color:var(--muted);
+      letter-spacing:.03em;
+    }
+
     input[type="search"], select{
       width:100%;
       padding:10px 12px;
       border-radius:12px;
-      border:1px solid var(--border);
-      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(20,24,52,.45);
       color:var(--text);
       outline:none;
       font-size:14px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
     }
-    input[type="search"]::placeholder{color:rgba(255,255,255,.35)}
+
+    input[type="search"]::placeholder{color:rgba(255,255,255,.40)}
 
     .row{
       display:flex;
@@ -128,29 +223,43 @@
     }
 
     .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 10px;border-radius:999px;
-      border:1px solid var(--border);
-      background:rgba(0,0,0,.18);
-      color:var(--muted);
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      color:#eef4ff;
       font-size:12px;
       white-space:nowrap;
-      box-shadow:0 10px 18px rgba(0,0,0,.15);
+      box-shadow:0 10px 18px rgba(0,0,0,.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .btn{
-      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
-      background:rgba(0,0,0,.18);color:var(--text);font-size:13px;cursor:pointer;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      color:var(--text);
+      font-size:13px;
+      cursor:pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
+
     .btn.small{padding:8px 10px;font-size:12px}
 
-    /* ✅ “装飾したボタン”統一 */
     .btn.primary{
-      background: linear-gradient(180deg, rgba(140,200,255,.26), rgba(255,255,255,.08));
-      border-color: rgba(180,220,255,.48);
+      background:
+        linear-gradient(180deg, rgba(255,205,120,.28), rgba(255,255,255,.08));
+      border-color: rgba(255,230,170,.45);
       box-shadow:
-        0 10px 18px rgba(0,0,0,.18),
-        0 0 0 1px rgba(180,220,255,.10) inset;
+        0 10px 18px rgba(0,0,0,.16),
+        0 0 0 1px rgba(255,240,180,.10) inset,
+        0 0 18px rgba(255,210,120,.08);
       font-weight:900;
       letter-spacing:.02em;
     }
@@ -158,37 +267,90 @@
     .btn:hover{filter:brightness(1.05)}
     .btn:active{transform:translateY(1px)}
 
-    .grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(var(--tile), 1fr));gap:var(--gap);align-items:stretch;}
-    .card{
-      position:relative;border-radius:14px;border:1px solid var(--border);
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.12));
-      overflow:hidden;box-shadow:0 10px 18px rgba(0,0,0,.22);
-      cursor:pointer;min-height:calc(var(--tile) + 34px);
-      user-select:none;-webkit-tap-highlight-color:transparent;
-      transition:transform .12s ease, filter .12s ease;
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(var(--tile), 1fr));
+      gap:var(--gap);
+      align-items:stretch;
     }
+
+    .card{
+      position:relative;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.10));
+      overflow:hidden;
+      box-shadow:0 10px 18px rgba(0,0,0,.18);
+      cursor:pointer;
+      min-height:calc(var(--tile) + 34px);
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      transition:transform .12s ease, filter .12s ease, box-shadow .12s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .card:hover{
+      box-shadow:
+        0 12px 22px rgba(0,0,0,.20),
+        0 0 20px rgba(160,220,255,.08);
+    }
+
     .card:active{transform:scale(.985)}
+
     .thumb{
-      width:100%;height:var(--tile);display:block;
+      width:100%;
+      height:var(--tile);
+      display:block;
       object-fit:contain;
       padding:var(--thumbPad);
-      background:rgba(0,0,0,.14);
+      background:rgba(9,12,28,.24);
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
-    .meta{padding:7px 8px 9px;display:flex;flex-direction:column;gap:4px;}
-    .name{font-size:12px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .mini{display:flex;align-items:center;justify-content:space-between;gap:6px;color:var(--muted);font-size:11px;}
+
+    .meta{
+      padding:7px 8px 9px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    .name{
+      font-size:12px;
+      line-height:1.2;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .mini{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:6px;
+      color:var(--muted);
+      font-size:11px;
+    }
 
     .tag{
-      display:inline-flex;align-items:center;gap:6px;
-      padding:2px 8px;border-radius:999px;border:1px solid var(--border);
-      background:rgba(0,0,0,.18);color:var(--muted);max-width:100%;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.16);
+      color:var(--muted);
+      max-width:100%;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
+
     .tag b{color:var(--text);font-weight:700}
     .id{opacity:.95}
 
-    /* ✅ レアリティ枠（右下）に色を付ける（rarityのtagだけ） */
     .tag.rarity{
       color: rgba(255,255,255,.95);
       border-color: rgba(255,255,255,.20);
@@ -200,22 +362,28 @@
     .tag.rarity[data-r="SR"]{ background:var(--rarSR-bg); border-color:var(--rarSR-bd); }
     .tag.rarity[data-r="UR"]{ background:var(--rarUR-bg); border-color:var(--rarUR-bd); color:rgba(10,16,26,.92); text-shadow:none; }
     .tag.rarity[data-r="LR"]{ background:var(--rarLR-bg); border-color:var(--rarLR-bd); color:rgba(30,20,0,.92); text-shadow:none; }
-    /* SPやOTHER等を表示する場合の見た目（色分け不要ならN扱いでOK） */
     .tag.rarity[data-r="SP"]{ background: rgba(140,200,255,.18); border-color: rgba(180,220,255,.35); }
     .tag.rarity[data-r="OT"]{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
 
     .countBadge{
-      position:absolute;right:6px;top:6px;
-      padding:3px 8px;border-radius:999px;border:1px solid var(--border);
-      background:rgba(0,0,0,.62);color:rgba(255,255,255,.92);
-      font-size:11px;line-height:1;
+      position:absolute;
+      right:6px;
+      top:6px;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(7,10,24,.58);
+      color:rgba(255,255,255,.94);
+      font-size:11px;
+      line-height:1;
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
-      pointer-events:none;user-select:none;
+      pointer-events:none;
+      user-select:none;
       z-index:5;
+      box-shadow:0 4px 12px rgba(0,0,0,.14);
     }
 
-    /* ===== SR以上グロー ===== */
     .card.is-glow{
       border-color:rgba(255,230,120,.38);
       transform: translateZ(0);
@@ -226,9 +394,11 @@
         0 0 34px rgba(120,210,255,.07);
       filter:saturate(1.06) brightness(1.015);
     }
+
     .card.is-glow::before{
       content:"";
-      position:absolute; inset:-3px;
+      position:absolute;
+      inset:-3px;
       border-radius:18px;
       pointer-events:none;
       background:conic-gradient(from 200deg,
@@ -244,9 +414,11 @@
       mix-blend-mode: screen;
       z-index:1;
     }
+
     .card.is-glow::after{
       content:"";
-      position:absolute; inset:0;
+      position:absolute;
+      inset:0;
       pointer-events:none;
       background:
         linear-gradient(180deg, rgba(255,255,255,.12), transparent 58%),
@@ -256,11 +428,14 @@
       mix-blend-mode: screen;
       z-index:2;
     }
+
     .card.is-glow .meta{position:relative;z-index:4;}
     .card.is-glow .thumb{position:relative;z-index:3;}
+
     .card.is-glow .thumb::after{
       content:"";
-      position:absolute; inset:-35% -55%;
+      position:absolute;
+      inset:-35% -55%;
       pointer-events:none;
       background: linear-gradient(115deg,
         rgba(255,255,255,0.00) 46%,
@@ -274,8 +449,10 @@
       mix-blend-mode: screen;
       animation: shineSweep 6.8s ease-in-out infinite;
     }
+
     .card.is-glow .spark{
-      position:absolute; inset:0;
+      position:absolute;
+      inset:0;
       pointer-events:none;
       z-index:4;
       opacity:.35;
@@ -289,7 +466,12 @@
       filter: drop-shadow(0 0 5px rgba(255,255,255,.18));
       animation: sparkTwinkle 2.6s ease-in-out infinite;
     }
-    @keyframes holoSpin{ from{ transform: rotate(0deg); } to{ transform: rotate(360deg); } }
+
+    @keyframes holoSpin{
+      from{ transform: rotate(0deg); }
+      to{ transform: rotate(360deg); }
+    }
+
     @keyframes shineSweep{
       0%{ transform: translateX(-85%) translateY(25%); opacity:0; }
       12%{ opacity:.35; }
@@ -297,11 +479,13 @@
       30%{ opacity:.30; }
       100%{ transform: translateX(75%) translateY(-10%); opacity:0; }
     }
+
     @keyframes sparkTwinkle{
       0%{ opacity:.10; transform: translateY(0); }
       50%{ opacity:.45; }
       100%{ opacity:.16; transform: translateY(-1px); }
     }
+
     @media (prefers-reduced-motion: reduce){
       .card.is-glow::before,
       .card.is-glow .thumb::after,
@@ -309,44 +493,120 @@
     }
 
     .empty{
-      margin-top:14px;padding:16px;border:1px dashed rgba(255,255,255,.18);
-      border-radius:var(--radius);color:var(--muted);background:rgba(0,0,0,.18);
+      margin-top:14px;
+      padding:16px;
+      border:1px dashed rgba(255,255,255,.20);
+      border-radius:var(--radius);
+      color:var(--muted);
+      background:rgba(255,255,255,.06);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-    .empty code{color:var(--text);background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px;}
+
+    .empty code{
+      color:var(--text);
+      background:rgba(255,255,255,.08);
+      padding:2px 6px;
+      border-radius:8px;
+    }
 
     .modal{
-      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-      padding:16px;background:rgba(0,0,0,.72);z-index:9999;
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      background:rgba(7,10,24,.74);
+      z-index:9999;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
     }
+
     .modal[aria-hidden="false"]{display:flex}
+
     .modal__panel{
       width:min(92vw, 560px);
-      border-radius:18px;border:1px solid var(--border);
-      background:#0f1626;
-      box-shadow:0 24px 60px rgba(0,0,0,.5);
-      overflow:hidden;position:relative;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background:linear-gradient(180deg, rgba(32,38,78,.96), rgba(17,22,48,.98));
+      box-shadow:0 24px 60px rgba(0,0,0,.42);
+      overflow:hidden;
+      position:relative;
     }
+
     .modal__img{
-      width:100%;height:auto;display:block;
+      width:100%;
+      height:auto;
+      display:block;
       background:rgba(255,255,255,.05);
-      image-rendering:pixelated;image-rendering:crisp-edges;
+      image-rendering:pixelated;
+      image-rendering:crisp-edges;
     }
-    .modal__body{padding:12px 12px 14px;display:flex;flex-direction:column;gap:10px;}
-    .modal__title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
-    .modal__title h2{margin:0;font-size:15px;line-height:1.25;}
+
+    .modal__body{
+      padding:12px 12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .modal__title{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .modal__title h2{
+      margin:0;
+      font-size:15px;
+      line-height:1.25;
+    }
+
     .close{
-      border:1px solid var(--border);background:rgba(0,0,0,.18);color:var(--text);
-      border-radius:12px;padding:8px 10px;cursor:pointer;font-size:13px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-size:13px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
+
     .kv{
-      display:grid;grid-template-columns:110px 1fr;gap:8px 10px;
-      font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;
+      display:grid;
+      grid-template-columns:110px 1fr;
+      gap:8px 10px;
+      font-size:12px;
+      color:var(--muted);
+      border-top:1px solid rgba(255,255,255,.10);
+      padding-top:10px;
     }
-    .kv b{color:var(--text);font-weight:600}
+
+    .kv b{
+      color:var(--text);
+      font-weight:600
+    }
+
     .srGlow{
-      display:inline-flex;align-items:center;gap:6px;font-size:11px;
-      padding:4px 10px;border-radius:999px;border:1px solid rgba(255,220,120,.35);
-      color:#ffe9b8;background:rgba(255,220,120,.08);
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,220,120,.35);
+      color:#ffe9b8;
+      background:rgba(255,220,120,.08);
+    }
+
+    .controls select{
+      font-size:13px;
+      transform: scale(.92);
+      transform-origin: left center;
     }
 
     @media (max-width: 520px){
@@ -355,73 +615,6 @@
       .backBtn{padding:8px 10px;font-size:12px}
       .backBtn .ico{width:18px;height:18px}
       .modal__panel{width:min(94vw, 560px)}
-    }
-
-    /* ===== 図鑑タイトル（詰め） ===== */
-    .title{
-      text-align:center;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:2px;
-      padding:0;
-      margin:0;
-    }
-    .title h1{
-      margin:0;
-      padding:0;
-      line-height:1.1;
-      font-size:22px;
-    }
-    /* ✅ 下の文字列は削除 */
-    #lastBackupLine{ display:none !important; }
-
-    /* =========================================================
-       ✅ 共通バックアップUI（このページ用）
-       - ボタンのみ表示
-       - 復元は出さない（backupのみ）
-       ========================================================= */
-    #trcBackupFloat{
-      position: static !important;
-      z-index: auto !important;
-      display: inline-flex !important;
-      gap: 0 !important;
-      padding: 0 !important;
-      border: none !important;
-      border-radius: 0 !important;
-      background: transparent !important;
-      backdrop-filter: none !important;
-      box-shadow: none !important;
-      color: inherit !important;
-    }
-    #trcBackupFloat .trcDot,
-    #trcBackupFloat .trcCap,
-    #trcBackupFloat .trcMini{ display:none !important; }
-    #trcBackupFloat .trcBtn:not(.trcBtnPrimary){ display:none !important; }
-
-    #trcBackupFloat .trcBtnPrimary{
-      padding: 8px 10px !important;
-      border-radius: 12px !important;
-      border: 1px solid rgba(180,220,255,.48) !important;
-      background: linear-gradient(180deg, rgba(140,200,255,.26), rgba(255,255,255,.08)) !important;
-      color: var(--text) !important;
-      font-size: 12px !important;
-      font-weight: 900 !important;
-      letter-spacing: .02em !important;
-      box-shadow:
-        0 10px 18px rgba(0,0,0,.18),
-        0 0 0 1px rgba(180,220,255,.10) inset !important;
-      cursor: pointer !important;
-      white-space: nowrap !important;
-    }
-    #trcBackupFloat .trcBtnPrimary:hover{ filter: brightness(1.06) !important; }
-    #trcBackupFloat .trcBtnPrimary:active{ transform: translateY(1px) !important; }
-
-    .controls select{
-      font-size:13px;
-      transform: scale(.92);
-      transform-origin: left center;
     }
   </style>
 </head>
@@ -437,7 +630,6 @@
 
         <div class="title">
           <h1>所有カード一覧</h1>
-          <span id="lastBackupLine"></span>
         </div>
       </div>
 
@@ -469,7 +661,6 @@
 
       <div class="row" id="actionRow">
         <button class="btn small primary" id="btnMyShop" type="button">露店でカードを売る</button>
-        <!-- バックアップ（共通JSが生成→ここへ移動） -->
       </div>
     </section>
 
@@ -479,7 +670,6 @@
     </main>
   </div>
 
-  <!-- カード詳細 Modal -->
   <div class="modal" id="modal" aria-hidden="true" role="dialog" aria-label="カード拡大表示">
     <div class="modal__panel" role="document">
       <img id="mImg" class="modal__img" alt="">
@@ -503,18 +693,8 @@
   </div>
 
   <script>
-    // =========================================================
-    // 図鑑（count方式 / IDごとに1枚表示）
-    // - gate.js 側で追加される職人カード（craft_XXX）も表示・並び替え可能
-    //
-    // ✅ 変更点（今回）
-    // - ハーフアニバ系は「並び替えSPカテゴリに入れる」判定は維持
-    // - ただし、カードのバッジ表示は「実際のレアリティ（tier優先）」を表示する
-    //   → item.tier があれば tier を表示、無ければ item.rarity を表示
-    // =========================================================
-
     const LS_KEY = "tf_v1_book";
-    const MYSHOP_URL = "https://takoyaki-card.com/town/roten.html"; // 必要なら変更
+    const MYSHOP_URL = "https://takoyaki-card.com/town/myshop.html";
 
     const elGrid = document.getElementById("grid");
     const elEmpty = document.getElementById("empty");
@@ -523,9 +703,7 @@
     const elSort = document.getElementById("sort");
     const btnBack = document.getElementById("btnBack");
     const btnMyShop = document.getElementById("btnMyShop");
-    const actionRow = document.getElementById("actionRow");
 
-    // card modal
     const modal = document.getElementById("modal");
     const mImg = document.getElementById("mImg");
     const mTitle = document.getElementById("mTitle");
@@ -540,44 +718,38 @@
     let view = [];
     let countMap = {};
 
-    function safeJSONParse(str){ try { return JSON.parse(str); } catch(e){ return null; } }
-    function normalizeText(s){ return (s ?? "").toString().trim().toLowerCase(); }
+    function safeJSONParse(str){
+      try { return JSON.parse(str); }
+      catch(e){ return null; }
+    }
 
-    // ✅ 表示用レアリティ（tier優先）
+    function normalizeText(s){
+      return (s ?? "").toString().trim().toLowerCase();
+    }
+
     function displayRarity(item){
       const t = (item?.tier ?? "").toString().trim();
       if(t) return t;
       return (item?.rarity ?? "").toString().trim();
     }
-    function displayRarityUpper(item){
-      return (displayRarity(item) || "").toString().trim().toUpperCase();
-    }
 
     function parseCardId(id){
       const s = (id ?? "").toString().trim().toUpperCase();
 
-      // ✅ 例: TN-001 / TP-001 / SP-001 / COL-001
       let m = s.match(/^([A-Z]+)[-_]?(\d+)$/);
       if(m) return { prefix:m[1], num:Number(m[2] || 0) };
 
-      // ✅ 例: SP-ANNIV-001 のような「先頭プレフィックス」だけ拾う
-      //    → prefix=SP, num=001 が取れるなら取る（末尾数字がある場合）
       m = s.match(/^([A-Z]+)[-_].*?(\d+)$/);
       if(m) return { prefix:m[1], num:Number(m[2] || 0) };
 
-      // craft_001 の prefix を CRAFT に寄せたい
       if(s.startsWith("CRAFT_") || s.startsWith("CRAFT-")){
         const n = Number((s.split(/[_-]/)[1] || "0"));
-        return { prefix:"CRAFT", num: Number.isFinite(n)?n:9999 };
+        return { prefix:"CRAFT", num:Number.isFinite(n) ? n : 9999 };
       }
 
       return { prefix:"ZZ", num:9999 };
     }
 
-    // =========================================================
-    // ✅ SPカテゴリ判定（並び替え用：ハーフアニバ等もSPカテゴリへ）
-    // - バッジ表示とは別管理（表示は tier/rarity の実値）
-    // =========================================================
     function isHalfAnnivLike(item){
       const id   = (item?.id ?? "").toString().trim().toUpperCase();
       const name = (item?.name ?? "").toString().trim().toUpperCase();
@@ -587,18 +759,16 @@
         "ハーフアニバーサリー", "HALFANNIV", "HALF_ANNIV", "HALF-ANNIV", "HALF ANNIV",
         "HALF", "HAFU", "HALFANNIVERSARY",
         "アニバーサリー", "ANNIVERSARY", "ANNIV", "ANV", "ANIV",
-        "HALF-ANNIVERSARY", "HALF_ANNIVERSARY",
+        "HALF-ANNIVERSARY", "HALF_ANNIVERSARY"
       ];
 
       const hay = `${id} ${name} ${img}`;
-
       const urlHints = [
         "/ANNIVERSARY/", "/ANV/", "/ANNIV/", "/HALFANNIV/", "/HALF_ANNIV/", "/HALF-ANNIV/"
       ];
 
       if(urlHints.some(k => hay.includes(k))) return true;
       if(hits.some(k => hay.includes(k))) return true;
-
       if(id.includes("ANN_") || id.includes("ANV_") || id.includes("ANNIV_")) return true;
 
       return false;
@@ -611,11 +781,7 @@
 
       if(id.startsWith("SP")) return true;
       if(rarity === "SP") return true;
-
-      // ✅ 追加：ハーフアニバ/アニバ系列をSPカテゴリとして扱う
       if(isHalfAnnivLike(item)) return true;
-
-      // 既存の“ネタSP”判定（必要なら残す）
       if(name.includes("焦げ") || name.includes("生焼け")) return true;
       if(id.includes("BURN") || id.includes("RAW") || id.includes("NAMA") || id.includes("KOGE")) return true;
 
@@ -628,12 +794,6 @@
       return id.startsWith("CRAFT_") || id.startsWith("CRAFT-") || rar === "CRAFT";
     }
 
-    function idToNumber(id){
-      const p = parseCardId(id);
-      return Number.isFinite(p.num) ? p.num : Number.POSITIVE_INFINITY;
-    }
-
-    // ✅ グロー判定も「表示レアリティ（tier優先）」で判定
     function isSRPlusByItem(item){
       const r = normalizeText(displayRarity(item));
       if(!r) return false;
@@ -645,7 +805,6 @@
       return false;
     }
 
-    // ✅ バッジ色分けも「表示レアリティ（tier優先）」で判定
     function rarityCodeFromDisplay(displayRaw){
       const r = (displayRaw ?? "").toString().trim().toUpperCase();
       if(!r) return "OT";
@@ -660,47 +819,59 @@
 
     function toDate(at){
       if(at == null || at === "") return null;
-      if(typeof at === "number") return new Date(normalizeEpoch(at));
+
+      if(typeof at === "number"){
+        return new Date(normalizeEpoch(at));
+      }
+
       const s = String(at).trim();
       if(/^\d+$/.test(s)){
         const n = Number(s);
         if(!Number.isFinite(n)) return null;
         return new Date(normalizeEpoch(n));
       }
+
       const d = new Date(s);
       if(isNaN(d.getTime())) return null;
       return d;
     }
+
     function normalizeEpoch(n){
       const abs = Math.abs(n);
       if(abs < 1e11) return n * 1000;
       return n;
     }
+
     function fmtTokyo(d){
       try{
         const fmt = new Intl.DateTimeFormat("ja-JP",{
           timeZone:"Asia/Tokyo",
-          year:"numeric", month:"2-digit", day:"2-digit",
-          hour:"2-digit", minute:"2-digit",
+          year:"numeric",
+          month:"2-digit",
+          day:"2-digit",
+          hour:"2-digit",
+          minute:"2-digit",
           hour12:false
         });
         const parts = fmt.formatToParts(d);
-        const get = (t) => parts.find(p=>p.type===t)?.value ?? "";
+        const get = (t) => parts.find(p => p.type === t)?.value ?? "";
         return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
       }catch(e){
         const yyyy = d.getFullYear();
-        const mm = String(d.getMonth()+1).padStart(2,"0");
+        const mm = String(d.getMonth() + 1).padStart(2,"0");
         const dd = String(d.getDate()).padStart(2,"0");
         const hh = String(d.getHours()).padStart(2,"0");
         const mi = String(d.getMinutes()).padStart(2,"0");
         return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
       }
     }
+
     function formatAt(at){
       const d = toDate(at);
       if(!d) return "-";
       return fmtTokyo(d);
     }
+
     function toTime(at){
       const d = toDate(at);
       return d ? d.getTime() : 0;
@@ -715,6 +886,7 @@
         countMap[id] = (Number.isFinite(c) && c > 0) ? c : 1;
       }
     }
+
     function getCount(id){
       const key = (id ?? "").toString();
       return countMap[key] || 1;
@@ -722,13 +894,11 @@
 
     function load(){
       const raw = localStorage.getItem(LS_KEY);
+
       if(!raw){
         all = [];
         render();
-        showEmpty(
-          `まだカードが登録されていないよ。<br>
-           畑で収穫したり、カードを入手するとここに表示されるよ。`
-        );
+        showEmpty("まだカードが登録されていないよ。<br>畑で収穫したり、カードを入手するとここに表示されるよ。");
         elPill.textContent = "0 / 0";
         return;
       }
@@ -738,20 +908,18 @@
       let gotArr = [];
       if(obj && Array.isArray(obj.got)){
         gotArr = obj.got;
-      } else if(obj && obj.got && typeof obj.got === "object"){
+      }else if(obj && obj.got && typeof obj.got === "object"){
         gotArr = Object.values(obj.got);
-      } else {
+      }else{
         gotArr = [];
       }
 
-      // ✅ gate.js が保存する形式（lastAddedAt / photo / desc）にも対応
-      // ✅ 追加：tier（XP方式などで保存している場合）の読込
       all = gotArr.map(x => ({
         id: x?.id ?? "",
         name: x?.name ?? "",
         img: x?.img ?? "",
-        rarity: x?.rarity ?? "",      // 「カテゴリ」や旧データ用
-        tier: x?.tier ?? "",          // ✅ 表示用（存在すればこちら優先）
+        rarity: x?.rarity ?? "",
+        tier: x?.tier ?? "",
         at: x?.at ?? "",
         lastAt: x?.lastAt ?? "",
         lastAddedAt: x?.lastAddedAt ?? "",
@@ -768,7 +936,6 @@
 
       view = all.filter(item => {
         if(!q) return true;
-        // ✅ 検索は「表示レアリティ（tier）」もヒット対象にする
         const hay = [
           item.id,
           item.name,
@@ -798,33 +965,32 @@
         });
 
       }else if(sort === "tn_shop"){
-        view = view.filter(c=>{
+        view = view.filter(c => {
           const p = parseCardId(c.id);
           return p.prefix === "TN" && p.num >= 1 && p.num <= 25;
-        }).sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+        }).sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
 
       }else if(sort === "tn_net"){
-        view = view.filter(c=>{
+        view = view.filter(c => {
           const p = parseCardId(c.id);
           return p.prefix === "TN" && p.num >= 26 && p.num <= 50;
-        }).sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+        }).sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
 
       }else if(sort === "tp"){
-        view = view.filter(c=> parseCardId(c.id).prefix === "TP")
-                   .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+        view = view.filter(c => parseCardId(c.id).prefix === "TP")
+                   .sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
 
       }else if(sort === "nk"){
-        view = view.filter(c=> parseCardId(c.id).prefix === "NK")
-                   .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+        view = view.filter(c => parseCardId(c.id).prefix === "NK")
+                   .sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
 
       }else if(sort === "bs"){
-        view = view.filter(c=> parseCardId(c.id).prefix === "BS")
-                   .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+        view = view.filter(c => parseCardId(c.id).prefix === "BS")
+                   .sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
 
       }else if(sort === "sp"){
-        // ✅ SPカテゴリ（ハーフアニバもここに入る）
-        view = view.filter(c=> isSpecialSPCard(c))
-                   .sort((a,b)=>{
+        view = view.filter(c => isSpecialSPCard(c))
+                   .sort((a,b) => {
                      const A0 = parseCardId(a.id);
                      const B0 = parseCardId(b.id);
 
@@ -835,12 +1001,12 @@
                    });
 
       }else if(sort === "col"){
-        view = view.filter(c=> parseCardId(c.id).prefix === "COL")
-                   .sort((a,b)=> parseCardId(a.id).num - parseCardId(b.id).num);
+        view = view.filter(c => parseCardId(c.id).prefix === "COL")
+                   .sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
 
       }else if(sort === "craft"){
-        view = view.filter(c=> isCraftCard(c))
-                   .sort((a,b)=>{
+        view = view.filter(c => isCraftCard(c))
+                   .sort((a,b) => {
                      const A = parseCardId(a.id);
                      const B = parseCardId(b.id);
                      if(A.num !== B.num) return A.num - B.num;
@@ -850,25 +1016,23 @@
       }else if(sort === "all_serial"){
         const prefixOrder = { TN:1, TP:2, NK:3, BS:4, COL:5, SP:6, CRAFT:7 };
 
-        view.sort((a,b)=>{
+        view.sort((a,b) => {
           const A0 = parseCardId(a.id);
           const B0 = parseCardId(b.id);
 
-          // ✅ SPカテゴリなら prefix を SP 扱いに寄せる（ハーフアニバ等も含む）
           const A = isSpecialSPCard(a) ? { prefix:"SP", num:A0.num } : A0;
           const B = isSpecialSPCard(b) ? { prefix:"SP", num:B0.num } : B0;
 
           const pa = prefixOrder[A.prefix] ?? 99;
           const pb = prefixOrder[B.prefix] ?? 99;
           if(pa !== pb) return pa - pb;
-
           if(A.num !== B.num) return A.num - B.num;
 
           return timeOf(b) - timeOf(a);
         });
 
       }else{
-        view.sort((a,b) => idToNumber(a.id) - idToNumber(b.id));
+        view.sort((a,b) => parseCardId(a.id).num - parseCardId(b.id).num);
       }
 
       elPill.textContent = `${view.length} / ${all.length}`;
@@ -930,8 +1094,7 @@
         const dispR = displayRarity(item) || "-";
         const rcode = rarityCodeFromDisplay(dispR);
         rar.className = "tag rarity";
-        rar.dataset.r = rcode; /* ✅ 色分け */
-        // ✅ バッジ表示は「実際のレア（tier優先）」を表示
+        rar.dataset.r = rcode;
         rar.innerHTML = `<b>${escapeHTML(dispR)}</b>`;
 
         mini.appendChild(tag);
@@ -971,10 +1134,12 @@
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
     }
+
     function showEmpty(html){
       elEmpty.style.display = "block";
       elEmpty.innerHTML = html;
     }
+
     function hideEmpty(){
       elEmpty.style.display = "none";
       elEmpty.innerHTML = "";
@@ -987,7 +1152,6 @@
       mImg.alt = item.name || item.id || "card";
       mTitle.textContent = item.name || "(no name)";
       mId.textContent = item.id || "-";
-      // ✅ モーダルの「レア」も表示レア（tier優先）に統一
       mRarity.textContent = dispR;
       mAt.textContent = formatAt(item.lastAt || item.lastAddedAt || item.at);
       mGlow.style.display = isSRPlusByItem(item) ? "inline-flex" : "none";
@@ -996,17 +1160,21 @@
       modal.setAttribute("aria-hidden","false");
       document.addEventListener("keydown", onEscClose, { once:false });
     }
+
     function closeModal(){
       modal.setAttribute("aria-hidden","true");
       mImg.removeAttribute("src");
       document.removeEventListener("keydown", onEscClose);
     }
+
     function onEscClose(e){
       if(e.key === "Escape") closeModal();
     }
-    modal.addEventListener("click", (e) => { if(e.target === modal) closeModal(); });
 
-    // controls
+    modal.addEventListener("click", (e) => {
+      if(e.target === modal) closeModal();
+    });
+
     elQ.addEventListener("input", () => render());
     elSort.addEventListener("change", () => render());
 
@@ -1021,38 +1189,7 @@
 
     mClose.addEventListener("click", closeModal);
 
-    // =========================================================
-    // ✅ 共通バックアップUIを「マイ露店ボタンの右隣」に移動
-    // =========================================================
-    function moveBackupUIToRightOfMyShop(){
-      const wrap = document.getElementById("trcBackupFloat");
-      if(!wrap || !actionRow) return;
-
-      if(wrap.parentElement !== actionRow){
-        actionRow.appendChild(wrap);
-      }
-      if(btnMyShop && btnMyShop.nextSibling !== wrap){
-        actionRow.insertBefore(wrap, btnMyShop.nextSibling);
-      }
-    }
-
-    const mo = new MutationObserver(() => {
-      if(document.getElementById("trcBackupFloat")){
-        moveBackupUIToRightOfMyShop();
-        mo.disconnect();
-      }
-    });
-    mo.observe(document.documentElement, { childList:true, subtree:true });
-
-    window.addEventListener("DOMContentLoaded", () => moveBackupUIToRightOfMyShop(), { once:true });
-
-    // init
     load();
   </script>
-
-  <!-- ✅ 共通バックアップ（town/assets/trc-backup-float.js）
-       ※ このHTMLが town/ 配下なら "./assets/..." でOK
-       ※ 階層が違う場合はパスだけ調整 -->
-  <script src="./assets/trc-backup-float.js"></script>
 </body>
 </html>
