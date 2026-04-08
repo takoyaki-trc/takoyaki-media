@@ -3,6 +3,8 @@
    ✅ 資材在庫: tf_v1_inv（seed/water/fert）= ファームと完全共通
    ✅ 図鑑: tf_v1_book（got[id].count 合計を “所持” として表示）※今回はUIから非表示化
    ✅ オクト: roten_v1_octo
+   ✅ たこ焼きみくじ: 1日1回（おみくじ演出：大吉/中吉/末吉/凶/大凶 + 報酬テーブル）
+   ✅ 公開記念プレゼント: 1回だけ
    ✅ コラボのタネ（seed_colabo / seed_anniv）は「シリアルで増える」ので購入不可
    ✅ Toast：Chromeでも確実に表示（bottom固定 / inline important）
    ✅ 購入UI：数量の隣に「買う」（2段にしない）
@@ -11,6 +13,7 @@
    ✅ 所持数：画像右上にバッジ表示（購入欄の所持テキストは廃止）
    ✅ ボタン：＋/−/買う を少し小さく
    ✅ オクト不足の常時ヒント表示を削除（押下時Toastのみ）
+   ✅ おみくじオクト：大凶1 / 凶500 / 末吉1000 / 中吉3000 / 大吉7777
 
    ✅ 今回の修正（依頼内容）
    1) 上部の共通シリアル入力欄は “見えないように隠す”
@@ -38,6 +41,8 @@
     octo: "roten_v1_octo",
     inv: "tf_v1_inv",
     book: "tf_v1_book",
+    mikujiDate: "roten_v1_mikuji_date",
+    launchGift: "roten_v1_launch_gift_claimed",
     log: "roten_v1_log",
     codesUsed: "tf_v1_codes_used",
     deviceId: "tf_v1_device_id",
@@ -65,6 +70,14 @@
   // ---------- utils ----------
   const $  = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  function todayKey(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const da = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${da}`;
+  }
 
   function loadJSON(key, fallback){
     try{
@@ -397,6 +410,20 @@
     // 図鑑UIは非表示化（値更新は残す）
     $("#chipBookOwned") && ($("#chipBookOwned").textContent = String(calcBookOwned()));
     $("#chipBookDup")   && ($("#chipBookDup").textContent   = "0");
+
+    const done = localStorage.getItem(LS.mikujiDate) === todayKey();
+    const btnM = $("#btnMikuji");
+    if(btnM){
+      btnM.textContent = done ? "🎲 たこ焼きみくじ（本日済）" : "🎲 たこ焼きみくじ（1日1回）";
+      btnM.disabled = done;
+    }
+
+    const claimed = localStorage.getItem(LS.launchGift) === "1";
+    const giftBtn = $("#btnLaunchPresent");
+    if(giftBtn){
+      giftBtn.textContent = claimed ? "🎁 公開記念プレゼント（受取済）" : "🎁 公開記念プレゼント（1回だけ）";
+      giftBtn.disabled = claimed;
+    }
   }
 
   // =========================================================
@@ -618,7 +645,7 @@
         justify-content:flex-end;
         align-items:center;
         gap:8px;
-        flex-wrap:nowrap;
+        flex-wrap:nowrap; /* 基本は横並び */
       }
 
       /* ✅ BOOTHボタン：幅は今のまま / 色を付ける */
@@ -659,7 +686,7 @@
         font-weight: 900;
         letter-spacing: .02em;
         padding: 0 10px;
-        width: clamp(120px, 34vw, 190px);
+        width: clamp(120px, 34vw, 190px); /* ✅ 幅が原因で崩れにくい */
         max-width: 190px;
         outline: none;
       }
@@ -693,10 +720,13 @@
         .good .buybar .buybtn{ min-width: 86px !important; }
         .good .qty .qtyin{ width: 52px !important; }
         .roten-about-btn{ font-size: 12px !important; }
-        .good .boothLink{ min-width: 120px; }
+        .good .boothLink{ min-width: 120px; } /* 幅維持 */
+
+        /* 420px程度は横並び優先（入力はclampで縮む） */
         .good .serialMiniInput{ width: clamp(110px, 34vw, 180px); max-width: 180px; }
       }
 
+      /* ✅ かなり狭い端末だけ “入力欄を下に回す” → 崩れ防止 */
       @media (max-width: 360px){
         .good .boothRow{
           flex-wrap:wrap;
@@ -1159,6 +1189,191 @@
   }
 
   // =========================================================
+  // ✅ たこ焼きみくじ
+  // =========================================================
+  const OMKUJI = [
+    { w: 8,  luck:"大吉", kind:"seed",  id:"seed_special", qty:1, octo:7777, label:"たこぴのタネ×1 + オクト+7777",
+      msg:"焼き台が歌ってる…たこ。今日は“伝説”が出る…たこ。" },
+    { w: 18, luck:"中吉", kind:"water", id:"water_regret", qty:1, octo:3000, label:"押さなきゃよかった水×1 + オクト+3000",
+      msg:"事件の匂い…たこ。SNS向けの運…たこ。" },
+    { w: 28, luck:"末吉", kind:"water", id:"water_overdo", qty:1, octo:1000, label:"やりすぎな水×1 + オクト+1000",
+      msg:"勝負の一滴…たこ。うまく焼けるといいね…たこ。" },
+    { w: 28, luck:"凶",   kind:"fert",  id:"fert_skip",    qty:1, octo: 500, label:"工程すっ飛ばし肥料×1 + オクト+500",
+      msg:"焦ると…焼ける…たこ。近道はだいたい罠…たこ。" },
+    { w: 18, luck:"大凶", kind:"octo",  id:"octo",         qty:1, octo:   1, label:"オクト+1",
+      msg:"……大凶でも、1オクトは“希望”…たこ。明日がある…たこ。" },
+  ];
+
+  function pickWeighted(list){
+    const sum = list.reduce((a,b)=>a + (Number(b.w)||0), 0);
+    let r = Math.random() * sum;
+    for(const it of list){
+      r -= (Number(it.w)||0);
+      if(r <= 0) return it;
+    }
+    return list[0];
+  }
+
+  function applyReward(reward){
+    if(Number(reward.octo) > 0) addOcto(Number(reward.octo));
+    if(reward.kind === "octo") return;
+
+    const inv = ensureInvKeys();
+    inv[reward.kind] = inv[reward.kind] || {};
+    inv[reward.kind][reward.id] = Number(inv[reward.kind][reward.id] || 0) + Number(reward.qty || 1);
+    saveInv(inv);
+  }
+
+  function openMikuji(){
+    const done = localStorage.getItem(LS.mikujiDate) === todayKey();
+    if(done){
+      openModal("🎲 たこ焼きみくじ", `<div class="mikuji-wrap"><div class="note">今日はもう引いた…たこ。明日またおいで…たこ。</div></div>`);
+      return;
+    }
+
+    const ballImg = "https://ul.h3z.jp/PHREbelx.png";
+
+    openModal("🎲 たこ焼きみくじ（1日1回）", `
+      <div class="mikuji-wrap">
+        <div class="note">
+          たこぴ：<br>
+          「焼き台から1つ選んで…たこ。<br>
+          運勢が出る…たこ。」
+        </div>
+
+        <div class="grill" id="grill">
+          ${Array.from({length:9}).map((_,i)=>`
+            <button class="ball" type="button" data-i="${i}">
+              <img src="${ballImg}" alt="たこ焼き">
+            </button>
+          `).join("")}
+        </div>
+
+        <div class="note">※押した瞬間、今日の運命が確定する…たこ。</div>
+      </div>
+    `);
+
+    const root = document.getElementById("modalBody") || document;
+    const grill = $("#grill", root);
+    $$(".ball", grill).forEach(b => {
+      b.addEventListener("click", () => doMikuji(), { once:true });
+    });
+  }
+
+  function doMikuji(){
+    const r = pickWeighted(OMKUJI);
+
+    applyReward(r);
+    localStorage.setItem(LS.mikujiDate, todayKey());
+    pushLog(`みくじ：${r.luck} / ${r.label}`);
+
+    openModal("🎴 おみくじ結果", `
+      <div class="mikuji-wrap">
+        <div style="
+          text-align:center;
+          font-weight:1000;
+          font-size:44px;
+          letter-spacing:.08em;
+          line-height:1;
+          margin: 8px 0 10px;
+        ">${r.luck}</div>
+
+        <div style="
+          text-align:center;
+          font-weight:900;
+          font-size:16px;
+          margin-bottom: 10px;
+        ">${r.label}</div>
+
+        <div class="note" style="text-align:center;">
+          たこぴ：<br>「${r.msg}」
+        </div>
+
+        <div class="row">
+          <button class="btn big" id="okMikuji" type="button">OK</button>
+        </div>
+      </div>
+    `);
+
+    const root = document.getElementById("modalBody") || document;
+    $("#okMikuji", root)?.addEventListener("click", () => {
+      closeModal();
+      refreshHUD();
+      renderGoods();
+    });
+  }
+
+  // =========================================================
+  // ✅ 公開記念プレゼント
+  // =========================================================
+  function openLaunchPresent(){
+    const claimed = localStorage.getItem(LS.launchGift) === "1";
+    if(claimed){
+      openModal("🎁 公開記念プレゼント", `<div class="mikuji-wrap"><div class="note">もう受け取った…たこ。大事に使って…たこ。</div></div>`);
+      return;
+    }
+
+    openModal("🎁 公開記念プレゼント（1回だけ）", `
+      <div class="mikuji-wrap">
+        <div class="note">
+          たこぴ：<br>
+          「ホームページ公開記念…たこ。<br>
+          “最初の火種”をあげる…たこ。」
+        </div>
+
+        <div class="inv-box">
+          <div class="inv-title">内容</div>
+          <div class="note">🌱 店頭タネ×15</div>
+          <div class="note">🌱 回線タネ×15</div>
+          <div class="note">🌱 たこぴのタネ×1</div>
+          <hr class="sep">
+          <div class="note">💧 なんか良さそう×10 / 怪しい×10 / やりすぎ×10</div>
+          <div class="note">🧪 気のせい×10 / 根性×10 / 工程すっ飛ばし×10</div>
+        </div>
+
+        <div class="row">
+          <button class="btn big" id="claimGift" type="button">受け取る（取り消し不可）</button>
+          <button class="btn btn-ghost" id="cancelGift" type="button">やめる</button>
+        </div>
+
+        <div class="note">※1回だけ。押したら戻れない…たこ。</div>
+      </div>
+    `);
+
+    const root = document.getElementById("modalBody") || document;
+    $("#cancelGift", root)?.addEventListener("click", closeModal);
+    $("#claimGift", root)?.addEventListener("click", () => {
+      claimLaunchGift();
+      closeModal();
+    });
+  }
+
+  function claimLaunchGift(){
+    const inv = ensureInvKeys();
+
+    inv.seed["seed_shop"]    = Number(inv.seed["seed_shop"]||0) + 15;
+    inv.seed["seed_line"]    = Number(inv.seed["seed_line"]||0) + 15;
+    inv.seed["seed_special"] = Number(inv.seed["seed_special"]||0) + 1;
+
+    inv.water["water_nice"]       = Number(inv.water["water_nice"]||0) + 10;
+    inv.water["water_suspicious"] = Number(inv.water["water_suspicious"]||0) + 10;
+    inv.water["water_overdo"]     = Number(inv.water["water_overdo"]||0) + 10;
+
+    inv.fert["fert_feel"] = Number(inv.fert["fert_feel"]||0) + 10;
+    inv.fert["fert_guts"] = Number(inv.fert["fert_guts"]||0) + 10;
+    inv.fert["fert_skip"] = Number(inv.fert["fert_skip"]||0) + 10;
+
+    saveInv(inv);
+    localStorage.setItem(LS.launchGift, "1");
+    pushLog("公開記念プレゼント受取");
+
+    setTakopiSayRandom();
+    refreshHUD();
+    renderGoods();
+    toastHype("🎁 プレゼント受取！", {kind:"good"});
+  }
+
+  // =========================================================
   // ✅ 右上説明ボタン / 戻るボタン（あれば） / 配線
   // =========================================================
   function wireTabs(){
@@ -1189,6 +1404,21 @@
 
     $("#btnOpenRates")?.addEventListener("click", () => {
       openAboutModal();
+      setTakopiSayRandom();
+    });
+
+    $("#btnMikuji")?.addEventListener("click", () => {
+      openMikuji();
+      setTakopiSayRandom();
+    });
+
+    $("#btnLaunchPresent")?.addEventListener("click", () => {
+      openLaunchPresent();
+      setTakopiSayRandom();
+    });
+
+    $("#btnOpenSell")?.addEventListener("click", () => {
+      toastHype("🏮 売却ページを開いた！", {kind:"info"});
       setTakopiSayRandom();
     });
 
