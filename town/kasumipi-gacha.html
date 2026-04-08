@@ -1117,6 +1117,7 @@ img{max-width:100%}
   </div>
 </div>
 
+
 <script>
 (() => {
   "use strict";
@@ -1180,6 +1181,10 @@ img{max-width:100%}
     }
   }
 
+  function nowISO() {
+    return new Date().toISOString();
+  }
+
   function getHeat() {
     return Number(localStorage.getItem(KEY_HEAT) || 0);
   }
@@ -1220,38 +1225,70 @@ img{max-width:100%}
   }
 
   function addOwned(card) {
+    const ts = nowISO();
+
+    /* =========================
+       このページ専用のコレクション
+    ========================= */
     const book = getBook();
 
     if (!book.owned[card.id]) {
       book.owned[card.id] = {
+        id: card.id,
         count: 0,
         name: card.name,
         rarity: card.rarity,
-        img: card.img
+        img: card.img,
+        at: ts,
+        lastAt: ts,
+        lastAddedAt: ts
       };
     }
 
+    book.owned[card.id].id = card.id;
     book.owned[card.id].count += 1;
     book.owned[card.id].name = card.name;
     book.owned[card.id].rarity = card.rarity;
     book.owned[card.id].img = card.img;
+    if (!book.owned[card.id].at) book.owned[card.id].at = ts;
+    book.owned[card.id].lastAt = ts;
+    book.owned[card.id].lastAddedAt = ts;
 
     saveBook(book);
 
+    /* =========================
+       zukan.html 用の共通図鑑
+       - SPカテゴリに入れるため rarity は "SP"
+       - 表示レアは tier に実レアを保存
+    ========================= */
     const globalBook = getGlobalBook();
-    if (!globalBook.got) globalBook.got = {};
+    if (!globalBook.got || typeof globalBook.got !== "object") {
+      globalBook.got = {};
+    }
+
     if (!globalBook.got[card.id]) {
       globalBook.got[card.id] = {
+        id: card.id,
         count: 0,
         name: card.name,
-        rarity: card.rarity,
-        img: card.img
+        rarity: "SP",
+        tier: card.rarity,
+        img: card.img,
+        at: ts,
+        lastAt: ts,
+        lastAddedAt: ts
       };
     }
+
+    globalBook.got[card.id].id = card.id;
     globalBook.got[card.id].count += 1;
     globalBook.got[card.id].name = card.name;
-    globalBook.got[card.id].rarity = card.rarity;
+    globalBook.got[card.id].rarity = "SP";
+    globalBook.got[card.id].tier = card.rarity;
     globalBook.got[card.id].img = card.img;
+    if (!globalBook.got[card.id].at) globalBook.got[card.id].at = ts;
+    globalBook.got[card.id].lastAt = ts;
+    globalBook.got[card.id].lastAddedAt = ts;
 
     saveGlobalBook(globalBook);
   }
@@ -1287,6 +1324,7 @@ img{max-width:100%}
         <div class="collectionCode">${card.id}</div>
         <div class="collectionName">${owned ? card.name : "未所持"}</div>
       `;
+
       root.appendChild(item);
     });
   }
@@ -1570,22 +1608,10 @@ img{max-width:100%}
   init();
 })();
 </script>
+
+
+
+  
 </body>
 </html>
-    border-radius:7px;
-  }
-  .gaugeWrap{
-    margin-bottom:10px;
-  }
-  .gaugeMeta{
-    font-size:11px;
-    gap:4px 10px;
-    line-height:1.5;
-  }
-  .resultHead{
-    align-items:center;
-  }
-  .resultActionBtn{
-    min-height:36px;
-    padding:7px 12px;
-    font-size:12px;
+   
