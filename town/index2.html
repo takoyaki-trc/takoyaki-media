@@ -585,7 +585,126 @@
       margin:10px 0;
     }
 
-    
+    /* =========================
+       所持アイテムモーダル
+    ========================= */
+    .inventory-summary{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .inventory-card{
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+    }
+
+    .inventory-card-label{
+      font-size:12px;
+      font-weight:800;
+      color:rgba(255,255,255,.72);
+      margin-bottom:4px;
+    }
+
+    .inventory-card-value{
+      font-size:18px;
+      font-weight:900;
+      color:#fff;
+    }
+
+    .inventory-groups{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .inventory-group{
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .inventory-group-title{
+      font-size:14px;
+      font-weight:900;
+      margin:0 0 10px;
+      color:#fff;
+    }
+
+    .inventory-icon-grid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:10px;
+    }
+
+    .inventory-icon-item{
+      position:relative;
+      min-height:84px;
+      border-radius:14px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      padding:10px 8px;
+      text-align:center;
+    }
+
+    .inventory-icon-emoji{
+      font-size:28px;
+      line-height:1;
+    }
+
+    .inventory-icon-name{
+      font-size:11px;
+      line-height:1.35;
+      font-weight:800;
+      color:#fff;
+      word-break:break-word;
+    }
+
+    .inventory-count-badge{
+      position:absolute;
+      top:6px;
+      right:6px;
+      min-width:22px;
+      height:22px;
+      padding:0 6px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(180deg, #ffe58a, #ffbf47);
+      color:#241600;
+      font-size:11px;
+      font-weight:900;
+      box-shadow:0 6px 12px rgba(255,191,71,.28);
+    }
+
+    .inventory-empty{
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.78);
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+    }
+
+    @media (max-width:520px){
+      .inventory-summary{
+        grid-template-columns:1fr;
+      }
+      .inventory-icon-grid{
+        grid-template-columns:repeat(2, minmax(0,1fr));
+      }
+    }
 
     /* =========================
        お知らせ
@@ -1495,6 +1614,11 @@
             <span class="octo-label">所持オクト</span>
             <span id="octoValue" class="octo-value">0</span>
           </div>
+
+          <button id="inventoryBtn" class="hud-btn inventory-btn" type="button" aria-label="所持アイテム">
+            <span class="hud-icon">📦</span>
+            <span>所持</span>
+          </button>
         </div>
 
         <div class="hud-actions">
@@ -1639,7 +1763,18 @@
     </div>
   </div>
 
-
+  <!-- =========================
+       所持アイテムモーダル
+  ========================= -->
+  <div class="modal" id="inventoryModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
+      <div class="modal-title" id="inventoryTitle">所持アイテム</div>
+      <div id="inventoryModalBody"></div>
+      <div class="modal-actions">
+        <button class="modal-btn primary" type="button" id="inventoryClose">閉じる</button>
+      </div>
+    </div>
+  </div>
 
   <!-- =========================
        ファーム説明モーダル
@@ -2499,7 +2634,14 @@
       modal.setAttribute("aria-hidden", "true");
     }
 
-  
+    /* =========================================
+       7) 所持アイテムモーダル
+       tf_v1_inv のみ読む
+    ========================================= */
+    const inventoryBtn       = document.getElementById("inventoryBtn");
+    const inventoryModal     = document.getElementById("inventoryModal");
+    const inventoryModalBody = document.getElementById("inventoryModalBody");
+    const inventoryClose     = document.getElementById("inventoryClose");
 
     function totalCount(obj){
       return Object.values(obj || {}).reduce((sum, v) => sum + Math.max(0, Number(v || 0)), 0);
@@ -2876,12 +3018,15 @@
 
     window.addEventListener("pageshow", applyAll);
     window.addEventListener("storage", (e) => {
-  if (e.key === LS.octo || e.key === LS.launchGift || e.key === LS.newsRead || e.key === LS.inv) {
-    renderOcto();
-    refreshGiftButton();
-    renderNewsBadge();
-  }
-});
+      if (e.key === LS.octo || e.key === LS.launchGift || e.key === LS.newsRead || e.key === LS.inv) {
+        renderOcto();
+        refreshGiftButton();
+        renderNewsBadge();
+        if (inventoryModal && inventoryModal.style.display === "flex") {
+          renderInventoryModal();
+        }
+      }
+    });
   })();
   </script>
 
