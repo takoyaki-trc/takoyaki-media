@@ -2070,9 +2070,9 @@
     const layer = $("#suspenseLayer");
     if (!layer) return;
     layer.classList.add("show");
-    await wait(3000);
+    await wait(2500);
     layer.classList.remove("show");
-    await wait(120);
+    await wait(160);
   }
 
   async function showJudge(judgement) {
