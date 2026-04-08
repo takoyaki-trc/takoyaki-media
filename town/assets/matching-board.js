@@ -2070,7 +2070,7 @@
     const layer = $("#suspenseLayer");
     if (!layer) return;
     layer.classList.add("show");
-    await wait(1800);
+    await wait(3000);
     layer.classList.remove("show");
     await wait(120);
   }
