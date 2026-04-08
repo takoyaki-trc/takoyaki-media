@@ -1101,94 +1101,54 @@ img{max-width:100%}
   "use strict";
 
   const KEY_HEAT  = "matching_heat_v1";
-  const KEY_GACHA = "kasumipi_gacha_v6";
-  const KEY_BOOK  = "kasumipi_gacha_book_v6";
+  const KEY_GACHA = "kasumipi_gacha_v7";
+  const KEY_BOOK  = "kasumipi_gacha_book_v7";
 
   const COST = 500;
 
-  const IMG_TOP   = "https://ul.h3z.jp/gQiokHCL.png";
-  const IMG_STAGE = "https://ul.h3z.jp/UtPlWaZz.png";
+  const IMG_TOP = "https://ul.h3z.jp/gQiokHCL.png";
 
+  // 図鑑カテゴリはSP枠に入れるが、表示レアリティは R / SR / UR / LR
   const CARD_POOL = [
     {
       id: "KSP-01",
-      rarity: "SP",
+      bookCategory: "SP",
+      rarity: "R",
       name: "かすみぴ《浮上》",
       theme: "soft",
       text: "静かな金の光の中で、ゆっくり浮かび上がってきた一枚。",
-      img: "https://files.catbox.moe/9m5q8j.jpg"
+      img: "https://takoyaki-card.com/town/assets/images/sp/koi01.png",
+      weight: 70
     },
     {
       id: "KSP-02",
-      rarity: "SP",
+      bookCategory: "SP",
+      rarity: "SR",
       name: "かすみぴ《抱えた記憶》",
       theme: "dark",
       text: "赤紫の脈動をまとい、手放せない記憶のように現れた。",
-      img: "https://files.catbox.moe/t2l2o8.jpg"
+      img: "https://takoyaki-card.com/town/assets/images/sp/koi02.png",
+      weight: 18
     },
     {
       id: "KSP-03",
-      rarity: "SP",
+      bookCategory: "SP",
+      rarity: "UR",
       name: "かすみぴ《選別》",
       theme: "choice",
       text: "数ある候補の中から、最後に選ばれた特別な一枚。",
-      img: "https://files.catbox.moe/v1rrsx.jpg"
+      img: "https://takoyaki-card.com/town/assets/images/sp/koi03ur.png",
+      weight: 7
     },
     {
       id: "KSP-04",
-      rarity: "SP",
+      bookCategory: "SP",
+      rarity: "LR",
       name: "かすみぴ《深層》",
       theme: "final",
       text: "金の奔流の中心で、ついに深層そのものが姿を現した。",
-      img: "https://files.catbox.moe/o7x1k3.jpg"
-    },
-    {
-      id: "KN-01",
-      rarity: "N",
-      name: "かすみぴ《微熱》",
-      theme: "normal",
-      text: "小さく残った熱が、まだ消えずにゆらいでいる。",
-      img: IMG_TOP
-    },
-    {
-      id: "KN-02",
-      rarity: "N",
-      name: "かすみぴ《見送り》",
-      theme: "normal",
-      text: "届かなかった言葉だけが、あとからゆっくり追いかけてくる。",
-      img: IMG_STAGE
-    },
-    {
-      id: "KN-03",
-      rarity: "N",
-      name: "かすみぴ《未読》",
-      theme: "normal",
-      text: "開かれないまま沈んでいた感情が、今日だけ少し光った。",
-      img: IMG_TOP
-    },
-    {
-      id: "KN-04",
-      rarity: "N",
-      name: "かすみぴ《余韻》",
-      theme: "normal",
-      text: "終わったあとに残るものほど、案外ずっとしぶとい。",
-      img: IMG_STAGE
-    },
-    {
-      id: "KN-05",
-      rarity: "N",
-      name: "かすみぴ《片想い》",
-      theme: "normal",
-      text: "一方通行でも、熱だけは妙に本物だったりする。",
-      img: IMG_TOP
-    },
-    {
-      id: "KN-06",
-      rarity: "N",
-      name: "かすみぴ《置き去り》",
-      theme: "normal",
-      text: "忘れたつもりの気持ちほど、あとから一番面倒を起こす。",
-      img: IMG_STAGE
+      img: "https://takoyaki-card.com/town/assets/images/sp/koi04lr.png",
+      weight: 5
     }
   ];
 
@@ -1235,25 +1195,39 @@ img{max-width:100%}
 
   function addOwned(card) {
     const book = getBook();
+
     if (!book.owned[card.id]) {
       book.owned[card.id] = {
         count: 0,
         name: card.name,
         rarity: card.rarity,
+        bookCategory: card.bookCategory || "SP",
         img: card.img
       };
     }
+
     book.owned[card.id].count += 1;
+    book.owned[card.id].name = card.name;
+    book.owned[card.id].rarity = card.rarity;
+    book.owned[card.id].bookCategory = card.bookCategory || "SP";
+    book.owned[card.id].img = card.img;
+
     saveBook(book);
   }
 
   function rarityClass(rarity) {
-    return rarity === "SP" ? "sp" : "n";
+    const r = String(rarity || "").toLowerCase();
+    if (r === "lr") return "lr";
+    if (r === "ur") return "ur";
+    if (r === "sr") return "sr";
+    return "r";
   }
 
   function renderCollection() {
     const book = getBook();
     const root = $("#collectionGrid");
+    if (!root) return;
+
     root.innerHTML = "";
 
     CARD_POOL.forEach(card => {
@@ -1279,14 +1253,16 @@ img{max-width:100%}
   function renderHeat() {
     const heat = getHeat();
 
-    $("#heatNow").textContent = heat.toLocaleString();
+    if ($("#heatNow")) $("#heatNow").textContent = heat.toLocaleString();
 
     const btn = $("#drawBtn");
     const hint = $("#drawHint");
     const meter = $("#heatMeter");
 
     const meterPercent = Math.max(0, Math.min(100, Math.round((heat / COST) * 100)));
-    meter.style.width = meterPercent + "%";
+    if (meter) meter.style.width = meterPercent + "%";
+
+    if (!btn || !hint) return;
 
     if (heat >= COST) {
       btn.disabled = false;
@@ -1298,32 +1274,41 @@ img{max-width:100%}
   }
 
   function renderIdleResult() {
-    $("#resultRarity").textContent = "---";
-    $("#resultRarity").className = "resultRarity n";
-    $("#resultName").textContent = "---";
-    $("#resultText").textContent = "ここに排出結果が表示されます。";
+    if ($("#resultRarity")) {
+      $("#resultRarity").textContent = "---";
+      $("#resultRarity").className = "resultRarity r";
+    }
+    if ($("#resultName")) $("#resultName").textContent = "---";
+    if ($("#resultText")) $("#resultText").textContent = "ここに排出結果が表示されます。";
   }
 
   function renderResult(card) {
     const img = $("#resultImage");
     const ph = $("#resultPlaceholder");
 
-    img.src = card.img;
-    img.classList.remove("hidden");
-    ph.classList.add("hidden");
+    if (img) {
+      img.src = card.img;
+      img.classList.remove("hidden");
+    }
+    if (ph) ph.classList.add("hidden");
 
-    $("#resultRarity").textContent = card.rarity;
-    $("#resultRarity").className = `resultRarity ${rarityClass(card.rarity)}`;
-    $("#resultName").textContent = card.name;
-    $("#resultText").textContent = card.text;
+    if ($("#resultRarity")) {
+      $("#resultRarity").textContent = card.rarity;
+      $("#resultRarity").className = `resultRarity ${rarityClass(card.rarity)}`;
+    }
+    if ($("#resultName")) $("#resultName").textContent = card.name;
+    if ($("#resultText")) $("#resultText").textContent = card.text;
   }
 
   function clearParticles() {
-    $("#particleField").innerHTML = "";
+    const field = $("#particleField");
+    if (field) field.innerHTML = "";
   }
 
   function spawnParticles(count, theme = "gold") {
     const root = $("#particleField");
+    if (!root) return;
+
     clearParticles();
 
     for (let i = 0; i < count; i++) {
@@ -1373,97 +1358,101 @@ img{max-width:100%}
 
   function setTheme(theme) {
     const scene = $("#drawScene");
+    if (!scene) return;
     scene.className = "drawScene";
     scene.classList.add(`theme-${theme}`);
   }
 
   async function playNormalScene() {
     setTheme("normal");
-    $("#drawText").textContent = "Tracing…";
+    if ($("#drawText")) $("#drawText").textContent = "Tracing…";
     spawnParticles(26, "normal");
     await sleep(480);
 
-    $("#drawText").textContent = "A faint signal…";
+    if ($("#drawText")) $("#drawText").textContent = "A faint signal…";
     spawnParticles(42, "normal");
     await sleep(620);
 
-    $("#drawFlash").classList.add("show");
+    if ($("#drawFlash")) $("#drawFlash").classList.add("show");
     spawnParticles(56, "normal");
     await sleep(360);
-    $("#drawFlash").classList.remove("show");
+    if ($("#drawFlash")) $("#drawFlash").classList.remove("show");
   }
 
   async function playSoftScene() {
     setTheme("soft");
-    $("#drawText").textContent = "Connecting…";
+    if ($("#drawText")) $("#drawText").textContent = "Connecting…";
     spawnParticles(36, "gold");
     await sleep(600);
 
-    $("#drawText").textContent = "Signal Rising…";
+    if ($("#drawText")) $("#drawText").textContent = "Signal Rising…";
     spawnParticles(48, "gold");
     await sleep(750);
 
-    $("#drawFlash").classList.add("show");
+    if ($("#drawFlash")) $("#drawFlash").classList.add("show");
     spawnParticles(72, "gold");
     await sleep(420);
-    $("#drawFlash").classList.remove("show");
+    if ($("#drawFlash")) $("#drawFlash").classList.remove("show");
   }
 
   async function playDarkScene() {
     setTheme("dark");
-    $("#drawText").textContent = "Resonance Detected…";
+    if ($("#drawText")) $("#drawText").textContent = "Resonance Detected…";
     spawnParticles(36, "dark");
     await sleep(650);
 
-    $("#cardSilhouette").style.filter = "hue-rotate(-20deg) saturate(1.18)";
-    $("#drawText").textContent = "Memory Pulse…";
+    if ($("#cardSilhouette")) $("#cardSilhouette").style.filter = "hue-rotate(-20deg) saturate(1.18)";
+    if ($("#drawText")) $("#drawText").textContent = "Memory Pulse…";
     spawnParticles(64, "dark");
     await sleep(820);
 
-    $("#drawFlash").classList.add("show");
+    if ($("#drawFlash")) $("#drawFlash").classList.add("show");
     spawnParticles(86, "dark");
     await sleep(450);
-    $("#drawFlash").classList.remove("show");
-    $("#cardSilhouette").style.filter = "";
+    if ($("#drawFlash")) $("#drawFlash").classList.remove("show");
+    if ($("#cardSilhouette")) $("#cardSilhouette").style.filter = "";
   }
 
   async function playChoiceScene() {
     setTheme("choice");
-    $("#drawText").textContent = "Selecting one memory…";
+    if ($("#drawText")) $("#drawText").textContent = "Selecting one memory…";
     spawnParticles(40, "choice");
     await sleep(520);
 
     const sil = $("#cardSilhouette");
-    for (let i = 0; i < 3; i++) {
-      sil.style.transform = i % 2 === 0
-        ? "translateX(-68px) translateY(-10px) rotate(-8deg) scale(.96)"
-        : "translateX(68px) translateY(-10px) rotate(8deg) scale(.96)";
-      await sleep(180);
+    if (sil) {
+      for (let i = 0; i < 3; i++) {
+        sil.style.transform = i % 2 === 0
+          ? "translateX(-68px) translateY(-10px) rotate(-8deg) scale(.96)"
+          : "translateX(68px) translateY(-10px) rotate(8deg) scale(.96)";
+        await sleep(180);
+      }
+      sil.style.transform = "";
     }
-    sil.style.transform = "";
-    $("#drawText").textContent = "Chosen.";
+
+    if ($("#drawText")) $("#drawText").textContent = "Chosen.";
     spawnParticles(96, "choice");
-    $("#drawFlash").classList.add("show");
+    if ($("#drawFlash")) $("#drawFlash").classList.add("show");
     await sleep(460);
-    $("#drawFlash").classList.remove("show");
+    if ($("#drawFlash")) $("#drawFlash").classList.remove("show");
   }
 
   async function playFinalScene() {
     setTheme("final");
-    $("#drawText").textContent = "Deep Core Opened…";
+    if ($("#drawText")) $("#drawText").textContent = "Deep Core Opened…";
     spawnParticles(80, "final");
     await sleep(500);
 
-    $("#drawText").textContent = "Special Signal Confirmed";
+    if ($("#drawText")) $("#drawText").textContent = "Special Signal Confirmed";
     spawnParticles(120, "final");
     await sleep(620);
 
-    $("#drawFlash").classList.add("show");
+    if ($("#drawFlash")) $("#drawFlash").classList.add("show");
     spawnParticles(170, "final");
     await sleep(520);
-    $("#drawFlash").classList.remove("show");
+    if ($("#drawFlash")) $("#drawFlash").classList.remove("show");
 
-    $("#drawText").textContent = "Manifest.";
+    if ($("#drawText")) $("#drawText").textContent = "Manifest.";
     spawnParticles(140, "final");
     await sleep(280);
   }
@@ -1472,29 +1461,46 @@ img{max-width:100%}
     const overlay = $("#drawOverlay");
     const big = $("#bigResultOverlay");
 
-    overlay.classList.add("show");
+    if (overlay) overlay.classList.add("show");
     clearParticles();
-    $("#cardSilhouette").style.transform = "";
-    $("#cardSilhouette").style.filter = "";
 
-    if (card.theme === "normal") await playNormalScene();
-    else if (card.theme === "soft") await playSoftScene();
+    if ($("#cardSilhouette")) {
+      $("#cardSilhouette").style.transform = "";
+      $("#cardSilhouette").style.filter = "";
+    }
+
+    if (card.theme === "soft") await playSoftScene();
     else if (card.theme === "dark") await playDarkScene();
     else if (card.theme === "choice") await playChoiceScene();
-    else await playFinalScene();
+    else if (card.theme === "final") await playFinalScene();
+    else await playNormalScene();
 
-    overlay.classList.remove("show");
+    if (overlay) overlay.classList.remove("show");
     clearParticles();
 
-    $("#bigResultRarity").textContent = card.rarity;
-    $("#bigResultName").textContent = card.name;
-    big.classList.add("show");
+    if ($("#bigResultRarity")) $("#bigResultRarity").textContent = card.rarity;
+    if ($("#bigResultName")) $("#bigResultName").textContent = card.name;
+
+    if (big) big.classList.add("show");
     await sleep(card.theme === "final" ? 1700 : 1300);
-    big.classList.remove("show");
+    if (big) big.classList.remove("show");
   }
 
+  // 確率:
+  // R  70%
+  // SR 18%
+  // UR  7%
+  // LR  5%
+  // 高レア（UR/LR）はそれぞれ5～10%帯に調整
   function pickRandomCard() {
-    return CARD_POOL[Math.floor(Math.random() * CARD_POOL.length)];
+    const totalWeight = CARD_POOL.reduce((sum, card) => sum + Number(card.weight || 0), 0);
+    let roll = Math.random() * totalWeight;
+
+    for (const card of CARD_POOL) {
+      roll -= Number(card.weight || 0);
+      if (roll < 0) return card;
+    }
+    return CARD_POOL[CARD_POOL.length - 1];
   }
 
   async function drawOnce() {
@@ -1522,16 +1528,26 @@ img{max-width:100%}
   }
 
   function bindUI() {
-    $("#backBtn").addEventListener("click", () => {
-      if (history.length > 1) history.back();
-      else location.href = "./";
-    });
+    const backBtn = $("#backBtn");
+    if (backBtn) {
+      backBtn.addEventListener("click", () => {
+        if (history.length > 1) history.back();
+        else location.href = "./";
+      });
+    }
 
-    $("#drawBtn").addEventListener("click", drawOnce);
+    const drawBtn = $("#drawBtn");
+    if (drawBtn) {
+      drawBtn.addEventListener("click", drawOnce);
+    }
 
-    $("#toCollectionBtn").addEventListener("click", () => {
-      $("#collectionPanel").scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    const toCollectionBtn = $("#toCollectionBtn");
+    if (toCollectionBtn) {
+      toCollectionBtn.addEventListener("click", () => {
+        const panel = $("#collectionPanel");
+        if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
   }
 
   function init() {
