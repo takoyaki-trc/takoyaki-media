@@ -6,8 +6,12 @@
     book: "takomin_room_v1_book",
     log: "takomin_room_v1_log",
     ownedCards: "takomin_player_cards_v1",
-    roomBg: "takomin_room_bg_v1"
+    roomBg: "takomin_room_bg_v1",
+    takominBook: "takomin_room_book_v1"
   };
+
+  const LS_CARD_BOOK = "tf_v1_book";
+  const LS_OCTO = "roten_v1_octo";
 
   const MAX_STAT = TAKOMIN_DATA.maxStat;
   const GROWTH_DAYS = TAKOMIN_DATA.growthDays;
@@ -61,7 +65,8 @@
         rarity: "N",
         icon: "",
         attackStyle: "タコ殴り",
-        attackIcon: "👊"
+        attackIcon: "👊",
+        motionClass: "motion-fist"
       };
     }
 
@@ -107,6 +112,7 @@
       takominIcon: takomin.icon || "",
       takominAttackStyle: takomin.attackStyle || "タコ殴り",
       takominAttackIcon: takomin.attackIcon || "👊",
+      takominMotionClass: takomin.motionClass || "motion-fist",
       babyImg: choice(TAKOMIN_DATA.babyImages),
       day: 1,
       personality: null,
@@ -116,7 +122,7 @@
       def: base.def,
       taste: base.taste,
       love: base.love,
-      octo: 0,
+      octo: getCurrentOcto(),
       dailyFeedUsed: 0,
       dailyFeedLimit: TAKOMIN_DATA.rarityFeedLimit[takomin.rarity] || 3,
       lastDayKey: toTodayKeyJP(),
@@ -130,30 +136,61 @@
   let state = loadJSON(KEY.state, null);
   if (!state) {
     state = buildNewState();
-    saveJSON(KEY.state, state);
+    saveState();
   }
 
-  let book = loadJSON(KEY.book, []);
   let logs = loadJSON(KEY.log, []);
 
-  function ensureOwnedCards() {
-    let owned = loadJSON(KEY.ownedCards, null);
-    if (owned && typeof owned === "object") return owned;
+  function getCurrentOcto() {
+    const n = Number(localStorage.getItem(LS_OCTO) || "0");
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
 
-    const demo = {};
-    (TAKOMIN_CARDS || []).slice(0, 12).forEach((card, i) => {
-      demo[card.id] = i % 3 === 0 ? 3 : 1;
+  function setCurrentOcto(n) {
+    const v = Math.max(0, Math.floor(Number(n) || 0));
+    localStorage.setItem(LS_OCTO, String(v));
+    state.octo = v;
+  }
+
+  function ensureTakominBook() {
+    const book = loadJSON(KEY.takominBook, null);
+    if (Array.isArray(book)) return book;
+    saveJSON(KEY.takominBook, []);
+    return [];
+  }
+
+  function addTakominBookRecord(record) {
+    const book = ensureTakominBook();
+    book.unshift(record);
+    saveJSON(KEY.takominBook, book.slice(0, 300));
+  }
+
+  function pullOwnedCardsFromTfBook() {
+    const raw = loadJSON(LS_CARD_BOOK, null);
+    const result = {};
+
+    if (!raw) return result;
+
+    const got = Array.isArray(raw.got)
+      ? raw.got
+      : (raw.got && typeof raw.got === "object" ? Object.values(raw.got) : []);
+
+    got.forEach(item => {
+      const id = String(item?.id || "").trim();
+      const count = Number(item?.count || 0);
+      if (!id || !Number.isFinite(count) || count <= 0) return;
+      result[id] = Math.floor(count);
     });
-    saveJSON(KEY.ownedCards, demo);
-    return demo;
+
+    return result;
   }
 
   function getOwnedCards() {
-    return loadJSON(KEY.ownedCards, {});
+    return pullOwnedCardsFromTfBook();
   }
 
-  function setOwnedCards(obj) {
-    saveJSON(KEY.ownedCards, obj);
+  function ensureOwnedCards() {
+    return getOwnedCards();
   }
 
   ensureOwnedCards();
@@ -163,7 +200,7 @@
       at: new Date().toLocaleString("ja-JP"),
       text
     });
-    logs = logs.slice(0, 60);
+    logs = logs.slice(0, 80);
     saveJSON(KEY.log, logs);
   }
 
@@ -268,10 +305,11 @@
       (state.atk + state.def + state.taste + state.love) * 0.8 + rand(50, 180)
     );
 
-    const record = {
+    addTakominBookRecord({
       takominId: state.takominId,
       name: state.takominName,
       rarity: state.takominRarity,
+      icon: state.takominIcon,
       personality: state.personality || "未確定",
       finalStats: {
         hp: state.hp,
@@ -282,11 +320,9 @@
       },
       rewardOcto,
       graduatedAt: new Date().toLocaleString("ja-JP")
-    };
+    });
 
-    book.unshift(record);
-    book = book.slice(0, 200);
-    saveJSON(KEY.book, book);
+    setCurrentOcto(getCurrentOcto() + rewardOcto);
 
     pushLog(`${state.takominName}「今まで世話になったな！」 報酬 ${rewardOcto} オクト`);
     alert(`${state.takominName}「今まで世話になったな！」\n${rewardOcto}オクトを残して旅立ちました。`);
@@ -360,7 +396,6 @@
     pushLog(`神経衰弱：${pairs}組 / ${jpName}+${gain}`);
   }
 
-  // ===== 背景 =====
   function applyRoomBackground() {
     roomBgState = getRoomBgState();
     const bg = TAKOMIN_DATA.roomBackgrounds.find(v => v.id === roomBgState.selectedId) || getDefaultRoomBg();
@@ -423,7 +458,6 @@
     return dropped;
   }
 
-  // ===== 強襲 =====
   let raidTimer = null;
   let introTimer1 = null;
   let introTimer2 = null;
@@ -546,6 +580,12 @@
     box.classList.add("shake");
   }
 
+  function applyAttackMotion() {
+    const player = $("#raidPlayerSprite");
+    player.className = "raid-player-thumb";
+    if (state.takominMotionClass) player.classList.add(state.takominMotionClass);
+  }
+
   function attackRaid() {
     if (!state.raidCurrent || state.raidCurrent.finished) return;
 
@@ -567,6 +607,7 @@
     }
 
     shakeEnemy();
+    applyAttackMotion();
 
     enemy.hp = clamp(enemy.hp - damage, 0, enemy.maxHp);
     $("#raidStatus").textContent = `${baseAttack}！ ${enemy.name} に ${damage} ダメージ`;
@@ -632,7 +673,8 @@
       applyStat("love", gain);
 
       const octo = rand(enemy.octoMin, enemy.octoMax);
-      state.octo += octo;
+      setCurrentOcto(getCurrentOcto() + octo);
+
       state.hp = clamp(raid.playerHp, 0, state.maxHp);
 
       let result = `勝利！ 全パラメーター +${gain} / オクト +${octo}`;
@@ -673,6 +715,7 @@
     $("#raidPlayerSprite").innerHTML = getTakominSpriteHtml();
     $("#attackOrbIcon").textContent = state.takominAttackIcon || "👊";
     $("#attackOrbLabel").textContent = state.day <= 3 ? "タコ殴り" : (state.takominAttackStyle || "攻撃");
+    applyAttackMotion();
 
     $("#enemyHpText").textContent = `${raid.enemy.hp} / ${raid.enemy.maxHp}`;
     $("#enemyHpBar").style.width = `${(raid.enemy.hp / raid.enemy.maxHp) * 100}%`;
@@ -694,7 +737,6 @@
     }
   }
 
-  // ===== 回復 =====
   function healWithCard() {
     if (!TAKOMIN_ITEMS.healCards?.length) {
       alert("回復カードがありません。");
@@ -724,7 +766,6 @@
     }
   }
 
-  // ===== 所持カードモーダル =====
   function openFeedModal() {
     maybeResetDaily();
 
@@ -772,6 +813,28 @@
     });
   }
 
+  function decrementTfBookCardCount(cardId) {
+    const raw = loadJSON(LS_CARD_BOOK, null);
+    if (!raw) return;
+
+    let list = [];
+    if (Array.isArray(raw.got)) {
+      list = raw.got;
+    } else if (raw.got && typeof raw.got === "object") {
+      list = Object.values(raw.got);
+    } else {
+      return;
+    }
+
+    const target = list.find(v => String(v?.id || "").trim() === cardId);
+    if (!target) return;
+
+    target.count = Math.max(0, Math.floor(Number(target.count || 0) - 1));
+
+    raw.got = list.filter(v => Number(v?.count || 0) > 0);
+    saveJSON(LS_CARD_BOOK, raw);
+  }
+
   function feedOwnedCard(cardId) {
     maybeResetDaily();
 
@@ -800,9 +863,7 @@
     }
 
     applyCardToStats(card);
-    owned[cardId] = count - 1;
-    if (owned[cardId] <= 0) delete owned[cardId];
-    setOwnedCards(owned);
+    decrementTfBookCardCount(cardId);
 
     state.dailyFeedUsed += 1;
     state.feedHistory.push({
@@ -822,7 +883,6 @@
     }
   }
 
-  // ===== 描画 =====
   function getTakominDisplayName() {
     if (state.day <= 3) return "のっぺりタコ民";
     return state.takominName;
@@ -830,17 +890,14 @@
 
   function getTakominBalloonText() {
     if (isLocked()) return "ぐったりしているたこ……";
-    if (state.day <= 3) return choice(TAKOMIN_DATA.phaseTexts.baby);
-    if (state.day >= 7 && state.personality) {
-      return {
-        "攻撃型": "今日は暴れたい気分たこ",
-        "防御型": "受けて立つたこ",
-        "味職人型": "味で語るたこ",
-        "地元愛型": "函館に捧げるたこ",
-        "バランス型": "全部それなりに大事たこ"
-      }[state.personality] || choice(TAKOMIN_DATA.phaseTexts.adult);
-    }
-    return choice(TAKOMIN_DATA.phaseTexts.adult);
+    if (state.day <= 3) return choice(TAKOMIN_DATA.talks.baby);
+    if (state.day < 7) return choice(TAKOMIN_DATA.talks.mid);
+
+    if (state.personality === "攻撃型") return choice(TAKOMIN_DATA.talks.attack);
+    if (state.personality === "防御型") return choice(TAKOMIN_DATA.talks.defend);
+    if (state.personality === "味職人型") return choice(TAKOMIN_DATA.talks.taste);
+    if (state.personality === "地元愛型") return choice(TAKOMIN_DATA.talks.love);
+    return choice(TAKOMIN_DATA.talks.balance);
   }
 
   function getTakominSpriteHtml() {
@@ -854,6 +911,7 @@
   }
 
   function renderHUD() {
+    state.octo = getCurrentOcto();
     $("#hudDay").textContent = `${state.day} / ${GROWTH_DAYS}`;
     $("#hudHp").textContent = `${state.hp} / ${state.maxHp}`;
     $("#hudOcto").textContent = String(state.octo);
@@ -884,6 +942,8 @@
 
   function drawRadarChart() {
     const canvas = $("#radarChart");
+    if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     const dpr = Math.max(1, window.devicePixelRatio || 1);
     const width = canvas.clientWidth || 500;
@@ -899,11 +959,11 @@
     const radius = Math.min(width, height) * 0.31;
 
     const labels = [
-      { name: "HP", value: state.hp },
-      { name: "攻撃", value: state.atk },
-      { name: "防御", value: state.def },
-      { name: "味", value: state.taste },
-      { name: "函館愛", value: state.love }
+      { name: "HP", value: state.hp, max: state.maxHp || 1 },
+      { name: "攻撃", value: state.atk, max: MAX_STAT },
+      { name: "防御", value: state.def, max: MAX_STAT },
+      { name: "味", value: state.taste, max: MAX_STAT },
+      { name: "函館愛", value: state.love, max: MAX_STAT }
     ];
 
     ctx.strokeStyle = "rgba(255,255,255,.16)";
@@ -927,6 +987,7 @@
       const angle = -Math.PI / 2 + (Math.PI * 2 / labels.length) * i;
       const x = cx + Math.cos(angle) * radius;
       const y = cy + Math.sin(angle) * radius;
+
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.lineTo(x, y);
@@ -934,6 +995,7 @@
 
       const lx = cx + Math.cos(angle) * (radius + 20);
       const ly = cy + Math.sin(angle) * (radius + 20);
+
       ctx.fillStyle = "rgba(255,255,255,.9)";
       ctx.font = "12px sans-serif";
       ctx.textAlign = "center";
@@ -943,7 +1005,8 @@
     ctx.beginPath();
     labels.forEach((label, i) => {
       const angle = -Math.PI / 2 + (Math.PI * 2 / labels.length) * i;
-      const r = radius * (clamp(label.value, 0, MAX_STAT) / MAX_STAT);
+      const ratio = clamp(label.value / (label.max || 1), 0, 1);
+      const r = radius * ratio;
       const x = cx + Math.cos(angle) * r;
       const y = cy + Math.sin(angle) * r;
       if (i === 0) ctx.moveTo(x, y);
@@ -959,11 +1022,14 @@
 
   function renderLogs() {
     const root = $("#logList");
+    if (!root) return;
+
     root.innerHTML = "";
     if (!logs.length) {
       root.innerHTML = `<div class="sub">まだログがありません。</div>`;
       return;
     }
+
     logs.forEach(item => {
       const el = document.createElement("div");
       el.className = "log-item";
@@ -974,9 +1040,14 @@
 
   function renderButtons() {
     const locked = isLocked();
-    $("#btnFeedOpen").disabled = locked;
-    $("#btnRunEvent").disabled = locked || state.todayEventDone;
-    $("#btnNextDay").disabled = locked;
+
+    const btnFeedOpen = $("#btnFeedOpen");
+    const btnRunEvent = $("#btnRunEvent");
+    const btnNextDay = $("#btnNextDay");
+
+    if (btnFeedOpen) btnFeedOpen.disabled = locked;
+    if (btnRunEvent) btnRunEvent.disabled = locked || state.todayEventDone;
+    if (btnNextDay) btnNextDay.disabled = locked;
 
     if (locked) {
       setEventText(`現在行動不能中です。残り ${formatRemain(getRemainingLockMs())}`);
@@ -994,7 +1065,7 @@
   }
 
   function escapeHtml(str) {
-    return String(str)
+    return String(str ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
@@ -1002,22 +1073,22 @@
       .replaceAll("'", "&#39;");
   }
 
-  // ===== イベント =====
-  $("#btnFeedOpen").addEventListener("click", openFeedModal);
-  $("#btnFeedClose").addEventListener("click", closeFeedModal);
+  // ===== イベントバインド =====
+  $("#btnFeedOpen")?.addEventListener("click", openFeedModal);
+  $("#btnFeedClose")?.addEventListener("click", closeFeedModal);
 
-  $("#btnOpenBg").addEventListener("click", openBgModal);
-  $("#btnBgClose").addEventListener("click", closeBgModal);
+  $("#btnOpenBg")?.addEventListener("click", openBgModal);
+  $("#btnBgClose")?.addEventListener("click", closeBgModal);
 
-  $("#btnRunEvent").addEventListener("click", runDailyEvent);
-  $("#btnHeal").addEventListener("click", healWithCard);
-  $("#btnNextDay").addEventListener("click", advanceDay);
+  $("#btnRunEvent")?.addEventListener("click", runDailyEvent);
+  $("#btnHeal")?.addEventListener("click", healWithCard);
+  $("#btnNextDay")?.addEventListener("click", advanceDay);
 
-  $("#btnRaidAttack").addEventListener("click", attackRaid);
-  $("#raidEnemyTapArea").addEventListener("click", attackRaid);
-  $("#btnUseRaw").addEventListener("click", () => useRaidItem("SP-RAW"));
-  $("#btnUseBurn").addEventListener("click", () => useRaidItem("SP-BURN"));
-  $("#btnRaidClose").addEventListener("click", () => closeRaidScreen(false));
+  $("#btnRaidAttack")?.addEventListener("click", attackRaid);
+  $("#raidEnemyTapArea")?.addEventListener("click", attackRaid);
+  $("#btnUseRaw")?.addEventListener("click", () => useRaidItem("SP-RAW"));
+  $("#btnUseBurn")?.addEventListener("click", () => useRaidItem("SP-BURN"));
+  $("#btnRaidClose")?.addEventListener("click", () => closeRaidScreen(false));
 
   window.addEventListener("resize", drawRadarChart);
 
