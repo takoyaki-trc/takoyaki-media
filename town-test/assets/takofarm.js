@@ -17,6 +17,7 @@
   // ✅ 時短はヒリョウのみ反映
   // ✅ 70%時短で 1時間30分 になるよう修正
   // ✅ 収穫モーダル：カード下に「閉じる」「図鑑を確認する」の2ボタン
+  // ✅ タワー肥料4種を追加
   // =========================================================
 
   // =========================
@@ -258,14 +259,37 @@
   ];
 
   // =========================================================
+  // タワー肥料 / SP
+  // =========================================================
+  const TOWER_FERT_IDS = new Set([
+    "fert_balance",
+    "fert_sleep",
+    "fert_takoyaki",
+    "fert_drop"
+  ]);
+
+  const TOWER_SP_REWARD = {
+    id: "SP-TOWER-001",
+    name: "たこ焼きタワーSPカード",
+    img: "https://ul.h3z.jp/LoXMSiYd.jpg",
+    rarity: "SP"
+  };
+
+  // =========================================================
   // 肥料
   // =========================================================
   const FERTS = [
-    { id: "fert_agedama", name: "ただの揚げ玉", desc: "時短0。\nおいしそう…\nたまに《焼きすぎたカード》", factor: 1.0, fx: "時短 0%", img: "https://ul.h3z.jp/9p5fx53n.png", burnCardUp: 0.12, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
-    { id: "fert_feel", name: "気のせい肥料", desc: "早くなった気がする。\n気のせいかもしれない。", factor: 0.95, fx: "時短 5%", img: "https://ul.h3z.jp/XqFTb7sw.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: false, skipGrowAnim: false },
-    { id: "fert_guts", name: "根性論ぶち込み肥料", desc: "理由はない。\n気合いだ。", factor: 0.8, fx: "時短 20%", img: "https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp: 0.0, rawCardChance: 0.0, mantra: true, skipGrowAnim: false },
-    { id: "fert_skip", name: "工程すっ飛ばし肥料", desc: "途中は、\n見なかったことにした。", factor: 0.6, fx: "時短 40%", img: "https://ul.h3z.jp/FqPzx12Q.png", burnCardUp: 0.0, rawCardChance: 0.01, mantra: false, skipGrowAnim: true },
-    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n焼けてないって？\nたまに《生焼けカード》", factor: 0.3, fx: "時短 70%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, mantra: false, skipGrowAnim: true },
+    { id: "fert_agedama", name: "ただの揚げ玉", desc: "時短0。\nおいしそう…\nたまに《焼きすぎたカード》", factor: 1.0, fx: "時短 0%", img: "https://ul.h3z.jp/9p5fx53n.png", burnCardUp: 0.12, rawCardChance: 0.0, towerSpChance: 0.0, mantra: false, skipGrowAnim: false },
+
+    { id: "fert_balance", name: "天秤にかけた肥料", desc: "50%で10秒収穫。\n50%でただの揚げ玉の2倍時間。", factor: 1.0, fx: "10秒 or 2倍", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou6.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.0, specialGrow: "balance", mantra: false, skipGrowAnim: false },
+    { id: "fert_sleep", name: "寝かせた肥料", desc: "ただの揚げ玉より1.5倍時間。\nでも、タワーSPカードが眠っているかも。", factor: 1.5, fx: "時間 1.5倍 / SPかも", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou7.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.05, mantra: false, skipGrowAnim: false },
+    { id: "fert_takoyaki", name: "たこ焼き風味の肥料", desc: "ほんのり香ばしい。\n扱いやすい時短肥料。", factor: 0.4, fx: "時短 60%", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou8.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.0, mantra: false, skipGrowAnim: false },
+    { id: "fert_drop", name: "天からの一滴", desc: "空から落ちた一滴。\nほぼ待たない。", factor: 0.1, fx: "時短 90%", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou9.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.0, mantra: false, skipGrowAnim: true },
+
+    { id: "fert_feel", name: "気のせい肥料", desc: "早くなった気がする。\n気のせいかもしれない。", factor: 0.95, fx: "時短 5%", img: "https://ul.h3z.jp/XqFTb7sw.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.0, mantra: false, skipGrowAnim: false },
+    { id: "fert_guts", name: "根性論ぶち込み肥料", desc: "理由はない。\n気合いだ。", factor: 0.8, fx: "時短 20%", img: "https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.0, mantra: true, skipGrowAnim: false },
+    { id: "fert_skip", name: "工程すっ飛ばし肥料", desc: "途中は、\n見なかったことにした。", factor: 0.6, fx: "時短 40%", img: "https://ul.h3z.jp/FqPzx12Q.png", burnCardUp: 0.0, rawCardChance: 0.01, towerSpChance: 0.0, mantra: false, skipGrowAnim: true },
+    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n焼けてないって？\nたまに《生焼けカード》", factor: 0.25, fx: "時短 75%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, towerSpChance: 0.0, mantra: false, skipGrowAnim: true },
   ];
 
   const TAKOPI_SEED_POOL = [
@@ -537,7 +561,7 @@
 
     const seedChoices = SEEDS.filter((x) => x.id !== "seed_colabo" && x.id !== "seed_anniv");
     const waterChoices = WATERS.slice();
-    const fertChoices = FERTS.slice();
+    const fertChoices = FERTS.filter((x) => !TOWER_FERT_IDS.has(x.id));
 
     const rewards = [];
     for (let k = 0; k < count; k++) {
@@ -874,6 +898,11 @@
     const fert = FERTS.find((x) => x.id === (p.fertId || null));
     if (!fert) return null;
 
+    const towerSpP = Number(fert.towerSpChance ?? 0);
+    if (towerSpP > 0 && Math.random() < towerSpP) {
+      return { ...TOWER_SP_REWARD };
+    }
+
     const burnP = Number(fert.burnCardUp ?? 0);
     if (burnP > 0 && Math.random() < burnP) {
       return { id: "SP-BURN", name: "焼きすぎたカード", img: "https://ul.h3z.jp/VSQupsYH.png", rarity: "SP" };
@@ -928,6 +957,17 @@
     const T = String(tier || "").toUpperCase();
     if (R === "SP" && T) return `SP（${T}）`;
     return r || "";
+  }
+
+  function calcGrowMsByFert(fert) {
+    if (!fert) return BASE_GROW_MS;
+
+    if (fert.specialGrow === "balance") {
+      return Math.random() < 0.5 ? 10 * 1000 : BASE_GROW_MS * 2;
+    }
+
+    const growFactor = clamp((fert.factor ?? 1), 0.1, 2.0);
+    return Math.floor(BASE_GROW_MS * growFactor);
   }
 
   const farmEl = document.getElementById("farm");
@@ -1285,6 +1325,26 @@
               pointer-events:none;
             ">釣り</div>
           `;
+        } else if (isFert && TOWER_FERT_IDS.has(x.id)) {
+          topBadge = `
+            <div style="
+              position:absolute;
+              top:6px;
+              right:6px;
+              z-index:3;
+              padding:3px 7px;
+              border-radius:999px;
+              font-size:10px;
+              font-weight:1000;
+              letter-spacing:.02em;
+              line-height:1;
+              background:rgba(255,196,70,.98);
+              border:1px solid rgba(255,228,145,.98);
+              color:#2a1600;
+              box-shadow:0 3px 10px rgba(0,0,0,.22);
+              pointer-events:none;
+            ">タワー</div>
+          `;
         }
 
         return `
@@ -1500,12 +1560,7 @@
     const water = WATERS.find((x) => x.id === waterId);
     const fert = FERTS.find((x) => x.id === fertId);
 
-    const growFactor = clamp(
-      (fert?.factor ?? 1),
-      0.3, 1.0
-    );
-
-    const growMs = Math.floor(BASE_GROW_MS * growFactor);
+    const growMs = calcGrowMsByFert(fert);
     const now = Date.now();
 
     invDec(inv, "seed", seedId);
