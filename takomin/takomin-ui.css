@@ -59,20 +59,21 @@ body{min-height:100dvh}
 .sub{font-size:12px;color:var(--muted)}
 .action-note{margin-top:10px;line-height:1.5}
 
+/* 部屋 */
 .room{
   position:relative;
-  min-height:500px;
+  min-height:520px;
   overflow:hidden;
   background:
-    linear-gradient(rgba(6,17,38,.30),rgba(6,17,38,.45)),
-    url("https://ul.h3z.jp/6j6v5M0f.png") center center / cover no-repeat;
+    linear-gradient(rgba(6,17,38,.24),rgba(6,17,38,.40)),
+    var(--room-bg, url("https://ul.h3z.jp/OX975TdZ.png")) center center / cover no-repeat;
 }
 @media (max-width:860px){
   .room{min-height:620px}
 }
 .floor{
-  position:absolute;left:0;right:0;bottom:0;height:128px;
-  background:linear-gradient(180deg,rgba(58,73,95,.95),rgba(35,48,68,.98));
+  position:absolute;left:0;right:0;bottom:0;height:120px;
+  background:linear-gradient(180deg,rgba(58,73,95,.78),rgba(35,48,68,.92));
   border-top:1px solid rgba(255,255,255,.08)
 }
 .room-ui{
@@ -92,12 +93,12 @@ body{min-height:100dvh}
 .takomin-stage{
   position:absolute;
   left:50%;
-  bottom:96px;
+  bottom:128px;
   transform:translateX(-50%);
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:14px;
+  gap:12px;
   z-index:2;
   width:min(92%,420px);
 }
@@ -129,25 +130,25 @@ body{min-height:100dvh}
   gap:10px;
 }
 .takomin{
-  width:min(72vw,300px);
-  height:min(72vw,300px);
-  max-width:300px;
-  max-height:300px;
-  min-width:200px;
-  min-height:200px;
+  width:min(52vw,220px);
+  height:min(52vw,220px);
+  max-width:220px;
+  max-height:220px;
+  min-width:140px;
+  min-height:140px;
   border-radius:28px;
   display:grid;
   place-items:center;
   position:relative;
-  overflow:hidden;
+  overflow:visible;
   background:transparent;
 }
 .sprite{
   width:100%;
   height:100%;
   display:grid;
-  place-items:end center;
-  font-size:80px;
+  place-items:center;
+  font-size:72px;
   line-height:1;
   filter:drop-shadow(0 8px 10px rgba(0,0,0,.18));
   user-select:none
@@ -168,7 +169,11 @@ body{min-height:100dvh}
   white-space:nowrap
 }
 
-.action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.action-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px
+}
 .btn{
   appearance:none;border:none;border-radius:14px;padding:13px 14px;
   font-weight:900;font-size:14px;color:#fff;cursor:pointer;
@@ -243,7 +248,7 @@ canvas{display:block;width:100%;height:260px}
   max-height:calc(94dvh - 72px)
 }
 
-/* 4列固定 */
+/* 所持カード4列 */
 .owned-grid{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -311,36 +316,93 @@ canvas{display:block;width:100%;height:260px}
   border-radius:12px
 }
 
+/* 背景グリッド */
+.bg-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px
+}
+@media (max-width:860px){
+  .bg-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+.bg-card{
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(255,255,255,.04);
+  padding:10px;
+  display:grid;
+  gap:10px
+}
+.bg-thumb{
+  width:100%;
+  aspect-ratio:16/10;
+  border-radius:12px;
+  overflow:hidden;
+  background:rgba(255,255,255,.06)
+}
+.bg-thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block
+}
+.bg-title{font-size:14px;font-weight:900}
+.bg-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:max-content;
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:11px;
+  font-weight:900;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.06)
+}
+.bg-badge.locked{
+  color:#fca5a5;
+  border-color:rgba(239,68,68,.35)
+}
+.bg-badge.owned{
+  color:#86efac;
+  border-color:rgba(34,197,94,.35)
+}
+
 /* 強襲導入 */
 .raid-intro{
   position:fixed;inset:0;z-index:1200;
   display:grid;place-items:center;
   background:#000;
+  overflow:hidden;
 }
 .raid-intro-dark{
   position:absolute;inset:0;background:#000;
 }
 .raid-intro-text{
   position:relative;
-  z-index:2;
+  z-index:3;
   font-size:clamp(24px,6vw,56px);
   font-weight:900;
   text-align:center;
   color:#fff;
   text-shadow:0 0 18px rgba(255,255,255,.35);
 }
-.raid-intro-bang{
+.raid-flash{
   position:absolute;
-  z-index:3;
-  font-size:clamp(36px,9vw,90px);
-  font-weight:900;
-  color:#ffdd55;
-  text-shadow:0 0 22px rgba(255,180,0,.8),0 0 40px rgba(255,90,0,.5);
-  animation:bangPop .4s ease-out infinite alternate;
+  width:20vmax;
+  height:20vmax;
+  border-radius:999px;
+  border:10px solid rgba(255,255,255,.9);
+  opacity:0;
+  transform:scale(.2);
 }
-@keyframes bangPop{
-  from{transform:scale(.92)}
-  to{transform:scale(1.08)}
+.raid-flash.flash1{animation:boomRing .9s ease-out .5s forwards}
+.raid-flash.flash2{animation:boomRing .9s ease-out .7s forwards}
+.raid-flash.flash3{animation:boomRing .9s ease-out .9s forwards}
+@keyframes boomRing{
+  0%{opacity:.95;transform:scale(.15)}
+  70%{opacity:.75}
+  100%{opacity:0;transform:scale(4.6)}
 }
 
 /* 強襲本戦 */
@@ -388,8 +450,8 @@ canvas{display:block;width:100%;height:260px}
   z-index:2;
 }
 .raid-enemy{
-  width:min(86vw,760px);
-  height:min(60vh,560px);
+  width:min(88vw,860px);
+  height:min(62vh,620px);
   display:grid;
   place-items:center;
   position:relative;
@@ -401,8 +463,19 @@ canvas{display:block;width:100%;height:260px}
   height:100%;
   display:grid;
   place-items:center;
-  font-size:min(44vw,280px);
-  filter:drop-shadow(0 18px 28px rgba(0,0,0,.5))
+  font-size:min(48vw,320px);
+  filter:drop-shadow(0 18px 28px rgba(0,0,0,.5));
+  transition:transform .08s ease;
+}
+.raid-enemy.shake .raid-enemy-sprite{
+  animation:enemyShake .12s linear 1;
+}
+@keyframes enemyShake{
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-10px)}
+  50%{transform:translateX(10px)}
+  75%{transform:translateX(-8px)}
+  100%{transform:translateX(0)}
 }
 .raid-enemy-sprite img{
   width:100%;
