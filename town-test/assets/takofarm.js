@@ -193,70 +193,166 @@
       { no: "TN-050", name: "焼かれし記憶、ソースに還る", img: "assets/images/1stcard/050lr1.png" },
     ],
   };
+// =========================================================
+// タネ一覧
+// =========================================================
+const SEEDS = [
+  {
+    id: "seed_random",
+    name: "なに出るタネ",
+    desc: "何が出るか\n誰もまだ\n知らない",
+    factor: 1.0,
+    img: "https://ul.h3z.jp/gnyvP580.png",
+    fx: "第一弾全50種"
+  },
+  {
+    id: "seed_shop",
+    name: "店頭タネ",
+    desc: "店頭カード\nだけ出る\nタネです",
+    factor: 1.0,
+    img: "https://ul.h3z.jp/IjvuhWoY.png",
+    fx: "店頭全25種"
+  },
+  {
+    id: "seed_line",
+    name: "回線タネ",
+    desc: "通販カード\nだけ出る\nタネです",
+    factor: 1.0,
+    img: "https://ul.h3z.jp/AonxB5x7.png",
+    fx: "BOOTH全25種"
+  },
+  {
+    id: "seed_special",
+    name: "たこぴのタネ",
+    desc: "植えると\nたこぴだけ\n出てくる",
+    factor: 1.0,
+    img: "https://ul.h3z.jp/29OsEvjf.png",
+    fx: "たこぴカード8種"
+  },
+
+  {
+    id: "seed_bussasari",
+    name: "ブッ刺さりタネ",
+    desc: "ダーツプロ\n5種だけが\n出てくる",
+    factor: 1.05,
+    img: "https://ul.h3z.jp/MjWkTaU3.png",
+    fx: "ダーツプロ全5種"
+  },
+  {
+    id: "seed_namara_kawasar",
+    name: "なまら買わさるタネ",
+    desc: "限定カード\nだけ狙える\n特別タネ",
+    factor: 1.08,
+    img: "https://ul.h3z.jp/yiqHzfi0.png",
+    fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全12種"
+  },
+
+  {
+    id: "seed_colabo",
+    name: "【ｺﾗﾎﾞ】ぐらたん\nのタネ",
+    desc: "2種だけを\nランダムで\n収穫する",
+    factor: 1.0,
+    img: "https://ul.h3z.jp/wbnwoTzm.png",
+    fx: "全2種《N/LR》"
+  },
+  {
+    id: "seed_anniv",
+    name: "ﾊｰﾌｱﾆﾊﾞｰｻﾘｰ\nのタネ",
+    desc: "5種から\nランダムで\n収穫する",
+    factor: 1.0,
+    img: "https://takoyaki-card.com/town/assets/images/anniversary/anv1.png",
+    fx: "全5種《N/R/SR/UR/LR》"
+  },
+];
 
   // =========================================================
-  // タネ一覧
-  // =========================================================
-  const SEEDS = [
-    { id: "seed_random", name: "なに出るタネ", desc: "何が育つかは完全ランダム。\n店主も知らない。", factor: 1.0, img: "https://ul.h3z.jp/gnyvP580.png", fx: "第一弾全50種" },
-    { id: "seed_shop", name: "店頭タネ", desc: "店で生まれたタネ。\n店頭ナンバーを宿している。", factor: 1.0, img: "https://ul.h3z.jp/IjvuhWoY.png", fx: "店頭全25種" },
-    { id: "seed_line", name: "回線タネ", desc: "画面の向こうから届いたタネ。\nクリックすると芽が出る。", factor: 1.0, img: "https://ul.h3z.jp/AonxB5x7.png", fx: "BOOTH全25種" },
-    { id: "seed_special", name: "たこぴのタネ", desc: "このタネを植えたら、\n必ずたこぴが出る。", factor: 1.0, img: "https://ul.h3z.jp/29OsEvjf.png", fx: "たこぴカード8種" },
+// =========================================================
+// 水一覧
+// =========================================================
+const WATERS = [
+  {
+    id: "water_plain_free",
+    name: "ただの水",
+    desc: "基本の水\n高レアは\n出ません",
+    factor: 1.0,
+    fx: "基準（水）",
+    img: "https://ul.h3z.jp/13XdhuHi.png",
+    rates: { N: 62.5, R: 31.2, SR: 6.3, UR: 0, LR: 0 }
+  },
+  {
+    id: "water_nice",
+    name: "なんか良さそうな水",
+    desc: "少しだけ\n上振れする\nやさしい水",
+    factor: 0.98,
+    fx: "ちょい上振れ",
+    img: "https://ul.h3z.jp/3z04ypEd.png",
+    rates: { N: 60.5, R: 31.0, SR: 7.3, UR: 1.2, LR: 0 }
+  },
+  {
+    id: "water_suspicious",
+    name: "怪しい水",
+    desc: "現実寄りの\n標準抽選\nのミズです",
+    factor: 0.95,
+    fx: "標準（現実準拠）",
+    img: "https://ul.h3z.jp/wtCO9mec.png",
+    rates: { N: 66.0, R: 28.5, SR: 4.5, UR: 0.8, LR: 0.2 }
+  },
+  {
+    id: "water_overdo",
+    name: "やりすぎな水",
+    desc: "高レアを\n狙いやすい\n勝負の水",
+    factor: 0.9,
+    fx: "勝負",
+    img: "https://ul.h3z.jp/vsL9ggf6.png",
+    rates: { N: 58.0, R: 29.0, SR: 9.5, UR: 2.8, LR: 0.7 }
+  },
+  {
+    id: "water_regret",
+    name: "押さなきゃよかった水",
+    desc: "ほぼ事件\nほぼNしか\n出ません",
+    factor: 1.0,
+    fx: "事件",
+    img: "https://ul.h3z.jp/L0nafMOp.png",
+    rates: { N: 99.97, R: 0, SR: 0, UR: 0, LR: 0.03 }
+  },
 
-    { id: "seed_bussasari", name: "ブッ刺さりタネ", desc: "刺さるのは心だけ。\n出るのは5枚だけ", factor: 1.05, img: "https://ul.h3z.jp/MjWkTaU3.png", fx: "ダーツプロ全5種" },
-    { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "これがｼｮｯﾌﾟｶｰﾄﾞ\nってやつなのか", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全12種" },
-
-    { id: "seed_colabo", name: "【ｺﾗﾎﾞ】ぐらたん\nのタネ", desc: "全2種ランダム収穫\n《N/LR》", factor: 1.0, img: "https://ul.h3z.jp/wbnwoTzm.png" },
-    { id: "seed_anniv", name: "ﾊｰﾌｱﾆﾊﾞｰｻﾘｰ\nのタネ", desc: "全5種ランダム収穫\n《N/R/SR/UR/LR》", factor: 1.0, img: "https://takoyaki-card.com/town/assets/images/anniversary/anv1.png" },
-  ];
-
-  // =========================================================
-  // 水一覧
-  // =========================================================
-  const WATERS = [
-    { id: "water_plain_free", name: "ただの水", desc: "UR/LRなし。\n無課金の基準。", factor: 1.0, fx: "基準（水）", img: "https://ul.h3z.jp/13XdhuHi.png", rates: { N: 62.5, R: 31.2, SR: 6.3, UR: 0, LR: 0 } },
-    { id: "water_nice", name: "なんか良さそうな水", desc: "ちょい上振れ・LRなし。\n初心者の背中押し。", factor: 0.98, fx: "ちょい上振れ", img: "https://ul.h3z.jp/3z04ypEd.png", rates: { N: 60.5, R: 31.0, SR: 7.3, UR: 1.2, LR: 0 } },
-    { id: "water_suspicious", name: "怪しい水", desc: "現実準拠・標準。\n実パックと同じ空気。", factor: 0.95, fx: "標準（現実準拠）", img: "https://ul.h3z.jp/wtCO9mec.png", rates: { N: 66.0, R: 28.5, SR: 4.5, UR: 0.8, LR: 0.2 } },
-    { id: "water_overdo", name: "やりすぎな水", desc: "勝負水・現実より上。\n体感で強い。", factor: 0.9, fx: "勝負", img: "https://ul.h3z.jp/vsL9ggf6.png", rates: { N: 58.0, R: 29.0, SR: 9.5, UR: 2.8, LR: 0.7 } },
-    { id: "water_regret", name: "押さなきゃよかった水", desc: "ほぼ狂気。\n事件製造機（SNS向け）", factor: 1.0, fx: "事件", img: "https://ul.h3z.jp/L0nafMOp.png", rates: { N: 99.97, R: 0, SR: 0, UR: 0, LR: 0.03 } },
-
-    {
-      id: "water_rotten",
-      name: "腐ったミズ",
-      desc: "腐敗した力を宿した危険なミズ。\n通常カードはレアリティが1段階下がるが、たまにSPカードを引き当てる。",
-      factor: 1.06,
-      fx: "1段階ダウン / SPカード出るかも",
-      img: "https://takoyaki-card.com/town/assets/images/mizu/6.png",
-      rates: { N: 0, R: 0, SR: 0, UR: 0, LR: 0 }
-    },
-    {
-      id: "water_sea",
-      name: "海水",
-      desc: "しょっぱさが染みついた海のミズ。\nしょっぱいカードが多く出るが、稀にSPカードが紛れ込む。",
-      factor: 0.98,
-      fx: "N多め / SPカード稀に出るかも",
-      img: "https://takoyaki-card.com/town/assets/images/mizu/7.png",
-      rates: { N: 0, R: 0, SR: 0, UR: 0, LR: 0 }
-    },
-    {
-      id: "water_yunokawa",
-      name: "ゆのかわの温泉ミズ",
-      desc: "アツめのご利益をたっぷり含んだミズ。\nRがかなり出やすく、安定して収穫しやすい。",
-      factor: 0.88,
-      fx: "安定",
-      img: "https://takoyaki-card.com/town/assets/images/mizu/8.png",
-      rates: { N: 30.0, R: 68.0, SR: 1.5, UR: 0.4, LR: 0.1 }
-    },
-    {
-      id: "water_supergod",
-      name: "超神水",
-      desc: "神域から落ちた一滴。\n高レアカードを引き寄せる、最上級のミズ。",
-      factor: 0.72,
-      fx: "アツい",
-      img: "https://takoyaki-card.com/town/assets/images/mizu/9.png",
-      rates: { N: 38.0, R: 50.0, SR: 10.0, UR: 1.0, LR: 1.0 }
-    },
-  ];
+  {
+    id: "water_rotten",
+    name: "腐ったミズ",
+    desc: "レア段階が\n1つ下がる\nSPもある",
+    factor: 1.06,
+    fx: "1段階ダウン / SPカード出るかも",
+    img: "https://takoyaki-card.com/town/assets/images/mizu/6.png",
+    rates: { N: 0, R: 0, SR: 0, UR: 0, LR: 0 }
+  },
+  {
+    id: "water_sea",
+    name: "海水",
+    desc: "Nが多めで\nたまにSPも\n混ざります",
+    factor: 0.98,
+    fx: "N多め / SPカード稀に出るかも",
+    img: "https://takoyaki-card.com/town/assets/images/mizu/7.png",
+    rates: { N: 0, R: 0, SR: 0, UR: 0, LR: 0 }
+  },
+  {
+    id: "water_yunokawa",
+    name: "ゆのかわの温泉ミズ",
+    desc: "Rがかなり\n出やすくて\n安定型です",
+    factor: 0.88,
+    fx: "安定",
+    img: "https://takoyaki-card.com/town/assets/images/mizu/8.png",
+    rates: { N: 30.0, R: 68.0, SR: 1.5, UR: 0.4, LR: 0.1 }
+  },
+  {
+    id: "water_supergod",
+    name: "超神水",
+    desc: "高レアを\n強く呼ぶ\n神のミズ",
+    factor: 0.72,
+    fx: "アツい",
+    img: "https://takoyaki-card.com/town/assets/images/mizu/9.png",
+    rates: { N: 38.0, R: 50.0, SR: 10.0, UR: 1.0, LR: 1.0 }
+  },
+];
 
   // =========================================================
   // タワー肥料 / SP
@@ -275,22 +371,129 @@
     rarity: "SP"
   };
 
-  // =========================================================
-  // 肥料
-  // =========================================================
-  const FERTS = [
-    { id: "fert_agedama", name: "ただの揚げ玉", desc: "時短0。\nおいしそう…\nたまに《焼きすぎたカード》", factor: 1.0, fx: "時短 0%", img: "https://ul.h3z.jp/9p5fx53n.png", burnCardUp: 0.12, rawCardChance: 0.0, towerSpChance: 0.0, mantra: false, skipGrowAnim: false },
-
-    { id: "fert_balance", name: "天秤にかけた肥料", desc: "50%で10秒収穫。\n50%でただの揚げ玉の2倍時間。", factor: 1.0, fx: "10秒 or 2倍", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou6.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.0, specialGrow: "balance", mantra: false, skipGrowAnim: false },
-    { id: "fert_sleep", name: "寝かせた肥料", desc: "ただの揚げ玉より1.5倍時間。\nでも、タワーSPカードが眠っているかも。", factor: 1.5, fx: "時間 1.5倍 / SPかも", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou7.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.05, mantra: false, skipGrowAnim: false },
-    { id: "fert_takoyaki", name: "たこ焼き風味の肥料", desc: "ほんのり香ばしい。\n扱いやすい時短肥料。", factor: 0.4, fx: "時短 60%", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou8.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.0, mantra: false, skipGrowAnim: false },
-    { id: "fert_drop", name: "天からの一滴", desc: "空から落ちた一滴。\nほぼ待たない。", factor: 0.1, fx: "時短 90%", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou9.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.0, mantra: false, skipGrowAnim: true },
-
-    { id: "fert_feel", name: "気のせい肥料", desc: "早くなった気がする。\n気のせいかもしれない。", factor: 0.95, fx: "時短 5%", img: "https://ul.h3z.jp/XqFTb7sw.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.0, mantra: false, skipGrowAnim: false },
-    { id: "fert_guts", name: "根性論ぶち込み肥料", desc: "理由はない。\n気合いだ。", factor: 0.8, fx: "時短 20%", img: "https://ul.h3z.jp/bT9ZcNnS.png", burnCardUp: 0.0, rawCardChance: 0.0, towerSpChance: 0.0, mantra: true, skipGrowAnim: false },
-    { id: "fert_skip", name: "工程すっ飛ばし肥料", desc: "途中は、\n見なかったことにした。", factor: 0.6, fx: "時短 40%", img: "https://ul.h3z.jp/FqPzx12Q.png", burnCardUp: 0.0, rawCardChance: 0.01, towerSpChance: 0.0, mantra: false, skipGrowAnim: true },
-    { id: "fert_timeno", name: "時間を信じない肥料", desc: "最終兵器・禁忌。\n焼けてないって？\nたまに《生焼けカード》", factor: 0.25, fx: "時短 75%", img: "https://ul.h3z.jp/l2njWY57.png", burnCardUp: 0.0, rawCardChance: 0.03, towerSpChance: 0.0, mantra: false, skipGrowAnim: true },
-  ];
+// =========================================================
+// 肥料
+// =========================================================
+const FERTS = [
+  {
+    id: "fert_sleep",
+    name: "寝かせた肥料",
+    desc: "時間は\n1.5倍に\nなります",
+    factor: 1.5,
+    fx: "時間 1.5倍 / SPかも",
+    img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou7.png",
+    burnCardUp: 0.0,
+    rawCardChance: 0.0,
+    towerSpChance: 0.05,
+    mantra: false,
+    skipGrowAnim: false
+  },
+  {
+    id: "fert_balance",
+    name: "天秤にかけた肥料",
+    desc: "10秒か\n2倍時間か\n半々です",
+    factor: 1.0,
+    fx: "10秒 or 2倍",
+    img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou6.png",
+    burnCardUp: 0.0,
+    rawCardChance: 0.0,
+    towerSpChance: 0.0,
+    specialGrow: "balance",
+    mantra: false,
+    skipGrowAnim: false
+  },
+  {
+    id: "fert_agedama",
+    name: "ただの揚げ玉",
+    desc: "時短なし\nたまに焼き\nすぎカード",
+    factor: 1.0,
+    fx: "時短 0%",
+    img: "https://ul.h3z.jp/9p5fx53n.png",
+    burnCardUp: 0.12,
+    rawCardChance: 0.0,
+    towerSpChance: 0.0,
+    mantra: false,
+    skipGrowAnim: false
+  },
+  {
+    id: "fert_feel",
+    name: "気のせい肥料",
+    desc: "少しだけ\n早くなる\n気がする",
+    factor: 0.95,
+    fx: "時短 5%",
+    img: "https://ul.h3z.jp/XqFTb7sw.png",
+    burnCardUp: 0.0,
+    rawCardChance: 0.0,
+    towerSpChance: 0.0,
+    mantra: false,
+    skipGrowAnim: false
+  },
+  {
+    id: "fert_guts",
+    name: "根性論ぶち込み肥料",
+    desc: "気合いで\n少し早く\n育てます",
+    factor: 0.8,
+    fx: "時短 20%",
+    img: "https://ul.h3z.jp/bT9ZcNnS.png",
+    burnCardUp: 0.0,
+    rawCardChance: 0.0,
+    towerSpChance: 0.0,
+    mantra: true,
+    skipGrowAnim: false
+  },
+  {
+    id: "fert_skip",
+    name: "工程すっ飛ばし肥料",
+    desc: "途中を\n飛ばして\n早く育つ",
+    factor: 0.6,
+    fx: "時短 40%",
+    img: "https://ul.h3z.jp/FqPzx12Q.png",
+    burnCardUp: 0.0,
+    rawCardChance: 0.01,
+    towerSpChance: 0.0,
+    mantra: false,
+    skipGrowAnim: true
+  },
+  {
+    id: "fert_takoyaki",
+    name: "たこ焼き風味の肥料",
+    desc: "香ばしく\nかなり早く\n育てます",
+    factor: 0.4,
+    fx: "時短 60%",
+    img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou8.png",
+    burnCardUp: 0.0,
+    rawCardChance: 0.0,
+    towerSpChance: 0.0,
+    mantra: false,
+    skipGrowAnim: false
+  },
+  {
+    id: "fert_timeno",
+    name: "時間を信じない肥料",
+    desc: "禁忌級の\n強い時短\nたまに生焼け",
+    factor: 0.25,
+    fx: "時短 75%",
+    img: "https://ul.h3z.jp/l2njWY57.png",
+    burnCardUp: 0.0,
+    rawCardChance: 0.03,
+    towerSpChance: 0.0,
+    mantra: false,
+    skipGrowAnim: true
+  },
+  {
+    id: "fert_drop",
+    name: "天からの一滴",
+    desc: "ほぼ待たず\nすぐ育つ\n最速肥料",
+    factor: 0.1,
+    fx: "時短 90%",
+    img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou9.png",
+    burnCardUp: 0.0,
+    rawCardChance: 0.0,
+    towerSpChance: 0.0,
+    mantra: false,
+    skipGrowAnim: true
+  },
+];
 
   const TAKOPI_SEED_POOL = [
     { id: "TP-001", name: "届け！たこぴ便", img: "https://ul.h3z.jp/rjih1Em9.png", rarity: "N" },
