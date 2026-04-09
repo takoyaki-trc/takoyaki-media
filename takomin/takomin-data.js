@@ -52,12 +52,10 @@
       opener:    "https://ul.h3z.jp/9usFHTdU.png",
       party:     "https://ul.h3z.jp/pByCAUMC.png",
       pilgrim:   "https://ul.h3z.jp/eW2dluw2.png",
-
-      // 特別枠（画像は必要なら差し替え）
-      miko: "assets/takomin/miko.png",
-      kasumi: "assets/takomin/kasumi.png",
-      takopi: "assets/takomin/takopi.png",
-      takonana: "assets/takomin/takonana.png"
+      miko:      "assets/takomin/miko.png",
+      kasumi:    "assets/takomin/kasumi.png",
+      takopi:    "assets/takomin/takopi.png",
+      takonana:  "assets/takomin/takonana.png"
     }
   };
 
@@ -68,37 +66,58 @@
     "https://ul.h3z.jp/kWd9he8J.png"
   ];
 
+  const ROOM_BACKGROUNDS = [
+    {
+      id: "bg_room_01",
+      name: "デフォルトの部屋",
+      img: "https://ul.h3z.jp/OX975TdZ.png",
+      defaultOwned: true
+    },
+    {
+      id: "bg_room_02",
+      name: "夕暮れの部屋",
+      img: "https://ul.h3z.jp/tiQfexZ6.png",
+      defaultOwned: false
+    },
+    {
+      id: "bg_room_03",
+      name: "静かな部屋",
+      img: "https://ul.h3z.jp/oLUE1NNI.png",
+      defaultOwned: false
+    },
+    {
+      id: "bg_room_04",
+      name: "青い部屋",
+      img: "https://ul.h3z.jp/U3bHmpNd.png",
+      defaultOwned: false
+    },
+    {
+      id: "bg_room_05",
+      name: "あたたかい部屋",
+      img: "https://ul.h3z.jp/1ykdcnJI.png",
+      defaultOwned: false
+    },
+    {
+      id: "bg_room_06",
+      name: "深夜の部屋",
+      img: "https://ul.h3z.jp/MtNcKSNc.png",
+      defaultOwned: false
+    }
+  ];
+
   const CUSTOMER_RARITY_ASSIGN = {
     N: [
-      "careful",
-      "looker",
-      "guide",
-      "relax",
-      "diet",
-      "overflow",
-      "ramen",
-      "streamer",
-      "opener",
-      "party",
-      "pilgrim"
+      "careful","looker","guide","relax","diet",
+      "overflow","ramen","streamer","opener","party","pilgrim"
     ],
     R: [
-      "impulse",
-      "picky",
-      "flipper",
-      "climber",
-      "collector",
-      "shadow"
+      "impulse","picky","flipper","climber","collector","shadow"
     ],
     SR: [
-      "rich",
-      "king",
-      "artisan",
-      "gourmet"
+      "rich","king","artisan","gourmet"
     ],
     UR: [
-      "miko",
-      "kasumi"
+      "miko","kasumi"
     ],
     LR: [
       "takopi"
@@ -129,7 +148,17 @@
             id === "kasumi" ? "記憶の揺らぎ" :
             id === "takopi" ? "焼かれた運命" :
             id === "takonana" ? "店主の真髄" :
-            "タコ殴り"
+            "タコ殴り",
+          attackIcon:
+            id === "rich" ? "💴" :
+            id === "king" ? "👑" :
+            id === "artisan" ? "🪄" :
+            id === "gourmet" ? "👅" :
+            id === "miko" ? "✨" :
+            id === "kasumi" ? "🫧" :
+            id === "takopi" ? "🔥" :
+            id === "takonana" ? "🌊" :
+            "👊"
         });
       });
     });
@@ -141,6 +170,8 @@
     maxStat: 500,
     growthDays: 10,
     babyImages: BABY_TAKOMIN_IMAGES,
+    roomBackgrounds: ROOM_BACKGROUNDS,
+    roomBgDropRate: 0.22,
 
     rarityRate: [
       { rarity: "N", weight: 60 },
@@ -196,7 +227,7 @@
       gokiburi: {
         id: "gokiburi",
         name: "ゴキブリタコ",
-        maxHp: 55,
+        maxHp: 550,
         attack: 12,
         attackIntervalMs: 1600,
         rewardMin: 1,
@@ -207,7 +238,7 @@
       takonyan: {
         id: "takonyan",
         name: "タコにゃん",
-        maxHp: 90,
+        maxHp: 900,
         attack: 18,
         attackIntervalMs: 1300,
         rewardMin: 3,
@@ -218,7 +249,7 @@
       kumatako: {
         id: "kumatako",
         name: "クマタコ",
-        maxHp: 130,
+        maxHp: 1300,
         attack: 26,
         attackIntervalMs: 1100,
         rewardMin: 5,
