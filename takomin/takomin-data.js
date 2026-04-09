@@ -67,42 +67,12 @@
   ];
 
   const ROOM_BACKGROUNDS = [
-    {
-      id: "bg_room_01",
-      name: "デフォルトの部屋",
-      img: "https://ul.h3z.jp/OX975TdZ.png",
-      defaultOwned: true
-    },
-    {
-      id: "bg_room_02",
-      name: "夕暮れの部屋",
-      img: "https://ul.h3z.jp/tiQfexZ6.png",
-      defaultOwned: false
-    },
-    {
-      id: "bg_room_03",
-      name: "静かな部屋",
-      img: "https://ul.h3z.jp/oLUE1NNI.png",
-      defaultOwned: false
-    },
-    {
-      id: "bg_room_04",
-      name: "青い部屋",
-      img: "https://ul.h3z.jp/U3bHmpNd.png",
-      defaultOwned: false
-    },
-    {
-      id: "bg_room_05",
-      name: "あたたかい部屋",
-      img: "https://ul.h3z.jp/1ykdcnJI.png",
-      defaultOwned: false
-    },
-    {
-      id: "bg_room_06",
-      name: "深夜の部屋",
-      img: "https://ul.h3z.jp/MtNcKSNc.png",
-      defaultOwned: false
-    }
+    { id: "bg_room_01", name: "デフォルトの部屋", img: "https://ul.h3z.jp/OX975TdZ.png", defaultOwned: true },
+    { id: "bg_room_02", name: "夕暮れの部屋", img: "https://ul.h3z.jp/tiQfexZ6.png", defaultOwned: false },
+    { id: "bg_room_03", name: "静かな部屋", img: "https://ul.h3z.jp/oLUE1NNI.png", defaultOwned: false },
+    { id: "bg_room_04", name: "青い部屋", img: "https://ul.h3z.jp/U3bHmpNd.png", defaultOwned: false },
+    { id: "bg_room_05", name: "あたたかい部屋", img: "https://ul.h3z.jp/1ykdcnJI.png", defaultOwned: false },
+    { id: "bg_room_06", name: "深夜の部屋", img: "https://ul.h3z.jp/MtNcKSNc.png", defaultOwned: false }
   ];
 
   const CUSTOMER_RARITY_ASSIGN = {
@@ -124,6 +94,57 @@
     ],
     SECRET: [
       "takonana"
+    ]
+  };
+
+  const TAKOMIN_TALKS = {
+    baby: [
+      "……",
+      "ぽよ",
+      "ぬめ…",
+      "まだ何者でもないたこ",
+      "ふにゃ…",
+      "ぷる…",
+      "みてるたこ？",
+      "まだ決まってないたこ"
+    ],
+    attack: [
+      "今日は暴れたい気分たこ",
+      "当たりにいくたこ",
+      "押していくたこ",
+      "前に出るたこ"
+    ],
+    defend: [
+      "受けて立つたこ",
+      "まだ倒れないたこ",
+      "守るのも強さたこ",
+      "受け流すたこ"
+    ],
+    taste: [
+      "味で語るたこ",
+      "雑には終わらせないたこ",
+      "ひと口で黙らせるたこ",
+      "舌に残すたこ"
+    ],
+    love: [
+      "函館に捧げるたこ",
+      "地元愛で押すたこ",
+      "これは函館案件たこ",
+      "街ごと背負うたこ"
+    ],
+    balance: [
+      "全部それなりに大事たこ",
+      "偏らないのも才能たこ",
+      "総合力でいくたこ",
+      "無難じゃなく安定たこ"
+    ],
+    mid: [
+      "まだ伸びるたこ",
+      "今日は何を食べるたこ？",
+      "育ってる気がするたこ",
+      "焦らなくても強くなるたこ",
+      "次の一枚が大事たこ",
+      "もう少しで決まるたこ"
     ]
   };
 
@@ -158,7 +179,17 @@
             id === "kasumi" ? "🫧" :
             id === "takopi" ? "🔥" :
             id === "takonana" ? "🌊" :
-            "👊"
+            "👊",
+          motionClass:
+            id === "rich" ? "motion-bill" :
+            id === "king" ? "motion-king" :
+            id === "artisan" ? "motion-artisan" :
+            id === "gourmet" ? "motion-gourmet" :
+            id === "miko" ? "motion-miko" :
+            id === "kasumi" ? "motion-kasumi" :
+            id === "takopi" ? "motion-takopi" :
+            id === "takonana" ? "motion-takonana" :
+            "motion-fist"
         });
       });
     });
@@ -172,6 +203,7 @@
     babyImages: BABY_TAKOMIN_IMAGES,
     roomBackgrounds: ROOM_BACKGROUNDS,
     roomBgDropRate: 0.22,
+    talks: TAKOMIN_TALKS,
 
     rarityRate: [
       { rarity: "N", weight: 60 },
@@ -259,20 +291,6 @@
       }
     },
 
-    takomins: buildTakominList(),
-
-    phaseTexts: {
-      baby: [
-        "……",
-        "ぽよ",
-        "まだ何者でもないたこ",
-        "ぬめ…"
-      ],
-      adult: [
-        "今日は何を食べるたこ？",
-        "強くなる予感がするたこ",
-        "まだ伸びるたこ"
-      ]
-    }
+    takomins: buildTakominList()
   };
 })();
