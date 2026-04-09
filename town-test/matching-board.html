@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+
+<!-- Start KARTE Tag -->
+<script>!function(n){if(!window[n]){var o=window[n]=function(){var n=[].slice.call(arguments);return o.x?o.x.apply(0,n):o.q.push(n)};o.q=[],o.i=Date.now(),o.allow=function(){o.o="allow"},o.deny=function(){o.o="deny"}}}("krt")</script>
+<script async src="https://cdn-edge.karte.io/e881ae2322fe85206893871d5e65d626/edge.js"></script>
+<!-- End KARTE Tag -->
+
+
+  <title>カード募集板｜たこ焼きトレカ</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+JP:wght@500;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./assets/matching-board.css">
+</head>
+<body>
+  <div class="page">
+
+    <header class="topbar">
+      <button class="topBtn topBtn--back" id="backBtn" aria-label="戻る">←</button>
+
+      <div class="topTitle">
+        <h1>カード募集板</h1>
+        <p>今日の相手を探すじゃなイカ</p>
+      </div>
+
+      <button class="topBtn topBtn--book" id="affectionBtn" type="button" aria-label="好感度チェックを開く">
+        <span class="topBtnMain">好感度</span>
+        <span class="topBtnSub">チェック</span>
+      </button>
+    </header>
+
+    <section class="hero">
+      <div class="heroFrame">
+        <img
+          id="heroImage"
+          class="heroImage"
+          src="https://ul.h3z.jp/KyGJh82d.png"
+          alt="カード募集板トップ画像">
+      </div>
+
+      <div class="heroSpeechWrap">
+        <div class="heroSpeech">
+          <div class="heroSpeechBadge" data-character-title>かすみぴの一言</div>
+          <p id="heroSpeechText">今日は、どの願いが深く沈んでるじゃなイカ？</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="intro">
+      <div class="introLeft">
+        <h2>今日の募集相手</h2>
+        <p>
+          条件が合えばマッチ成立じゃなイカ。<br>
+          成立するとオクト・熱量・追加報酬がもらえるじゃなイカ。
+        </p>
+      </div>
+
+      <aside class="legendNotice">
+        <div class="legendNoticeBadge">低確率で出現</div>
+        <h3>伝説マッチ</h3>
+        <p>
+          LRやSP相当の相手は別枠で現れるじゃなイカ。<br>
+          出会えた日はかなりアツいじゃなイカ。
+        </p>
+      </aside>
+    </section>
+
+    <main class="board">
+      <section class="matchList" id="matchList"></section>
+      <section class="legendMatch hidden" id="legendMatch"></section>
+    </main>
+
+    <p class="footNote">
+      ※ コラボのタネ、ハーフアニバーサリーのタネは報酬に含めない。<br>
+      ※ 報酬欄の「🎁 追加報酬あり」は、成立後に中身が全部開く。<br>
+  
+    </p>
+  </div>
+
+  <button class="takopiFloat" id="takopiFloat" aria-label="かすみぴのひとこと" title="かすみぴ">
+    <img src="https://ul.h3z.jp/eUMxATXQ.png" alt="かすみぴ">
+  </button>
+
+  <div class="takopiToast" id="takopiToast" aria-live="polite">
+    <div class="takopiToastInner" id="takopiToastInner">……深く沈んだ願い、見えてるじゃなイカ？</div>
+  </div>
+
+  <!-- カード選択モーダル -->
+  <div class="modal" id="jobModal" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="modalJobName">
+      <button class="modalClose" id="jobModalClose" aria-label="閉じる">✕</button>
+      <div class="modalBody" id="jobModalBody"></div>
+    </div>
+  </div>
+
+  <!-- 報酬モーダル -->
+  <div class="rewardModal" id="rewardModal" aria-hidden="true">
+    <div class="rewardCard">
+      <div class="rewardCap">マッチ成立</div>
+      <h2 class="rewardTitle" id="rewardTitle">……深く刺さったじゃなイカ</h2>
+      <p class="rewardSub" id="rewardSub">報酬を受け取ったじゃなイカ。</p>
+      <div class="rewardList" id="rewardList"></div>
+      <button class="rewardCloseBtn" id="rewardCloseBtn">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 好感度モーダル -->
+  <div class="modal" id="affectionModal" aria-hidden="true">
+    <div class="modalCard modalCard--affection" role="dialog" aria-modal="true" aria-labelledby="affectionTitle">
+      <button class="modalClose" id="affectionClose" aria-label="閉じる">✕</button>
+      <div class="modalBody">
+        <div class="affectionHeroCap">好感度チェック</div>
+        <h2 class="affectionHeroTitle" id="affectionTitle">いま気に入ってくれてるタコ民</h2>
+        <p class="affectionHeroSub">募集板やマイ露店で育った好感度を、そのまま表示するじゃなイカ。</p>
+
+        <div class="affectionList" id="affectionList"></div>
+        <p class="affectionEmpty hidden" id="affectionEmpty">まだ記録されている好感度はないじゃなイカ。</p>
+
+        <div class="affectionFoot">
+          <button class="affectionOkBtn" id="affectionOk" type="button">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遊び方モーダルはJSで生成 -->
+  <!-- 判定演出レイヤーはJSで生成 -->
+
+  <script src="./assets/love-lines.js"></script>
+  <script src="./assets/matching-board.js"></script>
+</body>
+</html>
