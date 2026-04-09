@@ -955,42 +955,59 @@
   }
 
   function ensureDefaults() {
-    if (localStorage.getItem(KEY.octo) == null) localStorage.setItem(KEY.octo, "1000");
-    if (localStorage.getItem(KEY.heat) == null) localStorage.setItem(KEY.heat, "0");
+    if (localStorage.getItem(KEY.octo) == null) {
+      localStorage.setItem(KEY.octo, "1000");
+    }
+
+    if (localStorage.getItem(KEY.heat) == null) {
+      localStorage.setItem(KEY.heat, "0");
+    }
 
     const inv = loadJSON(KEY.inv, null);
-    if (!inv) saveJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
+    if (!inv || typeof inv !== "object") {
+      saveJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
+    } else {
+      inv.seed = inv.seed && typeof inv.seed === "object" ? inv.seed : {};
+      inv.water = inv.water && typeof inv.water === "object" ? inv.water : {};
+      inv.fert = inv.fert && typeof inv.fert === "object" ? inv.fert : {};
+      if (!("ver" in inv)) inv.ver = 1;
+      saveJSON(KEY.inv, inv);
+    }
 
     const meta = loadJSON(KEY.matchingMeta, null);
-    if (!meta) {
+    if (!meta || typeof meta !== "object") {
       saveJSON(KEY.matchingMeta, {
         totalAttempts: 0,
         totalSuccess: 0,
         totalFail: 0,
         statsByType: {}
       });
+    } else {
+      meta.totalAttempts = Number(meta.totalAttempts || 0);
+      meta.totalSuccess = Number(meta.totalSuccess || 0);
+      meta.totalFail = Number(meta.totalFail || 0);
+      meta.statsByType = meta.statsByType && typeof meta.statsByType === "object"
+        ? meta.statsByType
+        : {};
+      saveJSON(KEY.matchingMeta, meta);
     }
 
+    // 図鑑は空で初期化するだけ。ランダム生成しない
     const book = loadJSON(KEY.book, null);
-    if (!book) {
-      const got = {};
-      CARDS_ALL.forEach(card => {
-        let count = 0;
-        if (card.rarity === "N") count = Math.random() < 0.65 ? Math.floor(Math.random() * 4) : 0;
-        else if (card.rarity === "R") count = Math.random() < 0.45 ? Math.floor(Math.random() * 3) : 0;
-        else if (card.rarity === "SR") count = Math.random() < 0.28 ? Math.floor(Math.random() * 2) : 0;
-        else if (card.rarity === "UR") count = Math.random() < 0.12 ? 1 : 0;
-        else if (card.rarity === "LR") count = Math.random() < 0.05 ? 1 : 0;
-        else if (card.rarity === "SP") count = Math.random() < 0.04 ? 1 : 0;
-
-        if (count > 0) got[card.id] = { count, name: card.name, rarity: card.rarity };
-      });
-      saveJSON(KEY.book, { got });
+    if (!book || typeof book !== "object") {
+      saveJSON(KEY.book, { ver: 1, got: {} });
+    } else {
+      book.got = book.got && typeof book.got === "object" ? book.got : {};
+      if (!("ver" in book)) book.ver = 1;
+      saveJSON(KEY.book, book);
     }
 
     const affection = loadJSON(AFFECTION_LS_KEY, null);
-    if (!affection || !affection.guests) {
+    if (!affection || typeof affection !== "object" || !affection.guests || typeof affection.guests !== "object") {
       localStorage.setItem(AFFECTION_LS_KEY, JSON.stringify({ ver: 1, guests: {} }));
+    } else {
+      if (!("ver" in affection)) affection.ver = 1;
+      localStorage.setItem(AFFECTION_LS_KEY, JSON.stringify(affection));
     }
   }
 
