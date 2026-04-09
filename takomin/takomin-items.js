@@ -4,7 +4,8 @@ window.TAKOMIN_ITEMS = {
       id: "REAL_TAKOYAKI_01",
       name: "実写たこ焼きカード",
       healMode: "percent",
-      healValue: 0.5 // 最大HPの50%回復
+      healValue: 0.5,
+      img: "assets/items/heal.png"
     }
   ],
 
@@ -13,13 +14,15 @@ window.TAKOMIN_ITEMS = {
       id: "SP-RAW",
       name: "生焼けカード",
       type: "stun",
-      stunSeconds: 3
+      stunSeconds: 3,
+      img: "assets/items/raw.png"
     },
     {
       id: "SP-BURN",
       name: "焼きすぎたカード",
       type: "cut_hp",
-      cutRate: 1 / 3
+      cutRate: 1 / 3,
+      img: "assets/items/burn.png"
     }
   ]
 };
