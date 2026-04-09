@@ -1,0 +1,4114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+
+<!-- Start KARTE Tag -->
+<script>!function(n){if(!window[n]){var o=window[n]=function(){var n=[].slice.call(arguments);return o.x?o.x.apply(0,n):o.q.push(n)};o.q=[],o.i=Date.now(),o.allow=function(){o.o="allow"},o.deny=function(){o.o="deny"}}}("krt")</script>
+<script async src="https://cdn-edge.karte.io/e881ae2322fe85206893871d5e65d626/edge.js"></script>
+<!-- End KARTE Tag -->
+
+
+  <title>焼かれた伝説｜たこ焼きトレーディングカード - 2ページ目</title>
+  <meta name="description" content="たこ焼きトレカの街マップ2ページ目。建物・タコ民・オクト表示・バックアップ対応。">
+
+  <link rel="icon" href="https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/icon.png">
+  <link rel="apple-touch-icon" href="https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/icon.png">
+  <meta name="apple-mobile-web-app-title" content="焼かれた伝説">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
+  <style>
+    :root{
+      --hud-top: max(8px, env(safe-area-inset-top));
+      --panel-bg: rgba(9, 14, 26, .88);
+      --panel-bg-soft: rgba(15, 22, 38, .82);
+      --panel-line: rgba(255,255,255,.10);
+      --panel-text: #fff;
+      --shadow: 0 12px 28px rgba(0,0,0,.28);
+      --shell-max: 900px;
+      --gold: #ffe58a;
+      --blue: #bfe0ff;
+      --red: #ff5d5f;
+    }
+
+    *{ box-sizing:border-box; }
+
+    html, body{
+      margin:0;
+      padding:0;
+      width:100%;
+      min-height:100%;
+    }
+
+    body{
+      overflow-x:hidden;
+      color:#fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:#0d1220;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-3;
+      pointer-events:none;
+      background:
+        radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.18) 100%),
+        var(--sky, linear-gradient(#87b8e5 0%, #cfe8ff 55%, #ffffff 100%));
+      transition:background 6s linear;
+    }
+
+    .page-shell{
+      width:100%;
+      max-width:var(--shell-max);
+      margin:0 auto;
+      padding:94px 8px 20px;
+      position:relative;
+      z-index:2;
+    }
+
+    /* =========================
+       上部HUD
+    ========================= */
+    .top-hud{
+      position:fixed;
+      top:var(--hud-top);
+      left:0;
+      right:0;
+      z-index:2000;
+      pointer-events:none;
+    }
+
+    .top-hud-inner{
+      width:min(920px, calc(100% - 10px));
+      margin:0 auto;
+      pointer-events:none;
+    }
+
+    .hud-bar{
+      pointer-events:auto;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      flex-wrap:wrap;
+      min-height:48px;
+      padding:6px;
+      border:1px solid var(--panel-line);
+      border-radius:16px;
+      background:linear-gradient(180deg, rgba(20,28,46,.96), rgba(10,14,24,.92));
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+    }
+
+    .hud-left{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:0;
+      flex:1 1 auto;
+      flex-wrap:wrap;
+    }
+
+    .hud-actions{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:0;
+      flex:0 0 auto;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .hud-btn,
+    .hud-chip{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      min-height:36px;
+      min-width:0;
+      padding:0 12px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      background:var(--panel-bg-soft);
+      color:var(--panel-text);
+      text-decoration:none;
+      font-size:12px;
+      font-weight:900;
+      line-height:1;
+      white-space:nowrap;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    .hud-btn{
+      cursor:pointer;
+      appearance:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .hud-btn:hover,
+    .hud-btn:active{
+      filter:brightness(1.04);
+    }
+
+    .hud-icon{
+      font-size:15px;
+      line-height:1;
+      flex:0 0 auto;
+    }
+
+    .hud-btn.back-btn{
+      padding-inline:14px;
+    }
+
+    .hud-chip.octo-chip{
+      flex:1 1 180px;
+      justify-content:flex-start;
+      min-width:150px;
+      background:
+        linear-gradient(180deg, rgba(255,222,120,.08), rgba(255,255,255,.03)),
+        var(--panel-bg-soft);
+    }
+
+    .octo-label{
+      color:rgba(255,255,255,.82);
+      font-weight:800;
+    }
+
+    .octo-value{
+      color:var(--gold);
+      font-weight:900;
+      margin-left:2px;
+    }
+
+    .hud-btn.inventory-btn{
+      background:
+        linear-gradient(180deg, rgba(191,224,255,.10), rgba(255,255,255,.02)),
+        var(--panel-bg-soft);
+      border-color:rgba(180,220,255,.24);
+    }
+
+    .hud-btn.zukan-btn{
+      background:
+        linear-gradient(180deg, rgba(195,220,255,.10), rgba(255,255,255,.03)),
+        var(--panel-bg-soft);
+    }
+
+    .hud-btn.serial-btn{
+      background:
+        linear-gradient(180deg, rgba(255,185,90,.16), rgba(255,255,255,.03)),
+        var(--panel-bg-soft);
+      border-color:rgba(255,220,130,.20);
+    }
+
+    .hud-btn.guide-btn{
+      background:
+        linear-gradient(180deg, rgba(140,200,255,.16), rgba(255,255,255,.03)),
+        var(--panel-bg-soft);
+      border-color:rgba(180,220,255,.24);
+    }
+
+    .icon-only{
+      width:36px;
+      min-width:36px;
+      padding:0;
+      position:relative;
+    }
+
+    .news-badge,
+    .gift-badge{
+      display:none;
+      position:absolute;
+      top:-5px;
+      right:-3px;
+      align-items:center;
+      justify-content:center;
+      min-width:16px;
+      height:16px;
+      padding:0 4px;
+      border-radius:999px;
+      background:var(--red);
+      color:#fff;
+      font-size:9px;
+      font-weight:900;
+      line-height:1;
+      box-shadow:0 4px 10px rgba(255,77,79,.30);
+    }
+
+    .news-badge.is-show,
+    .gift-badge.is-show{
+      display:inline-flex;
+    }
+
+    @media (max-width:760px){
+      .page-shell{
+        padding-top:90px;
+      }
+
+      .hud-left{
+        flex:1 1 100%;
+      }
+
+      .hud-actions{
+        flex:1 1 100%;
+        justify-content:flex-start;
+      }
+    }
+
+    @media (max-width:520px){
+      .top-hud-inner{
+        width:calc(100% - 8px);
+      }
+
+      .hud-bar{
+        gap:5px;
+        padding:5px;
+        border-radius:14px;
+      }
+
+      .hud-btn,
+      .hud-chip{
+        min-height:34px;
+        padding:0 10px;
+        font-size:11px;
+        border-radius:11px;
+      }
+
+      .hud-btn.back-btn{
+        min-width:76px;
+        padding-inline:10px;
+      }
+
+      .hud-chip.octo-chip{
+        min-width:0;
+        flex:1 1 calc(100% - 82px);
+      }
+
+      .hud-btn.inventory-btn{
+        flex:0 0 auto;
+      }
+
+      .hud-actions{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr) 36px 36px minmax(0,1fr);
+        gap:5px;
+        width:100%;
+      }
+
+      .icon-only{
+        width:36px;
+        min-width:36px;
+      }
+
+      .page-shell{
+        padding-top:132px;
+      }
+    }
+
+    /* =========================
+       マップ
+    ========================= */
+    .map-wrap{
+      position:relative;
+      display:block;
+      width:100%;
+      max-width:900px;
+      margin:0 auto;
+      transform:translateZ(0);
+      -webkit-transform:translateZ(0);
+    }
+
+    .map-img{
+      display:block;
+      width:100%;
+      max-width:100%;
+      height:auto;
+      image-rendering:pixelated;
+      transform:translateZ(0);
+      -webkit-transform:translateZ(0);
+    }
+
+    /* =========================
+       建物
+    ========================= */
+    .tf-building{
+      position:absolute;
+      display:block;
+      z-index:40;
+      cursor:pointer;
+      transform:translate(-50%, -100%);
+      transform-origin:50% 100%;
+      touch-action:manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tf-building > img{
+      display:block;
+      width:100%;
+      height:auto;
+      image-rendering:pixelated;
+    }
+
+    @media (hover:hover){
+      .tf-building:hover{
+        filter:drop-shadow(0 0 10px rgba(255,255,180,.75));
+      }
+    }
+
+    /* =========================
+       タコ民
+    ========================= */
+    .takomin{
+      position:absolute;
+      transform:translate(-50%, -100%);
+      width:clamp(52px, 6vw, 72px);
+      z-index:60;
+      background:transparent;
+      border:0;
+      padding:0;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action:manipulation;
+      transform-origin:50% 100%;
+    }
+
+    .takomin img{
+      width:100%;
+      height:auto;
+      display:block;
+      image-rendering:pixelated;
+      pointer-events:none;
+      filter:
+        drop-shadow(0 0 2px rgba(255, 240, 150, 0.95))
+        drop-shadow(0 0 6px rgba(255, 200, 80, 0.75))
+        drop-shadow(0 0 14px rgba(255, 140, 20, 0.55));
+      animation:none !important;
+    }
+
+    .takomin-balloon{
+      position:absolute;
+      bottom:100%;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:999;
+      display:none;
+      background:#000;
+      color:#fff;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.16);
+      font-size:12px;
+      width:180px;
+      max-width:min(180px, 68vw);
+      white-space:normal;
+      word-break:break-word;
+      line-height:1.6;
+      text-align:center;
+      pointer-events:none;
+      box-shadow:0 10px 28px rgba(0,0,0,.32);
+    }
+
+    .takomin.is-float img,
+    .takomin.is-bob img{
+      animation:none !important;
+    }
+
+    /* キャラだけサイズ調整 */
+    .t6 img{ transform:scale(1.7); transform-origin:50% 100%; }
+    .t7 img{ transform:scale(1.9); transform-origin:50% 100%; }
+    .t8 img{ transform:scale(1.2); transform-origin:50% 100%; }
+    .t10 img{ transform:scale(1.5); transform-origin:50% 100%; }
+
+    /* 吹き出し位置補正 */
+    .t6 .takomin-balloon,
+    .t7 .takomin-balloon{
+      left:0;
+      transform:none;
+    }
+
+    .t9 .takomin-balloon,
+    .t10 .takomin-balloon{
+      left:auto;
+      right:0;
+      transform:none;
+    }
+
+    .t2 .takomin-balloon,
+    .t3 .takomin-balloon,
+    .t4 .takomin-balloon,
+    .t8 .takomin-balloon{
+      left:50%;
+      right:auto;
+      transform:translateX(-50%);
+    }
+
+.t6 .takomin-balloon::after,
+.t10 .takomin-balloon::after{
+  left:auto;
+  right:24px;
+  transform:none;
+}
+
+.t7 .takomin-balloon::after{
+  left:24px;
+  right:auto;
+  transform:none;
+}
+
+
+
+    
+/* =========================
+   個別の吹き出し位置調整
+========================= */
+
+/* t6：右上へ大きく逃がす */
+.t6 .takomin-balloon{
+  left:auto;
+  right:-18px;
+  bottom:112%;
+  transform:none;
+}
+
+/* t7：左上へ大きく逃がす */
+.t7 .takomin-balloon{
+  left:-18px;
+  right:auto;
+  bottom:112%;
+  transform:none;
+}
+
+/* かすみぴ：真上だけど少し高め */
+.t8 .takomin-balloon{
+  left:50%;
+  right:auto;
+  bottom:118%;
+  transform:translateX(-50%);
+}
+
+/* t10：右上へ大きく逃がして少し高め */
+.t10 .takomin-balloon{
+  left:auto;
+  right:-18px;
+  bottom:124%;
+  transform:none;
+}
+
+
+    
+    /* ===== 建物座標 ===== */
+    .b1{ left:18%; top:22%; width:110px; }
+    .b2{ left:51%; top:51%; width:120px; }
+    .b3{ left:20%; top:58%; width:118px; }
+    .b4{ left:82%; top:22%; width:110px; }
+    .b5{ left:52%; top:83%; width:120px; }
+    .b6{ left:78%; top:58%; width:118px; }
+
+    /* ===== タコ民座標 ===== */
+    .t2 { top:22%; left:32%; }
+    .t3 { top:24%; left:49%; }
+    .t4 { top:21%; left:66%; }
+    .t6 { top:42%; left:35%; }
+    .t7 { top:83%; left:25%; }
+    .t8 { top:60%; left:58%; }
+    .t9 { top:77%; left:66%; }
+    .t10{ top:64%; left:90%; }
+
+    /* =========================
+       モーダル
+    ========================= */
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:flex-start;
+      justify-content:center;
+      padding:16px;
+      z-index:3000;
+      background:rgba(0,0,0,.76);
+      box-sizing:border-box;
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    .modal-card{
+      width:min(720px, 96vw);
+      max-height:90vh;
+      overflow:auto;
+      border:2px solid rgba(255,255,255,.18);
+      border-radius:16px;
+      background:#111827;
+      color:#fff;
+      box-shadow:0 20px 60px rgba(0,0,0,.5);
+      padding:16px;
+      box-sizing:border-box;
+      margin:auto 0;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    .modal-title{
+      font-size:18px;
+      font-weight:900;
+      margin:0 0 12px;
+    }
+
+    .modal-text{
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.88);
+    }
+
+    .modal-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .modal-btn{
+      border:1px solid rgba(255,255,255,.22);
+      border-radius:12px;
+      padding:12px 14px;
+      font-weight:900;
+      cursor:pointer;
+      background:rgba(255,255,255,.08);
+      color:#fff;
+    }
+
+    .modal-btn.primary{
+      border:0;
+      background:#60a5fa;
+      color:#08111f;
+    }
+
+    .gift-list{
+      margin:14px 0 0;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.05);
+    }
+
+    .gift-list-title{
+      font-size:14px;
+      font-weight:900;
+      margin-bottom:8px;
+      color:#fff;
+    }
+
+    .gift-note{
+      font-size:12px;
+      line-height:1.7;
+      color:rgba(255,255,255,.76);
+      margin-top:10px;
+    }
+
+    .gift-item{
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.92);
+    }
+
+    .gift-divider{
+      border:0;
+      height:1px;
+      background:rgba(255,255,255,.12);
+      margin:10px 0;
+    }
+
+    /* =========================
+       所持アイテムモーダル
+    ========================= */
+    .inventory-summary{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .inventory-card{
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+    }
+
+    .inventory-card-label{
+      font-size:12px;
+      font-weight:800;
+      color:rgba(255,255,255,.72);
+      margin-bottom:4px;
+    }
+
+    .inventory-card-value{
+      font-size:18px;
+      font-weight:900;
+      color:#fff;
+    }
+
+    .inventory-groups{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .inventory-group{
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .inventory-group-title{
+      font-size:14px;
+      font-weight:900;
+      margin:0 0 10px;
+      color:#fff;
+    }
+
+    .inventory-icon-grid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:10px;
+    }
+
+    .inventory-icon-item{
+      position:relative;
+      min-height:84px;
+      border-radius:14px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      padding:10px 8px;
+      text-align:center;
+    }
+
+    .inventory-icon-emoji{
+      font-size:28px;
+      line-height:1;
+    }
+
+    .inventory-icon-name{
+      font-size:11px;
+      line-height:1.35;
+      font-weight:800;
+      color:#fff;
+      word-break:break-word;
+    }
+
+    .inventory-count-badge{
+      position:absolute;
+      top:6px;
+      right:6px;
+      min-width:22px;
+      height:22px;
+      padding:0 6px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(180deg, #ffe58a, #ffbf47);
+      color:#241600;
+      font-size:11px;
+      font-weight:900;
+      box-shadow:0 6px 12px rgba(255,191,71,.28);
+    }
+
+    .inventory-empty{
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.78);
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+    }
+
+    @media (max-width:520px){
+      .inventory-summary{
+        grid-template-columns:1fr;
+      }
+      .inventory-icon-grid{
+        grid-template-columns:repeat(2, minmax(0,1fr));
+      }
+    }
+
+    /* =========================
+       お知らせ
+    ========================= */
+    .news-list{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .news-item{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.05);
+      border-radius:14px;
+      padding:14px;
+    }
+
+    .news-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+      flex-wrap:wrap;
+    }
+
+    .news-date{
+      font-size:12px;
+      font-weight:900;
+      color:#b9d9ff;
+    }
+
+    .news-label{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:40px;
+      height:22px;
+      padding:0 8px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:900;
+      line-height:1;
+      background:#ff4d4f;
+      color:#fff;
+    }
+
+    .news-item.is-read .news-label{
+      background:rgba(255,255,255,.12);
+      color:rgba(255,255,255,.72);
+    }
+
+    .news-title{
+      font-size:15px;
+      font-weight:900;
+      color:#fff;
+      margin:0 0 8px;
+      line-height:1.45;
+    }
+
+    .news-body{
+      font-size:13px;
+      line-height:1.85;
+      color:rgba(255,255,255,.88);
+      white-space:pre-line;
+    }
+
+    .news-empty{
+      font-size:13px;
+      line-height:1.8;
+      color:rgba(255,255,255,.8);
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.04);
+    }
+
+    /* =========================
+       遊び方
+    ========================= */
+    .guide-modal-card{
+      width:min(920px, 96vw);
+      max-height:90vh;
+      padding:0;
+      border:0;
+      border-radius:24px;
+      overflow-y:auto;
+      overflow-x:hidden;
+      -webkit-overflow-scrolling:touch;
+      margin:auto 0;
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,.28), transparent 20%),
+        radial-gradient(circle at top right, rgba(255,231,155,.30), transparent 24%),
+        radial-gradient(circle at bottom left, rgba(120,220,255,.22), transparent 28%),
+        linear-gradient(180deg, #fff6da 0%, #ffeec2 18%, #ffd8a8 46%, #ffc6a0 70%, #ffb8b8 100%);
+      box-shadow:
+        0 28px 70px rgba(0,0,0,.35),
+        inset 0 0 0 2px rgba(255,255,255,.22);
+      position:relative;
+    }
+
+    .guide-modal-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255,255,255,.58) 0 3px, transparent 4px),
+        radial-gradient(circle at 72% 14%, rgba(255,255,255,.48) 0 2px, transparent 3px),
+        radial-gradient(circle at 84% 24%, rgba(255,255,255,.40) 0 2px, transparent 3px),
+        radial-gradient(circle at 14% 70%, rgba(255,255,255,.42) 0 2px, transparent 3px),
+        radial-gradient(circle at 88% 72%, rgba(255,255,255,.38) 0 3px, transparent 4px),
+        linear-gradient(135deg, rgba(255,255,255,.05) 25%, transparent 25%) 0 0 / 24px 24px,
+        linear-gradient(225deg, rgba(255,255,255,.05) 25%, transparent 25%) 0 0 / 24px 24px;
+      opacity:.65;
+      mix-blend-mode:soft-light;
+    }
+
+    .guide-page{
+      position:relative;
+      z-index:1;
+      color:#3b1f12;
+      padding:0;
+    }
+
+    .guide-section{
+      padding:22px 18px;
+      border-top:1px solid rgba(91,42,19,.10);
+      background:rgba(255,250,238,.40);
+    }
+
+    .guide-section:nth-child(even){
+      background:rgba(255,244,223,.56);
+    }
+
+    .guide-section-head{
+      margin-bottom:14px;
+    }
+
+    .guide-section-title{
+      margin:0 0 8px;
+      font-size:22px;
+      line-height:1.35;
+      font-weight:900;
+      color:#5b2913;
+    }
+
+    .guide-section-lead{
+      margin:0;
+      font-size:13px;
+      line-height:1.85;
+      color:rgba(91,41,19,.82);
+      font-weight:700;
+    }
+
+    .guide-kicker{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:28px;
+      padding:0 12px;
+      border-radius:999px;
+      background:linear-gradient(180deg, #fff3a2, #ffd76b);
+      border:1px solid rgba(170,110,25,.22);
+      color:#6b3a0f;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.08em;
+      margin-bottom:12px;
+      box-shadow:0 6px 16px rgba(255,183,77,.18);
+    }
+
+    .guide-hero{
+      display:grid;
+      grid-template-columns:300px 1fr;
+      gap:0;
+      align-items:stretch;
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,.48), transparent 36%),
+        linear-gradient(180deg, rgba(255,243,204,.96), rgba(255,222,170,.96) 44%, rgba(255,199,152,.96));
+    }
+
+    .guide-hero-media{
+      min-height:290px;
+      background:
+        radial-gradient(circle at 50% 25%, rgba(255,255,255,.62), rgba(255,255,255,.12) 48%, transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.30), rgba(255,255,255,.06));
+      border-right:1px solid rgba(91,41,19,.10);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .guide-hero-media::before{
+      content:"";
+      position:absolute;
+      inset:auto -10% -18% -10%;
+      height:58%;
+      background:
+        radial-gradient(circle at 15% 40%, rgba(117,195,95,.38), transparent 22%),
+        radial-gradient(circle at 50% 20%, rgba(140,210,115,.45), transparent 26%),
+        radial-gradient(circle at 82% 42%, rgba(117,195,95,.35), transparent 22%),
+        linear-gradient(180deg, rgba(116,173,88,.10), rgba(76,137,52,.28));
+      pointer-events:none;
+    }
+
+    .guide-hero-media img{
+      width:100%;
+      max-width:230px;
+      height:auto;
+      display:block;
+      image-rendering:pixelated;
+      filter:drop-shadow(0 18px 26px rgba(0,0,0,.22));
+      position:relative;
+      z-index:1;
+    }
+
+    .guide-hero-content{
+      padding:26px 24px 24px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+
+    .guide-title{
+      margin:0 0 8px;
+      font-size:32px;
+      line-height:1.18;
+      font-weight:1000;
+      color:#5b2913;
+      letter-spacing:.01em;
+    }
+
+    .guide-subtitle{
+      margin:0 0 14px;
+      font-size:15px;
+      line-height:1.75;
+      color:#8f3b18;
+      font-weight:900;
+    }
+
+    .guide-balloon{
+      display:inline-block;
+      width:100%;
+      max-width:560px;
+      padding:15px 16px;
+      border-radius:18px;
+      background:rgba(255,255,255,.72);
+      border:1px solid rgba(145,77,33,.12);
+      color:#55301a;
+      font-size:14px;
+      line-height:1.92;
+      font-weight:700;
+      box-shadow:0 14px 24px rgba(118,63,28,.10);
+    }
+
+    .guide-balloon b{
+      color:#7c300d;
+    }
+
+    .guide-highlight-strip{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:12px;
+    }
+
+    .guide-highlight{
+      padding:14px 14px 13px;
+      border-radius:18px;
+      background:rgba(255,255,255,.72);
+      border:1px solid rgba(140,72,24,.10);
+      box-shadow:0 10px 20px rgba(118,63,28,.08);
+    }
+
+    .guide-highlight-icon{
+      font-size:26px;
+      line-height:1;
+      margin-bottom:8px;
+    }
+
+    .guide-highlight-title{
+      margin:0 0 6px;
+      font-size:16px;
+      line-height:1.35;
+      font-weight:900;
+      color:#662d12;
+    }
+
+    .guide-highlight-text{
+      margin:0;
+      font-size:12px;
+      line-height:1.8;
+      color:rgba(91,41,19,.80);
+      font-weight:700;
+    }
+
+    .flow-cards{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:12px;
+    }
+
+    .flow-card{
+      position:relative;
+      padding:18px 16px 16px;
+      border-radius:20px;
+      border:1px solid rgba(129,63,21,.10);
+      background:rgba(255,255,255,.78);
+      box-shadow:0 12px 24px rgba(118,63,28,.08);
+    }
+
+    .flow-card.is-gift{
+      background:linear-gradient(180deg, rgba(255,225,164,.80), rgba(255,255,255,.78));
+    }
+
+    .flow-card.is-serial{
+      background:linear-gradient(180deg, rgba(255,198,144,.82), rgba(255,255,255,.78));
+    }
+
+    .flow-card.is-plant{
+      background:linear-gradient(180deg, rgba(185,236,187,.82), rgba(255,255,255,.78));
+    }
+
+    .flow-card.is-bonus{
+      background:linear-gradient(180deg, rgba(177,220,255,.82), rgba(255,255,255,.78));
+    }
+
+    .flow-step-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:24px;
+      padding:0 10px;
+      border-radius:999px;
+      background:rgba(91,41,19,.08);
+      border:1px solid rgba(91,41,19,.08);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.08em;
+      color:#74401d;
+      margin-bottom:12px;
+    }
+
+    .flow-icon{
+      font-size:30px;
+      line-height:1;
+      margin-bottom:10px;
+    }
+
+    .flow-name{
+      margin:0 0 6px;
+      font-size:18px;
+      line-height:1.3;
+      font-weight:900;
+      color:#5b2913;
+    }
+
+    .flow-text{
+      margin:0;
+      font-size:13px;
+      line-height:1.82;
+      color:rgba(91,41,19,.82);
+      font-weight:700;
+    }
+
+    .req-panel{
+      padding:16px;
+      border-radius:20px;
+      border:1px solid rgba(160,74,28,.12);
+      background:
+        radial-gradient(circle at top right, rgba(255,236,181,.68), transparent 30%),
+        rgba(255,255,255,.75);
+      box-shadow:0 12px 24px rgba(118,63,28,.08);
+    }
+
+    .req-panel-title{
+      margin:0 0 12px;
+      font-size:18px;
+      font-weight:900;
+      color:#5b2913;
+    }
+
+    .req-grid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:12px;
+    }
+
+    .req-card{
+      padding:16px 14px;
+      border-radius:18px;
+      border:1px solid rgba(135,69,24,.08);
+      background:rgba(255,249,240,.92);
+      min-height:140px;
+    }
+
+    .req-card-icon{
+      font-size:30px;
+      line-height:1;
+      margin-bottom:10px;
+    }
+
+    .req-card-title{
+      margin:0 0 6px;
+      font-size:17px;
+      font-weight:900;
+      color:#6c2d12;
+    }
+
+    .req-card-text{
+      margin:0;
+      font-size:12px;
+      line-height:1.85;
+      color:rgba(91,41,19,.80);
+      font-weight:700;
+    }
+
+    .branch-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:14px;
+    }
+
+    .branch-card{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:18px;
+      border-radius:22px;
+      border:1px solid rgba(145,69,24,.10);
+      background:rgba(255,255,255,.78);
+      box-shadow:0 14px 24px rgba(118,63,28,.08);
+    }
+
+    .branch-card.is-serial{
+      background:linear-gradient(180deg, rgba(255,214,127,.76), rgba(255,255,255,.82));
+      border-color:rgba(194,130,22,.18);
+    }
+
+    .branch-card.is-beginner{
+      background:linear-gradient(180deg, rgba(183,230,255,.78), rgba(255,255,255,.82));
+      border-color:rgba(58,136,205,.16);
+    }
+
+    .branch-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      align-self:flex-start;
+      min-height:26px;
+      padding:0 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.68);
+      border:1px solid rgba(91,41,19,.10);
+      color:#6a3413;
+      font-size:11px;
+      font-weight:900;
+    }
+
+    .branch-title{
+      margin:0;
+      font-size:22px;
+      line-height:1.3;
+      font-weight:900;
+      color:#5b2913;
+    }
+
+    .branch-sub{
+      font-size:12px;
+      line-height:1.7;
+      color:rgba(91,41,19,.72);
+      font-weight:800;
+    }
+
+    .branch-steps{
+      margin:2px 0 0;
+      padding-left:20px;
+      color:#5b2913;
+    }
+
+    .branch-steps li{
+      margin:0 0 8px;
+      font-size:14px;
+      line-height:1.72;
+      font-weight:700;
+    }
+
+    .branch-text{
+      margin:0;
+      font-size:13px;
+      line-height:1.85;
+      color:rgba(91,41,19,.82);
+      font-weight:700;
+    }
+
+    .branch-note{
+      margin-top:auto;
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.58);
+      border:1px solid rgba(91,41,19,.08);
+      font-size:12px;
+      line-height:1.7;
+      color:rgba(91,41,19,.84);
+      font-weight:700;
+    }
+
+    .branch-button{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      min-height:48px;
+      margin-top:2px;
+      padding:0 16px;
+      border-radius:14px;
+      text-decoration:none;
+      border:0;
+      cursor:pointer;
+      font-size:14px;
+      font-weight:900;
+      line-height:1;
+      transition:transform .15s ease, filter .15s ease;
+      box-shadow:0 10px 18px rgba(118,63,28,.10);
+    }
+
+    .branch-button:hover,
+    .branch-button:active{
+      transform:translateY(-1px);
+      filter:brightness(1.04);
+    }
+
+    .branch-button.serial{
+      background:linear-gradient(180deg, #ffd978, #ffbf47);
+      color:#2a1a00;
+    }
+
+    .branch-button.beginner{
+      background:linear-gradient(180deg, #9fd2ff, #68b0ff);
+      color:#071a31;
+    }
+
+    .term-grid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:12px;
+    }
+
+    .term-card{
+      padding:16px 14px;
+      border-radius:18px;
+      border:1px solid rgba(145,69,24,.10);
+      background:rgba(255,255,255,.78);
+      text-align:left;
+      box-shadow:0 10px 20px rgba(118,63,28,.06);
+    }
+
+    .term-icon{
+      font-size:28px;
+      line-height:1;
+      margin-bottom:10px;
+    }
+
+    .term-title{
+      margin:0 0 6px;
+      font-size:16px;
+      line-height:1.35;
+      font-weight:900;
+      color:#5b2913;
+    }
+
+    .term-text{
+      margin:0;
+      font-size:12px;
+      line-height:1.82;
+      color:rgba(91,41,19,.80);
+      font-weight:700;
+    }
+
+    .memo-box{
+      padding:16px;
+      border-radius:20px;
+      border:1px solid rgba(255,173,99,.18);
+      background:
+        linear-gradient(180deg, rgba(255,235,187,.72), rgba(255,255,255,.78));
+      box-shadow:0 12px 22px rgba(118,63,28,.06);
+    }
+
+    .memo-list{
+      margin:0;
+      padding-left:20px;
+    }
+
+    .memo-list li{
+      margin:0 0 10px;
+      font-size:13px;
+      line-height:1.95;
+      color:rgba(91,41,19,.90);
+      font-weight:700;
+    }
+
+    .memo-list li:last-child{
+      margin-bottom:0;
+    }
+
+    .memo-balloon{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:15px;
+      background:rgba(255,255,255,.68);
+      border:1px solid rgba(91,41,19,.08);
+      font-size:13px;
+      line-height:1.9;
+      color:rgba(91,41,19,.90);
+      font-weight:700;
+    }
+
+    .action-buttons{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:12px;
+    }
+
+    .action-button{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:56px;
+      padding:0 16px;
+      border-radius:16px;
+      text-decoration:none;
+      border:0;
+      cursor:pointer;
+      font-size:14px;
+      font-weight:900;
+      line-height:1;
+      transition:transform .15s ease, filter .15s ease;
+      box-shadow:0 12px 18px rgba(118,63,28,.10);
+    }
+
+    .action-button:hover,
+    .action-button:active{
+      transform:translateY(-1px);
+      filter:brightness(1.04);
+    }
+
+    .action-button.is-gift{
+      background:linear-gradient(180deg, #ffd978, #ffbf47);
+      color:#2a1a00;
+    }
+
+    .action-button.is-serial{
+      background:linear-gradient(180deg, #ffcb98, #ff9e54);
+      color:#472007;
+    }
+
+    .action-button.is-farm{
+      background:linear-gradient(180deg, #b8efbf, #79d786);
+      color:#082511;
+    }
+
+    .action-note{
+      margin-top:12px;
+      font-size:12px;
+      line-height:1.86;
+      color:rgba(91,41,19,.76);
+      font-weight:700;
+    }
+
+    .guide-modal-actions{
+      padding:0 18px 20px;
+      margin-top:0;
+    }
+
+    .guide-modal-actions .modal-btn.primary{
+      background:linear-gradient(180deg, #7ec9ff, #4aaaf8);
+      color:#071a31;
+    }
+
+    @media (max-width:780px){
+      .guide-hero{
+        grid-template-columns:1fr;
+      }
+
+      .guide-hero-media{
+        min-height:auto;
+        border-right:0;
+        border-bottom:1px solid rgba(91,41,19,.10);
+        padding:18px 18px 8px;
+      }
+
+      .guide-hero-media img{
+        max-width:180px;
+      }
+
+      .guide-highlight-strip{
+        grid-template-columns:1fr;
+      }
+
+      .flow-cards{
+        grid-template-columns:repeat(2, minmax(0,1fr));
+      }
+
+      .req-grid{
+        grid-template-columns:1fr;
+      }
+
+      .branch-grid{
+        grid-template-columns:1fr;
+      }
+
+      .term-grid{
+        grid-template-columns:repeat(2, minmax(0,1fr));
+      }
+
+      .action-buttons{
+        grid-template-columns:1fr;
+      }
+
+      .guide-title{
+        font-size:26px;
+      }
+    }
+
+    @media (max-width:520px){
+      .guide-section{
+        padding:18px 14px;
+      }
+
+      .guide-hero-content{
+        padding:18px 14px 16px;
+      }
+
+      .guide-title{
+        font-size:23px;
+      }
+
+      .guide-subtitle{
+        font-size:14px;
+      }
+
+      .guide-balloon{
+        font-size:13px;
+        line-height:1.88;
+        padding:12px 13px;
+      }
+
+      .guide-section-title{
+        font-size:18px;
+      }
+
+      .flow-cards{
+        grid-template-columns:1fr;
+      }
+
+      .branch-title{
+        font-size:20px;
+      }
+
+      .term-grid{
+        grid-template-columns:1fr;
+      }
+    }
+
+    /* =========================
+       フッターのバックアップ
+    ========================= */
+    #trcFooterDataBox{
+      width:min(720px, 92%);
+      margin:18px auto 10px;
+      padding:12px 12px;
+      border:2px solid rgba(255,255,255,.22);
+      border-radius:14px;
+      background:rgba(10,10,18,.55);
+      backdrop-filter:blur(6px);
+      box-shadow:0 16px 50px rgba(0,0,0,.45);
+      text-align:left;
+      box-sizing:border-box;
+    }
+
+    #trcFooterDataBox .row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    #trcFooterDataBox .title{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight:900;
+      letter-spacing:.03em;
+      color:#fff;
+    }
+
+    #trcFooterDataBox .dot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:rgba(180,220,255,.85);
+      box-shadow:0 0 0 2px rgba(180,220,255,.18);
+    }
+
+    #trcFooterDataBox .desc{
+      margin-top:8px;
+      font-size:12px;
+      line-height:1.6;
+      color:rgba(255,255,255,.76);
+    }
+
+    #trcFooterDataBox .btns{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    #trcFooterDataBox .btn{
+      border:2px solid rgba(255,255,255,.30);
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:900;
+      letter-spacing:.03em;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+      white-space:nowrap;
+    }
+
+    #trcFooterDataBox .btn.primary{
+      background:linear-gradient(180deg, rgba(140,200,255,.22), rgba(255,255,255,.08));
+      border-color:rgba(180,220,255,.55);
+    }
+
+    footer{
+      width:100%;
+      margin:10px auto 0;
+      padding:10px 10px calc(18px + env(safe-area-inset-bottom));
+      text-align:center;
+      color:rgba(255,255,255,.78);
+      font-size:12px;
+      line-height:1.6;
+    }
+
+    footer a{
+      color:#fff;
+      text-decoration:none;
+      border-bottom:1px solid rgba(255,255,255,.35);
+      padding-bottom:1px;
+    }
+
+    /* =========================
+       weather.js 読込状態
+    ========================= */
+    .weather-status{
+      position:fixed;
+      right:10px;
+      bottom:10px;
+      z-index:5000;
+      max-width:min(360px, calc(100vw - 20px));
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(9,12,20,.88);
+      color:#fff;
+      box-shadow:0 12px 34px rgba(0,0,0,.35);
+      font-size:12px;
+      line-height:1.5;
+      display:none;
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+    }
+
+    .weather-status.is-error{
+      display:block;
+      border-color:rgba(255,100,100,.45);
+      color:#ffd5d5;
+    }
+
+    .weather-status b{
+      color:#fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================
+       上部HUD
+  ========================= -->
+  <div class="top-hud">
+    <div class="top-hud-inner">
+      <div class="hud-bar">
+        <div class="hud-left">
+          <a class="hud-btn back-btn" href="./index.html" aria-label="戻る">
+            <span class="hud-icon">←</span>
+            <span>戻る</span>
+          </a>
+
+          <div class="hud-chip octo-chip" aria-label="所持オクト">
+            <span class="hud-icon">🐙</span>
+            <span class="octo-label">所持オクト</span>
+            <span id="octoValue" class="octo-value">0</span>
+          </div>
+
+        </div>
+
+        <div class="hud-actions">
+          <a class="hud-btn zukan-btn" href="./zukan.html" aria-label="カード図鑑">
+            <span class="hud-icon">📘</span>
+            <span>図鑑</span>
+          </a>
+
+          <a
+            id="serialCodeBtn"
+            class="hud-btn serial-btn"
+            href="https://takoyaki-card.com/town-test/code.html"
+            aria-label="シリアルコード入力ページ"
+          >
+            <span class="hud-icon">🎫</span>
+            <span>シリアル入力</span>
+          </a>
+
+          <button id="newsBtn" class="hud-btn icon-only" type="button" aria-label="お知らせ">
+            <span class="hud-icon">✉️</span>
+            <span id="newsBadge" class="news-badge">N</span>
+          </button>
+
+          <button id="giftBoxBtn" class="hud-btn icon-only" type="button" aria-label="初回限定プレゼント">
+            <span class="hud-icon">🎁</span>
+            <span id="giftBadge" class="gift-badge">1</span>
+          </button>
+
+          <button id="farmGuideBtn" class="hud-btn guide-btn" type="button" aria-label="たこ焼きファームの始め方">
+            <span class="hud-icon">🔰</span>
+            <span>始め方</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+    <div class="page-shell">
+    <!-- =========================
+         マップ
+    ========================= -->
+    <div class="map-wrap" id="townMap">
+
+      <img
+        class="map-img"
+        src="https://takoyaki-card.com/town/assets/images/map/farmasa.png"
+        data-morning="https://takoyaki-card.com/town/assets/images/map/farmasa.png"
+        data-day="https://takoyaki-card.com/town/assets/images/map/farmhiru.png"
+        data-night="https://takoyaki-card.com/town/assets/images/map/farmyoru.png"
+        alt="2ページ目マップ">
+
+      <!-- 建物 -->
+      <a class="tf-building b1" href="./farm.html" aria-label="たこ焼き畑">
+        <img src="https://takoyaki-card.com/town/assets/images/map/hatake.png" alt="たこ焼き畑">
+      </a>
+
+      <a class="tf-building b2" href="https://takoyaki-card.com/town/matching-board.html" aria-label="カード募集板">
+        <img src="https://takoyaki-card.com/town/assets/images/map/keijiban.png" alt="カード募集板">
+      </a>
+
+      <a class="tf-building b3" href="./myshop.html" aria-label="マイ露店">
+        <img src="https://takoyaki-card.com/town/assets/images/map/myshop.png" alt="マイ露店">
+      </a>
+
+      <a class="tf-building b4" href="./omikuji.html" aria-label="ログインボーナス">
+        <img src="https://takoyaki-card.com/town/assets/images/map/omikuji.png" alt="ログインボーナス">
+      </a>
+
+      <a class="tf-building b5" href="./title-panel.html" aria-label="月間記録の祭壇">
+        <img src="https://takoyaki-card.com/town/assets/images/map/saidan.png" alt="月間記録の祭壇">
+      </a>
+
+      <a class="tf-building b6" href="./roten.html" aria-label="たこぴのお店">
+        <img src="https://takoyaki-card.com/town/assets/images/map/takopimise.png" alt="たこぴのお店">
+      </a>
+
+      <!-- タコ民 -->
+      <button class="takomin t2" data-id="t2" type="button" aria-label="菜々">
+        <img src="https://takoyaki-card.com/town/assets/images/map/h1.png"
+             data-day="https://takoyaki-card.com/town/assets/images/map/h1.png"
+             data-night="https://takoyaki-card.com/town/assets/images/map/h2.png"
+             alt="菜々">
+        <div class="takomin-balloon"></div>
+      </button>
+
+      <button class="takomin t3" data-id="t3" type="button" aria-label="タコニャン">
+        <img src="https://takoyaki-card.com/town/assets/images/map/takonyan.png"
+             data-day="https://takoyaki-card.com/town/assets/images/map/takonyan.png"
+             data-night="https://takoyaki-card.com/town/assets/images/map/takonyan.png"
+             alt="タコニャン">
+        <div class="takomin-balloon"></div>
+      </button>
+
+      <button class="takomin t4" data-id="t4" type="button" aria-label="みこぴ">
+        <img src="https://takoyaki-card.com/town/assets/images/map/m1.png"
+             data-day="https://takoyaki-card.com/town/assets/images/map/m1.png"
+             data-night="https://takoyaki-card.com/town/assets/images/map/m2.png"
+             alt="みこぴ">
+        <div class="takomin-balloon"></div>
+      </button>
+
+      <button class="takomin t6" data-id="t6" type="button" aria-label="マイ露店の案内人">
+        <img src="https://takoyaki-card.com/town/assets/images/map/mikai1.png"
+             data-day="https://takoyaki-card.com/town/assets/images/map/mikai2.png"
+             data-night="https://takoyaki-card.com/town/assets/images/map/mikai2.png"
+             alt="マイ露店の案内人">
+        <div class="takomin-balloon"></div>
+      </button>
+
+      <button class="takomin t7" data-id="t7" type="button" aria-label="札束タコ民">
+        <img src="https://takoyaki-card.com/town/assets/images/map/satu1.png"
+             data-day="https://takoyaki-card.com/town/assets/images/map/satu1.png"
+             data-night="https://takoyaki-card.com/town/assets/images/map/satu2.png"
+             alt="札束タコ民">
+        <div class="takomin-balloon"></div>
+      </button>
+
+      <button class="takomin t8" data-id="t8" type="button" aria-label="かすみぴ">
+        <img src="https://takoyaki-card.com/town/assets/images/map/kasumi1.png"
+             data-day="https://takoyaki-card.com/town/assets/images/map/kasumi1.png"
+             data-night="https://takoyaki-card.com/town/assets/images/map/kasumi2.png"
+             alt="かすみぴ">
+        <div class="takomin-balloon"></div>
+      </button>
+
+      <button class="takomin t9" data-id="t9" type="button" aria-label="防水タコ民">
+        <img src="https://takoyaki-card.com/town/assets/images/map/bousui.png"
+             data-day="https://takoyaki-card.com/town/assets/images/map/bousui.png"
+             data-night="https://takoyaki-card.com/town/assets/images/map/bousui.png"
+             alt="防水タコ民">
+        <div class="takomin-balloon"></div>
+      </button>
+
+      <button class="takomin t10" data-id="t10" type="button" aria-label="たこぴ">
+        <img src="https://takoyaki-card.com/town/assets/images/map/takopi01.png"
+             data-day="https://takoyaki-card.com/town/assets/images/map/takopi01.png"
+             data-night="https://takoyaki-card.com/town/assets/images/map/takopi02.png"
+             alt="たこぴ">
+        <div class="takomin-balloon"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- =========================
+       所持アイテムモーダル
+  ========================= -->
+  <div class="modal" id="inventoryModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
+      <div class="modal-title" id="inventoryTitle">所持アイテム</div>
+      <div id="inventoryModalBody"></div>
+      <div class="modal-actions">
+        <button class="modal-btn primary" type="button" id="inventoryClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================
+       ファーム説明モーダル
+  ========================= -->
+  <div class="modal" id="farmGuideModal" aria-hidden="true">
+    <div class="modal-card guide-modal-card" role="dialog" aria-modal="true" aria-labelledby="farmGuideTitle">
+      <div class="guide-page">
+
+        <section class="guide-hero">
+          <div class="guide-hero-media">
+            <img
+              src="https://takoyaki-card.com/town/assets/images/map/hatake.png"
+              alt="たこ焼きファーム案内">
+          </div>
+
+          <div class="guide-hero-content">
+            <div class="guide-kicker">FARM START GUIDE</div>
+            <h2 class="guide-title" id="farmGuideTitle">たこ焼きファームの遊び方</h2>
+            <p class="guide-subtitle">
+              最初に <b>プレゼントで資材</b> を受け取って、<br>
+              そのあと <b>シリアルコードがある人はタネを追加</b> すると始めやすいたこ。
+            </p>
+
+            <div class="guide-balloon">
+              このゲームは <b>タネ・ミズ・ヒリョウ</b> がないと遊べないたこ。<br>
+              まずは <b>🎁 初回限定プレゼント</b> で資材を受け取るたこ。<br>
+              そのあと、シリアルコードを持っている人は <b>🎫 シリアル入力</b> でタネを手に入れるたこ。<br>
+              さらに <b>ログインボーナス</b> でも、オクトや資材が増えていくたこ。
+            </div>
+          </div>
+        </section>
+
+        <section class="guide-section">
+          <div class="guide-section-head">
+            <h3 class="guide-section-title">まず最初に知っておくこと</h3>
+            <p class="guide-section-lead">
+              畑に行くだけではまだ遊べないことがあります。<br>
+              先に資材をそろえておくと、流れがかなり分かりやすくなります。
+            </p>
+          </div>
+
+          <div class="guide-highlight-strip">
+            <article class="guide-highlight">
+              <div class="guide-highlight-icon">🎁</div>
+              <h4 class="guide-highlight-title">最初はプレゼント</h4>
+              <p class="guide-highlight-text">
+                はじめての人は、まずプレゼントを受け取って資材を確保するのが基本です。
+              </p>
+            </article>
+
+            <article class="guide-highlight">
+              <div class="guide-highlight-icon">🎫</div>
+              <h4 class="guide-highlight-title">シリアルは追加タネ</h4>
+              <p class="guide-highlight-text">
+                シリアルコードがある人は、プレゼントのあとに入力してタネを増やします。
+              </p>
+            </article>
+
+            <article class="guide-highlight">
+              <div class="guide-highlight-icon">🎁</div>
+              <h4 class="guide-highlight-title">ログインボーナスも大事</h4>
+              <p class="guide-highlight-text">
+                オクトや資材を少しずつ増やせるので、毎日見ると育成が楽になります。
+              </p>
+            </article>
+          </div>
+        </section>
+
+
+                <section class="guide-section">
+          <div class="guide-section-head">
+            <h3 class="guide-section-title">このゲームに必要な3つの資材</h3>
+            <p class="guide-section-lead">
+              ファームを動かすための基本セットです。<br>
+              どれかが足りないと、やりたいことが止まりやすいです。
+            </p>
+          </div>
+
+          <div class="req-panel">
+            <h4 class="req-panel-title">これがないと始まりにくいたこ</h4>
+
+            <div class="req-grid">
+              <article class="req-card">
+                <div class="req-card-icon">🌱</div>
+                <h5 class="req-card-title">タネ</h5>
+                <p class="req-card-text">
+                  畑に植えるために必要です。<br>
+                  シリアルコードやプレゼントなどで入手できます。
+                </p>
+              </article>
+
+              <article class="req-card">
+                <div class="req-card-icon">💧</div>
+                <h5 class="req-card-title">ミズ</h5>
+                <p class="req-card-text">
+                  畑で使う大事な資材です。<br>
+                  プレゼントやログインボーナスなどで増やせます。
+                </p>
+              </article>
+
+              <article class="req-card">
+                <div class="req-card-icon">🧪</div>
+                <h5 class="req-card-title">ヒリョウ</h5>
+                <p class="req-card-text">
+                  成長を助ける資材です。<br>
+                  持っているとファームが進めやすくなります。
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="guide-section guide-flow">
+          <div class="guide-section-head">
+            <h3 class="guide-section-title">おすすめの始める順番</h3>
+            <p class="guide-section-lead">
+              今回の流れはこれで固定しておくと、初めての人でも迷いにくいです。
+            </p>
+          </div>
+
+          <div class="flow-cards">
+            <article class="flow-card is-gift">
+              <div class="flow-step-badge">STEP 1</div>
+              <div class="flow-icon">🎁</div>
+              <h4 class="flow-name">プレゼントを受け取る</h4>
+              <p class="flow-text">
+                まず最初に資材を受け取る。<br>
+                タネ・ミズ・ヒリョウの土台をここで作るたこ。
+              </p>
+            </article>
+
+            <article class="flow-card is-serial">
+              <div class="flow-step-badge">STEP 2</div>
+              <div class="flow-icon">🎫</div>
+              <h4 class="flow-name">シリアル入力する</h4>
+              <p class="flow-text">
+                シリアルコードがある人だけ次へ。<br>
+                入力してタネを増やすたこ。
+              </p>
+            </article>
+
+            <article class="flow-card is-plant">
+              <div class="flow-step-badge">STEP 3</div>
+              <div class="flow-icon">🌱</div>
+              <h4 class="flow-name">畑で植える</h4>
+              <p class="flow-text">
+                そろえた資材でファーム開始。<br>
+                やっとここで畑が動き出すたこ。
+              </p>
+            </article>
+
+            <article class="flow-card is-bonus">
+              <div class="flow-step-badge">STEP 4</div>
+              <div class="flow-icon">🎁</div>
+              <h4 class="flow-name">ログインボーナスを見る</h4>
+              <p class="flow-text">
+                オクトや資材の補充に役立つ。<br>
+                毎日こつこつで差が出るたこ。
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="guide-section guide-start-branch">
+          <div class="guide-section-head">
+            <h3 class="guide-section-title">自分の状況に合わせて進むたこ</h3>
+            <p class="guide-section-lead">
+              どちらの人も、最初にプレゼントを見るのがおすすめです。<br>
+              そのあとに分岐すると分かりやすいです。
+            </p>
+          </div>
+
+          <div class="branch-grid">
+            <article class="branch-card is-beginner">
+              <div class="branch-badge">まずここ</div>
+              <h4 class="branch-title">全員共通の最初の動き</h4>
+              <div class="branch-sub">はじめての人も、シリアル持ちの人も共通</div>
+
+              <ol class="branch-steps">
+                <li><b>初回限定プレゼントを開く</b></li>
+                <li><b>タネ・ミズ・ヒリョウを受け取る</b></li>
+                <li><b>所持アイテムで中身を確認する</b></li>
+              </ol>
+
+              <p class="branch-text">
+                まず資材を持っている状態にしてから進むと、畑に行ったとき何ができるかが分かりやすくなります。
+              </p>
+
+              <div class="branch-note">
+                このゲームは資材ゼロだと動きにくいので、最初にここを済ませるのがいちばん自然たこ。
+              </div>
+
+              <button class="branch-button beginner" type="button" id="guideGiftOpenBtn">
+                プレゼントを開く
+              </button>
+            </article>
+
+            <article class="branch-card is-serial">
+              <div class="branch-badge">持ってる人向け</div>
+              <h4 class="branch-title">シリアルコードがある人</h4>
+              <div class="branch-sub">プレゼント受取後に進むルート</div>
+
+              <ol class="branch-steps">
+                <li><b>プレゼントを受け取ったあと</b></li>
+                <li><b>シリアル入力ページへ行く</b></li>
+                <li><b>コードを使ってタネを手に入れる</b></li>
+                <li><b>畑へ行って植える</b></li>
+              </ol>
+
+              <p class="branch-text">
+                シリアルコードは、スタート用の追加タネを増やすイメージです。最初から畑へ行くより、先に入力しておくと流れがきれいです。
+              </p>
+
+              <div class="branch-note">
+                シリアルは「最初に資材を持つ」→「追加でタネをもらう」の順で見ると理解しやすいたこ。
+              </div>
+
+              <a class="branch-button serial" href="https://takoyaki-card.com/town-test/code.html">
+                シリアル入力へ
+              </a>
+            </article>
+          </div>
+        </section>
+
+        <section class="guide-section guide-terms">
+          <div class="guide-section-head">
+            <h3 class="guide-section-title">これだけ覚えればOK</h3>
+            <p class="guide-section-lead">
+              最初は全部を覚えなくて大丈夫です。<br>
+              とりあえず下の4つが分かれば動けます。
+            </p>
+          </div>
+
+          <div class="term-grid">
+            <article class="term-card">
+              <div class="term-icon">🌱</div>
+              <h4 class="term-title">タネ</h4>
+              <p class="term-text">植えるための基本アイテム。ないと畑が始まりません。</p>
+            </article>
+
+            <article class="term-card">
+              <div class="term-icon">💧</div>
+              <h4 class="term-title">ミズ</h4>
+              <p class="term-text">ファームで使う重要資材。プレゼントやログインボーナスでも増やせます。</p>
+            </article>
+
+            <article class="term-card">
+              <div class="term-icon">🧪</div>
+              <h4 class="term-title">ヒリョウ</h4>
+              <p class="term-text">成長補助のための資材。持っていると育成が進めやすくなります。</p>
+            </article>
+
+            <article class="term-card">
+              <div class="term-icon">🐙</div>
+              <h4 class="term-title">オクト</h4>
+              <p class="term-text">お店などで使うお金。ログインボーナスでも増えることがあります。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="guide-section guide-memo">
+          <div class="guide-section-head">
+            <h3 class="guide-section-title">はじめての人向けメモ</h3>
+          </div>
+
+          <div class="memo-box">
+            <ul class="memo-list">
+              <li><b>所持アイテム</b> ボタンを押すと、今あるタネ・ミズ・ヒリョウが確認できます</li>
+              <li><b>ログインボーナス</b> は資材やオクトの補充先として大事です</li>
+              <li>プレゼント受取後に <b>シリアル入力</b> を見ると、タネ不足になりにくいです</li>
+              <li>データは <b>この端末のブラウザ</b> に保存されるので、機種変更前はバックアップ推奨です</li>
+            </ul>
+
+            <div class="memo-balloon">
+              迷ったら、まず <b>所持アイテム</b> を見るたこ。<br>
+              「今なにを持っていて、何が足りないか」が分かれば、次に進みやすいたこ。
+            </div>
+          </div>
+        </section>
+
+        <section class="guide-section guide-actions">
+          <div class="guide-section-head">
+            <h3 class="guide-section-title">準備ができたらこの順で進むたこ</h3>
+            <p class="guide-section-lead">
+              いちばん迷わない順番でボタンを並べています。
+            </p>
+          </div>
+
+          <div class="action-buttons">
+            <button class="action-button is-gift" type="button" id="guideGiftOpenBtnBottom">
+              🎁 まずプレゼント
+            </button>
+
+            <a class="action-button is-serial" href="https://takoyaki-card.com/town-test/code.html">
+              🎫 次にシリアル入力
+            </a>
+
+            <a class="action-button is-farm" href="./farm.html">
+              🌱 そのあと畑へ行く
+            </a>
+          </div>
+
+          <div class="action-note">
+            ログインボーナスでオクトや資材も増えるので、プレイ前後に見ておくとお得です。
+          </div>
+        </section>
+
+        <div class="modal-actions guide-modal-actions">
+          <button class="modal-btn primary" type="button" id="farmGuideClose">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================
+       初回限定プレゼント
+  ========================= -->
+  <div class="modal" id="giftModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="giftModalTitle">
+      <div class="modal-title" id="giftModalTitle">初回限定プレゼント</div>
+      <div class="modal-text" id="giftModalBody"></div>
+      <div class="modal-actions" id="giftModalActions"></div>
+    </div>
+  </div>
+
+  <!-- =========================
+       お知らせモーダル
+  ========================= -->
+  <div class="modal" id="newsModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
+      <div class="modal-title" id="newsModalTitle">運営からのお知らせ</div>
+      <div class="modal-text" style="margin-bottom:12px;">
+        最新情報がここに届きます。新しいお知らせがあると、上の <b>✉️</b> に赤い印が付きます。
+      </div>
+      <div id="newsList" class="news-list"></div>
+      <div class="modal-actions">
+        <button class="modal-btn primary" type="button" id="newsModalClose">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="weatherJsStatus" class="weather-status" aria-live="polite"></div>
+
+
+
+    <script>
+  (() => {
+    "use strict";
+
+    /* =========================================
+       0) 共通
+    ========================================= */
+    const LS = {
+      octo: "roten_v1_octo",
+      inv: "tf_v1_inv",
+      launchGift: "roten_v1_launch_gift_claimed",
+      log: "roten_v1_log",
+      newsRead: "trc_v1_news_read_ids"
+    };
+
+    const NEWS_DATA = [
+      {
+        id: "news_2026_03_27_mail_start",
+        date: "2026.03.27",
+        title: "✉️ お知らせ機能を追加しました",
+        body:
+`街の上にある ✉️ から、
+運営の最新情報を確認できるようになりました。
+
+新しいお知らせが届くと、
+ボタンに印が表示されます。`
+      },
+      {
+        id: "news_2026_03_27_guide",
+        date: "2026.03.27",
+        title: "はじめての方へ：おすすめの遊び方",
+        body:
+`最初は「初回限定プレゼント」で資材を受け取るのがおすすめです。
+
+そのあと、シリアルコードを持っている方は
+「シリアル入力」でタネを受け取ってから畑へ進むと分かりやすいです。
+
+また、ログインボーナスでも
+オクトや資材を手に入れられます。`
+      }
+    ];
+
+    const ITEM_META = {
+      seed: {
+        seed_shop:           { icon:"🌱", name:"店頭タネ" },
+        seed_line:           { icon:"🌱", name:"回線タネ" },
+        seed_special:        { icon:"🌱", name:"たこぴのタネ" },
+        seed_random:         { icon:"🌱", name:"ランダムタネ" },
+        seed_bussasari:      { icon:"🌱", name:"ぶっ刺さりタネ" },
+        seed_namara_kawasar: { icon:"🌱", name:"なまらかわさるタネ" },
+        seed_colabo:         { icon:"🌱", name:"コラボタネ" },
+        seed_anniv:          { icon:"🌱", name:"アニバーサリータネ" }
+      },
+      water: {
+        water_plain_free:  { icon:"💧", name:"無料のミズ" },
+        water_nice:        { icon:"💧", name:"なんか良さそう" },
+        water_suspicious:  { icon:"💧", name:"怪しい水" },
+        water_overdo:      { icon:"💧", name:"やりすぎな水" },
+        water_regret:      { icon:"💧", name:"押さなきゃよかった水" },
+        water_rotten:      { icon:"💧", name:"腐ったミズ" },
+        water_sea:         { icon:"💧", name:"海水" },
+        water_yunokawa:    { icon:"💧", name:"温泉水" },
+        water_supergod:    { icon:"💧", name:"超神水" }
+      },
+      fert: {
+        fert_feel:       { icon:"🧪", name:"気のせい肥料" },
+        fert_guts:       { icon:"🧪", name:"根性論ぶち込み肥料" },
+        fert_skip:       { icon:"🧪", name:"工程すっ飛ばし肥料" },
+        fert_intuition:  { icon:"🧪", name:"直感のヒリョウ" },
+        fert_trial:      { icon:"🧪", name:"試しのヒリョウ" },
+        fert_empty:      { icon:"🧪", name:"無のヒリョウ" }
+      }
+    };
+
+    function nowTokyo(){
+      return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+    }
+
+    function isNightHour(h){
+      return (h >= 20 || h < 5);
+    }
+
+    function slotByHour(h){
+      if (h >= 5 && h < 11) return "morning";
+      if (h >= 11 && h < 20) return "day";
+      return "night";
+    }
+
+    function loadJSON(key, fallback){
+      try{
+        const raw = localStorage.getItem(key);
+        if(!raw) return fallback;
+        return JSON.parse(raw);
+      }catch(_){
+        return fallback;
+      }
+    }
+
+    function saveJSON(key, obj){
+      localStorage.setItem(key, JSON.stringify(obj));
+    }
+
+    function pushLog(msg){
+      const a = loadJSON(LS.log, []);
+      a.unshift({ t: Date.now(), msg });
+      saveJSON(LS.log, a.slice(0, 80));
+    }
+
+    function invDefault(){
+      return { ver:1, seed:{}, water:{}, fert:{} };
+    }
+
+    function loadInv(){
+      const inv = loadJSON(LS.inv, invDefault());
+      inv.seed = (inv && typeof inv.seed === "object" && inv.seed) ? inv.seed : {};
+      inv.water = (inv && typeof inv.water === "object" && inv.water) ? inv.water : {};
+      inv.fert = (inv && typeof inv.fert === "object" && inv.fert) ? inv.fert : {};
+      return inv;
+    }
+
+    function saveInv(inv){
+      saveJSON(LS.inv, inv);
+    }
+
+    function ensureInvKeys(){
+      const inv = loadInv();
+      inv.seed = inv.seed || {};
+      inv.water = inv.water || {};
+      inv.fert = inv.fert || {};
+      saveInv(inv);
+      return inv;
+    }
+
+    function getOctoValue(){
+      const raw = localStorage.getItem(LS.octo);
+      const n = Number(raw || 0);
+      return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+    }
+
+    function setOctoValue(v){
+      localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v) || 0))));
+    }
+
+    function addOcto(delta){
+      setOctoValue(getOctoValue() + Number(delta || 0));
+    }
+
+    function renderOcto(){
+      const el = document.getElementById("octoValue");
+      if (!el) return;
+      el.textContent = getOctoValue().toLocaleString("ja-JP");
+    }
+
+    function escapeHtml(str){
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    /* =========================================
+       1) マップ画像切替
+    ========================================= */
+    function applyMapByHour(h){
+      const img = document.querySelector(".map-img");
+      if (!img) return;
+
+      const slot = slotByHour(h);
+      const url =
+        slot === "morning" ? img.dataset.morning :
+        slot === "day"     ? img.dataset.day :
+                             img.dataset.night;
+
+      if (url && img.src !== url) img.src = url;
+    }
+
+    /* =========================================
+       2) 空グラデーション
+    ========================================= */
+    const SKY = [
+      ["#0b1020", "#141c2e"], ["#0b1020", "#141c2e"],
+      ["#0c1224", "#18223a"], ["#121a33", "#22304f"],
+      ["#1b2a44", "#3b4a6b"], ["#3c3b5a", "#7b6ea8"],
+      ["#8a5a7b", "#f2b5c4"], ["#d97b6a", "#ffd1a9"],
+      ["#8ec1e8", "#eaf4ff"], ["#6fa8dc", "#cfe8ff"],
+      ["#63a4e1", "#dbeeff"], ["#76b5ea", "#eaf4ff"],
+      ["#87b8e5", "#eaf4ff"], ["#87b8e5", "#eaf4ff"],
+      ["#7fb3d5", "#eaf4f4"], ["#9fc5d1", "#eaf4f4"],
+      ["#f9cb9c", "#fff1c1"], ["#f2a65a", "#f6d365"],
+      ["#d96c4f", "#f2a65a"], ["#a35d7b", "#5b4e7a"],
+      ["#2c2f4a", "#1b2430"], ["#1b2430", "#141c2e"],
+      ["#121a2b", "#10131f"], ["#0b1020", "#141c2e"]
+    ];
+
+    const mix = (a,b,t)=>{
+      const h=x=>parseInt(x,16);
+      const r=x=>x.toString(16).padStart(2,"0");
+      const A=a.slice(1).match(/../g).map(h);
+      const B=b.slice(1).match(/../g).map(h);
+      return "#"+A.map((v,i)=>r(Math.round(v+(B[i]-v)*t))).join("");
+    };
+
+    function applySky(now){
+      const h = now.getHours();
+      const t = (now.getMinutes() * 60 + now.getSeconds()) / 3600;
+      const next = (h + 1) % 24;
+
+      document.body.style.setProperty(
+        "--sky",
+        `linear-gradient(${mix(SKY[h][0], SKY[next][0], t)}, ${mix(SKY[h][1], SKY[next][1], t)})`
+      );
+    }
+
+    /* =========================================
+       3) 昼夜クラス
+    ========================================= */
+    function applyDayNightClass(h){
+      const html = document.documentElement;
+      if (isNightHour(h)) {
+        html.classList.add("is-night");
+        html.classList.remove("day");
+      } else {
+        html.classList.remove("is-night");
+        html.classList.add("day");
+      }
+    }
+
+    /* =========================================
+       4) 建物・タコ民の昼夜画像切替
+    ========================================= */
+    function applyNpcImages(){
+      const night = document.documentElement.classList.contains("is-night");
+      document.querySelectorAll(".takomin img").forEach(img => {
+        const day = img.dataset.day;
+        const nightUrl = img.dataset.night;
+        const next = night ? nightUrl : day;
+        if (next && img.src !== next) img.src = next;
+      });
+    }
+
+    /* =========================================
+       5) タコ民セリフ
+    ========================================= */
+    const TAKOMIN_LINES = {
+      t2: {
+        day: [
+          "まずはタネを植えねぇと何も始まらねぇぞ。",
+          "資材が揃ってからが本番だ。焦るなよ。",
+          "いいか、タネ・ミズ・ヒリョウ。この3つだ。",
+          "焼きも畑も、準備で8割決まるんだ。",
+          "プレゼントはもう開けたか？あれが最初の一手だ。",
+          "畑はな、毎日触る奴が強くなる。",
+          "シリアル持ってるなら先に使っとけ。無駄がない。",
+          "いい流れ作れよ。途中で止まるな。",
+          "迷ったら持ち物見ろ。それが答えだ。",
+          "焼くのも育てるのも同じだ。手を抜くなよ。"
+        ],
+        night: [
+          "夜は判断が鈍る。だからこそ基本を守れ。",
+          "暗くても、やることは変わらねぇ。",
+          "タネがないなら動くな。それだけだ。",
+          "焦ると全部崩れるぞ。ゆっくりいけ。",
+          "夜に仕込んだ分、明日が楽になる。",
+          "静かな時間が一番伸びるんだ。",
+          "シリアルは夜に使うのも悪くねぇな。",
+          "今日はどこまで進める？決めてから動け。",
+          "畑は裏切らねぇ。ただしサボると死ぬ。",
+          "ちゃんとやってりゃ結果はついてくる。"
+        ]
+      },
+      t3: {
+        day: [
+          "畑のアイテム、釣りでも拾えるニャン。",
+          "海の中には、まだ見たことないカードが眠ってるニャン。",
+          "右の神社、運試しできるニャン。",
+          "おみくじで資材もオクトも出ることあるニャン。",
+          "釣りは地味だけど、当たるとデカいニャン。",
+          "毎日引くと、何か起きるって噂ニャン…？",
+          "大凶ってハズレだけじゃない気がするニャン。",
+          "連続で引いてる人、なんか様子おかしいニャン。",
+          "運も実力のうちニャン。引いてみるニャン。",
+          "神社と釣り、両方見るのがコツニャン。"
+        ],
+        night: [
+          "夜の海はレア出やすい気がするニャン。",
+          "静かな時ほど、大物が来るニャン。",
+          "神社も夜のほうが…なんか出そうニャン。",
+          "大凶、続けて引いてる人いるニャン…。",
+          "あれ、ただのハズレじゃない気がするニャン。",
+          "釣りとおみくじ、両方やるのがコツニャン。",
+          "夜の引きは偏るニャン。良くも悪くもニャン。",
+          "今日も引く？それとも様子見るニャン？",
+          "欲張ると外す。でも欲張らないと当たらないニャン。",
+          "深追いするか…やめるか…悩むニャン。"
+        ]
+      },
+      t4: {
+        day: [
+          "今日の運命、受け取っていきますか？",
+          "毎日の積み重ねが、未来を変えますよ。",
+          "小さな報酬も、やがて大きな差になります。",
+          "忘れずに受け取ることが大事です。",
+          "今日の一歩が、明日の結果を作ります。",
+          "来るたびに何かが積み上がっています。",
+          "継続は力、というやつですね。",
+          "今日の分、受け取っていきましょう。",
+          "流れは続いていますよ。",
+          "止めないこと、それが一番です。"
+        ],
+        night: [
+          "夜の報酬も、静かに積み上がります。",
+          "今日の終わりに、ひとつ受け取っていきませんか？",
+          "忘れているもの、ありませんか？",
+          "一日分の差は、意外と大きいですよ。",
+          "夜に確認する人ほど、積み重ねが上手です。",
+          "ここで止めるか、続けるか…。",
+          "ほんの少しの差が、後で効いてきます。",
+          "受け取り忘れは、もったいないですよ。",
+          "今日もお疲れさまです。",
+          "最後にひとつ、受け取っていきましょう。"
+        ]
+      },
+      t6: {
+        day: [
+          "ここは自分の店だ。好きにやっていい。",
+          "ダブったカード、売っていけばいい。",
+          "タコ民と会話してみろ。ちゃんと反応あるぞ。",
+          "好感度、上げると見えるものが変わる。",
+          "売るか残すか、その判断が大事だ。",
+          "全部売るなよ。後で後悔するぞ。",
+          "ここはただの店じゃねぇ。関係を作る場所だ。",
+          "同じカードでも価値は変わる。",
+          "会話、意外とヒントあるぞ。",
+          "商売はタイミングだ。覚えとけ。"
+        ],
+        night: [
+          "夜の客はクセがある。気をつけろ。",
+          "静かな時間ほど、いい取引が来る。",
+          "売るかどうか、夜は迷うよな。",
+          "焦って売るな。価値を見極めろ。",
+          "好感度、ちゃんと見てるか？",
+          "誰に売るかで結果は変わる。",
+          "夜は本音が出る場所だ。",
+          "交渉はじっくりやれ。",
+          "ここでの判断、後に効くぞ。",
+          "いい店にするかどうかは、お前次第だ。"
+        ]
+      },
+      t7: {
+        day: [
+          "今日はどこで使うか…悩むな。",
+          "マッチングで探すか…露店で買うか…。",
+          "釣りで一発当てるのもありだな。",
+          "職人カード、今日出るかもしれない…。",
+          "全部集めたいんだよ、全部。",
+          "まだ見てないカードがあるはずだ。",
+          "中途半端は嫌なんだよな。",
+          "ここで使うか…温存するか…。",
+          "あと一枚で揃う気がするんだよ。",
+          "いや…まだ足りない…まだだ…。"
+        ],
+        night: [
+          "夜は欲が強くなるな…。",
+          "全部欲しい。全部集めたい。",
+          "隠れカード…絶対あるはずだ。",
+          "職人カード…今日来る気がする。",
+          "ここで引くか…いや…待つか…。",
+          "金はある。でも時間が足りない。",
+          "コンプしないと気が済まない。",
+          "まだ終わってない…まだ集めきれてない。",
+          "ここで引かなきゃ後悔する気がする…。",
+          "もう戻れないな…。行くしかない。"
+        ]
+      },
+      t8: {
+        day: [
+          "その願い、叶えてあげるじゃなイカ。",
+          "欲しいカード…ちゃんと見えてるじゃなイカ？",
+          "タコ民の願い、拾ってくるじゃなイカ。",
+          "当てられたら、報酬が増えるじゃなイカ。",
+          "外してもいい。でも当てたら気持ちいいじゃなイカ？",
+          "そのヒント、ちゃんと読めてるじゃなイカ？",
+          "探すのは簡単。でも当てるのは難しいじゃなイカ。",
+          "願いを叶えると、何か溜まっていくじゃなイカ。",
+          "熱量…ちゃんと見てるじゃなイカ？",
+          "溜まったら、何が起きると思うじゃなイカ？"
+        ],
+        night: [
+          "夜は願いが濃くなるじゃなイカ。",
+          "そのカード、本当に欲しいのは誰じゃなイカ？",
+          "外れるときほど、惜しいじゃなイカ。",
+          "熱量、溜まってきてるじゃなイカ…？",
+          "そろそろ、引けるんじゃなイカ？",
+          "願いは繰り返すほど強くなるじゃなイカ。",
+          "あと少しで何かが変わるじゃなイカ。",
+          "気づいてる？もうすぐじゃなイカ。",
+          "この感覚、クセになるじゃなイカ？",
+          "全部当てたら、どうなると思うじゃなイカ？"
+        ]
+      },
+      t9: {
+        day: [
+          "水は防げる。でも流れは防げない。",
+          "ここは月間記録の場所だ。",
+          "積み上げたものだけが残る。",
+          "数字は嘘をつかない。",
+          "今月、どこまでやれる？",
+          "続けた分だけ記録になる。",
+          "途中でやめると全部止まるぞ。",
+          "見返すと差が出てるはずだ。",
+          "防ぐのも大事だが、進むのも大事だ。",
+          "ちゃんと積み上げてるか？"
+        ],
+        night: [
+          "夜に見る記録は重い。",
+          "今日の分、ちゃんと残ってるか？",
+          "積み上げは裏切らない。",
+          "でも止めると一気に落ちる。",
+          "今月、まだ伸ばせる。",
+          "数字は静かに語る。",
+          "誰も見てなくても記録は残る。",
+          "積み重ねた者だけが分かる。",
+          "ここで差が出る。",
+          "まだ終わってない。続けろ。"
+        ]
+      },
+      t10: {
+        day: [
+          "いらっしゃいだこ〜！資材ならなんでもあるたこ！",
+          "タネ・ミズ・ヒリョウ、全部そろってるたこ！",
+          "足りないもの、ここで補うたこ！",
+          "畑で困る前に買っとくたこ！",
+          "準備してる人ほど強いんだこ〜！",
+          "必要な分だけ買うのも大事たこ！",
+          "買いすぎても使いきれるたこ〜？",
+          "今のうちに揃えると楽たこ！",
+          "資材切れは一番つらいたこ〜！",
+          "迷ったら少し多めに持つたこ！"
+        ],
+        night: [
+          "夜の買い物はちょっと楽しいたこ〜！",
+          "足りなくなる前に買っとくたこ！",
+          "夜に仕込んで明日が楽たこ！",
+          "資材があると安心するたこ〜！",
+          "あとちょっと…って時に困るたこ！",
+          "今買うか、明日にするか…悩むたこ？",
+          "まとめ買いもアリたこ〜！",
+          "夜は判断ミスしやすいから気をつけるたこ！",
+          "ちゃんと考えて買うたこ〜！",
+          "必要な分、ちゃんと見極めるたこ！"
+        ]
+      }
+    };
+
+    function pickRandom(arr){
+      if (!Array.isArray(arr) || !arr.length) return "……";
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function currentTalk(id){
+      const item = TAKOMIN_LINES[id];
+      if (!item) return "……";
+      const night = document.documentElement.classList.contains("is-night");
+      return pickRandom(night ? item.night : item.day);
+    }
+
+    function wireTakominTalk(){
+      document.querySelectorAll(".takomin").forEach(btn => {
+        const balloon = btn.querySelector(".takomin-balloon");
+        if (!balloon) return;
+
+        const show = () => {
+          balloon.textContent = currentTalk(btn.dataset.id);
+          balloon.style.display = "block";
+        };
+        const hide = () => {
+          balloon.style.display = "none";
+        };
+
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const opened = balloon.style.display === "block";
+          document.querySelectorAll(".takomin-balloon").forEach(b => b.style.display = "none");
+          if (!opened) show();
+        });
+
+        btn.addEventListener("mouseenter", show);
+        btn.addEventListener("mouseleave", hide);
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".takomin")) {
+          document.querySelectorAll(".takomin-balloon").forEach(b => b.style.display = "none");
+        }
+      });
+    }
+
+    /* =========================================
+       6) モーダル共通
+    ========================================= */
+    function openModal(modal){
+      if (!modal) return;
+      modal.style.display = "flex";
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(modal){
+      if (!modal) return;
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    /* =========================================
+       7) 所持アイテムモーダル
+       tf_v1_inv のみ読む
+    ========================================= */
+    const inventoryBtn       = document.getElementById("inventoryBtn");
+    const inventoryModal     = document.getElementById("inventoryModal");
+    const inventoryModalBody = document.getElementById("inventoryModalBody");
+    const inventoryClose     = document.getElementById("inventoryClose");
+
+    function totalCount(obj){
+      return Object.values(obj || {}).reduce((sum, v) => sum + Math.max(0, Number(v || 0)), 0);
+    }
+
+    function getItemMeta(type, key){
+      const meta = ITEM_META[type] && ITEM_META[type][key];
+      if (meta) return meta;
+
+      const fallbackIcon =
+        type === "seed" ? "🌱" :
+        type === "water" ? "💧" :
+        type === "fert" ? "🧪" : "📦";
+
+      return {
+        icon: fallbackIcon,
+        name: String(key || "").replace(/_/g, " ")
+      };
+    }
+
+    function buildInventoryIconGrid(obj, type){
+      const rows = Object.entries(obj || {})
+        .map(([key, value]) => [key, Number(value || 0)])
+        .filter(([, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1]);
+
+      if (!rows.length) {
+        return `<div class="inventory-empty">まだありません。</div>`;
+      }
+
+      return `
+        <div class="inventory-icon-grid">
+          ${rows.map(([key, count]) => {
+            const meta = getItemMeta(type, key);
+            return `
+              <div class="inventory-icon-item">
+                <div class="inventory-count-badge">${count.toLocaleString("ja-JP")}</div>
+                <div class="inventory-icon-emoji">${escapeHtml(meta.icon)}</div>
+                <div class="inventory-icon-name">${escapeHtml(meta.name)}</div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function renderInventoryModal(){
+      const inv = ensureInvKeys();
+
+      const seedTotal = totalCount(inv.seed);
+      const waterTotal = totalCount(inv.water);
+      const fertTotal = totalCount(inv.fert);
+      const allTotal = seedTotal + waterTotal + fertTotal;
+
+      if (!allTotal) {
+        inventoryModalBody.innerHTML = `
+          <div class="inventory-summary">
+            <div class="inventory-card">
+              <div class="inventory-card-label">所持オクト</div>
+              <div class="inventory-card-value">🐙 ${getOctoValue().toLocaleString("ja-JP")}</div>
+            </div>
+            <div class="inventory-card">
+              <div class="inventory-card-label">所持アイテム合計</div>
+              <div class="inventory-card-value">0</div>
+            </div>
+          </div>
+
+          <div class="inventory-empty">
+            まだアイテムを持っていません。<br>
+            まずは「初回限定プレゼント」で資材を受け取ってください。<br>
+            そのあと、シリアルコードがある人は「シリアル入力」でタネを受け取ると始めやすいです。
+          </div>
+        `;
+        return;
+      }
+
+      inventoryModalBody.innerHTML = `
+        <div class="inventory-summary">
+          <div class="inventory-card">
+            <div class="inventory-card-label">所持オクト</div>
+            <div class="inventory-card-value">🐙 ${getOctoValue().toLocaleString("ja-JP")}</div>
+          </div>
+          <div class="inventory-card">
+            <div class="inventory-card-label">所持アイテム合計</div>
+            <div class="inventory-card-value">${allTotal.toLocaleString("ja-JP")}</div>
+          </div>
+        </div>
+
+        <div class="inventory-groups">
+          <section class="inventory-group">
+            <h3 class="inventory-group-title">🌱 タネ（${seedTotal.toLocaleString("ja-JP")}）</h3>
+            ${buildInventoryIconGrid(inv.seed, "seed")}
+          </section>
+
+          <section class="inventory-group">
+            <h3 class="inventory-group-title">💧 ミズ（${waterTotal.toLocaleString("ja-JP")}）</h3>
+            ${buildInventoryIconGrid(inv.water, "water")}
+          </section>
+
+          <section class="inventory-group">
+            <h3 class="inventory-group-title">🧪 ヒリョウ（${fertTotal.toLocaleString("ja-JP")}）</h3>
+            ${buildInventoryIconGrid(inv.fert, "fert")}
+          </section>
+        </div>
+      `;
+    }
+
+    function openInventoryModal(){
+      renderInventoryModal();
+      openModal(inventoryModal);
+    }
+
+    if (inventoryBtn) {
+      inventoryBtn.addEventListener("click", openInventoryModal);
+    }
+
+    if (inventoryClose) {
+      inventoryClose.addEventListener("click", () => closeModal(inventoryModal));
+    }
+
+    if (inventoryModal) {
+      inventoryModal.addEventListener("click", (e) => {
+        if (e.target === inventoryModal) closeModal(inventoryModal);
+      });
+    }
+
+    /* =========================================
+       8) ファーム説明モーダル
+    ========================================= */
+    const farmGuideBtn   = document.getElementById("farmGuideBtn");
+    const farmGuideModal = document.getElementById("farmGuideModal");
+    const farmGuideClose = document.getElementById("farmGuideClose");
+
+    if (farmGuideBtn) {
+      farmGuideBtn.addEventListener("click", () => openModal(farmGuideModal));
+    }
+    if (farmGuideClose) {
+      farmGuideClose.addEventListener("click", () => closeModal(farmGuideModal));
+    }
+    if (farmGuideModal) {
+      farmGuideModal.addEventListener("click", (e) => {
+        if (e.target === farmGuideModal) closeModal(farmGuideModal);
+      });
+    }
+
+    /* =========================================
+       9) 初回限定プレゼント
+    ========================================= */
+    const giftBoxBtn       = document.getElementById("giftBoxBtn");
+    const giftBadge        = document.getElementById("giftBadge");
+    const giftModal        = document.getElementById("giftModal");
+    const giftModalBody    = document.getElementById("giftModalBody");
+    const giftModalActions = document.getElementById("giftModalActions");
+
+    function renderGiftModalClaimed(){
+      giftModalBody.innerHTML = `
+        もう受け取った…たこ。<br>
+        大事に使って…たこ。
+      `;
+
+      giftModalActions.innerHTML = `
+        <button class="modal-btn primary" type="button" id="giftModalCloseBtn">閉じる</button>
+      `;
+
+      document.getElementById("giftModalCloseBtn")?.addEventListener("click", () => closeModal(giftModal));
+    }
+
+    function renderGiftModalReady(){
+      giftModalBody.innerHTML = `
+        たこぴ：<br>
+        「ホームページ公開記念…たこ。<br>
+        “最初の火種”をあげる…たこ。」<br><br>
+
+        <div class="gift-list">
+          <div class="gift-list-title">内容</div>
+          <div class="gift-item">🌱 店頭タネ ×15</div>
+          <div class="gift-item">🌱 回線タネ ×15</div>
+          <div class="gift-item">🌱 たこぴのタネ ×1</div>
+          <hr class="gift-divider">
+          <div class="gift-item">💧 なんか良さそう ×10</div>
+          <div class="gift-item">💧 怪しい水 ×10</div>
+          <div class="gift-item">💧 やりすぎな水 ×10</div>
+          <div class="gift-item">🧪 気のせい肥料 ×10</div>
+          <div class="gift-item">🧪 根性論ぶち込み肥料 ×10</div>
+          <div class="gift-item">🧪 工程すっ飛ばし肥料 ×10</div>
+          <div class="gift-item">💰 オクト +1000</div>
+        </div>
+
+        <div class="gift-note">
+          ※1回だけ。押したら戻れない…たこ。
+        </div>
+      `;
+
+      giftModalActions.innerHTML = `
+        <button class="modal-btn primary" type="button" id="claimGiftBtn">受け取る（取り消し不可）</button>
+        <button class="modal-btn" type="button" id="giftModalCloseBtn">やめる</button>
+      `;
+
+      document.getElementById("giftModalCloseBtn")?.addEventListener("click", () => closeModal(giftModal));
+      document.getElementById("claimGiftBtn")?.addEventListener("click", () => {
+        claimLaunchGift();
+        closeModal(giftModal);
+      });
+    }
+
+    function refreshGiftButton(){
+      const claimed = localStorage.getItem(LS.launchGift) === "1";
+      if (!giftBadge) return;
+      if (claimed) giftBadge.classList.remove("is-show");
+      else giftBadge.classList.add("is-show");
+    }
+
+    function openGiftBox(){
+      const claimed = localStorage.getItem(LS.launchGift) === "1";
+      if(claimed) renderGiftModalClaimed();
+      else renderGiftModalReady();
+      openModal(giftModal);
+    }
+    window.openGiftBox = openGiftBox;
+
+    function claimLaunchGift(){
+      const claimed = localStorage.getItem(LS.launchGift) === "1";
+      if (claimed) return;
+
+      const inv = ensureInvKeys();
+
+      inv.seed["seed_shop"]    = Number(inv.seed["seed_shop"] || 0) + 15;
+      inv.seed["seed_line"]    = Number(inv.seed["seed_line"] || 0) + 15;
+      inv.seed["seed_special"] = Number(inv.seed["seed_special"] || 0) + 1;
+
+      inv.water["water_nice"]       = Number(inv.water["water_nice"] || 0) + 10;
+      inv.water["water_suspicious"] = Number(inv.water["water_suspicious"] || 0) + 10;
+      inv.water["water_overdo"]     = Number(inv.water["water_overdo"] || 0) + 10;
+
+      inv.fert["fert_feel"] = Number(inv.fert["fert_feel"] || 0) + 10;
+      inv.fert["fert_guts"] = Number(inv.fert["fert_guts"] || 0) + 10;
+      inv.fert["fert_skip"] = Number(inv.fert["fert_skip"] || 0) + 10;
+
+      saveInv(inv);
+      addOcto(1000);
+      localStorage.setItem(LS.launchGift, "1");
+      pushLog("初回限定プレゼント受取（+1000オクト）");
+
+      refreshGiftButton();
+      renderOcto();
+      alert("初回限定プレゼントを受け取りました。オクト+1000も付与したたこ。");
+    }
+
+    if (giftBoxBtn) {
+      giftBoxBtn.addEventListener("click", openGiftBox);
+    }
+    if (giftModal) {
+      giftModal.addEventListener("click", (e) => {
+        if (e.target === giftModal) closeModal(giftModal);
+      });
+    }
+
+    /* =========================================
+       10) お知らせ
+    ========================================= */
+    const newsBtn        = document.getElementById("newsBtn");
+    const newsBadge      = document.getElementById("newsBadge");
+    const newsModal      = document.getElementById("newsModal");
+    const newsList       = document.getElementById("newsList");
+    const newsModalClose = document.getElementById("newsModalClose");
+
+    function getReadNewsIds(){
+      const arr = loadJSON(LS.newsRead, []);
+      return Array.isArray(arr) ? arr : [];
+    }
+
+    function setReadNewsIds(ids){
+      saveJSON(LS.newsRead, Array.from(new Set(ids)));
+    }
+
+    function getUnreadNews(){
+      const readIds = new Set(getReadNewsIds());
+      return NEWS_DATA.filter(item => !readIds.has(item.id));
+    }
+
+    function renderNewsBadge(){
+      if (!newsBadge) return;
+      const unread = getUnreadNews().length;
+      if (unread > 0) newsBadge.classList.add("is-show");
+      else newsBadge.classList.remove("is-show");
+    }
+
+    function renderNewsList(){
+      if (!newsList) return;
+      const readIds = new Set(getReadNewsIds());
+
+      if (!NEWS_DATA.length) {
+        newsList.innerHTML = `<div class="news-empty">現在、お知らせはありません。</div>`;
+        return;
+      }
+
+      newsList.innerHTML = NEWS_DATA.map(item => {
+        const isRead = readIds.has(item.id);
+        return `
+          <article class="news-item ${isRead ? "is-read" : ""}">
+            <div class="news-head">
+              <div class="news-date">${escapeHtml(item.date)}</div>
+              <div class="news-label">${isRead ? "既読" : "NEW"}</div>
+            </div>
+            <h3 class="news-title">${escapeHtml(item.title)}</h3>
+            <div class="news-body">${escapeHtml(item.body).replace(/\n/g, "<br>")}</div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function openNewsModal(){
+      renderNewsList();
+      openModal(newsModal);
+
+      const allIds = NEWS_DATA.map(item => item.id);
+      setReadNewsIds(allIds);
+      renderNewsBadge();
+      pushLog("お知らせを確認");
+    }
+
+    if (newsBtn) {
+      newsBtn.addEventListener("click", openNewsModal);
+    }
+    if (newsModalClose) {
+      newsModalClose.addEventListener("click", () => closeModal(newsModal));
+    }
+    if (newsModal) {
+      newsModal.addEventListener("click", (e) => {
+        if (e.target === newsModal) closeModal(newsModal);
+      });
+    }
+
+    /* =========================================
+       11) 遊び方内プレゼント導線
+    ========================================= */
+    function wireGuideGiftButtons(){
+      const topBtn = document.getElementById("guideGiftOpenBtn");
+      const bottomBtn = document.getElementById("guideGiftOpenBtnBottom");
+
+      function closeGuideAndOpenGift(){
+        closeModal(farmGuideModal);
+        openGiftBox();
+      }
+
+      if (topBtn) topBtn.addEventListener("click", closeGuideAndOpenGift);
+      if (bottomBtn) bottomBtn.addEventListener("click", closeGuideAndOpenGift);
+    }
+
+    /* =========================================
+       12) 一括反映
+    ========================================= */
+    function applyAll(){
+      const now = nowTokyo();
+      const h = now.getHours();
+
+      applyDayNightClass(h);
+      applyMapByHour(h);
+      applySky(now);
+      applyNpcImages();
+      renderOcto();
+      refreshGiftButton();
+      renderNewsBadge();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      ensureInvKeys();
+      applyAll();
+      wireTakominTalk();
+      wireGuideGiftButtons();
+      setInterval(applyAll, 20 * 1000);
+      setInterval(renderOcto, 1500);
+    });
+
+    window.addEventListener("pageshow", applyAll);
+    window.addEventListener("storage", (e) => {
+      if (e.key === LS.octo || e.key === LS.launchGift || e.key === LS.newsRead || e.key === LS.inv) {
+        renderOcto();
+        refreshGiftButton();
+        renderNewsBadge();
+        if (inventoryModal && inventoryModal.style.display === "flex") {
+          renderInventoryModal();
+        }
+      }
+    });
+  })();
+  </script>
+
+   <!-- ▼ GitHub（jsDelivr）からJS読み込み（defer推奨） -->
+  <script defer src="./assets/takofarm3.js?v=20260129a"></script>
+
+  <footer id="siteFooter" style="
+    width:100%;
+    margin: 10px auto 0;
+    padding: 10px 10px calc(18px + env(safe-area-inset-bottom));
+    box-sizing:border-box;
+    text-align:center;
+    color: rgba(255,255,255,.78);
+    font-size: 12px;
+    line-height: 1.6;
+  ">
+    <div id="trcFooterDataBox" aria-label="データのバックアップと復元">
+      <div class="row">
+        <div class="title"><span class="dot"></span>DATA（端末保存）</div>
+        <div class="btns">
+          <button id="trcFooterBackup" class="btn primary" type="button">バックアップ</button>
+          <button id="trcFooterRestore" class="btn" type="button">復元</button>
+          <input id="trcFooterRestoreFile" type="file" accept="application/json" style="display:none">
+        </div>
+      </div>
+
+      <div class="desc" style="
+        color:#ff6b6b;
+        font-weight:700;
+        line-height:1.5;
+      ">
+        ⚠ 重要：このゲームのデータは端末のブラウザにのみ保存されています。
+        キャッシュ削除･履歴削除･機種変更を行うと、<br>
+        カード画像･ゲーム進行･オクト･熱量などのデータはすべて消えます。<br>
+        データはサーバーに保存されません。復旧もできません。<br>
+        必ず事前に「バックアップ」を作成してください。<br>
+        ※復元は現在のデータを上書きします。元には戻せません。
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-bottom:10px;">
+      <a href="./tokushoho.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">特定商取引法に基づく表記</a>
+      <a href="./privacy.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">プライバシーポリシー</a>
+      <a href="./terms.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">利用規約 / 免責</a>
+      <a href="./contact.html" style="color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px;">お問い合わせ</a>
+    </div>
+
+    <div style="opacity:.75;margin-bottom:8px;">
+      ※画像･文章の無断転載を禁止します。
+    </div>
+
+    <div style="opacity:.9;">
+      © たこ焼き菜々 / 焼かれた伝説 たこ焼きトレーディングカード
+    </div>
+  </footer>
+
+  <script>
+  (() => {
+    "use strict";
+
+    // =========================================================
+    // Keys
+    // =========================================================
+    const KEY = {
+      resident: "trc_v1_resident",
+      lastLogin: "trc_v1_last_login",
+    };
+
+    const EXIST = {
+      // 基本
+      farmBook:      "tf_v1_book",
+      farmInv:       "tf_v1_inv",
+      rotenOcto:     "roten_v1_octo",
+
+      // 既存ゲーム
+      tower:         "tower_v1_state",
+      fish:          "fish_v1_state",
+
+      // 称号の頂
+      monthly:       "ttc_monthly_stats_v1",
+      history:       "ttc_monthly_history_v1",
+      godfarm:       "ttc_godfarm_v1",
+      godbonus:      "ttc_god_bonus_v1",
+
+      // 募集板 / 熱量 / 好感度
+      matchingBoard: "ttc_matching_board_v7",
+      matchingMeta:  "ttc_matching_meta_v6",
+      heat:          "matching_heat_v1",
+      affection:     "roten_v1_guest_affection",
+
+      // かすみぴガチャ
+      kasumiGacha:   "kasumipi_gacha_v2",
+      kasumiBook:    "kasumipi_gacha_book_v2"
+    };
+
+    // =========================================================
+    // Utils
+    // =========================================================
+    const getRaw = (k) => {
+      const v = localStorage.getItem(k);
+      return (v === null || v === undefined) ? null : String(v);
+    };
+
+    const safeJSONParse = (raw, fallback) => {
+      try { return JSON.parse(raw); } catch (_) { return fallback; }
+    };
+
+    const safeStringify = (obj) => {
+      try { return JSON.stringify(obj); } catch (_) { return "null"; }
+    };
+
+    function listKeysByRegex(re) {
+      const out = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (re.test(k)) out.push(k);
+      }
+      return out;
+    }
+
+    function isInstagramInAppBrowser() {
+      const ua = navigator.userAgent || "";
+      return /Instagram/i.test(ua);
+    }
+
+    function isYahooInAppBrowser() {
+      const ua = navigator.userAgent || "";
+      return /Yahoo/i.test(ua) || /YJApp/i.test(ua);
+    }
+
+    function isFirefoxFamily() {
+      const ua = navigator.userAgent || "";
+      return /Firefox/i.test(ua) || /FxiOS/i.test(ua);
+    }
+
+    function shouldPreferTextBackup() {
+      return isInstagramInAppBrowser() || isYahooInAppBrowser() || isFirefoxFamily();
+    }
+
+    // =========================================================
+    // 図鑑 slim 化（count + img + name + rarity など維持）
+    // =========================================================
+    function slimBookRawKeepImg() {
+      const raw = getRaw(EXIST.farmBook);
+      if (!raw) return null;
+
+      const book = safeJSONParse(raw, null);
+      if (!book || typeof book !== "object") return raw;
+
+      const got = (book.got && typeof book.got === "object") ? book.got : {};
+      const outGot = {};
+
+      for (const id of Object.keys(got)) {
+        const node = got[id] || {};
+        const c = Number(node.count || 0);
+        if (c > 0) {
+          const out = { id, count: c };
+          if (typeof node.img === "string" && node.img.trim()) out.img = node.img.trim();
+          if (typeof node.name === "string" && node.name.trim()) out.name = node.name.trim();
+          if (typeof node.rarity === "string" && node.rarity.trim()) out.rarity = node.rarity.trim();
+          if (node.at != null && String(node.at).trim()) out.at = node.at;
+          if (node.lastAt != null && String(node.lastAt).trim()) out.lastAt = node.lastAt;
+          outGot[id] = out;
+        }
+      }
+
+      const slim = { ver: book.ver ?? 1, got: outGot };
+      return safeStringify(slim);
+    }
+
+    // =========================================================
+    // Key discovery
+    // =========================================================
+    function findFarmProgressKeys() {
+      const out = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (!/^tf_v1_/i.test(k)) continue;
+        if (/log|history|debug/i.test(k)) continue;
+        if (k === EXIST.farmBook || k === EXIST.farmInv) continue;
+        out.push(k);
+      }
+
+      const prefer = [
+        "tf_v1_state",
+        "tf_v1_level",
+        "tf_v1_xp",
+        "tf_v1_farm",
+        "tf_v1_progress"
+      ];
+
+      const ordered = [];
+      for (const p of prefer) {
+        if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
+      }
+      for (const k of out) {
+        if (!ordered.includes(k)) ordered.push(k);
+      }
+
+      return ordered.slice(0, 60);
+    }
+
+    function findRotenProgressKeys() {
+      const out = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (!/^roten_v1_/i.test(k)) continue;
+        if (/log|history|debug/i.test(k)) continue;
+        out.push(k);
+      }
+
+      const prefer = [
+        "roten_v1_level",
+        "roten_v1_rep",
+        "roten_v1_myshop",
+        "roten_v1_inventory",
+        "roten_v1_market",
+        "roten_v1_state",
+        "roten_v1_shelves",
+        "roten_v1_octo",
+        "roten_v1_guest_affection"
+      ];
+
+      const ordered = [];
+      for (const p of prefer) {
+        if (localStorage.getItem(p) != null && !ordered.includes(p)) ordered.push(p);
+      }
+      for (const k of out) {
+        if (!ordered.includes(k)) ordered.push(k);
+      }
+
+      return ordered.slice(0, 120);
+    }
+
+    function findMatchingKeys() {
+      const out = [];
+
+      const prefer = [
+        EXIST.matchingBoard,
+        EXIST.matchingMeta,
+        EXIST.heat,
+        EXIST.affection
+      ];
+
+      for (const k of prefer) {
+        if (getRaw(k) != null && !out.includes(k)) out.push(k);
+      }
+
+      for (const k of listKeysByRegex(/^ttc_matching_/i)) {
+        if (!out.includes(k)) out.push(k);
+      }
+
+      for (const k of listKeysByRegex(/^matching_heat_/i)) {
+        if (!out.includes(k)) out.push(k);
+      }
+
+      for (const k of listKeysByRegex(/guest_affection/i)) {
+        if (!out.includes(k)) out.push(k);
+      }
+
+      return out.slice(0, 50);
+    }
+
+    function findKasumiGachaKeys() {
+      const out = [];
+
+      const prefer = [
+        EXIST.kasumiGacha,
+        EXIST.kasumiBook,
+        EXIST.heat
+      ];
+
+      for (const k of prefer) {
+        if (getRaw(k) != null && !out.includes(k)) out.push(k);
+      }
+
+      for (const k of listKeysByRegex(/^kasumipi_gacha_/i)) {
+        if (!out.includes(k)) out.push(k);
+      }
+
+      return out.slice(0, 40);
+    }
+
+    // =========================================================
+    // Backup payload
+    // =========================================================
+    function buildSlimBackupPayload() {
+      const keys = {};
+
+      // 基本
+      keys[KEY.resident] = getRaw(KEY.resident);
+      keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
+
+      // コアデータ
+      keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
+      keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
+      keys[EXIST.farmBook]  = slimBookRawKeepImg();
+
+      // 畑
+      for (const k of findFarmProgressKeys()) {
+        const v = getRaw(k);
+        if (v != null) keys[k] = v;
+      }
+
+      // 露店
+      for (const k of findRotenProgressKeys()) {
+        const v = getRaw(k);
+        if (v != null) keys[k] = v;
+      }
+
+      // タワー
+      if (getRaw(EXIST.tower) != null) keys[EXIST.tower] = getRaw(EXIST.tower);
+      for (const k of listKeysByRegex(/tower/i)) {
+        const v = getRaw(k);
+        if (v != null) keys[k] = v;
+      }
+
+      // 釣り
+      if (getRaw(EXIST.fish) != null) keys[EXIST.fish] = getRaw(EXIST.fish);
+      for (const k of listKeysByRegex(/fish|takofish|tako_fish|tfish/i)) {
+        const v = getRaw(k);
+        if (v != null) keys[k] = v;
+      }
+
+      // 称号の頂
+      if (getRaw(EXIST.monthly)  != null) keys[EXIST.monthly]  = getRaw(EXIST.monthly);
+      if (getRaw(EXIST.history)  != null) keys[EXIST.history]  = getRaw(EXIST.history);
+      if (getRaw(EXIST.godfarm)  != null) keys[EXIST.godfarm]  = getRaw(EXIST.godfarm);
+      if (getRaw(EXIST.godbonus) != null) keys[EXIST.godbonus] = getRaw(EXIST.godbonus);
+
+      // 募集板 / 熱量 / 好感度
+      for (const k of findMatchingKeys()) {
+        const v = getRaw(k);
+        if (v != null) keys[k] = v;
+      }
+
+      // かすみぴガチャ
+      for (const k of findKasumiGachaKeys()) {
+        const v = getRaw(k);
+        if (v != null) keys[k] = v;
+      }
+
+      // null削除
+      for (const k of Object.keys(keys)) {
+        if (keys[k] === null || keys[k] === undefined) delete keys[k];
+      }
+
+      return {
+        app: "takoyaki-trc",
+        ver: 8,
+        kind: "slim+roten+title+matching+gacha-compatible",
+        exportedAt: new Date().toISOString(),
+        note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り/称号の頂/募集板/熱量/好感度/かすみぴガチャ を保存。旧keys形式バックアップの復元にも対応。",
+        keys
+      };
+    }
+
+    // =========================================================
+    // Fallback modal
+    // =========================================================
+    function showBackupFallbackModal(jsonText, filename) {
+      let modal = document.getElementById("trcBackupFallbackModal");
+
+      if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "trcBackupFallbackModal";
+        modal.style.cssText = `
+          position: fixed;
+          inset: 0;
+          z-index: 999999;
+          background: rgba(0,0,0,.82);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+          box-sizing: border-box;
+        `;
+
+        modal.innerHTML = `
+          <div style="
+            width:min(720px, 96vw);
+            max-height:90vh;
+            overflow:auto;
+            background:#111827;
+            color:#fff;
+            border:2px solid rgba(255,255,255,.18);
+            border-radius:16px;
+            box-shadow:0 20px 60px rgba(0,0,0,.5);
+            padding:16px;
+            box-sizing:border-box;
+          ">
+            <div style="font-size:18px;font-weight:900;margin-bottom:10px;">
+              バックアップ保存
+            </div>
+
+            <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.85);margin-bottom:12px;">
+              このブラウザではファイル保存に失敗することがあります。<br>
+              下のJSONをコピーして、メモ帳などに
+              <b style="color:#ffd166;">${filename}</b>
+              という名前で保存してください。<br><br>
+              いちばん確実なのは、
+              <b style="color:#8ecae6;">Chromeや外部ブラウザで開いてバックアップ</b>
+              です。
+            </div>
+
+            <textarea id="trcBackupFallbackText" readonly style="
+              width:100%;
+              min-height:280px;
+              resize:vertical;
+              border-radius:12px;
+              border:1px solid rgba(255,255,255,.2);
+              background:#0b1220;
+              color:#dff3ff;
+              padding:12px;
+              box-sizing:border-box;
+              font-size:12px;
+              line-height:1.5;
+            "></textarea>
+
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
+              <button id="trcBackupCopyBtn" type="button" style="
+                border:0;
+                border-radius:12px;
+                padding:12px 14px;
+                font-weight:900;
+                cursor:pointer;
+                background:#60a5fa;
+                color:#08111f;
+              ">コピー</button>
+
+              <button id="trcBackupCloseBtn" type="button" style="
+                border:1px solid rgba(255,255,255,.22);
+                border-radius:12px;
+                padding:12px 14px;
+                font-weight:900;
+                cursor:pointer;
+                background:rgba(255,255,255,.08);
+                color:#fff;
+              ">閉じる</button>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) modal.remove();
+        });
+
+        modal.querySelector("#trcBackupCloseBtn").addEventListener("click", () => {
+          modal.remove();
+        });
+
+        modal.querySelector("#trcBackupCopyBtn").addEventListener("click", async () => {
+          const ta = modal.querySelector("#trcBackupFallbackText");
+          ta.focus();
+          ta.select();
+
+          let copied = false;
+
+          try {
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(ta.value);
+              copied = true;
+            }
+          } catch (_) {}
+
+          if (!copied) {
+            try {
+              document.execCommand("copy");
+              copied = true;
+            } catch (_) {}
+          }
+
+          alert(copied ? "バックアップJSONをコピーしました。" : "コピーに失敗しました。長押しで手動コピーしてください。");
+        });
+      }
+
+      const ta = modal.querySelector("#trcBackupFallbackText");
+      ta.value = jsonText;
+    }
+
+    // =========================================================
+    // Save methods
+    // =========================================================
+    async function downloadBackupFile(jsonText, filename) {
+      const blob = new Blob([jsonText], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      try {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.rel = "noopener";
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, 1200);
+
+        return true;
+      } catch (_) {
+        URL.revokeObjectURL(url);
+        return false;
+      }
+    }
+
+    async function shareBackupFile(jsonText, filename) {
+      try {
+        if (!navigator.share || typeof File === "undefined") return false;
+
+        const file = new File([jsonText], filename, { type: "application/json" });
+        if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+          return false;
+        }
+
+        await navigator.share({
+          title: "たこ焼きトレカ バックアップ",
+          text: "バックアップファイルを保存してください。",
+          files: [file]
+        });
+
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function ensureBackupChoiceModal() {
+      let modal = document.getElementById("trcBackupChoiceModal");
+      if (modal) return modal;
+
+      modal = document.createElement("div");
+      modal.id = "trcBackupChoiceModal";
+      modal.style.cssText = `
+        position:fixed;
+        inset:0;
+        z-index:999999;
+        background:rgba(0,0,0,.82);
+        display:none;
+        align-items:center;
+        justify-content:center;
+        padding:16px;
+        box-sizing:border-box;
+      `;
+
+      modal.innerHTML = `
+        <div style="
+          width:min(640px,96vw);
+          background:#111827;
+          color:#fff;
+          border:2px solid rgba(255,255,255,.18);
+          border-radius:16px;
+          box-shadow:0 20px 60px rgba(0,0,0,.5);
+          padding:16px;
+          box-sizing:border-box;
+        ">
+          <div style="font-size:18px;font-weight:900;margin-bottom:10px;">
+            バックアップ方法を選んでください
+          </div>
+
+          <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.88);margin-bottom:14px;">
+            Yahoo / Firefox / アプリ内ブラウザでは、ファイル保存が失敗することがあります。<br>
+            その場合は「テキストで保存」がいちばん確実です。
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button id="trcChoiceDownload" type="button" style="
+              border:0;
+              border-radius:12px;
+              padding:14px 16px;
+              font-weight:900;
+              cursor:pointer;
+              background:#60a5fa;
+              color:#08111f;
+              text-align:left;
+            ">ファイル保存</button>
+
+            <button id="trcChoiceShare" type="button" style="
+              border:0;
+              border-radius:12px;
+              padding:14px 16px;
+              font-weight:900;
+              cursor:pointer;
+              background:#a7f3d0;
+              color:#06261b;
+              text-align:left;
+            ">共有して保存</button>
+
+            <button id="trcChoiceText" type="button" style="
+              border:0;
+              border-radius:12px;
+              padding:14px 16px;
+              font-weight:900;
+              cursor:pointer;
+              background:#fcd34d;
+              color:#3a2400;
+              text-align:left;
+            ">テキストで保存</button>
+
+            <button id="trcChoiceBackupClose" type="button" style="
+              border:1px solid rgba(255,255,255,.22);
+              border-radius:12px;
+              padding:12px 14px;
+              font-weight:900;
+              cursor:pointer;
+              background:rgba(255,255,255,.08);
+              color:#fff;
+            ">閉じる</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      return modal;
+    }
+
+    async function openBackupChoiceAndRun(payload, filename) {
+      const modal = ensureBackupChoiceModal();
+      modal.style.display = "flex";
+
+      const jsonText = JSON.stringify(payload, null, 2);
+
+      const closeModal = () => {
+        modal.style.display = "none";
+      };
+
+      modal.onclick = (e) => {
+        if (e.target === modal) closeModal();
+      };
+
+      modal.querySelector("#trcChoiceBackupClose").onclick = closeModal;
+
+      modal.querySelector("#trcChoiceDownload").onclick = async () => {
+        closeModal();
+        const ok = await downloadBackupFile(jsonText, filename);
+        if (!ok) {
+          showBackupFallbackModal(jsonText, filename);
+        }
+      };
+
+      modal.querySelector("#trcChoiceShare").onclick = async () => {
+        closeModal();
+        const ok = await shareBackupFile(jsonText, filename);
+        if (!ok) {
+          showBackupFallbackModal(jsonText, filename);
+        } else {
+          alert("共有画面を開きました。ファイルアプリやドライブ等に保存してください。");
+        }
+      };
+
+      modal.querySelector("#trcChoiceText").onclick = () => {
+        closeModal();
+        showBackupFallbackModal(jsonText, filename);
+      };
+    }
+
+    async function backupSlim() {
+      const payload = buildSlimBackupPayload();
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const filename = `takoyaki-trc-backup_${stamp}.json`;
+      const jsonText = JSON.stringify(payload, null, 2);
+
+      if (shouldPreferTextBackup()) {
+        await openBackupChoiceAndRun(payload, filename);
+        return;
+      }
+
+      const downloaded = await downloadBackupFile(jsonText, filename);
+      if (downloaded && !isInstagramInAppBrowser()) {
+        return;
+      }
+
+      const shared = await shareBackupFile(jsonText, filename);
+      if (shared) {
+        alert("共有画面を開きました。ファイルアプリやドライブ等に保存してください。");
+        return;
+      }
+
+      showBackupFallbackModal(jsonText, filename);
+    }
+
+    // =========================================================
+    // Restore common
+    // =========================================================
+    function restoreFromParsedData(data) {
+      if (!data || typeof data !== "object") {
+        alert("この内容はバックアップ形式ではありません。");
+        return false;
+      }
+
+      const source =
+        (data.keys && typeof data.keys === "object") ? data.keys :
+        (data.storage && typeof data.storage === "object") ? data.storage :
+        null;
+
+      if (!source) {
+        alert("この内容はバックアップ形式ではありません。");
+        return false;
+      }
+
+      const keys = Object.keys(source);
+      const exportedAt = String(data.exportedAt || data.exported || "");
+
+      const ok = confirm(
+        "バックアップから復元します。\n" +
+        "現在のデータは上書きされます（元に戻せません）。\n\n" +
+        `復元キー数: ${keys.length}\n` +
+        `書き出し日時: ${exportedAt}\n\n` +
+        "続行しますか？"
+      );
+      if (!ok) return false;
+
+      for (const k of keys) {
+        const v = source[k];
+        if (v === null || v === undefined) {
+          localStorage.removeItem(k);
+        } else {
+          localStorage.setItem(k, String(v));
+        }
+      }
+
+      alert("復元しました。ページを再読み込みします。");
+      location.reload();
+      return true;
+    }
+
+    // =========================================================
+    // File restore
+    // =========================================================
+    async function restoreFromFile(file) {
+      const text = await file.text();
+      const data = safeJSONParse(text, null);
+
+      if (!data) {
+        alert("このファイルはバックアップ形式ではありません。");
+        return;
+      }
+
+      restoreFromParsedData(data);
+    }
+
+    // =========================================================
+    // Paste restore
+    // =========================================================
+    function normalizePastedText(text) {
+      let t = String(text || "").trim();
+
+      if (t.startsWith("takoyaki-trc-backup.json")) {
+        t = t.replace(/^takoyaki-trc-backup\.json\s*/i, "").trim();
+      }
+
+      return t;
+    }
+
+    function restoreFromPastedText(text) {
+      const normalized = normalizePastedText(text);
+
+      if (!normalized) {
+        alert("貼り付け内容が空です。");
+        return;
+      }
+
+      const data = safeJSONParse(normalized, null);
+      if (!data) {
+        alert("JSONの形式が正しくありません。最初の { から最後の } まで貼り付けてください。");
+        return;
+      }
+
+      restoreFromParsedData(data);
+    }
+
+    // =========================================================
+    // Restore modals
+    // =========================================================
+    function ensureRestoreChoiceModal() {
+      let modal = document.getElementById("trcRestoreChoiceModal");
+      if (modal) return modal;
+
+      modal = document.createElement("div");
+      modal.id = "trcRestoreChoiceModal";
+      modal.style.cssText = `
+        position:fixed;
+        inset:0;
+        z-index:999999;
+        background:rgba(0,0,0,.82);
+        display:none;
+        align-items:center;
+        justify-content:center;
+        padding:16px;
+        box-sizing:border-box;
+      `;
+
+      modal.innerHTML = `
+        <div style="
+          width:min(640px,96vw);
+          background:#111827;
+          color:#fff;
+          border:2px solid rgba(255,255,255,.18);
+          border-radius:16px;
+          box-shadow:0 20px 60px rgba(0,0,0,.5);
+          padding:16px;
+          box-sizing:border-box;
+        ">
+          <div style="font-size:18px;font-weight:900;margin-bottom:10px;">
+            復元方法を選んでください
+          </div>
+
+          <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.88);margin-bottom:14px;">
+            メモに保存したバックアップは「貼り付け復元」、<br>
+            JSONファイルとして保存したバックアップは「ファイルを開く」から復元できます。
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button id="trcChoicePaste" type="button" style="
+              border:0;
+              border-radius:12px;
+              padding:14px 16px;
+              font-weight:900;
+              cursor:pointer;
+              background:#60a5fa;
+              color:#08111f;
+              text-align:left;
+            ">貼り付け復元</button>
+
+            <button id="trcChoiceFile" type="button" style="
+              border:0;
+              border-radius:12px;
+              padding:14px 16px;
+              font-weight:900;
+              cursor:pointer;
+              background:#a7f3d0;
+              color:#06261b;
+              text-align:left;
+            ">ファイルを開く</button>
+
+            <button id="trcChoiceClose" type="button" style="
+              border:1px solid rgba(255,255,255,.22);
+              border-radius:12px;
+              padding:12px 14px;
+              font-weight:900;
+              cursor:pointer;
+              background:rgba(255,255,255,.08);
+              color:#fff;
+            ">閉じる</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      return modal;
+    }
+
+    function ensurePasteRestoreModal() {
+      let modal = document.getElementById("trcPasteRestoreModal");
+      if (modal) return modal;
+
+      modal = document.createElement("div");
+      modal.id = "trcPasteRestoreModal";
+      modal.style.cssText = `
+        position:fixed;
+        inset:0;
+        z-index:999999;
+        background:rgba(0,0,0,.82);
+        display:none;
+        align-items:center;
+        justify-content:center;
+        padding:16px;
+        box-sizing:border-box;
+      `;
+
+      modal.innerHTML = `
+        <div style="
+          width:min(720px,96vw);
+          max-height:90vh;
+          overflow:auto;
+          background:#111827;
+          color:#fff;
+          border:2px solid rgba(255,255,255,.18);
+          border-radius:16px;
+          box-shadow:0 20px 60px rgba(0,0,0,.5);
+          padding:16px;
+          box-sizing:border-box;
+        ">
+          <div style="font-size:18px;font-weight:900;margin-bottom:10px;">
+            貼り付け復元
+          </div>
+
+          <div style="font-size:13px;line-height:1.7;color:rgba(255,255,255,.88);margin-bottom:12px;">
+            メモなどに保存したバックアップJSONを、そのまま下に貼り付けてください。<br>
+            復元すると現在のデータは上書きされます。
+          </div>
+
+          <textarea id="trcPasteRestoreText" style="
+            width:100%;
+            min-height:280px;
+            resize:vertical;
+            border-radius:12px;
+            border:1px solid rgba(255,255,255,.2);
+            background:#0b1220;
+            color:#dff3ff;
+            padding:12px;
+            box-sizing:border-box;
+            font-size:12px;
+            line-height:1.5;
+          " placeholder='ここに {"app":"takoyaki-trc", ... } を貼り付け'></textarea>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+            <button id="trcPasteRestoreRun" type="button" style="
+              border:0;
+              border-radius:12px;
+              padding:12px 14px;
+              font-weight:900;
+              cursor:pointer;
+              background:#60a5fa;
+              color:#08111f;
+            ">この内容で復元</button>
+
+            <button id="trcPasteRestoreClose" type="button" style="
+              border:1px solid rgba(255,255,255,.22);
+              border-radius:12px;
+              padding:12px 14px;
+              font-weight:900;
+              cursor:pointer;
+              background:rgba(255,255,255,.08);
+              color:#fff;
+            ">閉じる</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      return modal;
+    }
+
+    function openRestoreChoiceModal() {
+      const choiceModal = ensureRestoreChoiceModal();
+      const pasteModal  = ensurePasteRestoreModal();
+
+      choiceModal.style.display = "flex";
+
+      const btnPaste = choiceModal.querySelector("#trcChoicePaste");
+      const btnFile  = choiceModal.querySelector("#trcChoiceFile");
+      const btnClose = choiceModal.querySelector("#trcChoiceClose");
+
+      const closeChoice = () => {
+        choiceModal.style.display = "none";
+      };
+
+      choiceModal.onclick = (e) => {
+        if (e.target === choiceModal) closeChoice();
+      };
+
+      btnClose.onclick = closeChoice;
+
+      btnPaste.onclick = () => {
+        closeChoice();
+        pasteModal.style.display = "flex";
+        const ta = pasteModal.querySelector("#trcPasteRestoreText");
+        if (ta) {
+          ta.value = "";
+          setTimeout(() => ta.focus(), 30);
+        }
+      };
+
+      btnFile.onclick = () => {
+        closeChoice();
+        const inp = document.getElementById("trcFooterRestoreFile");
+        if (inp) inp.click();
+      };
+
+      const pasteText  = pasteModal.querySelector("#trcPasteRestoreText");
+      const pasteRun   = pasteModal.querySelector("#trcPasteRestoreRun");
+      const pasteClose = pasteModal.querySelector("#trcPasteRestoreClose");
+
+      pasteModal.onclick = (e) => {
+        if (e.target === pasteModal) pasteModal.style.display = "none";
+      };
+
+      pasteClose.onclick = () => {
+        pasteModal.style.display = "none";
+      };
+
+      pasteRun.onclick = () => {
+        restoreFromPastedText(pasteText.value);
+      };
+    }
+
+    // =========================================================
+    // UI wiring
+    // =========================================================
+    const btnBackup  = document.getElementById("trcFooterBackup");
+    const btnRestore = document.getElementById("trcFooterRestore");
+    const inp        = document.getElementById("trcFooterRestoreFile");
+
+    if (!btnBackup || !btnRestore || !inp) return;
+
+    btnBackup.addEventListener("click", async () => {
+      const normal = btnBackup.textContent;
+      btnBackup.disabled = true;
+      btnBackup.textContent = "作成中…";
+
+      try {
+        await backupSlim();
+      } catch (err) {
+        console.error(err);
+        alert("バックアップの作成に失敗しました。Chromeや外部ブラウザでもお試しください。");
+      } finally {
+        btnBackup.disabled = false;
+        btnBackup.textContent = normal;
+      }
+    });
+
+    btnRestore.addEventListener("click", () => {
+      openRestoreChoiceModal();
+    });
+
+    inp.addEventListener("change", async () => {
+      const f = inp.files && inp.files[0];
+      inp.value = "";
+      if (!f) return;
+
+      const normal = btnRestore.textContent;
+      btnRestore.disabled = true;
+      btnRestore.textContent = "読込中…";
+
+      try {
+        await restoreFromFile(f);
+      } catch (err) {
+        console.error(err);
+        alert("復元に失敗しました。ファイル形式を確認してください。");
+      } finally {
+        btnRestore.disabled = false;
+        btnRestore.textContent = normal;
+      }
+    });
+  })();
+  </script>
+
+  <script src="./assets/weather2.js"></script>
+</body>
+</html>
+
+</body>
+</html>
