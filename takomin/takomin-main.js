@@ -5,7 +5,8 @@
     state: "takomin_room_v1_state",
     book: "takomin_room_v1_book",
     log: "takomin_room_v1_log",
-    ownedCards: "takomin_player_cards_v1"
+    ownedCards: "takomin_player_cards_v1",
+    roomBg: "takomin_room_bg_v1"
   };
 
   const MAX_STAT = TAKOMIN_DATA.maxStat;
@@ -66,6 +67,33 @@
 
     return choice(pool);
   }
+
+  function getDefaultRoomBg() {
+    return TAKOMIN_DATA.roomBackgrounds.find(v => v.defaultOwned) || TAKOMIN_DATA.roomBackgrounds[0];
+  }
+
+  function ensureRoomBgState() {
+    let bgState = loadJSON(KEY.roomBg, null);
+    if (bgState && Array.isArray(bgState.ownedIds) && bgState.selectedId) return bgState;
+
+    const def = getDefaultRoomBg();
+    bgState = {
+      selectedId: def.id,
+      ownedIds: [def.id]
+    };
+    saveJSON(KEY.roomBg, bgState);
+    return bgState;
+  }
+
+  function getRoomBgState() {
+    return loadJSON(KEY.roomBg, ensureRoomBgState());
+  }
+
+  function setRoomBgState(v) {
+    saveJSON(KEY.roomBg, v);
+  }
+
+  let roomBgState = ensureRoomBgState();
 
   function buildNewState() {
     const takomin = pickTakominByRarity();
@@ -332,11 +360,73 @@
     pushLog(`神経衰弱：${pairs}組 / ${jpName}+${gain}`);
   }
 
+  // ===== 背景 =====
+  function applyRoomBackground() {
+    roomBgState = getRoomBgState();
+    const bg = TAKOMIN_DATA.roomBackgrounds.find(v => v.id === roomBgState.selectedId) || getDefaultRoomBg();
+    $("#roomPanel").style.setProperty("--room-bg", `url("${bg.img}")`);
+  }
+
+  function openBgModal() {
+    renderBgModal();
+    $("#bgModal").style.display = "flex";
+  }
+
+  function closeBgModal() {
+    $("#bgModal").style.display = "none";
+  }
+
+  function renderBgModal() {
+    roomBgState = getRoomBgState();
+    const root = $("#bgGrid");
+    root.innerHTML = "";
+
+    TAKOMIN_DATA.roomBackgrounds.forEach(bg => {
+      const owned = roomBgState.ownedIds.includes(bg.id);
+      const selected = roomBgState.selectedId === bg.id;
+
+      const el = document.createElement("div");
+      el.className = "bg-card";
+      el.innerHTML = `
+        <div class="bg-thumb"><img src="${escapeHtml(bg.img)}" alt=""></div>
+        <div class="bg-title">${escapeHtml(bg.name)}</div>
+        <div class="bg-badge ${owned ? "owned" : "locked"}">${owned ? (selected ? "使用中" : "所持") : "未所持"}</div>
+        <button class="btn ${owned ? "" : "secondary"}" ${owned ? "" : "disabled"}>${selected ? "使用中" : "この背景にする"}</button>
+      `;
+      const btn = el.querySelector("button");
+      if (owned && !selected) {
+        btn.addEventListener("click", () => {
+          roomBgState.selectedId = bg.id;
+          setRoomBgState(roomBgState);
+          applyRoomBackground();
+          renderBgModal();
+          pushLog(`背景を「${bg.name}」に変更`);
+        });
+      }
+      root.appendChild(el);
+    });
+  }
+
+  function maybeDropRoomBg() {
+    roomBgState = getRoomBgState();
+
+    const unowned = TAKOMIN_DATA.roomBackgrounds.filter(v =>
+      !roomBgState.ownedIds.includes(v.id) && !v.defaultOwned
+    );
+
+    if (!unowned.length) return null;
+    if (Math.random() > TAKOMIN_DATA.roomBgDropRate) return null;
+
+    const dropped = choice(unowned);
+    roomBgState.ownedIds.push(dropped.id);
+    setRoomBgState(roomBgState);
+    return dropped;
+  }
+
   // ===== 強襲 =====
   let raidTimer = null;
   let introTimer1 = null;
   let introTimer2 = null;
-  let introTimer3 = null;
 
   function buildRaidEnemy() {
     const enemyInfo = weightedPick(TAKOMIN_DATA.raidEnemyRate);
@@ -366,24 +456,23 @@
 
     const intro = $("#raidIntro");
     const introText = $("#raidIntroText");
-    const introBang = $("#raidIntroBang");
 
     intro.classList.remove("hidden");
     introText.textContent = `${state.raidCurrent.enemy.name} があらわれた!!`;
-    introBang.classList.add("hidden");
 
     introTimer1 = setTimeout(() => {
-      introBang.classList.remove("hidden");
-    }, 900);
+      intro.classList.add("boom");
+    }, 450);
 
     introTimer2 = setTimeout(() => {
       intro.classList.add("hidden");
+      intro.classList.remove("boom");
       openRaidScreen();
       renderRaid();
       setEventText(`強襲発生！ ${state.raidCurrent.enemy.name} が部屋に紛れ込んだ。`);
       pushLog(`強襲開始：${state.raidCurrent.enemy.name}`);
       startRaidEnemyLoop();
-    }, 1500);
+    }, 1350);
   }
 
   function openRaidScreen() {
@@ -435,6 +524,10 @@
     }
   }
 
+  function calcTapDamage() {
+    return Math.max(1, Math.floor(state.atk / 20) + 1);
+  }
+
   function showHitFx(text, critical = false) {
     const root = $("#hitFx");
     const el = document.createElement("div");
@@ -446,6 +539,13 @@
     setTimeout(() => el.remove(), 520);
   }
 
+  function shakeEnemy() {
+    const box = $("#raidEnemyTapArea");
+    box.classList.remove("shake");
+    void box.offsetWidth;
+    box.classList.add("shake");
+  }
+
   function attackRaid() {
     if (!state.raidCurrent || state.raidCurrent.finished) return;
 
@@ -455,16 +555,18 @@
 
     enemy.hitCount += 1;
 
-    let critical = Math.random() < 0.14;
-    let damage = clamp(Math.round(6 + state.atk * 0.22), 1, 9999);
+    let damage = calcTapDamage();
+    let critical = Math.random() < 0.12;
 
     if (critical) {
-      damage = Math.round(damage * 2);
+      damage *= 2;
       showHitFx(`CRITICAL!! ${damage} HIT!!`, true);
     } else {
       const hitLabel = enemy.hitCount % 10 === 0 ? `${enemy.hitCount} HIT!!` : `${damage} HIT`;
       showHitFx(hitLabel, false);
     }
+
+    shakeEnemy();
 
     enemy.hp = clamp(enemy.hp - damage, 0, enemy.maxHp);
     $("#raidStatus").textContent = `${baseAttack}！ ${enemy.name} に ${damage} ダメージ`;
@@ -533,8 +635,16 @@
       state.octo += octo;
       state.hp = clamp(raid.playerHp, 0, state.maxHp);
 
-      raid.result = `勝利！ 全パラメーター +${gain} / オクト +${octo}`;
-      setEventText(`${enemy.name}を撃退！ 全パラメーター +${gain}、オクト +${octo}`);
+      let result = `勝利！ 全パラメーター +${gain} / オクト +${octo}`;
+
+      const droppedBg = maybeDropRoomBg();
+      if (droppedBg) {
+        result += ` / 背景アイテム「${droppedBg.name}」入手！`;
+        pushLog(`背景ドロップ：${droppedBg.name}`);
+      }
+
+      raid.result = result;
+      setEventText(result);
       pushLog(`強襲勝利：${enemy.name} / 全パラ+${gain} / オクト+${octo}`);
     } else {
       state.hp = 0;
@@ -757,6 +867,7 @@
     $("#takominBalloon").textContent = getTakominBalloonText();
     $("#takominName").textContent = getTakominDisplayName();
     $("#takominSprite").innerHTML = getTakominSpriteHtml();
+    applyRoomBackground();
   }
 
   function renderStats() {
@@ -895,6 +1006,9 @@
   $("#btnFeedOpen").addEventListener("click", openFeedModal);
   $("#btnFeedClose").addEventListener("click", closeFeedModal);
 
+  $("#btnOpenBg").addEventListener("click", openBgModal);
+  $("#btnBgClose").addEventListener("click", closeBgModal);
+
   $("#btnRunEvent").addEventListener("click", runDailyEvent);
   $("#btnHeal").addEventListener("click", healWithCard);
   $("#btnNextDay").addEventListener("click", advanceDay);
@@ -907,5 +1021,6 @@
 
   window.addEventListener("resize", drawRadarChart);
 
+  applyRoomBackground();
   renderAll();
 })();
