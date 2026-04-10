@@ -58,7 +58,7 @@
                 </div>
               </div>
 
-              <div class="talk-inline" id="talkInline" style="display:none">
+              <div class="talk-inline" id="talkInline">
                 <div class="talk-inline-top">
                   <div class="talk-inline-mood" id="talkMoodInline">会話中…</div>
                   <div class="talk-inline-timer" id="talkTimerInline">10s</div>
@@ -249,1118 +249,6 @@
     showErr(e && e.reason ? (e.reason.stack || e.reason.message || String(e.reason)) : "promise rejection");
   });
 
-  window.__SAFE_STORAGE__ = Storage;
-  window.__SHOW_ERR__ = showErr;
-})();
-</script>
-
-<script>
-(() => {
-  "use strict";
-
-  const Storage = window.__SAFE_STORAGE__;
-  const showErr = window.__SHOW_ERR__;
-
-  const LS_KEY = "roten_v1_guest_affection";
-  const REGULAR_LOVE_THRESHOLD = 80;
-  const REGULAR_BUDGET_BONUS_RATE = 0.18;
-  const FX_LS_KEY = "roten_v1_stage_card_fx";
-  const INV_LS_KEY = "tf_v1_inv";
-  const BOOK_LS_KEY = "tf_v1_book";
-  const MYSHOP_LS_KEY = "roten_v1_myshop";
-
-  const RAW_TRIGGER_RATE = 0.10;
-  const RAW_RECLAIM_RATE = 0.20;
-  const RAW_COOLDOWN_VISITS = 3;
-  const RAW_SEED_ID = "seed_random";
-  const RAW_SEED_COUNT_NORMAL = 1;
-  const RAW_SEED_COUNT_RECLAIM = 2;
-  const RAW_BUY_BONUS_RATE = 0.35;
-  const RAW_BUY_BONUS_EXPIRE_MS = 5 * 60 * 1000;
-
-  const BURN_TRIGGER_RATE = 0.08;
-  const BURN_TARGETS = new Set(["flipper", "looker", "picky", "streamer"]);
-
-  const CUSTOMER_NAME_MAP = {
-    impulse: "即決タコ民",
-    picky: "見えないタコ民",
-    king: "王様タコ民",
-    flipper: "よっぱらいタコ民",
-    careful: "つぶやきタコ民",
-    looker: "冷やかしタコ民",
-    rich: "札束タコ民",
-    climber: "踏破タコ民",
-    guide: "ナビタコ民",
-    relax: "ほぐしタコ民",
-    artisan: "返し職人タコ民",
-    diet: "ゼロ理論タコ民",
-    overflow: "枠外タコ民",
-    collector: "未開封保護タコ民",
-    shadow: "防水タコ民",
-    ramen: "替え玉タコ民",
-    streamer: "投げ銭タコ民",
-    gourmet: "舌判定タコ民",
-    opener: "即バリタコ民",
-    party: "宴タコ民",
-    pilgrim: "覚悟タコ民"
-  };
-
-  const CUSTOMER_ICON_MAP = {
-    careful:   "https://ul.h3z.jp/RpLPCRTc.png",
-    impulse:   "https://ul.h3z.jp/TMXU9ztW.png",
-    looker:    "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku16.png",
-    picky:     "https://ul.h3z.jp/MZYfusKm.png",
-    king:      "https://ul.h3z.jp/wMM8PrcP.png",
-    flipper:   "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku20.png",
-    rich:      "https://ul.h3z.jp/pZKu3lSE.png",
-    climber:   "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku2.png",
-    guide:     "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/roten/kyaku3.png",
-    relax:     "https://ul.h3z.jp/dbBbLypa.png",
-    artisan:   "https://ul.h3z.jp/OA5StkvT.png",
-    diet:      "https://ul.h3z.jp/KVImBYZ8.png",
-    overflow:  "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/kyaku7.png",
-    collector: "https://ul.h3z.jp/zSvGyVq9.png",
-    shadow:    "https://ul.h3z.jp/IBKDrVAm.png",
-    ramen:     "https://ul.h3z.jp/NViRwhdj.png",
-    streamer:  "https://ul.h3z.jp/8PukOegd.png",
-    gourmet:   "https://ul.h3z.jp/We4UXFSI.png",
-    opener:    "https://ul.h3z.jp/9usFHTdU.png",
-    party:     "https://ul.h3z.jp/pByCAUMC.png",
-    pilgrim:   "https://ul.h3z.jp/eW2dluw2.png"
-  };
-
-  const CUSTOMER_BUDGET_RANGE = {
-    careful:   { min: 800,        max: 3200 },
-    looker:    { min: 300,        max: 1200 },
-    picky:     { min: 700,        max: 2600 },
-    diet:      { min: 900,        max: 3000 },
-    overflow:  { min: 1000,       max: 3800 },
-    relax:     { min: 1200,       max: 4200 },
-    guide:     { min: 1000,       max: 4000 },
-
-    impulse:   { min: 1500,       max: 5500 },
-    opener:    { min: 1800,       max: 6000 },
-    streamer:  { min: 1800,       max: 6500 },
-    party:     { min: 2000,       max: 7000 },
-    ramen:     { min: 1800,       max: 6500 },
-    climber:   { min: 2200,       max: 7000 },
-    shadow:    { min: 2200,       max: 7000 },
-    gourmet:   { min: 2500,       max: 8500 },
-
-    flipper:   { min: 2500,       max: 9000 },
-    artisan:   { min: 3000,       max: 10000 },
-    collector: { min: 3500,       max: 12000 },
-    pilgrim:   { min: 4000,       max: 14000 },
-
-    king:      { min: 12000,      max: 30000 },
-    rich:      { min: 1000000000, max: 100000000000 }
-  };
-
-  const GUEST_LABELS = {
-    impulse:   { text:"まだ勢いだけで来ている。", mid:"ノリが合う店だと思い始めている。", max:"勢いで来て、愛着で帰る常連。" },
-    picky:     { text:"まだ厳しく見定めている。", mid:"少しずつ認め始めている。", max:"うるさいけど、かなり気に入っている。" },
-    king:      { text:"まだ試す目で見ている。", mid:"店の格を認め始めている。", max:"王が認めた棚。かなり強い。" },
-    flipper:   { text:"利益しか見ていない。", mid:"数字以外の価値も少し見えてきた。", max:"打算から始まったのに、なぜか情がある。" },
-    careful:   { text:"まだ警戒しながら様子見。", mid:"少しずつ安心してきている。", max:"かなり信頼している常連候補。" },
-    looker:    { text:"まだ“見るだけ”の距離感。", mid:"眺めるだけでは済まなくなってきた。", max:"口では軽いが、かなり好き。" },
-    rich:      { text:"金で測っている。", mid:"値段以外の面白さも認め始めた。", max:"財布より先に心が動いている。" },
-    climber:   { text:"まだ試練の棚だと思っている。", mid:"登る価値のある店だと思い始めた。", max:"景色の見える常連ポジション。" },
-    guide:     { text:"まだ外から案内している。", mid:"語りたくなる場所になってきた。", max:"もう半分この店の広報。" },
-    relax:     { text:"まだ様子見で空気を読んでいる。", mid:"居心地の良さを感じ始めている。", max:"癒やし目的でも来ている。" },
-    artisan:   { text:"仕事として見ている。", mid:"腕前を認めてきている。", max:"技術も空気も含めて評価している。" },
-    diet:      { text:"理屈で距離を取っている。", mid:"理論の中に好意が混ざり始めた。", max:"もはや理屈を超えて好き。" },
-    overflow:  { text:"まだ枠外から見ている。", mid:"ズレた会話を楽しみ始めている。", max:"規格外どうしで相性が良い。" },
-    collector: { text:"まだ管理対象として見ている。", mid:"保存以上の感情が生まれ始めた。", max:"かなり大切な棚認定。" },
-    shadow:    { text:"まだ慎重に距離を測っている。", mid:"守れる価値を感じ始めている。", max:"信用しているから買う側に寄っている。" },
-    ramen:     { text:"まだ濃さだけ見ている。", mid:"味わうように通い始めている。", max:"締めに寄りたくなる店になった。" },
-    streamer:  { text:"まだネタとして見ている。", mid:"映え以上の面白さを感じている。", max:"本気で推したくなっている。" },
-    gourmet:   { text:"まだ厳しく品定めしている。", mid:"余韻のある店だと感じ始めた。", max:"かなり深く気に入っている。" },
-    opener:    { text:"まだ勢いだけで近づいている。", mid:"開封以上に店も楽しみ始めた。", max:"テンション込みでかなり好き。" },
-    party:     { text:"まだ祭りのノリで来ている。", mid:"ノリ以上の居場所感が出てきた。", max:"騒がしいけど本気で好き。" },
-    pilgrim:   { text:"まだ巡礼先のひとつ。", mid:"来た意味がある場所だと思い始めた。", max:"わざわざ来る価値があると確信している。" }
-  };
-
-  const TALK_POOLS = {
-    careful: [
-      {
-        mood: "慎重に棚を見ながら、そっと聞いてきた。",
-        ask: "……これ、買ったあと後悔しないやつ？",
-        choices: [
-          { text: "後悔しても、それ込みで思い出です。", delta: +1, reply: "……その言い方、ずるいな。", stage: "……少し肩の力が抜けたみたいだ。", log: "思い出として背中を押した" },
-          { text: "人によります。慎重にどうぞ。", delta: 0, reply: "……うん、それが一番信用できる。", stage: "……誠実さは伝わったらしい。", log: "慎重派に誠実対応した" },
-          { text: "後悔する前にもう一枚どうですか。", delta: -1, reply: "……急に怖くなってきた。", stage: "……少し引かれた。", log: "慎重派に圧をかけた" }
-        ]
-      }
-    ],
-    impulse: [
-      {
-        mood: "目を輝かせて身を乗り出してきた。",
-        ask: "これ、今いっといた方がいい感じ？",
-        choices: [
-          { text: "今いかないと、未来の自分がうるさいです。", delta: +1, reply: "そういうの好き！", stage: "……完全にテンションが上がった。", log: "即決派の勢いを肯定した" },
-          { text: "深呼吸してからでも遅くないです。", delta: 0, reply: "それもそう。でも多分もう遅い！", stage: "……少し理性が戻った。", log: "即決派を少し落ち着かせた" },
-          { text: "迷うなら今日はやめましょう。", delta: -1, reply: "えっ、そこは背中押してよ！？", stage: "……勢いを止められて少し不満そうだ。", log: "即決派を止めた" }
-        ]
-      }
-    ]
-  };
-
-  const GENERIC_POOL = [
-    {
-      mood: "少し気になった顔でこちらを見ている。",
-      ask: "この棚って、なんでこんなに気になるんだろう。",
-      choices: [
-        { text: "たぶん、見た目より中身が危ないからです。", delta: +1, reply: "……その言い方、嫌いじゃない。", stage: "……“危ない”の一言が刺さったようだ。", log: "汎用会話で危険さを伝えた" },
-        { text: "気になる時点で、もう片足入ってます。", delta: 0, reply: "……それ、ちょっと認めたくないな。", stage: "……図星っぽい。", log: "汎用会話で図星を刺した" },
-        { text: "気のせいかもしれません。", delta: -1, reply: "……急に興ざめした。", stage: "……空気が少ししぼんだ。", log: "汎用会話で気のせい扱いした" }
-      ]
-    }
-  ];
-
-  const IGNORE_LINES_COMMON = [
-    "……無視しないでください……。",
-    "……返事、ちょっと待ってたんだけどな。",
-    "……あ、いま話しかける流れじゃなかった？",
-    "……なるほど、空気だけ吸って帰るやつですね。",
-    "……返事がないの、ちょっと刺さる。"
-  ];
-
-  let els = {};
-  let activeTalk = null;
-  let countdownTimer = null;
-  let talkDelayTimer = null;
-  let helpersGlobal = null;
-  let initDone = false;
-
-  function safeJSON(raw, fallback){
-    try{ return JSON.parse(raw); }catch(e){ return fallback; }
-  }
-  function lsGet(key, fallback){
-    const raw = Storage.getItem(key);
-    if(raw == null) return fallback;
-    return safeJSON(raw, fallback);
-  }
-  function lsSet(key, val){
-    Storage.setItem(key, JSON.stringify(val));
-  }
-  function clampValue(n, min, max){
-    return Math.max(min, Math.min(max, Number(n || 0)));
-  }
-  function pickValue(arr){
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
-  function shuffle(arr){
-    const a = arr.slice();
-    for(let i=a.length-1;i>0;i--){
-      const j = Math.floor(Math.random() * (i+1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
-  function escapeHTML(s){
-    return String(s || "").replace(/[&<>"']/g, m => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      "\"":"&quot;",
-      "'":"&#039;"
-    }[m]));
-  }
-
-  function bindEls(){
-    els.stageName = document.getElementById("stageName");
-    els.stageMsg = document.getElementById("stageMsg");
-    els.talkInline = document.getElementById("talkInline");
-    els.talkMoodInline = document.getElementById("talkMoodInline");
-    els.timerInline = document.getElementById("talkTimerInline");
-    els.c1 = document.getElementById("talkChoice1");
-    els.c2 = document.getElementById("talkChoice2");
-    els.c3 = document.getElementById("talkChoice3");
-
-    els.affectionBtn = document.getElementById("affectionCheckBtn");
-    els.affectionModal = document.getElementById("affectionModal");
-    els.affectionClose = document.getElementById("affectionClose");
-    els.affectionOk = document.getElementById("affectionOk");
-    els.affectionModalList = document.getElementById("affectionModalList");
-    els.affectionModalEmpty = document.getElementById("affectionModalEmpty");
-  }
-
-  function loadState(){
-    const parsed = lsGet(LS_KEY, null);
-    if(!parsed || typeof parsed !== "object") return { ver:1, guests:{} };
-    if(!parsed.guests || typeof parsed.guests !== "object") parsed.guests = {};
-    return parsed;
-  }
-  function saveState(state){
-    lsSet(LS_KEY, state);
-  }
-  function getDefaultGuestState(){
-    return {
-      love: 0,
-      talkCount: 0,
-      buyCount: 0,
-      ignoreCount: 0,
-      lastTalkAt: 0,
-      lastSeenAt: 0,
-      tempBuyBonusRate: 0,
-      tempBuyBonusUntil: 0
-    };
-  }
-  function getGuestState(id){
-    const state = loadState();
-    if(!state.guests[id]) return getDefaultGuestState();
-    return { ...getDefaultGuestState(), ...state.guests[id] };
-  }
-  function patchGuest(id, patch){
-    const state = loadState();
-    if(!state.guests[id]) state.guests[id] = getDefaultGuestState();
-    Object.assign(state.guests[id], patch || {});
-    state.guests[id].love = clampValue(state.guests[id].love, 0, 100);
-    saveState(state);
-    return state.guests[id];
-  }
-
-  function heartsFromLove(love){
-    if(love >= 80) return 5;
-    if(love >= 60) return 4;
-    if(love >= 40) return 3;
-    if(love >= 20) return 2;
-    if(love >= 8)  return 1;
-    return 0;
-  }
-  function isRegularLove(love){
-    return Number(love || 0) >= REGULAR_LOVE_THRESHOLD;
-  }
-  function getRegularBudgetBonusRate(){
-    return REGULAR_BUDGET_BONUS_RATE;
-  }
-  function getBudgetRangeByGuestId(id){
-    return CUSTOMER_BUDGET_RANGE[id] || { min: 1500, max: 5000 };
-  }
-  function labelFromLove(id, love){
-    const row = GUEST_LABELS[id];
-    if(!row){
-      if(love >= 80) return "かなり気に入っている。";
-      if(love >= 40) return "少しずつ距離が縮んでいる。";
-      return "まだ距離を測っている。";
-    }
-    if(love >= 80) return row.max;
-    if(love >= 40) return row.mid;
-    return row.text;
-  }
-
-  function getAffinityRows(){
-    const state = loadState();
-    const rows = Object.keys(state.guests).map(id => {
-      const g = state.guests[id];
-      const love = Number(g.love || 0);
-      return {
-        id,
-        name: CUSTOMER_NAME_MAP[id] || id,
-        icon: CUSTOMER_ICON_MAP[id] || "",
-        love,
-        hearts: heartsFromLove(love),
-        talkCount: Number(g.talkCount || 0),
-        buyCount: Number(g.buyCount || 0),
-        ignoreCount: Number(g.ignoreCount || 0),
-        label: labelFromLove(id, love),
-        isRegular: isRegularLove(love),
-        budgetRange: getBudgetRangeByGuestId(id),
-        lastSeenAt: Number(g.lastSeenAt || 0)
-      };
-    });
-
-    rows.sort((a, b) =>
-      (Number(b.isRegular) - Number(a.isRegular)) ||
-      (b.love - a.love) ||
-      (b.lastSeenAt - a.lastSeenAt) ||
-      String(a.name).localeCompare(String(b.name), "ja")
-    );
-    return rows.slice(0, 30);
-  }
-
-  function setTempBuyBonusForGuest(guestId, rate, expireMs){
-    const g = getGuestState(guestId);
-    patchGuest(guestId, {
-      tempBuyBonusRate: Number(g.tempBuyBonusRate || 0) + Number(rate || 0),
-      tempBuyBonusUntil: Date.now() + Number(expireMs || 0),
-      lastSeenAt: Date.now()
-    });
-  }
-  function getActiveTempBuyBonusRate(guestId){
-    const g = getGuestState(guestId);
-    const until = Number(g.tempBuyBonusUntil || 0);
-    if(until > Date.now()) return Number(g.tempBuyBonusRate || 0);
-    if(Number(g.tempBuyBonusRate || 0) > 0 || until > 0){
-      patchGuest(guestId, { tempBuyBonusRate: 0, tempBuyBonusUntil: 0 });
-    }
-    return 0;
-  }
-  function getBuyProbabilityBonus(guestId){
-    const g = getGuestState(guestId);
-    const love = Number(g.love || 0);
-    let bonus = 0;
-
-    if(love >= 90) bonus += 0.28;
-    else if(love >= 75) bonus += 0.20;
-    else if(love >= 60) bonus += 0.14;
-    else if(love >= 45) bonus += 0.08;
-    else if(love >= 30) bonus += 0.04;
-    else if(love >= 15) bonus += 0.01;
-
-    bonus += getActiveTempBuyBonusRate(guestId);
-    return bonus;
-  }
-  function onPurchaseSuccess(guestId){
-    const g = getGuestState(guestId);
-    patchGuest(guestId, {
-      buyCount: Number(g.buyCount || 0) + 1,
-      lastSeenAt: Date.now(),
-      tempBuyBonusRate: 0,
-      tempBuyBonusUntil: 0
-    });
-    renderGuestAffinityModal();
-  }
-
-  function renderGuestAffinityModal(){
-    bindEls();
-    if(!els.affectionModalList || !els.affectionModalEmpty) return;
-
-    const rows = getAffinityRows();
-    els.affectionModalList.innerHTML = "";
-
-    if(!rows.length){
-      els.affectionModalEmpty.style.display = "block";
-      return;
-    }
-    els.affectionModalEmpty.style.display = "none";
-
-    const frag = document.createDocumentFragment();
-    rows.forEach(row => {
-      const card = document.createElement("div");
-      card.className = "gcard";
-
-      let heartsHTML = "";
-      for(let i=0;i<5;i++){
-        heartsHTML += `<span class="${i < row.hearts ? "on" : "off"}">♥</span>`;
-      }
-
-      const iconHTML = row.icon
-        ? `<img alt="${escapeHTML(row.name)}" src="${escapeHTML(row.icon)}">`
-        : `<div class="afficon-fallback">画像<br>なし</div>`;
-
-      card.innerHTML = `
-        <div class="affrow">
-          <div class="afficon">${iconHTML}</div>
-          <div class="affbody">
-            <div class="ghead">
-              <div class="gname" title="${escapeHTML(row.name)}">
-                ${escapeHTML(row.name)}
-                ${row.isRegular ? `<span class="regular-badge">常連</span>` : ``}
-              </div>
-              <div class="gmeta">好感度 ${escapeHTML(String(row.love))}/100</div>
-            </div>
-            <div class="gline">
-              <div class="ghearts">${heartsHTML}</div>
-              <div class="gauge"><i style="width:${clampValue(row.love,0,100)}%"></i></div>
-            </div>
-            <div class="gsub">${escapeHTML(row.label)}</div>
-            <div class="gsub">会話 ${escapeHTML(String(row.talkCount))}回 ・ 放置 ${escapeHTML(String(row.ignoreCount))}回</div>
-          </div>
-        </div>
-      `;
-      frag.appendChild(card);
-    });
-
-    els.affectionModalList.appendChild(frag);
-  }
-
-  function openAffinityModal(){
-    bindEls();
-    renderGuestAffinityModal();
-    if(!els.affectionModal) return false;
-    els.affectionModal.classList.add("show");
-    els.affectionModal.setAttribute("aria-hidden", "false");
-    document.body.classList.add("noscroll");
-    return true;
-  }
-  function closeAffinityModal(){
-    bindEls();
-    if(els.affectionModal){
-      els.affectionModal.classList.remove("show");
-      els.affectionModal.setAttribute("aria-hidden", "true");
-    }
-    document.body.classList.remove("noscroll");
-  }
-
-  function updateAffinityButton(){ bindEls(); }
-
-  function bindAffinityButtonDirect(){
-    bindEls();
-
-    if(els.affectionBtn && !els.affectionBtn.__rotenBound){
-      els.affectionBtn.__rotenBound = true;
-      els.affectionBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        openAffinityModal();
-      });
-    }
-    if(els.affectionClose && !els.affectionClose.__rotenBound){
-      els.affectionClose.__rotenBound = true;
-      els.affectionClose.addEventListener("click", (e) => {
-        e.preventDefault();
-        closeAffinityModal();
-      });
-    }
-    if(els.affectionOk && !els.affectionOk.__rotenBound){
-      els.affectionOk.__rotenBound = true;
-      els.affectionOk.addEventListener("click", (e) => {
-        e.preventDefault();
-        closeAffinityModal();
-      });
-    }
-    if(els.affectionModal && !els.affectionModal.__rotenBoundBackdrop){
-      els.affectionModal.__rotenBoundBackdrop = true;
-      els.affectionModal.addEventListener("click", (e) => {
-        if(e.target === els.affectionModal){
-          closeAffinityModal();
-        }
-      });
-    }
-  }
-
-  function injectStyles(){
-    if(document.getElementById("rotenSocialExtraStyle")) return;
-    const style = document.createElement("style");
-    style.id = "rotenSocialExtraStyle";
-    style.textContent = `
-      .affrow{
-        display:grid;
-        grid-template-columns:56px 1fr;
-        gap:10px;
-        align-items:center;
-      }
-      .afficon{
-        width:56px;
-        height:56px;
-        border-radius:12px;
-        overflow:hidden;
-        border:1px solid rgba(255,255,255,.14);
-        background:rgba(0,0,0,.18);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      }
-      .afficon img{
-        width:100%;
-        height:100%;
-        object-fit:contain;
-        image-rendering:pixelated;
-        display:block;
-      }
-      .afficon-fallback{
-        font-size:11px;
-        color:rgba(255,255,255,.66);
-        text-align:center;
-        line-height:1.2;
-        padding:4px;
-      }
-      .affbody{
-        min-width:0;
-        display:grid;
-        gap:8px;
-      }
-      .regular-badge{
-        margin-left:8px;
-        padding:2px 8px;
-        border-radius:999px;
-        font-size:11px;
-        background:rgba(255,215,0,.18);
-        border:1px solid rgba(255,215,0,.45);
-        color:#ffe082;
-        vertical-align:middle;
-      }
-      #stageMsg.talk-question{
-        display:block;
-        margin-top:6px;
-        padding:10px 12px;
-        border-radius:12px;
-        background:rgba(255, 208, 102, .18);
-        border:1px solid rgba(255, 208, 102, .45);
-        color:#fff4cf !important;
-        font-weight:800;
-        line-height:1.55;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function bindDocumentDelegation(){
-    if(document.__rotenAffinityDelegated) return;
-    document.__rotenAffinityDelegated = true;
-
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest("#affectionCheckBtn");
-      if(btn){
-        e.preventDefault();
-        e.stopPropagation();
-        openAffinityModal();
-        return;
-      }
-
-      const closeBtn = e.target.closest("#affectionClose, #affectionOk");
-      if(closeBtn){
-        e.preventDefault();
-        closeAffinityModal();
-        return;
-      }
-
-      if(e.target && e.target.id === "affectionModal"){
-        closeAffinityModal();
-      }
-    });
-  }
-
-  function normalizeName(v){
-    return String(v || "").replace(/\s+/g, "").trim();
-  }
-
-  function getMyShopSlots(){
-    const shop = lsGet(MYSHOP_LS_KEY, null);
-    if(!shop || !Array.isArray(shop.slots)) return [];
-    return shop.slots;
-  }
-
-  function hasShelfCardByMatcher(matcher){
-    const slots = getMyShopSlots();
-    return slots.some(slot => {
-      const item = slot && slot.item;
-      if(!item) return false;
-      return matcher(item);
-    });
-  }
-
-  function isRawCard(item){
-    const id = String(item?.id || "").toUpperCase();
-    const name = normalizeName(item?.name || "");
-    return (
-      id === "SP-RAW" ||
-      id === "RAW" ||
-      name.includes("ドロドロ生焼け") ||
-      name.includes("生焼け")
-    );
-  }
-
-  function isBurnCard(item){
-    const id = String(item?.id || "").toUpperCase();
-    const name = normalizeName(item?.name || "");
-    return (
-      id === "SP-BURN" ||
-      id === "BURN" ||
-      name.includes("焼きすぎ")
-    );
-  }
-
-  function hasShelfCard(cardId){
-    const want = String(cardId || "").toUpperCase();
-    if(want === "SP-RAW") return hasShelfCardByMatcher(isRawCard);
-    if(want === "SP-BURN") return hasShelfCardByMatcher(isBurnCard);
-    return hasShelfCardByMatcher(item => String(item?.id || "").toUpperCase() === want);
-  }
-
-  function getShelfCardIds(){
-    const slots = getMyShopSlots();
-    const ids = [];
-    slots.forEach(slot => {
-      if(slot && slot.item && slot.item.id) ids.push(String(slot.item.id).toUpperCase());
-    });
-    return ids;
-  }
-
-  function loadFxState(){
-    const parsed = lsGet(FX_LS_KEY, null);
-    if(!parsed || typeof parsed !== "object"){
-      return { visitCounter:0, rawCooldownUntilVisit:0, rawLastTriggerAt:0, burnLastTriggerAt:0 };
-    }
-    return {
-      visitCounter: Number(parsed.visitCounter || 0),
-      rawCooldownUntilVisit: Number(parsed.rawCooldownUntilVisit || 0),
-      rawLastTriggerAt: Number(parsed.rawLastTriggerAt || 0),
-      burnLastTriggerAt: Number(parsed.burnLastTriggerAt || 0)
-    };
-  }
-  function saveFxState(state){
-    lsSet(FX_LS_KEY, state);
-  }
-  function bumpVisitCounter(){
-    const fx = loadFxState();
-    fx.visitCounter += 1;
-    saveFxState(fx);
-    return fx.visitCounter;
-  }
-
-  function addSeedToInventory(seedId, amount){
-    const inv = lsGet(INV_LS_KEY, {}) || {};
-    if(!inv.seeds || typeof inv.seeds !== "object") inv.seeds = {};
-    inv.seeds[seedId] = Number(inv.seeds[seedId] || 0) + Number(amount || 0);
-    lsSet(INV_LS_KEY, inv);
-    return Number(inv.seeds[seedId] || 0);
-  }
-
-  function decrementCardCountInBook(cardId, amount){
-    const target = String(cardId || "").toUpperCase();
-    const n = Math.max(1, Number(amount || 1));
-    const book = lsGet(BOOK_LS_KEY, null);
-    if(!book) return false;
-    let changed = false;
-
-    if(book && book.got && typeof book.got === "object"){
-      Object.keys(book.got).forEach(k => {
-        const row = book.got[k];
-        if(changed || !row || typeof row !== "object") return;
-        const id = String(row.id || k).toUpperCase();
-        const name = normalizeName(row.name || "");
-        const hit =
-          id === target ||
-          (target === "SP-RAW" && (name.includes("ドロドロ生焼け") || name.includes("生焼け"))) ||
-          (target === "SP-BURN" && name.includes("焼きすぎ"));
-
-        if(!hit) return;
-
-        if(typeof row.count === "number"){
-          row.count = Math.max(0, row.count - n);
-          if(row.count <= 0) delete book.got[k];
-          changed = true;
-        }
-      });
-    }
-
-    if(changed) lsSet(BOOK_LS_KEY, book);
-    return changed;
-  }
-
-  function removeOneMatchingShelfCard(matchFn){
-    const shop = lsGet(MYSHOP_LS_KEY, null);
-    if(!shop || !Array.isArray(shop.slots)) return false;
-
-    for(let i=0;i<shop.slots.length;i++){
-      const slot = shop.slots[i];
-      if(!slot || !slot.item) continue;
-      if(!matchFn(slot.item)) continue;
-
-      const qty = Math.max(1, Number(slot.qty || 1));
-      if(qty > 1){
-        slot.qty = qty - 1;
-      }else{
-        slot.item = null;
-        slot.qty = 0;
-        if(i === 5) slot.priceTier = "奉納";
-      }
-      lsSet(MYSHOP_LS_KEY, shop);
-      return true;
-    }
-    return false;
-  }
-
-  function maybeTriggerRawCardEffect(ctx){
-    if(!hasShelfCard("SP-RAW")) return false;
-
-    const fx = loadFxState();
-    const visitNo = Number(fx.visitCounter || 0);
-    if(visitNo < Number(fx.rawCooldownUntilVisit || 0)) return false;
-    if(Math.random() >= RAW_TRIGGER_RATE) return false;
-
-    const guestId = ctx.guestId || "";
-    const guestName = ctx.guestName || CUSTOMER_NAME_MAP[guestId] || "タコ民";
-    const reclaim = Math.random() < RAW_RECLAIM_RATE;
-    const seedCount = reclaim ? RAW_SEED_COUNT_RECLAIM : RAW_SEED_COUNT_NORMAL;
-
-    addSeedToInventory(RAW_SEED_ID, seedCount);
-
-    fx.rawLastTriggerAt = Date.now();
-    fx.rawCooldownUntilVisit = visitNo + RAW_COOLDOWN_VISITS + 1;
-    saveFxState(fx);
-
-    let removed = false;
-    if(reclaim){
-      removed = removeOneMatchingShelfCard(isRawCard);
-      decrementCardCountInBook("SP-RAW", 1);
-    } else {
-      setTempBuyBonusForGuest(guestId, RAW_BUY_BONUS_RATE, RAW_BUY_BONUS_EXPIRE_MS);
-    }
-
-    if(helpersGlobal && typeof helpersGlobal.pushLog === "function"){
-      helpersGlobal.pushLog(
-        "棚カード発動",
-        reclaim
-          ? `〘ドロドロ生焼けカード〙が発動。タネ +${seedCount}、カードを回収された。`
-          : `〘ドロドロ生焼けカード〙が発動。タネ +${seedCount}。`,
-        guestId
-      );
-    }
-    if(helpersGlobal && typeof helpersGlobal.toast === "function"){
-      helpersGlobal.toast(
-        "棚カード発動",
-        reclaim ? `ドロドロ生焼けカード｜タネ +${seedCount} / カード回収` : `ドロドロ生焼けカード｜タネ +${seedCount}`,
-        ""
-      );
-    }
-
-    if(els.stageName) els.stageName.textContent = guestName;
-    if(els.stageMsg){
-      els.stageMsg.textContent = reclaim
-        ? "生焼けじゃないの！！これ入れなよ！！ ……そう言いながらカードを回収し、代わりにタネを置いていった。"
-        : "生焼けじゃないの！！これ入れなよ！！ ……そう言いながらタネを置いていった。";
-    }
-
-    if(typeof ctx.onStateChange === "function"){
-      ctx.onStateChange({
-        talking: false,
-        vMsg: reclaim
-          ? `タコ民が現れ、${seedCount}個のタネを置いて生焼けカードを回収していった。`
-          : `タコ民が現れ、${seedCount}個のタネを置いていった。`
-      });
-    }
-
-    if(typeof ctx.onResult === "function"){
-      ctx.onResult({
-        leaveNow: reclaim || Math.random() < 0.65,
-        leaveLine: reclaim
-          ? "……『これはまだ出しちゃダメでしょ！！』と言い残して去っていった。"
-          : "……タネだけ置いて、妙に満足した顔で去っていった。",
-        stageMessage: reclaim
-          ? `タコ民が現れ、${seedCount}個のタネを置いて生焼けカードを回収していった。`
-          : `タコ民が現れ、${seedCount}個のタネを置いていった。`,
-        rawEffectTriggered: true,
-        rawEffectReclaim: reclaim,
-        rawEffectRemoved: removed,
-        rewardedSeedId: RAW_SEED_ID,
-        rewardedSeedCount: seedCount
-      });
-    }
-    return true;
-  }
-
-  function maybeTriggerBurnCardEffect(ctx){
-    if(!hasShelfCard("SP-BURN")) return false;
-    if(!BURN_TARGETS.has(String(ctx.guestId || ""))) return false;
-    if(Math.random() >= BURN_TRIGGER_RATE) return false;
-
-    const fx = loadFxState();
-    fx.burnLastTriggerAt = Date.now();
-    saveFxState(fx);
-
-    if(helpersGlobal && typeof helpersGlobal.pushLog === "function"){
-      helpersGlobal.pushLog("棚カード発動", "〘焼きすぎたカード〙の気配で客が帰っていった。", ctx.guestId || "");
-    }
-    if(helpersGlobal && typeof helpersGlobal.toast === "function"){
-      helpersGlobal.toast("棚カード発動", "焼きすぎたカード｜客が警戒して帰った", "");
-    }
-
-    if(els.stageName) els.stageName.textContent = ctx.guestName || "来店客";
-    if(els.stageMsg) els.stageMsg.textContent = "……『なんか焦げ臭くない？』と言い残して、少し警戒した顔で帰っていった。";
-
-    if(typeof ctx.onStateChange === "function"){
-      ctx.onStateChange({
-        talking: false,
-        vMsg: "棚の空気が少し焦げついていた。"
-      });
-    }
-    if(typeof ctx.onResult === "function"){
-      ctx.onResult({
-        leaveNow: true,
-        leaveLine: "……『なんか焦げ臭くない？』と言い残して帰っていった。",
-        stageMessage: "棚の空気が少し焦げついていた。"
-      });
-    }
-    return true;
-  }
-
-  function maybeTriggerShelfCardEffect(ctx){
-    if(!ctx || !ctx.guestId || !ctx.visitId) return false;
-    bumpVisitCounter();
-    if(maybeTriggerRawCardEffect(ctx)) return true;
-    if(maybeTriggerBurnCardEffect(ctx)) return true;
-    return false;
-  }
-function shouldTalk(guestId){
-    const g = getGuestState(guestId);
-    const love = Number(g.love || 0);
-    let p = 0.30;
-    if(love >= 60) p += 0.05;
-    else if(love >= 30) p += 0.03;
-    if(Number(g.talkCount || 0) === 0) p += 0.03;
-    return Math.random() < clampValue(p, 0.30, 0.40);
-  }
-
-  function pickTalkEvent(guestId){
-    const pool = TALK_POOLS[guestId] || GENERIC_POOL;
-    return pickValue(pool);
-  }
-
-  function showInlineTalk(show){
-    bindEls();
-    if(!els.talkInline) return;
-    els.talkInline.style.display = show ? "grid" : "none";
-  }
-
-  function setChoicesDisabled(disabled){
-    bindEls();
-    [els.c1, els.c2, els.c3].forEach(btn => {
-      if(!btn) return;
-      btn.disabled = !!disabled;
-      btn.style.opacity = disabled ? "0.65" : "1";
-      btn.style.cursor = disabled ? "default" : "pointer";
-    });
-  }
-
-  function clearTimers(){
-    if(countdownTimer){ clearInterval(countdownTimer); countdownTimer = null; }
-    if(talkDelayTimer){ clearTimeout(talkDelayTimer); talkDelayTimer = null; }
-  }
-
-  function updateTimer(deadlineAt){
-    const remain = Math.max(0, Math.ceil((deadlineAt - Date.now()) / 1000));
-    bindEls();
-    if(els.timerInline) els.timerInline.textContent = `${remain}s`;
-  }
-
-  function finishTalk(result){
-    const cb = activeTalk ? activeTalk.onResult : null;
-    clearTimers();
-    showInlineTalk(false);
-    activeTalk = null;
-    renderGuestAffinityModal();
-    if(typeof cb === "function") cb(result || {});
-  }
-
-  function handleIgnoreTimeout(){
-    if(!activeTalk) return;
-
-    const guestId = activeTalk.guestId;
-    const guestName = activeTalk.guestName;
-    const prev = getGuestState(guestId);
-
-    patchGuest(guestId, {
-      love: clampValue(Number(prev.love || 0) - 1, 0, 100),
-      ignoreCount: Number(prev.ignoreCount || 0) + 1,
-      lastSeenAt: Date.now()
-    });
-
-    const leaveLine = pickValue(IGNORE_LINES_COMMON);
-
-    if(helpersGlobal && typeof helpersGlobal.pushLog === "function"){
-      helpersGlobal.pushLog("会話失敗", `${guestName} を放置してしまった`, guestId);
-    }
-    if(helpersGlobal && typeof helpersGlobal.addRep === "function"){
-      helpersGlobal.addRep(-1);
-    }
-
-    finishTalk({
-      leaveNow: true,
-      leaveLine,
-      stageMessage: "……返事がなくて、寂しそうに視線をそらした。"
-    });
-  }
-
-  function applyChoice(choice){
-    if(!activeTalk || !choice) return;
-
-    setChoicesDisabled(true);
-
-    const guestId = activeTalk.guestId;
-    const guestName = activeTalk.guestName;
-    const prev = getGuestState(guestId);
-    const delta = Number(choice.delta || 0);
-    const nextLove = clampValue(Number(prev.love || 0) + delta, 0, 100);
-
-    patchGuest(guestId, {
-      love: nextLove,
-      talkCount: Number(prev.talkCount || 0) + 1,
-      lastTalkAt: Date.now(),
-      lastSeenAt: Date.now()
-    });
-
-    if(helpersGlobal && typeof helpersGlobal.pushLog === "function"){
-      helpersGlobal.pushLog("会話", `${guestName}：${choice.log || "会話した"}（好感度 ${delta >= 0 ? "+" : ""}${delta}）`, guestId);
-    }
-
-    if(helpersGlobal && typeof helpersGlobal.toast === "function"){
-      const sign = delta >= 0 ? "+" : "";
-      helpersGlobal.toast("会話した", `${guestName}｜好感度 ${sign}${delta}`, "");
-    }
-
-    bindEls();
-    if(els.stageMsg){
-      els.stageMsg.textContent = choice.reply || "……";
-      els.stageMsg.classList.add("talk-question");
-    }
-    if(els.talkMoodInline){
-      els.talkMoodInline.textContent = `好感度 ${nextLove}/100`;
-    }
-
-    clearTimers();
-
-    setTimeout(() => {
-      finishTalk({
-        leaveNow: false,
-        stageMessage: choice.stage || "……少しだけ空気がやわらいだ。"
-      });
-    }, 1100);
-  }
-
-  function startConversationNow(ctx){
-    if(!ctx || !ctx.guestId || !ctx.visitId) return false;
-    if(activeTalk) return false;
-
-    bindEls();
-    if(!els.stageMsg || !els.c1 || !els.c2 || !els.c3 || !els.talkInline){
-      return false;
-    }
-
-    const guestId = ctx.guestId;
-    const guestName = ctx.guestName || CUSTOMER_NAME_MAP[guestId] || guestId;
-    const ev = pickTalkEvent(guestId);
-    const deadlineAt = Date.now() + 10000;
-
-    activeTalk = {
-      guestId,
-      guestName,
-      visitId: ctx.visitId,
-      deadlineAt,
-      onResult: ctx.onResult
-    };
-
-    helpersGlobal = ctx.helpers || null;
-
-    patchGuest(guestId, { lastSeenAt: Date.now() });
-
-    if(typeof ctx.onStateChange === "function"){
-      ctx.onStateChange({
-        talking: true,
-        talkStartedAt: Date.now(),
-        vMsg: ev.ask || "……なにか話したそうだ。"
-      });
-    }
-
-    if(els.stageMsg){
-      els.stageMsg.textContent = ev.ask || "……";
-      els.stageMsg.classList.add("talk-question");
-    }
-    if(els.talkMoodInline) els.talkMoodInline.textContent = ev.mood || "会話中…";
-    if(els.timerInline) els.timerInline.textContent = "10s";
-
-    const choices = shuffle((ev.choices || []).map(ch => ({
-      ...ch,
-      delta: Number(ch.delta || 0)
-    })));
-
-    const c1 = choices[0] || { text:"うなずく", delta:0, reply:"……。", stage:"……少しだけ落ち着いた。" };
-    const c2 = choices[1] || { text:"少し考える", delta:0, reply:"……。", stage:"……少しだけ落ち着いた。" };
-    const c3 = choices[2] || { text:"話を流す", delta:-1, reply:"……。", stage:"……少しだけ気まずい空気になった。" };
-
-    els.c1.textContent = c1.text;
-    els.c2.textContent = c2.text;
-    els.c3.textContent = c3.text;
-
-    els.c1.onclick = () => applyChoice(c1);
-    els.c2.onclick = () => applyChoice(c2);
-    els.c3.onclick = () => applyChoice(c3);
-
-    setChoicesDisabled(false);
-    showInlineTalk(true);
-    renderGuestAffinityModal();
-
-    updateTimer(deadlineAt);
-    countdownTimer = setInterval(() => {
-      if(!activeTalk) return;
-      updateTimer(deadlineAt);
-      if(Date.now() >= deadlineAt){
-        handleIgnoreTimeout();
-      }
-    }, 200);
-
-    return true;
-  }
-
-  function maybeStartConversation(ctx){
-    if(!ctx || !ctx.guestId || !ctx.visitId) return false;
-    if(activeTalk) return false;
-
-    helpersGlobal = ctx.helpers || null;
-
-    const talkWillStart = shouldTalk(ctx.guestId);
-
-    if(!talkWillStart){
-      if(maybeTriggerShelfCardEffect(ctx)) return true;
-      return false;
-    }
-
-    clearTimers();
-    talkDelayTimer = setTimeout(() => {
-      const sameCtx = ctx && typeof ctx.getStageState === "function" ? ctx.getStageState() : null;
-      if(sameCtx){
-        if(!sameCtx.hasVisitor) return;
-        if(sameCtx.visitId !== ctx.visitId) return;
-        if(sameCtx.leaving) return;
-        if(sameCtx.talking) return;
-      }
-      startConversationNow(ctx);
-    }, 2000);
-
-    return true;
-  }
-
-  function forceCloseTalk(){
-    activeTalk = null;
-    clearTimers();
-    showInlineTalk(false);
-    bindEls();
-    if(els.stageMsg) els.stageMsg.classList.remove("talk-question");
-  }
-
-  function init(){
-    bindEls();
-    injectStyles();
-    bindDocumentDelegation();
-    bindAffinityButtonDirect();
-    showInlineTalk(false);
-    renderGuestAffinityModal();
-    initDone = true;
-    return true;
-  }
-
-  window.RotenSocial = {
-    init,
-    bindGuestUI(){},
-    renderGuestAffinity: renderGuestAffinityModal,
-    getAffinityRows,
-    getBuyProbabilityBonus,
-    maybeStartConversation,
-    onPurchaseSuccess,
-    forceCloseTalk,
-    updateAffinityButton,
-    openAffinityModal,
-    closeAffinityModal,
-    getBudgetRangeByGuestId,
-    getRegularBudgetBonusRate,
-    isRegularLove,
-    startConversationNow,
-    hasShelfCard,
-    getShelfCardIds,
-    maybeTriggerShelfCardEffect
-  };
-})();
-</script>
-
-<script>
-(() => {
-  "use strict";
-
-  const Storage = window.__SAFE_STORAGE__;
-  const showErr = window.__SHOW_ERR__;
-
   const CRAFT_CAN_LIST_LAST_ONE = true;
   function isCraftCard(obj){
     const id = String(obj?.id || obj?._key || "").toUpperCase();
@@ -1405,87 +293,108 @@ function shouldTalk(guestId){
   const VISITOR_LINES = {
     careful: [
       "どうしようかな…","もう少し見てから…","今日は買うべきか…","財布に相談中…（既読スルー）",
-      "これは危険物かもしれない…","買った未来と買わない未来を比較中…","いったん深呼吸…","この棚、静かに圧が強い…"
+      "これは危険物かもしれない…","買った未来と買わない未来を比較中…","いったん深呼吸…","この棚、静かに圧が強い…",
+      "函館の潮風でも、この迷いは飛ばない…","夜景の前に理性が試されてる…"
     ],
     impulse: [
       "おっ、いいじゃん","今が買い時かも！","これいっとく？","勢いで買う！…たぶん！",
-      "理屈は後で考える！","もう会計の顔してる？","出会った時点で半分買ってる","迷う時間がもったいない！"
+      "理屈は後で考える！","もう会計の顔してる？","出会った時点で半分買ってる","迷う時間がもったいない！",
+      "朝市より勢いがある！","函館まで来て慎重とか言ってられない！"
     ],
     looker: [
       "ふーん","見るだけ見よ","賑やかだなあ","撮って帰るわ（買わない）",
-      "今日は空気だけ吸う","買わないとは言ってない、今はまだ","棚の前で哲学してる","見学も立派な参加です"
+      "今日は空気だけ吸う","買わないとは言ってない、今はまだ","棚の前で哲学してる","見学も立派な参加です",
+      "ベイエリア感覚で眺めてる","これは観光。たぶん観光。"
     ],
     picky: [
       "匂いは悪くない…","焼きのムラは…？","慎重に選びたい","今日は“普通”が強い日…",
-      "もう少し運命感がほしい","この一枚に人生を賭けるには早い","完成度は高い。高いから怖い","軽率に手を出すと負ける棚だ"
+      "もう少し運命感がほしい","この一枚に人生を賭けるには早い","完成度は高い。高いから怖い","軽率に手を出すと負ける棚だ",
+      "夜景くらいの説得力が欲しい","函館の風格に見合う一枚か…見極めたい"
     ],
     king: [
       "よい。","余は迷わぬ。","この棚…格がある。","買う。異論はない。",
-      "王の財布に曇りなし。","なるほど、面白い。","余の棚鑑定、合格。","今日は機嫌がいい。買おう。"
+      "王の財布に曇りなし。","なるほど、面白い。","余の棚鑑定、合格。","今日は機嫌がいい。買おう。",
+      "港町にも王の休暇は必要だ","夜景より先に余の心を奪うとは"
     ],
     flipper: [
       "回るか…？","これは動く。","利益の匂いがする","買う。評判は知らん。",
-      "数字が俺を呼んでる","この棚、現金の顔してる","感情じゃない。計算だ。たぶん。","売れる絵が見える…"
+      "数字が俺を呼んでる","この棚、現金の顔してる","感情じゃない。計算だ。たぶん。","売れる絵が見える…",
+      "函館の土産？いや、案件だ","潮風より回転率が気になる"
     ],
     rich: [
       "値段？ ああ、雰囲気代だろう","高い？ それは“希少”という意味だ","棚ごと欲しいが…今日は我慢する","焼きの格が違う",
-      "財布は景色を見ない","この程度なら前菜だ","良いものには理由がある","支払いの痛みが追いついてない"
+      "財布は景色を見ない","この程度なら前菜だ","良いものには理由がある","支払いの痛みが追いついてない",
+      "夜景代わりに一枚も悪くない","函館で財布が軽くなるのは想定内だ"
     ],
     climber: [
       "この棚…登れるな","酸素が薄い。レアの高度だ","頂上（UR）は近い…気がする","ここで撤退は恥だ",
-      "一段上の棚の匂いがする","まだ行ける、まだ届く","買った先に景色がある","これは高所訓練だ"
+      "一段上の棚の匂いがする","まだ行ける、まだ届く","買った先に景色がある","これは高所訓練だ",
+      "函館山より先に登るものがあったか","坂の街はこうでなくちゃ"
     ],
     guide: [
       "こちらが“後悔ゾーン”です","右を見ると財布、左を見ると欲望","今買うと“語れる思い出”になります","出口は…あ、閉まりました",
-      "本日も心を焼く展示となっております","おすすめは“勢い”コースです","この先、理性の保証はありません","道案内はするが、責任は取らない"
+      "本日も心を焼く展示となっております","おすすめは“勢い”コースです","この先、理性の保証はありません","道案内はするが、責任は取らない",
+      "赤レンガ方面よりこちらが危険です","函館観光の寄り道先としては強すぎる"
     ],
     relax: [
       "肩の力、抜いて…買いな？","悩みは筋肉に出る","この棚、ツボ押してくる","物欲リンパ流れてる",
-      "呼吸して。吸って。買って。","その迷い、ほぐせます","財布も心も温めよう","たこ焼きと一緒に緊張もほどける"
+      "呼吸して。吸って。買って。","その迷い、ほぐせます","財布も心も温めよう","たこ焼きと一緒に緊張もほどける",
+      "潮風セラピーより効いてる","函館の夜にちょうどいい一枚だよ"
     ],
     artisan: [
       "焼き面…美しい","これは返しが神","手が勝手に回転を想像する","…買う理由が多すぎる",
-      "職人の指先が見える","表面の説得力が強い","これは仕事が丁寧だ","一枚に技術が詰まってる"
+      "職人の指先が見える","表面の説得力が強い","これは仕事が丁寧だ","一枚に技術が詰まってる",
+      "函館の風土に負けない仕事だ","港町でこの焼きは反則級"
     ],
     diet: [
       "これはカード。つまり0カロリー","買っても太らない。むしろ痩せる","罪悪感が焼かれている","理論上、無限に買える",
-      "これは食欲ではない。収集欲だ","財布は痩せるが体は太らない","理屈の上では勝ってる","今日の摂取は感動です"
+      "これは食欲ではない。収集欲だ","財布は痩せるが体は太らない","理屈の上では勝ってる","今日の摂取は感動です",
+      "函館グルメの後でも別腹だ","夜景カロリーもゼロ扱いでいい"
     ],
     overflow: [
       "あ、俺ちょっとはみ出てる？","棚から出てるのが味","規格外が一番うまい","枠に収まらない人生でね",
-      "ルールの外に本質がある","ちょっとズレてる方が刺さる","正面からじゃ足りない","この棚、普通じゃないのがいい"
+      "ルールの外に本質がある","ちょっとズレてる方が刺さる","正面からじゃ足りない","この棚、普通じゃないのがいい",
+      "坂の街でまっすぐ歩く方が難しい","函館っぽくて好きだ、このはみ出し感"
     ],
     collector: [
       "触らない。眺める","買うか…保存か…","これは2枚必要なやつ","未所持の匂いがする",
-      "スリーブの未来が見える","開ける用と守る用が必要","この出会いは管理案件","図鑑がうるさい"
+      "スリーブの未来が見える","開ける用と守る用が必要","この出会いは管理案件","図鑑がうるさい",
+      "旅の記録にしては強すぎる","函館の思い出としては完璧すぎる"
     ],
     shadow: [
       "この街、防御力は高いな。カードの話だが","水は止められる。でも収集欲は止まらん","濡れたら終わり？だから二重スリーブだ","現場終わりの一枚が、今日の報酬だ",
-      "守る準備はできてる","この一枚、現場判断で確保","雨より怖いのは売り切れだ","慎重に、だが素早く"
+      "守る準備はできてる","この一枚、現場判断で確保","雨より怖いのは売り切れだ","慎重に、だが素早く",
+      "函館の風雨でも守り抜く","港町の湿気？対策済みだ"
     ],
     ramen: [
       "これは…濃い","替え玉（追加購入）できる？","スープは無いが深みはある","〆に1枚、いっとくか",
-      "一枚で終わる気がしない","濃厚だ…財布にくる","今日の締めはこれだ","湯気はないのに熱い"
+      "一枚で終わる気がしない","濃厚だ…財布にくる","今日の締めはこれだ","湯気はないのに熱い",
+      "函館の夜にこの濃さは危険だ","食後でも別腹に入るやつだ"
     ],
     streamer: [
       "みんな見てる〜？","今から運試しするよ〜","当たったら神回","外れても“美味しい”",
-      "コメント欄がざわつくやつ","これ、映えるでしょ？","伝説回の気配ある","今日は数字が伸びる気がする"
+      "コメント欄がざわつくやつ","これ、映えるでしょ？","伝説回の気配ある","今日は数字が伸びる気がする",
+      "函館ロケ回、急に当たり引きそう","夜景よりこっちが映えたらごめん"
     ],
     gourmet: [
       "香りが語りかけてくる","焼きの思想がある","これは“食後に語れる”","軽率には買えない",
-      "一枚の余韻が長い","品がある。悔しいがある","味じゃない、格だ","これは舌じゃなく心で食べるやつ"
+      "一枚の余韻が長い","品がある。悔しいがある","味じゃない、格だ","これは舌じゃなく心で食べるやつ",
+      "函館の空気にも負けてない","旅の記憶に残る一皿…じゃない、一枚だ"
     ],
     opener: [
       "開けたい","今すぐ開けたい","結果より“音”","我慢？ なにそれ？",
-      "持って帰る前に開けそう","開封は呼吸","袋の音が聞こえてる","結果より瞬間派です"
+      "持って帰る前に開けそう","開封は呼吸","袋の音が聞こえてる","結果より瞬間派です",
+      "朝市のイカより反応が早い","函館まで来て我慢は無理"
     ],
     party: [
       "今日は全部祭り","財布？ 酔ってる","景気よく焼こう","買う理由しかない",
-      "テンションが会計してる","一枚で済む気がしない","祭りのあとに後悔しよう","今は波に乗るだけ"
+      "テンションが会計してる","一枚で済む気がしない","祭りのあとに後悔しよう","今は波に乗るだけ",
+      "港の夜風まで祝ってる","函館テンションが全開だ"
     ],
     pilgrim: [
       "ここまで6時間","買わない選択肢は無い","帰りも6時間","記念になるやつ頼む",
-      "ここまで来たんだ、手ぶらでは帰れない","旅路が一枚を重くする","これは巡礼の証だ","距離が価値を押し上げる"
+      "ここまで来たんだ、手ぶらでは帰れない","旅路が一枚を重くする","これは巡礼の証だ","距離が価値を押し上げる",
+      "函館に来た意味を作りたい","夜景より先に心が決まった"
     ]
   };
 
@@ -1494,7 +403,12 @@ function shouldTalk(guestId){
     "……また来る。焼かれる覚悟ができたら。",
     "……買わない勇気も、立派な消費行動だよね。",
     "……今はその時じゃない。たこ焼きがそう言った。",
-    "……棚の圧が強すぎて、俺が焼けた。"
+    "……棚の圧が強すぎて、俺が焼けた。",
+    "……帰宅してから後悔する予定です。",
+    "……今日は買わなかった。逆に一生覚えてる。",
+    "……欲しかった。でも今日は理性が勝った。",
+    "……見送っただけだ。負けではない。",
+    "……これは縁がなかったんじゃない。タイミングが悪かっただけ。"
   ];
 
   const BUY_LINES = [
@@ -1502,24 +416,34 @@ function shouldTalk(guestId){
     "大事そうにカードを抱えて帰っていった。",
     "足取り軽く帰っていった。",
     "今日はいい日だ、とつぶやいて帰っていった。",
-    "焼かれた顔で満足そうに帰っていった。"
+    "焼かれた顔で満足そうに帰っていった。",
+    "財布は軽いが心は重そうに満たされていた。",
+    "勝者の顔で帰っていった。",
+    "いい買い物だった、と頷いて帰っていった。",
+    "静かにガッツポーズして帰っていった。",
+    "帰り道まで誇らしそうだった。"
   ];
 
   const CONTRACT_LINES = [
     "📜 契約成立。棚が一瞬、呼吸した。",
     "📜 奉納が受理された。見えない手が押印した。",
-    "📜 署名完了。焼かれた運命が、少しだけ味方した。"
+    "📜 署名完了。焼かれた運命が、少しだけ味方した。",
+    "📜 契約が通った。次の客の足音が軽い。",
+    "📜 祀り棚が静かにうなずいた。"
   ];
 
   const CONTRACT_SMALL_LINES = [
     "……契約は通った。静かな効き目が残っている。",
-    "……深い報酬は眠っているが、棚は確かに応えた。"
+    "……深い報酬は眠っているが、棚は確かに応えた。",
+    "……今回は印だけ。だが印だけでも十分に重い。",
+    "……契約は成立。余韻だけでも店が少し強くなる。"
   ];
 
   const CONTRACT_BONUS_LINES = [
     "棚の気配が濃くなった。",
     "街の流れが少しだけこちらに寄った。",
-    "焼きの神様が小さく頷いた。"
+    "焼きの神様が小さく頷いた。",
+    "運の焼き加減がちょうど良くなった。"
   ];
 
   const NEG_TYPES = new Set(["looker","picky","flipper"]);
@@ -1646,11 +570,23 @@ function shouldTalk(guestId){
     const s = lsGet(LS.monthly, null);
 
     if(!s || typeof s !== "object"){
-      return { monthKey: currentKey, harvest: 0, sales: 0, fishing: 0, tower: 0 };
+      return {
+        monthKey: currentKey,
+        harvest: 0,
+        sales: 0,
+        fishing: 0,
+        tower: 0
+      };
     }
 
     if(String(s.monthKey || "") !== currentKey){
-      return { monthKey: currentKey, harvest: 0, sales: 0, fishing: 0, tower: 0 };
+      return {
+        monthKey: currentKey,
+        harvest: 0,
+        sales: 0,
+        fishing: 0,
+        tower: 0
+      };
     }
 
     return {
@@ -1677,11 +613,17 @@ function shouldTalk(guestId){
     const s = lsGet(LS.myshopMonthlySales, null);
 
     if(!s || typeof s !== "object"){
-      return { monthKey: currentKey, sales: 0 };
+      return {
+        monthKey: currentKey,
+        sales: 0
+      };
     }
 
     if(String(s.monthKey || "") !== currentKey){
-      return { monthKey: currentKey, sales: 0 };
+      return {
+        monthKey: currentKey,
+        sales: 0
+      };
     }
 
     return {
@@ -1793,8 +735,7 @@ function shouldTalk(guestId){
   function applyDayNight(){
     const night = isNight();
     stageBg.src = night ? ASSETS.bgNight : ASSETS.bgDay;
-    stageTimeTag.textContent = "";
-    stageTimeTag.style.display = "none";
+    stageTimeTag.textContent = night ? "夜" : "昼";
   }
 
   const STAGE_DEFAULT = {
@@ -1825,98 +766,14 @@ function shouldTalk(guestId){
     lsSet(LS.stage, s);
   }
 
-  let stageTalkTimer = null;
-  let stageSellTimer = null;
-  let stageLeaveTimer = null;
-  let stageDeadlineAt = 0;
+  let stageTalkTimer=null;
+  let stageSellTimer=null;
+  let stageLeaveTimer=null;
 
   function clearStageTimers(){
-    if(stageTalkTimer){ clearInterval(stageTalkTimer); stageTalkTimer = null; }
-    if(stageSellTimer){ clearTimeout(stageSellTimer); stageSellTimer = null; }
-    if(stageLeaveTimer){ clearTimeout(stageLeaveTimer); stageLeaveTimer = null; }
-  }
-
-  function hideStageStayTag(){
-    if(stageTimeTag){
-      stageTimeTag.textContent = "";
-      stageTimeTag.style.display = "none";
-    }
-  }
-
-  function getVisitorLineForType(type, currentMsg){
-    const pool = VISITOR_LINES[String(type || "")] || ["……"];
-    if(!Array.isArray(pool) || !pool.length) return "……";
-    if(pool.length === 1) return pool[0];
-
-    let next = pick(pool);
-    let guard = 0;
-    while(next === currentMsg && guard < 8){
-      next = pick(pool);
-      guard += 1;
-    }
-    return next;
-  }
-
-  function stopVisitorTimers(){
-    clearStageTimers();
-    stageDeadlineAt = 0;
-    hideStageStayTag();
-  }
-
-  function startVisitorTimers(stayMs){
-    clearStageTimers();
-    hideStageStayTag();
-
-    const st = loadStage();
-    if(!st.hasVisitor || st.leaving){
-      return false;
-    }
-
-    const totalMs = Math.max(1000, Math.floor(Number(stayMs || st.stayMs || 12000)));
-    stageDeadlineAt = now() + totalMs;
-
-    st.stayMs = totalMs;
-    saveStage(st);
-
-    stageTalkTimer = setInterval(() => {
-      const cur = loadStage();
-      if(!cur.hasVisitor || cur.leaving){
-        stopVisitorTimers();
-        return;
-      }
-      if(cur.talking) return;
-      if(cur.talkDone) return;
-
-      if(Math.random() < 0.55){
-        const nextMsg = getVisitorLineForType(cur.vType, cur.vMsg);
-        if(nextMsg && nextMsg !== cur.vMsg){
-          cur.vMsg = nextMsg;
-          saveStage(cur);
-          renderStage();
-        }
-      }
-    }, rand(2800, 4500));
-
-    stageSellTimer = setTimeout(() => {
-      const cur = loadStage();
-
-      if(!cur.hasVisitor || cur.leaving){
-        stopVisitorTimers();
-        return;
-      }
-
-      if(cur.talking){
-        return;
-      }
-
-      saleProcess();
-    }, totalMs);
-
-    return true;
-  }
-
-  function resetVisitorTimers(stayMs){
-    return startVisitorTimers(stayMs);
+    if(stageTalkTimer){ clearInterval(stageTalkTimer); stageTalkTimer=null; }
+    if(stageSellTimer){ clearTimeout(stageSellTimer); stageSellTimer=null; }
+    if(stageLeaveTimer){ clearTimeout(stageLeaveTimer); stageLeaveTimer=null; }
   }
 
   function injectStageWalletStyles(){
@@ -1946,10 +803,103 @@ function shouldTalk(guestId){
       .stage-name-main.pos{
         color:#ffffff;
       }
+
+      .stage-chip-row{
+        display:flex;
+        gap:6px;
+        flex-wrap:wrap;
+        align-items:center;
+      }
+
+      .stage-chip{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:4px 12px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:700;
+        line-height:1;
+        white-space:nowrap;
+      }
+
+      .stage-chip.regular{
+        background:linear-gradient(180deg,#ffd76a,#ffb13b);
+        border:1px solid #ffd76a;
+        color:#3a2400;
+        box-shadow:
+          0 0 10px rgba(255,200,80,.45),
+          inset 0 1px 0 rgba(255,255,255,.35);
+      }
+
+      .stage-chip.wallet.normal{
+        background:rgba(255,255,255,.08);
+        border:1px solid rgba(255,255,255,.14);
+        color:#ffffff;
+      }
+
+      .stage-chip.wallet.mid{
+        background:linear-gradient(180deg,#b7dcff,#7fbaff);
+        border:1px solid #9fd0ff;
+        color:#00264a;
+        box-shadow:
+          0 0 10px rgba(120,180,255,.32),
+          inset 0 1px 0 rgba(255,255,255,.38);
+      }
+
+      .stage-chip.wallet.rich{
+        background:linear-gradient(180deg,#ffe8a3,#ffc94a);
+        border:1px solid #ffe8a3;
+        color:#3a2400;
+      }
+
+      .stage-chip.wallet.king{
+        background:linear-gradient(180deg,#ffd76a,#ffb13b);
+        border:1px solid #ffd76a;
+        color:#3a2400;
+      }
+
+      .stage-chip-icon{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        font-size:13px;
+      }
+
+      .stage-chip-text{
+        display:inline-flex;
+        align-items:center;
+      }
+
+      @keyframes walletFloat{
+        0%   { transform:translateY(0px) rotate(0deg) scale(1); }
+        25%  { transform:translateY(-1px) rotate(-1.2deg) scale(1.01); }
+        50%  { transform:translateY(0px) rotate(.8deg) scale(1.02); }
+        75%  { transform:translateY(-1px) rotate(-.8deg) scale(1.01); }
+        100% { transform:translateY(0px) rotate(0deg) scale(1); }
+      }
+
+      @keyframes walletGlow{
+        0%,100%{
+          box-shadow:
+            0 0 14px rgba(255,190,70,.48),
+            0 0 24px rgba(255,190,70,.18),
+            inset 0 1px 0 rgba(255,255,255,.42);
+        }
+        50%{
+          box-shadow:
+            0 0 18px rgba(255,215,110,.68),
+            0 0 34px rgba(255,200,80,.28),
+            inset 0 1px 0 rgba(255,255,255,.46);
+        }
+      }
     `;
     document.head.appendChild(style);
   }
 
+  // =========================
+  // 図鑑データサニタイズ
+  // =========================
   function cleanStr(v){
     return String(v ?? "").trim();
   }
@@ -1970,6 +920,7 @@ function shouldTalk(guestId){
     if(!name) return false;
     if(!img) return false;
     if(count <= 0) return false;
+
     return true;
   }
 
@@ -3181,14 +2132,7 @@ function shouldTalk(guestId){
       onStateChange: (patch)=>{
         const st = loadStage();
         if(!st.hasVisitor) return;
-
         Object.assign(st, patch || {});
-
-        if(patch && patch.talking){
-          st.talking = true;
-          st.talkStartedAt = Number(patch.talkStartedAt || now());
-        }
-
         saveStage(st);
         renderStage();
       },
@@ -3198,14 +2142,13 @@ function shouldTalk(guestId){
 
         st.talking = false;
         st.talkDone = true;
-        st.talkStartedAt = 0;
+        saveStage(st);
 
         if(result && result.stageMessage){
           st.vMsg = result.stageMessage;
+          saveStage(st);
+          renderStage();
         }
-
-        saveStage(st);
-        renderStage();
 
         if(result && result.leaveNow){
           beginLeave(result.leaveLine || pick(LEAVE_LINES));
@@ -3213,11 +2156,7 @@ function shouldTalk(guestId){
           return;
         }
 
-        let remain = Math.max(0, stageDeadlineAt - now());
-        if(remain <= 0){
-          remain = rand(5000, 9000);
-        }
-
+        const remain = rand(6000, 11000);
         startVisitorTimers(remain);
         renderAll();
       },
@@ -3234,8 +2173,8 @@ function shouldTalk(guestId){
 
     if(started){
       const st2 = loadStage();
-      st2.talking = true;
-      if(!st2.talkStartedAt) st2.talkStartedAt = now();
+      st2.talking = false;
+      st2.talkStartedAt = 0;
       saveStage(st2);
       renderStage();
       return true;
@@ -3309,7 +2248,12 @@ function shouldTalk(guestId){
       tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
       saveTick(tickObj);
 
-      maybeStartTalkAfterSpawn(s);
+      if(maybeStartTalkAfterSpawn(s)){
+        startVisitorTimers(stayMs);
+        renderAll();
+        return;
+      }
+
       startVisitorTimers(stayMs);
       renderAll();
     }, 3000);
@@ -3389,19 +2333,19 @@ function shouldTalk(guestId){
           <div class="stage-name-main ${isNegativeType(s.vType) ? "neg" : "pos"}">
             ${name}
           </div>
+
           ${walletChip}
           ${regularChip}
         </div>
       </div>
     `;
 
-    stageMsg.classList.remove("talk-question");
     stageMsg.textContent = s.vMsg || "—";
 
     const shop = loadMyShop();
     const slot = shop.slots?.[s.targetSlot];
 
-    if(slot && slot.item && s.vBudget && !s.talking){
+    if(slot && slot.item && s.vBudget){
       const rep = loadRep().rep;
       const base = basePriceFor(slot.item);
 
@@ -3456,8 +2400,6 @@ function shouldTalk(guestId){
     }else{
       stageVisitor.classList.remove("show");
     }
-
-    hideStageStayTag();
   }
 
   function setStageEmpty(msg){
@@ -3497,7 +2439,7 @@ function shouldTalk(guestId){
     setGlobalSpawnCooldown(GLOBAL_VISITOR_COOLDOWN_MS);
     if(leavingSlot >= 0) shiftOtherDueTimers(leavingSlot);
 
-    stageLeaveTimer = setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
+    setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
   }
 
   const SHOUT_LINES = [
@@ -3677,3 +2619,8 @@ function shouldTalk(guestId){
   }
 })();
 </script>
+
+<script src="assets/myshop-social-data.js"></script>
+<script src="assets/myshop-social.js"></script>
+</body>
+</html>
