@@ -776,6 +776,83 @@
     if(stageLeaveTimer){ clearTimeout(stageLeaveTimer); stageLeaveTimer=null; }
   }
 
+  /* ===== 追加修正その1：本物の来店タイマー ===== */
+  function updateStageStayTag(remainMs){
+    const ms = Math.max(0, Number(remainMs || 0));
+    const sec = Math.max(0, Math.ceil(ms / 1000));
+    stageTimeTag.textContent = `滞在 ${sec}s`;
+  }
+
+  function stopVisitorTimers(){
+    clearStageTimers();
+    const st = loadStage();
+    if(!st.hasVisitor){
+      stageTimeTag.textContent = isNight() ? "夜" : "昼";
+    }
+  }
+
+  function startVisitorTimers(stayMs){
+    clearStageTimers();
+
+    const st = loadStage();
+    if(!st.hasVisitor || st.leaving){
+      stageTimeTag.textContent = isNight() ? "夜" : "昼";
+      return false;
+    }
+
+    const totalMs = Math.max(1000, Math.floor(Number(stayMs || st.stayMs || 12000)));
+    const startedAt = now();
+    const endAt = startedAt + totalMs;
+
+    st.stayMs = totalMs;
+    saveStage(st);
+
+    updateStageStayTag(totalMs);
+
+    stageTalkTimer = setInterval(() => {
+      const cur = loadStage();
+
+      if(!cur.hasVisitor || cur.leaving){
+        stopVisitorTimers();
+        return;
+      }
+
+      const remain = Math.max(0, endAt - now());
+      updateStageStayTag(remain);
+
+      if(cur.talking && cur.talkStartedAt){
+        const talkRemain = Math.max(0, 10000 - (now() - Number(cur.talkStartedAt || 0)));
+        const talkTimerEl = $("#talkTimerInline");
+        if(talkTimerEl){
+          talkTimerEl.textContent = `${Math.ceil(talkRemain / 1000)}s`;
+        }
+      }
+    }, 200);
+
+    stageSellTimer = setTimeout(() => {
+      const cur = loadStage();
+
+      if(!cur.hasVisitor || cur.leaving){
+        stopVisitorTimers();
+        return;
+      }
+
+      if(cur.talking){
+        const extraMs = 2500;
+        startVisitorTimers(extraMs);
+        return;
+      }
+
+      saleProcess();
+    }, totalMs);
+
+    return true;
+  }
+
+  function resetVisitorTimers(stayMs){
+    return startVisitorTimers(stayMs);
+  }
+
   function injectStageWalletStyles(){
     if(document.getElementById("stageWalletFxStyle")) return;
 
@@ -870,36 +947,10 @@
         display:inline-flex;
         align-items:center;
       }
-
-      @keyframes walletFloat{
-        0%   { transform:translateY(0px) rotate(0deg) scale(1); }
-        25%  { transform:translateY(-1px) rotate(-1.2deg) scale(1.01); }
-        50%  { transform:translateY(0px) rotate(.8deg) scale(1.02); }
-        75%  { transform:translateY(-1px) rotate(-.8deg) scale(1.01); }
-        100% { transform:translateY(0px) rotate(0deg) scale(1); }
-      }
-
-      @keyframes walletGlow{
-        0%,100%{
-          box-shadow:
-            0 0 14px rgba(255,190,70,.48),
-            0 0 24px rgba(255,190,70,.18),
-            inset 0 1px 0 rgba(255,255,255,.42);
-        }
-        50%{
-          box-shadow:
-            0 0 18px rgba(255,215,110,.68),
-            0 0 34px rgba(255,200,80,.28),
-            inset 0 1px 0 rgba(255,255,255,.46);
-        }
-      }
     `;
     document.head.appendChild(style);
   }
 
-  // =========================
-  // 図鑑データサニタイズ
-  // =========================
   function cleanStr(v){
     return String(v ?? "").trim();
   }
@@ -1292,8 +1343,7 @@
 
     return shop;
   }
-
-  function loadTick(){
+function loadTick(){
     const t = lsGet(LS.tick, { ver:1, nextAtBySlot:{} });
     t.nextAtBySlot = t.nextAtBySlot || {};
     return t;
@@ -2129,10 +2179,14 @@
       guestName: s.vName,
       guestMood: s.vMsg,
       getStageState: () => loadStage(),
+      /* ===== 追加修正その2：会話開始時に talkStartedAt を保存 ===== */
       onStateChange: (patch)=>{
         const st = loadStage();
         if(!st.hasVisitor) return;
         Object.assign(st, patch || {});
+        if(patch && patch.talking){
+          st.talkStartedAt = Number(patch.talkStartedAt || now());
+        }
         saveStage(st);
         renderStage();
       },
@@ -2142,6 +2196,7 @@
 
         st.talking = false;
         st.talkDone = true;
+        st.talkStartedAt = 0;
         saveStage(st);
 
         if(result && result.stageMessage){
@@ -2171,10 +2226,11 @@
       }
     });
 
+    /* ===== 追加修正その3：会話開始直後に false へ戻さない ===== */
     if(started){
       const st2 = loadStage();
-      st2.talking = false;
-      st2.talkStartedAt = 0;
+      st2.talking = true;
+      if(!st2.talkStartedAt) st2.talkStartedAt = now();
       saveStage(st2);
       renderStage();
       return true;
@@ -2248,12 +2304,7 @@
       tickObj.nextAtBySlot[String(targetSlot)] = now() + nextVisitDelayMs();
       saveTick(tickObj);
 
-      if(maybeStartTalkAfterSpawn(s)){
-        startVisitorTimers(stayMs);
-        renderAll();
-        return;
-      }
-
+      maybeStartTalkAfterSpawn(s);
       startVisitorTimers(stayMs);
       renderAll();
     }, 3000);
@@ -2431,15 +2482,17 @@
 
     s.leaving = true;
     s.talking = false;
+    s.talkStartedAt = 0;
     saveStage(s);
     renderStage();
 
     socialCall("forceCloseTalk");
+    stopVisitorTimers();
 
     setGlobalSpawnCooldown(GLOBAL_VISITOR_COOLDOWN_MS);
     if(leavingSlot >= 0) shiftOtherDueTimers(leavingSlot);
 
-    setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
+    stageLeaveTimer = setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
   }
 
   const SHOUT_LINES = [
@@ -2560,6 +2613,7 @@
     lsSet(LS.queue, { ver:1, shoutPending:false, shoutTargetSlot:null, shoutSpawnAt:0, normalPending:false, normalTargetSlot:null, queuedAt:0 });
     lsSet(LS.flow, { ver:1, nextSpawnAllowedAt: 0 });
     socialCall("forceCloseTalk");
+    stopVisitorTimers();
 
     alert("客状態だけ修理しました（呼び込みCD・レベルは保持）");
     location.reload();
