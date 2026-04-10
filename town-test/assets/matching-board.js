@@ -491,7 +491,6 @@
     { id: "fert_guts", name: "根性論ぶち込み肥料" },
     { id: "fert_skip", name: "工程すっ飛ばし肥料" },
     { id: "fert_timeno", name: "時間を信じない肥料" },
-
     { id: "fert_balance", name: "天秤にかけた肥料" },
     { id: "fert_sleep", name: "寝かせた肥料" },
     { id: "fert_takoyaki", name: "たこ焼き風味の肥料" },
@@ -918,9 +917,109 @@
     return setHeat(getHeat() + Number(delta || 0));
   }
 
+  // =========================================================
+  // Book normalize helpers
+  // =========================================================
+  function normalizeBookEntry(cardId, rawEntry) {
+    const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
+
+    if (rawEntry == null) return null;
+
+    if (typeof rawEntry === "number") {
+      const count = Math.max(0, Math.floor(rawEntry));
+      return count > 0 ? { count, name: info.name, rarity: info.rarity } : null;
+    }
+
+    if (typeof rawEntry === "boolean") {
+      return rawEntry ? { count: 1, name: info.name, rarity: info.rarity } : null;
+    }
+
+    if (typeof rawEntry === "string") {
+      const n = Number(rawEntry);
+      if (Number.isFinite(n) && n > 0) {
+        return { count: Math.floor(n), name: info.name, rarity: info.rarity };
+      }
+      return null;
+    }
+
+    if (typeof rawEntry === "object") {
+      let count = 0;
+
+      if (typeof rawEntry.count === "number") {
+        count = rawEntry.count;
+      } else if (typeof rawEntry.count === "string") {
+        count = Number(rawEntry.count);
+      } else if (typeof rawEntry.owned === "number") {
+        count = rawEntry.owned;
+      } else if (typeof rawEntry.qty === "number") {
+        count = rawEntry.qty;
+      } else {
+        count = 1;
+      }
+
+      count = Math.max(0, Math.floor(Number(count) || 0));
+      if (count <= 0) return null;
+
+      return {
+        count,
+        name: rawEntry.name || info.name,
+        rarity: rawEntry.rarity || info.rarity
+      };
+    }
+
+    return null;
+  }
+
   function getBook() {
-    const book = loadJSON(KEY.book, { got: {} });
-    if (!book.got || typeof book.got !== "object") book.got = {};
+    const book = loadJSON(KEY.book, { ver: 1, got: {} });
+
+    if (!book || typeof book !== "object") {
+      return { ver: 1, got: {} };
+    }
+
+    if (!book.got || typeof book.got !== "object") {
+      book.got = {};
+      return book;
+    }
+
+    const normalizedGot = {};
+    let changed = false;
+
+    for (const [cardId, rawEntry] of Object.entries(book.got)) {
+      if (!CARD_MAP[cardId]) {
+        changed = true;
+        continue;
+      }
+
+      const normalized = normalizeBookEntry(cardId, rawEntry);
+      if (normalized) {
+        normalizedGot[cardId] = normalized;
+
+        if (
+          rawEntry !== normalized &&
+          (
+            typeof rawEntry !== "object" ||
+            Number(rawEntry.count || 0) !== normalized.count ||
+            rawEntry.name !== normalized.name ||
+            rawEntry.rarity !== normalized.rarity
+          )
+        ) {
+          changed = true;
+        }
+      } else {
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      book.got = normalizedGot;
+      if (!("ver" in book)) book.ver = 1;
+      saveBook(book);
+    } else {
+      book.got = normalizedGot;
+      if (!("ver" in book)) book.ver = 1;
+    }
+
     return book;
   }
 
@@ -930,17 +1029,30 @@
 
   function getOwnedCount(cardId) {
     const book = getBook();
-    return Number(book.got?.[cardId]?.count || 0);
+    const entry = book.got?.[cardId];
+    return Math.max(0, Math.floor(Number(entry?.count || 0)));
   }
 
   function addOwned(cardId, delta) {
     const book = getBook();
     const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
-    if (!book.got[cardId]) {
-      book.got[cardId] = { count: 0, name: info.name, rarity: info.rarity };
+
+    const current = normalizeBookEntry(cardId, book.got?.[cardId]) || {
+      count: 0,
+      name: info.name,
+      rarity: info.rarity
+    };
+
+    current.count = Math.max(0, Math.floor(Number(current.count || 0) + Number(delta || 0)));
+    current.name = current.name || info.name;
+    current.rarity = current.rarity || info.rarity;
+
+    if (current.count <= 0) {
+      delete book.got[cardId];
+    } else {
+      book.got[cardId] = current;
     }
-    book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + Number(delta || 0));
-    if (book.got[cardId].count <= 0) delete book.got[cardId];
+
     saveBook(book);
   }
 
@@ -992,12 +1104,20 @@
       saveJSON(KEY.matchingMeta, meta);
     }
 
-    // 図鑑は空で初期化するだけ。ランダム生成しない
     const book = loadJSON(KEY.book, null);
     if (!book || typeof book !== "object") {
       saveJSON(KEY.book, { ver: 1, got: {} });
     } else {
-      book.got = book.got && typeof book.got === "object" ? book.got : {};
+      const rawGot = book.got && typeof book.got === "object" ? book.got : {};
+      const normalizedGot = {};
+
+      for (const [cardId, rawEntry] of Object.entries(rawGot)) {
+        if (!CARD_MAP[cardId]) continue;
+        const normalized = normalizeBookEntry(cardId, rawEntry);
+        if (normalized) normalizedGot[cardId] = normalized;
+      }
+
+      book.got = normalizedGot;
       if (!("ver" in book)) book.ver = 1;
       saveJSON(KEY.book, book);
     }
@@ -2107,7 +2227,7 @@
     const rarityOrder = { SP: 6, LR: 5, UR: 4, SR: 3, R: 2, N: 1 };
 
     const ownedCards = CARDS_ALL
-      .map(card => ({ ...card, count: Number(owned.got?.[card.id]?.count || 0) }))
+      .map(card => ({ ...card, count: getOwnedCount(card.id) }))
       .filter(v => v.count > 0)
       .sort((a, b) => {
         const rd = (rarityOrder[b.rarity] || 0) - (rarityOrder[a.rarity] || 0);
