@@ -3,39 +3,7 @@
 
   const LS_KEY = "roten_v1_guest_affection";
   const REGULAR_LOVE_THRESHOLD = 80;
-  const REGULAR_BUDGET_BONUS_RATE = 0.18;
-
-  const FX_LS_KEY = "roten_v1_stage_card_fx";
-  const INV_LS_KEY = "tf_v1_inv";
-  const BOOK_LS_KEY = "tf_v1_book";
-
-  const RAW_CARD_ID = "SP-RAW";
-  const BURN_CARD_ID = "SP-BURN";
-
-  const RAW_TRIGGER_RATE = 0.10;
-  const RAW_RECLAIM_RATE = 0.20;
-  const RAW_COOLDOWN_VISITS = 3;
-  const RAW_SEED_ID = "seed_random";
-  const RAW_SEED_COUNT_NORMAL = 1;
-  const RAW_SEED_COUNT_RECLAIM = 2;
-  const RAW_BUY_BONUS_RATE = 0.35;
-  const RAW_BUY_BONUS_EXPIRE_MS = 5 * 60 * 1000;
-
-  const BURN_TRIGGER_RATE = 0.08;
-  const BURN_TARGETS = new Set(["flipper", "looker", "picky", "streamer"]);
-
-  const SHELF_STORAGE_CANDIDATES = [
-    "roten_v1_shelf",
-    "roten_v1_showcase",
-    "roten_stage_v1_shelf",
-    "roten_stage_v1_showcase",
-    "myshop_v1_shelf",
-    "myshop_v1_showcase",
-    "roten_v1_display_cards",
-    "roten_v1_cards_on_shelf",
-    "myshop_cards_display",
-    "roten_v1_stage"
-  ];
+  const REGULAR_BUDGET_BONUS_RATE = 0.18; // おすすめ値：18%
 
   const CUSTOMER_NAME_MAP = {
     impulse: "即決タコ民",
@@ -85,6 +53,8 @@
     pilgrim:   "https://ul.h3z.jp/eW2dluw2.png"
   };
 
+  // 今の価格帯に合わせて調整済み
+  // rich（札束タコ民）のみ 10億〜100億
   const CUSTOMER_BUDGET_RANGE = {
     careful:   { min: 800,        max: 3200 },
     looker:    { min: 300,        max: 1200 },
@@ -109,6 +79,7 @@
     pilgrim:   { min: 4000,       max: 14000 },
 
     king:      { min: 12000,      max: 30000 },
+
     rich:      { min: 1000000000, max: 100000000000 }
   };
 
@@ -469,7 +440,7 @@
   }
 
   function safeJSON(raw, fallback){
-    try { return JSON.parse(raw); }
+    try{ return JSON.parse(raw); }
     catch(e){ return fallback; }
   }
 
@@ -489,16 +460,6 @@
   function guestDisplayName(id, fallback){
     if(activeTalk && activeTalk.guestId === id && activeTalk.guestName) return activeTalk.guestName;
     return fallback || CUSTOMER_NAME_MAP[id] || id || "来店客";
-  }
-
-  function escapeHTML(s){
-    return String(s || "").replace(/[&<>"']/g, m => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      "\"":"&quot;",
-      "'":"&#039;"
-    }[m]));
   }
 
   function loadState(){
@@ -524,9 +485,7 @@
       buyCount: 0,
       ignoreCount: 0,
       lastTalkAt: 0,
-      lastSeenAt: 0,
-      tempBuyBonusRate: 0,
-      tempBuyBonusUntil: 0
+      lastSeenAt: 0
     };
   }
 
@@ -556,7 +515,7 @@
     if(love >= 60) return 4;
     if(love >= 40) return 3;
     if(love >= 20) return 2;
-    if(love >= 8) return 1;
+    if(love >= 8)  return 1;
     return 0;
   }
 
@@ -615,424 +574,14 @@
     return rows.slice(0, 30);
   }
 
-  function loadFxState(){
-    const parsed = safeJSON(localStorage.getItem(FX_LS_KEY), null);
-    if(!parsed || typeof parsed !== "object"){
-      return {
-        visitCounter: 0,
-        rawCooldownUntilVisit: 0,
-        rawLastTriggerAt: 0,
-        burnLastTriggerAt: 0
-      };
-    }
-    return {
-      visitCounter: Number(parsed.visitCounter || 0),
-      rawCooldownUntilVisit: Number(parsed.rawCooldownUntilVisit || 0),
-      rawLastTriggerAt: Number(parsed.rawLastTriggerAt || 0),
-      burnLastTriggerAt: Number(parsed.burnLastTriggerAt || 0)
-    };
-  }
-
-  function saveFxState(state){
-    localStorage.setItem(FX_LS_KEY, JSON.stringify({
-      visitCounter: Number(state.visitCounter || 0),
-      rawCooldownUntilVisit: Number(state.rawCooldownUntilVisit || 0),
-      rawLastTriggerAt: Number(state.rawLastTriggerAt || 0),
-      burnLastTriggerAt: Number(state.burnLastTriggerAt || 0)
-    }));
-  }
-
-  function bumpVisitCounter(){
-    const fx = loadFxState();
-    fx.visitCounter += 1;
-    saveFxState(fx);
-    return fx.visitCounter;
-  }
-
-  function normalizeCardId(v){
-    if(v == null) return "";
-    return String(v).trim().toUpperCase();
-  }
-
-  function collectCardIdsDeep(node, out){
-    if(!node) return;
-    if(Array.isArray(node)){
-      node.forEach(v => collectCardIdsDeep(v, out));
-      return;
-    }
-    if(typeof node === "string"){
-      const s = normalizeCardId(node);
-      if(s) out.push(s);
-      return;
-    }
-    if(typeof node !== "object") return;
-
-    const keys = ["id", "cardId", "itemId", "card_id", "slotCardId"];
-    for(const k of keys){
-      if(node[k]){
-        const s = normalizeCardId(node[k]);
-        if(s) out.push(s);
-      }
-    }
-
-    Object.keys(node).forEach(k => {
-      if(k === "id" || k === "cardId" || k === "itemId" || k === "card_id" || k === "slotCardId") return;
-      collectCardIdsDeep(node[k], out);
-    });
-  }
-
-  function tryReadShelfFromGlobals(){
-    try{
-      if(window.RotenStage && typeof window.RotenStage.getShelfCardIds === "function"){
-        const ids = window.RotenStage.getShelfCardIds() || [];
-        return ids.map(normalizeCardId).filter(Boolean);
-      }
-      if(typeof window.getShelfCardIds === "function"){
-        const ids = window.getShelfCardIds() || [];
-        return ids.map(normalizeCardId).filter(Boolean);
-      }
-      if(window.RotenStage && typeof window.RotenStage.getShelfState === "function"){
-        const state = window.RotenStage.getShelfState();
-        const out = [];
-        collectCardIdsDeep(state, out);
-        return out.filter(Boolean);
-      }
-    }catch(e){}
-    return null;
-  }
-
-  function tryReadShelfFromStorage(){
-    for(const key of SHELF_STORAGE_CANDIDATES){
-      const parsed = safeJSON(localStorage.getItem(key), null);
-      if(!parsed) continue;
-      const out = [];
-      collectCardIdsDeep(parsed, out);
-      if(out.length) return out.filter(Boolean);
-    }
-    return [];
-  }
-
-  function getShelfCardIds(){
-    const byGlobal = tryReadShelfFromGlobals();
-    if(Array.isArray(byGlobal) && byGlobal.length) return byGlobal;
-    return tryReadShelfFromStorage();
-  }
-
-  function hasShelfCard(cardId){
-    const ids = getShelfCardIds();
-    const want = normalizeCardId(cardId);
-    return ids.includes(want);
-  }
-
-  function removeCardIdDeep(node, targetId){
-    let removed = false;
-
-    if(Array.isArray(node)){
-      for(let i=node.length - 1; i >= 0; i--){
-        const item = node[i];
-
-        if(typeof item === "string" && normalizeCardId(item) === targetId){
-          node.splice(i, 1);
-          removed = true;
-          break;
-        }
-
-        if(item && typeof item === "object"){
-          const id = normalizeCardId(item.id || item.cardId || item.itemId || item.card_id || item.slotCardId);
-          if(id === targetId){
-            if("id" in item) item.id = "";
-            if("cardId" in item) item.cardId = "";
-            if("itemId" in item) item.itemId = "";
-            if("card_id" in item) item.card_id = "";
-            if("slotCardId" in item) item.slotCardId = "";
-            if("card" in item) item.card = null;
-            removed = true;
-            break;
-          }
-          if(removeCardIdDeep(item, targetId)){
-            removed = true;
-            break;
-          }
-        }
-      }
-      return removed;
-    }
-
-    if(node && typeof node === "object"){
-      for(const k of Object.keys(node)){
-        const item = node[k];
-        if(typeof item === "string" && normalizeCardId(item) === targetId){
-          node[k] = "";
-          return true;
-        }
-        if(item && typeof item === "object"){
-          const id = normalizeCardId(item.id || item.cardId || item.itemId || item.card_id || item.slotCardId);
-          if(id === targetId){
-            if("id" in item) item.id = "";
-            if("cardId" in item) item.cardId = "";
-            if("itemId" in item) item.itemId = "";
-            if("card_id" in item) item.card_id = "";
-            if("slotCardId" in item) item.slotCardId = "";
-            if("card" in item) item.card = null;
-            return true;
-          }
-          if(removeCardIdDeep(item, targetId)) return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  function attemptRemoveCardFromShelf(cardId){
-    const target = normalizeCardId(cardId);
-
-    try{
-      if(window.RotenStage && typeof window.RotenStage.removeShelfCard === "function"){
-        const ok = !!window.RotenStage.removeShelfCard(target);
-        if(ok) return true;
-      }
-      if(typeof window.removeShelfCard === "function"){
-        const ok = !!window.removeShelfCard(target);
-        if(ok) return true;
-      }
-    }catch(e){}
-
-    for(const key of SHELF_STORAGE_CANDIDATES){
-      const raw = localStorage.getItem(key);
-      if(!raw) continue;
-      const parsed = safeJSON(raw, null);
-      if(!parsed) continue;
-      const cloned = JSON.parse(JSON.stringify(parsed));
-      const removed = removeCardIdDeep(cloned, target);
-      if(removed){
-        localStorage.setItem(key, JSON.stringify(cloned));
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function addSeedToInventory(seedId, amount){
-    const inv = safeJSON(localStorage.getItem(INV_LS_KEY), null) || {};
-    if(!inv.seeds || typeof inv.seeds !== "object") inv.seeds = {};
-    inv.seeds[seedId] = Number(inv.seeds[seedId] || 0) + Number(amount || 0);
-    localStorage.setItem(INV_LS_KEY, JSON.stringify(inv));
-    return Number(inv.seeds[seedId] || 0);
-  }
-
-  function decrementCardCountInBook(cardId, amount){
-    const target = normalizeCardId(cardId);
-    const n = Math.max(1, Number(amount || 1));
-    const book = safeJSON(localStorage.getItem(BOOK_LS_KEY), null);
-    if(!book) return false;
-
-    let changed = false;
-
-    if(Array.isArray(book)){
-      for(let i=0;i<book.length;i++){
-        const row = book[i];
-        if(!row || typeof row !== "object") continue;
-        const id = normalizeCardId(row.id || row.cardId || row.no);
-        if(id !== target) continue;
-
-        if(typeof row.count === "number"){
-          row.count = Math.max(0, row.count - n);
-          changed = true;
-          break;
-        }
-        if(typeof row.owned === "number"){
-          row.owned = Math.max(0, row.owned - n);
-          changed = true;
-          break;
-        }
-      }
-    } else if(typeof book === "object"){
-      if(typeof book[target] === "number"){
-        book[target] = Math.max(0, book[target] - n);
-        changed = true;
-      } else if(book.cards && typeof book.cards === "object" && typeof book.cards[target] === "number"){
-        book.cards[target] = Math.max(0, book.cards[target] - n);
-        changed = true;
-      } else {
-        for(const key of Object.keys(book)){
-          const row = book[key];
-          if(!row || typeof row !== "object") continue;
-          const id = normalizeCardId(row.id || row.cardId || row.no || key);
-          if(id !== target) continue;
-          if(typeof row.count === "number"){
-            row.count = Math.max(0, row.count - n);
-            changed = true;
-            break;
-          }
-          if(typeof row.owned === "number"){
-            row.owned = Math.max(0, row.owned - n);
-            changed = true;
-            break;
-          }
-        }
-      }
-    }
-
-    if(changed){
-      localStorage.setItem(BOOK_LS_KEY, JSON.stringify(book));
-    }
-    return changed;
-  }
-
-  function setTempBuyBonusForGuest(guestId, rate, expireMs){
-    const g = getGuestState(guestId);
-    patchGuest(guestId, {
-      tempBuyBonusRate: Number(g.tempBuyBonusRate || 0) + Number(rate || 0),
-      tempBuyBonusUntil: Date.now() + Number(expireMs || 0),
-      lastSeenAt: Date.now()
-    });
-  }
-
-  function getActiveTempBuyBonusRate(guestId){
-    const g = getGuestState(guestId);
-    const until = Number(g.tempBuyBonusUntil || 0);
-    if(until > Date.now()){
-      return Number(g.tempBuyBonusRate || 0);
-    }
-    if(Number(g.tempBuyBonusRate || 0) > 0 || until > 0){
-      patchGuest(guestId, {
-        tempBuyBonusRate: 0,
-        tempBuyBonusUntil: 0
-      });
-    }
-    return 0;
-  }
-
-  function pushHelperLog(title, body, guestId){
-    if(helpersGlobal && typeof helpersGlobal.pushLog === "function"){
-      helpersGlobal.pushLog(title, body, guestId);
-    }
-  }
-
-  function toastHelper(title, body, extra){
-    if(helpersGlobal && typeof helpersGlobal.toast === "function"){
-      helpersGlobal.toast(title, body, extra || "");
-    }
-  }
-
-  function finishStageEvent(ctx, payload){
-    if(!ctx) return true;
-    if(typeof ctx.onStateChange === "function"){
-      ctx.onStateChange({
-        talking: false,
-        vMsg: payload.stageMessage || ""
-      });
-    }
-    if(typeof ctx.onResult === "function"){
-      ctx.onResult(payload);
-    }
-    return true;
-  }
-
-  function maybeTriggerRawCardEffect(ctx){
-    if(!hasShelfCard(RAW_CARD_ID)) return false;
-
-    const fx = loadFxState();
-    const visitNo = Number(fx.visitCounter || 0);
-
-    if(visitNo < Number(fx.rawCooldownUntilVisit || 0)) return false;
-    if(Math.random() >= RAW_TRIGGER_RATE) return false;
-
-    const guestId = ctx.guestId || "";
-    const guestName = ctx.guestName || CUSTOMER_NAME_MAP[guestId] || "タコ民";
-
-    const reclaim = Math.random() < RAW_RECLAIM_RATE;
-    const seedCount = reclaim ? RAW_SEED_COUNT_RECLAIM : RAW_SEED_COUNT_NORMAL;
-    addSeedToInventory(RAW_SEED_ID, seedCount);
-
-    fx.rawLastTriggerAt = Date.now();
-    fx.rawCooldownUntilVisit = visitNo + RAW_COOLDOWN_VISITS + 1;
-    saveFxState(fx);
-
-    let removed = false;
-    if(reclaim){
-      removed = attemptRemoveCardFromShelf(RAW_CARD_ID);
-      decrementCardCountInBook(RAW_CARD_ID, 1);
-    } else {
-      setTempBuyBonusForGuest(guestId, RAW_BUY_BONUS_RATE, RAW_BUY_BONUS_EXPIRE_MS);
-    }
-
-    const line = reclaim
-      ? "生焼けじゃないの！！これ入れなよ！！ ……そう言いながらカードを回収し、代わりにタネを置いていった。"
-      : "生焼けじゃないの！！これ入れなよ！！ ……そう言いながらタネを置いていった。";
-
-    const stageMessage = reclaim
-      ? `タコ民が現れ、${seedCount}個のタネを置いて生焼けカードを回収していった。`
-      : `タコ民が現れ、${seedCount}個のタネを置いていった。`;
-
-    if(els.stageName) els.stageName.textContent = guestName;
-    if(els.stageMsg) els.stageMsg.textContent = line;
-
-    pushHelperLog(
-      "棚カード発動",
-      reclaim
-        ? `〘ドロドロ生焼けカード〙が発動。タネ +${seedCount}、カードを回収された。`
-        : `〘ドロドロ生焼けカード〙が発動。タネ +${seedCount}。`,
-      guestId
-    );
-
-    toastHelper(
-      "棚カード発動",
-      reclaim
-        ? `ドロドロ生焼けカード｜タネ +${seedCount} / カード回収`
-        : `ドロドロ生焼けカード｜タネ +${seedCount}`,
-      ""
-    );
-
-    if(helpersGlobal && typeof helpersGlobal.renderGuestAffinity === "function"){
-      helpersGlobal.renderGuestAffinity();
-    }
-
-    return finishStageEvent(ctx, {
-      leaveNow: reclaim || Math.random() < 0.65,
-      leaveLine: reclaim
-        ? "……『これはまだ出しちゃダメでしょ！！』と言い残して去っていった。"
-        : "……タネだけ置いて、妙に満足した顔で去っていった。",
-      stageMessage,
-      rawEffectTriggered: true,
-      rawEffectReclaim: reclaim,
-      rawEffectRemoved: removed,
-      rewardedSeedId: RAW_SEED_ID,
-      rewardedSeedCount: seedCount
-    });
-  }
-
-  function maybeTriggerBurnCardEffect(ctx){
-    if(!hasShelfCard(BURN_CARD_ID)) return false;
-    if(!BURN_TARGETS.has(String(ctx.guestId || ""))) return false;
-    if(Math.random() >= BURN_TRIGGER_RATE) return false;
-
-    const fx = loadFxState();
-    fx.burnLastTriggerAt = Date.now();
-    saveFxState(fx);
-
-    if(els.stageName) els.stageName.textContent = ctx.guestName || "来店客";
-    if(els.stageMsg) els.stageMsg.textContent = "……『なんか焦げ臭くない？』と言い残して、少し警戒した顔で帰っていった。";
-
-    pushHelperLog("棚カード発動", "〘焼きすぎたカード〙の気配で客が帰っていった。", ctx.guestId || "");
-    toastHelper("棚カード発動", "焼きすぎたカード｜客が警戒して帰った", "");
-
-    return finishStageEvent(ctx, {
-      leaveNow: true,
-      leaveLine: "……『なんか焦げ臭くない？』と言い残して帰っていった。",
-      stageMessage: "棚の空気が少し焦げついていた。"
-    });
-  }
-
-  function maybeTriggerShelfCardEffect(ctx){
-    if(!ctx || !ctx.guestId || !ctx.visitId) return false;
-
-    bumpVisitCounter();
-
-    if(maybeTriggerRawCardEffect(ctx)) return true;
-    if(maybeTriggerBurnCardEffect(ctx)) return true;
-
-    return false;
+  function escapeHTML(s){
+    return String(s || "").replace(/[&<>"']/g, m => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      "\"":"&quot;",
+      "'":"&#039;"
+    }[m]));
   }
 
   function injectStyles(){
@@ -1105,6 +654,7 @@
         vertical-align:middle;
       }
 
+      /* 所持金バッジの文字にじみ対策 */
       #stageName span[style*="border-radius:999px"]{
         text-shadow:none !important;
         filter:none !important;
@@ -1117,6 +667,7 @@
         filter:none !important;
       }
 
+      /* 会話中の質問を目立たせる */
       #stageMsg.talk-question{
         display:block;
         margin-top:6px;
@@ -1130,6 +681,7 @@
         box-shadow:none !important;
       }
 
+      /* 会話パネル全体を見やすく */
       #talkInline{
         margin-top:10px;
         padding:10px;
@@ -1387,26 +939,21 @@
   function getBuyProbabilityBonus(guestId){
     const g = getGuestState(guestId);
     const love = Number(g.love || 0);
-    let bonus = 0;
 
-    if(love >= 90) bonus += 0.28;
-    else if(love >= 75) bonus += 0.20;
-    else if(love >= 60) bonus += 0.14;
-    else if(love >= 45) bonus += 0.08;
-    else if(love >= 30) bonus += 0.04;
-    else if(love >= 15) bonus += 0.01;
-
-    bonus += getActiveTempBuyBonusRate(guestId);
-    return bonus;
+    if(love >= 90) return 0.28;
+    if(love >= 75) return 0.20;
+    if(love >= 60) return 0.14;
+    if(love >= 45) return 0.08;
+    if(love >= 30) return 0.04;
+    if(love >= 15) return 0.01;
+    return 0;
   }
 
   function onPurchaseSuccess(guestId){
     const g = getGuestState(guestId);
     patchGuest(guestId, {
       buyCount: Number(g.buyCount || 0) + 1,
-      lastSeenAt: Date.now(),
-      tempBuyBonusRate: 0,
-      tempBuyBonusUntil: 0
+      lastSeenAt: Date.now()
     });
     renderGuestAffinity();
   }
@@ -1640,12 +1187,6 @@
   function maybeStartConversation(ctx){
     if(!ctx || !ctx.guestId || !ctx.visitId) return false;
     if(activeTalk) return false;
-
-    onStateChangeGlobal = typeof ctx.onStateChange === "function" ? ctx.onStateChange : null;
-    onResultGlobal = typeof ctx.onResult === "function" ? ctx.onResult : null;
-    helpersGlobal = ctx.helpers || null;
-
-    if(maybeTriggerShelfCardEffect(ctx)) return true;
     if(!shouldTalk(ctx.guestId)) return false;
 
     clearTimers();
@@ -1803,38 +1344,13 @@
     }, 250);
   }
 
-  function installLegacyCompat(){
-    if(typeof window.startVisitorTimers !== "function"){
-      window.startVisitorTimers = function startVisitorTimersCompat(){
-        return false;
-      };
-    }
-
-    if(typeof window.stopVisitorTimers !== "function"){
-      window.stopVisitorTimers = function stopVisitorTimersCompat(){
-        return false;
-      };
-    }
-
-    if(typeof window.resetVisitorTimers !== "function"){
-      window.resetVisitorTimers = function resetVisitorTimersCompat(){
-        return false;
-      };
-    }
-  }
-
   if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", () => {
-      installLegacyCompat();
-      scheduleBootRetries();
-    }, { once:true });
+    document.addEventListener("DOMContentLoaded", scheduleBootRetries, { once:true });
   } else {
-    installLegacyCompat();
     scheduleBootRetries();
   }
 
   window.addEventListener("load", () => {
-    installLegacyCompat();
     scheduleBootRetries();
   }, { once:true });
 
@@ -1853,9 +1369,6 @@
     getBudgetRangeByGuestId,
     getRegularBudgetBonusRate,
     isRegularLove,
-    startConversationNow,
-    hasShelfCard,
-    getShelfCardIds,
-    maybeTriggerShelfCardEffect
+    startConversationNow
   };
 })();
