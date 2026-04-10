@@ -3,7 +3,7 @@
 
   const LS_KEY = "roten_v1_guest_affection";
   const REGULAR_LOVE_THRESHOLD = 80;
-  const REGULAR_BUDGET_BONUS_RATE = 0.18; // おすすめ値：18%
+  const REGULAR_BUDGET_BONUS_RATE = 0.18;
 
   const FX_LS_KEY = "roten_v1_stage_card_fx";
   const INV_LS_KEY = "tf_v1_inv";
@@ -12,16 +12,16 @@
   const RAW_CARD_ID = "SP-RAW";
   const BURN_CARD_ID = "SP-BURN";
 
-  const RAW_TRIGGER_RATE = 0.10;          // 10%
-  const RAW_RECLAIM_RATE = 0.20;          // 20%で回収
-  const RAW_COOLDOWN_VISITS = 3;          // 発動後3来店クールタイム
-  const RAW_SEED_ID = "seed_random";      // 置いていくタネ
+  const RAW_TRIGGER_RATE = 0.10;
+  const RAW_RECLAIM_RATE = 0.20;
+  const RAW_COOLDOWN_VISITS = 3;
+  const RAW_SEED_ID = "seed_random";
   const RAW_SEED_COUNT_NORMAL = 1;
   const RAW_SEED_COUNT_RECLAIM = 2;
-  const RAW_BUY_BONUS_RATE = 0.35;        // 発動後は購入率を少し上げる
+  const RAW_BUY_BONUS_RATE = 0.35;
   const RAW_BUY_BONUS_EXPIRE_MS = 5 * 60 * 1000;
 
-  const BURN_TRIGGER_RATE = 0.08;         // 8%
+  const BURN_TRIGGER_RATE = 0.08;
   const BURN_TARGETS = new Set(["flipper", "looker", "picky", "streamer"]);
 
   const SHELF_STORAGE_CANDIDATES = [
@@ -109,7 +109,6 @@
     pilgrim:   { min: 4000,       max: 14000 },
 
     king:      { min: 12000,      max: 30000 },
-
     rich:      { min: 1000000000, max: 100000000000 }
   };
 
@@ -470,7 +469,7 @@
   }
 
   function safeJSON(raw, fallback){
-    try{ return JSON.parse(raw); }
+    try { return JSON.parse(raw); }
     catch(e){ return fallback; }
   }
 
@@ -557,7 +556,7 @@
     if(love >= 60) return 4;
     if(love >= 40) return 3;
     if(love >= 20) return 2;
-    if(love >= 8)  return 1;
+    if(love >= 8) return 1;
     return 0;
   }
 
@@ -727,14 +726,17 @@
 
   function removeCardIdDeep(node, targetId){
     let removed = false;
+
     if(Array.isArray(node)){
       for(let i=node.length - 1; i >= 0; i--){
         const item = node[i];
+
         if(typeof item === "string" && normalizeCardId(item) === targetId){
           node.splice(i, 1);
           removed = true;
           break;
         }
+
         if(item && typeof item === "object"){
           const id = normalizeCardId(item.id || item.cardId || item.itemId || item.card_id || item.slotCardId);
           if(id === targetId){
@@ -1395,7 +1397,6 @@
     else if(love >= 15) bonus += 0.01;
 
     bonus += getActiveTempBuyBonusRate(guestId);
-
     return bonus;
   }
 
@@ -1802,13 +1803,38 @@
     }, 250);
   }
 
+  function installLegacyCompat(){
+    if(typeof window.startVisitorTimers !== "function"){
+      window.startVisitorTimers = function startVisitorTimersCompat(){
+        return false;
+      };
+    }
+
+    if(typeof window.stopVisitorTimers !== "function"){
+      window.stopVisitorTimers = function stopVisitorTimersCompat(){
+        return false;
+      };
+    }
+
+    if(typeof window.resetVisitorTimers !== "function"){
+      window.resetVisitorTimers = function resetVisitorTimersCompat(){
+        return false;
+      };
+    }
+  }
+
   if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", scheduleBootRetries, { once:true });
+    document.addEventListener("DOMContentLoaded", () => {
+      installLegacyCompat();
+      scheduleBootRetries();
+    }, { once:true });
   } else {
+    installLegacyCompat();
     scheduleBootRetries();
   }
 
   window.addEventListener("load", () => {
+    installLegacyCompat();
     scheduleBootRetries();
   }, { once:true });
 
