@@ -448,7 +448,6 @@
 
     .helper b{ color:#fff7d2; }
 
-    /* 大凶サマリー */
     .daikyo-summary-simple{
       padding:16px;
       border-radius:18px;
@@ -534,7 +533,9 @@
       box-shadow:
         0 12px 28px rgba(0,0,0,.18),
         inset 0 0 0 1px rgba(255,255,255,.03);
-      min-height:128px;
+      min-height:360px;
+      display:flex;
+      flex-direction:column;
     }
 
     .daikyo-card::after{
@@ -549,7 +550,7 @@
     }
 
     .daikyo-card.locked{
-      filter:grayscale(.24) saturate(.68) brightness(.92);
+      filter:grayscale(.18) saturate(.78) brightness(.95);
     }
 
     .daikyo-card-top{
@@ -613,6 +614,58 @@
         inset 0 0 0 1px rgba(255,255,255,.03);
       font-size:15px;
       line-height:1;
+      z-index:2;
+    }
+
+    .daikyo-thumb{
+      width:100%;
+      max-width:188px;
+      aspect-ratio:3 / 4.2;
+      border-radius:14px;
+      overflow:hidden;
+      margin:0 auto 10px;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.06),
+        0 8px 18px rgba(0,0,0,.18);
+      flex:0 0 auto;
+      position:relative;
+    }
+
+    .daikyo-thumb img{
+      display:block;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      background:#140b11;
+    }
+
+    .daikyo-thumb.is-dummy{
+      background:
+        radial-gradient(circle at 50% 20%, rgba(255,255,255,.08), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.01)),
+        linear-gradient(180deg, #321120, #1b0c15 55%, #12070d 100%);
+    }
+
+    .daikyo-thumb.is-dummy::before{
+      content:"";
+      position:absolute;
+      inset:10px;
+      border-radius:10px;
+      border:1px dashed rgba(255,255,255,.12);
+    }
+
+    .daikyo-thumb.is-dummy::after{
+      content:"LOCKED";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      font-family:"DotGothic16", monospace;
+      font-size:14px;
+      letter-spacing:.10em;
+      color:rgba(255,255,255,.28);
+      text-shadow:0 0 10px rgba(255,255,255,.05);
     }
 
     .daikyo-card-id{
@@ -622,6 +675,7 @@
       font-weight:900;
       margin-bottom:6px;
       word-break:break-all;
+      text-align:center;
     }
 
     .daikyo-card-name{
@@ -630,6 +684,7 @@
       color:#fff6d9;
       font-weight:1000;
       min-height:42px;
+      text-align:center;
     }
 
     .daikyo-card-meta{
@@ -638,6 +693,9 @@
       line-height:1.45;
       color:rgba(255,255,255,.78);
       font-family:"DotGothic16", monospace;
+      text-align:center;
+      margin-top:auto;
+      padding-top:8px;
     }
 
     #toast{
@@ -1081,6 +1139,14 @@
         gap:10px;
       }
 
+      .daikyo-card{
+        min-height:332px;
+      }
+
+      .daikyo-thumb{
+        max-width:100%;
+      }
+
       .result-header{
         padding:14px 14px;
       }
@@ -1119,6 +1185,7 @@
       .topchip-value{ font-size:12px; }
       .result-bottom-actions{ flex-direction:column; }
       .daikyo-grid{ grid-template-columns:1fr; }
+      .daikyo-card{ min-height:352px; }
     }
   </style>
 </head>
@@ -1373,8 +1440,9 @@
         "「ひらくまえの どきどきが だいじたこ。」"
       ];
 
-      const OMKUJI = [
+      const OMKUJI_BASE = [
         {
+          key: "daikichi",
           w: 10,
           luck: "大吉",
           kind: "seed",
@@ -1385,6 +1453,7 @@
           msg: "やきだいが うたってるたこ。"
         },
         {
+          key: "chukichi",
           w: 20,
           luck: "中吉",
           kind: "water",
@@ -1395,6 +1464,7 @@
           msg: "じけんの においが するたこ。"
         },
         {
+          key: "suekichi",
           w: 25,
           luck: "末吉",
           kind: "water",
@@ -1405,6 +1475,7 @@
           msg: "しょうぶの いってきたこ。"
         },
         {
+          key: "kyo",
           w: 15,
           luck: "凶",
           kind: "fert",
@@ -1415,6 +1486,7 @@
           msg: "ふかいことばにみえて だいたい きのせいたこ。"
         },
         {
+          key: "daikyo",
           w: 30,
           luck: "大凶",
           kind: "octo",
@@ -1426,12 +1498,23 @@
         }
       ];
 
+      const DAIKYO_HIDDEN_RATE_MAP = {
+        0: 30,
+        1: 35,
+        2: 45,
+        3: 55,
+        4: 65,
+        5: 75,
+        6: 85
+      };
+
       const DAIKYO_SP_REWARDS = {
         3: {
           cardId: "SP-KYO-001",
           name: "大凶3連でも前向きに",
           rarity: "SP",
           tier: "N",
+          img: "https://takoyaki-card.com/town/assets/images/sp/kyo001.png",
           line: "大凶3連でも前向きに"
         },
         4: {
@@ -1439,6 +1522,7 @@
           name: "大凶4連でもいい経験です",
           rarity: "SP",
           tier: "R",
+          img: "https://takoyaki-card.com/town/assets/images/sp/kyo002.png",
           line: "大凶4連でもいい経験です"
         },
         5: {
@@ -1446,6 +1530,7 @@
           name: "大凶5連ですが笑ってください",
           rarity: "SP",
           tier: "SR",
+          img: "https://takoyaki-card.com/town/assets/images/sp/kyo003.png",
           line: "大凶5連ですが笑ってください"
         },
         6: {
@@ -1453,6 +1538,7 @@
           name: "大凶6連でも流れ来てます",
           rarity: "SP",
           tier: "UR",
+          img: "https://takoyaki-card.com/town/assets/images/sp/kyo004.png",
           line: "大凶6連でも流れ来てます"
         },
         7: {
@@ -1460,6 +1546,7 @@
           name: "大凶7連、それでも前向きに",
           rarity: "SP",
           tier: "LR",
+          img: "https://takoyaki-card.com/town/assets/images/sp/kyo005lr.png",
           line: "大凶7連、それでも前向きに"
         }
       };
@@ -1570,7 +1657,7 @@
                 const n = parseNumberish(v);
                 if(n !== null) return Math.max(0, n);
               }
-            }catch(_){}
+            }catch(_){} 
           }else{
             const n = parseNumberish(raw);
             if(n !== null) return Math.max(0, n);
@@ -1639,7 +1726,7 @@
           name: card.name,
           rarity: "SP",
           tier: card.tier || "SP",
-          img: prev.img || "",
+          img: card.img || "",
           count: Number(prev.count || 0) + 1,
           firstAt: prev.firstAt || Date.now(),
           lastAt: Date.now()
@@ -1858,6 +1945,33 @@
         saveJSON(LS.daikyoState, state);
       }
 
+      function getHiddenDaikyoRate(streak){
+        const safe = Math.max(0, Number(streak || 0));
+        if(safe >= 6) return DAIKYO_HIDDEN_RATE_MAP[6];
+        return DAIKYO_HIDDEN_RATE_MAP[safe] ?? 30;
+      }
+
+      function buildOmikujiPoolForCurrentState(){
+        const state = loadDaikyoState();
+        const currentStreak = Number(state.streak || 0);
+        const targetDaikyo = getHiddenDaikyoRate(currentStreak);
+
+        const daikyoBase = OMKUJI_BASE.find(v => v.key === "daikyo");
+        const others = OMKUJI_BASE.filter(v => v.key !== "daikyo");
+        const othersBaseTotal = others.reduce((sum, v) => sum + Number(v.w || 0), 0);
+        const remain = Math.max(0, 100 - targetDaikyo);
+
+        const adjustedOthers = others.map(v => ({
+          ...v,
+          w: (Number(v.w || 0) / othersBaseTotal) * remain
+        }));
+
+        return [
+          ...adjustedOthers,
+          { ...daikyoBase, w: targetDaikyo }
+        ];
+      }
+
       function handleDaikyoSpReward(reward){
         const today = todayKey();
         const state = loadDaikyoState();
@@ -2035,6 +2149,19 @@
               <div class="daikyo-day-badge">大凶${card.day}日</div>
               <div class="daikyo-tier ${tierClass(card.tier)}">${card.tier}</div>
             </div>
+
+            ${
+              isOwned
+                ? `
+                  <div class="daikyo-thumb">
+                    <img src="${card.img}" alt="${card.name}">
+                  </div>
+                `
+                : `
+                  <div class="daikyo-thumb is-dummy" aria-hidden="true"></div>
+                `
+            }
+
             <div class="daikyo-card-id">${card.cardId}</div>
             <div class="daikyo-card-name">${isOwned ? card.name : "？？？？？？？？"}</div>
             <div class="daikyo-card-meta">${isOwned ? card.line : "未取得"}</div>
@@ -2091,7 +2218,8 @@
           return;
         }
 
-        const r = pickWeighted(OMKUJI);
+        const currentPool = buildOmikujiPoolForCurrentState();
+        const r = pickWeighted(currentPool);
 
         applyOmikujiReward(r);
         const extra = handleDaikyoSpReward(r);
