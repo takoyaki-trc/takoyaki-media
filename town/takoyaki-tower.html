@@ -17,8 +17,14 @@
   }
   *{ box-sizing:border-box; }
 
-  body{
+  html, body{
     margin:0;
+    padding:0;
+    width:100%;
+    min-height:100%;
+  }
+
+  body{
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
     background:#0f1115;
     color:#fff;
@@ -26,6 +32,7 @@
     min-height:100svh;
     align-items:center;
     justify-content:center;
+    overflow:hidden;
   }
 
   .wrap{
@@ -130,33 +137,65 @@
   }
 
   #takoyakiResultOverlay{
-    align-items:flex-start !important;
-    padding-top:14px;
+    position:absolute;
+    inset:0;
+    display:none;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:
+      max(10px, env(safe-area-inset-top))
+      10px
+      max(10px, env(safe-area-inset-bottom))
+      10px;
     box-sizing:border-box;
+    z-index:9999;
   }
-  #takoyakiResultOverlay > div:last-child{
-    margin-top:8px;
-    padding-bottom:110px !important;
+
+  #takoyakiResultOverlay .result-card{
+    position:relative;
+    width:min(92%, 440px);
+    max-height:calc(100% - 8px);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.18);
+    background:linear-gradient(180deg, rgba(24,28,40,.95), rgba(12,14,20,.95));
+    box-shadow:0 20px 60px rgba(0,0,0,.55);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
     box-sizing:border-box;
+    transform:translateY(6px) scale(.98);
+    opacity:0;
+    transition:transform .18s ease, opacity .18s ease;
   }
-  #takoyakiResultOverlay #resTitle{
-    margin-bottom:6px;
+
+  #takoyakiResultOverlay .result-scroll{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:12px 12px 8px;
+    scrollbar-width:none;
   }
+  #takoyakiResultOverlay .result-scroll::-webkit-scrollbar{
+    display:none;
+  }
+
   #takoyakiResultOverlay .result-actions{
-    position:fixed;
-    left:50%;
-    bottom:18px;
-    transform:translateX(-50%);
-    width:min(92vw, 440px);
-    max-width:440px;
-    z-index:10000;
+    flex:0 0 auto;
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg, rgba(18,22,32,.96), rgba(12,15,22,.98));
   }
   #takoyakiResultOverlay .result-actions button{
     width:100%;
     min-width:0;
+    padding:13px 12px;
+    border-radius:12px;
+    font-size:16px;
+    font-weight:800;
   }
   #takoyakiResultOverlay .result-actions .quit-btn{
     background:#2a3147;
@@ -167,18 +206,18 @@
   .drop-card{
     display:flex;
     align-items:center;
-    gap:12px;
-    padding:12px;
+    gap:10px;
+    padding:10px;
     border-radius:14px;
     border:1px solid rgba(255,255,255,.14);
     background:rgba(255,255,255,.06);
-    margin:10px 0 12px;
+    margin:8px 0 8px;
   }
   .drop-card img{
-    width:72px;
-    height:72px;
+    width:64px;
+    height:64px;
     object-fit:cover;
-    border-radius:14px;
+    border-radius:12px;
     border:1px solid rgba(255,255,255,.16);
     background:rgba(0,0,0,.18);
     flex:0 0 auto;
@@ -189,12 +228,12 @@
     border-radius:999px;
     background:rgba(255,196,70,.95);
     color:#2a1600;
-    font-size:11px;
+    font-size:10px;
     font-weight:1000;
-    margin-bottom:6px;
+    margin-bottom:5px;
   }
   .drop-card .drop-name{
-    font-size:16px;
+    font-size:15px;
     font-weight:900;
     line-height:1.2;
   }
@@ -202,15 +241,16 @@
     font-size:12px;
     opacity:.84;
     margin-top:4px;
+    line-height:1.4;
   }
   .drop-none{
-    padding:12px;
+    padding:10px 12px;
     border-radius:14px;
     border:1px dashed rgba(255,255,255,.18);
     background:rgba(255,255,255,.04);
-    margin:10px 0 12px;
+    margin:8px 0 8px;
     font-size:13px;
-    line-height:1.6;
+    line-height:1.55;
     opacity:.92;
   }
 
@@ -1369,16 +1409,6 @@
 
     const box = document.createElement("div");
     box.id = "takoyakiResultOverlay";
-    box.style.position = "absolute";
-    box.style.left = "0";
-    box.style.top = "0";
-    box.style.width = "100%";
-    box.style.height = "100%";
-    box.style.display = "none";
-    box.style.alignItems = "center";
-    box.style.justifyContent = "center";
-    box.style.zIndex = "9999";
-    box.style.pointerEvents = "auto";
 
     const bg = document.createElement("div");
     bg.style.position = "absolute";
@@ -1389,39 +1419,33 @@
     box.appendChild(bg);
 
     const card = document.createElement("div");
-    card.style.position = "relative";
-    card.style.width = "min(92%, 440px)";
-    card.style.borderRadius = "18px";
-    card.style.border = "1px solid rgba(255,255,255,.18)";
-    card.style.background = "linear-gradient(180deg, rgba(24,28,40,.95), rgba(12,14,20,.95))";
-    card.style.boxShadow = "0 20px 60px rgba(0,0,0,.55)";
-    card.style.padding = "14px 14px 16px";
-    card.style.boxSizing = "border-box";
-    card.style.transform = "translateY(6px) scale(.98)";
-    card.style.opacity = "0";
-    card.style.transition = "transform .18s ease, opacity .18s ease";
+    card.className = "result-card";
     box.appendChild(card);
+
+    const scroll = document.createElement("div");
+    scroll.className = "result-scroll";
+    card.appendChild(scroll);
 
     const miniWrap = document.createElement("div");
     miniWrap.style.borderRadius = "16px";
     miniWrap.style.border = "1px solid rgba(255,255,255,.14)";
     miniWrap.style.background = "rgba(255,255,255,.05)";
-    miniWrap.style.padding = "10px";
-    miniWrap.style.marginBottom = "12px";
-    card.appendChild(miniWrap);
+    miniWrap.style.padding = "8px";
+    miniWrap.style.marginBottom = "10px";
+    scroll.appendChild(miniWrap);
 
     const miniTitle = document.createElement("div");
     miniTitle.style.fontWeight = "900";
     miniTitle.style.fontSize = "12px";
     miniTitle.style.opacity = ".8";
-    miniTitle.style.marginBottom = "6px";
+    miniTitle.style.marginBottom = "5px";
     miniTitle.textContent = "あなたのタワー（縮小再現）";
     miniWrap.appendChild(miniTitle);
 
     const miniCanvas = document.createElement("canvas");
     miniCanvas.id = "resMiniCanvas";
     miniCanvas.width = 360;
-    miniCanvas.height = 180;
+    miniCanvas.height = 130;
     miniCanvas.style.width = "100%";
     miniCanvas.style.height = "auto";
     miniCanvas.style.display = "block";
@@ -1432,39 +1456,40 @@
     const h1 = document.createElement("div");
     h1.id = "resTitle";
     h1.style.fontWeight = "900";
-    h1.style.fontSize = "18px";
+    h1.style.fontSize = "17px";
     h1.style.letterSpacing = ".02em";
-    h1.style.marginBottom = "6px";
-    card.appendChild(h1);
+    h1.style.lineHeight = "1.3";
+    h1.style.marginBottom = "5px";
+    scroll.appendChild(h1);
 
     const sub = document.createElement("div");
     sub.id = "resSub";
     sub.style.opacity = ".85";
     sub.style.fontSize = "13px";
     sub.style.lineHeight = "1.35";
-    sub.style.marginBottom = "8px";
-    card.appendChild(sub);
+    sub.style.marginBottom = "7px";
+    scroll.appendChild(sub);
 
     const dt = document.createElement("div");
     dt.id = "resDate";
     dt.style.opacity = ".75";
     dt.style.fontSize = "12px";
-    dt.style.margin = "0 0 10px";
-    card.appendChild(dt);
+    dt.style.margin = "0 0 8px";
+    scroll.appendChild(dt);
 
     const stats = document.createElement("div");
     stats.style.display = "grid";
     stats.style.gridTemplateColumns = "1fr 1fr";
-    stats.style.gap = "10px";
-    stats.style.marginBottom = "12px";
-    card.appendChild(stats);
+    stats.style.gap = "8px";
+    stats.style.marginBottom = "8px";
+    scroll.appendChild(stats);
 
     const statA = document.createElement("div");
     statA.style.padding = "10px";
     statA.style.borderRadius = "14px";
     statA.style.border = "1px solid rgba(255,255,255,.12)";
     statA.style.background = "rgba(255,255,255,.06)";
-    statA.innerHTML = `<div style="opacity:.75;font-size:12px;">到達</div><div id="resReach" style="font-weight:900;font-size:20px;margin-top:2px;"></div><div id="resPts" style="opacity:.85;font-size:12px;margin-top:4px;"></div>`;
+    statA.innerHTML = `<div style="opacity:.75;font-size:12px;">到達</div><div id="resReach" style="font-weight:900;font-size:18px;margin-top:2px;"></div><div id="resPts" style="opacity:.85;font-size:12px;margin-top:4px;"></div>`;
     stats.appendChild(statA);
 
     const statB = document.createElement("div");
@@ -1472,12 +1497,12 @@
     statB.style.borderRadius = "14px";
     statB.style.border = "1px solid rgba(255,255,255,.12)";
     statB.style.background = "rgba(255,255,255,.06)";
-    statB.innerHTML = `<div style="opacity:.75;font-size:12px;">BEST</div><div id="resBestPts" style="font-weight:900;font-size:20px;margin-top:2px;"></div>`;
+    statB.innerHTML = `<div style="opacity:.75;font-size:12px;">BEST</div><div id="resBestPts" style="font-weight:900;font-size:18px;margin-top:2px;"></div>`;
     stats.appendChild(statB);
 
     const dropWrap = document.createElement("div");
     dropWrap.id = "resDropWrap";
-    card.appendChild(dropWrap);
+    scroll.appendChild(dropWrap);
 
     const row = document.createElement("div");
     row.className = "result-actions";
@@ -1513,7 +1538,7 @@
     if (st.position === "static") wrap.style.position = "relative";
     wrap.appendChild(box);
 
-    resultOverlay = { box, card, miniCanvas };
+    resultOverlay = { box, card, miniCanvas, scroll };
     return resultOverlay;
   }
 
@@ -1786,6 +1811,7 @@
     renderResultDrop(S.lastDrop);
     renderTowerMini(o.miniCanvas, S.allBlocks);
 
+    o.scroll.scrollTop = 0;
     o.box.style.display = "flex";
     requestAnimationFrame(() => {
       o.card.style.opacity = "1";
@@ -1795,7 +1821,8 @@
 
   function hideResultOverlay(){
     if (!resultOverlay) return;
-    const { box, card } = resultOverlay;
+    const { box, card, scroll } = resultOverlay;
+    if (scroll) scroll.scrollTop = 0;
     card.style.opacity = "0";
     card.style.transform = "translateY(6px) scale(.98)";
     setTimeout(() => {
@@ -1834,11 +1861,11 @@
     mctx.clearRect(0,0,W,H);
     mctx.imageSmoothingEnabled = false;
 
-    mctx.save();
-    mctx.globalAlpha = 0.20;
-    mctx.fillStyle = "#000";
+    const g = mctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, "#071327");
+    g.addColorStop(1, "#02050d");
+    mctx.fillStyle = g;
     mctx.fillRect(0,0,W,H);
-    mctx.restore();
 
     if (!blocks || blocks.length === 0) return;
 
