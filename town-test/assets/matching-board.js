@@ -1767,18 +1767,47 @@
     return { icon: "💔", verdict: "fail", text: "片想いのままだったようだ" };
   }
 
+  function canAttemptJob(job) {
+    return getOwnedCount(job.targetCardId) > 0;
+  }
+
   function getJobStatus(job) {
     if (job.completed) {
-      return { cls: "done", label: "成立済み", action: "成立済み", disabled: true };
+      return {
+        cls: "done",
+        label: "成立済み",
+        action: "成立済み",
+        disabled: true,
+        unavailable: false
+      };
     }
+
     if (job.retryCount >= 3) {
-      return { cls: "ng", label: "本日終了", action: "本日終了", disabled: true };
+      return {
+        cls: "ng",
+        label: "本日終了",
+        action: "本日終了",
+        disabled: true,
+        unavailable: false
+      };
     }
+
+    if (!canAttemptJob(job)) {
+      return {
+        cls: "ng",
+        label: "今は渡せない",
+        action: "カード不足",
+        disabled: true,
+        unavailable: true
+      };
+    }
+
     return {
       cls: "ok",
       label: "挑戦可能",
       action: `マッチングする ${job.retryCount + 1}/3`,
-      disabled: false
+      disabled: false,
+      unavailable: false
     };
   }
 
@@ -2073,11 +2102,13 @@
 
         <div class="matchActionRow">
           ${
-            nextIdx < job.hints.length
-              ? `<button class="matchHintNextBtn" data-open-next-hint="${job.id}">
-                   次のヒントへ（${job.hintCosts[nextIdx]}オクト）
-                 </button>`
-              : `<button class="matchHintNextBtn" disabled>ヒント終了</button>`
+            status.unavailable
+              ? `<button class="matchHintNextBtn" disabled>今は渡せない</button>`
+              : nextIdx < job.hints.length
+                ? `<button class="matchHintNextBtn" data-open-next-hint="${job.id}">
+                     次のヒントへ（${job.hintCosts[nextIdx]}オクト）
+                   </button>`
+                : `<button class="matchHintNextBtn" disabled>ヒント終了</button>`
           }
 
           <button class="matchPuffyBtn" data-open-select="${job.id}" ${status.disabled ? "disabled" : ""}>
@@ -2086,11 +2117,13 @@
         </div>
 
         ${
-          !job.completed && job.retryCount > 0 && job.retryCount < 3
-            ? `<div class="matchRetryNote">失敗 ${job.retryCount}/3 回。あと ${3 - job.retryCount} 回じゃなイカ。</div>`
-            : !job.completed && job.retryCount >= 3
-              ? `<div class="matchRetryNote isEnd">今日はこの相手とはもう挑戦できないじゃなイカ。</div>`
-              : ""
+          status.unavailable
+            ? `<div class="matchRetryNote isEnd">この相手の答えのカードは、現在の所持カードにありません。</div>`
+            : !job.completed && job.retryCount > 0 && job.retryCount < 3
+              ? `<div class="matchRetryNote">失敗 ${job.retryCount}/3 回。あと ${3 - job.retryCount} 回じゃなイカ。</div>`
+              : !job.completed && job.retryCount >= 3
+                ? `<div class="matchRetryNote isEnd">今日はこの相手とはもう挑戦できないじゃなイカ。</div>`
+                : ""
         }
       </div>
     `;
@@ -2198,6 +2231,12 @@
     const job = getJobById(jobId);
     if (!job) return;
 
+    const status = getJobStatus(job);
+    if (status.unavailable) {
+      showKasumipiToast("……その一枚、まだ手元に来てないじゃなイカ");
+      return;
+    }
+
     const nextIdx = Number(job.currentHintIndex || 0) + 1;
     if (nextIdx >= job.hints.length) return;
 
@@ -2221,9 +2260,12 @@
     if (!job) return;
 
     const status = getJobStatus(job);
+    if (status.unavailable) {
+      showKasumipiToast("……その一枚、まだ手元に来てないじゃなイカ");
+      return;
+    }
     if (status.disabled) return;
 
-    const owned = getBook();
     const rarityOrder = { SP: 6, LR: 5, UR: 4, SR: 3, R: 2, N: 1 };
 
     const ownedCards = CARDS_ALL
