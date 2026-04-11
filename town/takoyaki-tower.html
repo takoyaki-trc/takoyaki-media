@@ -4,12 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no" />
 
-
 <!-- Start KARTE Tag -->
 <script>!function(n){if(!window[n]){var o=window[n]=function(){var n=[].slice.call(arguments);return o.x?o.x.apply(0,n):o.q.push(n)};o.q=[],o.i=Date.now(),o.allow=function(){o.o="allow"},o.deny=function(){o.o="deny"}}}("krt")</script>
 <script async src="https://cdn-edge.karte.io/e881ae2322fe85206893871d5e65d626/edge.js"></script>
 <!-- End KARTE Tag -->
-
 
 <title>たこ焼きタイミングタワー</title>
 <style>
@@ -17,6 +15,8 @@
     --w: 420px;
     --h: 720px;
   }
+  *{ box-sizing:border-box; }
+
   body{
     margin:0;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
@@ -32,7 +32,6 @@
     width:min(var(--w), 100vw);
     min-height:100svh;
     padding:10px 10px 12px;
-    box-sizing:border-box;
     display:flex;
     flex-direction:column;
     gap:8px;
@@ -57,20 +56,21 @@
     overflow:hidden;
     box-shadow: 0 10px 30px rgba(0,0,0,.35);
     position:relative;
-    flex: 1 1 auto;
+    flex:1 1 auto;
     display:flex;
     flex-direction:column;
-    min-height: 0;
+    min-height:0;
   }
 
   canvas{
     display:block;
     width:100%;
     height:auto;
-    background: radial-gradient(120% 80% at 50% 15%, rgba(255,255,255,.06), rgba(0,0,0,0) 50%),
-                linear-gradient(#0f1320, #0b0d13);
+    background:
+      radial-gradient(120% 80% at 50% 15%, rgba(255,255,255,.06), rgba(0,0,0,0) 50%),
+      linear-gradient(#0f1320, #0b0d13);
     touch-action:manipulation;
-    flex: 1 1 auto;
+    flex:1 1 auto;
   }
 
   .controls{
@@ -130,45 +130,544 @@
   }
 
   #takoyakiResultOverlay{
-    align-items: flex-start !important;
-    padding-top: 14px;
-    box-sizing: border-box;
+    align-items:flex-start !important;
+    padding-top:14px;
+    box-sizing:border-box;
   }
   #takoyakiResultOverlay > div:last-child{
-    margin-top: 8px;
+    margin-top:8px;
+    padding-bottom:110px !important;
+    box-sizing:border-box;
   }
   #takoyakiResultOverlay #resTitle{
-    margin-bottom: 6px;
+    margin-bottom:6px;
   }
-  #takoyakiResultOverlay > div:last-child{
-    padding-bottom: 92px !important;
-    box-sizing: border-box;
-  }
-
-  /* ✅ 結果画面の2ボタン対応 */
   #takoyakiResultOverlay .result-actions{
-    position: fixed;
-    left: 50%;
-    bottom: 18px;
-    transform: translateX(-50%);
-    width: min(92vw, 440px);
-    max-width: 440px;
-    z-index: 10000;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    position:fixed;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    width:min(92vw, 440px);
+    max-width:440px;
+    z-index:10000;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
   }
   #takoyakiResultOverlay .result-actions button{
-    width: 100%;
-    min-width: 0;
+    width:100%;
+    min-width:0;
   }
   #takoyakiResultOverlay .result-actions .quit-btn{
     background:#2a3147;
     color:#fff;
     font-weight:700;
   }
-  #takoyakiResultOverlay > div:last-child{
-    padding-bottom: 110px !important;
+
+  .drop-card{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.06);
+    margin:10px 0 12px;
+  }
+  .drop-card img{
+    width:72px;
+    height:72px;
+    object-fit:cover;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(0,0,0,.18);
+    flex:0 0 auto;
+  }
+  .drop-card .drop-kicker{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:999px;
+    background:rgba(255,196,70,.95);
+    color:#2a1600;
+    font-size:11px;
+    font-weight:1000;
+    margin-bottom:6px;
+  }
+  .drop-card .drop-name{
+    font-size:16px;
+    font-weight:900;
+    line-height:1.2;
+  }
+  .drop-card .drop-count{
+    font-size:12px;
+    opacity:.84;
+    margin-top:4px;
+  }
+  .drop-none{
+    padding:12px;
+    border-radius:14px;
+    border:1px dashed rgba(255,255,255,.18);
+    background:rgba(255,255,255,.04);
+    margin:10px 0 12px;
+    font-size:13px;
+    line-height:1.6;
+    opacity:.92;
+  }
+
+  .tower-drop-splash{
+    position:absolute;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at center, rgba(255,220,120,.22) 0%, rgba(38,18,4,.94) 28%, rgba(0,0,0,.992) 100%);
+    z-index:10020;
+    padding:16px;
+    overflow:hidden;
+  }
+  .tower-drop-splash.show{
+    display:flex;
+    animation:dropOverlayShake .52s ease-out 1;
+  }
+
+  .tower-drop-flash{
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at center, rgba(255,255,255,.96) 0%, rgba(255,224,140,.58) 20%, rgba(255,180,70,.18) 42%, rgba(0,0,0,0) 72%);
+    mix-blend-mode:screen;
+    pointer-events:none;
+    opacity:0;
+  }
+  .tower-drop-splash.show .tower-drop-flash{
+    animation:dropFlash .55s ease-out 1;
+  }
+
+  .tower-drop-bg-core{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:380px;
+    height:380px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    pointer-events:none;
+    filter: blur(8px);
+    opacity:.98;
+    animation:towerCorePulse 1.5s ease-in-out infinite;
+  }
+
+  .tower-drop-vignette{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:
+      radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,.14) 36%, rgba(0,0,0,.82) 100%);
+  }
+
+  .tower-drop-particles,
+  .tower-drop-confetti{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+  }
+
+  .tower-drop-particles span{
+    position:absolute;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    animation:towerParticleFloat 1.8s linear infinite;
+    opacity:0;
+  }
+
+  .tower-drop-particles span:nth-child(1){ left:12%; top:78%; animation-delay:.0s;  animation-duration:1.65s; transform:scale(.9); }
+  .tower-drop-particles span:nth-child(2){ left:22%; top:68%; animation-delay:.2s;  animation-duration:1.95s; transform:scale(1.1); }
+  .tower-drop-particles span:nth-child(3){ left:30%; top:82%; animation-delay:.45s; animation-duration:1.75s; transform:scale(.8); }
+  .tower-drop-particles span:nth-child(4){ left:42%; top:74%; animation-delay:.12s; animation-duration:1.9s; transform:scale(1.2); }
+  .tower-drop-particles span:nth-child(5){ left:56%; top:80%; animation-delay:.35s; animation-duration:1.7s; transform:scale(.95); }
+  .tower-drop-particles span:nth-child(6){ left:66%; top:70%; animation-delay:.6s;  animation-duration:2.0s; transform:scale(1.15); }
+  .tower-drop-particles span:nth-child(7){ left:76%; top:84%; animation-delay:.28s; animation-duration:1.8s; transform:scale(.85); }
+  .tower-drop-particles span:nth-child(8){ left:86%; top:72%; animation-delay:.52s; animation-duration:1.72s; transform:scale(1.05); }
+  .tower-drop-particles span:nth-child(9){ left:18%; top:56%; animation-delay:.8s;  animation-duration:1.9s; transform:scale(.75); }
+  .tower-drop-particles span:nth-child(10){ left:82%; top:58%; animation-delay:.92s; animation-duration:1.88s; transform:scale(.9); }
+  .tower-drop-particles span:nth-child(11){ left:48%; top:88%; animation-delay:.7s; animation-duration:2.05s; transform:scale(1.25); }
+  .tower-drop-particles span:nth-child(12){ left:62%; top:60%; animation-delay:1.0s; animation-duration:1.78s; transform:scale(.78); }
+  .tower-drop-particles span:nth-child(13){ left:8%; top:66%; animation-delay:.14s; animation-duration:1.66s; transform:scale(.82); }
+  .tower-drop-particles span:nth-child(14){ left:25%; top:88%; animation-delay:.62s; animation-duration:1.85s; transform:scale(1.06); }
+  .tower-drop-particles span:nth-child(15){ left:37%; top:64%; animation-delay:.94s; animation-duration:1.72s; transform:scale(.7); }
+  .tower-drop-particles span:nth-child(16){ left:71%; top:88%; animation-delay:.22s; animation-duration:2.08s; transform:scale(1.18); }
+  .tower-drop-particles span:nth-child(17){ left:90%; top:82%; animation-delay:.47s; animation-duration:1.8s; transform:scale(.92); }
+  .tower-drop-particles span:nth-child(18){ left:52%; top:66%; animation-delay:.77s; animation-duration:1.95s; transform:scale(1.1); }
+  .tower-drop-particles span:nth-child(19){ left:14%; top:86%; animation-delay:.33s; animation-duration:1.72s; transform:scale(1.26); }
+  .tower-drop-particles span:nth-child(20){ left:74%; top:62%; animation-delay:.55s; animation-duration:1.84s; transform:scale(.86); }
+  .tower-drop-particles span:nth-child(21){ left:61%; top:86%; animation-delay:.24s; animation-duration:2.05s; transform:scale(1.12); }
+  .tower-drop-particles span:nth-child(22){ left:40%; top:62%; animation-delay:.88s; animation-duration:1.76s; transform:scale(.9); }
+  .tower-drop-particles span:nth-child(23){ left:28%; top:58%; animation-delay:1.05s; animation-duration:1.95s; transform:scale(1.05); }
+  .tower-drop-particles span:nth-child(24){ left:84%; top:88%; animation-delay:.64s; animation-duration:1.86s; transform:scale(.74); }
+
+  .tower-drop-confetti span{
+    position:absolute;
+    top:-20px;
+    width:8px;
+    height:16px;
+    border-radius:4px;
+    opacity:0;
+    animation:dropConfettiFall 1.5s linear infinite;
+  }
+  .tower-drop-confetti span:nth-child(1){ left:8%; animation-delay:.00s; transform:rotate(12deg); }
+  .tower-drop-confetti span:nth-child(2){ left:15%; animation-delay:.12s; transform:rotate(-16deg); }
+  .tower-drop-confetti span:nth-child(3){ left:23%; animation-delay:.25s; transform:rotate(20deg); }
+  .tower-drop-confetti span:nth-child(4){ left:31%; animation-delay:.08s; transform:rotate(-8deg); }
+  .tower-drop-confetti span:nth-child(5){ left:39%; animation-delay:.34s; transform:rotate(16deg); }
+  .tower-drop-confetti span:nth-child(6){ left:47%; animation-delay:.18s; transform:rotate(-24deg); }
+  .tower-drop-confetti span:nth-child(7){ left:55%; animation-delay:.42s; transform:rotate(8deg); }
+  .tower-drop-confetti span:nth-child(8){ left:63%; animation-delay:.10s; transform:rotate(-14deg); }
+  .tower-drop-confetti span:nth-child(9){ left:71%; animation-delay:.28s; transform:rotate(24deg); }
+  .tower-drop-confetti span:nth-child(10){ left:79%; animation-delay:.04s; transform:rotate(-10deg); }
+  .tower-drop-confetti span:nth-child(11){ left:87%; animation-delay:.32s; transform:rotate(14deg); }
+  .tower-drop-confetti span:nth-child(12){ left:93%; animation-delay:.20s; transform:rotate(-18deg); }
+
+  .tower-drop-rays{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:330px;
+    height:330px;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+    z-index:1;
+    opacity:.82;
+    filter: blur(.2px);
+  }
+  .tower-drop-rays span{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:4px;
+    height:185px;
+    margin-left:-2px;
+    transform-origin:50% 0%;
+    border-radius:999px;
+    opacity:.92;
+  }
+  .tower-drop-rays span:nth-child(1){ transform:rotate(0deg); }
+  .tower-drop-rays span:nth-child(2){ transform:rotate(15deg); }
+  .tower-drop-rays span:nth-child(3){ transform:rotate(30deg); }
+  .tower-drop-rays span:nth-child(4){ transform:rotate(45deg); }
+  .tower-drop-rays span:nth-child(5){ transform:rotate(60deg); }
+  .tower-drop-rays span:nth-child(6){ transform:rotate(75deg); }
+  .tower-drop-rays span:nth-child(7){ transform:rotate(90deg); }
+  .tower-drop-rays span:nth-child(8){ transform:rotate(105deg); }
+  .tower-drop-rays span:nth-child(9){ transform:rotate(120deg); }
+  .tower-drop-rays span:nth-child(10){ transform:rotate(135deg); }
+  .tower-drop-rays span:nth-child(11){ transform:rotate(150deg); }
+  .tower-drop-rays span:nth-child(12){ transform:rotate(165deg); }
+  .tower-drop-rays span:nth-child(13){ transform:rotate(180deg); }
+  .tower-drop-rays span:nth-child(14){ transform:rotate(195deg); }
+  .tower-drop-rays span:nth-child(15){ transform:rotate(210deg); }
+  .tower-drop-rays span:nth-child(16){ transform:rotate(225deg); }
+  .tower-drop-rays span:nth-child(17){ transform:rotate(240deg); }
+  .tower-drop-rays span:nth-child(18){ transform:rotate(255deg); }
+  .tower-drop-rays span:nth-child(19){ transform:rotate(270deg); }
+  .tower-drop-rays span:nth-child(20){ transform:rotate(285deg); }
+  .tower-drop-rays span:nth-child(21){ transform:rotate(300deg); }
+  .tower-drop-rays span:nth-child(22){ transform:rotate(315deg); }
+  .tower-drop-rays span:nth-child(23){ transform:rotate(330deg); }
+  .tower-drop-rays span:nth-child(24){ transform:rotate(345deg); }
+
+  .tower-drop-card{
+    width:min(430px, 100%);
+    border-radius:30px;
+    border:1px solid rgba(255,240,205,.30);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05) 18%, rgba(0,0,0,.08) 18%, rgba(0,0,0,0) 34%),
+      linear-gradient(180deg, rgba(36,26,14,.96), rgba(10,8,12,.98));
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.05) inset,
+      0 1px 0 rgba(255,255,255,.08) inset,
+      0 -20px 34px rgba(0,0,0,.22) inset,
+      0 0 44px rgba(255,180,70,.16),
+      0 28px 80px rgba(0,0,0,.68);
+    padding:20px 18px 18px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+    animation:towerDropPop .55s cubic-bezier(.18,.88,.25,1.15);
+    z-index:3;
+  }
+  .tower-drop-card::before{
+    content:"";
+    position:absolute;
+    inset:-45%;
+    background:
+      linear-gradient(120deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,248,220,.14) 32%,
+        rgba(255,255,255,0) 56%);
+    transform: rotate(12deg);
+    animation:towerCardShine 1.9s ease-in-out infinite;
+    pointer-events:none;
+  }
+  .tower-drop-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:30px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.04),
+      inset 0 36px 40px rgba(255,220,110,.06),
+      inset 0 -22px 28px rgba(0,0,0,.34);
+    pointer-events:none;
+  }
+
+  @keyframes towerDropPop{
+    0%{ transform:scale(.58) translateY(24px); opacity:0; }
+    55%{ transform:scale(1.06) translateY(-4px); opacity:1; }
+    100%{ transform:scale(1) translateY(0); opacity:1; }
+  }
+  @keyframes dropFlash{
+    0%{ opacity:0; }
+    18%{ opacity:1; }
+    100%{ opacity:0; }
+  }
+  @keyframes towerCorePulse{
+    0%,100%{ transform:translate(-50%,-50%) scale(1); opacity:.82; }
+    50%{ transform:translate(-50%,-50%) scale(1.12); opacity:1; }
+  }
+  @keyframes towerCardShine{
+    0%,100%{ opacity:.10; transform:translateX(-16%) rotate(12deg); }
+    50%{ opacity:.48; transform:translateX(18%) rotate(12deg); }
+  }
+  @keyframes towerParticleFloat{
+    0%{ transform:translateY(12px) scale(.8); opacity:0; }
+    12%{ opacity:1; }
+    100%{ transform:translateY(-190px) scale(1.24); opacity:0; }
+  }
+  @keyframes dropConfettiFall{
+    0%{ transform:translateY(-24px) rotate(0deg); opacity:0; }
+    12%{ opacity:1; }
+    100%{ transform:translateY(460px) rotate(340deg); opacity:0; }
+  }
+  @keyframes dropOverlayShake{
+    0%{ transform:translate3d(0,0,0); }
+    15%{ transform:translate3d(-3px,0,0); }
+    30%{ transform:translate3d(3px,0,0); }
+    45%{ transform:translate3d(-2px,0,0); }
+    60%{ transform:translate3d(2px,0,0); }
+    100%{ transform:translate3d(0,0,0); }
+  }
+
+  .tower-drop-badge{
+    display:inline-block;
+    padding:7px 14px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:1000;
+    letter-spacing:.12em;
+    border:1px solid rgba(255,245,220,.22);
+    color:#fff3d7;
+    box-shadow:
+      0 0 10px rgba(255,210,110,.10),
+      inset 0 0 10px rgba(255,255,255,.03);
+    margin-bottom:14px;
+    position:relative;
+    z-index:4;
+  }
+
+  .tower-drop-stage{
+    position:relative;
+    width:100%;
+    height:230px;
+    margin:0 auto 6px;
+    z-index:2;
+  }
+
+  .tower-drop-ring{
+    width:188px;
+    height:188px;
+    margin:0 auto;
+    border-radius:50%;
+    position:absolute;
+    left:50%;
+    top:44%;
+    transform:translate(-50%,-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:3;
+  }
+  .tower-drop-ring::before,
+  .tower-drop-ring::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    border:2px solid rgba(255,225,150,.24);
+    animation:towerRingPulse 1.5s ease-out infinite;
+  }
+  .tower-drop-ring::after{
+    inset:14px;
+    animation-delay:.22s;
+  }
+  @keyframes towerRingPulse{
+    0%{ transform:scale(.86); opacity:0; }
+    22%{ opacity:1; }
+    100%{ transform:scale(1.12); opacity:0; }
+  }
+
+  .tower-drop-hero-wrap{
+    position:absolute;
+    left:50%;
+    top:44%;
+    transform:translate(-50%,-50%);
+    width:138px;
+    height:164px;
+    z-index:5;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    perspective:800px;
+  }
+
+  .tower-drop-hero{
+    width:118px;
+    height:118px;
+    border-radius:30px;
+    border:1px solid rgba(255,245,215,.22);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05) 48%, rgba(0,0,0,.18) 100%),
+      rgba(255,255,255,.05);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.04) inset,
+      0 0 30px rgba(255,190,80,.20),
+      0 18px 30px rgba(0,0,0,.38);
+    position:relative;
+    overflow:hidden;
+    transform:translateY(30px) scale(.56) rotateX(16deg);
+    opacity:0;
+  }
+  .tower-drop-splash.show .tower-drop-hero{
+    animation:towerHeroIntro .56s cubic-bezier(.2,.9,.25,1.25) forwards;
+  }
+  .tower-drop-hero::before{
+    content:"";
+    position:absolute;
+    inset:-30%;
+    background:linear-gradient(120deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,.16) 42%,
+      rgba(255,255,255,0) 64%);
+    transform:rotate(15deg);
+    animation:towerHeroShine 2.2s linear infinite;
+  }
+  .tower-drop-hero img{
+    width:92px;
+    height:92px;
+    object-fit:cover;
+    border-radius:22px;
+    display:block;
+    position:relative;
+    z-index:1;
+    box-shadow: 0 10px 20px rgba(0,0,0,.28);
+  }
+  @keyframes towerHeroIntro{
+    0%{ transform:translateY(30px) scale(.52) rotateX(18deg); opacity:0; }
+    65%{ transform:translateY(-6px) scale(1.12) rotateX(0deg); opacity:1; }
+    100%{ transform:translateY(0) scale(1) rotateX(0deg); opacity:1; }
+  }
+  @keyframes towerHeroShine{
+    0%{ transform:translateX(-140%) rotate(15deg); }
+    100%{ transform:translateX(150%) rotate(15deg); }
+  }
+
+  .tower-drop-title{
+    font-size:28px;
+    font-weight:1000;
+    line-height:1.15;
+    margin-bottom:8px;
+    color:#fff8ea;
+    position:relative;
+    z-index:4;
+  }
+  .tower-drop-sub{
+    font-size:16px;
+    color:rgba(255,246,225,.90);
+    margin-bottom:14px;
+    position:relative;
+    z-index:4;
+  }
+  .tower-drop-qty{
+    font-size:34px;
+    font-weight:1000;
+    margin-bottom:8px;
+    letter-spacing:.04em;
+    position:relative;
+    z-index:4;
+  }
+  .tower-drop-total{
+    font-size:15px;
+    color:rgba(255,255,255,.88);
+    margin-bottom:16px;
+    position:relative;
+    z-index:4;
+  }
+
+  .tower-drop-action{
+    display:flex;
+    justify-content:center;
+    position:relative;
+    z-index:4;
+  }
+  .tower-drop-action button{
+    width:min(250px, 74%);
+    flex:none;
+    padding:14px 12px;
+    border-radius:16px;
+    font-weight:900;
+    font-size:17px;
+    box-shadow:
+      0 12px 24px rgba(0,0,0,.24),
+      inset 0 1px 0 rgba(255,255,255,.36);
+  }
+
+  @media (max-width: 560px){
+    .tower-drop-title{ font-size:24px; }
+    .tower-drop-qty{ font-size:26px; }
+    .tower-drop-stage{ height:204px; }
+    .tower-drop-rays{
+      width:280px;
+      height:280px;
+    }
+    .tower-drop-rays span{
+      height:155px;
+    }
+    .tower-drop-ring{
+      width:158px;
+      height:158px;
+    }
+    .tower-drop-hero-wrap{
+      width:116px;
+      height:140px;
+    }
+    .tower-drop-hero{
+      width:100px;
+      height:100px;
+      border-radius:24px;
+    }
+    .tower-drop-hero img{
+      width:78px;
+      height:78px;
+      border-radius:18px;
+    }
+    .tower-drop-action button{
+      width:min(240px, 78%);
+    }
   }
 </style>
 </head>
@@ -184,8 +683,8 @@
     <div id="toast" class="toast">PERFECT!!</div>
     <canvas id="cv" width="420" height="720" aria-label="たこ焼きタイミングタワー"></canvas>
     <div class="controls">
-      <button id="stopBtn">STOP（タップ）</button>
-      <button id="restartBtn" class="secondary">RESTART</button>
+      <button id="stopBtn" type="button">STOP（タップ）</button>
+      <button id="restartBtn" class="secondary" type="button">RESTART</button>
     </div>
   </div>
 
@@ -193,32 +692,15 @@
     ・操作は「STOP」だけ。<br/>
     ・下のブロックと重なった分だけ残ります。<br/>
     ・PERFECT（ほぼ同じ位置）だと削れません。<br/>
+    ・10階以上で、終了時にタワー肥料の抽選があります。<br/>
   </div>
 </div>
 
 <script>
 (() => {
-  /* =========================================================
-     ✅ たこ焼きタイミングタワー（完全版：やめるボタン追加版）
-     - ✅ 背景：朝→昼→夕→夜→宇宙→太陽フレア（0-10-20-30-40-50-51+）
-     - ✅ 月間記録 ttc_monthly_stats_v1 に tower の最高階数を反映
-     - ✅ 結果画面に「もう一回」「やめる」2ボタン追加
-     - ✅ やめるボタンでトップページへ戻れる
-     - ✅ TOP_URL だけ変えれば戻り先を自由に変更可能
-  ========================================================= */
+  "use strict";
 
-  // =========================
-  // トップページURL（ここだけ必要なら変更）
-  // =========================
   const TOP_URL = "index.html";
-  // 例:
-  // const TOP_URL = "../index.html";
-  // const TOP_URL = "/town/";
-  // const TOP_URL = "https://takoyaki-card.com/town/";
-
-  // =========================
-  // 月間記録
-  // =========================
   const LS_MONTHLY_STATS = "ttc_monthly_stats_v1";
 
   function getMonthKey(date = new Date()){
@@ -237,16 +719,9 @@
 
   function normalizeMonthlyStats(raw){
     const curMonth = getMonthKey();
-
-    if (!raw || typeof raw !== "object"){
-      return defaultMonthlyStats();
-    }
-
+    if (!raw || typeof raw !== "object") return defaultMonthlyStats();
     const monthKey = String(raw.monthKey || "");
-    if (monthKey !== curMonth){
-      return defaultMonthlyStats();
-    }
-
+    if (monthKey !== curMonth) return defaultMonthlyStats();
     return {
       monthKey: curMonth,
       harvest: Number(raw.harvest || 0),
@@ -287,9 +762,182 @@
     saveMonthlyStats(s);
   }
 
-  // =========================
-  // 画像URL
-  // =========================
+  const LS_INV = "tf_v1_inv";
+
+  const TOWER_FERTS = [
+    { id: "fert_balance",  name: "天秤にかけた肥料", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou6.png" },
+    { id: "fert_sleep",    name: "寝かせた肥料",     img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou7.png" },
+    { id: "fert_takoyaki", name: "たこ焼き風味の肥料", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou8.png" },
+    { id: "fert_drop",     name: "天からの一滴",     img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou9.png" }
+  ];
+  const TOWER_FERT_MAP = Object.fromEntries(TOWER_FERTS.map(v => [v.id, v]));
+
+  const DROP_THEME = {
+    fert_balance: {
+      glow: "#7cc6ff",
+      glowSoft: "rgba(124,198,255,.28)",
+      accent: "#e7f7ff",
+      badgeBg: "linear-gradient(180deg, rgba(130,210,255,.26), rgba(80,150,255,.14))",
+      core: "radial-gradient(circle, rgba(190,236,255,.62) 0%, rgba(124,198,255,.28) 38%, rgba(0,0,0,0) 70%)"
+    },
+    fert_sleep: {
+      glow: "#8eff93",
+      glowSoft: "rgba(142,255,147,.28)",
+      accent: "#effff0",
+      badgeBg: "linear-gradient(180deg, rgba(140,255,165,.26), rgba(65,185,95,.14))",
+      core: "radial-gradient(circle, rgba(190,255,198,.56) 0%, rgba(142,255,147,.24) 38%, rgba(0,0,0,0) 70%)"
+    },
+    fert_takoyaki: {
+      glow: "#ffbe52",
+      glowSoft: "rgba(255,190,82,.30)",
+      accent: "#fff5dc",
+      badgeBg: "linear-gradient(180deg, rgba(255,210,120,.28), rgba(255,140,50,.14))",
+      core: "radial-gradient(circle, rgba(255,236,180,.64) 0%, rgba(255,190,82,.26) 38%, rgba(0,0,0,0) 70%)"
+    },
+    fert_drop: {
+      glow: "#fff1a6",
+      glowSoft: "rgba(255,241,166,.32)",
+      accent: "#fffef4",
+      badgeBg: "linear-gradient(180deg, rgba(255,245,180,.30), rgba(255,210,90,.16))",
+      core: "radial-gradient(circle, rgba(255,249,214,.72) 0%, rgba(255,241,166,.30) 38%, rgba(0,0,0,0) 70%)"
+    },
+    default: {
+      glow: "#ffd875",
+      glowSoft: "rgba(255,216,117,.28)",
+      accent: "#fff4df",
+      badgeBg: "linear-gradient(180deg, rgba(255,225,130,.28), rgba(255,180,70,.14))",
+      core: "radial-gradient(circle, rgba(255,239,190,.62) 0%, rgba(255,216,117,.26) 38%, rgba(0,0,0,0) 70%)"
+    }
+  };
+
+  function getDropTheme(itemId){
+    return DROP_THEME[itemId] || DROP_THEME.default;
+  }
+
+  function loadFarmInv(){
+    try{
+      const raw = localStorage.getItem(LS_INV);
+      if (!raw) return { ver: 1, seed: {}, water: {}, fert: {} };
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj !== "object") return { ver: 1, seed: {}, water: {}, fert: {} };
+      obj.seed = obj.seed || {};
+      obj.water = obj.water || {};
+      obj.fert = obj.fert || {};
+      for (const f of TOWER_FERTS){
+        if (!(f.id in obj.fert)) obj.fert[f.id] = 0;
+      }
+      return obj;
+    }catch(_){
+      return { ver: 1, seed: {}, water: {}, fert: {} };
+    }
+  }
+
+  function saveFarmInv(inv){
+    localStorage.setItem(LS_INV, JSON.stringify(inv));
+  }
+
+  function addTowerFertToInv(fertId, qty = 1){
+    const inv = loadFarmInv();
+    inv.fert = inv.fert || {};
+    const addQty = Math.max(0, Math.floor(Number(qty || 0)));
+    const cur = Math.max(0, Math.floor(Number(inv.fert[fertId] || 0)));
+    inv.fert[fertId] = cur + addQty;
+    saveFarmInv(inv);
+    return inv.fert[fertId];
+  }
+
+  function getTowerFertTotal(fertId){
+    const inv = loadFarmInv();
+    return Math.max(0, Math.floor(Number((inv.fert || {})[fertId] || 0)));
+  }
+
+  function getTowerDropConfig(floors){
+    const f = Math.floor(Number(floors || 0));
+    if (f < 10) return null;
+    if (f < 20){
+      return {
+        rate: 0.25,
+        table: [
+          { id: "fert_takoyaki", w: 55 },
+          { id: "fert_balance",  w: 25 },
+          { id: "fert_sleep",    w: 15 },
+          { id: "fert_drop",     w: 5  }
+        ]
+      };
+    }
+    if (f < 30){
+      return {
+        rate: 0.35,
+        table: [
+          { id: "fert_takoyaki", w: 40 },
+          { id: "fert_balance",  w: 30 },
+          { id: "fert_sleep",    w: 20 },
+          { id: "fert_drop",     w: 10 }
+        ]
+      };
+    }
+    if (f < 40){
+      return {
+        rate: 0.45,
+        table: [
+          { id: "fert_takoyaki", w: 28 },
+          { id: "fert_balance",  w: 30 },
+          { id: "fert_sleep",    w: 25 },
+          { id: "fert_drop",     w: 17 }
+        ]
+      };
+    }
+    return {
+      rate: 0.55,
+      table: [
+        { id: "fert_takoyaki", w: 20 },
+        { id: "fert_balance",  w: 28 },
+        { id: "fert_sleep",    w: 27 },
+        { id: "fert_drop",     w: 25 }
+      ]
+    };
+  }
+
+  function pickWeighted(list){
+    let total = 0;
+    for (const row of list){
+      total += Math.max(0, Number(row.w || 0));
+    }
+    if (total <= 0) return list[0] || null;
+    let r = Math.random() * total;
+    for (const row of list){
+      r -= Math.max(0, Number(row.w || 0));
+      if (r <= 0) return row;
+    }
+    return list[list.length - 1] || null;
+  }
+
+  function rollTowerDrop(floors){
+    const conf = getTowerDropConfig(floors);
+    if (!conf) return { eligible:false, dropped:false, item:null };
+
+    if (Math.random() >= conf.rate){
+      return { eligible:true, dropped:false, item:null };
+    }
+
+    const picked = pickWeighted(conf.table);
+    const item = picked ? TOWER_FERT_MAP[picked.id] : null;
+    if (!item) return { eligible:true, dropped:false, item:null };
+
+    const total = addTowerFertToInv(item.id, 1);
+    return {
+      eligible: true,
+      dropped: true,
+      item: {
+        id: item.id,
+        name: item.name,
+        img: item.img,
+        qty: 1,
+        total
+      }
+    };
+  }
+
   const SPR = {
     takoA: "https://ul.h3z.jp/OPpiBayk.png",
     takoB: "https://ul.h3z.jp/8lVPkSPJ.png",
@@ -304,19 +952,27 @@
     const entries = Object.entries(SPR);
     let loaded = 0;
     return new Promise((resolve) => {
-      if (!entries.length){ resolve(); return; }
+      if (!entries.length){
+        resolve();
+        return;
+      }
       for (const [key, src] of entries){
         const im = new Image();
-        im.onload = () => { IMG[key] = im; loaded++; if (loaded === entries.length) resolve(); };
-        im.onerror = () => { console.warn("Image load failed:", key, src); loaded++; if (loaded === entries.length) resolve(); };
+        im.onload = () => {
+          IMG[key] = im;
+          loaded++;
+          if (loaded === entries.length) resolve();
+        };
+        im.onerror = () => {
+          console.warn("Image load failed:", key, src);
+          loaded++;
+          if (loaded === entries.length) resolve();
+        };
         im.src = src;
       }
     });
   }
 
-  // =========================
-  // 画面内に収める：canvas表示サイズ自動調整
-  // =========================
   const cv = document.getElementById("cv");
   const panel = cv.closest(".panel");
   const hud = document.querySelector(".hud");
@@ -326,21 +982,15 @@
   function fitCanvas(){
     const vh = Math.max(320, window.innerHeight);
     const pad = 35;
-
     const hudH = hud ? hud.getBoundingClientRect().height : 0;
     const hintH = hint ? hint.getBoundingClientRect().height : 0;
     const ctrlH = controls ? controls.getBoundingClientRect().height : 0;
-
     const maxCanvasH = Math.max(220, vh - (hudH + hintH + ctrlH + pad));
-
     const aspect = 720 / 420;
-
     const panelW = panel.getBoundingClientRect().width;
     const byWidthH = panelW * aspect;
-
     const displayH = Math.min(byWidthH, maxCanvasH);
     const displayW = Math.min(panelW, displayH / aspect);
-
     cv.style.width = Math.round(displayW) + "px";
     cv.style.height = Math.round(displayH) + "px";
     cv.style.margin = "0 auto";
@@ -349,58 +999,40 @@
   window.addEventListener("resize", fitCanvas, { passive:true });
   window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 80), { passive:true });
 
-  // =========================
-  // 設定
-  // =========================
   const CONF = {
     canvasW: 420,
     canvasH: 720,
-
     baseWidth: 230,
     blockHDefault: 34,
     minWidth: 34,
     marginX: 16,
-
     speedBase: 2.25,
     speedPerLevel: 0.085,
     perfectPx: 4,
-
     grid: true,
-
-    PROGRESS_MODE: "FLOOR",
     CAMERA_ANCHOR_Y: 0.28,
     CAMERA_SMOOTH: 0.16,
     CAMERA_MIN: 0,
-
     KEEP_BLOCKS_DRAW: 140,
-
-    BLOCK_DRAW_MODE: "COVER",
-
     BASE_BOOST: [1.65, 1.55, 1.45, 1.35, 1.25],
-
     SCORE_BASE0: 60,
     SCORE_PER_FLOOR: 10,
     SPEED_BONUS_FAST_MS: 450,
     SPEED_BONUS_MID_MS: 850,
     SPEED_BONUS_FAST: 40,
     SPEED_BONUS_MID: 20,
-
     PERFECT_MUL: 1.30,
     NEAR_MUL: 1.12,
     COMBO_MUL_ADD: 0.05,
     MUL_CAP: 2.00,
   };
 
-  // =========================
-  // 種類テーブル
-  // =========================
   const BLOCK_TABLE = [
     { key:"takoA", p: 44, h: 64, label:"素焼き（薄）", speedMul: 1.05 },
     { key:"takoB", p: 40, h: 64, label:"イカさま（標準）", speedMul: 1.22 },
     { key:"takoC", p: 30, h: 64, label:"生焼け（厚）", speedMul: 1.60 },
-
     { key:"takoG", p: 10, h: 64, label:"金焼き", perfectPlus: 3, speedMul: 1.25 },
-    { key:"takoR", p:  7, h: 64, label:"激辛",  speedMul: 1.4 },
+    { key:"takoR", p:  7, h: 64, label:"激辛", speedMul: 1.4 },
     { key:"takoX", p:  4, h: 64, label:"虹伝説", insurance: true, speedMul: 1.10 },
   ];
 
@@ -408,7 +1040,6 @@
   function pickBlockDef(){
     let total = 0;
     for (const d of BLOCK_TABLE) total += (d.p ?? 1);
-
     for (let tries=0; tries<8; tries++){
       let r = Math.random() * total;
       for (const d of BLOCK_TABLE){
@@ -425,9 +1056,6 @@
     return fb;
   }
 
-  // =========================
-  // DOM
-  // =========================
   const ctx = cv.getContext("2d");
   const scoreEl = document.getElementById("score");
   const bestEl  = document.getElementById("best");
@@ -436,9 +1064,6 @@
   const stopBtn = document.getElementById("stopBtn");
   const restartBtn = document.getElementById("restartBtn");
 
-  // =========================
-  // 保存
-  // =========================
   const BEST_POINT_KEY = "takoyakiTimingTower_best_points";
   function loadBestPoints(){
     const v = Number(localStorage.getItem(BEST_POINT_KEY) || 0);
@@ -448,41 +1073,30 @@
     localStorage.setItem(BEST_POINT_KEY, String(v));
   }
 
-  // =========================
-  // 状態
-  // =========================
   const S = {
     playing: false,
     over: false,
-
+    ending: false,
     floors: 0,
-
     points: 0,
     bestPoints: loadBestPoints(),
-
     mul: 1.0,
     comboPerfect: 0,
-
     level: 0,
     cameraY: 0,
     dir: 1,
-
     blocks: [],
     curr: null,
     allBlocks: [],
-
     lastTitle: "",
     lastSubtitle: "",
     lastRunAt: "",
     lastRunFloors: 0,
     lastRunPoints: 0,
-
+    lastDrop: null,
     lastFrameT: 0,
   };
 
-  // =========================
-  // トースト
-  // =========================
   function showToast(text){
     toastEl.textContent = text;
     toastEl.classList.add("show");
@@ -490,9 +1104,6 @@
     showToast._t = setTimeout(() => toastEl.classList.remove("show"), 520);
   }
 
-  // =========================
-  // 背景：朝→昼→夕→夜→宇宙→太陽フレア
-  // =========================
   const SKY_COLORS = {
     morning:{ top:"#cfe8ff", bottom:"#fff2d4" },
     day:    { top:"#a9cfe6", bottom:"#eaf5fb" },
@@ -566,7 +1177,6 @@
       const ang = (-0.55 + i*(1.10/(rays-1))) + (Math.sin((i+1)*3.1)*0.03);
       ctx.save();
       ctx.rotate(ang);
-
       const w = 10 + i*1.2;
       const h = CONF.canvasH * 0.95;
       const g = ctx.createLinearGradient(0, 0, 0, -h);
@@ -575,7 +1185,6 @@
       g.addColorStop(1.00, "rgba(0,0,0,0)");
       ctx.fillStyle = g;
       ctx.fillRect(-w/2, 40, w, -h);
-
       ctx.restore();
     }
     ctx.restore();
@@ -595,7 +1204,6 @@
   function drawBG(){
     const phase = getTimePhase(S.floors);
     const sky = SKY_COLORS[phase] || SKY_COLORS.day;
-
     const grad = ctx.createLinearGradient(0,0,0,CONF.canvasH);
     grad.addColorStop(0, sky.top);
     grad.addColorStop(1, sky.bottom);
@@ -634,18 +1242,18 @@
     ctx.restore();
   }
 
-  // =========================
-  // UI
-  // =========================
   function setHUD(){
     scoreEl.textContent = String(S.points);
     bestEl.textContent  = String(S.bestPoints);
-    stateEl.textContent = S.over ? `GAME OVER / ${S.floors}F` : (S.playing ? `${S.floors}F ×${S.mul.toFixed(2)}` : "READY");
+    if (S.ending){
+      stateEl.textContent = `FINISH / ${S.floors}F`;
+      return;
+    }
+    stateEl.textContent = S.over
+      ? `GAME OVER / ${S.floors}F`
+      : (S.playing ? `${S.floors}F ×${S.mul.toFixed(2)}` : "READY");
   }
 
-  // =========================
-  // 称号
-  // =========================
   function getTakoyakiTitle(floors){
     const p = Math.floor(floors);
     const table = [
@@ -671,9 +1279,6 @@
     return pick;
   }
 
-  // =========================
-  // ブロック構造
-  // =========================
   function makeBlock({ x, width, y, h, tileKey, label="", perfectPlus=0, speedMul=1, insurance=false, spawnedAt=0 }){
     return { x, width, y, h, tileKey, label, perfectPlus, speedMul, insurance, spawnedAt };
   }
@@ -681,15 +1286,11 @@
   function pushConfirmedBlock(b){
     S.blocks.push(b);
     S.allBlocks.push({ x: b.x, y: b.y, width: b.width, h: b.h, tileKey: b.tileKey });
-
     if (CONF.KEEP_BLOCKS_DRAW > 0 && S.blocks.length > CONF.KEEP_BLOCKS_DRAW){
       S.blocks = S.blocks.slice(S.blocks.length - CONF.KEEP_BLOCKS_DRAW);
     }
   }
 
-  // =========================
-  // 初期ブロック
-  // =========================
   function spawnBase(){
     const def = pickBlockDef();
     const w = CONF.baseWidth;
@@ -715,11 +1316,9 @@
   function spawnCurrent(){
     const prev = S.blocks[S.blocks.length - 1];
     const def = pickBlockDef();
-
     const w = prev.width;
     const h = def.h ?? CONF.blockHDefault;
     const y = prev.y - h;
-
     const startLeft = (S.level % 2 === 0);
     const x = startLeft ? CONF.marginX : (CONF.canvasW - CONF.marginX - w);
     S.dir = startLeft ? 1 : -1;
@@ -739,9 +1338,6 @@
     else if ((S.curr.speedMul||1) > 1.9) showToast("🌶 激辛（高速）");
   }
 
-  // =========================
-  // カメラ追随
-  // =========================
   function getTopMostY(){
     let topY = Infinity;
     for (const b of S.blocks){
@@ -759,17 +1355,12 @@
     S.cameraY += (target - S.cameraY) * CONF.CAMERA_SMOOTH;
   }
 
-  // =========================
-  // トップへ戻る
-  // =========================
   function goTopPage(){
     location.href = TOP_URL;
   }
 
-  // =========================
-  // 結果オーバーレイ
-  // =========================
   let resultOverlay = null;
+  let dropOverlay = null;
 
   function ensureOverlay(){
     if (resultOverlay) return resultOverlay;
@@ -884,6 +1475,10 @@
     statB.innerHTML = `<div style="opacity:.75;font-size:12px;">BEST</div><div id="resBestPts" style="font-weight:900;font-size:20px;margin-top:2px;"></div>`;
     stats.appendChild(statB);
 
+    const dropWrap = document.createElement("div");
+    dropWrap.id = "resDropWrap";
+    card.appendChild(dropWrap);
+
     const row = document.createElement("div");
     row.className = "result-actions";
     card.appendChild(row);
@@ -922,17 +1517,273 @@
     return resultOverlay;
   }
 
+  function ensureDropOverlay(){
+    if (dropOverlay) return dropOverlay;
+
+    const wrap = cv.closest(".panel") || document.body;
+    const st = getComputedStyle(wrap);
+    if (st.position === "static") wrap.style.position = "relative";
+
+    const box = document.createElement("div");
+    box.className = "tower-drop-splash";
+    box.id = "towerDropSplash";
+
+    const flash = document.createElement("div");
+    flash.className = "tower-drop-flash";
+    box.appendChild(flash);
+
+    const core = document.createElement("div");
+    core.className = "tower-drop-bg-core";
+    box.appendChild(core);
+
+    const vignette = document.createElement("div");
+    vignette.className = "tower-drop-vignette";
+    box.appendChild(vignette);
+
+    const particles = document.createElement("div");
+    particles.className = "tower-drop-particles";
+    for (let i=0; i<24; i++){
+      particles.appendChild(document.createElement("span"));
+    }
+    box.appendChild(particles);
+
+    const confetti = document.createElement("div");
+    confetti.className = "tower-drop-confetti";
+    for (let i=0; i<12; i++){
+      confetti.appendChild(document.createElement("span"));
+    }
+    box.appendChild(confetti);
+
+    const rays = document.createElement("div");
+    rays.className = "tower-drop-rays";
+    for (let i=0; i<24; i++){
+      rays.appendChild(document.createElement("span"));
+    }
+    box.appendChild(rays);
+
+    const card = document.createElement("div");
+    card.className = "tower-drop-card";
+    box.appendChild(card);
+
+    const badge = document.createElement("div");
+    badge.className = "tower-drop-badge";
+    badge.id = "towerDropBadge";
+    badge.textContent = "TOWER DROP";
+    card.appendChild(badge);
+
+    const stage = document.createElement("div");
+    stage.className = "tower-drop-stage";
+    card.appendChild(stage);
+
+    const ring = document.createElement("div");
+    ring.className = "tower-drop-ring";
+    stage.appendChild(ring);
+
+    const heroWrap = document.createElement("div");
+    heroWrap.className = "tower-drop-hero-wrap";
+    stage.appendChild(heroWrap);
+
+    const hero = document.createElement("div");
+    hero.className = "tower-drop-hero";
+    heroWrap.appendChild(hero);
+
+    const img = document.createElement("img");
+    img.id = "towerDropImg";
+    img.alt = "ドロップアイテム";
+    hero.appendChild(img);
+
+    const title = document.createElement("div");
+    title.className = "tower-drop-title";
+    title.id = "towerDropTitle";
+    title.textContent = "アイテム名";
+    card.appendChild(title);
+
+    const sub = document.createElement("div");
+    sub.className = "tower-drop-sub";
+    sub.id = "towerDropSub";
+    sub.textContent = "タワー報酬を手に入れた！";
+    card.appendChild(sub);
+
+    const qty = document.createElement("div");
+    qty.className = "tower-drop-qty";
+    qty.id = "towerDropQty";
+    qty.textContent = "×1 GET!";
+    card.appendChild(qty);
+
+    const total = document.createElement("div");
+    total.className = "tower-drop-total";
+    total.id = "towerDropTotal";
+    total.innerHTML = "所持数：<b>0</b>";
+    card.appendChild(total);
+
+    const action = document.createElement("div");
+    action.className = "tower-drop-action";
+    card.appendChild(action);
+
+    const okBtn = document.createElement("button");
+    okBtn.type = "button";
+    okBtn.id = "towerDropOkBtn";
+    okBtn.textContent = "受け取る";
+    action.appendChild(okBtn);
+
+    wrap.appendChild(box);
+
+    dropOverlay = {
+      box,
+      card,
+      core,
+      badge,
+      rays,
+      ring,
+      heroWrap,
+      hero,
+      img,
+      title,
+      sub,
+      qty,
+      total,
+      okBtn,
+      particles,
+      confetti
+    };
+    return dropOverlay;
+  }
+
+  function applyDropTheme(itemId){
+    const o = ensureDropOverlay();
+    const t = getDropTheme(itemId);
+
+    o.box.style.background = `radial-gradient(circle at center, ${t.glowSoft} 0%, rgba(10,7,5,.96) 34%, rgba(0,0,0,.992) 100%)`;
+    o.core.style.background = t.core;
+
+    o.card.style.borderColor = t.glowSoft.replace("0.28", "0.38").replace("0.30", "0.40").replace("0.32", "0.42");
+    o.card.style.boxShadow = `
+      0 0 0 1px rgba(255,255,255,.05) inset,
+      0 1px 0 rgba(255,255,255,.08) inset,
+      0 -20px 34px rgba(0,0,0,.22) inset,
+      0 0 52px ${t.glowSoft},
+      0 28px 80px rgba(0,0,0,.68)
+    `;
+
+    o.badge.style.background = t.badgeBg;
+    o.badge.style.color = t.accent;
+
+    o.title.style.color = t.accent;
+    o.title.style.textShadow = `0 0 12px rgba(255,255,255,.16), 0 0 26px ${t.glowSoft}, 0 0 46px ${t.glowSoft}`;
+    o.qty.style.color = t.accent;
+    o.qty.style.textShadow = `0 0 14px ${t.glowSoft}, 0 0 32px ${t.glowSoft}`;
+
+    o.ring.style.boxShadow = `0 0 42px ${t.glowSoft}`;
+    o.ring.style.background = `radial-gradient(circle, ${t.glowSoft} 0%, rgba(255,160,60,.08) 46%, rgba(0,0,0,0) 74%)`;
+
+    Array.from(o.rays.children).forEach((el, idx) => {
+      const alphaEnd = idx % 2 === 0 ? "0)" : ".06)";
+      el.style.background = `linear-gradient(180deg, ${t.accent}, rgba(255,170,50,${alphaEnd}`;
+      el.style.opacity = idx % 3 === 0 ? "0.96" : "0.78";
+    });
+
+    const confettiColors = [t.glow, t.accent, "#ffffff", "#ffd34d"];
+    Array.from(o.particles.children).forEach((el, idx) => {
+      const c1 = confettiColors[idx % confettiColors.length];
+      el.style.background = `radial-gradient(circle, ${c1} 0%, ${t.glow} 45%, rgba(255,196,70,0) 75%)`;
+      el.style.boxShadow = `0 0 10px ${t.glowSoft}, 0 0 22px ${t.glowSoft}`;
+    });
+
+    Array.from(o.confetti.children).forEach((el, idx) => {
+      el.style.background = confettiColors[idx % confettiColors.length];
+      el.style.boxShadow = `0 0 8px ${t.glowSoft}`;
+    });
+
+    o.okBtn.style.background = `linear-gradient(180deg, ${t.accent}, ${t.glow})`;
+    o.okBtn.style.color = "#2a1700";
+  }
+
+  function showTowerDropSplash(drop){
+    return new Promise((resolve) => {
+      if (!drop || !drop.dropped || !drop.item){
+        resolve();
+        return;
+      }
+
+      const o = ensureDropOverlay();
+      applyDropTheme(drop.item.id);
+
+      o.badge.textContent = "TOWER DROP";
+      o.title.textContent = drop.item.name || "報酬";
+      o.sub.textContent = "タワー報酬を手に入れた！";
+      o.qty.textContent = `×${Math.max(1, Number(drop.item.qty || 1))} GET!`;
+
+      const total = Number.isFinite(Number(drop.item.total))
+        ? Number(drop.item.total)
+        : getTowerFertTotal(drop.item.id);
+
+      o.total.innerHTML = `所持数：<b>${Math.max(0, Math.floor(total))}</b>`;
+
+      if (drop.item.img){
+        o.img.src = drop.item.img;
+        o.img.style.display = "block";
+      } else {
+        o.img.removeAttribute("src");
+        o.img.style.display = "none";
+      }
+
+      const done = () => {
+        o.box.classList.remove("show");
+        o.okBtn.removeEventListener("click", done);
+        resolve();
+      };
+
+      o.okBtn.addEventListener("click", done, { once:true });
+      o.box.classList.add("show");
+    });
+  }
+
+  function renderResultDrop(drop){
+    const root = document.getElementById("resDropWrap");
+    if (!root) return;
+
+    if (!drop || !drop.eligible){
+      root.innerHTML = `
+        <div class="drop-none">
+          10階未満だったので、今回はタワー報酬の抽選なし。<br>
+          まずは10階を目指すたこ。
+        </div>
+      `;
+      return;
+    }
+
+    if (!drop.dropped || !drop.item){
+      root.innerHTML = `
+        <div class="drop-none">
+          今回はドロップなし。
+        </div>
+      `;
+      return;
+    }
+
+    const t = getDropTheme(drop.item.id);
+    root.innerHTML = `
+      <div class="drop-card" style="box-shadow:0 0 24px ${t.glowSoft}; border-color:${t.glowSoft};">
+        <img src="${drop.item.img}" alt="${drop.item.name}">
+        <div>
+          <div class="drop-kicker" style="background:${t.badgeBg}; color:#fff;">タワー報酬</div>
+          <div class="drop-name" style="color:${t.accent};">${drop.item.name}</div>
+          <div class="drop-count">×${drop.item.qty} を獲得 / 所持数：${Math.max(0, Math.floor(Number(drop.item.total || 0)))}</div>
+        </div>
+      </div>
+    `;
+  }
+
   function showResultOverlay(){
     const o = ensureOverlay();
-
     document.getElementById("resTitle").textContent = S.lastTitle || "〘焼き結果〙";
     document.getElementById("resSub").textContent   = S.lastSubtitle || "";
     document.getElementById("resDate").textContent  = S.lastRunAt ? `記録：${S.lastRunAt}` : "";
-
     document.getElementById("resReach").textContent = `${S.lastRunFloors}F`;
     document.getElementById("resPts").textContent   = `点数：${S.lastRunPoints}`;
     document.getElementById("resBestPts").textContent = String(S.bestPoints);
 
+    renderResultDrop(S.lastDrop);
     renderTowerMini(o.miniCanvas, S.allBlocks);
 
     o.box.style.display = "flex";
@@ -947,7 +1798,9 @@
     const { box, card } = resultOverlay;
     card.style.opacity = "0";
     card.style.transform = "translateY(6px) scale(.98)";
-    setTimeout(() => { box.style.display = "none"; }, 180);
+    setTimeout(() => {
+      box.style.display = "none";
+    }, 180);
   }
 
   function setResultDatetime(){
@@ -958,13 +1811,13 @@
     });
   }
 
-  // =========================
-  // ミニタワー
-  // =========================
   function drawImageCover(g, img, x, y, w, h){
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
-    if (!iw || !ih){ g.drawImage(img, x, y, w, h); return; }
+    if (!iw || !ih){
+      g.drawImage(img, x, y, w, h);
+      return;
+    }
     const s = Math.max(w / iw, h / ih);
     const dw = iw * s;
     const dh = ih * s;
@@ -1011,7 +1864,6 @@
       const y = Math.round(oy + b.y*s);
       const w = Math.max(1, Math.round(b.width*s));
       const h = Math.max(1, Math.round(b.h*s));
-
       const tile = b.tileKey ? IMG[b.tileKey] : null;
       const r = Math.max(3, Math.round(Math.min(w, h) * 0.22));
 
@@ -1038,9 +1890,6 @@
     g.closePath();
   }
 
-  // =========================
-  // 描画（メイン）
-  // =========================
   function roundedPath(x, y, w, h, r){
     const rr = Math.min(r, w/2, h/2);
     ctx.moveTo(x+rr, y);
@@ -1057,7 +1906,6 @@
 
     const x = Math.round(b.x);
     const w = Math.round(b.width);
-
     const boost = CONF.BASE_BOOST[index] ?? 1.0;
     const h = Math.round(b.h * boost);
 
@@ -1085,9 +1933,7 @@
   function draw(){
     ctx.clearRect(0,0,CONF.canvasW, CONF.canvasH);
     ctx.imageSmoothingEnabled = false;
-
     drawBG();
-
     for (let i=0; i<S.blocks.length; i++){
       drawBlock(S.blocks[i], i);
     }
@@ -1101,29 +1947,25 @@
     ctx.restore();
   }
 
-  // =========================
-  // ゲーム進行
-  // =========================
   function reset(){
     hideResultOverlay();
+    if (dropOverlay) dropOverlay.box.classList.remove("show");
 
     S.playing = false;
     S.over = false;
-
+    S.ending = false;
     S.floors = 0;
     S.points = 0;
     S.mul = 1.0;
     S.comboPerfect = 0;
-
     S.lastTitle = "";
     S.lastSubtitle = "";
     S.lastRunAt = "";
     S.lastRunFloors = 0;
     S.lastRunPoints = 0;
-
+    S.lastDrop = null;
     S.cameraY = 0;
     S.dir = 1;
-
     S.lastFrameT = 0;
 
     spawnBase();
@@ -1134,6 +1976,7 @@
   }
 
   function start(){
+    if (S.ending) return;
     if (S.over) reset();
     S.playing = true;
     setHUD();
@@ -1145,7 +1988,7 @@
     return base * mul;
   }
 
-  function endRun(){
+  async function endRun(){
     S.lastRunFloors = S.floors;
     S.lastRunPoints = S.points;
 
@@ -1159,20 +2002,31 @@
     }
 
     updateMonthlyTowerHigh(S.floors);
+    S.lastDrop = rollTowerDrop(S.floors);
 
     setResultDatetime();
     setHUD();
+
+    if (S.lastDrop && S.lastDrop.dropped && S.lastDrop.item){
+      await showTowerDropSplash(S.lastDrop);
+    }
+
     showResultOverlay();
+    S.ending = false;
+    setHUD();
   }
 
-  function gameOver(){
+  async function gameOver(){
+    if (S.over || S.ending) return;
     S.over = true;
     S.playing = false;
-    endRun();
+    S.ending = true;
+    setHUD();
+    await endRun();
   }
 
   function drop(){
-    if (!S.curr || S.over) return;
+    if (!S.curr || S.over || S.ending) return;
 
     const prev = S.blocks[S.blocks.length - 1];
     const curr = S.curr;
@@ -1190,7 +2044,6 @@
     const perfectRange = CONF.perfectPx + (curr.perfectPlus || 0);
     const isPerfect = diff <= perfectRange;
     const nearPerfect = (!isPerfect && diff <= perfectRange * 2);
-
     const willShrink = overlapW < curr.width;
 
     if (curr.insurance && willShrink){
@@ -1249,20 +2102,15 @@
     setHUD();
   }
 
-  // =========================
-  // update
-  // =========================
   function update(now){
     if (!S.lastFrameT) S.lastFrameT = now;
     let dt = (now - S.lastFrameT) / 1000;
     S.lastFrameT = now;
-
     dt = Math.min(dt, 0.033);
 
-    if (S.playing && !S.over && S.curr){
+    if (S.playing && !S.over && !S.ending && S.curr){
       const sp = levelSpeed();
       const step = sp * dt * 60;
-
       S.curr.x += step * S.dir;
 
       const minX = CONF.marginX;
@@ -1286,35 +2134,30 @@
     requestAnimationFrame(loop);
   }
 
-  // =========================
-  // 入力
-  // =========================
   cv.addEventListener("pointerdown", (e) => {
     e.preventDefault();
+    if (S.ending) return;
     if (!S.playing) start();
     else drop();
   }, { passive:false });
 
   stopBtn.addEventListener("click", () => {
+    if (S.ending) return;
     if (!S.playing) start();
     else drop();
   });
 
-  restartBtn.addEventListener("click", reset);
+  restartBtn.addEventListener("click", () => {
+    reset();
+  });
 
-  // =========================
-  // 初期化
-  // =========================
   loadImages().then(() => {
     loadMonthlyStats();
-
     fitCanvas();
     requestAnimationFrame(fitCanvas);
-
     reset();
     loop();
   });
-
 })();
 </script>
 </body>
