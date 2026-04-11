@@ -490,7 +490,11 @@
     { id: "fert_feel", name: "気のせい肥料" },
     { id: "fert_guts", name: "根性論ぶち込み肥料" },
     { id: "fert_skip", name: "工程すっ飛ばし肥料" },
-    { id: "fert_timeno", name: "時間を信じない肥料" }
+    { id: "fert_timeno", name: "時間を信じない肥料" },
+    { id: "fert_balance", name: "天秤にかけた肥料" },
+    { id: "fert_sleep", name: "寝かせた肥料" },
+    { id: "fert_takoyaki", name: "たこ焼き風味の肥料" },
+    { id: "fert_drop", name: "天からの一滴" }
   ];
 
   const REWARD_ITEMS = {
@@ -500,27 +504,201 @@
   };
 
   const REWARD_PROFILES = {
-    careful: { fixed: [["water", "water_plain_free"]], rand: [["fert", "fert_feel", 18], ["seed", "seed_random", 18], ["water", "water_nice", 12]] },
-    impulse: { fixed: [["water", "water_nice"]], rand: [["seed", "seed_shop", 18], ["seed", "seed_line", 10], ["fert", "fert_guts", 10]] },
-    looker: { fixed: [["water", "water_plain_free"]], rand: [["water", "water_regret", 8], ["fert", "fert_agedama", 12], ["seed", "seed_random", 16]] },
-    picky: { fixed: [["water", "water_rotten"]], rand: [["water", "water_sea", 14], ["fert", "fert_timeno", 8], ["seed", "seed_bussasari", 6]] },
-    king: { fixed: [["water", "water_yunokawa"]], rand: [["seed", "seed_namara_kawasar", 12], ["seed", "seed_special", 8], ["fert", "fert_skip", 10]] },
-    flipper: { fixed: [["water", "water_nice"]], rand: [["fert", "fert_feel", 12], ["water", "water_regret", 8], ["seed", "seed_random", 14]] },
-    rich: { fixed: [["water", "water_overdo"], ["seed", "seed_namara_kawasar"]], rand: [["water", "water_supergod", 8], ["seed", "seed_bussasari", 18], ["fert", "fert_timeno", 12]] },
-    climber: { fixed: [["water", "water_suspicious"]], rand: [["fert", "fert_guts", 15], ["seed", "seed_line", 10], ["seed", "seed_shop", 12]] },
-    guide: { fixed: [["water", "water_plain_free"], ["seed", "seed_random"]], rand: [["fert", "fert_feel", 18], ["water", "water_nice", 12]] },
-    relax: { fixed: [["water", "water_plain_free"]], rand: [["seed", "seed_random", 16], ["fert", "fert_feel", 16], ["water", "water_nice", 8]] },
-    artisan: { fixed: [["fert", "fert_guts"]], rand: [["fert", "fert_skip", 18], ["water", "water_suspicious", 10], ["seed", "seed_shop", 12]] },
-    diet: { fixed: [["fert", "fert_agedama"]], rand: [["water", "water_regret", 10], ["fert", "fert_feel", 12], ["seed", "seed_random", 18]] },
-    overflow: { fixed: [["water", "water_rotten"]], rand: [["water", "water_sea", 12], ["fert", "fert_timeno", 8], ["seed", "seed_bussasari", 6]] },
-    collector: { fixed: [["seed", "seed_special"]], rand: [["water", "water_yunokawa", 10], ["seed", "seed_namara_kawasar", 10], ["fert", "fert_skip", 8]] },
-    shadow: { fixed: [["water", "water_suspicious"]], rand: [["water", "water_rotten", 8], ["water", "water_sea", 10], ["water", "water_overdo", 8]] },
-    ramen: { fixed: [["seed", "seed_random"]], rand: [["seed", "seed_shop", 12], ["fert", "fert_guts", 10], ["fert", "fert_feel", 12]] },
-    streamer: { fixed: [], rand: [["water", "water_nice", 12], ["seed", "seed_special", 8], ["fert", "fert_skip", 8], ["seed", "seed_bussasari", 10]] },
-    gourmet: { fixed: [["water", "water_yunokawa"]], rand: [["water", "water_nice", 14], ["seed", "seed_namara_kawasar", 10], ["fert", "fert_feel", 10]] },
-    opener: { fixed: [["water", "water_nice"]], rand: [["seed", "seed_shop", 16], ["seed", "seed_line", 10], ["fert", "fert_skip", 8]] },
-    party: { fixed: [["seed", "seed_random"]], rand: [["seed", "seed_shop", 12], ["water", "water_nice", 12], ["fert", "fert_guts", 10]] },
-    pilgrim: { fixed: [["water", "water_overdo"], ["fert", "fert_timeno"]], rand: [["water", "water_supergod", 10], ["seed", "seed_special", 10], ["seed", "seed_bussasari", 14]] }
+    careful: {
+      fixed: [["water", "water_plain_free"]],
+      rand: [
+        ["fert", "fert_feel", 18],
+        ["seed", "seed_random", 18],
+        ["water", "water_nice", 12],
+        ["fert", "fert_takoyaki", 8]
+      ]
+    },
+    impulse: {
+      fixed: [["water", "water_nice"]],
+      rand: [
+        ["seed", "seed_shop", 18],
+        ["seed", "seed_line", 10],
+        ["fert", "fert_guts", 10],
+        ["fert", "fert_balance", 8]
+      ]
+    },
+    looker: {
+      fixed: [["water", "water_plain_free"]],
+      rand: [
+        ["water", "water_regret", 8],
+        ["fert", "fert_agedama", 12],
+        ["seed", "seed_random", 16],
+        ["fert", "fert_balance", 6]
+      ]
+    },
+    picky: {
+      fixed: [["water", "water_rotten"]],
+      rand: [
+        ["water", "water_sea", 14],
+        ["fert", "fert_timeno", 8],
+        ["seed", "seed_bussasari", 6],
+        ["fert", "fert_sleep", 8]
+      ]
+    },
+    king: {
+      fixed: [["water", "water_yunokawa"]],
+      rand: [
+        ["seed", "seed_namara_kawasar", 12],
+        ["seed", "seed_special", 8],
+        ["fert", "fert_skip", 10],
+        ["fert", "fert_drop", 5]
+      ]
+    },
+    flipper: {
+      fixed: [["water", "water_nice"]],
+      rand: [
+        ["fert", "fert_feel", 12],
+        ["water", "water_regret", 8],
+        ["seed", "seed_random", 14],
+        ["fert", "fert_balance", 8]
+      ]
+    },
+    rich: {
+      fixed: [["water", "water_overdo"], ["seed", "seed_namara_kawasar"]],
+      rand: [
+        ["water", "water_supergod", 8],
+        ["seed", "seed_bussasari", 18],
+        ["fert", "fert_timeno", 12],
+        ["fert", "fert_drop", 10],
+        ["fert", "fert_sleep", 8]
+      ]
+    },
+    climber: {
+      fixed: [["water", "water_suspicious"]],
+      rand: [
+        ["fert", "fert_guts", 15],
+        ["seed", "seed_line", 10],
+        ["seed", "seed_shop", 12],
+        ["fert", "fert_takoyaki", 8]
+      ]
+    },
+    guide: {
+      fixed: [["water", "water_plain_free"], ["seed", "seed_random"]],
+      rand: [
+        ["fert", "fert_feel", 18],
+        ["water", "water_nice", 12],
+        ["fert", "fert_takoyaki", 8]
+      ]
+    },
+    relax: {
+      fixed: [["water", "water_plain_free"]],
+      rand: [
+        ["seed", "seed_random", 16],
+        ["fert", "fert_feel", 16],
+        ["water", "water_nice", 8],
+        ["fert", "fert_takoyaki", 10]
+      ]
+    },
+    artisan: {
+      fixed: [["fert", "fert_guts"]],
+      rand: [
+        ["fert", "fert_skip", 18],
+        ["water", "water_suspicious", 10],
+        ["seed", "seed_shop", 12],
+        ["fert", "fert_balance", 8],
+        ["fert", "fert_takoyaki", 8]
+      ]
+    },
+    diet: {
+      fixed: [["fert", "fert_agedama"]],
+      rand: [
+        ["water", "water_regret", 10],
+        ["fert", "fert_feel", 12],
+        ["seed", "seed_random", 18],
+        ["fert", "fert_takoyaki", 8]
+      ]
+    },
+    overflow: {
+      fixed: [["water", "water_rotten"]],
+      rand: [
+        ["water", "water_sea", 12],
+        ["fert", "fert_timeno", 8],
+        ["seed", "seed_bussasari", 6],
+        ["fert", "fert_sleep", 8],
+        ["fert", "fert_drop", 4]
+      ]
+    },
+    collector: {
+      fixed: [["seed", "seed_special"]],
+      rand: [
+        ["water", "water_yunokawa", 10],
+        ["seed", "seed_namara_kawasar", 10],
+        ["fert", "fert_skip", 8],
+        ["fert", "fert_sleep", 10]
+      ]
+    },
+    shadow: {
+      fixed: [["water", "water_suspicious"]],
+      rand: [
+        ["water", "water_rotten", 8],
+        ["water", "water_sea", 10],
+        ["water", "water_overdo", 8],
+        ["fert", "fert_sleep", 8]
+      ]
+    },
+    ramen: {
+      fixed: [["seed", "seed_random"]],
+      rand: [
+        ["seed", "seed_shop", 12],
+        ["fert", "fert_guts", 10],
+        ["fert", "fert_feel", 12],
+        ["fert", "fert_takoyaki", 8]
+      ]
+    },
+    streamer: {
+      fixed: [],
+      rand: [
+        ["water", "water_nice", 12],
+        ["seed", "seed_special", 8],
+        ["fert", "fert_skip", 8],
+        ["seed", "seed_bussasari", 10],
+        ["fert", "fert_balance", 8]
+      ]
+    },
+    gourmet: {
+      fixed: [["water", "water_yunokawa"]],
+      rand: [
+        ["water", "water_nice", 14],
+        ["seed", "seed_namara_kawasar", 10],
+        ["fert", "fert_feel", 10],
+        ["fert", "fert_takoyaki", 12],
+        ["fert", "fert_sleep", 6]
+      ]
+    },
+    opener: {
+      fixed: [["water", "water_nice"]],
+      rand: [
+        ["seed", "seed_shop", 16],
+        ["seed", "seed_line", 10],
+        ["fert", "fert_skip", 8],
+        ["fert", "fert_balance", 8]
+      ]
+    },
+    party: {
+      fixed: [["seed", "seed_random"]],
+      rand: [
+        ["seed", "seed_shop", 12],
+        ["water", "water_nice", 12],
+        ["fert", "fert_guts", 10],
+        ["fert", "fert_balance", 8],
+        ["fert", "fert_takoyaki", 8]
+      ]
+    },
+    pilgrim: {
+      fixed: [["water", "water_overdo"], ["fert", "fert_timeno"]],
+      rand: [
+        ["water", "water_supergod", 10],
+        ["seed", "seed_special", 10],
+        ["seed", "seed_bussasari", 14],
+        ["fert", "fert_drop", 10],
+        ["fert", "fert_sleep", 8]
+      ]
+    }
   };
 
   function itemIcon(kind) {
@@ -739,9 +917,109 @@
     return setHeat(getHeat() + Number(delta || 0));
   }
 
+  // =========================================================
+  // Book normalize helpers
+  // =========================================================
+  function normalizeBookEntry(cardId, rawEntry) {
+    const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
+
+    if (rawEntry == null) return null;
+
+    if (typeof rawEntry === "number") {
+      const count = Math.max(0, Math.floor(rawEntry));
+      return count > 0 ? { count, name: info.name, rarity: info.rarity } : null;
+    }
+
+    if (typeof rawEntry === "boolean") {
+      return rawEntry ? { count: 1, name: info.name, rarity: info.rarity } : null;
+    }
+
+    if (typeof rawEntry === "string") {
+      const n = Number(rawEntry);
+      if (Number.isFinite(n) && n > 0) {
+        return { count: Math.floor(n), name: info.name, rarity: info.rarity };
+      }
+      return null;
+    }
+
+    if (typeof rawEntry === "object") {
+      let count = 0;
+
+      if (typeof rawEntry.count === "number") {
+        count = rawEntry.count;
+      } else if (typeof rawEntry.count === "string") {
+        count = Number(rawEntry.count);
+      } else if (typeof rawEntry.owned === "number") {
+        count = rawEntry.owned;
+      } else if (typeof rawEntry.qty === "number") {
+        count = rawEntry.qty;
+      } else {
+        count = 1;
+      }
+
+      count = Math.max(0, Math.floor(Number(count) || 0));
+      if (count <= 0) return null;
+
+      return {
+        count,
+        name: rawEntry.name || info.name,
+        rarity: rawEntry.rarity || info.rarity
+      };
+    }
+
+    return null;
+  }
+
   function getBook() {
-    const book = loadJSON(KEY.book, { got: {} });
-    if (!book.got || typeof book.got !== "object") book.got = {};
+    const book = loadJSON(KEY.book, { ver: 1, got: {} });
+
+    if (!book || typeof book !== "object") {
+      return { ver: 1, got: {} };
+    }
+
+    if (!book.got || typeof book.got !== "object") {
+      book.got = {};
+      return book;
+    }
+
+    const normalizedGot = {};
+    let changed = false;
+
+    for (const [cardId, rawEntry] of Object.entries(book.got)) {
+      if (!CARD_MAP[cardId]) {
+        changed = true;
+        continue;
+      }
+
+      const normalized = normalizeBookEntry(cardId, rawEntry);
+      if (normalized) {
+        normalizedGot[cardId] = normalized;
+
+        if (
+          rawEntry !== normalized &&
+          (
+            typeof rawEntry !== "object" ||
+            Number(rawEntry.count || 0) !== normalized.count ||
+            rawEntry.name !== normalized.name ||
+            rawEntry.rarity !== normalized.rarity
+          )
+        ) {
+          changed = true;
+        }
+      } else {
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      book.got = normalizedGot;
+      if (!("ver" in book)) book.ver = 1;
+      saveBook(book);
+    } else {
+      book.got = normalizedGot;
+      if (!("ver" in book)) book.ver = 1;
+    }
+
     return book;
   }
 
@@ -751,17 +1029,30 @@
 
   function getOwnedCount(cardId) {
     const book = getBook();
-    return Number(book.got?.[cardId]?.count || 0);
+    const entry = book.got?.[cardId];
+    return Math.max(0, Math.floor(Number(entry?.count || 0)));
   }
 
   function addOwned(cardId, delta) {
     const book = getBook();
     const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
-    if (!book.got[cardId]) {
-      book.got[cardId] = { count: 0, name: info.name, rarity: info.rarity };
+
+    const current = normalizeBookEntry(cardId, book.got?.[cardId]) || {
+      count: 0,
+      name: info.name,
+      rarity: info.rarity
+    };
+
+    current.count = Math.max(0, Math.floor(Number(current.count || 0) + Number(delta || 0)));
+    current.name = current.name || info.name;
+    current.rarity = current.rarity || info.rarity;
+
+    if (current.count <= 0) {
+      delete book.got[cardId];
+    } else {
+      book.got[cardId] = current;
     }
-    book.got[cardId].count = Math.max(0, Number(book.got[cardId].count || 0) + Number(delta || 0));
-    if (book.got[cardId].count <= 0) delete book.got[cardId];
+
     saveBook(book);
   }
 
@@ -776,42 +1067,67 @@
   }
 
   function ensureDefaults() {
-    if (localStorage.getItem(KEY.octo) == null) localStorage.setItem(KEY.octo, "1000");
-    if (localStorage.getItem(KEY.heat) == null) localStorage.setItem(KEY.heat, "0");
+    if (localStorage.getItem(KEY.octo) == null) {
+      localStorage.setItem(KEY.octo, "1000");
+    }
+
+    if (localStorage.getItem(KEY.heat) == null) {
+      localStorage.setItem(KEY.heat, "0");
+    }
 
     const inv = loadJSON(KEY.inv, null);
-    if (!inv) saveJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
+    if (!inv || typeof inv !== "object") {
+      saveJSON(KEY.inv, { ver: 1, seed: {}, water: {}, fert: {} });
+    } else {
+      inv.seed = inv.seed && typeof inv.seed === "object" ? inv.seed : {};
+      inv.water = inv.water && typeof inv.water === "object" ? inv.water : {};
+      inv.fert = inv.fert && typeof inv.fert === "object" ? inv.fert : {};
+      if (!("ver" in inv)) inv.ver = 1;
+      saveJSON(KEY.inv, inv);
+    }
 
     const meta = loadJSON(KEY.matchingMeta, null);
-    if (!meta) {
+    if (!meta || typeof meta !== "object") {
       saveJSON(KEY.matchingMeta, {
         totalAttempts: 0,
         totalSuccess: 0,
         totalFail: 0,
         statsByType: {}
       });
+    } else {
+      meta.totalAttempts = Number(meta.totalAttempts || 0);
+      meta.totalSuccess = Number(meta.totalSuccess || 0);
+      meta.totalFail = Number(meta.totalFail || 0);
+      meta.statsByType = meta.statsByType && typeof meta.statsByType === "object"
+        ? meta.statsByType
+        : {};
+      saveJSON(KEY.matchingMeta, meta);
     }
 
     const book = loadJSON(KEY.book, null);
-    if (!book) {
-      const got = {};
-      CARDS_ALL.forEach(card => {
-        let count = 0;
-        if (card.rarity === "N") count = Math.random() < 0.65 ? Math.floor(Math.random() * 4) : 0;
-        else if (card.rarity === "R") count = Math.random() < 0.45 ? Math.floor(Math.random() * 3) : 0;
-        else if (card.rarity === "SR") count = Math.random() < 0.28 ? Math.floor(Math.random() * 2) : 0;
-        else if (card.rarity === "UR") count = Math.random() < 0.12 ? 1 : 0;
-        else if (card.rarity === "LR") count = Math.random() < 0.05 ? 1 : 0;
-        else if (card.rarity === "SP") count = Math.random() < 0.04 ? 1 : 0;
+    if (!book || typeof book !== "object") {
+      saveJSON(KEY.book, { ver: 1, got: {} });
+    } else {
+      const rawGot = book.got && typeof book.got === "object" ? book.got : {};
+      const normalizedGot = {};
 
-        if (count > 0) got[card.id] = { count, name: card.name, rarity: card.rarity };
-      });
-      saveJSON(KEY.book, { got });
+      for (const [cardId, rawEntry] of Object.entries(rawGot)) {
+        if (!CARD_MAP[cardId]) continue;
+        const normalized = normalizeBookEntry(cardId, rawEntry);
+        if (normalized) normalizedGot[cardId] = normalized;
+      }
+
+      book.got = normalizedGot;
+      if (!("ver" in book)) book.ver = 1;
+      saveJSON(KEY.book, book);
     }
 
     const affection = loadJSON(AFFECTION_LS_KEY, null);
-    if (!affection || !affection.guests) {
+    if (!affection || typeof affection !== "object" || !affection.guests || typeof affection.guests !== "object") {
       localStorage.setItem(AFFECTION_LS_KEY, JSON.stringify({ ver: 1, guests: {} }));
+    } else {
+      if (!("ver" in affection)) affection.ver = 1;
+      localStorage.setItem(AFFECTION_LS_KEY, JSON.stringify(affection));
     }
   }
 
@@ -1247,7 +1563,7 @@
     }
 
     if (type === "gourmet") {
-      return FIRST_SERIES_CARDS.filter(c => /焼き|ソース|マヨ|塩|明太|味噌|牡蠣|温泉|イカ/.test(c.name));
+      return FIRST_SERIES_CARDS.filter(c => /焼き|ソース|マヨ|塩|明太|味噌|温泉|イカ/.test(c.name));
     }
     if (type === "collector") {
       return FIRST_SERIES_CARDS.filter(c => ["SR", "UR", "LR"].includes(c.rarity) || /御神体|真珠|記憶|神/.test(c.name));
@@ -1911,7 +2227,7 @@
     const rarityOrder = { SP: 6, LR: 5, UR: 4, SR: 3, R: 2, N: 1 };
 
     const ownedCards = CARDS_ALL
-      .map(card => ({ ...card, count: Number(owned.got?.[card.id]?.count || 0) }))
+      .map(card => ({ ...card, count: getOwnedCount(card.id) }))
       .filter(v => v.count > 0)
       .sort((a, b) => {
         const rd = (rarityOrder[b.rarity] || 0) - (rarityOrder[a.rarity] || 0);
