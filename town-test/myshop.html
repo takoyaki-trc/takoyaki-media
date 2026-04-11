@@ -4,10 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 
-  <!-- Start KARTE Tag -->
-  <script>!function(n){if(!window[n]){var o=window[n]=function(){var n=[].slice.call(arguments);return o.x?o.x.apply(0,n):o.q.push(n)};o.q=[],o.i=Date.now(),o.allow=function(){o.o="allow"},o.deny=function(){o.o="deny"}}}("krt")</script>
-  <script async src="https://cdn-edge.karte.io/e881ae2322fe85206893871d5e65d626/edge.js"></script>
-  <!-- End KARTE Tag -->
+
+<!-- Start KARTE Tag -->
+<script>!function(n){if(!window[n]){var o=window[n]=function(){var n=[].slice.call(arguments);return o.x?o.x.apply(0,n):o.q.push(n)};o.q=[],o.i=Date.now(),o.allow=function(){o.o="allow"},o.deny=function(){o.o="deny"}}}("krt")</script>
+<script async src="https://cdn-edge.karte.io/e881ae2322fe85206893871d5e65d626/edge.js"></script>
+<!-- End KARTE Tag -->
 
   <title>マイ露店</title>
   <link rel="stylesheet" href="assets/myshop-social.css">
@@ -776,220 +777,350 @@
     if(stageLeaveTimer){ clearTimeout(stageLeaveTimer); stageLeaveTimer=null; }
   }
 
-  function injectStageWalletStyles(){
-    if(document.getElementById("stageWalletFxStyle")) return;
 
-    const style = document.createElement("style");
-    style.id = "stageWalletFxStyle";
-    style.textContent = `
-      .stage-name-ui{
-        display:grid;
-        gap:6px;
-        min-width:0;
-      }
 
-      .stage-name-main{
-        font-weight:800;
-        font-size:15px;
-        letter-spacing:.02em;
-        line-height:1.2;
-        word-break:break-word;
-      }
+function injectStageWalletStyles(){
+  if(document.getElementById("stageWalletFxStyle")) return;
 
-      .stage-name-main.neg{
-        color:#ffb6c1;
-      }
+  const style = document.createElement("style");
+  style.id = "stageWalletFxStyle";
+  style.textContent = `
+    .stage-name-ui{
+      display:grid;
+      gap:6px;
+      min-width:0;
+    }
 
-      .stage-name-main.pos{
-        color:#ffffff;
-      }
+    .stage-name-main{
+      font-weight:800;
+      font-size:15px;
+      letter-spacing:.02em;
+      line-height:1.2;
+      word-break:break-word;
+    }
 
-      .stage-chip-row{
-        display:flex;
-        gap:6px;
-        flex-wrap:wrap;
-        align-items:center;
-      }
+    .stage-name-main.neg{
+      color:#ffb6c1;
+    }
 
-      .stage-chip{
-        display:inline-flex;
-        align-items:center;
-        gap:6px;
-        padding:4px 12px;
-        border-radius:999px;
-        font-size:12px;
-        font-weight:700;
-        line-height:1;
-        white-space:nowrap;
-      }
+    .stage-name-main.pos{
+      color:#ffffff;
+    }
 
-      .stage-chip.regular{
-        background:linear-gradient(180deg,#ffd76a,#ffb13b);
-        border:1px solid #ffd76a;
-        color:#3a2400;
+    .stage-chip-row{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .stage-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  line-height:1;
+  white-space:nowrap;
+}
+
+    .stage-chip.regular{
+      background:linear-gradient(180deg,#ffd76a,#ffb13b);
+      border:1px solid #ffd76a;
+      color:#3a2400;
+      box-shadow:
+        0 0 10px rgba(255,200,80,.45),
+        inset 0 1px 0 rgba(255,255,255,.35);
+    }
+
+    
+
+    .stage-chip.wallet.normal{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      color:#ffffff;
+    }
+
+    .stage-chip.wallet.mid{
+      background:linear-gradient(180deg,#b7dcff,#7fbaff);
+      border:1px solid #9fd0ff;
+      color:#00264a;
+      box-shadow:
+        0 0 10px rgba(120,180,255,.32),
+        inset 0 1px 0 rgba(255,255,255,.38);
+    }
+
+    .stage-chip.wallet.rich{
+  background:linear-gradient(180deg,#ffe8a3,#ffc94a);
+  border:1px solid #ffe8a3;
+  color:#3a2400;
+}
+
+.stage-chip.wallet.king{
+  background:linear-gradient(180deg,#ffd76a,#ffb13b);
+  border:1px solid #ffd76a;
+  color:#3a2400;
+}
+
+    .stage-chip-icon{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+    }
+
+    .stage-chip-text{
+      display:inline-flex;
+      align-items:center;
+    }
+
+    @keyframes walletFloat{
+      0%   { transform:translateY(0px) rotate(0deg) scale(1); }
+      25%  { transform:translateY(-1px) rotate(-1.2deg) scale(1.01); }
+      50%  { transform:translateY(0px) rotate(.8deg) scale(1.02); }
+      75%  { transform:translateY(-1px) rotate(-.8deg) scale(1.01); }
+      100% { transform:translateY(0px) rotate(0deg) scale(1); }
+    }
+
+    @keyframes walletGlow{
+      0%,100%{
         box-shadow:
-          0 0 10px rgba(255,200,80,.45),
-          inset 0 1px 0 rgba(255,255,255,.35);
+          0 0 14px rgba(255,190,70,.48),
+          0 0 24px rgba(255,190,70,.18),
+          inset 0 1px 0 rgba(255,255,255,.42);
       }
-
-      .stage-chip.wallet.normal{
-        background:rgba(255,255,255,.08);
-        border:1px solid rgba(255,255,255,.14);
-        color:#ffffff;
-      }
-
-      .stage-chip.wallet.mid{
-        background:linear-gradient(180deg,#b7dcff,#7fbaff);
-        border:1px solid #9fd0ff;
-        color:#00264a;
+      50%{
         box-shadow:
-          0 0 10px rgba(120,180,255,.32),
-          inset 0 1px 0 rgba(255,255,255,.38);
+          0 0 18px rgba(255,215,110,.68),
+          0 0 34px rgba(255,200,80,.28),
+          inset 0 1px 0 rgba(255,255,255,.46);
       }
-
-      .stage-chip.wallet.rich{
-        background:linear-gradient(180deg,#ffe8a3,#ffc94a);
-        border:1px solid #ffe8a3;
-        color:#3a2400;
-      }
-
-      .stage-chip.wallet.king{
-        background:linear-gradient(180deg,#ffd76a,#ffb13b);
-        border:1px solid #ffd76a;
-        color:#3a2400;
-      }
-
-      .stage-chip-icon{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        font-size:13px;
-      }
-
-      .stage-chip-text{
-        display:inline-flex;
-        align-items:center;
-      }
-
-      @keyframes walletFloat{
-        0%   { transform:translateY(0px) rotate(0deg) scale(1); }
-        25%  { transform:translateY(-1px) rotate(-1.2deg) scale(1.01); }
-        50%  { transform:translateY(0px) rotate(.8deg) scale(1.02); }
-        75%  { transform:translateY(-1px) rotate(-.8deg) scale(1.01); }
-        100% { transform:translateY(0px) rotate(0deg) scale(1); }
-      }
-
-      @keyframes walletGlow{
-        0%,100%{
-          box-shadow:
-            0 0 14px rgba(255,190,70,.48),
-            0 0 24px rgba(255,190,70,.18),
-            inset 0 1px 0 rgba(255,255,255,.42);
-        }
-        50%{
-          box-shadow:
-            0 0 18px rgba(255,215,110,.68),
-            0 0 34px rgba(255,200,80,.28),
-            inset 0 1px 0 rgba(255,255,255,.46);
-        }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // =========================
-  // 図鑑データサニタイズ
-  // =========================
-  function cleanStr(v){
-    return String(v ?? "").trim();
-  }
-
-  function toPositiveInt(v){
-    const n = Number(v);
-    if(!Number.isFinite(n)) return 0;
-    return Math.max(0, Math.floor(n));
-  }
-
-  function isValidBookCardEntry(entry, fallbackKey){
-    const id = cleanStr(entry?.id || fallbackKey);
-    const name = cleanStr(entry?.name || entry?.title || entry?.label);
-    const img = cleanStr(entry?.img || entry?.image || entry?.url || entry?.src);
-    const count = toPositiveInt(entry?.count);
-
-    if(!id) return false;
-    if(!name) return false;
-    if(!img) return false;
-    if(count <= 0) return false;
-
-    return true;
-  }
-
-  function normalizeBookCard(entry, fallbackKey){
-    const id = cleanStr(entry?.id || fallbackKey);
-    const name = cleanStr(entry?.name || entry?.title || entry?.label);
-    const img = cleanStr(entry?.img || entry?.image || entry?.url || entry?.src);
-    const rarity = cleanStr(entry?.rarity || entry?.rare || entry?.rank);
-    const tier = cleanStr(entry?.tier);
-    const count = toPositiveInt(entry?.count);
-    const at = entry?.at ?? "";
-    const lastAt = entry?.lastAt ?? "";
-    const lastAddedAt = entry?.lastAddedAt ?? "";
-
-    return {
-      ...entry,
-      id,
-      name,
-      img,
-      rarity,
-      tier,
-      count,
-      at,
-      lastAt,
-      lastAddedAt
-    };
-  }
-
-  function sanitizeFarmBook(){
-    const raw = Storage.getItem(LS.farmBook);
-    if(raw == null){
-      const empty = { ver:1, got:{} };
-      lsSet(LS.farmBook, empty);
-      return empty;
     }
+  `;
+  document.head.appendChild(style);
+}
 
-    let book;
-    try{
-      book = JSON.parse(raw);
-    }catch(e){
-      const empty = { ver:1, got:{} };
-      lsSet(LS.farmBook, empty);
-      return empty;
-    }
 
-    if(!book || typeof book !== "object"){
-      const empty = { ver:1, got:{} };
-      lsSet(LS.farmBook, empty);
-      return empty;
-    }
 
-    const sourceGot = (book.got && typeof book.got === "object") ? book.got : {};
-    const cleanedGot = {};
 
-    for(const [key, val] of Object.entries(sourceGot)){
-      if(!val || typeof val !== "object") continue;
-      if(!isValidBookCardEntry(val, key)) continue;
 
-      const normalized = normalizeBookCard(val, key);
-      cleanedGot[normalized.id] = normalized;
-    }
+  function startVisitorTimers(stayMs){
+    clearStageTimers();
 
-    const cleanedBook = {
-      ver: Number(book.ver || 1),
-      got: cleanedGot
-    };
+    stageTalkTimer = setInterval(()=>{
+      const s2 = loadStage();
+      if(!s2.hasVisitor || s2.leaving || s2.talking) return;
+      const baseLines = VISITOR_LINES[s2.vType] || ["……"];
+      s2.vMsg = pick(baseLines);
+      saveStage(s2);
+      renderStage();
+    }, rand(3000, 6000));
 
-    lsSet(LS.farmBook, cleanedBook);
-    return cleanedBook;
+    stageSellTimer = setTimeout(()=>{
+      const s3 = loadStage();
+      if(s3.talking){
+        startVisitorTimers(rand(5000, 9000));
+        return;
+      }
+      saleProcess();
+    }, Math.max(1000, Math.floor(stayMs || 12000) - 1000));
+
+    stageLeaveTimer = setTimeout(()=>{
+      const s4 = loadStage();
+      if(s4.talking){
+        startVisitorTimers(rand(4000, 8000));
+        return;
+      }
+      beginLeave(pick(LEAVE_LINES));
+    }, Math.max(5000, Math.floor(stayMs || 12000)));
+  }
+function renderStage(){
+  const s = loadStage();
+
+  const name = escapeHTML(s.vName || "—");
+  const budget = Number(s.vBudget || 0);
+  const isRegular = !!s.vIsRegular;
+
+  let walletIcon = "👛";
+  let walletBg = "rgba(255,255,255,.08)";
+  let walletBorder = "rgba(255,255,255,.14)";
+  let walletColor = "#ffffff";
+
+  if(budget >= 20000){
+    walletIcon = "👑";
+    walletBg = "linear-gradient(180deg,#ffd76a,#ffb13b)";
+    walletBorder = "#ffd76a";
+    walletColor = "#3a2400";
+  }
+  else if(budget >= 10000){
+    walletIcon = "💰";
+    walletBg = "linear-gradient(180deg,#ffe8a3,#ffc94a)";
+    walletBorder = "#ffe8a3";
+    walletColor = "#3a2400";
+  }
+  else if(budget >= 4000){
+    walletIcon = "👛";
+    walletBg = "linear-gradient(180deg,#b7dcff,#7fbaff)";
+    walletBorder = "#9fd0ff";
+    walletColor = "#00264a";
+  }
+
+  const regularChip = isRegular
+  ? `<span style="
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:4px 10px;
+      border-radius:999px;
+      background:linear-gradient(180deg,#ffd76a,#ffb13b);
+      border:1px solid #ffd76a;
+      color:#3a2400;
+      font-size:12px;
+      font-weight:700;
+      box-shadow:0 0 10px rgba(255,200,80,.45);
+    ">⭐ 常連</span>`
+  : "";
+
+  const walletChip = budget > 0
+  ? `<span style="
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 12px;
+      border-radius:999px;
+      background:${walletBg};
+      border:1px solid ${walletBorder};
+      color:${walletColor};
+      font-size:12px;
+      font-weight:700;
+      box-shadow:0 0 8px rgba(0,0,0,.25);
+    ">${walletIcon} ${fmt(budget)}</span>`
+  : "";
+
+  stageName.innerHTML = `
+  <div class="stage-name-ui">
+
+    <div style="
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    ">
+      <div class="stage-name-main ${isNegativeType(s.vType) ? "neg" : "pos"}">
+        ${name}
+      </div>
+
+      ${walletChip}
+      ${regularChip}
+
+    </div>
+
+  </div>
+`;
+
+  stageMsg.textContent = s.vMsg || "—";
+// 財布と棚価格の比較表示
+const shop = loadMyShop();
+const slot = shop.slots?.[s.targetSlot];
+
+if(slot && slot.item && s.vBudget){
+
+  const rep = loadRep().rep;
+  const base = basePriceFor(slot.item);
+
+  let price = Math.floor(base * repFactor(rep));
+
+  if(slot.priceTier === "安い") price = Math.floor(price * 0.8);
+  if(slot.priceTier === "高い") price = Math.floor(price * 1.3);
+
+  if(s.targetSlot === 5){
+    price = Math.floor(price * 1.15);
+  }
+
+  let label = "";
+  let icon = "";
+
+  if(s.vBudget >= price * 1.3){
+    label = "余裕あり";
+    icon = "💰";
+  }
+  else if(s.vBudget >= price){
+    label = "買えそう";
+    icon = "🟡";
+  }
+  else{
+    label = "予算きびしい";
+    icon = "💸";
+  }
+
+  stageMsg.innerHTML = `
+    ${escapeHTML(s.vMsg || "—")}
+    <div style="
+      margin-top:6px;
+      font-size:12px;
+      opacity:.9;
+      display:flex;
+      gap:6px;
+      align-items:center;
+      flex-wrap:wrap;
+    ">
+      <span style="opacity:.7">この棚：</span>
+      <b>${fmt(price)} OCTO</b>
+      <span>｜</span>
+      <span>${icon}${label}</span>
+    </div>
+  `;
+}
+  if(s.vUrl) stageVisitor.src = s.vUrl;
+
+  if(s.hasVisitor && s.vUrl && !s.leaving){
+    stageVisitor.classList.add("show");
+  }else{
+    stageVisitor.classList.remove("show");
+  }
+}
+
+
+  function setStageEmpty(msg){
+    clearStageTimers();
+    const s = loadStage();
+    s.hasVisitor = false;
+    s.leaving = false;
+    s.vUrl = "";
+    s.vName = "—";
+    s.vMsg = msg || "まだ誰も来ていない。";
+    s.vType = "";
+    s.vBudget = 0;
+    s.vIsRegular = false;
+    s.stayMs = 0;
+    s.targetSlot = -1;
+    s.source = "";
+    s.visitId = "";
+    s.talking = false;
+    s.talkDone = false;
+    s.talkStartedAt = 0;
+    saveStage(s);
+    renderStage();
+  }
+
+  function beginLeave(msg){
+    const s = loadStage();
+    if(!s.hasVisitor) return;
+    const leavingSlot = Number(s.targetSlot ?? -1);
+
+    s.leaving = true;
+    s.talking = false;
+    saveStage(s);
+    renderStage();
+
+    socialCall("forceCloseTalk");
+
+    setGlobalSpawnCooldown(GLOBAL_VISITOR_COOLDOWN_MS);
+    if(leavingSlot >= 0) shiftOtherDueTimers(leavingSlot);
+
+    setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
   }
 
   function loadOcto(){
@@ -1051,7 +1182,9 @@
   }
 
   function loadFarmBook(){
-    return sanitizeFarmBook();
+    const book = lsGet(LS.farmBook, { ver:1, got:{} });
+    book.got = book.got || {};
+    return book;
   }
 
   function findGotKeyByCardId(book, cardId){
@@ -1071,21 +1204,11 @@
     const book = loadFarmBook();
     const key = findGotKeyByCardId(book, cardId);
     if(!key) return false;
-
     const c = book.got[key];
-    if(!isValidBookCardEntry(c, key)) return false;
-
     const cnt = Math.max(0, Number(c?.count||0));
     if(cnt < n) return false;
-
     c.count = cnt - n;
-
-    if(c.count <= 0){
-      delete book.got[key];
-    }else{
-      book.got[key] = normalizeBookCard(c, key);
-    }
-
+    book.got[key] = c;
     lsSet(LS.farmBook, book);
     return true;
   }
@@ -1094,31 +1217,17 @@
     n = Math.max(1, Math.floor(Number(n||1)));
     const book = loadFarmBook();
     const key = findGotKeyByCardId(book, cardId) || String(cardId||"");
-    const exist = book.got[key] || {};
+    const exist = book.got[key] || (cardSnapshot ? {...cardSnapshot} : { id: cardId, name: `カード ${cardId}` });
+    const cnt = Math.max(0, Number(exist.count||0));
+    exist.count = cnt + n;
 
-    const merged = {
-      ...exist,
-      ...(cardSnapshot || {}),
-      id: cleanStr((cardSnapshot && cardSnapshot.id) || exist.id || key),
-      name: cleanStr((cardSnapshot && cardSnapshot.name) || exist.name || `カード ${cardId}`),
-      img: cleanStr((cardSnapshot && cardSnapshot.img) || exist.img || ""),
-      rarity: cleanStr((cardSnapshot && cardSnapshot.rarity) || exist.rarity || ""),
-      tier: cleanStr((cardSnapshot && cardSnapshot.tier) || exist.tier || ""),
-      count: Math.max(0, Number(exist.count || 0) + n),
-      at: exist.at || (cardSnapshot && cardSnapshot.at) || "",
-      lastAt: Date.now(),
-      lastAddedAt: Date.now()
-    };
-
-    if(!isValidBookCardEntry(merged, key)){
-      return false;
+    if(cardSnapshot){
+      if(!exist.id) exist.id = cardSnapshot.id || cardId;
+      if(!exist.name && cardSnapshot.name) exist.name = cardSnapshot.name;
+      if(!exist.img  && cardSnapshot.img)  exist.img  = cardSnapshot.img;
+      if(!exist.rarity && cardSnapshot.rarity) exist.rarity = cardSnapshot.rarity;
     }
-
-    book.got[merged.id] = normalizeBookCard(merged, merged.id);
-    if(merged.id !== key && book.got[key] && key !== merged.id){
-      delete book.got[key];
-    }
-
+    book.got[key] = exist;
     lsSet(LS.farmBook, book);
     return true;
   }
@@ -1126,21 +1235,20 @@
   function listOwnedCardsFromBook(){
     const book = loadFarmBook();
     const got = book.got || {};
-
     const arr = Object.keys(got).map(k => {
       const c = got[k] || {};
-      const normalized = normalizeBookCard(c, k);
-
+      const count = Math.max(0, Number(c.count||0));
+      const id = String(c.id || k);
       return {
-        id: normalized.id,
-        name: normalized.name,
-        img: normalized.img,
-        rarity: normalized.rarity,
-        count: normalized.count,
-        raw: normalized,
+        id,
+        name: String(c.name || c.title || c.label || `カード ${id}`),
+        img: c.img || c.image || c.url || c.src || "",
+        rarity: String(c.rarity || c.rare || c.rank || ""),
+        count,
+        raw: c,
         _key: k
       };
-    }).filter(x => isValidBookCardEntry(x.raw, x.id));
+    }).filter(x => x.count > 0);
 
     arr.sort((a,b)=> (b.count-a.count) || a.name.localeCompare(b.name, "ja"));
     return arr;
@@ -1211,34 +1319,12 @@
       );
     }
 
-    s.slots = s.slots.slice(0,6).map((x, idx) => {
-      const item = x.item && typeof x.item === "object" ? x.item : null;
-      const qty = Math.max(0, Math.floor(Number(x.qty ?? (item ? 1 : 0))));
-      const priceTier = (idx===SHRINE_SLOT) ? "奉納" : (x.priceTier || "普通");
-      const createdAt = Number(x.createdAt||0);
-
-      const safeItem = item && isValidBookCardEntry({
-        id: item.id,
-        name: item.name,
-        img: item.img,
-        count: 1
-      }, item.id)
-        ? {
-            id: cleanStr(item.id),
-            name: cleanStr(item.name),
-            img: cleanStr(item.img),
-            rarity: cleanStr(item.rarity),
-            raw: item.raw || item
-          }
-        : null;
-
-      return {
-        item: safeItem,
-        qty: safeItem ? qty : 0,
-        priceTier,
-        createdAt
-      };
-    });
+    s.slots = s.slots.slice(0,6).map((x, idx) => ({
+      item: x.item || null,
+      qty: Math.max(0, Math.floor(Number(x.qty ?? (x.item ? 1 : 0)))),
+      priceTier: (idx===SHRINE_SLOT) ? "奉納" : (x.priceTier || "普通"),
+      createdAt: Number(x.createdAt||0),
+    }));
 
     s.slots = s.slots.map((x, idx)=>{
       if(x.item && (!x.qty || x.qty<1)) x.qty = 1;
@@ -1251,47 +1337,6 @@
     return s;
   }
   function saveMyShop(s){ lsSet(LS.myshop, s); }
-
-  function sanitizeMyShopAgainstBook(){
-    const book = loadFarmBook();
-    const validIds = new Set(Object.keys(book.got || {}));
-
-    const shop = loadMyShop();
-    let changed = false;
-
-    shop.slots = shop.slots.map((slot, idx) => {
-      if(!slot || !slot.item) return slot;
-
-      const item = slot.item;
-      const id = cleanStr(item.id);
-      const img = cleanStr(item.img);
-      const name = cleanStr(item.name);
-
-      const invalid =
-        !id ||
-        !name ||
-        !img ||
-        !validIds.has(id);
-
-      if(invalid){
-        changed = true;
-        return {
-          item: null,
-          qty: 0,
-          priceTier: idx === SHRINE_SLOT ? "奉納" : "普通",
-          createdAt: 0
-        };
-      }
-
-      return slot;
-    });
-
-    if(changed){
-      saveMyShop(shop);
-    }
-
-    return shop;
-  }
 
   function loadTick(){
     const t = lsGet(LS.tick, { ver:1, nextAtBySlot:{} });
@@ -1490,7 +1535,7 @@
         ? (Number(c.count||0) - listed)
         : (Number(c.count||0) - 1 - listed);
 
-      if(spare >= 1 && cleanStr(c.img)){
+      if(spare >= 1){
         pickable.push({
           id: c.id,
           name: c.name,
@@ -2212,9 +2257,9 @@
       let budget = rand(Number(range.min || 2000), Number(range.max || 6000));
 
       if(isRegular){
-        const rate = Number(socialCall("getRegularBudgetBonusRate") || 0.18);
-        budget = Math.floor(budget * (1 + rate));
-      }
+  const rate = Number(socialCall("getRegularBudgetBonusRate") || 0.18);
+  budget = Math.floor(budget * (1 + rate));
+}
 
       const s = loadStage();
       s.hasVisitor = true;
@@ -2257,189 +2302,6 @@
       startVisitorTimers(stayMs);
       renderAll();
     }, 3000);
-  }
-
-  function renderStage(){
-    const s = loadStage();
-
-    const name = escapeHTML(s.vName || "—");
-    const budget = Number(s.vBudget || 0);
-    const isRegular = !!s.vIsRegular;
-
-    let walletIcon = "👛";
-    let walletBg = "rgba(255,255,255,.08)";
-    let walletBorder = "rgba(255,255,255,.14)";
-    let walletColor = "#ffffff";
-
-    if(budget >= 20000){
-      walletIcon = "👑";
-      walletBg = "linear-gradient(180deg,#ffd76a,#ffb13b)";
-      walletBorder = "#ffd76a";
-      walletColor = "#3a2400";
-    }
-    else if(budget >= 10000){
-      walletIcon = "💰";
-      walletBg = "linear-gradient(180deg,#ffe8a3,#ffc94a)";
-      walletBorder = "#ffe8a3";
-      walletColor = "#3a2400";
-    }
-    else if(budget >= 4000){
-      walletIcon = "👛";
-      walletBg = "linear-gradient(180deg,#b7dcff,#7fbaff)";
-      walletBorder = "#9fd0ff";
-      walletColor = "#00264a";
-    }
-
-    const regularChip = isRegular
-      ? `<span style="
-          display:inline-flex;
-          align-items:center;
-          gap:4px;
-          padding:4px 10px;
-          border-radius:999px;
-          background:linear-gradient(180deg,#ffd76a,#ffb13b);
-          border:1px solid #ffd76a;
-          color:#3a2400;
-          font-size:12px;
-          font-weight:700;
-          box-shadow:0 0 10px rgba(255,200,80,.45);
-        ">⭐ 常連</span>`
-      : "";
-
-    const walletChip = budget > 0
-      ? `<span style="
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          padding:4px 12px;
-          border-radius:999px;
-          background:${walletBg};
-          border:1px solid ${walletBorder};
-          color:${walletColor};
-          font-size:12px;
-          font-weight:700;
-          box-shadow:0 0 8px rgba(0,0,0,.25);
-        ">${walletIcon} ${fmt(budget)}</span>`
-      : "";
-
-    stageName.innerHTML = `
-      <div class="stage-name-ui">
-        <div style="
-          display:flex;
-          align-items:center;
-          gap:8px;
-          flex-wrap:wrap;
-        ">
-          <div class="stage-name-main ${isNegativeType(s.vType) ? "neg" : "pos"}">
-            ${name}
-          </div>
-
-          ${walletChip}
-          ${regularChip}
-        </div>
-      </div>
-    `;
-
-    stageMsg.textContent = s.vMsg || "—";
-
-    const shop = loadMyShop();
-    const slot = shop.slots?.[s.targetSlot];
-
-    if(slot && slot.item && s.vBudget){
-      const rep = loadRep().rep;
-      const base = basePriceFor(slot.item);
-
-      let price = Math.floor(base * repFactor(rep));
-
-      if(slot.priceTier === "安い") price = Math.floor(price * 0.8);
-      if(slot.priceTier === "高い") price = Math.floor(price * 1.3);
-
-      if(s.targetSlot === 5){
-        price = Math.floor(price * 1.15);
-      }
-
-      let label = "";
-      let icon = "";
-
-      if(s.vBudget >= price * 1.3){
-        label = "余裕あり";
-        icon = "💰";
-      }
-      else if(s.vBudget >= price){
-        label = "買えそう";
-        icon = "🟡";
-      }
-      else{
-        label = "予算きびしい";
-        icon = "💸";
-      }
-
-      stageMsg.innerHTML = `
-        ${escapeHTML(s.vMsg || "—")}
-        <div style="
-          margin-top:6px;
-          font-size:12px;
-          opacity:.9;
-          display:flex;
-          gap:6px;
-          align-items:center;
-          flex-wrap:wrap;
-        ">
-          <span style="opacity:.7">この棚：</span>
-          <b>${fmt(price)} OCTO</b>
-          <span>｜</span>
-          <span>${icon}${label}</span>
-        </div>
-      `;
-    }
-
-    if(s.vUrl) stageVisitor.src = s.vUrl;
-
-    if(s.hasVisitor && s.vUrl && !s.leaving){
-      stageVisitor.classList.add("show");
-    }else{
-      stageVisitor.classList.remove("show");
-    }
-  }
-
-  function setStageEmpty(msg){
-    clearStageTimers();
-    const s = loadStage();
-    s.hasVisitor = false;
-    s.leaving = false;
-    s.vUrl = "";
-    s.vName = "—";
-    s.vMsg = msg || "まだ誰も来ていない。";
-    s.vType = "";
-    s.vBudget = 0;
-    s.vIsRegular = false;
-    s.stayMs = 0;
-    s.targetSlot = -1;
-    s.source = "";
-    s.visitId = "";
-    s.talking = false;
-    s.talkDone = false;
-    s.talkStartedAt = 0;
-    saveStage(s);
-    renderStage();
-  }
-
-  function beginLeave(msg){
-    const s = loadStage();
-    if(!s.hasVisitor) return;
-    const leavingSlot = Number(s.targetSlot ?? -1);
-
-    s.leaving = true;
-    s.talking = false;
-    saveStage(s);
-    renderStage();
-
-    socialCall("forceCloseTalk");
-
-    setGlobalSpawnCooldown(GLOBAL_VISITOR_COOLDOWN_MS);
-    if(leavingSlot >= 0) shiftOtherDueTimers(leavingSlot);
-
-    setTimeout(()=> setStageEmpty(msg || pick(LEAVE_LINES)), 650);
   }
 
   const SHOUT_LINES = [
@@ -2499,8 +2361,6 @@
   }
 
   function renderAll(){
-    sanitizeFarmBook();
-    sanitizeMyShopAgainstBook();
     renderStats();
     renderShelves();
     applyDayNight();
@@ -2566,9 +2426,6 @@
   });
 
   try{
-    sanitizeFarmBook();
-    sanitizeMyShopAgainstBook();
-    injectStageWalletStyles();
     renderAll();
 
     if(socialCall("init")){
@@ -2588,8 +2445,6 @@
   }
 
   function tick(){
-    sanitizeFarmBook();
-    sanitizeMyShopAgainstBook();
     updateNextTag();
     updateShoutUI();
     renderGuestAffinity();
