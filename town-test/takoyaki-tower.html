@@ -15,6 +15,7 @@
     --w: 420px;
     --h: 720px;
   }
+  *{ box-sizing:border-box; }
   body{
     margin:0;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
@@ -30,7 +31,6 @@
     width:min(var(--w), 100vw);
     min-height:100svh;
     padding:10px 10px 12px;
-    box-sizing:border-box;
     display:flex;
     flex-direction:column;
     gap:8px;
@@ -65,8 +65,9 @@
     display:block;
     width:100%;
     height:auto;
-    background: radial-gradient(120% 80% at 50% 15%, rgba(255,255,255,.06), rgba(0,0,0,0) 50%),
-                linear-gradient(#0f1320, #0b0d13);
+    background:
+      radial-gradient(120% 80% at 50% 15%, rgba(255,255,255,.06), rgba(0,0,0,0) 50%),
+      linear-gradient(#0f1320, #0b0d13);
     touch-action:manipulation;
     flex: 1 1 auto;
   }
@@ -127,6 +128,9 @@
     flex:0 0 auto;
   }
 
+  /* =========================
+     結果オーバーレイ
+  ========================= */
   #takoyakiResultOverlay{
     align-items: flex-start !important;
     padding-top: 14px;
@@ -139,7 +143,7 @@
     margin-bottom: 6px;
   }
   #takoyakiResultOverlay > div:last-child{
-    padding-bottom: 92px !important;
+    padding-bottom: 110px !important;
     box-sizing: border-box;
   }
 
@@ -163,9 +167,6 @@
     background:#2a3147;
     color:#fff;
     font-weight:700;
-  }
-  #takoyakiResultOverlay > div:last-child{
-    padding-bottom: 110px !important;
   }
 
   .drop-card{
@@ -217,6 +218,134 @@
     line-height:1.6;
     opacity:.92;
   }
+
+  /* =========================
+     ドロップ演出
+  ========================= */
+  .tower-drop-splash{
+    position:absolute;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at center, rgba(255,255,255,.10), rgba(0,0,0,.78) 68%);
+    z-index:10020;
+    padding:20px;
+  }
+  .tower-drop-splash.show{
+    display:flex;
+  }
+
+  .tower-drop-card{
+    width:min(420px, 100%);
+    border-radius:24px;
+    border:1px solid rgba(255,255,255,.22);
+    background:
+      radial-gradient(circle at top, rgba(255,255,255,.16), rgba(255,255,255,.05) 48%, rgba(0,0,0,.30) 100%);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.05) inset,
+      0 20px 60px rgba(0,0,0,.55),
+      0 0 35px rgba(255,217,121,.18);
+    padding:20px 18px 18px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+    animation:towerDropPop .42s ease-out;
+  }
+  .tower-drop-card::before{
+    content:"";
+    position:absolute;
+    inset:-40%;
+    background:
+      linear-gradient(120deg,
+        transparent 0%,
+        rgba(255,255,255,.08) 35%,
+        transparent 55%);
+    transform: rotate(12deg);
+    pointer-events:none;
+  }
+  @keyframes towerDropPop{
+    0%{ transform:scale(.72); opacity:0; }
+    70%{ transform:scale(1.04); opacity:1; }
+    100%{ transform:scale(1); opacity:1; }
+  }
+
+  .tower-drop-badge{
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:1000;
+    letter-spacing:.08em;
+    border:1px solid rgba(255,255,255,.22);
+    background:rgba(255,255,255,.08);
+    margin-bottom:10px;
+  }
+  .tower-drop-hero{
+    width:120px;
+    height:120px;
+    margin:0 auto 10px;
+    border-radius:22px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.06);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 10px 28px rgba(0,0,0,.35);
+  }
+  .tower-drop-hero img{
+    width:92px;
+    height:92px;
+    object-fit:cover;
+    border-radius:18px;
+    image-rendering:auto;
+    display:block;
+  }
+  .tower-drop-title{
+    font-size:28px;
+    font-weight:1000;
+    line-height:1.12;
+    margin-bottom:6px;
+    text-shadow:
+      0 0 10px rgba(255,255,255,.10),
+      0 0 22px rgba(255,217,121,.14);
+  }
+  .tower-drop-sub{
+    font-size:14px;
+    color:rgba(255,255,255,.86);
+    margin-bottom:12px;
+  }
+  .tower-drop-qty{
+    font-size:16px;
+    font-weight:1000;
+    margin-bottom:8px;
+  }
+  .tower-drop-total{
+    font-size:13px;
+    color:rgba(255,255,255,.78);
+    margin-bottom:14px;
+  }
+  .tower-drop-action{
+    display:flex;
+    gap:10px;
+  }
+  .tower-drop-action button{
+    flex:1;
+    padding:12px 12px;
+  }
+
+  @media (max-width: 560px){
+    .tower-drop-title{ font-size:24px; }
+    .tower-drop-hero{
+      width:100px;
+      height:100px;
+    }
+    .tower-drop-hero img{
+      width:78px;
+      height:78px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -231,8 +360,8 @@
     <div id="toast" class="toast">PERFECT!!</div>
     <canvas id="cv" width="420" height="720" aria-label="たこ焼きタイミングタワー"></canvas>
     <div class="controls">
-      <button id="stopBtn">STOP（タップ）</button>
-      <button id="restartBtn" class="secondary">RESTART</button>
+      <button id="stopBtn" type="button">STOP（タップ）</button>
+      <button id="restartBtn" class="secondary" type="button">RESTART</button>
     </div>
   </div>
 
@@ -383,9 +512,18 @@
   function addTowerFertToInv(fertId, qty = 1){
     const inv = loadFarmInv();
     inv.fert = inv.fert || {};
-    const cur = Number(inv.fert[fertId] || 0);
-    inv.fert[fertId] = Math.max(0, cur + Math.max(0, Math.floor(Number(qty || 0))));
+
+    const addQty = Math.max(0, Math.floor(Number(qty || 0)));
+    const cur = Math.max(0, Math.floor(Number(inv.fert[fertId] || 0)));
+    inv.fert[fertId] = cur + addQty;
+
     saveFarmInv(inv);
+    return inv.fert[fertId];
+  }
+
+  function getTowerFertTotal(fertId){
+    const inv = loadFarmInv();
+    return Math.max(0, Math.floor(Number((inv.fert || {})[fertId] || 0)));
   }
 
   // =========================
@@ -485,7 +623,7 @@
       };
     }
 
-    addTowerFertToInv(item.id, 1);
+    const total = addTowerFertToInv(item.id, 1);
 
     return {
       eligible: true,
@@ -494,7 +632,8 @@
         id: item.id,
         name: item.name,
         img: item.img,
-        qty: 1
+        qty: 1,
+        total
       }
     };
   }
@@ -516,11 +655,22 @@
     const entries = Object.entries(SPR);
     let loaded = 0;
     return new Promise((resolve) => {
-      if (!entries.length){ resolve(); return; }
+      if (!entries.length){
+        resolve();
+        return;
+      }
       for (const [key, src] of entries){
         const im = new Image();
-        im.onload = () => { IMG[key] = im; loaded++; if (loaded === entries.length) resolve(); };
-        im.onerror = () => { console.warn("Image load failed:", key, src); loaded++; if (loaded === entries.length) resolve(); };
+        im.onload = () => {
+          IMG[key] = im;
+          loaded++;
+          if (loaded === entries.length) resolve();
+        };
+        im.onerror = () => {
+          console.warn("Image load failed:", key, src);
+          loaded++;
+          if (loaded === entries.length) resolve();
+        };
         im.src = src;
       }
     });
@@ -598,7 +748,7 @@
     { key:"takoB", p: 40, h: 64, label:"イカさま（標準）", speedMul: 1.22 },
     { key:"takoC", p: 30, h: 64, label:"生焼け（厚）", speedMul: 1.60 },
     { key:"takoG", p: 10, h: 64, label:"金焼き", perfectPlus: 3, speedMul: 1.25 },
-    { key:"takoR", p:  7, h: 64, label:"激辛",  speedMul: 1.4 },
+    { key:"takoR", p:  7, h: 64, label:"激辛", speedMul: 1.4 },
     { key:"takoX", p:  4, h: 64, label:"虹伝説", insurance: true, speedMul: 1.10 },
   ];
 
@@ -652,6 +802,7 @@
   const S = {
     playing: false,
     over: false,
+    ending: false,
     floors: 0,
     points: 0,
     bestPoints: loadBestPoints(),
@@ -823,7 +974,14 @@
   function setHUD(){
     scoreEl.textContent = String(S.points);
     bestEl.textContent  = String(S.bestPoints);
-    stateEl.textContent = S.over ? `GAME OVER / ${S.floors}F` : (S.playing ? `${S.floors}F ×${S.mul.toFixed(2)}` : "READY");
+
+    if (S.ending){
+      stateEl.textContent = `FINISH / ${S.floors}F`;
+      return;
+    }
+    stateEl.textContent = S.over
+      ? `GAME OVER / ${S.floors}F`
+      : (S.playing ? `${S.floors}F ×${S.mul.toFixed(2)}` : "READY");
   }
 
   function getTakoyakiTitle(floors){
@@ -935,6 +1093,7 @@
   }
 
   let resultOverlay = null;
+  let dropOverlay = null;
 
   function ensureOverlay(){
     if (resultOverlay) return resultOverlay;
@@ -1091,6 +1250,114 @@
     return resultOverlay;
   }
 
+  function ensureDropOverlay(){
+    if (dropOverlay) return dropOverlay;
+
+    const wrap = cv.closest(".panel") || document.body;
+    const st = getComputedStyle(wrap);
+    if (st.position === "static") wrap.style.position = "relative";
+
+    const box = document.createElement("div");
+    box.className = "tower-drop-splash";
+    box.id = "towerDropSplash";
+
+    const card = document.createElement("div");
+    card.className = "tower-drop-card";
+    box.appendChild(card);
+
+    const badge = document.createElement("div");
+    badge.className = "tower-drop-badge";
+    badge.id = "towerDropBadge";
+    badge.textContent = "TOWER DROP";
+    card.appendChild(badge);
+
+    const hero = document.createElement("div");
+    hero.className = "tower-drop-hero";
+    card.appendChild(hero);
+
+    const img = document.createElement("img");
+    img.id = "towerDropImg";
+    img.alt = "ドロップアイテム";
+    hero.appendChild(img);
+
+    const title = document.createElement("div");
+    title.className = "tower-drop-title";
+    title.id = "towerDropTitle";
+    title.textContent = "アイテム名";
+    card.appendChild(title);
+
+    const sub = document.createElement("div");
+    sub.className = "tower-drop-sub";
+    sub.id = "towerDropSub";
+    sub.textContent = "タワー報酬を手に入れた！";
+    card.appendChild(sub);
+
+    const qty = document.createElement("div");
+    qty.className = "tower-drop-qty";
+    qty.id = "towerDropQty";
+    qty.textContent = "×1 GET!";
+    card.appendChild(qty);
+
+    const total = document.createElement("div");
+    total.className = "tower-drop-total";
+    total.id = "towerDropTotal";
+    total.innerHTML = "所持数：<b>0</b>";
+    card.appendChild(total);
+
+    const action = document.createElement("div");
+    action.className = "tower-drop-action";
+    card.appendChild(action);
+
+    const okBtn = document.createElement("button");
+    okBtn.type = "button";
+    okBtn.id = "towerDropOkBtn";
+    okBtn.textContent = "OK";
+    action.appendChild(okBtn);
+
+    wrap.appendChild(box);
+
+    dropOverlay = { box, badge, img, title, sub, qty, total, okBtn };
+    return dropOverlay;
+  }
+
+  function showTowerDropSplash(drop){
+    return new Promise((resolve) => {
+      if (!drop || !drop.dropped || !drop.item){
+        resolve();
+        return;
+      }
+
+      const o = ensureDropOverlay();
+      o.badge.textContent = "TOWER DROP";
+      o.title.textContent = drop.item.name || "報酬";
+      o.sub.textContent = "タワー報酬を手に入れた！";
+      o.qty.textContent = `×${Math.max(1, Number(drop.item.qty || 1))} GET!`;
+
+      const total = Number.isFinite(Number(drop.item.total))
+        ? Number(drop.item.total)
+        : getTowerFertTotal(drop.item.id);
+
+      o.total.innerHTML = `所持数：<b>${Math.max(0, Math.floor(total))}</b>`;
+
+      if (drop.item.img){
+        o.img.src = drop.item.img;
+        o.img.style.display = "block";
+      } else {
+        o.img.removeAttribute("src");
+        o.img.style.display = "none";
+      }
+
+      const done = () => {
+        o.box.classList.remove("show");
+        o.okBtn.removeEventListener("click", done);
+        resolve();
+      };
+
+      o.okBtn.addEventListener("click", done, { once:true });
+      o.box.classList.add("show");
+    });
+  }
+
   function renderResultDrop(drop){
     const root = document.getElementById("resDropWrap");
     if (!root) return;
@@ -1120,7 +1387,7 @@
         <div>
           <div class="drop-kicker">タワー報酬</div>
           <div class="drop-name">${drop.item.name}</div>
-          <div class="drop-count">×${drop.item.qty} を獲得</div>
+          <div class="drop-count">×${drop.item.qty} を獲得 / 所持数：${Math.max(0, Math.floor(Number(drop.item.total || 0)))}</div>
         </div>
       </div>
     `;
@@ -1152,7 +1419,9 @@
     const { box, card } = resultOverlay;
     card.style.opacity = "0";
     card.style.transform = "translateY(6px) scale(.98)";
-    setTimeout(() => { box.style.display = "none"; }, 180);
+    setTimeout(() => {
+      box.style.display = "none";
+    }, 180);
   }
 
   function setResultDatetime(){
@@ -1166,7 +1435,10 @@
   function drawImageCover(g, img, x, y, w, h){
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
-    if (!iw || !ih){ g.drawImage(img, x, y, w, h); return; }
+    if (!iw || !ih){
+      g.drawImage(img, x, y, w, h);
+      return;
+    }
     const s = Math.max(w / iw, h / ih);
     const dw = iw * s;
     const dh = ih * s;
@@ -1301,9 +1573,11 @@
 
   function reset(){
     hideResultOverlay();
+    if (dropOverlay) dropOverlay.box.classList.remove("show");
 
     S.playing = false;
     S.over = false;
+    S.ending = false;
     S.floors = 0;
     S.points = 0;
     S.mul = 1.0;
@@ -1326,6 +1600,7 @@
   }
 
   function start(){
+    if (S.ending) return;
     if (S.over) reset();
     S.playing = true;
     setHUD();
@@ -1337,7 +1612,7 @@
     return base * mul;
   }
 
-  function endRun(){
+  async function endRun(){
     S.lastRunFloors = S.floors;
     S.lastRunPoints = S.points;
 
@@ -1355,17 +1630,27 @@
 
     setResultDatetime();
     setHUD();
+
+    if (S.lastDrop && S.lastDrop.dropped && S.lastDrop.item){
+      await showTowerDropSplash(S.lastDrop);
+    }
+
     showResultOverlay();
+    S.ending = false;
+    setHUD();
   }
 
-  function gameOver(){
+  async function gameOver(){
+    if (S.over || S.ending) return;
     S.over = true;
     S.playing = false;
-    endRun();
+    S.ending = true;
+    setHUD();
+    await endRun();
   }
 
   function drop(){
-    if (!S.curr || S.over) return;
+    if (!S.curr || S.over || S.ending) return;
 
     const prev = S.blocks[S.blocks.length - 1];
     const curr = S.curr;
@@ -1447,7 +1732,7 @@
     S.lastFrameT = now;
     dt = Math.min(dt, 0.033);
 
-    if (S.playing && !S.over && S.curr){
+    if (S.playing && !S.over && !S.ending && S.curr){
       const sp = levelSpeed();
       const step = sp * dt * 60;
 
@@ -1476,16 +1761,20 @@
 
   cv.addEventListener("pointerdown", (e) => {
     e.preventDefault();
+    if (S.ending) return;
     if (!S.playing) start();
     else drop();
   }, { passive:false });
 
   stopBtn.addEventListener("click", () => {
+    if (S.ending) return;
     if (!S.playing) start();
     else drop();
   });
 
-  restartBtn.addEventListener("click", reset);
+  restartBtn.addEventListener("click", () => {
+    reset();
+  });
 
   loadImages().then(() => {
     loadMonthlyStats();
