@@ -400,7 +400,7 @@
       name: "寝かせた肥料",
       desc: "時間は\n1.5倍に\nなります",
       factor: 1.5,
-      fx: "時間 1.5倍 / 低確率でSP-HR",
+      fx: "時間 1.5倍 / 低確率でSPカード",
       img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou7.png",
       burnCardUp: 0.0,
       rawCardChance: 0.0,
