@@ -462,7 +462,7 @@
 
 
 
-    
+
 /* =========================
    個別の吹き出し位置調整
 ========================= */
@@ -500,7 +500,7 @@
 }
 
 
-    
+
     /* ===== 建物座標 ===== */
     .b1{ left:18%; top:22%; width:110px; }
     .b2{ left:51%; top:51%; width:120px; }
@@ -1708,7 +1708,7 @@
         <img src="https://takoyaki-card.com/town/assets/images/map/hatake.png" alt="たこ焼き畑">
       </a>
 
-      <a class="tf-building b2" href="https://takoyaki-card.com/town/matching-board.html" aria-label="カード募集板">
+      <a class="tf-building b2" href="https://takoyaki-card.com/town/mentenansu.html" aria-label="カード募集板">
         <img src="https://takoyaki-card.com/town/assets/images/map/keijiban.png" alt="カード募集板">
       </a>
 
@@ -2173,13 +2173,10 @@
         date: "2026.04.11",
         title: "図鑑表示の不具合について",
         body:
-`一部の環境で、所有カード一覧が正しく
-表示されない不具合が発生していました。
-現在は修正版を反映しています。図鑑ペー
-ジを開き直すことで、自動で復旧する場合
-があります。
-表示が戻らない場合は、ページの再読み込
-みもお試しください。
+`一部の環境で、所有カード一覧が正しく表示されない不具合が
+発生していました。現在は修正版を反映しています。図鑑ページ
+を開き直すことで、自動で復旧する場合があります。
+表示が戻らない場合は、ページの再読み込みもお試しください。
 ご不便をおかけし、申し訳ありませんでした。`
       },
       {
@@ -4121,264 +4118,8 @@
   </script>
 
   <script src="./assets/weather2.js"></script>
-
-
-
-<script>
-(() => {
-  "use strict";
-
-  const LS = {
-    octo: "roten_v1_octo",
-    inv: "tf_v1_inv",
-    launchGift: "roten_v1_launch_gift_claimed",
-    maintenanceApology: "trc_v1_maintenance_apology_20260411"
-  };
-
-  // ここは実際の肥料IDに合わせて必要なら変更
-  const APOLOGY_FERT_KEY = "fert_time_unbelief";
-
-  const giftBoxBtn = document.getElementById("giftBoxBtn");
-  const giftBadge = document.getElementById("giftBadge");
-  const giftModal = document.getElementById("giftModal");
-  const giftModalBody = document.getElementById("giftModalBody");
-  const giftModalActions = document.getElementById("giftModalActions");
-
-  if (!giftBoxBtn || !giftBadge || !giftModal || !giftModalBody || !giftModalActions) return;
-
-  function loadJSON(key, fallback){
-    try{
-      const raw = localStorage.getItem(key);
-      if(!raw) return fallback;
-      return JSON.parse(raw);
-    }catch(_){
-      return fallback;
-    }
-  }
-
-  function saveJSON(key, value){
-    localStorage.setItem(key, JSON.stringify(value));
-  }
-
-  function invDefault(){
-    return { ver:1, seed:{}, water:{}, fert:{} };
-  }
-
-  function loadInv(){
-    const inv = loadJSON(LS.inv, invDefault());
-    inv.seed = (inv && typeof inv.seed === "object" && inv.seed) ? inv.seed : {};
-    inv.water = (inv && typeof inv.water === "object" && inv.water) ? inv.water : {};
-    inv.fert = (inv && typeof inv.fert === "object" && inv.fert) ? inv.fert : {};
-    return inv;
-  }
-
-  function saveInv(inv){
-    saveJSON(LS.inv, inv);
-  }
-
-  function getOctoValue(){
-    const raw = localStorage.getItem(LS.octo);
-    const n = Number(raw || 0);
-    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
-  }
-
-  function setOctoValue(v){
-    localStorage.setItem(LS.octo, String(Math.max(0, Math.floor(Number(v) || 0))));
-  }
-
-  function addOcto(delta){
-    setOctoValue(getOctoValue() + Number(delta || 0));
-  }
-
-  function renderOctoIfExists(){
-    const el = document.getElementById("octoValue");
-    if (!el) return;
-    el.textContent = getOctoValue().toLocaleString("ja-JP");
-  }
-
-  function openModal(modal){
-    modal.style.display = "flex";
-    modal.setAttribute("aria-hidden", "false");
-  }
-
-  function closeModal(modal){
-    modal.style.display = "none";
-    modal.setAttribute("aria-hidden", "true");
-  }
-
-  function hasLaunchGift(){
-    return localStorage.getItem(LS.launchGift) === "1";
-  }
-
-  function hasMaintenanceApology(){
-    return localStorage.getItem(LS.maintenanceApology) === "1";
-  }
-
-  function claimLaunchGift(){
-    if (hasLaunchGift()) return;
-
-    const inv = loadInv();
-
-    inv.seed["seed_shop"]    = Number(inv.seed["seed_shop"] || 0) + 15;
-    inv.seed["seed_line"]    = Number(inv.seed["seed_line"] || 0) + 15;
-    inv.seed["seed_special"] = Number(inv.seed["seed_special"] || 0) + 1;
-
-    inv.water["water_nice"]       = Number(inv.water["water_nice"] || 0) + 10;
-    inv.water["water_suspicious"] = Number(inv.water["water_suspicious"] || 0) + 10;
-    inv.water["water_overdo"]     = Number(inv.water["water_overdo"] || 0) + 10;
-
-    inv.fert["fert_feel"] = Number(inv.fert["fert_feel"] || 0) + 10;
-    inv.fert["fert_guts"] = Number(inv.fert["fert_guts"] || 0) + 10;
-    inv.fert["fert_skip"] = Number(inv.fert["fert_skip"] || 0) + 10;
-
-    saveInv(inv);
-    addOcto(1000);
-    localStorage.setItem(LS.launchGift, "1");
-  }
-
-  function claimMaintenanceApology(){
-    if (hasMaintenanceApology()) return;
-
-    const inv = loadInv();
-    inv.fert[APOLOGY_FERT_KEY] = Number(inv.fert[APOLOGY_FERT_KEY] || 0) + 5;
-    saveInv(inv);
-
-    addOcto(1000);
-    localStorage.setItem(LS.maintenanceApology, "1");
-  }
-
-  function pendingCount(){
-    let count = 0;
-    if (!hasLaunchGift()) count += 1;
-    if (!hasMaintenanceApology()) count += 1;
-    return count;
-  }
-
-  function refreshGiftBadge(){
-    const count = pendingCount();
-    if (count > 0) {
-      giftBadge.textContent = String(count);
-      giftBadge.classList.add("is-show");
-    } else {
-      giftBadge.classList.remove("is-show");
-    }
-  }
-
-  function wireGiftButtons(){
-    document.getElementById("claimMaintenanceApologyBtn")?.addEventListener("click", () => {
-      claimMaintenanceApology();
-      refreshGiftBadge();
-      renderOctoIfExists();
-      renderUnifiedGiftModal();
-    });
-
-    document.getElementById("claimLaunchGiftBtn")?.addEventListener("click", () => {
-      claimLaunchGift();
-      refreshGiftBadge();
-      renderOctoIfExists();
-      renderUnifiedGiftModal();
-    });
-
-    document.getElementById("closeUnifiedGiftBtn")?.addEventListener("click", () => {
-      closeModal(giftModal);
-    });
-  }
-
-  function renderUnifiedGiftModal(){
-    const launchClaimed = hasLaunchGift();
-    const apologyClaimed = hasMaintenanceApology();
-
-    const sections = [];
-
-    sections.push(`
-      <div class="gift-list" style="margin-top:0;">
-        <div class="gift-list-title">緊急メンテナンスのお詫び</div>
-        <div class="gift-item">🐙 1000オクト</div>
-        <div class="gift-item">🧪 時間を信じないヒリョウ ×5</div>
-        <div class="gift-note" style="margin-top:10px;">
-          ${apologyClaimed ? "受け取り済みです。" : "ご不便をおかけしたお詫びとして、1回だけ受け取れます。"}
-        </div>
-      </div>
-    `);
-
-    sections.push(`
-      <div class="gift-list">
-        <div class="gift-list-title">初回限定プレゼント</div>
-        <div class="gift-item">🌱 店頭タネ ×15</div>
-        <div class="gift-item">🌱 回線タネ ×15</div>
-        <div class="gift-item">🌱 たこぴのタネ ×1</div>
-        <hr class="gift-divider">
-        <div class="gift-item">💧 なんか良さそう ×10</div>
-        <div class="gift-item">💧 怪しい水 ×10</div>
-        <div class="gift-item">💧 やりすぎな水 ×10</div>
-        <div class="gift-item">🧪 気のせい肥料 ×10</div>
-        <div class="gift-item">🧪 根性論ぶち込み肥料 ×10</div>
-        <div class="gift-item">🧪 工程すっ飛ばし肥料 ×10</div>
-        <div class="gift-item">🐙 1000オクト</div>
-        <div class="gift-note" style="margin-top:10px;">
-          ${launchClaimed ? "受け取り済みです。" : "初回のみ受け取れます。"}
-        </div>
-      </div>
-    `);
-
-    giftModalBody.innerHTML = `
-      たこぴ：<br>
-      「受け取れるものをまとめて置いておくたこ。<br>
-      まだ受け取ってないものがあれば、ここから受け取るたこ。」<br><br>
-      ${sections.join("")}
-    `;
-
-    giftModalActions.innerHTML = `
-      ${!apologyClaimed ? `<button class="modal-btn primary" type="button" id="claimMaintenanceApologyBtn">お詫びを受け取る</button>` : ``}
-      ${!launchClaimed ? `<button class="modal-btn primary" type="button" id="claimLaunchGiftBtn">初回プレゼントを受け取る</button>` : ``}
-      <button class="modal-btn" type="button" id="closeUnifiedGiftBtn">閉じる</button>
-    `;
-
-    if (apologyClaimed && launchClaimed) {
-      giftModalBody.innerHTML = `
-        たこぴ：<br>
-        「今、受け取れるプレゼントはないたこ。<br>
-        また何か配られる時はここに来るたこ。」<br><br>
-
-        <div class="gift-list" style="margin-top:0;">
-          <div class="gift-list-title">受取状況</div>
-          <div class="gift-item">✅ 緊急メンテナンスのお詫び：受取済み</div>
-          <div class="gift-item">✅ 初回限定プレゼント：受取済み</div>
-        </div>
-      `;
-    }
-
-    wireGiftButtons();
-  }
-
-  function openUnifiedGiftModal(){
-    renderUnifiedGiftModal();
-    openModal(giftModal);
-  }
-
-  // 既存の🎁ボタン処理を止めて、この追加版に差し替える
-  giftBoxBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    openUnifiedGiftModal();
-  }, true);
-
-  giftModal.addEventListener("click", (e) => {
-    if (e.target === giftModal) closeModal(giftModal);
-  });
-
-  refreshGiftBadge();
-  renderOctoIfExists();
-
-  window.addEventListener("storage", (e) => {
-    if (e.key === LS.octo || e.key === LS.inv || e.key === LS.launchGift || e.key === LS.maintenanceApology) {
-      refreshGiftBadge();
-      renderOctoIfExists();
-    }
-  });
-})();
-</script>
-
 </body>
 </html>
 
+</body>
+</html>
