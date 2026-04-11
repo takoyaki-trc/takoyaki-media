@@ -16,6 +16,7 @@
     --h: 720px;
   }
   *{ box-sizing:border-box; }
+
   body{
     margin:0;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
@@ -220,7 +221,7 @@
   }
 
   /* =========================
-     ドロップ演出
+     派手なドロップ演出
   ========================= */
   .tower-drop-splash{
     position:absolute;
@@ -229,117 +230,311 @@
     align-items:center;
     justify-content:center;
     background:
-      radial-gradient(circle at center, rgba(255,255,255,.10), rgba(0,0,0,.78) 68%);
+      radial-gradient(circle at center, rgba(255,210,100,.16) 0%, rgba(20,10,4,.92) 38%, rgba(0,0,0,.97) 100%);
     z-index:10020;
     padding:20px;
+    overflow:hidden;
   }
   .tower-drop-splash.show{
     display:flex;
   }
 
-  .tower-drop-card{
-    width:min(420px, 100%);
-    border-radius:24px;
-    border:1px solid rgba(255,255,255,.22);
+  .tower-drop-splash::before{
+    content:"";
+    position:absolute;
+    inset:-15%;
     background:
-      radial-gradient(circle at top, rgba(255,255,255,.16), rgba(255,255,255,.05) 48%, rgba(0,0,0,.30) 100%);
+      radial-gradient(circle at 50% 50%, rgba(255,223,120,.20) 0%, rgba(255,150,50,.08) 24%, rgba(0,0,0,0) 58%);
+    animation:towerGlowPulse 1.4s ease-in-out infinite;
+    pointer-events:none;
+  }
+
+  .tower-drop-splash::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      linear-gradient(115deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,.06) 40%,
+        rgba(255,255,255,0) 60%);
+    opacity:.45;
+    transform: translateX(-140%);
+    animation:towerSweep 1.8s linear infinite;
+    pointer-events:none;
+  }
+
+  .tower-drop-particles{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .tower-drop-particles span{
+    position:absolute;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:
+      radial-gradient(circle, rgba(255,245,180,1) 0%, rgba(255,196,70,.95) 45%, rgba(255,196,70,0) 75%);
     box-shadow:
-      0 0 0 1px rgba(255,255,255,.05) inset,
-      0 20px 60px rgba(0,0,0,.55),
-      0 0 35px rgba(255,217,121,.18);
-    padding:20px 18px 18px;
+      0 0 10px rgba(255,215,120,.75),
+      0 0 22px rgba(255,150,60,.45);
+    animation: towerParticleFloat 1.8s linear infinite;
+    opacity:0;
+  }
+  .tower-drop-particles span:nth-child(1){ left:12%; top:78%; animation-delay:.0s;  animation-duration:1.65s; transform:scale(.9); }
+  .tower-drop-particles span:nth-child(2){ left:22%; top:68%; animation-delay:.2s;  animation-duration:1.95s; transform:scale(1.1); }
+  .tower-drop-particles span:nth-child(3){ left:30%; top:82%; animation-delay:.45s; animation-duration:1.75s; transform:scale(.8); }
+  .tower-drop-particles span:nth-child(4){ left:42%; top:74%; animation-delay:.12s; animation-duration:1.9s; transform:scale(1.2); }
+  .tower-drop-particles span:nth-child(5){ left:56%; top:80%; animation-delay:.35s; animation-duration:1.7s; transform:scale(.95); }
+  .tower-drop-particles span:nth-child(6){ left:66%; top:70%; animation-delay:.6s;  animation-duration:2.0s; transform:scale(1.15); }
+  .tower-drop-particles span:nth-child(7){ left:76%; top:84%; animation-delay:.28s; animation-duration:1.8s; transform:scale(.85); }
+  .tower-drop-particles span:nth-child(8){ left:86%; top:72%; animation-delay:.52s; animation-duration:1.72s; transform:scale(1.05); }
+  .tower-drop-particles span:nth-child(9){ left:18%; top:56%; animation-delay:.8s;  animation-duration:1.9s; transform:scale(.75); }
+  .tower-drop-particles span:nth-child(10){ left:82%; top:58%; animation-delay:.92s; animation-duration:1.88s; transform:scale(.9); }
+  .tower-drop-particles span:nth-child(11){ left:48%; top:88%; animation-delay:.7s; animation-duration:2.05s; transform:scale(1.25); }
+  .tower-drop-particles span:nth-child(12){ left:62%; top:60%; animation-delay:1.0s; animation-duration:1.78s; transform:scale(.78); }
+
+  .tower-drop-card{
+    width:min(430px, 100%);
+    border-radius:28px;
+    border:1px solid rgba(255,240,205,.34);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,249,220,.26), rgba(255,220,120,.10) 24%, rgba(255,255,255,.05) 42%, rgba(10,8,12,.94) 92%),
+      linear-gradient(180deg, rgba(38,26,12,.98), rgba(15,10,7,.98));
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.06) inset,
+      0 0 20px rgba(255,220,110,.24),
+      0 0 52px rgba(255,160,50,.22),
+      0 26px 80px rgba(0,0,0,.62);
+    padding:22px 18px 18px;
     text-align:center;
     position:relative;
     overflow:hidden;
-    animation:towerDropPop .42s ease-out;
+    animation:towerDropPop .5s cubic-bezier(.18,.88,.25,1.15);
   }
   .tower-drop-card::before{
     content:"";
     position:absolute;
-    inset:-40%;
+    inset:-45%;
     background:
       linear-gradient(120deg,
-        transparent 0%,
-        rgba(255,255,255,.08) 35%,
-        transparent 55%);
+        rgba(255,255,255,0) 0%,
+        rgba(255,248,220,.14) 32%,
+        rgba(255,255,255,0) 56%);
     transform: rotate(12deg);
+    animation:towerCardShine 2s ease-in-out infinite;
     pointer-events:none;
   }
+  .tower-drop-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:28px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.04),
+      inset 0 0 34px rgba(255,220,110,.06);
+    pointer-events:none;
+  }
+
   @keyframes towerDropPop{
-    0%{ transform:scale(.72); opacity:0; }
-    70%{ transform:scale(1.04); opacity:1; }
-    100%{ transform:scale(1); opacity:1; }
+    0%{ transform:scale(.62) rotate(-2deg); opacity:0; }
+    60%{ transform:scale(1.06) rotate(.5deg); opacity:1; }
+    100%{ transform:scale(1) rotate(0deg); opacity:1; }
+  }
+  @keyframes towerGlowPulse{
+    0%,100%{ transform:scale(1); opacity:.82; }
+    50%{ transform:scale(1.08); opacity:1; }
+  }
+  @keyframes towerSweep{
+    0%{ transform:translateX(-140%); }
+    100%{ transform:translateX(160%); }
+  }
+  @keyframes towerCardShine{
+    0%,100%{ opacity:.18; transform:translateX(-16%) rotate(12deg); }
+    50%{ opacity:.55; transform:translateX(18%) rotate(12deg); }
+  }
+  @keyframes towerParticleFloat{
+    0%{
+      transform:translateY(12px) scale(.8);
+      opacity:0;
+    }
+    12%{
+      opacity:1;
+    }
+    100%{
+      transform:translateY(-165px) scale(1.2);
+      opacity:0;
+    }
   }
 
   .tower-drop-badge{
     display:inline-block;
-    padding:6px 12px;
+    padding:7px 14px;
     border-radius:999px;
     font-size:12px;
     font-weight:1000;
-    letter-spacing:.08em;
-    border:1px solid rgba(255,255,255,.22);
-    background:rgba(255,255,255,.08);
-    margin-bottom:10px;
+    letter-spacing:.12em;
+    border:1px solid rgba(255,245,220,.26);
+    background:linear-gradient(180deg, rgba(255,225,130,.22), rgba(255,180,70,.12));
+    color:#fff3d7;
+    box-shadow:
+      0 0 12px rgba(255,210,110,.14),
+      inset 0 0 10px rgba(255,255,255,.04);
+    margin-bottom:12px;
+    position:relative;
+    z-index:2;
   }
-  .tower-drop-hero{
-    width:120px;
-    height:120px;
-    margin:0 auto 10px;
-    border-radius:22px;
-    border:1px solid rgba(255,255,255,.18);
-    background:rgba(255,255,255,.06);
+
+  .tower-drop-ring{
+    width:174px;
+    height:174px;
+    margin:0 auto 12px;
+    border-radius:50%;
+    position:relative;
     display:flex;
     align-items:center;
     justify-content:center;
-    box-shadow:0 10px 28px rgba(0,0,0,.35);
+    background:
+      radial-gradient(circle, rgba(255,230,150,.14) 0%, rgba(255,160,60,.05) 46%, rgba(0,0,0,0) 74%);
+    box-shadow:
+      0 0 26px rgba(255,180,70,.16);
+    z-index:2;
+  }
+  .tower-drop-ring::before,
+  .tower-drop-ring::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    border:2px solid rgba(255,225,150,.22);
+    animation:towerRingPulse 1.6s ease-out infinite;
+  }
+  .tower-drop-ring::after{
+    inset:12px;
+    border-color:rgba(255,170,70,.20);
+    animation-delay:.28s;
+  }
+  @keyframes towerRingPulse{
+    0%{ transform:scale(.92); opacity:.0; }
+    25%{ opacity:1; }
+    100%{ transform:scale(1.08); opacity:0; }
+  }
+
+  .tower-drop-hero{
+    width:124px;
+    height:124px;
+    border-radius:28px;
+    border:1px solid rgba(255,245,215,.24);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)),
+      rgba(255,255,255,.05);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.04) inset,
+      0 0 22px rgba(255,190,80,.18),
+      0 12px 32px rgba(0,0,0,.36);
+    position:relative;
+    overflow:hidden;
+    animation:towerHeroFloat 2.2s ease-in-out infinite;
+  }
+  .tower-drop-hero::before{
+    content:"";
+    position:absolute;
+    inset:-35%;
+    background:linear-gradient(120deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,.14) 42%,
+      rgba(255,255,255,0) 64%);
+    transform:rotate(15deg);
+    animation:towerHeroShine 2.4s linear infinite;
   }
   .tower-drop-hero img{
-    width:92px;
-    height:92px;
+    width:94px;
+    height:94px;
     object-fit:cover;
-    border-radius:18px;
-    image-rendering:auto;
+    border-radius:20px;
     display:block;
+    position:relative;
+    z-index:1;
+    box-shadow: 0 8px 18px rgba(0,0,0,.24);
   }
+  @keyframes towerHeroFloat{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-5px); }
+  }
+  @keyframes towerHeroShine{
+    0%{ transform:translateX(-140%) rotate(15deg); }
+    100%{ transform:translateX(150%) rotate(15deg); }
+  }
+
   .tower-drop-title{
-    font-size:28px;
+    font-size:30px;
     font-weight:1000;
-    line-height:1.12;
+    line-height:1.08;
     margin-bottom:6px;
+    color:#fff8ea;
     text-shadow:
-      0 0 10px rgba(255,255,255,.10),
-      0 0 22px rgba(255,217,121,.14);
+      0 0 10px rgba(255,255,255,.14),
+      0 0 24px rgba(255,210,110,.18),
+      0 0 40px rgba(255,130,50,.12);
+    position:relative;
+    z-index:2;
   }
   .tower-drop-sub{
     font-size:14px;
-    color:rgba(255,255,255,.86);
-    margin-bottom:12px;
+    color:rgba(255,246,225,.88);
+    margin-bottom:14px;
+    position:relative;
+    z-index:2;
   }
   .tower-drop-qty{
-    font-size:16px;
+    font-size:18px;
     font-weight:1000;
     margin-bottom:8px;
+    color:#ffe7a3;
+    letter-spacing:.04em;
+    position:relative;
+    z-index:2;
   }
   .tower-drop-total{
     font-size:13px;
-    color:rgba(255,255,255,.78);
-    margin-bottom:14px;
+    color:rgba(255,255,255,.84);
+    margin-bottom:16px;
+    position:relative;
+    z-index:2;
   }
+
   .tower-drop-action{
     display:flex;
     gap:10px;
+    position:relative;
+    z-index:2;
   }
   .tower-drop-action button{
     flex:1;
-    padding:12px 12px;
+    padding:13px 12px;
+    border-radius:14px;
+    font-weight:900;
+    background:linear-gradient(180deg, #ffe178, #ffb639);
+    color:#2a1700;
+    box-shadow:
+      0 8px 18px rgba(255,165,50,.26),
+      inset 0 1px 0 rgba(255,255,255,.36);
   }
 
   @media (max-width: 560px){
     .tower-drop-title{ font-size:24px; }
+    .tower-drop-ring{
+      width:146px;
+      height:146px;
+    }
     .tower-drop-hero{
-      width:100px;
-      height:100px;
+      width:104px;
+      height:104px;
     }
     .tower-drop-hero img{
       width:78px;
@@ -377,14 +572,8 @@
 (() => {
   "use strict";
 
-  // =========================
-  // トップページURL
-  // =========================
   const TOP_URL = "index.html";
 
-  // =========================
-  // 月間記録
-  // =========================
   const LS_MONTHLY_STATS = "ttc_monthly_stats_v1";
 
   function getMonthKey(date = new Date()){
@@ -453,9 +642,6 @@
     saveMonthlyStats(s);
   }
 
-  // =========================
-  // 畑 inventory（肥料）
-  // =========================
   const LS_INV = "tf_v1_inv";
 
   const TOWER_FERTS = [
@@ -526,9 +712,6 @@
     return Math.max(0, Math.floor(Number((inv.fert || {})[fertId] || 0)));
   }
 
-  // =========================
-  // タワードロップ
-  // =========================
   function getTowerDropConfig(floors){
     const f = Math.floor(Number(floors || 0));
 
@@ -638,9 +821,6 @@
     };
   }
 
-  // =========================
-  // 画像URL
-  // =========================
   const SPR = {
     takoA: "https://ul.h3z.jp/OPpiBayk.png",
     takoB: "https://ul.h3z.jp/8lVPkSPJ.png",
@@ -676,9 +856,6 @@
     });
   }
 
-  // =========================
-  // 画面内に収める
-  // =========================
   const cv = document.getElementById("cv");
   const panel = cv.closest(".panel");
   const hud = document.querySelector(".hud");
@@ -709,9 +886,6 @@
   window.addEventListener("resize", fitCanvas, { passive:true });
   window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 80), { passive:true });
 
-  // =========================
-  // 設定
-  // =========================
   const CONF = {
     canvasW: 420,
     canvasH: 720,
@@ -740,9 +914,6 @@
     MUL_CAP: 2.00,
   };
 
-  // =========================
-  // 種類テーブル
-  // =========================
   const BLOCK_TABLE = [
     { key:"takoA", p: 44, h: 64, label:"素焼き（薄）", speedMul: 1.05 },
     { key:"takoB", p: 40, h: 64, label:"イカさま（標準）", speedMul: 1.22 },
@@ -773,9 +944,6 @@
     return fb;
   }
 
-  // =========================
-  // DOM
-  // =========================
   const ctx = cv.getContext("2d");
   const scoreEl = document.getElementById("score");
   const bestEl  = document.getElementById("best");
@@ -784,9 +952,6 @@
   const stopBtn = document.getElementById("stopBtn");
   const restartBtn = document.getElementById("restartBtn");
 
-  // =========================
-  // 保存
-  // =========================
   const BEST_POINT_KEY = "takoyakiTimingTower_best_points";
   function loadBestPoints(){
     const v = Number(localStorage.getItem(BEST_POINT_KEY) || 0);
@@ -796,9 +961,6 @@
     localStorage.setItem(BEST_POINT_KEY, String(v));
   }
 
-  // =========================
-  // 状態
-  // =========================
   const S = {
     playing: false,
     over: false,
@@ -1261,6 +1423,13 @@
     box.className = "tower-drop-splash";
     box.id = "towerDropSplash";
 
+    const particles = document.createElement("div");
+    particles.className = "tower-drop-particles";
+    for (let i=0; i<12; i++){
+      particles.appendChild(document.createElement("span"));
+    }
+    box.appendChild(particles);
+
     const card = document.createElement("div");
     card.className = "tower-drop-card";
     box.appendChild(card);
@@ -1271,9 +1440,13 @@
     badge.textContent = "TOWER DROP";
     card.appendChild(badge);
 
+    const ring = document.createElement("div");
+    ring.className = "tower-drop-ring";
+    card.appendChild(ring);
+
     const hero = document.createElement("div");
     hero.className = "tower-drop-hero";
-    card.appendChild(hero);
+    ring.appendChild(hero);
 
     const img = document.createElement("img");
     img.id = "towerDropImg";
@@ -1311,7 +1484,7 @@
     const okBtn = document.createElement("button");
     okBtn.type = "button";
     okBtn.id = "towerDropOkBtn";
-    okBtn.textContent = "OK";
+    okBtn.textContent = "受け取る";
     action.appendChild(okBtn);
 
     wrap.appendChild(box);
