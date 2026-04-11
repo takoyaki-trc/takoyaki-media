@@ -132,6 +132,12 @@
     return out;
   }
 
+  function toSafeCount(v, fallback = 0) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(0, Math.floor(n));
+  }
+
   // =========================================================
   // Dynamic style
   // =========================================================
@@ -921,53 +927,50 @@
   // Book normalize helpers
   // =========================================================
   function normalizeBookEntry(cardId, rawEntry) {
-    const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
+    const info = CARD_MAP[cardId] || { id: cardId, name: cardId, rarity: "N", img: "" };
 
     if (rawEntry == null) return null;
 
+    let count = 0;
+    let base = {};
+
     if (typeof rawEntry === "number") {
-      const count = Math.max(0, Math.floor(rawEntry));
-      return count > 0 ? { count, name: info.name, rarity: info.rarity } : null;
-    }
-
-    if (typeof rawEntry === "boolean") {
-      return rawEntry ? { count: 1, name: info.name, rarity: info.rarity } : null;
-    }
-
-    if (typeof rawEntry === "string") {
+      count = Math.max(0, Math.floor(rawEntry));
+    } else if (typeof rawEntry === "boolean") {
+      count = rawEntry ? 1 : 0;
+    } else if (typeof rawEntry === "string") {
       const n = Number(rawEntry);
-      if (Number.isFinite(n) && n > 0) {
-        return { count: Math.floor(n), name: info.name, rarity: info.rarity };
-      }
-      return null;
-    }
+      count = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+    } else if (typeof rawEntry === "object") {
+      base = rawEntry;
 
-    if (typeof rawEntry === "object") {
-      let count = 0;
-
-      if (typeof rawEntry.count === "number") {
-        count = rawEntry.count;
-      } else if (typeof rawEntry.count === "string") {
+      if (typeof rawEntry.count === "number" || typeof rawEntry.count === "string") {
         count = Number(rawEntry.count);
-      } else if (typeof rawEntry.owned === "number") {
-        count = rawEntry.owned;
-      } else if (typeof rawEntry.qty === "number") {
-        count = rawEntry.qty;
+      } else if (typeof rawEntry.owned === "number" || typeof rawEntry.owned === "string") {
+        count = Number(rawEntry.owned);
+      } else if (typeof rawEntry.qty === "number" || typeof rawEntry.qty === "string") {
+        count = Number(rawEntry.qty);
       } else {
         count = 1;
       }
 
       count = Math.max(0, Math.floor(Number(count) || 0));
-      if (count <= 0) return null;
-
-      return {
-        count,
-        name: rawEntry.name || info.name,
-        rarity: rawEntry.rarity || info.rarity
-      };
     }
 
-    return null;
+    if (count <= 0) return null;
+
+    return {
+      ...base,
+      id: base.id || info.id || cardId,
+      name: base.name || info.name || cardId,
+      img: base.img || info.img || "",
+      rarity: base.rarity || info.rarity || "N",
+      tier: base.tier || base.rarity || info.rarity || "N",
+      at: base.at ?? "",
+      lastAt: base.lastAt ?? "",
+      lastAddedAt: base.lastAddedAt ?? "",
+      count
+    };
   }
 
   function getBook() {
@@ -979,52 +982,67 @@
 
     if (!book.got || typeof book.got !== "object") {
       book.got = {};
-      return book;
     }
 
     const normalizedGot = {};
     let changed = false;
 
     for (const [cardId, rawEntry] of Object.entries(book.got)) {
-      if (!CARD_MAP[cardId]) {
+      const normalized = normalizeBookEntry(cardId, rawEntry);
+      if (!normalized) {
         changed = true;
         continue;
       }
 
-      const normalized = normalizeBookEntry(cardId, rawEntry);
-      if (normalized) {
-        normalizedGot[cardId] = normalized;
+      normalizedGot[cardId] = normalized;
 
-        if (
-          rawEntry !== normalized &&
-          (
-            typeof rawEntry !== "object" ||
-            Number(rawEntry.count || 0) !== normalized.count ||
-            rawEntry.name !== normalized.name ||
-            rawEntry.rarity !== normalized.rarity
-          )
-        ) {
-          changed = true;
-        }
-      } else {
+      if (
+        typeof rawEntry !== "object" ||
+        rawEntry == null ||
+        String(rawEntry.id || "") !== String(normalized.id || "") ||
+        String(rawEntry.name || "") !== String(normalized.name || "") ||
+        String(rawEntry.img || "") !== String(normalized.img || "") ||
+        String(rawEntry.rarity || "") !== String(normalized.rarity || "") ||
+        String(rawEntry.tier || "") !== String(normalized.tier || "") ||
+        String(rawEntry.at ?? "") !== String(normalized.at ?? "") ||
+        String(rawEntry.lastAt ?? "") !== String(normalized.lastAt ?? "") ||
+        String(rawEntry.lastAddedAt ?? "") !== String(normalized.lastAddedAt ?? "") ||
+        Number(rawEntry.count || 0) !== Number(normalized.count || 0)
+      ) {
         changed = true;
       }
     }
 
+    book.got = normalizedGot;
+    if (!("ver" in book)) book.ver = 1;
+
     if (changed) {
-      book.got = normalizedGot;
-      if (!("ver" in book)) book.ver = 1;
       saveBook(book);
-    } else {
-      book.got = normalizedGot;
-      if (!("ver" in book)) book.ver = 1;
     }
 
     return book;
   }
 
   function saveBook(book) {
-    saveJSON(KEY.book, book);
+    if (!book || typeof book !== "object") {
+      saveJSON(KEY.book, { ver: 1, got: {} });
+      return;
+    }
+
+    const next = {
+      ver: "ver" in book ? book.ver : 1,
+      got: {}
+    };
+
+    const rawGot = (book.got && typeof book.got === "object") ? book.got : {};
+
+    for (const [cardId, rawEntry] of Object.entries(rawGot)) {
+      const normalized = normalizeBookEntry(cardId, rawEntry);
+      if (!normalized) continue;
+      next.got[cardId] = normalized;
+    }
+
+    saveJSON(KEY.book, next);
   }
 
   function getOwnedCount(cardId) {
@@ -1035,22 +1053,38 @@
 
   function addOwned(cardId, delta) {
     const book = getBook();
-    const info = CARD_MAP[cardId] || { name: cardId, rarity: "N" };
+    const info = CARD_MAP[cardId] || { id: cardId, name: cardId, rarity: "N", img: "" };
 
     const current = normalizeBookEntry(cardId, book.got?.[cardId]) || {
-      count: 0,
+      id: cardId,
       name: info.name,
-      rarity: info.rarity
+      img: info.img || "",
+      rarity: info.rarity || "N",
+      tier: info.rarity || "N",
+      at: "",
+      lastAt: "",
+      lastAddedAt: "",
+      count: 0
     };
 
-    current.count = Math.max(0, Math.floor(Number(current.count || 0) + Number(delta || 0)));
-    current.name = current.name || info.name;
-    current.rarity = current.rarity || info.rarity;
+    const now = Date.now();
+    const nextCount = Math.max(0, Math.floor(Number(current.count || 0) + Number(delta || 0)));
 
-    if (current.count <= 0) {
+    if (nextCount <= 0) {
       delete book.got[cardId];
     } else {
-      book.got[cardId] = current;
+      book.got[cardId] = {
+        ...current,
+        id: current.id || cardId,
+        name: current.name || info.name || cardId,
+        img: current.img || info.img || "",
+        rarity: current.rarity || info.rarity || "N",
+        tier: current.tier || current.rarity || info.rarity || "N",
+        at: current.at || now,
+        lastAt: now,
+        lastAddedAt: Number(delta || 0) > 0 ? now : (current.lastAddedAt || now),
+        count: nextCount
+      };
     }
 
     saveBook(book);
@@ -1064,6 +1098,53 @@
     inv[kind] = inv[kind] || {};
     inv[kind][id] = Number(inv[kind][id] || 0) + Number(qty || 0);
     saveJSON(KEY.inv, inv);
+  }
+
+  function autoRepairBook() {
+    const book = loadJSON(KEY.book, null);
+    if (!book || typeof book !== "object" || !book.got || typeof book.got !== "object") return;
+
+    let changed = false;
+    const nextGot = {};
+
+    for (const [cardId, rawEntry] of Object.entries(book.got)) {
+      const normalized = normalizeBookEntry(cardId, rawEntry);
+      if (!normalized) continue;
+
+      const info = CARD_MAP[cardId] || null;
+
+      if (!normalized.img && info?.img) {
+        normalized.img = info.img;
+        changed = true;
+      }
+
+      if (!normalized.name && info?.name) {
+        normalized.name = info.name;
+        changed = true;
+      }
+
+      if (!normalized.rarity && info?.rarity) {
+        normalized.rarity = info.rarity;
+        changed = true;
+      }
+
+      if (!normalized.tier) {
+        normalized.tier = normalized.rarity || info?.rarity || "N";
+        changed = true;
+      }
+
+      if (!normalized.id) {
+        normalized.id = cardId;
+        changed = true;
+      }
+
+      nextGot[cardId] = normalized;
+    }
+
+    if (changed) {
+      book.got = nextGot;
+      saveBook(book);
+    }
   }
 
   function ensureDefaults() {
@@ -1108,18 +1189,7 @@
     if (!book || typeof book !== "object") {
       saveJSON(KEY.book, { ver: 1, got: {} });
     } else {
-      const rawGot = book.got && typeof book.got === "object" ? book.got : {};
-      const normalizedGot = {};
-
-      for (const [cardId, rawEntry] of Object.entries(rawGot)) {
-        if (!CARD_MAP[cardId]) continue;
-        const normalized = normalizeBookEntry(cardId, rawEntry);
-        if (normalized) normalizedGot[cardId] = normalized;
-      }
-
-      book.got = normalizedGot;
-      if (!("ver" in book)) book.ver = 1;
-      saveJSON(KEY.book, book);
+      saveBook(book);
     }
 
     const affection = loadJSON(AFFECTION_LS_KEY, null);
@@ -2687,6 +2757,7 @@
   // =========================================================
   ensureDynamicStyles();
   ensureDefaults();
+  autoRepairBook();
   ensureHowToModal();
   generateBoard(false);
   bindUI();
