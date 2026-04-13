@@ -20,6 +20,10 @@
   // ✅ タワー肥料4種を追加
   // ✅ 寝かせた肥料から低確率で SP-HR-001 / SP-HR-002 が出る
   // ✅ レベルアップ時：中央に大きく3秒演出表示 → その後に報酬モーダル
+  // ✅ レベルアップ報酬モーダルを今風に整理
+  //    ・説明文削除
+  //    ・「図鑑へ」ボタン削除
+  //    ・閉じるボタンのみ
   // =========================================================
 
   // =========================
@@ -1480,7 +1484,7 @@
       <div class="levelup-card">
         <div class="levelup-top">LEVEL UP!</div>
         <div class="levelup-main">Lv ${fromLevel} → Lv ${toLevel}</div>
-        <div class="levelup-sub">${unlockedDelta > 0 ? `新しい畑が ${unlockedDelta} マス解放！` : "報酬を獲得！"}</div>
+        <div class="levelup-sub">${unlockedDelta > 0 ? `新しい畑が ${unlockedDelta} マス解放！` : "報酬獲得！"}</div>
         <div class="levelup-stars" aria-hidden="true">
           <span>✦</span><span>✦</span><span>✦</span>
         </div>
@@ -2004,7 +2008,6 @@
       return;
     }
 
-    const seed = SEEDS.find((x) => x.id === seedId);
     const water = WATERS.find((x) => x.id === waterId);
     const fert = FERTS.find((x) => x.id === fertId);
 
@@ -2023,7 +2026,7 @@
       (seedId === "seed_bussasari") ||
       (seedId === "seed_namara_kawasar");
 
-    const fixedRarity = isFixedSeed ? null : pickRarityWithWater(waterId);
+    const fixedRarity = isFixedSeed ? null : pickRarityWithWater(water ? water.id : null);
 
     const srHint =
       isFixedSeed ? "NONE" :
@@ -2056,43 +2059,163 @@
   }
 
   function buildLevelRewardHtml(xpRes) {
-    const blocks = xpRes.rewards.map((r) => {
-      const itemsHtml = (r.items || []).map((it) => {
-        return `
-          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.05);margin-top:8px;">
-            <img src="${it.img}" alt="${it.name}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18)">
-            <div style="flex:1;min-width:0;">
-              <div style="font-weight:1000;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name}</div>
-              <div style="font-size:12px;opacity:.8;margin-top:2px;">×${it.qty}</div>
-            </div>
-          </div>
-        `;
-      }).join("");
+    const allItems = [];
+    let totalOcto = 0;
+    let totalUnlocked = 0;
 
-      const unlockHtml = r.unlockedNow > 0
-        ? `<div style="margin-top:8px;font-size:13px;color:#ffe38f;font-weight:1000;">🔓 畑が1マス解放された！</div>`
-        : ``;
+    for (const r of xpRes.rewards) {
+      totalOcto += Number(r.octo || 0);
+      totalUnlocked += Number(r.unlockedNow || 0);
+      for (const it of (r.items || [])) {
+        const key = `${it.kind}:${it.id}`;
+        const found = allItems.find((x) => x._key === key);
+        if (found) {
+          found.qty += Number(it.qty || 0);
+        } else {
+          allItems.push({ ...it, _key: key, qty: Number(it.qty || 0) });
+        }
+      }
+    }
 
+    const finalLevel = xpRes.rewards[xpRes.rewards.length - 1]?.level ?? player.level;
+
+    const octoCard = `
+      <div style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:14px;
+        border-radius:18px;
+        background:linear-gradient(180deg, rgba(255,187,94,.18), rgba(255,149,58,.08));
+        border:1px solid rgba(255,185,90,.28);
+        box-shadow:0 8px 18px rgba(0,0,0,.06);
+      ">
+        <div style="
+          width:54px;height:54px;flex:0 0 54px;
+          border-radius:16px;
+          display:grid;place-items:center;
+          font-size:26px;
+          background:linear-gradient(180deg,#fff2c7,#ffd97f);
+          border:1px solid rgba(255,199,96,.55);
+        ">💰</div>
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:12px;font-weight:900;color:#9d6a16;letter-spacing:.08em;">OCTO</div>
+          <div style="margin-top:2px;font-size:24px;font-weight:1000;color:#2d220f;line-height:1.05;">+${totalOcto}</div>
+        </div>
+      </div>
+    `;
+
+    const unlockCard = totalUnlocked > 0
+      ? `
+      <div style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:14px;
+        border-radius:18px;
+        background:linear-gradient(180deg, rgba(255,233,153,.20), rgba(255,203,86,.08));
+        border:1px solid rgba(255,214,110,.30);
+        box-shadow:0 8px 18px rgba(0,0,0,.06);
+      ">
+        <div style="
+          width:54px;height:54px;flex:0 0 54px;
+          border-radius:16px;
+          display:grid;place-items:center;
+          font-size:24px;
+          background:linear-gradient(180deg,#fff8da,#ffe79a);
+          border:1px solid rgba(255,220,126,.6);
+        ">🔓</div>
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:12px;font-weight:900;color:#a17411;letter-spacing:.08em;">UNLOCK</div>
+          <div style="margin-top:2px;font-size:18px;font-weight:1000;color:#2d220f;line-height:1.15;">畑が${totalUnlocked}マス解放</div>
+        </div>
+      </div>
+    `
+      : "";
+
+    const itemsHtml = allItems.map((it) => {
       return `
-        <div style="border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.06);padding:12px;margin-top:10px;">
-          <div style="font-weight:1000;font-size:14px;">Lv ${r.level} 報酬</div>
-          <div style="margin-top:8px;font-size:13px;">
-            ✅ オクト：<b>+${r.octo}</b>
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:12px;
+          padding:12px;
+          border-radius:16px;
+          background:rgba(255,255,255,.72);
+          border:1px solid rgba(0,0,0,.06);
+        ">
+          <img src="${it.img}" alt="${it.name}" style="
+            width:56px;height:56px;flex:0 0 56px;
+            object-fit:cover;
+            border-radius:14px;
+            border:1px solid rgba(0,0,0,.08);
+            background:rgba(255,255,255,.9);
+            box-shadow:0 4px 10px rgba(0,0,0,.05);
+          ">
+          <div style="min-width:0;flex:1;">
+            <div style="
+              font-size:15px;
+              font-weight:1000;
+              color:#2b2116;
+              line-height:1.2;
+              word-break:break-word;
+            ">${it.name}</div>
+            <div style="
+              margin-top:4px;
+              font-size:13px;
+              font-weight:900;
+              color:#7a5a2f;
+            ">×${it.qty}</div>
           </div>
-          ${unlockHtml}
-          ${itemsHtml}
         </div>
       `;
     }).join("");
 
     return `
-      <div class="step">
-        レベルが上がった。<b>オクトは必ず</b>もらえる。<br>
-        アイテムも追加されている。
-      </div>
-      ${blocks}
-      <div class="row">
-        <button type="button" id="btnGoZukan" class="primary">図鑑へ</button>
+      <div style="
+        display:grid;
+        gap:14px;
+      ">
+        <div style="
+          text-align:center;
+          padding:6px 0 2px;
+        ">
+          <div style="
+            font-size:12px;
+            font-weight:1000;
+            letter-spacing:.18em;
+            color:#a36a18;
+          ">LEVEL UP</div>
+          <div style="
+            margin-top:4px;
+            font-size:30px;
+            font-weight:1000;
+            line-height:1.05;
+            color:#2b2015;
+          ">Lv ${finalLevel}</div>
+        </div>
+
+        <div style="display:grid;gap:10px;">
+          ${octoCard}
+          ${unlockCard}
+        </div>
+
+        ${allItems.length ? `
+          <div style="display:grid;gap:10px;">
+            <div style="
+              font-size:12px;
+              font-weight:1000;
+              letter-spacing:.12em;
+              color:#8e6a34;
+              padding-left:2px;
+            ">GET ITEMS</div>
+            ${itemsHtml}
+          </div>
+        ` : ""}
+
+        <div class="row" style="margin-top:4px;">
+          <button type="button" id="btnLevelClose" class="primary">閉じる</button>
+        </div>
       </div>
     `;
   }
@@ -2101,12 +2224,11 @@
     openModal("Lvアップ！", buildLevelRewardHtml(xpRes));
     clearHarvestCommit();
 
-    const btn = document.getElementById("btnGoZukan");
+    const btn = document.getElementById("btnLevelClose");
     if (btn) {
       btn.addEventListener("click", () => {
         closeModal();
         render();
-        location.href = "./zukan.html";
       });
     }
   }
