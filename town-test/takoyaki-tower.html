@@ -57,11 +57,16 @@
   .hud b{ font-size:16px; }
 
   .panel{
-    background:#141824;
+    background:
+      radial-gradient(120% 120% at 50% 0%, rgba(255,210,100,.10), rgba(255,210,100,0) 38%),
+      radial-gradient(100% 120% at 50% 100%, rgba(65,110,255,.10), rgba(65,110,255,0) 42%),
+      linear-gradient(180deg, #101526 0%, #0b1020 52%, #090d18 100%);
     border:1px solid rgba(255,255,255,.08);
     border-radius:14px;
     overflow:hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    box-shadow:
+      0 10px 30px rgba(0,0,0,.35),
+      0 0 40px rgba(255,196,90,.06) inset;
     position:relative;
     flex:1 1 auto;
     display:flex;
@@ -74,8 +79,9 @@
     width:100%;
     height:auto;
     background:
-      radial-gradient(120% 80% at 50% 15%, rgba(255,255,255,.06), rgba(0,0,0,0) 50%),
-      linear-gradient(#0f1320, #0b0d13);
+      radial-gradient(120% 80% at 50% 12%, rgba(255,220,120,.08), rgba(0,0,0,0) 38%),
+      radial-gradient(100% 80% at 50% 100%, rgba(90,120,255,.06), rgba(0,0,0,0) 40%),
+      linear-gradient(180deg, #0c1326 0%, #09111f 58%, #070c16 100%);
     touch-action:manipulation;
     flex:1 1 auto;
   }
@@ -148,9 +154,14 @@
     width:min(92%, 440px);
     max-height:calc(100% - 8px);
     border-radius:18px;
-    border:1px solid rgba(255,255,255,.18);
-    background:linear-gradient(180deg, rgba(24,28,40,.95), rgba(12,14,20,.95));
-    box-shadow:0 20px 60px rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.16);
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(255,214,120,.12), rgba(255,214,120,0) 36%),
+      radial-gradient(100% 80% at 50% 100%, rgba(84,118,255,.09), rgba(84,118,255,0) 40%),
+      linear-gradient(180deg, rgba(24,30,52,.97), rgba(10,14,26,.98));
+    box-shadow:
+      0 20px 60px rgba(0,0,0,.55),
+      0 0 30px rgba(255,196,90,.08) inset;
     display:flex;
     flex-direction:column;
     overflow:hidden;
@@ -215,12 +226,13 @@
 
   .result-rank-wrap{
     margin:0 0 10px;
-    padding:10px 12px;
+    padding:12px 12px 11px;
     border-radius:16px;
     border:1px solid rgba(255,255,255,.12);
     background:
-      linear-gradient(180deg, rgba(255,220,120,.12), rgba(255,255,255,.03)),
-      rgba(255,255,255,.04);
+      radial-gradient(circle at 50% 0%, rgba(255,215,120,.14), rgba(255,215,120,0) 52%),
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025)),
+      rgba(255,255,255,.03);
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.06),
       0 0 18px rgba(255,190,80,.08);
@@ -1419,8 +1431,6 @@
     lastFrameT: 0,
   };
 
-  let scoreCountTimer = null;
-
   function showToast(text){
     toastEl.textContent = text;
     toastEl.classList.add("show");
@@ -1658,9 +1668,9 @@
       spawnedAt: performance.now(),
     });
 
-    if (S.curr.insurance) showToast("🌈 虹伝説（1回セーフ）");
-    else if ((S.curr.perfectPlus||0) > 0) showToast("🥇 金焼き（甘判定）");
-    else if ((S.curr.speedMul||1) > 1.9) showToast("🌶 激辛（高速）");
+    if (S.curr.insurance) showToast("🌈 セーフ！");
+    else if ((S.curr.perfectPlus||0) > 0) showToast("🥇 金焼き");
+    else if ((S.curr.speedMul||1) > 1.9) showToast("🌶 激辛");
   }
 
   function getTopMostY(){
@@ -1686,6 +1696,7 @@
 
   let resultOverlay = null;
   let rewardOverlay = null;
+  let scoreCountTimer = null;
 
   function ensureOverlay(){
     if (resultOverlay) return resultOverlay;
@@ -1750,32 +1761,25 @@
     rankWrap.className = "result-rank-wrap";
     rankWrap.innerHTML = `
       <div class="result-rank-label">RANK</div>
-      <div id="resRankValue" class="result-rank-value">〘未投入〙</div>
+      <div id="resRankValue" class="result-rank-value">鉄板と仲良くなったたこ</div>
+      <div id="resRankSub" style="margin-top:6px;font-size:13px;opacity:.88;line-height:1.55;">焦げも、友だちたこ。</div>
+      <div id="resRankDate" style="margin-top:6px;font-size:12px;opacity:.72;">記録：----</div>
     `;
     scroll.appendChild(rankWrap);
 
     const h1 = document.createElement("div");
     h1.id = "resTitle";
-    h1.style.fontWeight = "900";
-    h1.style.fontSize = "17px";
-    h1.style.letterSpacing = ".02em";
-    h1.style.lineHeight = "1.3";
-    h1.style.marginBottom = "5px";
+    h1.style.display = "none";
     scroll.appendChild(h1);
 
     const sub = document.createElement("div");
     sub.id = "resSub";
-    sub.style.opacity = ".85";
-    sub.style.fontSize = "13px";
-    sub.style.lineHeight = "1.35";
-    sub.style.marginBottom = "7px";
+    sub.style.display = "none";
     scroll.appendChild(sub);
 
     const dt = document.createElement("div");
     dt.id = "resDate";
-    dt.style.opacity = ".75";
-    dt.style.fontSize = "12px";
-    dt.style.margin = "0 0 8px";
+    dt.style.display = "none";
     scroll.appendChild(dt);
 
     const stats = document.createElement("div");
@@ -2158,13 +2162,22 @@
 
   function showResultOverlay(){
     const o = ensureOverlay();
-    document.getElementById("resTitle").textContent = S.lastTitle || "〘焼き結果〙";
-    document.getElementById("resSub").textContent   = S.lastSubtitle || "";
-    document.getElementById("resDate").textContent  = S.lastRunAt ? `記録：${S.lastRunAt}` : "";
+
+    const plainRank = String(S.lastTitle || "焼き結果").replace(/[〘〙]/g, "");
+    const rankSub = String(S.lastSubtitle || "");
+    const rankDate = S.lastRunAt ? `記録：${S.lastRunAt}` : "";
+
+    document.getElementById("resTitle").textContent = "";
+    document.getElementById("resSub").textContent = "";
+    document.getElementById("resDate").textContent = "";
+
     document.getElementById("resReach").textContent = `${S.lastRunFloors}F`;
     document.getElementById("resPts").textContent   = `点数：${S.lastRunPoints}`;
     document.getElementById("resBestPts").textContent = String(S.bestPoints);
-    document.getElementById("resRankValue").textContent = S.lastTitle || "〘焼き結果〙";
+
+    document.getElementById("resRankValue").textContent = plainRank;
+    document.getElementById("resRankSub").textContent = rankSub;
+    document.getElementById("resRankDate").textContent = rankDate;
 
     renderResultRewards(S.lastRewards);
     renderTowerMini(o.miniCanvas, S.allBlocks);
