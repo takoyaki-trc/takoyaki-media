@@ -9,7 +9,7 @@
 <script async src="https://cdn-edge.karte.io/e881ae2322fe85206893871d5e65d626/edge.js"></script>
 <!-- End KARTE Tag -->
 
-<title>たこ焼きタイミングタワー</title>
+<title>たこ焼きバランスタワー</title>
 <style>
   :root{
     --w: 420px;
@@ -17,8 +17,14 @@
   }
   *{ box-sizing:border-box; }
 
-  body{
+  html, body{
     margin:0;
+    padding:0;
+    width:100%;
+    min-height:100%;
+  }
+
+  body{
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
     background:#0f1115;
     color:#fff;
@@ -26,6 +32,7 @@
     min-height:100svh;
     align-items:center;
     justify-content:center;
+    overflow:hidden;
   }
 
   .wrap{
@@ -130,33 +137,65 @@
   }
 
   #takoyakiResultOverlay{
-    align-items:flex-start !important;
-    padding-top:14px;
+    position:absolute;
+    inset:0;
+    display:none;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:
+      max(10px, env(safe-area-inset-top))
+      10px
+      max(10px, env(safe-area-inset-bottom))
+      10px;
     box-sizing:border-box;
+    z-index:9999;
   }
-  #takoyakiResultOverlay > div:last-child{
-    margin-top:8px;
-    padding-bottom:110px !important;
+
+  #takoyakiResultOverlay .result-card{
+    position:relative;
+    width:min(92%, 440px);
+    max-height:calc(100% - 8px);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.18);
+    background:linear-gradient(180deg, rgba(24,28,40,.95), rgba(12,14,20,.95));
+    box-shadow:0 20px 60px rgba(0,0,0,.55);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
     box-sizing:border-box;
+    transform:translateY(6px) scale(.98);
+    opacity:0;
+    transition:transform .18s ease, opacity .18s ease;
   }
-  #takoyakiResultOverlay #resTitle{
-    margin-bottom:6px;
+
+  #takoyakiResultOverlay .result-scroll{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:12px 12px 8px;
+    scrollbar-width:none;
   }
+  #takoyakiResultOverlay .result-scroll::-webkit-scrollbar{
+    display:none;
+  }
+
   #takoyakiResultOverlay .result-actions{
-    position:fixed;
-    left:50%;
-    bottom:18px;
-    transform:translateX(-50%);
-    width:min(92vw, 440px);
-    max-width:440px;
-    z-index:10000;
+    flex:0 0 auto;
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg, rgba(18,22,32,.96), rgba(12,15,22,.98));
   }
   #takoyakiResultOverlay .result-actions button{
     width:100%;
     min-width:0;
+    padding:13px 12px;
+    border-radius:12px;
+    font-size:16px;
+    font-weight:800;
   }
   #takoyakiResultOverlay .result-actions .quit-btn{
     background:#2a3147;
@@ -164,21 +203,32 @@
     font-weight:700;
   }
 
+  .drop-section{
+    margin:8px 0 10px;
+  }
+  .drop-section-title{
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.05em;
+    opacity:.82;
+    margin-bottom:6px;
+  }
+
   .drop-card{
     display:flex;
     align-items:center;
-    gap:12px;
-    padding:12px;
+    gap:10px;
+    padding:10px;
     border-radius:14px;
     border:1px solid rgba(255,255,255,.14);
     background:rgba(255,255,255,.06);
-    margin:10px 0 12px;
+    margin:8px 0 8px;
   }
   .drop-card img{
-    width:72px;
-    height:72px;
+    width:64px;
+    height:64px;
     object-fit:cover;
-    border-radius:14px;
+    border-radius:12px;
     border:1px solid rgba(255,255,255,.16);
     background:rgba(0,0,0,.18);
     flex:0 0 auto;
@@ -189,12 +239,12 @@
     border-radius:999px;
     background:rgba(255,196,70,.95);
     color:#2a1600;
-    font-size:11px;
+    font-size:10px;
     font-weight:1000;
-    margin-bottom:6px;
+    margin-bottom:5px;
   }
   .drop-card .drop-name{
-    font-size:16px;
+    font-size:15px;
     font-weight:900;
     line-height:1.2;
   }
@@ -202,15 +252,16 @@
     font-size:12px;
     opacity:.84;
     margin-top:4px;
+    line-height:1.4;
   }
   .drop-none{
-    padding:12px;
+    padding:10px 12px;
     border-radius:14px;
     border:1px dashed rgba(255,255,255,.18);
     background:rgba(255,255,255,.04);
-    margin:10px 0 12px;
+    margin:8px 0 8px;
     font-size:13px;
-    line-height:1.6;
+    line-height:1.55;
     opacity:.92;
   }
 
@@ -681,7 +732,7 @@
 
   <div class="panel">
     <div id="toast" class="toast">PERFECT!!</div>
-    <canvas id="cv" width="420" height="720" aria-label="たこ焼きタイミングタワー"></canvas>
+    <canvas id="cv" width="420" height="720" aria-label="たこ焼きバランスタワー"></canvas>
     <div class="controls">
       <button id="stopBtn" type="button">STOP（タップ）</button>
       <button id="restartBtn" class="secondary" type="button">RESTART</button>
@@ -692,7 +743,7 @@
     ・操作は「STOP」だけ。<br/>
     ・下のブロックと重なった分だけ残ります。<br/>
     ・PERFECT（ほぼ同じ位置）だと削れません。<br/>
-    ・10階以上で、終了時にタワー肥料の抽選があります。<br/>
+    ・10階以上でタワー肥料抽選、25階以上で限定UR/LRカード抽選があります。<br/>
   </div>
 </div>
 
@@ -702,6 +753,30 @@
 
   const TOP_URL = "index.html";
   const LS_MONTHLY_STATS = "ttc_monthly_stats_v1";
+  const LS_INV = "tf_v1_inv";
+  const LS_BOOK = "tf_v1_book";
+
+  const LIMITED_CARD_POOL = [
+    {
+      id: "SP-TT001",
+      no: "SP-TT001",
+      name: "塔を踏破せし者",
+      rarity: "SP",
+      tier: "LR",
+      img: "https://takoyaki-card.com/town/assets/images/sp/tawa01.png",
+      desc: "最後の一段を踏んだ瞬間、世界が静かになった。"
+    },
+    {
+      id: "SP-TT002",
+      no: "SP-TT002",
+      name: "ずっと見ていた者",
+      rarity: "SP",
+      tier: "UR",
+      img: "https://takoyaki-card.com/town/assets/images/sp/tawa02.png",
+      desc: "大丈夫。全部、見ていた。静かに見守り続けた視線が、いまカードになる。"
+    }
+  ];
+  const LIMITED_CARD_MAP = Object.fromEntries(LIMITED_CARD_POOL.map(v => [v.id, v]));
 
   function getMonthKey(date = new Date()){
     return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
@@ -762,7 +837,62 @@
     saveMonthlyStats(s);
   }
 
-  const LS_INV = "tf_v1_inv";
+  function loadBook(){
+    try{
+      const raw = localStorage.getItem(LS_BOOK);
+      if (!raw) return { got:{}, cards:{} };
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj !== "object") return { got:{}, cards:{} };
+      if (!obj.got || typeof obj.got !== "object") obj.got = {};
+      if (!obj.cards || typeof obj.cards !== "object") obj.cards = {};
+      return obj;
+    }catch(_){
+      return { got:{}, cards:{} };
+    }
+  }
+
+  function saveBook(book){
+    const safe = (book && typeof book === "object") ? book : {};
+    if (!safe.got || typeof safe.got !== "object") safe.got = {};
+    if (!safe.cards || typeof safe.cards !== "object") safe.cards = {};
+    localStorage.setItem(LS_BOOK, JSON.stringify(safe));
+  }
+
+  function addCardToBook(card){
+    if (!card || !card.id) return 0;
+    const book = loadBook();
+    const prevGot = (book.got && book.got[card.id]) ? book.got[card.id] : {};
+    const prevCards = (book.cards && book.cards[card.id]) ? book.cards[card.id] : {};
+    const prevCount = Math.max(
+      Number(prevGot.count || 0),
+      Number(prevGot.qty || 0),
+      Number(prevCards.count || 0),
+      Number(prevCards.qty || 0),
+      0
+    );
+    const nextCount = prevCount + 1;
+
+    const entry = {
+      id: card.id,
+      no: card.no || card.id,
+      name: card.name || "",
+      img: card.img || "",
+      rarity: card.rarity || "SP",
+      tier: card.tier || "",
+      desc: card.desc || "",
+      count: nextCount,
+      qty: nextCount,
+      owned: nextCount,
+      total: nextCount,
+      category: "SP",
+      updatedAt: Date.now()
+    };
+
+    book.got[card.id] = entry;
+    book.cards[card.id] = entry;
+    saveBook(book);
+    return nextCount;
+  }
 
   const TOWER_FERTS = [
     { id: "fert_balance",  name: "天秤にかけた肥料", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou6.png" },
@@ -800,6 +930,20 @@
       accent: "#fffef4",
       badgeBg: "linear-gradient(180deg, rgba(255,245,180,.30), rgba(255,210,90,.16))",
       core: "radial-gradient(circle, rgba(255,249,214,.72) 0%, rgba(255,241,166,.30) 38%, rgba(0,0,0,0) 70%)"
+    },
+    "SP-TT001": {
+      glow: "#ffcc66",
+      glowSoft: "rgba(255,204,102,.34)",
+      accent: "#fff6d7",
+      badgeBg: "linear-gradient(180deg, rgba(255,232,150,.34), rgba(255,173,66,.16))",
+      core: "radial-gradient(circle, rgba(255,243,196,.76) 0%, rgba(255,204,102,.30) 38%, rgba(0,0,0,0) 70%)"
+    },
+    "SP-TT002": {
+      glow: "#ffd96d",
+      glowSoft: "rgba(255,217,109,.30)",
+      accent: "#fff9e3",
+      badgeBg: "linear-gradient(180deg, rgba(255,234,160,.32), rgba(255,196,75,.16))",
+      core: "radial-gradient(circle, rgba(255,247,212,.72) 0%, rgba(255,217,109,.28) 38%, rgba(0,0,0,0) 70%)"
     },
     default: {
       glow: "#ffd875",
@@ -914,24 +1058,63 @@
 
   function rollTowerDrop(floors){
     const conf = getTowerDropConfig(floors);
-    if (!conf) return { eligible:false, dropped:false, item:null };
+    if (!conf) return { eligible:false, dropped:false, item:null, type:"fert" };
 
     if (Math.random() >= conf.rate){
-      return { eligible:true, dropped:false, item:null };
+      return { eligible:true, dropped:false, item:null, type:"fert" };
     }
 
     const picked = pickWeighted(conf.table);
     const item = picked ? TOWER_FERT_MAP[picked.id] : null;
-    if (!item) return { eligible:true, dropped:false, item:null };
+    if (!item) return { eligible:true, dropped:false, item:null, type:"fert" };
 
     const total = addTowerFertToInv(item.id, 1);
     return {
       eligible: true,
       dropped: true,
+      type: "fert",
       item: {
         id: item.id,
         name: item.name,
         img: item.img,
+        qty: 1,
+        total
+      }
+    };
+  }
+
+  function rollLimitedCardDrop(floors){
+    const f = Math.floor(Number(floors || 0));
+    if (f < 25){
+      return { eligible:false, dropped:false, item:null, type:"card" };
+    }
+
+    const r = Math.random();
+    let card = null;
+
+    if (r < 0.01){
+      card = LIMITED_CARD_MAP["SP-TT001"];
+    } else if (r < 0.04){
+      card = LIMITED_CARD_MAP["SP-TT002"];
+    }
+
+    if (!card){
+      return { eligible:true, dropped:false, item:null, type:"card" };
+    }
+
+    const total = addCardToBook(card);
+    return {
+      eligible: true,
+      dropped: true,
+      type: "card",
+      item: {
+        id: card.id,
+        no: card.no,
+        name: card.name,
+        rarity: card.rarity,
+        tier: card.tier,
+        img: card.img,
+        desc: card.desc,
         qty: 1,
         total
       }
@@ -1093,7 +1276,7 @@
     lastRunAt: "",
     lastRunFloors: 0,
     lastRunPoints: 0,
-    lastDrop: null,
+    lastRewards: null,
     lastFrameT: 0,
   };
 
@@ -1263,6 +1446,7 @@
       { min: 10,  title:"〘湯気みてただけのたこ〙", sub:"見てたら、積めてたこ。" },
       { min: 15,  title:"〘ちいさくなっても気にしないたこ〙", sub:"丸は、心だと思うたこ。" },
       { min: 20,  title:"〘鉄板と仲良くなったたこ〙", sub:"焦げも、友だちたこ。" },
+      { min: 25,  title:"〘見られていたたこ〙", sub:"25階を越えたあたりから、視線を感じたたこ。" },
       { min: 30,  title:"〘タコ民に顔覚えられたたこ〙", sub:"あ、また来たたこ、って言われたこ。" },
       { min: 40,  title:"〘祭壇がチラ見してきたたこ〙", sub:"今、見られた気がしたたこ。" },
       { min: 50,  title:"〘PERFECTっぽいたこ〙",     sub:"ズレてない…気がするたこ。" },
@@ -1360,7 +1544,7 @@
   }
 
   let resultOverlay = null;
-  let dropOverlay = null;
+  let rewardOverlay = null;
 
   function ensureOverlay(){
     if (resultOverlay) return resultOverlay;
@@ -1369,16 +1553,6 @@
 
     const box = document.createElement("div");
     box.id = "takoyakiResultOverlay";
-    box.style.position = "absolute";
-    box.style.left = "0";
-    box.style.top = "0";
-    box.style.width = "100%";
-    box.style.height = "100%";
-    box.style.display = "none";
-    box.style.alignItems = "center";
-    box.style.justifyContent = "center";
-    box.style.zIndex = "9999";
-    box.style.pointerEvents = "auto";
 
     const bg = document.createElement("div");
     bg.style.position = "absolute";
@@ -1389,39 +1563,33 @@
     box.appendChild(bg);
 
     const card = document.createElement("div");
-    card.style.position = "relative";
-    card.style.width = "min(92%, 440px)";
-    card.style.borderRadius = "18px";
-    card.style.border = "1px solid rgba(255,255,255,.18)";
-    card.style.background = "linear-gradient(180deg, rgba(24,28,40,.95), rgba(12,14,20,.95))";
-    card.style.boxShadow = "0 20px 60px rgba(0,0,0,.55)";
-    card.style.padding = "14px 14px 16px";
-    card.style.boxSizing = "border-box";
-    card.style.transform = "translateY(6px) scale(.98)";
-    card.style.opacity = "0";
-    card.style.transition = "transform .18s ease, opacity .18s ease";
+    card.className = "result-card";
     box.appendChild(card);
+
+    const scroll = document.createElement("div");
+    scroll.className = "result-scroll";
+    card.appendChild(scroll);
 
     const miniWrap = document.createElement("div");
     miniWrap.style.borderRadius = "16px";
     miniWrap.style.border = "1px solid rgba(255,255,255,.14)";
     miniWrap.style.background = "rgba(255,255,255,.05)";
-    miniWrap.style.padding = "10px";
-    miniWrap.style.marginBottom = "12px";
-    card.appendChild(miniWrap);
+    miniWrap.style.padding = "8px";
+    miniWrap.style.marginBottom = "10px";
+    scroll.appendChild(miniWrap);
 
     const miniTitle = document.createElement("div");
     miniTitle.style.fontWeight = "900";
     miniTitle.style.fontSize = "12px";
     miniTitle.style.opacity = ".8";
-    miniTitle.style.marginBottom = "6px";
+    miniTitle.style.marginBottom = "5px";
     miniTitle.textContent = "あなたのタワー（縮小再現）";
     miniWrap.appendChild(miniTitle);
 
     const miniCanvas = document.createElement("canvas");
     miniCanvas.id = "resMiniCanvas";
     miniCanvas.width = 360;
-    miniCanvas.height = 180;
+    miniCanvas.height = 130;
     miniCanvas.style.width = "100%";
     miniCanvas.style.height = "auto";
     miniCanvas.style.display = "block";
@@ -1432,39 +1600,40 @@
     const h1 = document.createElement("div");
     h1.id = "resTitle";
     h1.style.fontWeight = "900";
-    h1.style.fontSize = "18px";
+    h1.style.fontSize = "17px";
     h1.style.letterSpacing = ".02em";
-    h1.style.marginBottom = "6px";
-    card.appendChild(h1);
+    h1.style.lineHeight = "1.3";
+    h1.style.marginBottom = "5px";
+    scroll.appendChild(h1);
 
     const sub = document.createElement("div");
     sub.id = "resSub";
     sub.style.opacity = ".85";
     sub.style.fontSize = "13px";
     sub.style.lineHeight = "1.35";
-    sub.style.marginBottom = "8px";
-    card.appendChild(sub);
+    sub.style.marginBottom = "7px";
+    scroll.appendChild(sub);
 
     const dt = document.createElement("div");
     dt.id = "resDate";
     dt.style.opacity = ".75";
     dt.style.fontSize = "12px";
-    dt.style.margin = "0 0 10px";
-    card.appendChild(dt);
+    dt.style.margin = "0 0 8px";
+    scroll.appendChild(dt);
 
     const stats = document.createElement("div");
     stats.style.display = "grid";
     stats.style.gridTemplateColumns = "1fr 1fr";
-    stats.style.gap = "10px";
-    stats.style.marginBottom = "12px";
-    card.appendChild(stats);
+    stats.style.gap = "8px";
+    stats.style.marginBottom = "8px";
+    scroll.appendChild(stats);
 
     const statA = document.createElement("div");
     statA.style.padding = "10px";
     statA.style.borderRadius = "14px";
     statA.style.border = "1px solid rgba(255,255,255,.12)";
     statA.style.background = "rgba(255,255,255,.06)";
-    statA.innerHTML = `<div style="opacity:.75;font-size:12px;">到達</div><div id="resReach" style="font-weight:900;font-size:20px;margin-top:2px;"></div><div id="resPts" style="opacity:.85;font-size:12px;margin-top:4px;"></div>`;
+    statA.innerHTML = `<div style="opacity:.75;font-size:12px;">到達</div><div id="resReach" style="font-weight:900;font-size:18px;margin-top:2px;"></div><div id="resPts" style="opacity:.85;font-size:12px;margin-top:4px;"></div>`;
     stats.appendChild(statA);
 
     const statB = document.createElement("div");
@@ -1472,12 +1641,12 @@
     statB.style.borderRadius = "14px";
     statB.style.border = "1px solid rgba(255,255,255,.12)";
     statB.style.background = "rgba(255,255,255,.06)";
-    statB.innerHTML = `<div style="opacity:.75;font-size:12px;">BEST</div><div id="resBestPts" style="font-weight:900;font-size:20px;margin-top:2px;"></div>`;
+    statB.innerHTML = `<div style="opacity:.75;font-size:12px;">BEST</div><div id="resBestPts" style="font-weight:900;font-size:18px;margin-top:2px;"></div>`;
     stats.appendChild(statB);
 
-    const dropWrap = document.createElement("div");
-    dropWrap.id = "resDropWrap";
-    card.appendChild(dropWrap);
+    const rewardsWrap = document.createElement("div");
+    rewardsWrap.id = "resRewardsWrap";
+    scroll.appendChild(rewardsWrap);
 
     const row = document.createElement("div");
     row.className = "result-actions";
@@ -1513,12 +1682,12 @@
     if (st.position === "static") wrap.style.position = "relative";
     wrap.appendChild(box);
 
-    resultOverlay = { box, card, miniCanvas };
+    resultOverlay = { box, card, miniCanvas, scroll };
     return resultOverlay;
   }
 
-  function ensureDropOverlay(){
-    if (dropOverlay) return dropOverlay;
+  function ensureRewardOverlay(){
+    if (rewardOverlay) return rewardOverlay;
 
     const wrap = cv.closest(".panel") || document.body;
     const st = getComputedStyle(wrap);
@@ -1628,7 +1797,7 @@
 
     wrap.appendChild(box);
 
-    dropOverlay = {
+    rewardOverlay = {
       box,
       card,
       core,
@@ -1646,17 +1815,17 @@
       particles,
       confetti
     };
-    return dropOverlay;
+    return rewardOverlay;
   }
 
-  function applyDropTheme(itemId){
-    const o = ensureDropOverlay();
+  function applyRewardTheme(itemId){
+    const o = ensureRewardOverlay();
     const t = getDropTheme(itemId);
 
     o.box.style.background = `radial-gradient(circle at center, ${t.glowSoft} 0%, rgba(10,7,5,.96) 34%, rgba(0,0,0,.992) 100%)`;
     o.core.style.background = t.core;
 
-    o.card.style.borderColor = t.glowSoft.replace("0.28", "0.38").replace("0.30", "0.40").replace("0.32", "0.42");
+    o.card.style.borderColor = t.glowSoft.replace("0.28", "0.38").replace("0.30", "0.40").replace("0.32", "0.42").replace("0.34", "0.44");
     o.card.style.boxShadow = `
       0 0 0 1px rgba(255,255,255,.05) inset,
       0 1px 0 rgba(255,255,255,.08) inset,
@@ -1698,29 +1867,32 @@
     o.okBtn.style.color = "#2a1700";
   }
 
-  function showTowerDropSplash(drop){
+  function showRewardSplash(reward){
     return new Promise((resolve) => {
-      if (!drop || !drop.dropped || !drop.item){
+      if (!reward || !reward.dropped || !reward.item){
         resolve();
         return;
       }
 
-      const o = ensureDropOverlay();
-      applyDropTheme(drop.item.id);
+      const o = ensureRewardOverlay();
+      applyRewardTheme(reward.item.id);
 
-      o.badge.textContent = "TOWER DROP";
-      o.title.textContent = drop.item.name || "報酬";
-      o.sub.textContent = "タワー報酬を手に入れた！";
-      o.qty.textContent = `×${Math.max(1, Number(drop.item.qty || 1))} GET!`;
+      if (reward.type === "card"){
+        o.badge.textContent = "LIMITED CARD";
+        o.sub.textContent = `${reward.item.tier}カードを手に入れた！`;
+        o.qty.textContent = `${reward.item.tier} GET!`;
+        o.total.innerHTML = `図鑑所持数：<b>${Math.max(0, Math.floor(Number(reward.item.total || 0)))}</b>`;
+      } else {
+        o.badge.textContent = "TOWER DROP";
+        o.sub.textContent = "タワー報酬を手に入れた！";
+        o.qty.textContent = `×${Math.max(1, Number(reward.item.qty || 1))} GET!`;
+        o.total.innerHTML = `所持数：<b>${Math.max(0, Math.floor(Number(reward.item.total || 0)))}</b>`;
+      }
 
-      const total = Number.isFinite(Number(drop.item.total))
-        ? Number(drop.item.total)
-        : getTowerFertTotal(drop.item.id);
+      o.title.textContent = reward.item.name || "報酬";
 
-      o.total.innerHTML = `所持数：<b>${Math.max(0, Math.floor(total))}</b>`;
-
-      if (drop.item.img){
-        o.img.src = drop.item.img;
+      if (reward.item.img){
+        o.img.src = reward.item.img;
         o.img.style.display = "block";
       } else {
         o.img.removeAttribute("src");
@@ -1738,40 +1910,78 @@
     });
   }
 
-  function renderResultDrop(drop){
-    const root = document.getElementById("resDropWrap");
-    if (!root) return;
-
-    if (!drop || !drop.eligible){
-      root.innerHTML = `
-        <div class="drop-none">
-          10階未満だったので、今回はタワー報酬の抽選なし。<br>
-          まずは10階を目指すたこ。
+  function renderSingleRewardSection(title, reward){
+    if (!reward || !reward.eligible){
+      if (reward && reward.type === "card"){
+        return `
+          <div class="drop-section">
+            <div class="drop-section-title">${title}</div>
+            <div class="drop-none">
+              25階未満だったので、今回は限定カード抽選なし。<br>
+              まずは25階を目指すたこ。
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="drop-section">
+          <div class="drop-section-title">${title}</div>
+          <div class="drop-none">
+            10階未満だったので、今回はタワー報酬の抽選なし。<br>
+            まずは10階を目指すたこ。
+          </div>
         </div>
       `;
-      return;
     }
 
-    if (!drop.dropped || !drop.item){
-      root.innerHTML = `
-        <div class="drop-none">
-          今回はドロップなし。
+    if (!reward.dropped || !reward.item){
+      if (reward.type === "card"){
+        return `
+          <div class="drop-section">
+            <div class="drop-section-title">${title}</div>
+            <div class="drop-none">
+              今回は限定カードは出なかったたこ。
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="drop-section">
+          <div class="drop-section-title">${title}</div>
+          <div class="drop-none">
+            今回はドロップなし。
+          </div>
         </div>
       `;
-      return;
     }
 
-    const t = getDropTheme(drop.item.id);
-    root.innerHTML = `
-      <div class="drop-card" style="box-shadow:0 0 24px ${t.glowSoft}; border-color:${t.glowSoft};">
-        <img src="${drop.item.img}" alt="${drop.item.name}">
-        <div>
-          <div class="drop-kicker" style="background:${t.badgeBg}; color:#fff;">タワー報酬</div>
-          <div class="drop-name" style="color:${t.accent};">${drop.item.name}</div>
-          <div class="drop-count">×${drop.item.qty} を獲得 / 所持数：${Math.max(0, Math.floor(Number(drop.item.total || 0)))}</div>
+    const t = getDropTheme(reward.item.id);
+    const kicker = reward.type === "card" ? `限定カード ${reward.item.tier}` : "タワー報酬";
+    const countLabel = reward.type === "card"
+      ? `×${reward.item.qty} を獲得 / 図鑑所持数：${Math.max(0, Math.floor(Number(reward.item.total || 0)))}`
+      : `×${reward.item.qty} を獲得 / 所持数：${Math.max(0, Math.floor(Number(reward.item.total || 0)))}`;
+
+    return `
+      <div class="drop-section">
+        <div class="drop-section-title">${title}</div>
+        <div class="drop-card" style="box-shadow:0 0 24px ${t.glowSoft}; border-color:${t.glowSoft};">
+          <img src="${reward.item.img}" alt="${reward.item.name}">
+          <div>
+            <div class="drop-kicker" style="background:${t.badgeBg}; color:#fff;">${kicker}</div>
+            <div class="drop-name" style="color:${t.accent};">${reward.item.name}</div>
+            <div class="drop-count">${countLabel}</div>
+          </div>
         </div>
       </div>
     `;
+  }
+
+  function renderResultRewards(rewards){
+    const root = document.getElementById("resRewardsWrap");
+    if (!root) return;
+    const fertHtml = renderSingleRewardSection("タワー報酬", rewards ? rewards.fert : null);
+    const cardHtml = renderSingleRewardSection("限定カード抽選", rewards ? rewards.card : null);
+    root.innerHTML = fertHtml + cardHtml;
   }
 
   function showResultOverlay(){
@@ -1783,9 +1993,10 @@
     document.getElementById("resPts").textContent   = `点数：${S.lastRunPoints}`;
     document.getElementById("resBestPts").textContent = String(S.bestPoints);
 
-    renderResultDrop(S.lastDrop);
+    renderResultRewards(S.lastRewards);
     renderTowerMini(o.miniCanvas, S.allBlocks);
 
+    o.scroll.scrollTop = 0;
     o.box.style.display = "flex";
     requestAnimationFrame(() => {
       o.card.style.opacity = "1";
@@ -1795,7 +2006,8 @@
 
   function hideResultOverlay(){
     if (!resultOverlay) return;
-    const { box, card } = resultOverlay;
+    const { box, card, scroll } = resultOverlay;
+    if (scroll) scroll.scrollTop = 0;
     card.style.opacity = "0";
     card.style.transform = "translateY(6px) scale(.98)";
     setTimeout(() => {
@@ -1834,11 +2046,11 @@
     mctx.clearRect(0,0,W,H);
     mctx.imageSmoothingEnabled = false;
 
-    mctx.save();
-    mctx.globalAlpha = 0.20;
-    mctx.fillStyle = "#000";
+    const g = mctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, "#071327");
+    g.addColorStop(1, "#02050d");
+    mctx.fillStyle = g;
     mctx.fillRect(0,0,W,H);
-    mctx.restore();
 
     if (!blocks || blocks.length === 0) return;
 
@@ -1949,7 +2161,7 @@
 
   function reset(){
     hideResultOverlay();
-    if (dropOverlay) dropOverlay.box.classList.remove("show");
+    if (rewardOverlay) rewardOverlay.box.classList.remove("show");
 
     S.playing = false;
     S.over = false;
@@ -1963,7 +2175,7 @@
     S.lastRunAt = "";
     S.lastRunFloors = 0;
     S.lastRunPoints = 0;
-    S.lastDrop = null;
+    S.lastRewards = null;
     S.cameraY = 0;
     S.dir = 1;
     S.lastFrameT = 0;
@@ -2002,13 +2214,22 @@
     }
 
     updateMonthlyTowerHigh(S.floors);
-    S.lastDrop = rollTowerDrop(S.floors);
+
+    const fertReward = rollTowerDrop(S.floors);
+    const cardReward = rollLimitedCardDrop(S.floors);
+    S.lastRewards = {
+      fert: fertReward,
+      card: cardReward
+    };
 
     setResultDatetime();
     setHUD();
 
-    if (S.lastDrop && S.lastDrop.dropped && S.lastDrop.item){
-      await showTowerDropSplash(S.lastDrop);
+    if (fertReward && fertReward.dropped && fertReward.item){
+      await showRewardSplash(fertReward);
+    }
+    if (cardReward && cardReward.dropped && cardReward.item){
+      await showRewardSplash(cardReward);
     }
 
     showResultOverlay();
