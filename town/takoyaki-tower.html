@@ -1,3 +1,5 @@
+タワーテスト完成版
+
 <!doctype html>
 <html lang="ja">
 <head>
@@ -9,7 +11,7 @@
 <script async src="https://cdn-edge.karte.io/e881ae2322fe85206893871d5e65d626/edge.js"></script>
 <!-- End KARTE Tag -->
 
-<title>たこ焼きタイミングタワー</title>
+<title>たこ焼きバランスタワー</title>
 <style>
   :root{
     --w: 420px;
@@ -57,11 +59,16 @@
   .hud b{ font-size:16px; }
 
   .panel{
-    background:#141824;
+    background:
+      radial-gradient(120% 120% at 50% 0%, rgba(255,210,100,.10), rgba(255,210,100,0) 38%),
+      radial-gradient(100% 120% at 50% 100%, rgba(65,110,255,.10), rgba(65,110,255,0) 42%),
+      linear-gradient(180deg, #101526 0%, #0b1020 52%, #090d18 100%);
     border:1px solid rgba(255,255,255,.08);
     border-radius:14px;
     overflow:hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    box-shadow:
+      0 10px 30px rgba(0,0,0,.35),
+      0 0 40px rgba(255,196,90,.06) inset;
     position:relative;
     flex:1 1 auto;
     display:flex;
@@ -74,8 +81,9 @@
     width:100%;
     height:auto;
     background:
-      radial-gradient(120% 80% at 50% 15%, rgba(255,255,255,.06), rgba(0,0,0,0) 50%),
-      linear-gradient(#0f1320, #0b0d13);
+      radial-gradient(120% 80% at 50% 12%, rgba(255,220,120,.08), rgba(0,0,0,0) 38%),
+      radial-gradient(100% 80% at 50% 100%, rgba(90,120,255,.06), rgba(0,0,0,0) 40%),
+      linear-gradient(180deg, #0c1326 0%, #09111f 58%, #070c16 100%);
     touch-action:manipulation;
     flex:1 1 auto;
   }
@@ -128,14 +136,6 @@
     transform:translateX(-50%) translateY(-2px);
   }
 
-  .hint{
-    font-size:12px;
-    opacity:.75;
-    line-height:1.5;
-    margin:0;
-    flex:0 0 auto;
-  }
-
   #takoyakiResultOverlay{
     position:absolute;
     inset:0;
@@ -156,16 +156,39 @@
     width:min(92%, 440px);
     max-height:calc(100% - 8px);
     border-radius:18px;
-    border:1px solid rgba(255,255,255,.18);
-    background:linear-gradient(180deg, rgba(24,28,40,.95), rgba(12,14,20,.95));
-    box-shadow:0 20px 60px rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.16);
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(255,214,120,.12), rgba(255,214,120,0) 36%),
+      radial-gradient(100% 80% at 50% 100%, rgba(84,118,255,.09), rgba(84,118,255,0) 40%),
+      linear-gradient(180deg, rgba(24,30,52,.97), rgba(10,14,26,.98));
+    box-shadow:
+      0 20px 60px rgba(0,0,0,.55),
+      0 0 30px rgba(255,196,90,.08) inset;
     display:flex;
     flex-direction:column;
     overflow:hidden;
     box-sizing:border-box;
-    transform:translateY(6px) scale(.98);
+    transform:translateY(12px) scale(.95);
     opacity:0;
-    transition:transform .18s ease, opacity .18s ease;
+  }
+
+  #takoyakiResultOverlay .result-card.show{
+    animation:resultPop .25s ease forwards;
+  }
+
+  @keyframes resultPop{
+    0%{
+      transform:translateY(14px) scale(.95);
+      opacity:0;
+    }
+    65%{
+      transform:translateY(-4px) scale(1.02);
+      opacity:1;
+    }
+    100%{
+      transform:translateY(0) scale(1);
+      opacity:1;
+    }
   }
 
   #takoyakiResultOverlay .result-scroll{
@@ -201,6 +224,98 @@
     background:#2a3147;
     color:#fff;
     font-weight:700;
+  }
+
+  .result-rank-wrap{
+    margin:0 0 10px;
+    padding:12px 12px 11px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.12);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,215,120,.14), rgba(255,215,120,0) 52%),
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025)),
+      rgba(255,255,255,.03);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 0 18px rgba(255,190,80,.08);
+  }
+  .result-rank-label{
+    font-size:11px;
+    opacity:.72;
+    font-weight:900;
+    letter-spacing:.1em;
+    margin-bottom:4px;
+  }
+  .result-rank-value{
+    font-size:22px;
+    font-weight:1000;
+    line-height:1.35;
+    color:#fff4d8;
+    text-shadow:0 0 14px rgba(255,208,100,.18);
+  }
+
+  .result-score-hero{
+    margin:0 0 10px;
+    padding:12px 10px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.12);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,210,90,.18), rgba(255,210,90,0) 55%),
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .result-score-hero::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.08) 40%, rgba(255,255,255,0) 70%);
+    transform:translateX(-100%);
+    animation:scoreShine 2.4s linear infinite;
+  }
+  @keyframes scoreShine{
+    100%{ transform:translateX(100%); }
+  }
+
+  .result-score-label{
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.12em;
+    opacity:.78;
+    margin-bottom:6px;
+  }
+
+  .result-score-value{
+    font-size:38px;
+    line-height:1;
+    font-weight:1000;
+    color:#fff8ea;
+    text-shadow:
+      0 0 12px rgba(255,214,110,.25),
+      0 0 28px rgba(255,179,60,.16);
+    display:inline-block;
+    transform-origin:center center;
+  }
+  .result-score-value.bump{
+    animation:scoreBump .22s ease;
+  }
+  @keyframes scoreBump{
+    0%{ transform:scale(1); }
+    40%{ transform:scale(1.12); }
+    100%{ transform:scale(1); }
+  }
+
+  .drop-section{
+    margin:8px 0 10px;
+  }
+  .drop-section-title{
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.05em;
+    opacity:.82;
+    margin-bottom:6px;
   }
 
   .drop-card{
@@ -270,6 +385,29 @@
     display:flex;
     animation:dropOverlayShake .52s ease-out 1;
   }
+  .tower-drop-splash.legendary{
+    background:
+      radial-gradient(circle at center, rgba(255,240,160,.14) 0%, rgba(0,0,0,.18) 12%, rgba(0,0,0,.97) 30%, rgba(0,0,0,.995) 100%);
+  }
+  .tower-drop-splash.legendary.show{
+    animation:
+      rewardDarkIn .12s linear,
+      rewardImpactShake .10s linear .18s 1,
+      dropOverlayShake .52s ease-out .22s 1;
+  }
+
+  @keyframes rewardDarkIn{
+    0%{ opacity:0; }
+    100%{ opacity:1; }
+  }
+  @keyframes rewardImpactShake{
+    0%{ transform:translate3d(0,0,0); }
+    20%{ transform:translate3d(-7px,0,0); }
+    40%{ transform:translate3d(7px,0,0); }
+    60%{ transform:translate3d(-5px,0,0); }
+    80%{ transform:translate3d(5px,0,0); }
+    100%{ transform:translate3d(0,0,0); }
+  }
 
   .tower-drop-flash{
     position:absolute;
@@ -282,6 +420,16 @@
   }
   .tower-drop-splash.show .tower-drop-flash{
     animation:dropFlash .55s ease-out 1;
+  }
+  .tower-drop-splash.legendary.show .tower-drop-flash{
+    animation:legendaryFlash .9s ease-out 1;
+  }
+  @keyframes legendaryFlash{
+    0%{ opacity:0; }
+    14%{ opacity:0; }
+    22%{ opacity:1; }
+    34%{ opacity:.35; }
+    100%{ opacity:0; }
   }
 
   .tower-drop-bg-core{
@@ -296,6 +444,16 @@
     filter: blur(8px);
     opacity:.98;
     animation:towerCorePulse 1.5s ease-in-out infinite;
+  }
+  .tower-drop-splash.legendary .tower-drop-bg-core{
+    width:520px;
+    height:520px;
+    filter:blur(12px);
+    animation:legendaryCorePulse 1.1s ease-in-out infinite;
+  }
+  @keyframes legendaryCorePulse{
+    0%,100%{ transform:translate(-50%,-50%) scale(.96); opacity:.72; }
+    50%{ transform:translate(-50%,-50%) scale(1.18); opacity:1; }
   }
 
   .tower-drop-vignette{
@@ -595,6 +753,9 @@
   .tower-drop-splash.show .tower-drop-hero{
     animation:towerHeroIntro .56s cubic-bezier(.2,.9,.25,1.25) forwards;
   }
+  .tower-drop-splash.legendary.show .tower-drop-hero{
+    animation:legendaryHeroIntro .85s cubic-bezier(.16,.92,.22,1.2) forwards;
+  }
   .tower-drop-hero::before{
     content:"";
     position:absolute;
@@ -619,6 +780,12 @@
   @keyframes towerHeroIntro{
     0%{ transform:translateY(30px) scale(.52) rotateX(18deg); opacity:0; }
     65%{ transform:translateY(-6px) scale(1.12) rotateX(0deg); opacity:1; }
+    100%{ transform:translateY(0) scale(1) rotateX(0deg); opacity:1; }
+  }
+  @keyframes legendaryHeroIntro{
+    0%{ transform:translateY(48px) scale(.36) rotateX(30deg); opacity:0; }
+    18%{ transform:translateY(48px) scale(.36) rotateX(30deg); opacity:0; }
+    50%{ transform:translateY(-14px) scale(1.18) rotateX(0deg); opacity:1; }
     100%{ transform:translateY(0) scale(1) rotateX(0deg); opacity:1; }
   }
   @keyframes towerHeroShine{
@@ -708,6 +875,12 @@
     .tower-drop-action button{
       width:min(240px, 78%);
     }
+    .result-score-value{
+      font-size:32px;
+    }
+    .result-rank-value{
+      font-size:20px;
+    }
   }
 </style>
 </head>
@@ -721,18 +894,11 @@
 
   <div class="panel">
     <div id="toast" class="toast">PERFECT!!</div>
-    <canvas id="cv" width="420" height="720" aria-label="たこ焼きタイミングタワー"></canvas>
+    <canvas id="cv" width="420" height="720" aria-label="たこ焼きバランスタワー"></canvas>
     <div class="controls">
       <button id="stopBtn" type="button">STOP（タップ）</button>
       <button id="restartBtn" class="secondary" type="button">RESTART</button>
     </div>
-  </div>
-
-  <div class="hint" id="hint">
-    ・操作は「STOP」だけ。<br/>
-    ・下のブロックと重なった分だけ残ります。<br/>
-    ・PERFECT（ほぼ同じ位置）だと削れません。<br/>
-    ・10階以上で、終了時にタワー肥料の抽選があります。<br/>
   </div>
 </div>
 
@@ -742,6 +908,30 @@
 
   const TOP_URL = "index.html";
   const LS_MONTHLY_STATS = "ttc_monthly_stats_v1";
+  const LS_INV = "tf_v1_inv";
+  const LS_BOOK = "tf_v1_book";
+
+  const LIMITED_CARD_POOL = [
+    {
+      id: "SP-TT001",
+      no: "SP-TT001",
+      name: "塔を踏破せし者",
+      rarity: "SP",
+      tier: "LR",
+      img: "https://takoyaki-card.com/town/assets/images/sp/tawa01.png",
+      desc: "最後の一段を踏んだ瞬間、世界が静かになった。"
+    },
+    {
+      id: "SP-TT002",
+      no: "SP-TT002",
+      name: "ずっと見ていた者",
+      rarity: "SP",
+      tier: "UR",
+      img: "https://takoyaki-card.com/town/assets/images/sp/tawa02.png",
+      desc: "大丈夫。全部、見ていた。静かに見守り続けた視線が、いまカードになる。"
+    }
+  ];
+  const LIMITED_CARD_MAP = Object.fromEntries(LIMITED_CARD_POOL.map(v => [v.id, v]));
 
   function getMonthKey(date = new Date()){
     return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
@@ -802,7 +992,62 @@
     saveMonthlyStats(s);
   }
 
-  const LS_INV = "tf_v1_inv";
+  function loadBook(){
+    try{
+      const raw = localStorage.getItem(LS_BOOK);
+      if (!raw) return { got:{}, cards:{} };
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj !== "object") return { got:{}, cards:{} };
+      if (!obj.got || typeof obj.got !== "object") obj.got = {};
+      if (!obj.cards || typeof obj.cards !== "object") obj.cards = {};
+      return obj;
+    }catch(_){
+      return { got:{}, cards:{} };
+    }
+  }
+
+  function saveBook(book){
+    const safe = (book && typeof book === "object") ? book : {};
+    if (!safe.got || typeof safe.got !== "object") safe.got = {};
+    if (!safe.cards || typeof safe.cards !== "object") safe.cards = {};
+    localStorage.setItem(LS_BOOK, JSON.stringify(safe));
+  }
+
+  function addCardToBook(card){
+    if (!card || !card.id) return 0;
+    const book = loadBook();
+    const prevGot = (book.got && book.got[card.id]) ? book.got[card.id] : {};
+    const prevCards = (book.cards && book.cards[card.id]) ? book.cards[card.id] : {};
+    const prevCount = Math.max(
+      Number(prevGot.count || 0),
+      Number(prevGot.qty || 0),
+      Number(prevCards.count || 0),
+      Number(prevCards.qty || 0),
+      0
+    );
+    const nextCount = prevCount + 1;
+
+    const entry = {
+      id: card.id,
+      no: card.no || card.id,
+      name: card.name || "",
+      img: card.img || "",
+      rarity: card.rarity || "SP",
+      tier: card.tier || "",
+      desc: card.desc || "",
+      count: nextCount,
+      qty: nextCount,
+      owned: nextCount,
+      total: nextCount,
+      category: "SP",
+      updatedAt: Date.now()
+    };
+
+    book.got[card.id] = entry;
+    book.cards[card.id] = entry;
+    saveBook(book);
+    return nextCount;
+  }
 
   const TOWER_FERTS = [
     { id: "fert_balance",  name: "天秤にかけた肥料", img: "https://takoyaki-card.com/town/assets/images/hiryou/hiryou6.png" },
@@ -840,6 +1085,20 @@
       accent: "#fffef4",
       badgeBg: "linear-gradient(180deg, rgba(255,245,180,.30), rgba(255,210,90,.16))",
       core: "radial-gradient(circle, rgba(255,249,214,.72) 0%, rgba(255,241,166,.30) 38%, rgba(0,0,0,0) 70%)"
+    },
+    "SP-TT001": {
+      glow: "#ffcc66",
+      glowSoft: "rgba(255,204,102,.34)",
+      accent: "#fff6d7",
+      badgeBg: "linear-gradient(180deg, rgba(255,232,150,.34), rgba(255,173,66,.16))",
+      core: "radial-gradient(circle, rgba(255,243,196,.76) 0%, rgba(255,204,102,.30) 38%, rgba(0,0,0,0) 70%)"
+    },
+    "SP-TT002": {
+      glow: "#ffd96d",
+      glowSoft: "rgba(255,217,109,.30)",
+      accent: "#fff9e3",
+      badgeBg: "linear-gradient(180deg, rgba(255,234,160,.32), rgba(255,196,75,.16))",
+      core: "radial-gradient(circle, rgba(255,247,212,.72) 0%, rgba(255,217,109,.28) 38%, rgba(0,0,0,0) 70%)"
     },
     default: {
       glow: "#ffd875",
@@ -954,24 +1213,63 @@
 
   function rollTowerDrop(floors){
     const conf = getTowerDropConfig(floors);
-    if (!conf) return { eligible:false, dropped:false, item:null };
+    if (!conf) return { eligible:false, dropped:false, item:null, type:"fert" };
 
     if (Math.random() >= conf.rate){
-      return { eligible:true, dropped:false, item:null };
+      return { eligible:true, dropped:false, item:null, type:"fert" };
     }
 
     const picked = pickWeighted(conf.table);
     const item = picked ? TOWER_FERT_MAP[picked.id] : null;
-    if (!item) return { eligible:true, dropped:false, item:null };
+    if (!item) return { eligible:true, dropped:false, item:null, type:"fert" };
 
     const total = addTowerFertToInv(item.id, 1);
     return {
       eligible: true,
       dropped: true,
+      type: "fert",
       item: {
         id: item.id,
         name: item.name,
         img: item.img,
+        qty: 1,
+        total
+      }
+    };
+  }
+
+  function rollLimitedCardDrop(floors){
+    const f = Math.floor(Number(floors || 0));
+    if (f < 25){
+      return { eligible:false, dropped:false, item:null, type:"card" };
+    }
+
+    const r = Math.random();
+    let card = null;
+
+    if (r < 0.01){
+      card = LIMITED_CARD_MAP["SP-TT001"];
+    } else if (r < 0.04){
+      card = LIMITED_CARD_MAP["SP-TT002"];
+    }
+
+    if (!card){
+      return { eligible:true, dropped:false, item:null, type:"card" };
+    }
+
+    const total = addCardToBook(card);
+    return {
+      eligible: true,
+      dropped: true,
+      type: "card",
+      item: {
+        id: card.id,
+        no: card.no,
+        name: card.name,
+        rarity: card.rarity,
+        tier: card.tier,
+        img: card.img,
+        desc: card.desc,
         qty: 1,
         total
       }
@@ -1016,16 +1314,14 @@
   const cv = document.getElementById("cv");
   const panel = cv.closest(".panel");
   const hud = document.querySelector(".hud");
-  const hint = document.getElementById("hint");
   const controls = panel.querySelector(".controls");
 
   function fitCanvas(){
     const vh = Math.max(320, window.innerHeight);
     const pad = 35;
     const hudH = hud ? hud.getBoundingClientRect().height : 0;
-    const hintH = hint ? hint.getBoundingClientRect().height : 0;
     const ctrlH = controls ? controls.getBoundingClientRect().height : 0;
-    const maxCanvasH = Math.max(220, vh - (hudH + hintH + ctrlH + pad));
+    const maxCanvasH = Math.max(220, vh - (hudH + ctrlH + pad));
     const aspect = 720 / 420;
     const panelW = panel.getBoundingClientRect().width;
     const byWidthH = panelW * aspect;
@@ -1133,7 +1429,7 @@
     lastRunAt: "",
     lastRunFloors: 0,
     lastRunPoints: 0,
-    lastDrop: null,
+    lastRewards: null,
     lastFrameT: 0,
   };
 
@@ -1301,8 +1597,9 @@
       { min: 1,   title:"〘はじめて置いたたこ〙",   sub:"今の音、ちょっと良かったたこ。" },
       { min: 5,   title:"〘返せた気がするたこ〙",   sub:"たぶん合ってた。たぶんたこ。" },
       { min: 10,  title:"〘湯気みてただけのたこ〙", sub:"見てたら、積めてたこ。" },
-      { min: 15,  title:"〘ちいさくなっても気にしないたこ〙", sub:"丸は、心だと思うたこ。" },
+      { min: 15,  title:"〘ちいさくなっても気にしないたこ〙", sub:"丸は、心だと思ったたこ。" },
       { min: 20,  title:"〘鉄板と仲良くなったたこ〙", sub:"焦げも、友だちたこ。" },
+      { min: 25,  title:"〘見られていたたこ〙", sub:"25階を越えたあたりから、視線を感じたたこ。" },
       { min: 30,  title:"〘タコ民に顔覚えられたたこ〙", sub:"あ、また来たたこ、って言われたこ。" },
       { min: 40,  title:"〘祭壇がチラ見してきたたこ〙", sub:"今、見られた気がしたたこ。" },
       { min: 50,  title:"〘PERFECTっぽいたこ〙",     sub:"ズレてない…気がするたこ。" },
@@ -1373,9 +1670,9 @@
       spawnedAt: performance.now(),
     });
 
-    if (S.curr.insurance) showToast("🌈 虹伝説（1回セーフ）");
-    else if ((S.curr.perfectPlus||0) > 0) showToast("🥇 金焼き（甘判定）");
-    else if ((S.curr.speedMul||1) > 1.9) showToast("🌶 激辛（高速）");
+    if (S.curr.insurance) showToast("🌈 セーフ！");
+    else if ((S.curr.perfectPlus||0) > 0) showToast("🥇 金焼き");
+    else if ((S.curr.speedMul||1) > 1.9) showToast("🌶 激辛");
   }
 
   function getTopMostY(){
@@ -1400,7 +1697,8 @@
   }
 
   let resultOverlay = null;
-  let dropOverlay = null;
+  let rewardOverlay = null;
+  let scoreCountTimer = null;
 
   function ensureOverlay(){
     if (resultOverlay) return resultOverlay;
@@ -1453,28 +1751,37 @@
     miniCanvas.style.borderRadius = "12px";
     miniWrap.appendChild(miniCanvas);
 
+    const scoreHero = document.createElement("div");
+    scoreHero.className = "result-score-hero";
+    scoreHero.innerHTML = `
+      <div class="result-score-label">FINAL SCORE</div>
+      <div id="resScoreAnimated" class="result-score-value">0</div>
+    `;
+    scroll.appendChild(scoreHero);
+
+    const rankWrap = document.createElement("div");
+    rankWrap.className = "result-rank-wrap";
+    rankWrap.innerHTML = `
+      <div class="result-rank-label">RANK</div>
+      <div id="resRankValue" class="result-rank-value">鉄板と仲良くなったたこ</div>
+      <div id="resRankSub" style="margin-top:6px;font-size:13px;opacity:.88;line-height:1.55;">焦げも、友だちたこ。</div>
+      <div id="resRankDate" style="margin-top:6px;font-size:12px;opacity:.72;">記録：----</div>
+    `;
+    scroll.appendChild(rankWrap);
+
     const h1 = document.createElement("div");
     h1.id = "resTitle";
-    h1.style.fontWeight = "900";
-    h1.style.fontSize = "17px";
-    h1.style.letterSpacing = ".02em";
-    h1.style.lineHeight = "1.3";
-    h1.style.marginBottom = "5px";
+    h1.style.display = "none";
     scroll.appendChild(h1);
 
     const sub = document.createElement("div");
     sub.id = "resSub";
-    sub.style.opacity = ".85";
-    sub.style.fontSize = "13px";
-    sub.style.lineHeight = "1.35";
-    sub.style.marginBottom = "7px";
+    sub.style.display = "none";
     scroll.appendChild(sub);
 
     const dt = document.createElement("div");
     dt.id = "resDate";
-    dt.style.opacity = ".75";
-    dt.style.fontSize = "12px";
-    dt.style.margin = "0 0 8px";
+    dt.style.display = "none";
     scroll.appendChild(dt);
 
     const stats = document.createElement("div");
@@ -1500,9 +1807,9 @@
     statB.innerHTML = `<div style="opacity:.75;font-size:12px;">BEST</div><div id="resBestPts" style="font-weight:900;font-size:18px;margin-top:2px;"></div>`;
     stats.appendChild(statB);
 
-    const dropWrap = document.createElement("div");
-    dropWrap.id = "resDropWrap";
-    scroll.appendChild(dropWrap);
+    const rewardsWrap = document.createElement("div");
+    rewardsWrap.id = "resRewardsWrap";
+    scroll.appendChild(rewardsWrap);
 
     const row = document.createElement("div");
     row.className = "result-actions";
@@ -1510,7 +1817,7 @@
 
     const againBtn = document.createElement("button");
     againBtn.type = "button";
-    againBtn.textContent = "もう一回";
+    againBtn.textContent = "もう一回焼く";
     row.appendChild(againBtn);
 
     const quitBtn = document.createElement("button");
@@ -1542,8 +1849,8 @@
     return resultOverlay;
   }
 
-  function ensureDropOverlay(){
-    if (dropOverlay) return dropOverlay;
+  function ensureRewardOverlay(){
+    if (rewardOverlay) return rewardOverlay;
 
     const wrap = cv.closest(".panel") || document.body;
     const st = getComputedStyle(wrap);
@@ -1653,7 +1960,7 @@
 
     wrap.appendChild(box);
 
-    dropOverlay = {
+    rewardOverlay = {
       box,
       card,
       core,
@@ -1671,17 +1978,17 @@
       particles,
       confetti
     };
-    return dropOverlay;
+    return rewardOverlay;
   }
 
-  function applyDropTheme(itemId){
-    const o = ensureDropOverlay();
+  function applyRewardTheme(itemId){
+    const o = ensureRewardOverlay();
     const t = getDropTheme(itemId);
 
     o.box.style.background = `radial-gradient(circle at center, ${t.glowSoft} 0%, rgba(10,7,5,.96) 34%, rgba(0,0,0,.992) 100%)`;
     o.core.style.background = t.core;
 
-    o.card.style.borderColor = t.glowSoft.replace("0.28", "0.38").replace("0.30", "0.40").replace("0.32", "0.42");
+    o.card.style.borderColor = t.glowSoft.replace("0.28", "0.38").replace("0.30", "0.40").replace("0.32", "0.42").replace("0.34", "0.44");
     o.card.style.boxShadow = `
       0 0 0 1px rgba(255,255,255,.05) inset,
       0 1px 0 rgba(255,255,255,.08) inset,
@@ -1723,29 +2030,37 @@
     o.okBtn.style.color = "#2a1700";
   }
 
-  function showTowerDropSplash(drop){
+  function showRewardSplash(reward){
     return new Promise((resolve) => {
-      if (!drop || !drop.dropped || !drop.item){
+      if (!reward || !reward.dropped || !reward.item){
         resolve();
         return;
       }
 
-      const o = ensureDropOverlay();
-      applyDropTheme(drop.item.id);
+      const o = ensureRewardOverlay();
+      const isLegendary = reward.type === "card" && (reward.item.tier === "UR" || reward.item.tier === "LR");
 
-      o.badge.textContent = "TOWER DROP";
-      o.title.textContent = drop.item.name || "報酬";
-      o.sub.textContent = "タワー報酬を手に入れた！";
-      o.qty.textContent = `×${Math.max(1, Number(drop.item.qty || 1))} GET!`;
+      o.box.classList.remove("legendary");
+      if (isLegendary) o.box.classList.add("legendary");
 
-      const total = Number.isFinite(Number(drop.item.total))
-        ? Number(drop.item.total)
-        : getTowerFertTotal(drop.item.id);
+      applyRewardTheme(reward.item.id);
 
-      o.total.innerHTML = `所持数：<b>${Math.max(0, Math.floor(total))}</b>`;
+      if (reward.type === "card"){
+        o.badge.textContent = "LIMITED CARD";
+        o.sub.textContent = `${reward.item.tier}カードを手に入れた！`;
+        o.qty.textContent = `${reward.item.tier} GET!`;
+        o.total.innerHTML = `図鑑所持数：<b>${Math.max(0, Math.floor(Number(reward.item.total || 0)))}</b>`;
+      } else {
+        o.badge.textContent = "TOWER DROP";
+        o.sub.textContent = "タワー報酬を手に入れた！";
+        o.qty.textContent = `×${Math.max(1, Number(reward.item.qty || 1))} GET!`;
+        o.total.innerHTML = `所持数：<b>${Math.max(0, Math.floor(Number(reward.item.total || 0)))}</b>`;
+      }
 
-      if (drop.item.img){
-        o.img.src = drop.item.img;
+      o.title.textContent = reward.item.name || "報酬";
+
+      if (reward.item.img){
+        o.img.src = reward.item.img;
         o.img.style.display = "block";
       } else {
         o.img.removeAttribute("src");
@@ -1754,6 +2069,7 @@
 
       const done = () => {
         o.box.classList.remove("show");
+        o.box.classList.remove("legendary");
         o.okBtn.removeEventListener("click", done);
         resolve();
       };
@@ -1763,71 +2079,129 @@
     });
   }
 
-  function renderResultDrop(drop){
-    const root = document.getElementById("resDropWrap");
-    if (!root) return;
-
-    if (!drop || !drop.eligible){
-      root.innerHTML = `
-        <div class="drop-none">
-          10階未満だったので、今回はタワー報酬の抽選なし。<br>
-          まずは10階を目指すたこ。
+  function renderTowerRewardSection(reward){
+    if (!reward || !reward.eligible){
+      return `
+        <div class="drop-section">
+          <div class="drop-section-title">タワー報酬</div>
+          <div class="drop-none">
+            10階未満だったので、今回はタワー報酬の抽選なし。<br>
+            まずは10階を目指すたこ。
+          </div>
         </div>
       `;
-      return;
     }
 
-    if (!drop.dropped || !drop.item){
-      root.innerHTML = `
-        <div class="drop-none">
-          今回はドロップなし。
+    if (!reward.dropped || !reward.item){
+      return `
+        <div class="drop-section">
+          <div class="drop-section-title">タワー報酬</div>
+          <div class="drop-none">
+            今回はドロップなし。
+          </div>
         </div>
       `;
-      return;
     }
 
-    const t = getDropTheme(drop.item.id);
-    root.innerHTML = `
-      <div class="drop-card" style="box-shadow:0 0 24px ${t.glowSoft}; border-color:${t.glowSoft};">
-        <img src="${drop.item.img}" alt="${drop.item.name}">
-        <div>
-          <div class="drop-kicker" style="background:${t.badgeBg}; color:#fff;">タワー報酬</div>
-          <div class="drop-name" style="color:${t.accent};">${drop.item.name}</div>
-          <div class="drop-count">×${drop.item.qty} を獲得 / 所持数：${Math.max(0, Math.floor(Number(drop.item.total || 0)))}</div>
+    const t = getDropTheme(reward.item.id);
+    return `
+      <div class="drop-section">
+        <div class="drop-section-title">タワー報酬</div>
+        <div class="drop-card" style="box-shadow:0 0 24px ${t.glowSoft}; border-color:${t.glowSoft};">
+          <img src="${reward.item.img}" alt="${reward.item.name}">
+          <div>
+            <div class="drop-kicker" style="background:${t.badgeBg}; color:#fff;">タワー報酬</div>
+            <div class="drop-name" style="color:${t.accent};">${reward.item.name}</div>
+            <div class="drop-count">×${reward.item.qty} を獲得 / 所持数：${Math.max(0, Math.floor(Number(reward.item.total || 0)))}</div>
+          </div>
         </div>
       </div>
     `;
   }
 
+  function renderResultRewards(rewards){
+    const root = document.getElementById("resRewardsWrap");
+    if (!root) return;
+    root.innerHTML = renderTowerRewardSection(rewards ? rewards.fert : null);
+  }
+
+  function animateResultScore(target){
+    if (scoreCountTimer) cancelAnimationFrame(scoreCountTimer);
+    const el = document.getElementById("resScoreAnimated");
+    if (!el) return;
+
+    const end = Math.max(0, Math.floor(Number(target || 0)));
+    if (end <= 0){
+      el.textContent = "0";
+      el.classList.remove("bump");
+      void el.offsetWidth;
+      el.classList.add("bump");
+      return;
+    }
+
+    const duration = 820;
+    const start = performance.now();
+
+    const tick = () => {
+      const now = performance.now();
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const value = Math.floor(end * eased);
+      el.textContent = String(value);
+
+      if (t >= 1){
+        el.textContent = String(end);
+        el.classList.remove("bump");
+        void el.offsetWidth;
+        el.classList.add("bump");
+        return;
+      }
+      scoreCountTimer = requestAnimationFrame(tick);
+    };
+
+    scoreCountTimer = requestAnimationFrame(tick);
+  }
+
   function showResultOverlay(){
     const o = ensureOverlay();
-    document.getElementById("resTitle").textContent = S.lastTitle || "〘焼き結果〙";
-    document.getElementById("resSub").textContent   = S.lastSubtitle || "";
-    document.getElementById("resDate").textContent  = S.lastRunAt ? `記録：${S.lastRunAt}` : "";
+
+    const plainRank = String(S.lastTitle || "焼き結果").replace(/[〘〙]/g, "");
+    const rankSub = String(S.lastSubtitle || "");
+    const rankDate = S.lastRunAt ? `記録：${S.lastRunAt}` : "";
+
+    document.getElementById("resTitle").textContent = "";
+    document.getElementById("resSub").textContent = "";
+    document.getElementById("resDate").textContent = "";
+
     document.getElementById("resReach").textContent = `${S.lastRunFloors}F`;
     document.getElementById("resPts").textContent   = `点数：${S.lastRunPoints}`;
     document.getElementById("resBestPts").textContent = String(S.bestPoints);
 
-    renderResultDrop(S.lastDrop);
+    document.getElementById("resRankValue").textContent = plainRank;
+    document.getElementById("resRankSub").textContent = rankSub;
+    document.getElementById("resRankDate").textContent = rankDate;
+
+    renderResultRewards(S.lastRewards);
     renderTowerMini(o.miniCanvas, S.allBlocks);
 
     o.scroll.scrollTop = 0;
     o.box.style.display = "flex";
-    requestAnimationFrame(() => {
-      o.card.style.opacity = "1";
-      o.card.style.transform = "translateY(0) scale(1)";
-    });
+    o.card.classList.remove("show");
+    void o.card.offsetWidth;
+    o.card.classList.add("show");
+
+    animateResultScore(S.lastRunPoints);
   }
 
   function hideResultOverlay(){
     if (!resultOverlay) return;
     const { box, card, scroll } = resultOverlay;
     if (scroll) scroll.scrollTop = 0;
+    if (scoreCountTimer) cancelAnimationFrame(scoreCountTimer);
+    box.style.display = "none";
+    card.classList.remove("show");
     card.style.opacity = "0";
-    card.style.transform = "translateY(6px) scale(.98)";
-    setTimeout(() => {
-      box.style.display = "none";
-    }, 180);
+    card.style.transform = "translateY(12px) scale(.95)";
   }
 
   function setResultDatetime(){
@@ -1976,7 +2350,10 @@
 
   function reset(){
     hideResultOverlay();
-    if (dropOverlay) dropOverlay.box.classList.remove("show");
+    if (rewardOverlay){
+      rewardOverlay.box.classList.remove("show");
+      rewardOverlay.box.classList.remove("legendary");
+    }
 
     S.playing = false;
     S.over = false;
@@ -1990,7 +2367,7 @@
     S.lastRunAt = "";
     S.lastRunFloors = 0;
     S.lastRunPoints = 0;
-    S.lastDrop = null;
+    S.lastRewards = null;
     S.cameraY = 0;
     S.dir = 1;
     S.lastFrameT = 0;
@@ -2029,13 +2406,22 @@
     }
 
     updateMonthlyTowerHigh(S.floors);
-    S.lastDrop = rollTowerDrop(S.floors);
+
+    const fertReward = rollTowerDrop(S.floors);
+    const cardReward = rollLimitedCardDrop(S.floors);
+    S.lastRewards = {
+      fert: fertReward,
+      card: cardReward
+    };
 
     setResultDatetime();
     setHUD();
 
-    if (S.lastDrop && S.lastDrop.dropped && S.lastDrop.item){
-      await showTowerDropSplash(S.lastDrop);
+    if (fertReward && fertReward.dropped && fertReward.item){
+      await showRewardSplash(fertReward);
+    }
+    if (cardReward && cardReward.dropped && cardReward.item){
+      await showRewardSplash(cardReward);
     }
 
     showResultOverlay();
