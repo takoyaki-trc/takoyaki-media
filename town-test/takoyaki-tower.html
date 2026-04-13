@@ -235,15 +235,9 @@
   .result-rank-value{
     font-size:22px;
     font-weight:1000;
-    line-height:1.2;
+    line-height:1.35;
     color:#fff4d8;
     text-shadow:0 0 14px rgba(255,208,100,.18);
-  }
-  .result-rank-sub{
-    margin-top:4px;
-    font-size:12px;
-    opacity:.82;
-    line-height:1.5;
   }
 
   .result-score-hero{
@@ -1422,53 +1416,16 @@
     lastRunFloors: 0,
     lastRunPoints: 0,
     lastRewards: null,
-    lastRank: null,
     lastFrameT: 0,
   };
+
+  let scoreCountTimer = null;
 
   function showToast(text){
     toastEl.textContent = text;
     toastEl.classList.add("show");
     clearTimeout(showToast._t);
     showToast._t = setTimeout(() => toastEl.classList.remove("show"), 520);
-  }
-
-  function getFloorRank(floors){
-    const f = Math.floor(Number(floors || 0));
-    if (f <= 5){
-      return {
-        label: "まだ焼けてない",
-        sub: "まずは鉄板に慣れるところからたこ。"
-      };
-    }
-    if (f < 10){
-      return {
-        label: "ちょっと焼けてきた",
-        sub: "形になり始めたたこ。"
-      };
-    }
-    if (f < 20){
-      return {
-        label: "いい匂い",
-        sub: "ここから一気に積めるたこ。"
-      };
-    }
-    if (f < 25){
-      return {
-        label: "職人レベル",
-        sub: "かなり止めどころが見えてきたたこ。"
-      };
-    }
-    if (f < 30){
-      return {
-        label: "伝説の入口",
-        sub: "ここから先はスクショ案件たこ。"
-      };
-    }
-    return {
-      label: "焼かれし者",
-      sub: "もう普通のたこ焼きではないたこ。"
-    };
   }
 
   const SKY_COLORS = {
@@ -1628,7 +1585,7 @@
       { min: 1,   title:"〘はじめて置いたたこ〙",   sub:"今の音、ちょっと良かったたこ。" },
       { min: 5,   title:"〘返せた気がするたこ〙",   sub:"たぶん合ってた。たぶんたこ。" },
       { min: 10,  title:"〘湯気みてただけのたこ〙", sub:"見てたら、積めてたこ。" },
-      { min: 15,  title:"〘ちいさくなっても気にしないたこ〙", sub:"丸は、心だと思うたこ。" },
+      { min: 15,  title:"〘ちいさくなっても気にしないたこ〙", sub:"丸は、心だと思ったたこ。" },
       { min: 20,  title:"〘鉄板と仲良くなったたこ〙", sub:"焦げも、友だちたこ。" },
       { min: 25,  title:"〘見られていたたこ〙", sub:"25階を越えたあたりから、視線を感じたたこ。" },
       { min: 30,  title:"〘タコ民に顔覚えられたたこ〙", sub:"あ、また来たたこ、って言われたこ。" },
@@ -1729,7 +1686,6 @@
 
   let resultOverlay = null;
   let rewardOverlay = null;
-  let scoreCountTimer = null;
 
   function ensureOverlay(){
     if (resultOverlay) return resultOverlay;
@@ -1794,8 +1750,7 @@
     rankWrap.className = "result-rank-wrap";
     rankWrap.innerHTML = `
       <div class="result-rank-label">RANK</div>
-      <div id="resRankValue" class="result-rank-value">まだ焼けてない</div>
-      <div id="resRankSub" class="result-rank-sub"></div>
+      <div id="resRankValue" class="result-rank-value">〘未投入〙</div>
     `;
     scroll.appendChild(rankWrap);
 
@@ -2118,22 +2073,11 @@
     });
   }
 
-  function renderSingleRewardSection(title, reward){
+  function renderTowerRewardSection(reward){
     if (!reward || !reward.eligible){
-      if (reward && reward.type === "card"){
-        return `
-          <div class="drop-section">
-            <div class="drop-section-title">${title}</div>
-            <div class="drop-none">
-              25階未満だったので、今回は限定カード抽選なし。<br>
-              まずは25階を目指すたこ。
-            </div>
-          </div>
-        `;
-      }
       return `
         <div class="drop-section">
-          <div class="drop-section-title">${title}</div>
+          <div class="drop-section-title">タワー報酬</div>
           <div class="drop-none">
             10階未満だったので、今回はタワー報酬の抽選なし。<br>
             まずは10階を目指すたこ。
@@ -2143,19 +2087,9 @@
     }
 
     if (!reward.dropped || !reward.item){
-      if (reward.type === "card"){
-        return `
-          <div class="drop-section">
-            <div class="drop-section-title">${title}</div>
-            <div class="drop-none">
-              今回は限定カードは出なかったたこ。
-            </div>
-          </div>
-        `;
-      }
       return `
         <div class="drop-section">
-          <div class="drop-section-title">${title}</div>
+          <div class="drop-section-title">タワー報酬</div>
           <div class="drop-none">
             今回はドロップなし。
           </div>
@@ -2164,20 +2098,15 @@
     }
 
     const t = getDropTheme(reward.item.id);
-    const kicker = reward.type === "card" ? `限定カード ${reward.item.tier}` : "タワー報酬";
-    const countLabel = reward.type === "card"
-      ? `×${reward.item.qty} を獲得 / 図鑑所持数：${Math.max(0, Math.floor(Number(reward.item.total || 0)))}`
-      : `×${reward.item.qty} を獲得 / 所持数：${Math.max(0, Math.floor(Number(reward.item.total || 0)))}`;
-
     return `
       <div class="drop-section">
-        <div class="drop-section-title">${title}</div>
+        <div class="drop-section-title">タワー報酬</div>
         <div class="drop-card" style="box-shadow:0 0 24px ${t.glowSoft}; border-color:${t.glowSoft};">
           <img src="${reward.item.img}" alt="${reward.item.name}">
           <div>
-            <div class="drop-kicker" style="background:${t.badgeBg}; color:#fff;">${kicker}</div>
+            <div class="drop-kicker" style="background:${t.badgeBg}; color:#fff;">タワー報酬</div>
             <div class="drop-name" style="color:${t.accent};">${reward.item.name}</div>
-            <div class="drop-count">${countLabel}</div>
+            <div class="drop-count">×${reward.item.qty} を獲得 / 所持数：${Math.max(0, Math.floor(Number(reward.item.total || 0)))}</div>
           </div>
         </div>
       </div>
@@ -2187,13 +2116,11 @@
   function renderResultRewards(rewards){
     const root = document.getElementById("resRewardsWrap");
     if (!root) return;
-    const fertHtml = renderSingleRewardSection("タワー報酬", rewards ? rewards.fert : null);
-    const cardHtml = renderSingleRewardSection("限定カード抽選", rewards ? rewards.card : null);
-    root.innerHTML = fertHtml + cardHtml;
+    root.innerHTML = renderTowerRewardSection(rewards ? rewards.fert : null);
   }
 
   function animateResultScore(target){
-    clearInterval(scoreCountTimer);
+    if (scoreCountTimer) cancelAnimationFrame(scoreCountTimer);
     const el = document.getElementById("resScoreAnimated");
     if (!el) return;
 
@@ -2206,7 +2133,6 @@
       return;
     }
 
-    let value = 0;
     const duration = 820;
     const start = performance.now();
 
@@ -2214,7 +2140,7 @@
       const now = performance.now();
       const t = Math.min(1, (now - start) / duration);
       const eased = 1 - Math.pow(1 - t, 3);
-      value = Math.floor(end * eased);
+      const value = Math.floor(end * eased);
       el.textContent = String(value);
 
       if (t >= 1){
@@ -2238,10 +2164,7 @@
     document.getElementById("resReach").textContent = `${S.lastRunFloors}F`;
     document.getElementById("resPts").textContent   = `点数：${S.lastRunPoints}`;
     document.getElementById("resBestPts").textContent = String(S.bestPoints);
-
-    const rank = S.lastRank || getFloorRank(S.lastRunFloors);
-    document.getElementById("resRankValue").textContent = rank.label;
-    document.getElementById("resRankSub").textContent = rank.sub;
+    document.getElementById("resRankValue").textContent = S.lastTitle || "〘焼き結果〙";
 
     renderResultRewards(S.lastRewards);
     renderTowerMini(o.miniCanvas, S.allBlocks);
@@ -2259,7 +2182,7 @@
     if (!resultOverlay) return;
     const { box, card, scroll } = resultOverlay;
     if (scroll) scroll.scrollTop = 0;
-    clearInterval(scoreCountTimer);
+    if (scoreCountTimer) cancelAnimationFrame(scoreCountTimer);
     box.style.display = "none";
     card.classList.remove("show");
     card.style.opacity = "0";
@@ -2430,7 +2353,6 @@
     S.lastRunFloors = 0;
     S.lastRunPoints = 0;
     S.lastRewards = null;
-    S.lastRank = null;
     S.cameraY = 0;
     S.dir = 1;
     S.lastFrameT = 0;
@@ -2458,7 +2380,6 @@
   async function endRun(){
     S.lastRunFloors = S.floors;
     S.lastRunPoints = S.points;
-    S.lastRank = getFloorRank(S.floors);
 
     const t = getTakoyakiTitle(S.floors);
     S.lastTitle = t.title;
