@@ -363,6 +363,7 @@
     .tag.rarity[data-r="LR"]{ background:var(--rarLR-bg); border-color:var(--rarLR-bd); color:rgba(30,20,0,.92); text-shadow:none; }
     .tag.rarity[data-r="SP"]{ background: rgba(140,200,255,.18); border-color: rgba(180,220,255,.35); }
     .tag.rarity[data-r="OT"]{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
+    .tag.rarity[data-r="CRAFT"]{ background: rgba(255,180,120,.18); border-color: rgba(255,180,120,.38); }
 
     .countBadge{
       position:absolute;
@@ -761,7 +762,7 @@
 
       if(urlHints.some(k => hay.includes(k))) return true;
       if(hits.some(k => hay.includes(k))) return true;
-      if(id.includes("ANN_") || id.includes("ANV_") || id.includes("ANNIV_")) return true;
+      if(id.includes("ANN_") || id.includes("ANV_") || id.includes("ANNIV_") || id.includes("SP-ANV-")) return true;
 
       return false;
     }
@@ -783,7 +784,8 @@
     function isCraftCard(item){
       const id = cleanStr(item?.id).toUpperCase();
       const rar = cleanStr(item?.rarity).toUpperCase();
-      return id.startsWith("CRAFT_") || id.startsWith("CRAFT-") || rar === "CRAFT";
+      const tier = cleanStr(item?.tier).toUpperCase();
+      return id.startsWith("CRAFT_") || id.startsWith("CRAFT-") || rar === "CRAFT" || tier === "CRAFT";
     }
 
     function isSRPlusByItem(item){
@@ -792,6 +794,8 @@
       if(r.includes("sr")) return true;
       if(r.includes("ur")) return true;
       if(r.includes("lr")) return true;
+      if(r.includes("sp")) return true;
+      if(r.includes("craft")) return true;
       if(r.includes("hr")) return true;
       if(r.includes("xr")) return true;
       return false;
@@ -800,6 +804,7 @@
     function rarityCodeFromDisplay(displayRaw){
       const r = cleanStr(displayRaw).toUpperCase();
       if(!r) return "OT";
+      if(r === "CRAFT" || r.includes("CRAFT")) return "CRAFT";
       if(r === "SP" || r.includes("SP")) return "SP";
       if(r.includes("LR")) return "LR";
       if(r.includes("UR")) return "UR";
@@ -949,38 +954,61 @@
       };
 
       const extra = [
-        { id: "TP-001", name: "届け！たこぴ便", img: "https://ul.h3z.jp/rjih1Em9.png", rarity: "N" },
-        { id: "TP-002", name: "ハロウィンたこぴ", img: "https://ul.h3z.jp/hIDWKss0.png", rarity: "N" },
-        { id: "TP-003", name: "紅葉たこぴ", img: "https://ul.h3z.jp/G05m1hbT.png", rarity: "N" },
-        { id: "TP-004", name: "クリスマスたこぴ", img: "https://ul.h3z.jp/FGEKvxhK.png", rarity: "N" },
-        { id: "TP-005", name: "お年玉たこぴ", img: "https://ul.h3z.jp/OPz58Wt6.png", rarity: "N" },
-        { id: "TP-006", name: "バレンタインたこぴ", img: "https://ul.h3z.jp/J0kj3CLb.png", rarity: "N" },
-        { id: "TP-007", name: "花見たこぴ", img: "https://ul.h3z.jp/KrCy4WQb.png", rarity: "N" },
-        { id: "TP-008", name: "入学たこぴ", img: "https://ul.h3z.jp/DidPdK9b.png", rarity: "UR" },
+        { id: "TP-001", name: "届け！たこぴ便", img: "https://ul.h3z.jp/rjih1Em9.png", rarity: "N", tier: "N" },
+        { id: "TP-002", name: "ハロウィンたこぴ", img: "https://ul.h3z.jp/hIDWKss0.png", rarity: "N", tier: "N" },
+        { id: "TP-003", name: "紅葉たこぴ", img: "https://ul.h3z.jp/G05m1hbT.png", rarity: "N", tier: "N" },
+        { id: "TP-004", name: "クリスマスたこぴ", img: "https://ul.h3z.jp/FGEKvxhK.png", rarity: "N", tier: "N" },
+        { id: "TP-005", name: "お年玉たこぴ", img: "https://ul.h3z.jp/OPz58Wt6.png", rarity: "N", tier: "N" },
+        { id: "TP-006", name: "バレンタインたこぴ", img: "https://ul.h3z.jp/J0kj3CLb.png", rarity: "N", tier: "N" },
+        { id: "TP-007", name: "花見たこぴ", img: "https://ul.h3z.jp/KrCy4WQb.png", rarity: "N", tier: "N" },
+        { id: "TP-008", name: "入学たこぴ", img: "https://ul.h3z.jp/DidPdK9b.png", rarity: "UR", tier: "UR" },
 
-        { id: "BS-001", name: "たこ焼きダーツインフェルノ《對馬裕佳子》", img: "https://ul.h3z.jp/l5roYZJ4.png", rarity: "N" },
-        { id: "BS-002", name: "店主反撃レビュー《佐俣雄一郎》", img: "https://ul.h3z.jp/BtOTLlSo.png", rarity: "N" },
-        { id: "BS-003", name: "自己啓発タコ塾《井上諒》", img: "https://ul.h3z.jp/P5vsAste.png", rarity: "N" },
-        { id: "BS-004", name: "カロリーゼロ理論《仁木治》", img: "https://ul.h3z.jp/ZGBzzH2r.png", rarity: "N" },
-        { id: "BS-005", name: "白い契約《稲石裕》", img: "https://ul.h3z.jp/nmiaCKae.png", rarity: "N" },
+        { id: "BS-001", name: "たこ焼きダーツインフェルノ《對馬裕佳子》", img: "https://ul.h3z.jp/l5roYZJ4.png", rarity: "N", tier: "N" },
+        { id: "BS-002", name: "店主反撃レビュー《佐俣雄一郎》", img: "https://ul.h3z.jp/BtOTLlSo.png", rarity: "N", tier: "N" },
+        { id: "BS-003", name: "自己啓発タコ塾《井上諒》", img: "https://ul.h3z.jp/P5vsAste.png", rarity: "N", tier: "N" },
+        { id: "BS-004", name: "カロリーゼロ理論《仁木治》", img: "https://ul.h3z.jp/ZGBzzH2r.png", rarity: "N", tier: "N" },
+        { id: "BS-005", name: "白い契約《稲石裕》", img: "https://ul.h3z.jp/nmiaCKae.png", rarity: "N", tier: "N" },
 
-        { id: "NK-001", name: "イカさま焼き", img: "https://ul.h3z.jp/1UB3EY1B.png", rarity: "LR" },
-        { id: "NK-002", name: "定番のソース", img: "https://ul.h3z.jp/MBZcFmq9.png", rarity: "N" },
-        { id: "NK-003", name: "すっぴん", img: "https://ul.h3z.jp/A6botkfp.png", rarity: "N" },
-        { id: "NK-004", name: "チーズソースマヨ", img: "https://ul.h3z.jp/MmkNjIJM.png", rarity: "SR" },
-        { id: "NK-005", name: "めんたいマヨ", img: "https://ul.h3z.jp/9oc1iVPt.png", rarity: "SR" },
-        { id: "NK-006", name: "ねぎ味噌", img: "https://ul.h3z.jp/vf60iccW.png", rarity: "SR" },
-        { id: "NK-007", name: "牡蠣だし醤油", img: "https://ul.h3z.jp/zwVHhrgx.png", rarity: "SR" },
-        { id: "NK-008", name: "塩こしょう", img: "https://ul.h3z.jp/KlgnlC2H.png", rarity: "UR" },
-        { id: "NK-009", name: "辛口ソース", img: "https://ul.h3z.jp/OavcxTBn.png", rarity: "R" },
-        { id: "NK-010", name: "ぶっかけ揚げ玉からしマヨ", img: "https://ul.h3z.jp/CcOw6yLq.png", rarity: "SR" },
-        { id: "NK-011", name: "塩マヨペッパー", img: "https://ul.h3z.jp/7UJoTCe7.png", rarity: "R" },
-        { id: "NK-012", name: "てりたま", img: "https://ul.h3z.jp/MU6ehdTH.png", rarity: "SR" },
+        { id: "NK-001", name: "イカさま焼き", img: "https://ul.h3z.jp/1UB3EY1B.png", rarity: "LR", tier: "LR" },
+        { id: "NK-002", name: "定番のソース", img: "https://ul.h3z.jp/MBZcFmq9.png", rarity: "N", tier: "N" },
+        { id: "NK-003", name: "すっぴん", img: "https://ul.h3z.jp/A6botkfp.png", rarity: "N", tier: "N" },
+        { id: "NK-004", name: "チーズソースマヨ", img: "https://ul.h3z.jp/MmkNjIJM.png", rarity: "SR", tier: "SR" },
+        { id: "NK-005", name: "めんたいマヨ", img: "https://ul.h3z.jp/9oc1iVPt.png", rarity: "SR", tier: "SR" },
+        { id: "NK-006", name: "ねぎ味噌", img: "https://ul.h3z.jp/vf60iccW.png", rarity: "SR", tier: "SR" },
+        { id: "NK-007", name: "牡蠣だし醤油", img: "https://ul.h3z.jp/zwVHhrgx.png", rarity: "SR", tier: "SR" },
+        { id: "NK-008", name: "塩こしょう", img: "https://ul.h3z.jp/KlgnlC2H.png", rarity: "UR", tier: "UR" },
+        { id: "NK-009", name: "辛口ソース", img: "https://ul.h3z.jp/OavcxTBn.png", rarity: "R", tier: "R" },
+        { id: "NK-010", name: "ぶっかけ揚げ玉からしマヨ", img: "https://ul.h3z.jp/CcOw6yLq.png", rarity: "SR", tier: "SR" },
+        { id: "NK-011", name: "塩マヨペッパー", img: "https://ul.h3z.jp/7UJoTCe7.png", rarity: "R", tier: "R" },
+        { id: "NK-012", name: "てりたま", img: "https://ul.h3z.jp/MU6ehdTH.png", rarity: "SR", tier: "SR" },
 
-        { id: "SP-MIZU-001_rotten", name: "腐敗したカード", img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png", rarity: "SP" },
-        { id: "SP-MIZU-002_rotten", name: "浸食したカード", img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png", rarity: "SP" },
-        { id: "SP-MIZU-001_sea", name: "腐敗したカード", img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png", rarity: "SP" },
-        { id: "SP-MIZU-002_sea", name: "浸食したカード", img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png", rarity: "SP" }
+        { id: "col-001", name: "伝説のたこ焼きライバー", img: "https://ul.h3z.jp/CmVTkAd2.png", rarity: "LR", tier: "LR" },
+        { id: "col-002", name: "たこ焼き実況者ライバー", img: "https://ul.h3z.jp/1VQvIP7v.png", rarity: "N", tier: "N" },
+
+        { id: "SP-ANV-001", name: "会話トリガー:店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/1.png", rarity: "SP", tier: "N" },
+        { id: "SP-ANV-002", name: "定型ループNPC", img: "https://takoyaki-card.com/town/assets/images/anniversary/2.png", rarity: "SP", tier: "R" },
+        { id: "SP-ANV-003", name: "始まりの合図", img: "https://takoyaki-card.com/town/assets/images/anniversary/3.png", rarity: "SP", tier: "SR" },
+        { id: "SP-ANV-004", name: "ここにいる店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/4a.jpg", rarity: "SP", tier: "UR" },
+        { id: "SP-ANV-005", name: "物語の外側", img: "https://takoyaki-card.com/town/assets/images/anniversary/4b.jpg", rarity: "SP", tier: "LR" },
+
+        { id: "SP-MIZU-001", name: "腐敗したカード", img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png", rarity: "N", tier: "N" },
+        { id: "SP-MIZU-002", name: "浸食したカード", img: "https://takoyaki-card.com/town/assets/images/sp/sinsykou.png", rarity: "LR", tier: "LR" },
+
+        { id: "SP-KYO-001", name: "大凶3連でも前向きに", img: "https://takoyaki-card.com/town/assets/images/sp/kyo001.png", rarity: "SP", tier: "N" },
+        { id: "SP-KYO-002", name: "大凶4連でもいい経験です", img: "https://takoyaki-card.com/town/assets/images/sp/kyo002.png", rarity: "SP", tier: "R" },
+        { id: "SP-KYO-003", name: "大凶5連ですが笑ってください", img: "https://takoyaki-card.com/town/assets/images/sp/kyo003.png", rarity: "SP", tier: "SR" },
+        { id: "SP-KYO-004", name: "大凶6連でも流れ来てます", img: "https://takoyaki-card.com/town/assets/images/sp/kyo004.png", rarity: "SP", tier: "UR" },
+        { id: "SP-KYO-005", name: "大凶7連、それでも前向きに", img: "https://takoyaki-card.com/town/assets/images/sp/kyo005lr.png", rarity: "SP", tier: "LR" },
+
+        { id: "SP-KOI-001", name: "見えない候補", img: "https://takoyaki-card.com/town/assets/images/sp/koi01.png", rarity: "R", tier: "R" },
+        { id: "SP-KOI-002", name: "霞の相談所", img: "https://takoyaki-card.com/town/assets/images/sp/koi02.png", rarity: "SR", tier: "SR" },
+        { id: "SP-KOI-003", name: "霞越しの本命", img: "https://takoyaki-card.com/town/assets/images/sp/koi03ur.png", rarity: "UR", tier: "UR" },
+        { id: "SP-KOI-004", name: "選ばれた理由", img: "https://takoyaki-card.com/town/assets/images/sp/koi04lr.png", rarity: "LR", tier: "LR" },
+
+        { id: "SP-TT001", name: "塔を踏破せし者", img: "https://takoyaki-card.com/town/assets/images/sp/tawa01.png", rarity: "SP", tier: "LR" },
+        { id: "SP-TT002", name: "ずっと見ていた者", img: "https://takoyaki-card.com/town/assets/images/sp/tawa02.png", rarity: "SP", tier: "UR" },
+
+        { id: "craft_001", name: "たこ焼き菜々", img: "https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/syokunin/01.png", rarity: "CRAFT", tier: "CRAFT" }
       ];
 
       const map = {};
@@ -1003,7 +1031,7 @@
           name: v.name,
           img: v.img,
           rarity: v.rarity || "N",
-          tier: v.rarity || "N"
+          tier: v.tier || v.rarity || "N"
         };
       });
 
@@ -1013,7 +1041,14 @@
     const CARD_MASTER = createMasterMap();
 
     function normalizeBookEntry(cardId, rawEntry){
-      const info = CARD_MASTER[cardId] || { id: cardId, name: cardId, img: "", rarity: "N", tier: "N" };
+      const fallback = (rawEntry && typeof rawEntry === "object") ? rawEntry : {};
+      const info = CARD_MASTER[cardId] || {
+        id: cardId,
+        name: cleanStr(fallback.name) || cardId,
+        img: cleanStr(fallback.img) || "",
+        rarity: cleanStr(fallback.rarity) || cleanStr(fallback.tier) || "N",
+        tier: cleanStr(fallback.tier) || cleanStr(fallback.rarity) || "N"
+      };
 
       if(rawEntry == null) return null;
 
