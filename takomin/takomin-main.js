@@ -7,7 +7,8 @@
     log: "takomin_room_v1_log",
     ownedCards: "takomin_player_cards_v1",
     roomBg: "takomin_room_bg_v1",
-    takominBook: "takomin_room_book_v1"
+    takominBook: "takomin_room_book_v1",
+    itemInv: "takomin_room_item_inv_v1"
   };
 
   const LS_CARD_BOOK = "tf_v1_book";
@@ -43,6 +44,15 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
   function weightedPick(list) {
     const total = list.reduce((s, v) => s + v.weight, 0);
     let r = Math.random() * total;
@@ -51,6 +61,17 @@
       if (r <= 0) return item;
     }
     return list[list.length - 1];
+  }
+
+  function getCurrentOcto() {
+    const n = Number(localStorage.getItem(LS_OCTO) || "0");
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
+
+  function setCurrentOcto(n) {
+    const v = Math.max(0, Math.floor(Number(n) || 0));
+    localStorage.setItem(LS_OCTO, String(v));
+    state.octo = v;
   }
 
   function pickTakominByRarity() {
@@ -98,7 +119,58 @@
     saveJSON(KEY.roomBg, v);
   }
 
-  let roomBgState = ensureRoomBgState();
+  function ensureTakominBook() {
+    const book = loadJSON(KEY.takominBook, null);
+    if (Array.isArray(book)) return book;
+    saveJSON(KEY.takominBook, []);
+    return [];
+  }
+
+  function addTakominBookRecord(record) {
+    const book = ensureTakominBook();
+    book.unshift(record);
+    saveJSON(KEY.takominBook, book.slice(0, 300));
+  }
+
+  function ensureItemInventory() {
+    const inv = loadJSON(KEY.itemInv, null);
+    if (inv && typeof inv === "object" && !Array.isArray(inv)) return inv;
+
+    const startInv = {};
+    (TAKOMIN_ITEMS.healCards || []).forEach((item, idx) => {
+      startInv[item.id] = idx === 0 ? 1 : 0;
+    });
+    saveJSON(KEY.itemInv, startInv);
+    return startInv;
+  }
+
+  function getItemInventory() {
+    return loadJSON(KEY.itemInv, ensureItemInventory());
+  }
+
+  function setItemInventory(inv) {
+    saveJSON(KEY.itemInv, inv);
+  }
+
+  function getItemCount(itemId) {
+    const inv = getItemInventory();
+    return Math.max(0, Math.floor(Number(inv[itemId] || 0)));
+  }
+
+  function addItem(itemId, amount = 1) {
+    const inv = getItemInventory();
+    inv[itemId] = Math.max(0, Math.floor(Number(inv[itemId] || 0) + amount));
+    setItemInventory(inv);
+  }
+
+  function consumeItem(itemId, amount = 1) {
+    const inv = getItemInventory();
+    const nowCount = Math.max(0, Math.floor(Number(inv[itemId] || 0)));
+    if (nowCount < amount) return false;
+    inv[itemId] = nowCount - amount;
+    setItemInventory(inv);
+    return true;
+  }
 
   function buildNewState() {
     const takomin = pickTakominByRarity();
@@ -129,71 +201,28 @@
       todayEventDone: false,
       lockedUntil: 0,
       feedHistory: [],
-      raidCurrent: null
+      raidCurrent: null,
+      lastEventText: "今日はまだイベント未実行です。"
     };
   }
+
+  let roomBgState = ensureRoomBgState();
+  ensureItemInventory();
 
   let state = loadJSON(KEY.state, null);
   if (!state) {
     state = buildNewState();
     saveState();
+  } else if (!("lastEventText" in state)) {
+    state.lastEventText = "今日はまだイベント未実行です。";
+    saveState();
   }
 
   let logs = loadJSON(KEY.log, []);
 
-  function getCurrentOcto() {
-    const n = Number(localStorage.getItem(LS_OCTO) || "0");
-    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  function saveState() {
+    saveJSON(KEY.state, state);
   }
-
-  function setCurrentOcto(n) {
-    const v = Math.max(0, Math.floor(Number(n) || 0));
-    localStorage.setItem(LS_OCTO, String(v));
-    state.octo = v;
-  }
-
-  function ensureTakominBook() {
-    const book = loadJSON(KEY.takominBook, null);
-    if (Array.isArray(book)) return book;
-    saveJSON(KEY.takominBook, []);
-    return [];
-  }
-
-  function addTakominBookRecord(record) {
-    const book = ensureTakominBook();
-    book.unshift(record);
-    saveJSON(KEY.takominBook, book.slice(0, 300));
-  }
-
-  function pullOwnedCardsFromTfBook() {
-    const raw = loadJSON(LS_CARD_BOOK, null);
-    const result = {};
-
-    if (!raw) return result;
-
-    const got = Array.isArray(raw.got)
-      ? raw.got
-      : (raw.got && typeof raw.got === "object" ? Object.values(raw.got) : []);
-
-    got.forEach(item => {
-      const id = String(item?.id || "").trim();
-      const count = Number(item?.count || 0);
-      if (!id || !Number.isFinite(count) || count <= 0) return;
-      result[id] = Math.floor(count);
-    });
-
-    return result;
-  }
-
-  function getOwnedCards() {
-    return pullOwnedCardsFromTfBook();
-  }
-
-  function ensureOwnedCards() {
-    return getOwnedCards();
-  }
-
-  ensureOwnedCards();
 
   function pushLog(text) {
     logs.unshift({
@@ -204,16 +233,12 @@
     saveJSON(KEY.log, logs);
   }
 
-  function saveState() {
-    saveJSON(KEY.state, state);
-  }
-
   function isLocked() {
     return state.lockedUntil && now() < state.lockedUntil;
   }
 
   function getRemainingLockMs() {
-    return Math.max(0, state.lockedUntil - now());
+    return Math.max(0, (state.lockedUntil || 0) - now());
   }
 
   function formatRemain(ms) {
@@ -242,17 +267,18 @@
   }
 
   function applyStat(name, amount) {
-    state[name] = clamp(Math.floor(state[name] + amount), 0, MAX_STAT);
+    const current = Number(state[name] || 0);
+    state[name] = clamp(Math.floor(current + amount), 0, MAX_STAT);
   }
 
   function applyCardToStats(card) {
     const rarityMul = TAKOMIN_DATA.rarityCardMultiplier[card.rarity] || 1;
     const scale = TAKOMIN_DATA.cardStatScale;
 
-    applyStat("atk",   Math.round(card.atk * scale * rarityMul));
-    applyStat("def",   Math.round(card.def * scale * rarityMul));
-    applyStat("taste", Math.round(card.taste * scale * rarityMul));
-    applyStat("love",  Math.round(card.love * scale * rarityMul));
+    applyStat("atk",   Math.round((Number(card.atk) || 0) * scale * rarityMul));
+    applyStat("def",   Math.round((Number(card.def) || 0) * scale * rarityMul));
+    applyStat("taste", Math.round((Number(card.taste) || 0) * scale * rarityMul));
+    applyStat("love",  Math.round((Number(card.love) || 0) * scale * rarityMul));
   }
 
   function determinePersonality() {
@@ -268,6 +294,13 @@
     } else {
       state.personality = arr[0].key;
     }
+  }
+
+  function setEventText(text) {
+    state.lastEventText = text;
+    const box = $("#eventBox");
+    if (box) box.textContent = text;
+    saveState();
   }
 
   function advanceDay() {
@@ -288,10 +321,12 @@
     if (state.day === 7) {
       determinePersonality();
       pushLog(`Day7: 性格が ${state.personality} に確定`);
+      setEventText(`Day7到達！ 性格が「${state.personality}」に確定した。`);
     }
 
     if (state.day === 10) {
       pushLog("Day10: 大人のタコ民になった");
+      setEventText("Day10到達！ 卒業できる状態になった。");
     }
 
     state.dailyFeedUsed = 0;
@@ -331,10 +366,6 @@
     state = buildNewState();
     saveState();
     renderAll();
-  }
-
-  function setEventText(text) {
-    $("#eventBox").textContent = text;
   }
 
   function runDailyEvent() {
@@ -399,21 +430,13 @@
   function applyRoomBackground() {
     roomBgState = getRoomBgState();
     const bg = TAKOMIN_DATA.roomBackgrounds.find(v => v.id === roomBgState.selectedId) || getDefaultRoomBg();
-    $("#roomPanel").style.setProperty("--room-bg", `url("${bg.img}")`);
-  }
-
-  function openBgModal() {
-    renderBgModal();
-    $("#bgModal").style.display = "flex";
-  }
-
-  function closeBgModal() {
-    $("#bgModal").style.display = "none";
+    $("#roomPanel")?.style.setProperty("--room-bg", `url("${bg.img}")`);
   }
 
   function renderBgModal() {
     roomBgState = getRoomBgState();
     const root = $("#bgGrid");
+    if (!root) return;
     root.innerHTML = "";
 
     TAKOMIN_DATA.roomBackgrounds.forEach(bg => {
@@ -426,9 +449,9 @@
         <div class="bg-thumb"><img src="${escapeHtml(bg.img)}" alt=""></div>
         <div class="bg-title">${escapeHtml(bg.name)}</div>
         <div class="bg-badge ${owned ? "owned" : "locked"}">${owned ? (selected ? "使用中" : "所持") : "未所持"}</div>
-        <button class="btn ${owned ? "" : "secondary"}" ${owned ? "" : "disabled"}>${selected ? "使用中" : "この背景にする"}</button>
+        <button class="btn ${owned ? "" : "secondary"}" ${owned ? "" : "disabled"} type="button">${selected ? "使用中" : "この背景にする"}</button>
       `;
-      const btn = el.querySelector("button");
+      const btn = $("button", el);
       if (owned && !selected) {
         btn.addEventListener("click", () => {
           roomBgState.selectedId = bg.id;
@@ -442,9 +465,17 @@
     });
   }
 
+  function openBgModal() {
+    renderBgModal();
+    $("#bgModal").style.display = "flex";
+  }
+
+  function closeBgModal() {
+    $("#bgModal").style.display = "none";
+  }
+
   function maybeDropRoomBg() {
     roomBgState = getRoomBgState();
-
     const unowned = TAKOMIN_DATA.roomBackgrounds.filter(v =>
       !roomBgState.ownedIds.includes(v.id) && !v.defaultOwned
     );
@@ -456,6 +487,231 @@
     roomBgState.ownedIds.push(dropped.id);
     setRoomBgState(roomBgState);
     return dropped;
+  }
+
+  function pullOwnedCardsFromTfBook() {
+    const raw = loadJSON(LS_CARD_BOOK, null);
+    const result = {};
+    if (!raw) return result;
+
+    const got = Array.isArray(raw.got)
+      ? raw.got
+      : (raw.got && typeof raw.got === "object" ? Object.values(raw.got) : []);
+
+    got.forEach(item => {
+      const id = String(item?.id || "").trim();
+      const count = Number(item?.count || 0);
+      if (!id || !Number.isFinite(count) || count <= 0) return;
+      result[id] = Math.floor(count);
+    });
+
+    return result;
+  }
+
+  function getOwnedCards() {
+    return pullOwnedCardsFromTfBook();
+  }
+
+  function decrementTfBookCardCount(cardId) {
+    const raw = loadJSON(LS_CARD_BOOK, null);
+    if (!raw) return;
+
+    let list = [];
+    if (Array.isArray(raw.got)) {
+      list = raw.got;
+    } else if (raw.got && typeof raw.got === "object") {
+      list = Object.values(raw.got);
+    } else {
+      return;
+    }
+
+    const target = list.find(v => String(v?.id || "").trim() === cardId);
+    if (!target) return;
+
+    target.count = Math.max(0, Math.floor(Number(target.count || 0) - 1));
+    raw.got = list.filter(v => Number(v?.count || 0) > 0);
+    saveJSON(LS_CARD_BOOK, raw);
+  }
+
+  function renderOwnedCardModal() {
+    const root = $("#ownedCardGrid");
+    if (!root) return;
+
+    root.innerHTML = "";
+    const owned = getOwnedCards();
+    const ownedList = (TAKOMIN_CARDS || [])
+      .map(card => ({ ...card, count: Number(owned[card.id] || 0) }))
+      .filter(card => card.count > 0);
+
+    if (!ownedList.length) {
+      root.innerHTML = `<div class="sub">所持カードがありません。</div>`;
+      return;
+    }
+
+    ownedList.forEach(card => {
+      const item = document.createElement("div");
+      item.className = "owned-card";
+      item.innerHTML = `
+        <div class="owned-thumb">
+          ${card.img ? `<img src="${escapeHtml(card.img)}" alt="">` : `<div>NO IMAGE</div>`}
+        </div>
+        <div class="owned-name">${escapeHtml(card.name || card.id)}</div>
+        <div class="owned-meta">[${escapeHtml(card.rarity)}] 攻:${card.atk} / 防:${card.def} / 味:${card.taste} / 愛:${card.love}</div>
+        <div class="owned-count">所持 ${card.count} 枚</div>
+        <button class="btn" type="button">このカードを与える</button>
+      `;
+      $("button", item).addEventListener("click", () => feedOwnedCard(card.id));
+      root.appendChild(item);
+    });
+  }
+
+  function openFeedModal() {
+    maybeResetDaily();
+
+    if (isLocked()) {
+      alert(`行動不能中です。残り ${formatRemain(getRemainingLockMs())}`);
+      return;
+    }
+
+    renderOwnedCardModal();
+    $("#feedModal").style.display = "flex";
+  }
+
+  function closeFeedModal() {
+    $("#feedModal").style.display = "none";
+  }
+
+  function feedOwnedCard(cardId) {
+    maybeResetDaily();
+
+    if (isLocked()) {
+      alert(`行動不能中です。残り ${formatRemain(getRemainingLockMs())}`);
+      return;
+    }
+
+    if (state.dailyFeedUsed >= state.dailyFeedLimit) {
+      alert(`今日はこれ以上与えられません（上限 ${state.dailyFeedLimit} 枚）`);
+      return;
+    }
+
+    const owned = getOwnedCards();
+    const count = Number(owned[cardId] || 0);
+    if (count <= 0) {
+      alert("そのカードは所持していません。");
+      renderOwnedCardModal();
+      return;
+    }
+
+    const card = (TAKOMIN_CARDS || []).find(v => v.id === cardId);
+    if (!card) {
+      alert("カードデータが見つかりません。");
+      return;
+    }
+
+    applyCardToStats(card);
+    decrementTfBookCardCount(cardId);
+
+    state.dailyFeedUsed += 1;
+    state.feedHistory.push({
+      day: state.day,
+      cardId: card.id,
+      cardName: card.name || card.id
+    });
+    state.feedHistory = state.feedHistory.slice(-200);
+
+    setEventText(`${card.name || card.id} を与えた。ステータスが成長した。`);
+    pushLog(`Day${state.day}: ${card.name || card.id} を与えた`);
+    saveState();
+    renderAll();
+    renderOwnedCardModal();
+
+    if (state.dailyFeedUsed >= state.dailyFeedLimit) {
+      closeFeedModal();
+    }
+  }
+
+  function renderHealModal() {
+    const root = $("#healCardGrid");
+    if (!root) return;
+
+    root.innerHTML = "";
+    const list = (TAKOMIN_ITEMS.healCards || [])
+      .map(item => ({ ...item, count: getItemCount(item.id) }))
+      .filter(item => item.count > 0);
+
+    if (!list.length) {
+      root.innerHTML = `<div class="sub">所持している回復カードがありません。</div>`;
+      return;
+    }
+
+    list.forEach(item => {
+      const healAmount = item.healMode === "percent"
+        ? Math.max(1, Math.floor(state.maxHp * Number(item.healValue || 0)))
+        : Math.max(1, Math.floor(Number(item.healValue || 0)));
+
+      const el = document.createElement("div");
+      el.className = "owned-card";
+      el.innerHTML = `
+        <div class="owned-thumb">
+          ${item.img ? `<img src="${escapeHtml(item.img)}" alt="">` : `<div>NO IMAGE</div>`}
+        </div>
+        <div class="owned-name">${escapeHtml(item.name)}</div>
+        <div class="owned-meta">HPを ${healAmount} 回復 / 現在HP ${state.hp} / ${state.maxHp}</div>
+        <div class="owned-count">所持 ${item.count} 枚</div>
+        <button class="btn good" type="button">このカードを使う</button>
+      `;
+      $("button", el).addEventListener("click", () => healWithCard(item.id));
+      root.appendChild(el);
+    });
+  }
+
+  function openHealModal() {
+    renderHealModal();
+    $("#healModal").style.display = "flex";
+  }
+
+  function closeHealModal() {
+    $("#healModal").style.display = "none";
+  }
+
+  function healWithCard(itemId) {
+    const healCard = (TAKOMIN_ITEMS.healCards || []).find(v => v.id === itemId);
+    if (!healCard) {
+      alert("回復カードが見つかりません。");
+      return;
+    }
+
+    if (getItemCount(itemId) <= 0) {
+      alert("その回復カードは所持していません。");
+      renderHealModal();
+      return;
+    }
+
+    const healAmount = healCard.healMode === "percent"
+      ? Math.max(1, Math.floor(state.maxHp * Number(healCard.healValue || 0)))
+      : Math.max(1, Math.floor(Number(healCard.healValue || 0)));
+
+    if (!consumeItem(itemId, 1)) {
+      alert("回復カードを消費できませんでした。");
+      return;
+    }
+
+    state.hp = clamp(state.hp + healAmount, 0, state.maxHp);
+
+    if (isLocked() && state.hp > 0) {
+      state.lockedUntil = 0;
+      pushLog("回復カード使用：行動不能から復帰");
+    }
+
+    setEventText(`${healCard.name} で HP を ${healAmount} 回復した。`);
+    pushLog(`回復カード使用：${healCard.name} / HP+${healAmount}`);
+    saveState();
+    renderAll();
+    renderHealModal();
+
+    if (getItemCount(itemId) <= 0) {
+      closeHealModal();
+    }
   }
 
   let raidTimer = null;
@@ -596,7 +852,7 @@
     enemy.hitCount += 1;
 
     let damage = calcTapDamage();
-    let critical = Math.random() < 0.12;
+    const critical = Math.random() < 0.12;
 
     if (critical) {
       damage *= 2;
@@ -737,149 +993,10 @@
     }
   }
 
-  function healWithCard() {
-    if (!TAKOMIN_ITEMS.healCards?.length) {
-      alert("回復カードがありません。");
-      return;
-    }
-
-    const healCard = TAKOMIN_ITEMS.healCards[0];
-    const healAmount = Math.max(1, Math.floor(state.maxHp * (healCard.healValue || 0.5)));
-
-    state.hp = clamp(state.hp + healAmount, 0, state.maxHp);
-
-    if (isLocked() && state.hp > 0) {
-      state.lockedUntil = 0;
-      pushLog("回復カード使用：行動不能から復帰");
-    }
-
-    setEventText(`${healCard.name} で HP を ${healAmount} 回復した。`);
-    pushLog(`回復カード使用：HP+${healAmount}`);
-    saveState();
-    renderAll();
-  }
-
   function checkLockIfNeeded() {
     if (state.hp <= 0) {
       state.hp = 0;
       state.lockedUntil = now() + 24 * 60 * 60 * 1000;
-    }
-  }
-
-  function openFeedModal() {
-    maybeResetDaily();
-
-    if (isLocked()) {
-      alert(`行動不能中です。残り ${formatRemain(getRemainingLockMs())}`);
-      return;
-    }
-
-    renderOwnedCardModal();
-    $("#feedModal").style.display = "flex";
-  }
-
-  function closeFeedModal() {
-    $("#feedModal").style.display = "none";
-  }
-
-  function renderOwnedCardModal() {
-    const root = $("#ownedCardGrid");
-    root.innerHTML = "";
-
-    const owned = getOwnedCards();
-    const ownedList = (TAKOMIN_CARDS || [])
-      .map(card => ({ ...card, count: Number(owned[card.id] || 0) }))
-      .filter(card => card.count > 0);
-
-    if (!ownedList.length) {
-      root.innerHTML = `<div class="sub">所持カードがありません。</div>`;
-      return;
-    }
-
-    ownedList.forEach(card => {
-      const item = document.createElement("div");
-      item.className = "owned-card";
-      item.innerHTML = `
-        <div class="owned-thumb">
-          ${card.img ? `<img src="${escapeHtml(card.img)}" alt="">` : `<div>NO IMAGE</div>`}
-        </div>
-        <div class="owned-name">${escapeHtml(card.name || card.id)}</div>
-        <div class="owned-meta">[${escapeHtml(card.rarity)}] 攻:${card.atk} / 防:${card.def} / 味:${card.taste} / 愛:${card.love}</div>
-        <div class="owned-count">所持 ${card.count} 枚</div>
-        <button class="btn" type="button">このカードを与える</button>
-      `;
-      item.querySelector("button").addEventListener("click", () => feedOwnedCard(card.id));
-      root.appendChild(item);
-    });
-  }
-
-  function decrementTfBookCardCount(cardId) {
-    const raw = loadJSON(LS_CARD_BOOK, null);
-    if (!raw) return;
-
-    let list = [];
-    if (Array.isArray(raw.got)) {
-      list = raw.got;
-    } else if (raw.got && typeof raw.got === "object") {
-      list = Object.values(raw.got);
-    } else {
-      return;
-    }
-
-    const target = list.find(v => String(v?.id || "").trim() === cardId);
-    if (!target) return;
-
-    target.count = Math.max(0, Math.floor(Number(target.count || 0) - 1));
-
-    raw.got = list.filter(v => Number(v?.count || 0) > 0);
-    saveJSON(LS_CARD_BOOK, raw);
-  }
-
-  function feedOwnedCard(cardId) {
-    maybeResetDaily();
-
-    if (isLocked()) {
-      alert(`行動不能中です。残り ${formatRemain(getRemainingLockMs())}`);
-      return;
-    }
-
-    if (state.dailyFeedUsed >= state.dailyFeedLimit) {
-      alert(`今日はこれ以上与えられません（上限 ${state.dailyFeedLimit} 枚）`);
-      return;
-    }
-
-    const owned = getOwnedCards();
-    const count = Number(owned[cardId] || 0);
-    if (count <= 0) {
-      alert("そのカードは所持していません。");
-      renderOwnedCardModal();
-      return;
-    }
-
-    const card = (TAKOMIN_CARDS || []).find(v => v.id === cardId);
-    if (!card) {
-      alert("カードデータが見つかりません。");
-      return;
-    }
-
-    applyCardToStats(card);
-    decrementTfBookCardCount(cardId);
-
-    state.dailyFeedUsed += 1;
-    state.feedHistory.push({
-      day: state.day,
-      cardId: card.id,
-      cardName: card.name || card.id
-    });
-    state.feedHistory = state.feedHistory.slice(-200);
-
-    pushLog(`Day${state.day}: ${card.name || card.id} を与えた`);
-    saveState();
-    renderAll();
-    renderOwnedCardModal();
-
-    if (state.dailyFeedUsed >= state.dailyFeedLimit) {
-      closeFeedModal();
     }
   }
 
@@ -907,7 +1024,7 @@
     if (state.takominIcon) {
       return `<img src="${escapeHtml(state.takominIcon)}" alt="">`;
     }
-    return `🐙`;
+    return "🐙";
   }
 
   function renderHUD() {
@@ -947,7 +1064,7 @@
     const ctx = canvas.getContext("2d");
     const dpr = Math.max(1, window.devicePixelRatio || 1);
     const width = canvas.clientWidth || 500;
-    const height = 260;
+    const height = 250;
 
     canvas.width = Math.floor(width * dpr);
     canvas.height = Math.floor(height * dpr);
@@ -955,8 +1072,8 @@
     ctx.clearRect(0, 0, width, height);
 
     const cx = width / 2;
-    const cy = height / 2;
-    const radius = Math.min(width, height) * 0.31;
+    const cy = height / 2 + 4;
+    const radius = Math.min(width, height) * 0.30;
 
     const labels = [
       { name: "HP", value: state.hp, max: state.maxHp || 1 },
@@ -993,10 +1110,10 @@
       ctx.lineTo(x, y);
       ctx.stroke();
 
-      const lx = cx + Math.cos(angle) * (radius + 20);
-      const ly = cy + Math.sin(angle) * (radius + 20);
+      const lx = cx + Math.cos(angle) * (radius + 22);
+      const ly = cy + Math.sin(angle) * (radius + 22);
 
-      ctx.fillStyle = "rgba(255,255,255,.9)";
+      ctx.fillStyle = "rgba(255,255,255,.92)";
       ctx.font = "12px sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(label.name, lx, ly);
@@ -1013,8 +1130,8 @@
       else ctx.lineTo(x, y);
     });
     ctx.closePath();
-    ctx.fillStyle = "rgba(251,146,60,.28)";
-    ctx.strokeStyle = "rgba(251,146,60,1)";
+    ctx.fillStyle = "rgba(251,146,60,.24)";
+    ctx.strokeStyle = "rgba(255,180,80,1)";
     ctx.lineWidth = 2;
     ctx.fill();
     ctx.stroke();
@@ -1033,7 +1150,7 @@
     logs.forEach(item => {
       const el = document.createElement("div");
       el.className = "log-item";
-      el.innerHTML = `<strong>${escapeHtml(item.at)}</strong><br>${escapeHtml(item.text)}`;
+      el.innerHTML = `<strong>${escapeHtml(item.at)}</strong>${escapeHtml(item.text)}`;
       root.appendChild(el);
     });
   }
@@ -1044,14 +1161,18 @@
     const btnFeedOpen = $("#btnFeedOpen");
     const btnRunEvent = $("#btnRunEvent");
     const btnNextDay = $("#btnNextDay");
+    const btnHealOpen = $("#btnHealOpen");
 
     if (btnFeedOpen) btnFeedOpen.disabled = locked;
     if (btnRunEvent) btnRunEvent.disabled = locked || state.todayEventDone;
     if (btnNextDay) btnNextDay.disabled = locked;
+    if (btnHealOpen) btnHealOpen.disabled = false;
 
-    if (locked) {
-      setEventText(`現在行動不能中です。残り ${formatRemain(getRemainingLockMs())}`);
-    }
+    const currentEvent = locked
+      ? `現在行動不能中です。残り ${formatRemain(getRemainingLockMs())}`
+      : (state.lastEventText || "今日はまだイベント未実行です.");
+
+    $("#eventBox").textContent = currentEvent;
   }
 
   function renderAll() {
@@ -1064,24 +1185,25 @@
     renderButtons();
   }
 
-  function escapeHtml(str) {
-    return String(str ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
+  function bindModalOverlayClose(modalId, panelSelector = ".modal-panel") {
+    const modal = $(modalId);
+    if (!modal) return;
+    modal.addEventListener("click", (e) => {
+      if (e.target.closest(panelSelector)) return;
+      modal.style.display = "none";
+    });
   }
 
-  // ===== イベントバインド =====
   $("#btnFeedOpen")?.addEventListener("click", openFeedModal);
   $("#btnFeedClose")?.addEventListener("click", closeFeedModal);
+
+  $("#btnHealOpen")?.addEventListener("click", openHealModal);
+  $("#btnHealClose")?.addEventListener("click", closeHealModal);
 
   $("#btnOpenBg")?.addEventListener("click", openBgModal);
   $("#btnBgClose")?.addEventListener("click", closeBgModal);
 
   $("#btnRunEvent")?.addEventListener("click", runDailyEvent);
-  $("#btnHeal")?.addEventListener("click", healWithCard);
   $("#btnNextDay")?.addEventListener("click", advanceDay);
 
   $("#btnRaidAttack")?.addEventListener("click", attackRaid);
@@ -1089,6 +1211,10 @@
   $("#btnUseRaw")?.addEventListener("click", () => useRaidItem("SP-RAW"));
   $("#btnUseBurn")?.addEventListener("click", () => useRaidItem("SP-BURN"));
   $("#btnRaidClose")?.addEventListener("click", () => closeRaidScreen(false));
+
+  bindModalOverlayClose("#feedModal");
+  bindModalOverlayClose("#healModal");
+  bindModalOverlayClose("#bgModal");
 
   window.addEventListener("resize", drawRadarChart);
 
