@@ -19,6 +19,11 @@
   // ✅ 収穫モーダル：カード下に「閉じる」「図鑑を確認する」の2ボタン
   // ✅ タワー肥料4種を追加
   // ✅ 寝かせた肥料から低確率で SP-HR-001 / SP-HR-002 が出る
+  // ✅ レベルアップ時：中央に大きく3秒演出表示 → その後に報酬モーダル
+  // ✅ レベルアップ報酬モーダルを今風に整理
+  //    ・説明文削除
+  //    ・「図鑑へ」ボタン削除
+  //    ・閉じるボタンのみ
   // =========================================================
 
   // =========================
@@ -665,6 +670,7 @@
   function xpNeedForLevel(level) {
     return 120 + (level - 1) * 50 + Math.floor(Math.pow(level - 1, 1.6) * 20);
   }
+
   function defaultPlayer() {
     return { ver: 1, level: 1, xp: 0, unlocked: START_UNLOCK };
   }
@@ -683,9 +689,11 @@
       return defaultPlayer();
     }
   }
+
   function savePlayer(p) {
     localStorage.setItem(LS_PLAYER, JSON.stringify(p));
   }
+
   let player = loadPlayer();
 
   // =========================================================
@@ -698,6 +706,7 @@
     FERTS.forEach((x) => (inv.fert[x.id] = 0));
     return inv;
   }
+
   function loadInv() {
     try {
       const raw = localStorage.getItem(LS_INV);
@@ -715,19 +724,23 @@
       return defaultInv();
     }
   }
+
   function saveInv(inv) {
     localStorage.setItem(LS_INV, JSON.stringify(inv));
   }
+
   function invGet(inv, invType, id) {
     const box = inv[invType] || {};
     const n = Number(box[id] ?? 0);
     return Number.isFinite(n) ? n : 0;
   }
+
   function invAdd(inv, invType, id, delta) {
     if (!inv[invType]) inv[invType] = {};
     const cur = Number(inv[invType][id] ?? 0);
     inv[invType][id] = Math.max(0, cur + delta);
   }
+
   function invDec(inv, invType, id) {
     const cur = invGet(inv, invType, id);
     if (cur <= 0) return false;
@@ -739,21 +752,25 @@
     const n = Number(localStorage.getItem(LS_OCTO) ?? 0);
     return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
   }
+
   function saveOcto(n) {
     localStorage.setItem(LS_OCTO, String(Math.max(0, Math.floor(Number(n) || 0))));
   }
+
   function addOcto(delta) {
     const cur = loadOcto();
     const next = Math.max(0, cur + Math.floor(Number(delta) || 0));
     saveOcto(next);
     return next;
   }
+
   function randInt(min, max) {
     min = Math.floor(min);
     max = Math.floor(max);
     if (max < min) [min, max] = [max, min];
     return min + Math.floor(Math.random() * (max - min + 1));
   }
+
   function clamp(x, a, b) {
     return Math.max(a, Math.min(b, x));
   }
@@ -842,8 +859,12 @@
   }
 
   function addXP(amount) {
-    if (!Number.isFinite(amount) || amount <= 0) return { leveled: false, unlockedDelta: 0, rewards: [] };
-    let leveled = false, unlockedDelta = 0;
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { leveled: false, unlockedDelta: 0, rewards: [] };
+    }
+
+    let leveled = false;
+    let unlockedDelta = 0;
     const rewards = [];
 
     player.xp += Math.floor(amount);
@@ -854,13 +875,21 @@
       leveled = true;
 
       const r = grantLevelRewards(player.level);
-      rewards.push({ level: player.level, ...r });
+      let unlockedNow = 0;
 
       if (player.unlocked < MAX_PLOTS) {
         player.unlocked += 1;
         unlockedDelta += 1;
+        unlockedNow = 1;
       }
+
+      rewards.push({
+        level: player.level,
+        unlockedNow,
+        ...r
+      });
     }
+
     savePlayer(player);
     return { leveled, unlockedDelta, rewards };
   }
@@ -868,6 +897,7 @@
   function defaultLoadout() {
     return { ver: 1, seedId: null, waterId: null, fertId: null };
   }
+
   function loadLoadout() {
     try {
       const raw = localStorage.getItem(LS_LOADOUT);
@@ -884,9 +914,11 @@
       return defaultLoadout();
     }
   }
+
   function saveLoadout(l) {
     localStorage.setItem(LS_LOADOUT, JSON.stringify(l));
   }
+
   let loadout = loadLoadout();
 
   const defaultPlot = () => ({ state: "EMPTY" });
@@ -903,6 +935,7 @@
       return defaultState();
     }
   }
+
   function saveState(s) {
     localStorage.setItem(LS_STATE, JSON.stringify(s));
   }
@@ -918,6 +951,7 @@
       return { ver: 1, got: {} };
     }
   }
+
   function saveBook(b) {
     localStorage.setItem(LS_BOOK, JSON.stringify(b));
   }
@@ -925,6 +959,7 @@
   function pad2(n) {
     return String(n).padStart(2, "0");
   }
+
   function fmtRemain(ms) {
     if (ms <= 0) return "00:00:00";
     const s = Math.floor(ms / 1000);
@@ -1068,6 +1103,7 @@
     }
     return set;
   }
+
   const SHOP_TN_SET = makeTNSet(1, 25);
   const LINE_TN_SET = makeTNSet(26, 50);
 
@@ -1077,10 +1113,12 @@
     if (seedId === "seed_line") return pool.filter((c) => LINE_TN_SET.has(c.no));
     return pool;
   }
+
   function getPoolByRarity(rarity) {
     const p = CARD_POOLS && CARD_POOLS[rarity] ? CARD_POOLS[rarity] : [];
     return Array.isArray(p) ? p : [];
   }
+
   function fallbackPickBySeed(seedId, startRarity) {
     const order = ["LR", "UR", "SR", "R", "N"];
     const startIdx = order.indexOf(startRarity);
@@ -1097,10 +1135,12 @@
     const c = pick(BUSSASARI_POOL);
     return { id: c.id, name: c.name, img: c.img, rarity: "N" };
   }
+
   function pickNamaraReward() {
     const c = pick(NAMARA_POOL);
     return { id: c.id, name: c.name, img: c.img, rarity: c.rarity };
   }
+
   function pickGratinReward() {
     const isLR = Math.random() < GRATIN_LR_CHANCE;
     const c = isLR ? GRATIN_POOL.find((x) => x.rarity === "LR") : GRATIN_POOL.find((x) => x.rarity === "N");
@@ -1119,6 +1159,7 @@
     }
     return "N";
   }
+
   function pickAnnivReward() {
     const tier = pickAnnivTier();
     const c =
@@ -1370,6 +1411,7 @@
   function onBackdrop(e) {
     if (e.target === modal) closeModalOrCommit();
   }
+
   function onEsc(e) {
     if (e.key === "Escape") closeModalOrCommit();
   }
@@ -1428,11 +1470,167 @@
     }, 900);
   }
 
+  // =========================================================
+  // レベルアップ演出
+  // =========================================================
+  function showLevelUpSplash({ fromLevel, toLevel, unlockedDelta = 0, onDone } = {}) {
+    const old = document.getElementById("levelUpSplash");
+    if (old) old.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "levelUpSplash";
+    overlay.innerHTML = `
+      <div class="levelup-bg-glow"></div>
+      <div class="levelup-card">
+        <div class="levelup-top">LEVEL UP!</div>
+        <div class="levelup-main">Lv ${fromLevel} → Lv ${toLevel}</div>
+        <div class="levelup-sub">${unlockedDelta > 0 ? `新しい畑が ${unlockedDelta} マス解放！` : "報酬獲得！"}</div>
+        <div class="levelup-stars" aria-hidden="true">
+          <span>✦</span><span>✦</span><span>✦</span>
+        </div>
+      </div>
+    `;
+
+    Object.assign(overlay.style, {
+      position: "fixed",
+      inset: "0",
+      zIndex: "100001",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "radial-gradient(circle at center, rgba(255,214,102,.18), rgba(14,10,30,.82) 42%, rgba(8,7,18,.94) 100%)",
+      backdropFilter: "blur(4px)",
+      WebkitBackdropFilter: "blur(4px)",
+      opacity: "0",
+      transition: "opacity .28s ease"
+    });
+
+    const glow = overlay.querySelector(".levelup-bg-glow");
+    const card = overlay.querySelector(".levelup-card");
+    const top = overlay.querySelector(".levelup-top");
+    const main = overlay.querySelector(".levelup-main");
+    const sub = overlay.querySelector(".levelup-sub");
+    const stars = overlay.querySelector(".levelup-stars");
+
+    Object.assign(glow.style, {
+      position: "absolute",
+      width: "52vmin",
+      height: "52vmin",
+      maxWidth: "420px",
+      maxHeight: "420px",
+      borderRadius: "999px",
+      background: "radial-gradient(circle, rgba(255,228,140,.35) 0%, rgba(255,180,70,.12) 38%, rgba(255,150,70,0) 72%)",
+      filter: "blur(10px)",
+      transform: "scale(.8)",
+      opacity: ".9"
+    });
+
+    Object.assign(card.style, {
+      position: "relative",
+      width: "min(88vw, 420px)",
+      padding: "28px 22px 24px",
+      borderRadius: "28px",
+      textAlign: "center",
+      color: "#fff",
+      background: "linear-gradient(180deg, rgba(255,212,94,.98) 0%, rgba(255,155,72,.98) 54%, rgba(214,88,53,.98) 100%)",
+      border: "2px solid rgba(255,244,204,.78)",
+      boxShadow: "0 18px 48px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.35)",
+      transform: "translateY(14px) scale(.86)",
+      opacity: "0",
+      transition: "transform .32s cubic-bezier(.2,.8,.2,1), opacity .28s ease"
+    });
+
+    Object.assign(top.style, {
+      fontSize: "14px",
+      fontWeight: "1000",
+      letterSpacing: ".22em",
+      marginBottom: "10px",
+      color: "#fffef7",
+      textShadow: "0 2px 8px rgba(90,30,0,.24)"
+    });
+
+    Object.assign(main.style, {
+      fontSize: "clamp(28px, 8vw, 42px)",
+      lineHeight: "1.08",
+      fontWeight: "1000",
+      letterSpacing: ".02em",
+      color: "#ffffff",
+      textShadow: "0 3px 10px rgba(90,25,0,.28)"
+    });
+
+    Object.assign(sub.style, {
+      marginTop: "12px",
+      fontSize: "14px",
+      lineHeight: "1.5",
+      fontWeight: "900",
+      color: "rgba(255,252,245,.98)",
+      textShadow: "0 2px 8px rgba(90,25,0,.18)"
+    });
+
+    Object.assign(stars.style, {
+      marginTop: "14px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "16px",
+      fontSize: "18px",
+      fontWeight: "1000",
+      color: "#fff6c7",
+      textShadow: "0 0 12px rgba(255,255,200,.62)"
+    });
+
+    Array.from(stars.children).forEach((s, idx) => {
+      s.style.display = "inline-block";
+      s.style.transform = "translateY(0) scale(1)";
+      s.style.animation = `farmLevelStarFloat 1.1s ease-in-out ${idx * 0.12}s infinite alternate`;
+    });
+
+    if (!document.getElementById("farmLevelUpSplashStyle")) {
+      const style = document.createElement("style");
+      style.id = "farmLevelUpSplashStyle";
+      style.textContent = `
+        @keyframes farmLevelStarFloat {
+          from { transform: translateY(0) scale(1); opacity: .78; }
+          to   { transform: translateY(-6px) scale(1.12); opacity: 1; }
+        }
+        @keyframes farmLevelCardPulse {
+          0%   { box-shadow: 0 18px 48px rgba(0,0,0,.42), 0 0 0 rgba(255,230,120,0), inset 0 1px 0 rgba(255,255,255,.35); }
+          50%  { box-shadow: 0 18px 48px rgba(0,0,0,.42), 0 0 34px rgba(255,226,130,.40), inset 0 1px 0 rgba(255,255,255,.35); }
+          100% { box-shadow: 0 18px 48px rgba(0,0,0,.42), 0 0 0 rgba(255,230,120,0), inset 0 1px 0 rgba(255,255,255,.35); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => {
+      overlay.style.opacity = "1";
+      glow.style.transform = "scale(1)";
+      card.style.transform = "translateY(0) scale(1)";
+      card.style.opacity = "1";
+      card.style.animation = "farmLevelCardPulse 1.2s ease-in-out infinite";
+    });
+
+    setTimeout(() => {
+      overlay.style.opacity = "0";
+      card.style.transform = "translateY(-6px) scale(1.04)";
+      card.style.opacity = "0";
+      glow.style.opacity = "0";
+
+      setTimeout(() => {
+        overlay.remove();
+        if (typeof onDone === "function") onDone();
+      }, 320);
+    }, 3000);
+  }
+
   let __harvestCommitFn = null;
 
   function setHarvestCommit(fn) {
     __harvestCommitFn = typeof fn === "function" ? fn : null;
   }
+
   function clearHarvestCommit() {
     __harvestCommitFn = null;
   }
@@ -1810,7 +2008,6 @@
       return;
     }
 
-    const seed = SEEDS.find((x) => x.id === seedId);
     const water = WATERS.find((x) => x.id === waterId);
     const fert = FERTS.find((x) => x.id === fertId);
 
@@ -1829,7 +2026,7 @@
       (seedId === "seed_bussasari") ||
       (seedId === "seed_namara_kawasar");
 
-    const fixedRarity = isFixedSeed ? null : pickRarityWithWater(waterId);
+    const fixedRarity = isFixedSeed ? null : pickRarityWithWater(water ? water.id : null);
 
     const srHint =
       isFixedSeed ? "NONE" :
@@ -1861,9 +2058,186 @@
     render();
   }
 
+  function buildLevelRewardHtml(xpRes) {
+    const allItems = [];
+    let totalOcto = 0;
+    let totalUnlocked = 0;
+
+    for (const r of xpRes.rewards) {
+      totalOcto += Number(r.octo || 0);
+      totalUnlocked += Number(r.unlockedNow || 0);
+      for (const it of (r.items || [])) {
+        const key = `${it.kind}:${it.id}`;
+        const found = allItems.find((x) => x._key === key);
+        if (found) {
+          found.qty += Number(it.qty || 0);
+        } else {
+          allItems.push({ ...it, _key: key, qty: Number(it.qty || 0) });
+        }
+      }
+    }
+
+    const finalLevel = xpRes.rewards[xpRes.rewards.length - 1]?.level ?? player.level;
+
+    const octoCard = `
+      <div style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:14px;
+        border-radius:18px;
+        background:linear-gradient(180deg, rgba(255,187,94,.18), rgba(255,149,58,.08));
+        border:1px solid rgba(255,185,90,.28);
+        box-shadow:0 8px 18px rgba(0,0,0,.06);
+      ">
+        <div style="
+          width:54px;height:54px;flex:0 0 54px;
+          border-radius:16px;
+          display:grid;place-items:center;
+          font-size:26px;
+          background:linear-gradient(180deg,#fff2c7,#ffd97f);
+          border:1px solid rgba(255,199,96,.55);
+        ">💰</div>
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:12px;font-weight:900;color:#9d6a16;letter-spacing:.08em;">OCTO</div>
+          <div style="margin-top:2px;font-size:24px;font-weight:1000;color:#2d220f;line-height:1.05;">+${totalOcto}</div>
+        </div>
+      </div>
+    `;
+
+    const unlockCard = totalUnlocked > 0
+      ? `
+      <div style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:14px;
+        border-radius:18px;
+        background:linear-gradient(180deg, rgba(255,233,153,.20), rgba(255,203,86,.08));
+        border:1px solid rgba(255,214,110,.30);
+        box-shadow:0 8px 18px rgba(0,0,0,.06);
+      ">
+        <div style="
+          width:54px;height:54px;flex:0 0 54px;
+          border-radius:16px;
+          display:grid;place-items:center;
+          font-size:24px;
+          background:linear-gradient(180deg,#fff8da,#ffe79a);
+          border:1px solid rgba(255,220,126,.6);
+        ">🔓</div>
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:12px;font-weight:900;color:#a17411;letter-spacing:.08em;">UNLOCK</div>
+          <div style="margin-top:2px;font-size:18px;font-weight:1000;color:#2d220f;line-height:1.15;">畑が${totalUnlocked}マス解放</div>
+        </div>
+      </div>
+    `
+      : "";
+
+    const itemsHtml = allItems.map((it) => {
+      return `
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:12px;
+          padding:12px;
+          border-radius:16px;
+          background:rgba(255,255,255,.72);
+          border:1px solid rgba(0,0,0,.06);
+        ">
+          <img src="${it.img}" alt="${it.name}" style="
+            width:56px;height:56px;flex:0 0 56px;
+            object-fit:cover;
+            border-radius:14px;
+            border:1px solid rgba(0,0,0,.08);
+            background:rgba(255,255,255,.9);
+            box-shadow:0 4px 10px rgba(0,0,0,.05);
+          ">
+          <div style="min-width:0;flex:1;">
+            <div style="
+              font-size:15px;
+              font-weight:1000;
+              color:#2b2116;
+              line-height:1.2;
+              word-break:break-word;
+            ">${it.name}</div>
+            <div style="
+              margin-top:4px;
+              font-size:13px;
+              font-weight:900;
+              color:#7a5a2f;
+            ">×${it.qty}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div style="
+        display:grid;
+        gap:14px;
+      ">
+        <div style="
+          text-align:center;
+          padding:6px 0 2px;
+        ">
+          <div style="
+            font-size:12px;
+            font-weight:1000;
+            letter-spacing:.18em;
+            color:#a36a18;
+          ">LEVEL UP</div>
+          <div style="
+            margin-top:4px;
+            font-size:30px;
+            font-weight:1000;
+            line-height:1.05;
+            color:#2b2015;
+          ">Lv ${finalLevel}</div>
+        </div>
+
+        <div style="display:grid;gap:10px;">
+          ${octoCard}
+          ${unlockCard}
+        </div>
+
+        ${allItems.length ? `
+          <div style="display:grid;gap:10px;">
+            <div style="
+              font-size:12px;
+              font-weight:1000;
+              letter-spacing:.12em;
+              color:#8e6a34;
+              padding-left:2px;
+            ">GET ITEMS</div>
+            ${itemsHtml}
+          </div>
+        ` : ""}
+
+        <div class="row" style="margin-top:4px;">
+          <button type="button" id="btnLevelClose" class="primary">閉じる</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function openLevelRewardModal(xpRes) {
+    openModal("Lvアップ！", buildLevelRewardHtml(xpRes));
+    clearHarvestCommit();
+
+    const btn = document.getElementById("btnLevelClose");
+    if (btn) {
+      btn.addEventListener("click", () => {
+        closeModal();
+        render();
+      });
+    }
+  }
+
   function commitHarvest(i, reward) {
     addToBook(reward);
     addMonthlyHarvest(1);
+
+    const prevLevel = player.level;
 
     const xpKey = (reward && reward.tier)
       ? String(reward.tier).toUpperCase()
@@ -1875,50 +2249,23 @@
     state.plots[i] = { state: "EMPTY" };
     saveState(state);
 
+    render();
+
     if (xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length) {
-      const blocks = xpRes.rewards.map((r) => {
-        const itemsHtml = (r.items || []).map((it) => {
-          return `
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.05);margin-top:8px;">
-              <img src="${it.img}" alt="${it.name}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18)">
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:1000;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name}</div>
-                <div style="font-size:12px;opacity:.8;margin-top:2px;">×${it.qty}</div>
-              </div>
-            </div>
-          `;
-        }).join("");
+      const toLevel = xpRes.rewards[xpRes.rewards.length - 1].level;
+      const unlockedDelta = Number(xpRes.unlockedDelta || 0);
 
-        return `
-          <div style="border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.06);padding:12px;margin-top:10px;">
-            <div style="font-weight:1000;font-size:14px;">Lv ${r.level} 報酬</div>
-            <div style="margin-top:8px;font-size:13px;">
-              ✅ オクト：<b>+${r.octo}</b>
-            </div>
-            ${itemsHtml}
-          </div>
-        `;
-      }).join("");
+      closeModal();
 
-      openModal("Lvアップ！", `
-        <div class="step">
-          レベルが上がった。<b>オクトは必ず</b>もらえる。<br>
-          ついでにアイテムも勝手に増えた。
-        </div>
-        ${blocks}
-        <div class="row">
-          <button type="button" id="btnGoZukan" class="primary">図鑑へ</button>
-        </div>
-      `);
-      clearHarvestCommit();
-
-      document.getElementById("btnGoZukan").addEventListener("click", () => {
-        closeModal();
-        render();
-        location.href = "./zukan.html";
+      showLevelUpSplash({
+        fromLevel: prevLevel,
+        toLevel,
+        unlockedDelta,
+        onDone: () => {
+          openLevelRewardModal(xpRes);
+          render();
+        }
       });
-
-      render();
       return;
     }
 
