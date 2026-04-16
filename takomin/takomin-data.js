@@ -181,14 +181,14 @@
             id === "takonana" ? "🌊" :
             "👊",
           motionClass:
-            id === "rich" ? "motion-bill" :
-            id === "king" ? "motion-king" :
-            id === "artisan" ? "motion-artisan" :
-            id === "gourmet" ? "motion-gourmet" :
-            id === "miko" ? "motion-miko" :
-            id === "kasumi" ? "motion-kasumi" :
-            id === "takopi" ? "motion-takopi" :
-            id === "takonana" ? "motion-takonana" :
+            id === "rich" ? "motion-money" :
+            id === "king" ? "motion-royal" :
+            id === "artisan" ? "motion-wave" :
+            id === "gourmet" ? "motion-fire" :
+            id === "miko" ? "motion-royal" :
+            id === "kasumi" ? "motion-wave" :
+            id === "takopi" ? "motion-fire" :
+            id === "takonana" ? "motion-wave" :
             "motion-fist"
         });
       });
