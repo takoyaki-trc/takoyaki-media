@@ -464,14 +464,14 @@
       { no: "TN-049", name: "たこ焼きの御神体", img: "https://ul.h3z.jp/GQ8H0lGq.jpg" }
     ],
     UR: [
-      { no: "TN-001", name: "黒き真珠イカさま焼き", img: "assets/images/1stcard/001ur1.png" },
-      { no: "TN-007", name: "ローソク出せ！", img: "assets/images/1stcard/007ur1.png" },
-      { no: "TN-033", name: "鉄板のビーナス", img: "assets/images/1stcard/033ur1.png" },
-      { no: "TN-045", name: "ドリームファイト", img: "assets/images/1stcard/045ur1.png" }
+      { no: "TN-001", name: "黒き真珠イカさま焼き", img: "town/assets/images/1stcard/001ur1.png" },
+      { no: "TN-007", name: "ローソク出せ！", img: "town/assets/images/1stcard/007ur1.png" },
+      { no: "TN-033", name: "鉄板のビーナス", img: "town/assets/images/1stcard/033ur1.png" },
+      { no: "TN-045", name: "ドリームファイト", img: "town/assets/images/1stcard/045ur1.png" }
     ],
     LR: [
       { no: "TN-025", name: "たこ焼き化石in函館山", img: "https://ul.h3z.jp/NEuFQ7PB.png" },
-      { no: "TN-050", name: "焼かれし記憶、ソースに還る", img: "assets/images/1stcard/050lr1.png" }
+      { no: "TN-050", name: "焼かれし記憶、ソースに還る", img: "town/assets/images/1stcard/050lr1.png" }
     ]
   };
 
