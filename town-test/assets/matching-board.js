@@ -138,6 +138,78 @@
     return Math.max(0, Math.floor(n));
   }
 
+  function normalizeCardCode(v) {
+    return String(v || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_\-]+/g, "");
+  }
+
+  function extractCountFromRawEntry(rawEntry) {
+    if (rawEntry == null) return 0;
+
+    if (typeof rawEntry === "number") {
+      return Math.max(0, Math.floor(rawEntry));
+    }
+
+    if (typeof rawEntry === "boolean") {
+      return rawEntry ? 1 : 0;
+    }
+
+    if (typeof rawEntry === "string") {
+      const n = Number(rawEntry);
+      return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+    }
+
+    if (typeof rawEntry === "object") {
+      const candidates = [
+        rawEntry.count,
+        rawEntry.owned,
+        rawEntry.qty,
+        rawEntry.amount,
+        rawEntry.total,
+        rawEntry.num
+      ];
+
+      for (const c of candidates) {
+        const n = Number(c);
+        if (Number.isFinite(n)) return Math.max(0, Math.floor(n));
+      }
+
+      if (
+        rawEntry.id ||
+        rawEntry.no ||
+        rawEntry.cardId ||
+        rawEntry.name ||
+        rawEntry.img ||
+        rawEntry.image
+      ) {
+        return 1;
+      }
+    }
+
+    return 0;
+  }
+
+  function getPossibleIdsFromEntry(key, rawEntry) {
+    const ids = new Set();
+
+    if (key != null && String(key).trim()) ids.add(String(key).trim());
+
+    if (rawEntry && typeof rawEntry === "object") {
+      const vals = [rawEntry.id, rawEntry.no, rawEntry.cardId, rawEntry.code];
+      vals.forEach(v => {
+        if (v != null && String(v).trim()) ids.add(String(v).trim());
+      });
+    }
+
+    return Array.from(ids);
+  }
+
+  function isSameCardCode(a, b) {
+    return normalizeCardCode(a) !== "" && normalizeCardCode(a) === normalizeCardCode(b);
+  }
+
   // =========================================================
   // Dynamic style
   // =========================================================
@@ -931,39 +1003,20 @@
 
     if (rawEntry == null) return null;
 
-    let count = 0;
+    let count = extractCountFromRawEntry(rawEntry);
     let base = {};
 
-    if (typeof rawEntry === "number") {
-      count = Math.max(0, Math.floor(rawEntry));
-    } else if (typeof rawEntry === "boolean") {
-      count = rawEntry ? 1 : 0;
-    } else if (typeof rawEntry === "string") {
-      const n = Number(rawEntry);
-      count = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
-    } else if (typeof rawEntry === "object") {
+    if (typeof rawEntry === "object" && rawEntry !== null) {
       base = rawEntry;
-
-      if (typeof rawEntry.count === "number" || typeof rawEntry.count === "string") {
-        count = Number(rawEntry.count);
-      } else if (typeof rawEntry.owned === "number" || typeof rawEntry.owned === "string") {
-        count = Number(rawEntry.owned);
-      } else if (typeof rawEntry.qty === "number" || typeof rawEntry.qty === "string") {
-        count = Number(rawEntry.qty);
-      } else {
-        count = 1;
-      }
-
-      count = Math.max(0, Math.floor(Number(count) || 0));
     }
 
     if (count <= 0) return null;
 
     return {
       ...base,
-      id: base.id || info.id || cardId,
+      id: base.id || base.no || base.cardId || info.id || cardId,
       name: base.name || info.name || cardId,
-      img: base.img || info.img || "",
+      img: base.img || base.image || info.img || "",
       rarity: base.rarity || info.rarity || "N",
       tier: base.tier || base.rarity || info.rarity || "N",
       at: base.at ?? "",
@@ -999,15 +1052,15 @@
       if (
         typeof rawEntry !== "object" ||
         rawEntry == null ||
-        String(rawEntry.id || "") !== String(normalized.id || "") ||
+        String(rawEntry.id || rawEntry.no || rawEntry.cardId || "") !== String(normalized.id || "") ||
         String(rawEntry.name || "") !== String(normalized.name || "") ||
-        String(rawEntry.img || "") !== String(normalized.img || "") ||
+        String(rawEntry.img || rawEntry.image || "") !== String(normalized.img || "") ||
         String(rawEntry.rarity || "") !== String(normalized.rarity || "") ||
         String(rawEntry.tier || "") !== String(normalized.tier || "") ||
         String(rawEntry.at ?? "") !== String(normalized.at ?? "") ||
         String(rawEntry.lastAt ?? "") !== String(normalized.lastAt ?? "") ||
         String(rawEntry.lastAddedAt ?? "") !== String(normalized.lastAddedAt ?? "") ||
-        Number(rawEntry.count || 0) !== Number(normalized.count || 0)
+        Number(extractCountFromRawEntry(rawEntry)) !== Number(normalized.count || 0)
       ) {
         changed = true;
       }
@@ -1046,16 +1099,42 @@
   }
 
   function getOwnedCount(cardId) {
-    const book = getBook();
-    const entry = book.got?.[cardId];
-    return Math.max(0, Math.floor(Number(entry?.count || 0)));
+    const book = loadJSON(KEY.book, { ver: 1, got: {} });
+    const got = (book && typeof book === "object" && book.got && typeof book.got === "object")
+      ? book.got
+      : {};
+
+    let total = 0;
+
+    for (const [key, rawEntry] of Object.entries(got)) {
+      const possibleIds = getPossibleIdsFromEntry(key, rawEntry);
+      const matched = possibleIds.some(v => isSameCardCode(v, cardId));
+      if (!matched) continue;
+      total += extractCountFromRawEntry(rawEntry);
+    }
+
+    return Math.max(0, Math.floor(total));
   }
 
   function addOwned(cardId, delta) {
     const book = getBook();
     const info = CARD_MAP[cardId] || { id: cardId, name: cardId, rarity: "N", img: "" };
 
-    const current = normalizeBookEntry(cardId, book.got?.[cardId]) || {
+    let targetKey = null;
+    let current = null;
+
+    for (const [key, rawEntry] of Object.entries(book.got || {})) {
+      const possibleIds = getPossibleIdsFromEntry(key, rawEntry);
+      if (possibleIds.some(v => isSameCardCode(v, cardId))) {
+        targetKey = key;
+        current = normalizeBookEntry(key, rawEntry);
+        break;
+      }
+    }
+
+    if (!targetKey) targetKey = cardId;
+
+    current = current || {
       id: cardId,
       name: info.name,
       img: info.img || "",
@@ -1071,9 +1150,9 @@
     const nextCount = Math.max(0, Math.floor(Number(current.count || 0) + Number(delta || 0)));
 
     if (nextCount <= 0) {
-      delete book.got[cardId];
+      delete book.got[targetKey];
     } else {
-      book.got[cardId] = {
+      book.got[targetKey] = {
         ...current,
         id: current.id || cardId,
         name: current.name || info.name || cardId,
@@ -1107,11 +1186,17 @@
     let changed = false;
     const nextGot = {};
 
-    for (const [cardId, rawEntry] of Object.entries(book.got)) {
-      const normalized = normalizeBookEntry(cardId, rawEntry);
+    for (const [rawKey, rawEntry] of Object.entries(book.got)) {
+      const possibleIds = getPossibleIdsFromEntry(rawKey, rawEntry);
+      const canonicalId =
+        possibleIds.find(id => CARD_MAP[id]) ||
+        CARDS_ALL.find(card => possibleIds.some(v => isSameCardCode(v, card.id)))?.id ||
+        rawKey;
+
+      const normalized = normalizeBookEntry(canonicalId, rawEntry);
       if (!normalized) continue;
 
-      const info = CARD_MAP[cardId] || null;
+      const info = CARD_MAP[canonicalId] || null;
 
       if (!normalized.img && info?.img) {
         normalized.img = info.img;
@@ -1133,12 +1218,22 @@
         changed = true;
       }
 
-      if (!normalized.id) {
-        normalized.id = cardId;
+      if (!normalized.id || !isSameCardCode(normalized.id, canonicalId)) {
+        normalized.id = canonicalId;
         changed = true;
       }
 
-      nextGot[cardId] = normalized;
+      if (nextGot[canonicalId]) {
+        nextGot[canonicalId].count =
+          Number(nextGot[canonicalId].count || 0) + Number(normalized.count || 0);
+        changed = true;
+      } else {
+        nextGot[canonicalId] = normalized;
+      }
+
+      if (String(rawKey) !== String(canonicalId)) {
+        changed = true;
+      }
     }
 
     if (changed) {
