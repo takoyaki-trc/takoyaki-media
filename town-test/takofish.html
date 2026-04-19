@@ -23,6 +23,7 @@
       --btn: rgba(255,255,255,.10);
       --btn2: rgba(255,255,255,.16);
       --shadow: 0 14px 40px rgba(0,0,0,.55);
+      --radius: 16px;
       --cyan:#7fd0ff;
       --gold:#ffd979;
     }
@@ -51,13 +52,13 @@
       position: sticky;
       top:0;
       z-index:50;
-      padding:10px 10px 8px;
+      padding: 10px 10px 8px;
       background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
       backdrop-filter: blur(8px);
     }
 
     .topbar-inner{
-      max-width:920px;
+      max-width: 920px;
       margin:0 auto;
       display:flex;
       align-items:center;
@@ -69,9 +70,9 @@
       border:1px solid var(--line);
       background: rgba(255,255,255,.08);
       color:var(--text);
-      border-radius:12px;
-      padding:10px 12px;
-      font-weight:900;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 900;
       cursor:pointer;
     }
 
@@ -102,9 +103,9 @@
     .card{
       width:min(560px, 100%);
       background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:18px;
-      box-shadow:var(--shadow);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
       overflow:hidden;
       display:flex;
       flex-direction:column;
@@ -112,8 +113,8 @@
     }
 
     .hud{
-      padding:10px 12px;
-      border-bottom:1px solid rgba(255,255,255,.12);
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
       display:flex;
       flex-wrap:wrap;
       align-items:center;
@@ -134,9 +135,9 @@
       border:1px solid var(--line);
       background: var(--btn);
       color:var(--text);
-      border-radius:14px;
-      padding:10px 12px;
-      font-weight:900;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-weight: 900;
       cursor:pointer;
     }
 
@@ -193,19 +194,6 @@
       line-height:1.5;
     }
 
-    .overlay{
-      position:absolute;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      background: rgba(0,0,0,.72);
-      padding:12px;
-      z-index:40;
-    }
-
-    .overlay.show{ display:flex; }
-
     .countOverlay{
       position:absolute;
       inset:0;
@@ -224,7 +212,7 @@
       text-align:center;
       padding:18px 22px;
       border-radius:20px;
-      background: rgba(8,15,28,.28);
+      background: rgba(8,15,28,.30);
       border:1px solid rgba(255,255,255,.14);
       box-shadow:0 10px 34px rgba(0,0,0,.28);
       backdrop-filter: blur(3px);
@@ -254,236 +242,372 @@
       color: rgba(255,255,255,.82);
     }
 
-    .resultShell{
-      width:min(440px, 100%);
-      max-height:calc(100svh - 40px);
+    /* ===== 結果画面 ===== */
+    .resultOverlay{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:
+        max(10px, env(safe-area-inset-top))
+        10px
+        max(10px, env(safe-area-inset-bottom))
+        10px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(2px);
+      z-index:70;
+    }
+
+    .resultOverlay.show{ display:flex; }
+
+    .resultCard{
+      width:min(96%, 460px);
+      max-height:calc(100svh - 20px);
       border-radius:24px;
-      border:1px solid rgba(255,255,255,.16);
+      border:1px solid rgba(255,255,255,.14);
       background:
-        radial-gradient(120% 90% at 50% 0%, rgba(255,214,120,.10), rgba(255,214,120,0) 38%),
-        radial-gradient(100% 90% at 50% 100%, rgba(84,118,255,.10), rgba(84,118,255,0) 40%),
-        linear-gradient(180deg, rgba(24,30,52,.97), rgba(10,14,26,.98));
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03) 15%, rgba(255,255,255,.02)),
+        radial-gradient(circle at 50% 0%, rgba(255,214,110,.10), rgba(255,214,110,0) 42%),
+        linear-gradient(180deg, #151b35 0%, #0b132a 62%, #07101f 100%);
       box-shadow:
-        0 20px 60px rgba(0,0,0,.55),
-        0 0 30px rgba(255,196,90,.06) inset;
+        inset 0 0 0 1px rgba(255,255,255,.03),
+        0 20px 60px rgba(0,0,0,.45),
+        0 0 28px rgba(109,162,255,.08);
+      overflow:hidden;
       display:flex;
       flex-direction:column;
-      overflow:hidden;
-      animation: resultPop .24s ease-out;
+      transform:translateY(12px) scale(.96);
+      opacity:0;
+    }
+
+    .resultOverlay.show .resultCard{
+      animation: resultPop .28s ease forwards;
     }
 
     @keyframes resultPop{
-      0%{ transform:translateY(10px) scale(.96); opacity:0; }
+      0%{ transform:translateY(12px) scale(.96); opacity:0; }
+      70%{ transform:translateY(-4px) scale(1.02); opacity:1; }
       100%{ transform:translateY(0) scale(1); opacity:1; }
     }
 
     .resultScroll{
-      flex:1 1 auto;
-      min-height:0;
       overflow:auto;
-      padding:12px;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255,220,120,.07), rgba(255,220,120,0) 46%),
-        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      min-height:0;
+      max-height:calc(100svh - 120px);
+      padding:18px;
+      scrollbar-width:none;
+      -webkit-overflow-scrolling:touch;
     }
 
-    .resultScoreHero{
-      margin:0 0 12px;
-      padding:14px 10px;
-      border-radius:22px;
+    .resultScroll::-webkit-scrollbar{ display:none; }
+
+    .scoreHero{
+      margin-bottom:14px;
+      padding:18px 16px 16px;
+      border-radius:24px;
       border:1px solid rgba(255,255,255,.12);
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255,210,90,.18), rgba(255,210,90,0) 55%),
-        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025));
       text-align:center;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-    }
-
-    .resultScoreLabel{
-      font-size:12px;
-      font-weight:900;
-      letter-spacing:.14em;
-      opacity:.82;
-      margin-bottom:6px;
-    }
-
-    .resultScoreValue{
-      font-size:56px;
-      line-height:1;
-      font-weight:1000;
-      color:#fff4dc;
-      text-shadow:
-        0 0 12px rgba(255,214,110,.25),
-        0 0 28px rgba(255,179,60,.16);
-    }
-
-    .resultRankWrap{
-      margin:0 0 12px;
-      padding:14px 14px 12px;
-      border-radius:22px;
-      border:1px solid rgba(255,255,255,.12);
       background:
-        radial-gradient(circle at 50% 0%, rgba(255,215,120,.12), rgba(255,215,120,0) 52%),
-        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.06),
-        0 0 18px rgba(255,190,80,.06);
+        radial-gradient(circle at 50% 0%, rgba(255,219,130,.18), rgba(255,219,130,0) 48%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      position:relative;
+      overflow:hidden;
     }
 
-    .resultRankLabel{
-      font-size:11px;
-      opacity:.72;
+    .scoreHero::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(120deg,
+          rgba(255,255,255,0) 0%,
+          rgba(255,255,255,.10) 40%,
+          rgba(255,255,255,0) 72%);
+      transform:translateX(-100%);
+      animation: scoreShine 2.4s linear infinite;
+      pointer-events:none;
+    }
+
+    @keyframes scoreShine{
+      to{ transform:translateX(100%); }
+    }
+
+    .scoreLabel{
+      font-size:12px;
+      letter-spacing:.13em;
       font-weight:900;
-      letter-spacing:.10em;
-      margin-bottom:4px;
-    }
-
-    .resultRankValue{
-      font-size:22px;
-      font-weight:1000;
-      line-height:1.35;
-      color:#fff4d8;
-      text-shadow:0 0 14px rgba(255,208,100,.18);
+      color:rgba(255,255,255,.80);
       margin-bottom:8px;
     }
 
-    .resultRankSub{
-      font-size:13px;
-      line-height:1.6;
-      color:rgba(255,255,255,.9);
-      margin-bottom:6px;
-    }
-
-    .resultDate{
-      font-size:12px;
-      opacity:.72;
-    }
-
-    .resultStatsGrid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin-bottom:12px;
-    }
-
-    .resultStatCard{
-      padding:12px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.05);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
-    }
-
-    .resultStatLabel{
-      opacity:.76;
-      font-size:12px;
-      margin-bottom:4px;
-    }
-
-    .resultStatValue{
-      font-weight:1000;
-      font-size:18px;
-      line-height:1.2;
-      margin-bottom:4px;
-    }
-
-    .resultSection{
-      margin-bottom:12px;
-    }
-
-    .resultSectionTitle{
-      font-size:12px;
-      font-weight:1000;
-      letter-spacing:.04em;
-      opacity:.84;
-      margin-bottom:6px;
-    }
-
-    .resultDropCard{
+    .scoreRow{
       display:flex;
-      gap:10px;
-      align-items:center;
-      padding:10px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.05);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+      align-items:flex-end;
+      justify-content:center;
+      gap:14px;
+      flex-wrap:wrap;
     }
 
-    .resultDropCard img{
-      width:64px;
-      height:64px;
-      object-fit:cover;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.18);
-      flex:0 0 auto;
-      image-rendering: pixelated;
+    .scoreMain{
+      line-height:1;
     }
 
-    .resultDropKicker{
-      display:inline-block;
-      padding:4px 8px;
+    .scoreValue{
+      font-size:68px;
+      line-height:1;
+      font-weight:1000;
+      color:#fff9ea;
+      text-shadow:
+        0 0 14px rgba(255,223,121,.22),
+        0 0 34px rgba(255,180,70,.14);
+    }
+
+    .scoreValue.bump{
+      animation: scoreBump .22s ease;
+    }
+
+    @keyframes scoreBump{
+      0%{ transform:scale(1); }
+      50%{ transform:scale(1.10); }
+      100%{ transform:scale(1); }
+    }
+
+    .bestInline{
+      position:relative;
+      align-self:flex-end;
+      min-width:118px;
+      padding:10px 12px 9px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06);
+      text-align:left;
+    }
+
+    .bestInlineHead{
+      font-size:11px;
+      font-weight:1000;
+      letter-spacing:.10em;
+      color:rgba(255,255,255,.70);
+      margin-bottom:5px;
+    }
+
+    .bestInlineNum{
+      font-size:24px;
+      line-height:1;
+      font-weight:1000;
+      color:#fff;
+    }
+
+    .bestInlineSub{
+      margin-top:4px;
+      font-size:12px;
+      color:rgba(255,255,255,.74);
+    }
+
+    .bestNewBadge{
+      display:none;
+      position:absolute;
+      top:-8px;
+      right:-8px;
+      padding:4px 7px;
       border-radius:999px;
-      background:rgba(255,196,70,.95);
-      color:#2a1600;
+      background:linear-gradient(180deg, #fff0a8, #ffb800);
+      color:#342400;
       font-size:10px;
       font-weight:1000;
-      margin-bottom:4px;
+      box-shadow:0 0 10px rgba(255,200,0,.42);
     }
 
-    .resultDropName{
-      font-size:15px;
-      font-weight:900;
-      line-height:1.2;
-      margin-bottom:4px;
+    .bestNewBadge.show{ display:inline-block; }
+
+    .rankBox{
+      margin-bottom:14px;
+      padding:16px;
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,227,145,.10), rgba(255,227,145,0) 44%),
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
     }
 
-    .resultDropText{
+    .rankLabel{
       font-size:12px;
-      line-height:1.5;
-      opacity:.88;
+      letter-spacing:.12em;
+      font-weight:900;
+      color:rgba(255,255,255,.80);
+      margin-bottom:8px;
     }
 
-    .resultNone{
-      padding:12px 14px;
-      border-radius:16px;
+    .rankTitle{
+      font-size:28px;
+      line-height:1.25;
+      font-weight:1000;
+      color:#fff3d0;
+      margin-bottom:10px;
+    }
+
+    .rankSub{
+      font-size:15px;
+      color:rgba(255,255,255,.92);
+      margin-bottom:8px;
+    }
+
+    .rankDate{
+      font-size:13px;
+      color:rgba(255,255,255,.72);
+      margin-bottom:8px;
+    }
+
+    .rankMeta{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+
+    .metaChip{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:34px;
+      padding:0 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:1000;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.10);
+      color:rgba(255,255,255,.92);
+    }
+
+    .section{
+      margin-bottom:14px;
+    }
+
+    .section:last-child{ margin-bottom:0; }
+
+    .sectionTitle{
+      font-size:18px;
+      font-weight:1000;
+      margin:0 0 10px;
+    }
+
+    .dropCardLine{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding:12px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)),
+        radial-gradient(circle at 0% 50%, rgba(100,167,255,.10), rgba(100,167,255,0) 35%);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+
+    .dropThumb{
+      width:86px;
+      height:86px;
+      border-radius:18px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(circle at 50% 20%, rgba(255,255,255,.20), rgba(255,255,255,0) 45%),
+        linear-gradient(180deg,#223356,#0d1b36);
+      flex:0 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .dropThumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      image-rendering:pixelated;
+    }
+
+    .dropMeta{
+      min-width:0;
+      flex:1;
+    }
+
+    .dropBadgeLine{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:34px;
+      padding:0 14px;
+      border-radius:999px;
+      background:linear-gradient(180deg,#ffd97d,#f0b62b);
+      color:#302000;
+      font-size:12px;
+      font-weight:1000;
+      margin-bottom:7px;
+    }
+
+    .dropName{
+      font-size:20px;
+      line-height:1.25;
+      font-weight:1000;
+      margin-bottom:5px;
+    }
+
+    .dropDesc{
+      font-size:14px;
+      color:rgba(255,255,255,.84);
+      line-height:1.5;
+      word-break:break-word;
+    }
+
+    .emptyLine{
+      padding:16px;
+      border-radius:22px;
       border:1px dashed rgba(255,255,255,.18);
       background:rgba(255,255,255,.03);
-      font-size:13px;
+      color:rgba(255,255,255,.86);
+      font-size:15px;
+      font-weight:900;
       line-height:1.6;
-      opacity:.94;
     }
 
     .resultActions{
       display:grid;
       grid-template-columns:1fr 1fr;
-      gap:10px;
-      padding:12px;
+      gap:12px;
+      padding:16px 18px calc(16px + env(safe-area-inset-bottom));
       border-top:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(18,22,32,.96), rgba(12,15,22,.98));
+      background:linear-gradient(180deg, rgba(5,8,17,.85), rgba(4,7,14,.96));
     }
 
-    .resultActions .btn{
-      width:100%;
-      padding:14px 12px;
-      border-radius:16px;
-      font-size:17px;
-      font-weight:900;
+    .actionBtn{
+      appearance:none;
+      border:0;
+      min-height:60px;
+      border-radius:18px;
+      font-size:18px;
+      font-weight:1000;
+      cursor:pointer;
     }
 
-    .resultAgainBtn{
-      background:#f3f1ee;
-      color:#111;
-      border-color:rgba(255,255,255,.28);
+    .actionAgain{
+      background:linear-gradient(180deg,#fbfbfb,#dadada);
+      color:#101010;
+      box-shadow:
+        inset 0 2px 0 rgba(255,255,255,.70),
+        0 10px 22px rgba(0,0,0,.24);
     }
 
-    .resultCloseBtn{
-      background:#2f3655;
+    .actionClose{
+      background:linear-gradient(180deg,#374061,#2b3250);
       color:#fff;
-      border-color:rgba(255,255,255,.14);
+      box-shadow:
+        inset 0 2px 0 rgba(255,255,255,.14),
+        0 10px 22px rgba(0,0,0,.22);
     }
 
+    /* ===== ドロップ演出 ===== */
     .dropSplash{
       position:absolute;
       inset:0;
@@ -613,6 +737,9 @@
 
     @media (max-width: 560px){
       .countNum{ font-size:60px; }
+      .scoreValue{ font-size:56px; }
+      .rankTitle{ font-size:24px; }
+      .dropName{ font-size:18px; }
       .dropTitle{ font-size:24px; }
       .dropHero{
         width:100px;
@@ -622,8 +749,9 @@
         width:78px;
         height:78px;
       }
-      .resultScoreValue{ font-size:46px; }
-      .resultRankValue{ font-size:18px; }
+      .resultActions{
+        grid-template-columns:1fr 1fr;
+      }
     }
   </style>
 </head>
@@ -666,48 +794,49 @@
               </div>
             </div>
 
-            <div id="resultOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="結果">
-              <div class="resultShell">
-                <div class="resultScroll">
-                  <div class="resultScoreHero">
-                    <div class="resultScoreLabel">TOTAL CATCH</div>
-                    <div id="resultScoreValue" class="resultScoreValue">0</div>
-                  </div>
-
-                  <div class="resultRankWrap">
-                    <div class="resultRankLabel">RANK</div>
-                    <div id="resultMain" class="resultRankValue"></div>
-                    <div id="resultSub" class="resultRankSub"></div>
-                    <div id="resultDate" class="resultDate"></div>
-                  </div>
-
-                  <div class="resultStatsGrid">
-                    <div class="resultStatCard">
-                      <div class="resultStatLabel">今回</div>
-                      <div id="resultCurrent" class="resultStatValue">0</div>
-                      <div id="resultExtendText" class="resultDate">延長：なし</div>
-                    </div>
-                    <div class="resultStatCard">
-                      <div class="resultStatLabel">BEST</div>
-                      <div id="resultBest" class="resultStatValue">0</div>
-                      <div class="resultDate">最高記録</div>
+            <div id="resultOverlay" class="resultOverlay" role="dialog" aria-modal="true" aria-label="結果">
+              <div class="resultCard">
+                <div id="resultScroll" class="resultScroll">
+                  <div class="scoreHero">
+                    <div class="scoreLabel">TOTAL CATCH</div>
+                    <div class="scoreRow">
+                      <div class="scoreMain">
+                        <div id="resultScoreValue" class="scoreValue">0</div>
+                      </div>
+                      <div class="bestInline">
+                        <div class="bestInlineHead">BEST</div>
+                        <div id="resultBestInline" class="bestInlineNum">0</div>
+                        <div class="bestInlineSub">最高記録</div>
+                        <div id="bestNewBadge" class="bestNewBadge">NEW!</div>
+                      </div>
                     </div>
                   </div>
 
-                  <div class="resultSection">
-                    <div class="resultSectionTitle">ドロップアイテム</div>
-                    <div id="waterDropWrap"></div>
+                  <div class="rankBox">
+                    <div class="rankLabel">RANK</div>
+                    <div id="resultMain" class="rankTitle">---</div>
+                    <div id="resultRankSub" class="rankSub">---</div>
+                    <div id="resultDate" class="rankDate">日時：----</div>
+                    <div class="rankMeta">
+                      <div id="resultExtendedChip" class="metaChip" style="display:none;">延長：あり</div>
+                      <div id="resultOniChip" class="metaChip" style="display:none;">鬼モード：到達</div>
+                    </div>
                   </div>
 
-                  <div class="resultSection">
-                    <div class="resultSectionTitle">カードドロップ</div>
-                    <div id="cardDropWrap"></div>
-                  </div>
+                  <section class="section">
+                    <div class="sectionTitle">ドロップアイテム</div>
+                    <div id="waterDropArea"></div>
+                  </section>
+
+                  <section class="section">
+                    <div class="sectionTitle">カードドロップ</div>
+                    <div id="cardDropArea"></div>
+                  </section>
                 </div>
 
                 <div class="resultActions">
-                  <button id="resultAgainBtn" class="btn resultAgainBtn" type="button">もう一回釣る</button>
-                  <button id="resultCloseBtn" class="btn resultCloseBtn" type="button">閉じる</button>
+                  <button id="resultRetryBtn" class="actionBtn actionAgain" type="button">もう一回釣る</button>
+                  <button id="resultCloseBtn" class="actionBtn actionClose" type="button">閉じる</button>
                 </div>
               </div>
             </div>
@@ -727,6 +856,7 @@
                 </div>
               </div>
             </div>
+
           </div>
 
           <div class="footnote">
@@ -737,1624 +867,1773 @@
     </main>
   </div>
 
-  <script>
-  (() => {
-    "use strict";
+<script>
+(() => {
+  "use strict";
 
-    const TOP_URL = "index.html";
+  const FISH_LS = {
+    best: "takoyakiFishing_best_points",
+    last: "takoyakiFishing_last_points",
+    playedAt: "takoyakiFishing_last_played",
+    compat: "fish_v1_state",
+    zukan: "tf_v1_book",
+    monthlyStats: "ttc_monthly_stats_v1",
+    inv: "tf_v1_inv",
+  };
 
-    const FISH_LS = {
-      best: "takoyakiFishing_best_points",
-      last: "takoyakiFishing_last_points",
-      playedAt: "takoyakiFishing_last_played",
-      compat: "fish_v1_state",
-      zukan: "tf_v1_book",
-      monthlyStats: "ttc_monthly_stats_v1",
-      inv: "tf_v1_inv",
+  const V = "3";
+
+  const DROP_WATERS = {
+    rotten: {
+      id: "water_rotten",
+      label: "腐ったミズ",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/6.png"
+    },
+    sea: {
+      id: "water_sea",
+      label: "海水",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/7.png"
+    },
+    yunokawa: {
+      id: "water_yunokawa",
+      label: "ゆのかわの温泉ミズ",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/8.png"
+    },
+    supergod: {
+      id: "water_supergod",
+      label: "超神水",
+      img: "https://takoyaki-card.com/town/assets/images/mizu/9.png"
+    },
+  };
+
+  const FISH_CARDS = [
+    {
+      id: "SP-FISH-001",
+      name: "一口どうぞマン",
+      img: "https://takoyaki-card.com/town/assets/images/sp/fish001.png",
+      rarity: "N",
+      weight: 45
+    },
+    {
+      id: "SP-FISH-002",
+      name: "函館の主イカ",
+      img: "https://takoyaki-card.com/town/assets/images/sp/fish002.png",
+      rarity: "N",
+      weight: 45
+    },
+    {
+      id: "SP-FISH-003",
+      name: "本日分、焼き上がり済",
+      img: "https://takoyaki-card.com/town/assets/images/sp/fish003.png",
+      rarity: "SR",
+      weight: 9.5
+    },
+    {
+      id: "SP-FISH-TAKOKAGE",
+      name: "タコ影魚群",
+      img: "https://takoyaki-card.com/town/assets/images/sp/fish.png",
+      rarity: "SECRET",
+      weight: 0.5
+    }
+  ];
+
+  const CDN_BASE = "https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/assets/takofish/";
+  const IMG_URLS = {
+    pick:          `${CDN_BASE}pick.png?v=${V}`,
+    sauce:         `${CDN_BASE}tako_sauce.png?v=${V}`,
+    ika_tako:      `${CDN_BASE}tako_ika.png?v=${V}`,
+    gold:          `${CDN_BASE}tako_gold.png?v=${V}`,
+    rainbow:       `${CDN_BASE}tako_rainbow.png?v=${V}`,
+    raw:           `${CDN_BASE}tako_raw.png?v=${V}`,
+    tourist_left:  `${CDN_BASE}tourist_left.png?v=${V}`,
+    tourist_right: `${CDN_BASE}tourist_right.png?v=${V}`,
+    squid:         `${CDN_BASE}ika.png?v=${V}`,
+  };
+
+  const CFG = {
+    W: 360,
+    H: 520,
+
+    BASE_LIMIT: 30,
+    EXT_LIMIT: 60,
+    EXT_SCORE: 600,
+    ONI_AT: 45,
+    ONI_FREEZE_MS: 300,
+    ONI_SPEED_MUL: 2.2,
+
+    HOOK_DROP_BASE: 620,
+    HOOK_REEL_BASE: 280,
+
+    TOP_Y: 18,
+    FLOOR_Y_RATIO: 0.86,
+
+    ITEM_COUNT: 7,
+
+    GIANT_DROP_CHANCE: 0.18,
+    GIANT_DROP_START_Y_RATIO: 0.62,
+
+    COUNTDOWN_SEC: 3,
+
+    SIZE: {
+      tiny:   { label: "極小",  draw: 24, base: 120 },
+      normal: { label: "普通",  draw: 40, base: 70  },
+      giant:  { label: "巨大",  draw: 56, base: 40  },
+    },
+    SIZE_WEIGHTS: [
+      { key: "normal", w: 62 },
+      { key: "tiny",   w: 28 },
+      { key: "giant",  w: 10 },
+    ],
+
+    TYPE: {
+      sauce:   { label: "ソース",     mult:  1.00, imgKey: "sauce" },
+      ika:     { label: "いかさま",   mult:  1.40, imgKey: "ika_tako" },
+      gold:    { label: "ゴールド",   mult:  2.80, imgKey: "gold" },
+      rainbow: { label: "レインボー", mult:  5.50, imgKey: "rainbow" },
+      raw:     { label: "生焼け",     mult: -1.50, imgKey: "raw" },
+    },
+    TYPE_WEIGHTS: [
+      { key: "sauce",   w: 55 },
+      { key: "ika",     w: 20 },
+      { key: "gold",    w: 10 },
+      { key: "rainbow", w:  5 },
+      { key: "raw",     w: 10 },
+    ],
+
+    ENEMY_CENTER_Y_RATIO: 0.45,
+    ENEMY_GAP: 170,
+
+    TOURIST: { w: 34, h: 18, speed: 90 },
+    SQUID: { w: 58, h: 58, speed: 18, ampX: 10, ampY: 16, freq: 0.55 },
+
+    DASH: {
+      w: 54, h: 10,
+      speed: 950,
+      minS: 10, maxS: 15,
+      oniMinS: 4, oniMaxS: 7,
+      trail: 4,
+    },
+
+    MARGIN_X: 10,
+  };
+
+  const RANKS_MINUS = [
+    { min: -1000, max: -1000, name: "〘未投入〙", line: "鉄板に、置かれていない。" },
+    { min: -999,  max: -900,  name: "〘焼かれていない存在〙", line: "まだ、始まってすらいない。" },
+    { min: -899,  max: -800,  name: "〘生焼け信者（末期）〙", line: "これは“通”の味。" },
+    { min: -799,  max: -700,  name: "〘回収係に顔を覚えられた〙", line: "また来たんですね。" },
+    { min: -699,  max: -600,  name: "〘ソース未装備〙", line: "武器を忘れてきた。" },
+    { min: -599,  max: -500,  name: "〘焼き台に謝ってる人〙", line: "違う、そうじゃない。" },
+    { min: -499,  max: -400,  name: "〘粉に戻った人〙", line: "最初からやり直せると思った？" },
+    { min: -399,  max: -300,  name: "〘鉄板の外側〙", line: "そこ、焼けない。" },
+    { min: -299,  max: -200,  name: "〘回収対象（仮）〙", line: "まだ返せると思っている。" },
+    { min: -199,  max: -100,  name: "〘生焼け肯定派〙", line: "これはこれで、って言い始めた。" },
+    { min: -99,   max: -1,    name: "〘ひっくり返し忘れ〙", line: "あっ、って言った。" },
+  ];
+
+  const RANKS_PLUS = [
+    { min: 0,    max: 149,  name: "〘粉の妖精（未焼成）〙", line: "まだ丸くすらない。人生も。" },
+    { min: 150,  max: 299,  name: "〘ソースの素振りマン〙", line: "かけてないのに、気持ちだけ濃い。" },
+    { min: 300,  max: 449,  name: "〘青のり散らし職人（風）〙", line: "職人“風”って言った？言ったね？" },
+    { min: 450,  max: 599,  name: "〘祭壇の前で深呼吸する人〙", line: "扉の前で呼吸するな。焼ける。" },
+    { min: 600,  max: 699,  name: "〘延長の民（帰れない）〙", line: "帰ろうと思った瞬間、延長が始まる。" },
+    { min: 700,  max: 799,  name: "〘潮目の読み間違い王〙", line: "読むな。感じろ。だいたい外れる。" },
+    { min: 800,  max: 899,  name: "〘鬼モード予備軍（危険物）〙", line: "近づくな。熱さに慣れた目をしてる。" },
+    { min: 900,  max: 999,  name: "〘回収されがちコレクター〙", line: "取ったと思ったら、取られてる。人生。" },
+    { min: 1000, max: 1149, name: "〘焼き台の反復横跳び〙", line: "足が速いのに、目的が分からない。" },
+    { min: 1150, max: 1299, name: "〘深海市場の常連（財布が不穏）〙", line: "買うな。回収される。なぜ来た。" },
+    { min: 1300, max: 1449, name: "〘図鑑を開く手が震える人〙", line: "ページめくると、たこ焼き増えると思ってる？" },
+    { min: 1450, max: 1599, name: "〘旅路の証っぽいもの保持者〙", line: "“っぽいもの”って言ったら全部軽くなる。" },
+    { min: 1600, max: 1749, name: "〘流れと握手した人〙", line: "握手した手が、もう戻ってこない。" },
+    { min: 1750, max: 1899, name: "〘観測者（現場猫）〙", line: "ヨシ！って言った瞬間、全部持ってかれた。" },
+    { min: 1900, max: 1999, name: "〘黒潮と同棲中〙", line: "家賃？払ってるのはメンタル。" },
+    { min: 2000, max: 2199, name: "〘仕様の外で生きてる人〙", line: "説明書が逃げた。戻ってこない。" },
+    { min: 2200, max: 2399, name: "〘焼かれた伝説（胃もたれ付き）〙", line: "伝説は重い。胃も重い。" },
+    { min: 2400, max: 2499, name: "〘禁断の回収免許皆伝〙", line: "免許？返納しろ。危ない。" },
+    { min: 2500, max: 2699, name: "〘観測不能（本人も不明）〙", line: "あなた誰？こっちが聞きたい。" },
+    { min: 2700, max: 2899, name: "〘祭壇が先にお辞儀した人〙", line: "偉いのはあなたじゃない。祭壇だ。" },
+    { min: 2900, max: 2999, name: "〘世界の外側でたこ焼き数えてる人〙", line: "数えるな。戻れなくなる。" },
+    { min: 3001, max: 3299, name: "〘上限突破：序章〙", line: "ここから先は、説明書が燃える。" },
+    { min: 3300, max: 3599, name: "〘回収無効化〙", line: "奪われない。奪わせない。" },
+    { min: 3600, max: 3999, name: "〘鬼の手元〙", line: "指先が熱を覚えている。" },
+    { min: 4000, max: 4499, name: "〘鉄板と同調〙", line: "揺れが読める。世界が遅い。" },
+    { min: 4500, max: 4999, name: "〘潮目支配〙", line: "流れを避けるんじゃない。使う。" },
+    { min: 5000, max: 5499, name: "〘焼成管理者〙", line: "火加減ではなく、運命を回している。" },
+    { min: 5500, max: 5999, name: "〘神速の返し〙", line: "拾う前に、もう次を取っている。" },
+    { min: 6000, max: 6499, name: "〘回収の外側〙", line: "海が静かに道を空ける。" },
+    { min: 6500, max: 6999, name: "〘深海の釣神〙", line: "海が静かに道を空ける。" },
+    { min: 7000, max: 7499, name: "〘レインボー統制〙", line: "色が来るタイミングが分かる。" },
+    { min: 7500, max: 7999, name: "〘鬼モード常駐〙", line: "もう戻れない。戻る必要もない。" },
+    { min: 8000, max: 8499, name: "〘焼かれた伝説：真〙", line: "伝説は“結果”ではなく“操作”だった。" },
+    { min: 8500, max: 8999, name: "〘鉄板の王〙", line: "火傷しない。火傷が逃げる。" },
+    { min: 9000, max: 9499, name: "〘世界線固定〙", line: "揺れが消える。残るのは精度。" },
+    { min: 9500, max: 9999, name: "〘釣り台の神〙", line: "あなたが動く前に、たこ焼きが寄る。" },
+    { min: 10000, max: 999999, name: "〘運営側〙", line: "……テストプレイ、ありがとうございます。" },
+  ];
+
+  const SCORE_3000_LINE = "それでも、たこ焼きは残らなかった。";
+
+  const els = {
+    backBtn: document.getElementById("backBtn"),
+    retryBtn: document.getElementById("retryBtn"),
+
+    resultOverlay: document.getElementById("resultOverlay"),
+    resultScroll: document.getElementById("resultScroll"),
+    resultScoreValue: document.getElementById("resultScoreValue"),
+    resultBestInline: document.getElementById("resultBestInline"),
+    bestNewBadge: document.getElementById("bestNewBadge"),
+    resultMain: document.getElementById("resultMain"),
+    resultRankSub: document.getElementById("resultRankSub"),
+    resultDate: document.getElementById("resultDate"),
+    resultExtendedChip: document.getElementById("resultExtendedChip"),
+    resultOniChip: document.getElementById("resultOniChip"),
+    waterDropArea: document.getElementById("waterDropArea"),
+    cardDropArea: document.getElementById("cardDropArea"),
+    resultRetryBtn: document.getElementById("resultRetryBtn"),
+    resultCloseBtn: document.getElementById("resultCloseBtn"),
+
+    dropSplash: document.getElementById("dropSplash"),
+    dropCard: document.getElementById("dropCard"),
+    dropBadge: document.getElementById("dropBadge"),
+    dropImg: document.getElementById("dropImg"),
+    dropTitle: document.getElementById("dropTitle"),
+    dropSub: document.getElementById("dropSub"),
+    dropQty: document.getElementById("dropQty"),
+    dropTotal: document.getElementById("dropTotal"),
+    dropOkBtn: document.getElementById("dropOkBtn"),
+
+    countOverlay: document.getElementById("countOverlay"),
+    countNum: document.getElementById("countNum"),
+
+    canvas: document.getElementById("tfCanvas"),
+  };
+
+  let IMGS = null;
+  let countdownTimer = null;
+  let countdownRunning = false;
+  let rafId = null;
+  let timerId = null;
+  let onPointer = null;
+  let STATE = null;
+  let scoreAnimFrame = null;
+
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function rand(a, b){ return a + Math.random() * (b - a); }
+
+  function readIntLS(key, def=0){
+    const raw = localStorage.getItem(key);
+    const n = Math.floor(Number(raw));
+    return Number.isFinite(n) ? n : def;
+  }
+
+  function setText(id, v){
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(v);
+  }
+
+  function formatLocal(dt){
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, "0");
+    const d = String(dt.getDate()).padStart(2, "0");
+    const hh = String(dt.getHours()).padStart(2, "0");
+    const mm = String(dt.getMinutes()).padStart(2, "0");
+    return `${y}/${m}/${d} ${hh}:${mm}`;
+  }
+
+  function getMonthKey(date = new Date()){
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
+  }
+
+  function defaultMonthlyStats(){
+    return { monthKey: getMonthKey(), harvest: 0, sales: 0, fishing: 0, tower: 0 };
+  }
+
+  function normalizeMonthlyStats(raw){
+    const curMonth = getMonthKey();
+    if (!raw || typeof raw !== "object") return defaultMonthlyStats();
+    const monthKey = String(raw.monthKey || "");
+    if (monthKey !== curMonth) return defaultMonthlyStats();
+    return {
+      monthKey: curMonth,
+      harvest: Number(raw.harvest || 0),
+      sales: Number(raw.sales || 0),
+      fishing: Number(raw.fishing || 0),
+      tower: Number(raw.tower || 0),
     };
+  }
 
-    const V = "3";
-
-    const DROP_WATERS = {
-      rotten: {
-        id: "water_rotten",
-        label: "腐ったミズ",
-        img: "https://takoyaki-card.com/town/assets/images/mizu/6.png"
-      },
-      sea: {
-        id: "water_sea",
-        label: "海水",
-        img: "https://takoyaki-card.com/town/assets/images/mizu/7.png"
-      },
-      yunokawa: {
-        id: "water_yunokawa",
-        label: "ゆのかわの温泉ミズ",
-        img: "https://takoyaki-card.com/town/assets/images/mizu/8.png"
-      },
-      supergod: {
-        id: "water_supergod",
-        label: "超神水",
-        img: "https://takoyaki-card.com/town/assets/images/mizu/9.png"
-      },
-    };
-
-    const FISH_CARDS = [
-      {
-        id: "SP-FISH-001",
-        name: "一口どうぞマン",
-        img: "https://takoyaki-card.com/town/assets/images/sp/fish001.png",
-        rarity: "N",
-        weight: 45
-      },
-      {
-        id: "SP-FISH-002",
-        name: "函館の主イカ",
-        img: "https://takoyaki-card.com/town/assets/images/sp/fish002.png",
-        rarity: "N",
-        weight: 45
-      },
-      {
-        id: "SP-FISH-003",
-        name: "本日分、焼き上がり済",
-        img: "https://takoyaki-card.com/town/assets/images/sp/fish003.png",
-        rarity: "SR",
-        weight: 9.5
-      },
-      {
-        id: "SP-FISH-TAKOKAGE",
-        name: "タコ影魚群",
-        img: "https://takoyaki-card.com/town/assets/images/sp/fish.png",
-        rarity: "SECRET",
-        weight: 0.5
-      }
-    ];
-
-    const CDN_BASE = "https://cdn.jsdelivr.net/gh/takoyaki-trc/takoyaki-gate@main/assets/takofish/";
-    const IMG_URLS = {
-      pick:          `${CDN_BASE}pick.png?v=${V}`,
-      sauce:         `${CDN_BASE}tako_sauce.png?v=${V}`,
-      ika_tako:      `${CDN_BASE}tako_ika.png?v=${V}`,
-      gold:          `${CDN_BASE}tako_gold.png?v=${V}`,
-      rainbow:       `${CDN_BASE}tako_rainbow.png?v=${V}`,
-      raw:           `${CDN_BASE}tako_raw.png?v=${V}`,
-      tourist_left:  `${CDN_BASE}tourist_left.png?v=${V}`,
-      tourist_right: `${CDN_BASE}tourist_right.png?v=${V}`,
-      squid:         `${CDN_BASE}ika.png?v=${V}`,
-    };
-
-    const CFG = {
-      W: 360,
-      H: 520,
-
-      BASE_LIMIT: 30,
-      EXT_LIMIT: 60,
-      EXT_SCORE: 600,
-      ONI_AT: 45,
-      ONI_FREEZE_MS: 300,
-      ONI_SPEED_MUL: 2.2,
-
-      HOOK_DROP_BASE: 620,
-      HOOK_REEL_BASE: 280,
-
-      TOP_Y: 18,
-      FLOOR_Y_RATIO: 0.86,
-
-      ITEM_COUNT: 7,
-
-      GIANT_DROP_CHANCE: 0.18,
-      GIANT_DROP_START_Y_RATIO: 0.62,
-
-      COUNTDOWN_SEC: 3,
-
-      SIZE: {
-        tiny:   { label: "極小",  draw: 24, base: 120 },
-        normal: { label: "普通",  draw: 40, base: 70  },
-        giant:  { label: "巨大",  draw: 56, base: 40  },
-      },
-      SIZE_WEIGHTS: [
-        { key: "normal", w: 62 },
-        { key: "tiny",   w: 28 },
-        { key: "giant",  w: 10 },
-      ],
-
-      TYPE: {
-        sauce:   { label: "ソース",     mult:  1.00, imgKey: "sauce" },
-        ika:     { label: "いかさま",   mult:  1.40, imgKey: "ika_tako" },
-        gold:    { label: "ゴールド",   mult:  2.80, imgKey: "gold" },
-        rainbow: { label: "レインボー", mult:  5.50, imgKey: "rainbow" },
-        raw:     { label: "生焼け",     mult: -1.50, imgKey: "raw" },
-      },
-      TYPE_WEIGHTS: [
-        { key: "sauce",   w: 55 },
-        { key: "ika",     w: 20 },
-        { key: "gold",    w: 10 },
-        { key: "rainbow", w:  5 },
-        { key: "raw",     w: 10 },
-      ],
-
-      ENEMY_CENTER_Y_RATIO: 0.45,
-      ENEMY_GAP: 170,
-
-      TOURIST: { w: 34, h: 18, speed: 90 },
-      SQUID: { w: 58, h: 58, speed: 18, ampX: 10, ampY: 16, freq: 0.55 },
-
-      DASH: {
-        w: 54, h: 10,
-        speed: 950,
-        minS: 10, maxS: 15,
-        oniMinS: 4, oniMaxS: 7,
-        trail: 4,
-      },
-
-      MARGIN_X: 10,
-    };
-
-    const RANKS_MINUS = [
-      { min: -1000, max: -1000, name: "〘未投入〙", line: "鉄板に、置かれていない。" },
-      { min: -999,  max: -900,  name: "〘焼かれていない存在〙", line: "まだ、始まってすらいない。" },
-      { min: -899,  max: -800,  name: "〘生焼け信者（末期）〙", line: "これは“通”の味。" },
-      { min: -799,  max: -700,  name: "〘回収係に顔を覚えられた〙", line: "また来たんですね。" },
-      { min: -699,  max: -600,  name: "〘ソース未装備〙", line: "武器を忘れてきた。" },
-      { min: -599,  max: -500,  name: "〘焼き台に謝ってる人〙", line: "違う、そうじゃない。" },
-      { min: -499,  max: -400,  name: "〘粉に戻った人〙", line: "最初からやり直せると思った？" },
-      { min: -399,  max: -300,  name: "〘鉄板の外側〙", line: "そこ、焼けない。" },
-      { min: -299,  max: -200,  name: "〘回収対象（仮）〙", line: "まだ返せると思っている。" },
-      { min: -199,  max: -100,  name: "〘生焼け肯定派〙", line: "これはこれで、って言い始めた。" },
-      { min: -99,   max: -1,    name: "〘ひっくり返し忘れ〙", line: "あっ、って言った。" },
-    ];
-
-    const RANKS_PLUS = [
-      { min: 0,    max: 149,  name: "〘粉の妖精（未焼成）〙", line: "まだ丸くすらない。人生も。" },
-      { min: 150,  max: 299,  name: "〘ソースの素振りマン〙", line: "かけてないのに、気持ちだけ濃い。" },
-      { min: 300,  max: 449,  name: "〘青のり散らし職人（風）〙", line: "職人“風”って言った？言ったね？" },
-      { min: 450,  max: 599,  name: "〘祭壇の前で深呼吸する人〙", line: "扉の前で呼吸するな。焼ける。" },
-      { min: 600,  max: 699,  name: "〘延長の民（帰れない）〙", line: "帰ろうと思った瞬間、延長が始まる。" },
-      { min: 700,  max: 799,  name: "〘潮目の読み間違い王〙", line: "読むな。感じろ。だいたい外れる。" },
-      { min: 800,  max: 899,  name: "〘鬼モード予備軍（危険物）〙", line: "近づくな。熱さに慣れた目をしてる。" },
-      { min: 900,  max: 999,  name: "〘回収されがちコレクター〙", line: "取ったと思ったら、取られてる。人生。" },
-      { min: 1000, max: 1149, name: "〘焼き台の反復横跳び〙", line: "足が速いのに、目的が分からない。" },
-      { min: 1150, max: 1299, name: "〘深海市場の常連（財布が不穏）〙", line: "買うな。回収される。なぜ来た。" },
-      { min: 1300, max: 1449, name: "〘図鑑を開く手が震える人〙", line: "ページめくると、たこ焼き増えると思ってる？" },
-      { min: 1450, max: 1599, name: "〘旅路の証っぽいもの保持者〙", line: "“っぽいもの”って言ったら全部軽くなる。" },
-      { min: 1600, max: 1749, name: "〘流れと握手した人〙", line: "握手した手が、もう戻ってこない。" },
-      { min: 1750, max: 1899, name: "〘観測者（現場猫）〙", line: "ヨシ！って言った瞬間、全部持ってかれた。" },
-      { min: 1900, max: 1999, name: "〘黒潮と同棲中〙", line: "家賃？払ってるのはメンタル。" },
-      { min: 2000, max: 2199, name: "〘仕様の外で生きてる人〙", line: "説明書が逃げた。戻ってこない。" },
-      { min: 2200, max: 2399, name: "〘焼かれた伝説（胃もたれ付き）〙", line: "伝説は重い。胃も重い。" },
-      { min: 2400, max: 2499, name: "〘禁断の回収免許皆伝〙", line: "免許？返納しろ。危ない。" },
-      { min: 2500, max: 2699, name: "〘観測不能（本人も不明）〙", line: "あなた誰？こっちが聞きたい。" },
-      { min: 2700, max: 2899, name: "〘祭壇が先にお辞儀した人〙", line: "偉いのはあなたじゃない。祭壇だ。" },
-      { min: 2900, max: 2999, name: "〘世界の外側でたこ焼き数えてる人〙", line: "数えるな。戻れなくなる。" },
-      { min: 3001, max: 3299, name: "〘上限突破：序章〙", line: "ここから先は、説明書が燃える。" },
-      { min: 3300, max: 3599, name: "〘回収無効化〙", line: "奪われない。奪わせない。" },
-      { min: 3600, max: 3999, name: "〘鬼の手元〙", line: "指先が熱を覚えている。" },
-      { min: 4000, max: 4499, name: "〘鉄板と同調〙", line: "揺れが読める。世界が遅い。" },
-      { min: 4500, max: 4999, name: "〘潮目支配〙", line: "流れを避けるんじゃない。使う。" },
-      { min: 5000, max: 5499, name: "〘焼成管理者〙", line: "火加減ではなく、運命を回している。" },
-      { min: 5500, max: 5999, name: "〘神速の返し〙", line: "拾う前に、もう次を取っている。" },
-      { min: 6000, max: 6499, name: "〘回収の外側〙", line: "海が静かに道を空ける。" },
-      { min: 6500, max: 6999, name: "〘深海の釣神〙", line: "海が静かに道を空ける。" },
-      { min: 7000, max: 7499, name: "〘レインボー統制〙", line: "色が来るタイミングが分かる。" },
-      { min: 7500, max: 7999, name: "〘鬼モード常駐〙", line: "もう戻れない。戻る必要もない。" },
-      { min: 8000, max: 8499, name: "〘焼かれた伝説：真〙", line: "伝説は“結果”ではなく“操作”だった。" },
-      { min: 8500, max: 8999, name: "〘鉄板の王〙", line: "火傷しない。火傷が逃げる。" },
-      { min: 9000, max: 9499, name: "〘世界線固定〙", line: "揺れが消える。残るのは精度。" },
-      { min: 9500, max: 9999, name: "〘釣り台の神〙", line: "あなたが動く前に、たこ焼きが寄る。" },
-      { min: 10000, max: 999999, name: "〘運営側〙", line: "……テストプレイ、ありがとうございます。" },
-    ];
-
-    const SCORE_3000_LINE = "それでも、たこ焼きは残らなかった。";
-
-    const els = {
-      backBtn: document.getElementById("backBtn"),
-      retryBtn: document.getElementById("retryBtn"),
-
-      resultOverlay: document.getElementById("resultOverlay"),
-      resultScoreValue: document.getElementById("resultScoreValue"),
-      resultMain: document.getElementById("resultMain"),
-      resultSub: document.getElementById("resultSub"),
-      resultDate: document.getElementById("resultDate"),
-      resultCurrent: document.getElementById("resultCurrent"),
-      resultBest: document.getElementById("resultBest"),
-      resultExtendText: document.getElementById("resultExtendText"),
-      waterDropWrap: document.getElementById("waterDropWrap"),
-      cardDropWrap: document.getElementById("cardDropWrap"),
-      resultAgainBtn: document.getElementById("resultAgainBtn"),
-      resultCloseBtn: document.getElementById("resultCloseBtn"),
-
-      dropSplash: document.getElementById("dropSplash"),
-      dropCard: document.getElementById("dropCard"),
-      dropBadge: document.getElementById("dropBadge"),
-      dropImg: document.getElementById("dropImg"),
-      dropTitle: document.getElementById("dropTitle"),
-      dropSub: document.getElementById("dropSub"),
-      dropQty: document.getElementById("dropQty"),
-      dropTotal: document.getElementById("dropTotal"),
-      dropOkBtn: document.getElementById("dropOkBtn"),
-
-      countOverlay: document.getElementById("countOverlay"),
-      countNum: document.getElementById("countNum"),
-
-      canvas: document.getElementById("tfCanvas"),
-    };
-
-    let IMGS = null;
-    let countdownTimer = null;
-    let countdownRunning = false;
-    let rafId = null;
-    let timerId = null;
-    let onPointer = null;
-    let STATE = null;
-
-    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-    function rand(a, b){ return a + Math.random() * (b - a); }
-
-    function readIntLS(key, def=0){
-      const raw = localStorage.getItem(key);
-      const n = Math.floor(Number(raw));
-      return Number.isFinite(n) ? n : def;
-    }
-
-    function setText(id, v){
-      const el = document.getElementById(id);
-      if (el) el.textContent = String(v);
-    }
-
-    function formatLocal(dt){
-      const y = dt.getFullYear();
-      const m = String(dt.getMonth() + 1).padStart(2, "0");
-      const d = String(dt.getDate()).padStart(2, "0");
-      const hh = String(dt.getHours()).padStart(2, "0");
-      const mm = String(dt.getMinutes()).padStart(2, "0");
-      return `${y}/${m}/${d} ${hh}:${mm}`;
-    }
-
-    function getMonthKey(date = new Date()){
-      return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
-    }
-
-    function defaultMonthlyStats(){
-      return { monthKey: getMonthKey(), harvest: 0, sales: 0, fishing: 0, tower: 0 };
-    }
-
-    function normalizeMonthlyStats(raw){
-      const curMonth = getMonthKey();
-      if (!raw || typeof raw !== "object") return defaultMonthlyStats();
-      const monthKey = String(raw.monthKey || "");
-      if (monthKey !== curMonth) return defaultMonthlyStats();
-      return {
-        monthKey: curMonth,
-        harvest: Number(raw.harvest || 0),
-        sales: Number(raw.sales || 0),
-        fishing: Number(raw.fishing || 0),
-        tower: Number(raw.tower || 0),
-      };
-    }
-
-    function loadMonthlyStats(){
-      try{
-        const raw = localStorage.getItem(FISH_LS.monthlyStats);
-        if (!raw){
-          const def = defaultMonthlyStats();
-          localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(def));
-          return def;
-        }
-        const parsed = JSON.parse(raw);
-        const norm = normalizeMonthlyStats(parsed);
-        localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(norm));
-        return norm;
-      }catch(_){
+  function loadMonthlyStats(){
+    try{
+      const raw = localStorage.getItem(FISH_LS.monthlyStats);
+      if (!raw){
         const def = defaultMonthlyStats();
         localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(def));
         return def;
       }
-    }
-
-    function saveMonthlyStats(stats){
-      const norm = normalizeMonthlyStats(stats);
+      const parsed = JSON.parse(raw);
+      const norm = normalizeMonthlyStats(parsed);
       localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(norm));
+      return norm;
+    }catch(_){
+      const def = defaultMonthlyStats();
+      localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(def));
+      return def;
     }
+  }
 
-    function updateMonthlyFishingHigh(score = 0){
-      const s = loadMonthlyStats();
-      s.monthKey = getMonthKey();
-      s.fishing = Math.max(Number(s.fishing || 0), Math.floor(Number(score || 0)));
-      saveMonthlyStats(s);
+  function saveMonthlyStats(stats){
+    const norm = normalizeMonthlyStats(stats);
+    localStorage.setItem(FISH_LS.monthlyStats, JSON.stringify(norm));
+  }
+
+  function updateMonthlyFishingHigh(score = 0){
+    const s = loadMonthlyStats();
+    s.monthKey = getMonthKey();
+    s.fishing = Math.max(Number(s.fishing || 0), Math.floor(Number(score || 0)));
+    saveMonthlyStats(s);
+  }
+
+  function saveFishingRecord(score){
+    score = Math.floor(Number(score) || 0);
+    localStorage.setItem(FISH_LS.last, String(score));
+    localStorage.setItem(FISH_LS.playedAt, new Date().toISOString());
+
+    const best = readIntLS(FISH_LS.best, 0);
+    const isNew = score > best;
+    const newBest = isNew ? score : best;
+    if (isNew) localStorage.setItem(FISH_LS.best, String(score));
+
+    try{
+      let st = {};
+      try{ st = JSON.parse(localStorage.getItem(FISH_LS.compat) || "{}"); }catch(_){}
+      st.best = Math.max(Math.floor(Number(st.best) || 0), newBest);
+      st.last = score;
+      st.updatedAt = Date.now();
+      localStorage.setItem(FISH_LS.compat, JSON.stringify(st));
+    }catch(_){}
+
+    updateMonthlyFishingHigh(score);
+    return { best: newBest, isNew };
+  }
+
+  function normalizeScore(score, min, max){
+    if (max <= min) return 0;
+    const s = clamp(Number(score) || 0, min, max);
+    return (s - min) / (max - min);
+  }
+
+  function normalizeNegativeMagnitude(score, near = -151, deep = -1000){
+    const s = Number(score) || 0;
+    if (s > near) return 0;
+    const mag = Math.abs(s);
+    const minMag = Math.abs(near);
+    const maxMag = Math.abs(deep);
+    return clamp((mag - minMag) / (maxMag - minMag), 0, 1);
+  }
+
+  function defaultInv(){
+    return { ver: 1, seed: {}, water: {}, fert: {} };
+  }
+
+  function loadFarmInv(){
+    try{
+      const raw = localStorage.getItem(FISH_LS.inv);
+      if (!raw) return defaultInv();
+      const inv = JSON.parse(raw);
+      if (!inv || typeof inv !== "object") return defaultInv();
+      if (!inv.seed || typeof inv.seed !== "object") inv.seed = {};
+      if (!inv.water || typeof inv.water !== "object") inv.water = {};
+      if (!inv.fert || typeof inv.fert !== "object") inv.fert = {};
+      return inv;
+    }catch(_){
+      return defaultInv();
     }
+  }
 
-    function saveFishingRecord(score){
-      score = Math.floor(Number(score) || 0);
-      localStorage.setItem(FISH_LS.last, String(score));
-      localStorage.setItem(FISH_LS.playedAt, new Date().toISOString());
+  function saveFarmInv(inv){
+    localStorage.setItem(FISH_LS.inv, JSON.stringify(inv || defaultInv()));
+  }
 
-      const best = readIntLS(FISH_LS.best, 0);
-      const isNew = score > best;
-      const newBest = isNew ? score : best;
-      if (isNew) localStorage.setItem(FISH_LS.best, String(score));
+  function addWaterToFarm(drop){
+    if (!drop || !drop.id) return null;
 
-      try{
-        let st = {};
-        try{ st = JSON.parse(localStorage.getItem(FISH_LS.compat) || "{}"); }catch(_){}
-        st.best = Math.max(Math.floor(Number(st.best) || 0), newBest);
-        st.last = score;
-        st.updatedAt = Date.now();
-        localStorage.setItem(FISH_LS.compat, JSON.stringify(st));
-      }catch(_){}
+    const inv = loadFarmInv();
+    const cur = Math.max(0, Math.floor(Number(inv.water[drop.id] || 0)));
+    const qty = Math.max(1, Math.floor(Number(drop.qty || 1)));
+    inv.water[drop.id] = cur + qty;
+    saveFarmInv(inv);
 
-      updateMonthlyFishingHigh(score);
-      return { best: newBest, isNew };
-    }
+    return {
+      id: drop.id,
+      label: drop.label,
+      img: drop.img || "",
+      qty,
+      total: inv.water[drop.id]
+    };
+  }
 
-    function normalizeScore(score, min, max){
-      if (max <= min) return 0;
-      const s = clamp(Number(score) || 0, min, max);
-      return (s - min) / (max - min);
-    }
-
-    function normalizeNegativeMagnitude(score, near = -151, deep = -1000){
-      const s = Number(score) || 0;
-      if (s > near) return 0;
-      const mag = Math.abs(s);
-      const minMag = Math.abs(near);
-      const maxMag = Math.abs(deep);
-      return clamp((mag - minMag) / (maxMag - minMag), 0, 1);
-    }
-
-    function defaultInv(){
-      return { ver: 1, seed: {}, water: {}, fert: {} };
-    }
-
-    function loadFarmInv(){
-      try{
-        const raw = localStorage.getItem(FISH_LS.inv);
-        if (!raw) return defaultInv();
-        const inv = JSON.parse(raw);
-        if (!inv || typeof inv !== "object") return defaultInv();
-        if (!inv.seed || typeof inv.seed !== "object") inv.seed = {};
-        if (!inv.water || typeof inv.water !== "object") inv.water = {};
-        if (!inv.fert || typeof inv.fert !== "object") inv.fert = {};
-        return inv;
-      }catch(_){
-        return defaultInv();
+  function rollRateTable(table){
+    const total = table.reduce((s, v) => s + Number(v.rate || 0), 0);
+    const r = Math.random() * total;
+    let acc = 0;
+    for (const row of table){
+      acc += Number(row.rate || 0);
+      if (r < acc){
+        if (!row.drop) return null;
+        return { ...row.drop, qty: 1 };
       }
     }
+    return null;
+  }
 
-    function saveFarmInv(inv){
-      localStorage.setItem(FISH_LS.inv, JSON.stringify(inv || defaultInv()));
-    }
+  function rollWaterDrop(score){
+    score = Math.floor(Number(score) || 0);
 
-    function addWaterToFarm(drop){
-      if (!drop || !drop.id) return null;
-
-      const inv = loadFarmInv();
-      const cur = Math.max(0, Math.floor(Number(inv.water[drop.id] || 0)));
-      const qty = Math.max(1, Math.floor(Number(drop.qty || 1)));
-      inv.water[drop.id] = cur + qty;
-      saveFarmInv(inv);
-
-      return {
-        id: drop.id,
-        label: drop.label,
-        img: drop.img || "",
-        qty,
-        total: inv.water[drop.id]
-      };
-    }
-
-    function rollRateTable(table){
-      const total = table.reduce((s, v) => s + Number(v.rate || 0), 0);
-      const r = Math.random() * total;
-      let acc = 0;
-      for (const row of table){
-        acc += Number(row.rate || 0);
-        if (r < acc){
-          if (!row.drop) return null;
-          return { ...row.drop, qty: 1 };
-        }
-      }
+    if (score >= -150 && score <= 500){
       return null;
     }
 
-    function rollWaterDrop(score){
-      score = Math.floor(Number(score) || 0);
+    if (score <= -1001){
+      return { ...DROP_WATERS.rotten, qty: 1 };
+    }
 
-      if (score >= -150 && score <= 500) return null;
-
-      if (score <= -1001){
+    if (score >= -1000 && score <= -151){
+      const t = normalizeNegativeMagnitude(score, -151, -1000);
+      const chance = 30 + 20 * t;
+      if (Math.random() * 100 < chance){
         return { ...DROP_WATERS.rotten, qty: 1 };
       }
-
-      if (score >= -1000 && score <= -151){
-        const t = normalizeNegativeMagnitude(score, -151, -1000);
-        const chance = 30 + 20 * t;
-        if (Math.random() * 100 < chance){
-          return { ...DROP_WATERS.rotten, qty: 1 };
-        }
-        return null;
-      }
-
-      if (score >= 501 && score <= 1499){
-        const t = normalizeScore(score, 501, 1499);
-        const chance = 30 + 25 * t;
-        if (Math.random() * 100 < chance){
-          return { ...DROP_WATERS.sea, qty: 1 };
-        }
-        return null;
-      }
-
-      if (score >= 1500 && score <= 2499){
-        const t = normalizeScore(score, 1500, 2499);
-        const chance = 45 + 25 * t;
-        if (Math.random() * 100 < chance){
-          return { ...DROP_WATERS.yunokawa, qty: 1 };
-        }
-        return null;
-      }
-
-      if (score >= 2500 && score <= 3999){
-        return rollRateTable([
-          { rate: 20, drop: null },
-          { rate: 20, drop: DROP_WATERS.supergod },
-          { rate: 40, drop: DROP_WATERS.yunokawa },
-          { rate: 20, drop: DROP_WATERS.sea },
-        ]);
-      }
-
-      if (score >= 4000 && score <= 4999){
-        return rollRateTable([
-          { rate: 15, drop: null },
-          { rate: 35, drop: DROP_WATERS.supergod },
-          { rate: 35, drop: DROP_WATERS.yunokawa },
-          { rate: 15, drop: DROP_WATERS.sea },
-        ]);
-      }
-
-      if (score >= 5000){
-        return rollRateTable([
-          { rate: 55, drop: DROP_WATERS.supergod },
-          { rate: 30, drop: DROP_WATERS.yunokawa },
-          { rate: 15, drop: DROP_WATERS.sea },
-        ]);
-      }
-
       return null;
     }
 
-    function rollCardDrop(score){
-      let chance = 0;
-
-      if (score >= 1000 && score <= 1999) chance = 5;
-      else if (score >= 2000 && score <= 2999) chance = 10;
-      else if (score >= 3000 && score <= 3999) chance = 15;
-      else if (score >= 4000 && score <= 4999) chance = 20;
-      else if (score >= 5000) chance = 25;
-
-      if (chance <= 0) return null;
-      if (Math.random() * 100 >= chance) return null;
-
-      const total = FISH_CARDS.reduce((s, c) => s + c.weight, 0);
-      let r = Math.random() * total;
-
-      for (const c of FISH_CARDS){
-        r -= c.weight;
-        if (r <= 0) return { ...c };
+    if (score >= 501 && score <= 1499){
+      const t = normalizeScore(score, 501, 1499);
+      const chance = 30 + 25 * t;
+      if (Math.random() * 100 < chance){
+        return { ...DROP_WATERS.sea, qty: 1 };
       }
-      return { ...FISH_CARDS[0] };
+      return null;
     }
 
-    function saveCardToZukan(card){
-      if (!card || !card.id) return { ok:false, count:0, isNew:false };
-
-      const now = Date.now();
-
-      try{
-        let book = {};
-        try{ book = JSON.parse(localStorage.getItem(FISH_LS.zukan) || "{}"); }catch(_){ book = {}; }
-
-        if (!book || typeof book !== "object") book = {};
-        if (!book.got || typeof book.got !== "object") book.got = {};
-
-        const prev = book.got[card.id];
-        let count = 1;
-        let isNew = true;
-
-        if (prev && typeof prev === "object"){
-          const curCount = Number.isFinite(prev.count) ? prev.count : 1;
-          count = curCount + 1;
-          isNew = false;
-          prev.count = count;
-          prev.name = card.name || prev.name || "";
-          prev.img = card.img || prev.img || "";
-          prev.rarity = card.rarity || prev.rarity || "";
-          prev.lastAt = now;
-          book.got[card.id] = prev;
-        } else {
-          book.got[card.id] = {
-            id: card.id,
-            name: card.name || "",
-            img: card.img || "",
-            rarity: card.rarity || "",
-            tier: "",
-            count: 1,
-            at: now,
-            lastAt: now,
-          };
-        }
-
-        localStorage.setItem(FISH_LS.zukan, JSON.stringify(book));
-        return { ok:true, count, isNew };
-      }catch(_){
-        return { ok:false, count:0, isNew:false };
+    if (score >= 1500 && score <= 2499){
+      const t = normalizeScore(score, 1500, 2499);
+      const chance = 45 + 25 * t;
+      if (Math.random() * 100 < chance){
+        return { ...DROP_WATERS.yunokawa, qty: 1 };
       }
+      return null;
     }
 
-    function pickByWeight(list){
-      let sum = 0;
-      for (const it of list) sum += it.w;
-      let r = Math.random() * sum;
-      for (const it of list){
-        r -= it.w;
-        if (r <= 0) return it.key;
-      }
-      return list[list.length - 1].key;
+    if (score >= 2500 && score <= 3999){
+      return rollRateTable([
+        { rate: 20, drop: null },
+        { rate: 20, drop: DROP_WATERS.supergod },
+        { rate: 40, drop: DROP_WATERS.yunokawa },
+        { rate: 20, drop: DROP_WATERS.sea },
+      ]);
     }
 
-    function circleHit(ax, ay, ar, bx, by, br){
-      const dx = ax - bx;
-      const dy = ay - by;
-      return (dx * dx + dy * dy) <= (ar + br) * (ar + br);
+    if (score >= 4000 && score <= 4999){
+      return rollRateTable([
+        { rate: 15, drop: null },
+        { rate: 35, drop: DROP_WATERS.supergod },
+        { rate: 35, drop: DROP_WATERS.yunokawa },
+        { rate: 15, drop: DROP_WATERS.sea },
+      ]);
     }
 
-    function circleRectHit(cx, cy, cr, rx, ry, rw, rh){
-      const nx = clamp(cx, rx, rx + rw);
-      const ny = clamp(cy, ry, ry + rh);
-      const dx = cx - nx;
-      const dy = cy - ny;
-      return (dx * dx + dy * dy) <= cr * cr;
+    if (score >= 5000){
+      return rollRateTable([
+        { rate: 55, drop: DROP_WATERS.supergod },
+        { rate: 30, drop: DROP_WATERS.yunokawa },
+        { rate: 15, drop: DROP_WATERS.sea },
+      ]);
     }
 
-    function nowMs(){ return performance.now(); }
+    return null;
+  }
 
-    function getComboMultiplier(comboCount){
-      if (comboCount >= 5) return 2.0;
-      if (comboCount === 4) return 1.6;
-      if (comboCount === 3) return 1.4;
-      if (comboCount === 2) return 1.2;
-      return 1.0;
+  function rollCardDrop(score){
+    let chance = 0;
+
+    if (score >= 1000 && score <= 1999) chance = 5;
+    else if (score >= 2000 && score <= 2999) chance = 10;
+    else if (score >= 3000 && score <= 3999) chance = 15;
+    else if (score >= 4000 && score <= 4999) chance = 20;
+    else if (score >= 5000) chance = 25;
+
+    if (chance <= 0) return null;
+    if (Math.random() * 100 >= chance) return null;
+
+    const total = FISH_CARDS.reduce((s, c) => s + c.weight, 0);
+    let r = Math.random() * total;
+
+    for (const c of FISH_CARDS){
+      r -= c.weight;
+      if (r <= 0) return { ...c };
     }
+    return { ...FISH_CARDS[0] };
+  }
 
-    function calcCatchScore(spec, comboAfterCatch){
-      return Math.round(spec.size.base * spec.type.mult * getComboMultiplier(comboAfterCatch));
-    }
+  function saveCardToZukan(card){
+    if (!card || !card.id) return { ok:false, count:0, isNew:false };
 
-    function buildTakoyakiSpec(){
-      const sizeKey = pickByWeight(CFG.SIZE_WEIGHTS);
-      const typeKey = pickByWeight(CFG.TYPE_WEIGHTS);
-      const size = CFG.SIZE[sizeKey];
-      const type = CFG.TYPE[typeKey];
-      const previewPoints = Math.round(size.base * type.mult);
-      return { sizeKey, size, type, points: previewPoints };
-    }
+    const now = Date.now();
 
-    function pointerToCanvasX(e, cvs){
-      const rect = cvs.getBoundingClientRect();
-      const x = (e.clientX - rect.left) * (CFG.W / rect.width);
-      return clamp(x, CFG.MARGIN_X, CFG.W - CFG.MARGIN_X);
-    }
+    try{
+      let book = {};
+      try{ book = JSON.parse(localStorage.getItem(FISH_LS.zukan) || "{}"); }catch(_){ book = {}; }
 
-    function hookDropSpeed(hy, floorY){
-      const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
-      return CFG.HOOK_DROP_BASE * (1.02 + 0.62 * t);
-    }
+      if (!book || typeof book !== "object") book = {};
+      if (!book.got || typeof book.got !== "object") book.got = {};
 
-    function hookReelSpeed(hy, floorY, hasCatch){
-      const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
-      return CFG.HOOK_REEL_BASE * (1.24 + 0.74 * (1 - t)) * (hasCatch ? 1.16 : 1.03);
-    }
+      const prev = book.got[card.id];
+      let count = 1;
+      let isNew = true;
 
-    function getRank(score){
-      if (score === 3000) return null;
-      const list = (score < 0) ? RANKS_MINUS : RANKS_PLUS;
-      if (score < list[0].min) return list[0];
-      if (score > list[list.length - 1].max) return list[list.length - 1];
-      for (const r of list){
-        if (score >= r.min && score <= r.max) return r;
-      }
-      return list[list.length - 1];
-    }
-
-    function refreshBestUI(){
-      setText("tfBest", readIntLS(FISH_LS.best, 0));
-    }
-
-    function loadImage(src){
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error(src));
-        img.src = src;
-      });
-    }
-
-    async function loadAllImages(){
-      const keys = Object.keys(IMG_URLS);
-      const images = {};
-      const failed = [];
-      for (const k of keys){
-        try{ images[k] = await loadImage(IMG_URLS[k]); }
-        catch(e){ failed.push({ key:k, url:String(e.message || e) }); }
-      }
-      return { images, failed };
-    }
-
-    function showResult(){ els.resultOverlay.classList.add("show"); }
-    function hideResult(){ els.resultOverlay.classList.remove("show"); }
-
-    function showCountdownNum(v){
-      els.countNum.textContent = String(v);
-      els.countOverlay.classList.add("show");
-    }
-
-    function hideCountdown(){
-      els.countOverlay.classList.remove("show");
-    }
-
-    function showDropSplash(payload){
-      return new Promise((resolve) => {
-        if (!payload){
-          resolve();
-          return;
-        }
-
-        els.dropBadge.textContent = payload.badge || "DROP";
-        els.dropTitle.textContent = payload.title || "GET!";
-        els.dropSub.textContent = payload.sub || "";
-        els.dropQty.textContent = payload.qtyText || "";
-        els.dropTotal.innerHTML = payload.totalText || "";
-
-        if (payload.img){
-          els.dropImg.src = payload.img;
-          els.dropImg.style.display = "block";
-        } else {
-          els.dropImg.removeAttribute("src");
-          els.dropImg.style.display = "none";
-        }
-
-        if (payload.rare){
-          els.dropCard.classList.add("dropRare");
-        } else {
-          els.dropCard.classList.remove("dropRare");
-        }
-
-        els.dropSplash.classList.add("show");
-
-        const done = () => {
-          els.dropSplash.classList.remove("show");
-          els.dropOkBtn.removeEventListener("click", done);
-          resolve();
+      if (prev && typeof prev === "object"){
+        const curCount = Number.isFinite(prev.count) ? prev.count : 1;
+        count = curCount + 1;
+        isNew = false;
+        prev.count = count;
+        prev.name = card.name || prev.name || "";
+        prev.img = card.img || prev.img || "";
+        prev.rarity = card.rarity || prev.rarity || "";
+        prev.lastAt = now;
+        book.got[card.id] = prev;
+      } else {
+        book.got[card.id] = {
+          id: card.id,
+          name: card.name || "",
+          img: card.img || "",
+          rarity: card.rarity || "",
+          tier: "",
+          count: 1,
+          at: now,
+          lastAt: now,
         };
+      }
 
-        els.dropOkBtn.addEventListener("click", done, { once:true });
-      });
+      localStorage.setItem(FISH_LS.zukan, JSON.stringify(book));
+      return { ok:true, count, isNew };
+    }catch(_){
+      return { ok:false, count:0, isNew:false };
     }
+  }
 
-    function renderWaterResult(dropInfo){
-      if (!dropInfo){
-        return `<div class="resultNone">今回はミズのドロップなし。</div>`;
-      }
-
-      return `
-        <div class="resultDropCard">
-          <img src="${dropInfo.img}" alt="${dropInfo.label}">
-          <div>
-            <div class="resultDropKicker">WATER DROP</div>
-            <div class="resultDropName">${dropInfo.label}</div>
-            <div class="resultDropText">×${dropInfo.qty} を獲得 / 所持数：${dropInfo.total}</div>
-          </div>
-        </div>
-      `;
+  function pickByWeight(list){
+    let sum = 0;
+    for (const it of list) sum += it.w;
+    let r = Math.random() * sum;
+    for (const it of list){
+      r -= it.w;
+      if (r <= 0) return it.key;
     }
+    return list[list.length - 1].key;
+  }
 
-    function renderCardResult(cardInfo, cardResult){
-      if (!cardInfo){
-        return `<div class="resultNone">今回はカードドロップなし。</div>`;
-      }
+  function circleHit(ax, ay, ar, bx, by, br){
+    const dx = ax - bx;
+    const dy = ay - by;
+    return (dx * dx + dy * dy) <= (ar + br) * (ar + br);
+  }
 
-      const stateText = cardResult && cardResult.isNew
-        ? "NEW! 図鑑に登録"
-        : (cardResult && cardResult.count > 1
-          ? `×${cardResult.count}`
-          : "図鑑に登録");
+  function circleRectHit(cx, cy, cr, rx, ry, rw, rh){
+    const nx = clamp(cx, rx, rx + rw);
+    const ny = clamp(cy, ry, ry + rh);
+    const dx = cx - nx;
+    const dy = cy - ny;
+    return (dx * dx + dy * dy) <= cr * cr;
+  }
 
-      return `
-        <div class="resultDropCard">
-          <img src="${cardInfo.img}" alt="${cardInfo.name}">
-          <div>
-            <div class="resultDropKicker">CARD DROP</div>
-            <div class="resultDropName">${cardInfo.name}</div>
-            <div class="resultDropText">${cardInfo.rarity} / ${stateText}</div>
-          </div>
-        </div>
-      `;
+  function nowMs(){ return performance.now(); }
+
+  function getComboMultiplier(comboCount){
+    if (comboCount >= 5) return 2.0;
+    if (comboCount === 4) return 1.6;
+    if (comboCount === 3) return 1.4;
+    if (comboCount === 2) return 1.2;
+    return 1.0;
+  }
+
+  function calcCatchScore(spec, comboAfterCatch){
+    return Math.round(spec.size.base * spec.type.mult * getComboMultiplier(comboAfterCatch));
+  }
+
+  function buildTakoyakiSpec(){
+    const sizeKey = pickByWeight(CFG.SIZE_WEIGHTS);
+    const typeKey = pickByWeight(CFG.TYPE_WEIGHTS);
+    const size = CFG.SIZE[sizeKey];
+    const type = CFG.TYPE[typeKey];
+    const previewPoints = Math.round(size.base * type.mult);
+    return { sizeKey, size, type, points: previewPoints };
+  }
+
+  function pointerToCanvasX(e, cvs){
+    const rect = cvs.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (CFG.W / rect.width);
+    return clamp(x, CFG.MARGIN_X, CFG.W - CFG.MARGIN_X);
+  }
+
+  function hookDropSpeed(hy, floorY){
+    const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
+    return CFG.HOOK_DROP_BASE * (1.02 + 0.62 * t);
+  }
+
+  function hookReelSpeed(hy, floorY, hasCatch){
+    const t = clamp((hy - CFG.TOP_Y) / Math.max(1, (floorY - CFG.TOP_Y)), 0, 1);
+    return CFG.HOOK_REEL_BASE * (1.24 + 0.74 * (1 - t)) * (hasCatch ? 1.16 : 1.03);
+  }
+
+  function getRank(score){
+    if (score === 3000) return null;
+    const list = (score < 0) ? RANKS_MINUS : RANKS_PLUS;
+    if (score < list[0].min) return list[0];
+    if (score > list[list.length - 1].max) return list[list.length - 1];
+    for (const r of list){
+      if (score >= r.min && score <= r.max) return r;
     }
+    return list[list.length - 1];
+  }
 
-    async function showResultScreen(score, extended, oniReached){
-      const rec = saveFishingRecord(score);
-      refreshBestUI();
+  function refreshBestUI(){
+    setText("tfBest", readIntLS(FISH_LS.best, 0));
+  }
 
-      const iso = localStorage.getItem(FISH_LS.playedAt);
-      const dt = iso ? new Date(iso) : new Date();
-      const formatted = `記録：${formatLocal(dt)}`;
+  function loadImage(src){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error(src));
+      img.src = src;
+    });
+  }
 
-      const waterDrop = rollWaterDrop(score);
-      const dropInfo = addWaterToFarm(waterDrop);
-
-      const cardDrop = rollCardDrop(score);
-      let cardResult = { ok:false, count:0, isNew:false };
-      if (cardDrop){
-        cardResult = saveCardToZukan(cardDrop);
-      }
-
-      if (dropInfo){
-        await showDropSplash({
-          badge: "WATER DROP",
-          title: dropInfo.label,
-          sub: "ファームにミズが追加された！",
-          qtyText: `×${dropInfo.qty} GET!`,
-          totalText: `所持数：<b>${dropInfo.total}</b>`,
-          img: dropInfo.img,
-          rare: dropInfo.id === "water_supergod" || dropInfo.id === "water_yunokawa"
-        });
-      }
-
-      if (cardDrop){
-        await showDropSplash({
-          badge: "CARD DROP",
-          title: cardDrop.name,
-          sub: cardResult.ok
-            ? (cardResult.isNew ? "新しいカードを獲得！" : "同じカードを獲得！")
-            : "保存に失敗しました。",
-          qtyText: cardResult.ok
-            ? (cardResult.isNew ? "NEW!" : `×${cardResult.count}`)
-            : "SAVE ERROR",
-          totalText: cardResult.ok ? `${cardDrop.rarity}` : `localStorageを確認`,
-          img: cardDrop.img,
-          rare: cardDrop.rarity === "SR" || cardDrop.rarity === "SECRET"
-        });
-      }
-
-      let mainText = "";
-      let subText = "";
-
-      if (score === 3000){
-        mainText = SCORE_3000_LINE;
-        subText = "ちょうど3,000点。説明しづらい奇跡。";
-      } else {
-        const rank = getRank(score);
-        mainText = rank.name.replace(/[〘〙]/g, "");
-        subText = rank.line;
-      }
-
-      els.resultScoreValue.textContent = String(score);
-      els.resultMain.textContent = mainText;
-      els.resultSub.textContent = subText;
-      els.resultDate.textContent = formatted;
-      els.resultCurrent.textContent = String(score);
-      els.resultBest.textContent = String(rec.best);
-      els.resultExtendText.textContent = extended
-        ? `延長：あり / ${oniReached ? "鬼モード到達" : "鬼モード未到達"}`
-        : "延長：なし";
-
-      els.waterDropWrap.innerHTML = renderWaterResult(dropInfo);
-      els.cardDropWrap.innerHTML = renderCardResult(cardDrop, cardResult);
-
-      showResult();
+  async function loadAllImages(){
+    const keys = Object.keys(IMG_URLS);
+    const images = {};
+    const failed = [];
+    for (const k of keys){
+      try{ images[k] = await loadImage(IMG_URLS[k]); }
+      catch(e){ failed.push({ key:k, url:String(e.message || e) }); }
     }
+    return { images, failed };
+  }
 
-    function getRemainingTime(){
-      if (!STATE) return 0;
-      return Math.max(0, STATE.limit - STATE.elapsed);
+  function showResult(){
+    els.resultScroll.scrollTop = 0;
+    els.resultOverlay.classList.add("show");
+  }
+
+  function hideResult(){
+    els.resultOverlay.classList.remove("show");
+    els.resultScroll.scrollTop = 0;
+    if (scoreAnimFrame){
+      cancelAnimationFrame(scoreAnimFrame);
+      scoreAnimFrame = null;
     }
-
-    function stopCountdown(){
-      countdownRunning = false;
-      if (countdownTimer){
-        clearTimeout(countdownTimer);
-        countdownTimer = null;
-      }
-      hideCountdown();
-    }
-
-    function detachPointer(){
-      const cvs = els.canvas;
-      if (cvs && onPointer){
-        cvs.removeEventListener("pointerdown", onPointer);
-        onPointer = null;
-      }
-    }
-
-    function stopGame(){
-      stopCountdown();
-      if (timerId) clearInterval(timerId);
-      timerId = null;
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = null;
-      detachPointer();
-      STATE = null;
-    }
-
-    function flashText(msg, ms){
-      if (!STATE) return;
-      STATE.flashMsg = msg;
-      STATE.flashUntil = nowMs() + ms;
-    }
-
-    function drawImageCentered(ctx, img, x, y, size){
-      ctx.drawImage(img, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
-    }
-
-    function startTimerLoop(){
-      if (timerId) clearInterval(timerId);
-
-      timerId = setInterval(() => {
-        if (!STATE || !STATE.timerStarted) return;
-        if (getRemainingTime() <= 0) return;
-
-        STATE.elapsed++;
-
-        if (STATE.elapsed === 30){
-          if (STATE.score >= CFG.EXT_SCORE){
-            STATE.extended = true;
-            STATE.limit = CFG.EXT_LIMIT;
-            flashText(`延長解放！${CFG.EXT_LIMIT}秒へ`, 1100);
-          } else {
-            STATE.limit = CFG.BASE_LIMIT;
-            flashText("終了！", 900);
-          }
-        }
-
-        if (STATE.extended && STATE.elapsed === CFG.ONI_AT){
-          STATE.oni = true;
-          STATE.oniReached = true;
-          STATE.freezeUntil = nowMs() + CFG.ONI_FREEZE_MS;
-          flashText("鬼モード突入！！", 1000);
-        }
-
-        setText("tfTime", Math.max(0, STATE.limit - STATE.elapsed));
-        setText("tfScore", STATE.score);
-        setText("tfCombo", STATE.combo);
-        setText("tfMiss", STATE.miss);
-
-        if (getRemainingTime() <= 0 && !STATE.ended){
-          STATE.ended = true;
-          setTimeout(() => { showResultScreen(STATE.score, STATE.extended, STATE.oniReached); }, 120);
-        }
-      }, 1000);
-    }
-
-    function startGameWithCountdown(){
-      if (countdownRunning) return;
-      startGame({ withCountdown: true });
-    }
-
-    function startCountdownPhase(){
-      if (!STATE) return;
-      countdownRunning = true;
-      STATE.phase = "countdown";
-      STATE.inputEnabled = false;
-      STATE.timerStarted = false;
-
-      let n = CFG.COUNTDOWN_SEC;
-      showCountdownNum(n);
-
-      function tick(){
-        if (!STATE || !countdownRunning) return;
-
-        if (n > 1){
-          n--;
-          showCountdownNum(n);
-          countdownTimer = setTimeout(tick, 1000);
-          return;
-        }
-
-        els.countNum.textContent = "GO!";
-        countdownTimer = setTimeout(() => {
-          if (!STATE) return;
-          stopCountdown();
-          STATE.phase = "play";
-          STATE.inputEnabled = true;
-          STATE.timerStarted = true;
-          startTimerLoop();
-          flashText("START!", 650);
-        }, 420);
-      }
-
-      countdownTimer = setTimeout(tick, 1000);
-    }
-
-    function startGame(opts = {}){
-      const withCountdown = !!opts.withCountdown;
-
-      stopGame();
-      hideResult();
-
-      const cvs = els.canvas;
-      const ctx = cvs.getContext("2d");
-      ctx.imageSmoothingEnabled = false;
-
-      const W = CFG.W, H = CFG.H;
-      const FLOOR_Y = Math.floor(H * CFG.FLOOR_Y_RATIO);
-      const GIANT_DROP_START_Y = Math.floor(H * CFG.GIANT_DROP_START_Y_RATIO);
-      const ENEMY_CENTER_Y = Math.floor(H * CFG.ENEMY_CENTER_Y_RATIO);
-      const TOURIST_Y = ENEMY_CENTER_Y - Math.floor(CFG.ENEMY_GAP * 0.55);
-      const SQUID_Y   = ENEMY_CENTER_Y + Math.floor(CFG.ENEMY_GAP * 0.55);
-      const HORIZON_Y = TOURIST_Y + 8;
-
-      STATE = {
-        elapsed: 0,
-        limit: CFG.BASE_LIMIT,
-        extended: false,
-        oni: false,
-        oniReached: false,
-        freezeUntil: 0,
-
-        score: 0,
-        combo: 0,
-        miss: 0,
-
-        flashMsg: "",
-        flashUntil: 0,
-
-        items: [],
-        hook: null,
-        tourist: null,
-        squid: null,
-        dash: null,
-        dashTrail: [],
-
-        ended: false,
-
-        phase: withCountdown ? "countdown" : "play",
-        inputEnabled: !withCountdown,
-        timerStarted: !withCountdown,
-
-        horizonY: HORIZON_Y
-      };
-
-      function remaining(){
-        return Math.max(0, STATE.limit - STATE.elapsed);
-      }
-
-      for (let i = 0; i < CFG.ITEM_COUNT; i++){
-        const spec = buildTakoyakiSpec();
-        const baseY = (FLOOR_Y - 14) + rand(-2, 2);
-        STATE.items.push({
-          x: rand(W * 0.15, W * 0.85),
-          baseY,
-          y: baseY,
-          alive: true,
-          spec,
-          vx: (Math.random() < 0.5 ? -1 : 1) * (45 + rand(0, 22)),
-          vxTarget: (Math.random() < 0.5 ? -1 : 1) * (45 + rand(0, 50)),
-          bobAmp: rand(0.6, 2.4),
-          bobSpd: rand(3.0, 7.8),
-          bobPhase: rand(0, Math.PI * 2),
-          nextMind: nowMs() + rand(450, 1100),
-          pauseUntil: 0,
-        });
-      }
-
-      function resetItem(it){
-        it.spec = buildTakoyakiSpec();
-        const baseY = (FLOOR_Y - 14) + rand(-2, 2);
-        it.x = rand(W * 0.15, W * 0.85);
-        it.baseY = baseY;
-        it.y = baseY;
-        it.alive = true;
-        it.vx = (Math.random() < 0.5 ? -1 : 1) * (45 + rand(0, 22));
-        it.vxTarget = (Math.random() < 0.5 ? -1 : 1) * (45 + rand(0, 50));
-        it.bobAmp = rand(0.6, 2.4);
-        it.bobSpd = rand(3.0, 7.8);
-        it.bobPhase = rand(0, Math.PI * 2);
-        it.nextMind = nowMs() + rand(450, 1100);
-        it.pauseUntil = 0;
-      }
-
-      STATE.hook = {
-        x: W * 0.5,
-        y: 18,
-        phase: "idle",
-        hasCatch: false,
-        caught: null,
-        giantDropArmed: false,
-        giantDropRolled: false,
-        giantWillDrop: false,
-      };
-
-      function setHookIdle(){
-        const h = STATE.hook;
-        h.phase = "idle";
-        h.y = 18;
-        h.hasCatch = false;
-        h.caught = null;
-        h.giantDropArmed = false;
-        h.giantDropRolled = false;
-        h.giantWillDrop = false;
-      }
-
-      STATE.tourist = { x: 0, y: TOURIST_Y, w: 34, h: 18, dir: 1, speed: 90 };
-      STATE.squid = {
-        baseX: W - 58, baseY: SQUID_Y, x: W - 58, y: SQUID_Y,
-        w: 58, h: 58, dir: -1,
-        speed: 18, ampX: 10, ampY: 16, freq: 0.55,
-        phase: Math.random() * Math.PI * 2,
-      };
-
-      const dashY = Math.floor((TOURIST_Y + SQUID_Y) * 0.5) - 12;
-      STATE.dash = {
-        active:false,
-        x: W + 60,
-        y: dashY,
-        w: 54,
-        h: 10,
-        vx: -950,
-        nextAt: nowMs() + (10 * 1000 + Math.random() * (15 - 10) * 1000)
-      };
-
-      function spawnDash(now){
-        const d = STATE.dash;
-        d.active = true;
-        d.x = W + d.w + 10;
-        d.vx = -950 * (STATE.oni ? 1.15 : 1.0);
-        const minS = STATE.oni ? 4 : 10;
-        const maxS = STATE.oni ? 7 : 15;
-        d.nextAt = now + (minS * 1000 + Math.random() * (maxS - minS) * 1000);
-        STATE.dashTrail.length = 0;
-        if (STATE.phase === "play") flashText("⚠ 流れが来た", 520);
-      }
-
-      function despawnDash(){
-        const d = STATE.dash;
-        d.active = false;
-        d.x = W + d.w + 10;
-      }
-
-      function startDropAt(x){
-        if (!STATE || !STATE.inputEnabled) return;
-        if (remaining() <= 0) return;
-        const h = STATE.hook;
-        if (h.phase !== "idle") return;
-        h.x = clamp(x, 10, W - 10);
-        h.phase = "drop";
-        h.hasCatch = false;
-        h.caught = null;
-        h.giantDropArmed = false;
-        h.giantDropRolled = false;
-        h.giantWillDrop = false;
-      }
-
-      onPointer = (e) => {
-        e.preventDefault();
-        startDropAt(pointerToCanvasX(e, cvs));
-      };
-      cvs.addEventListener("pointerdown", onPointer, { passive:false });
-
-      function drawCloud(x, y, s){
-        ctx.save();
-        ctx.globalAlpha = 0.92;
-        ctx.fillStyle = "#f5fbff";
-        ctx.fillRect(Math.round(x - s * 0.75), Math.round(y + s * 0.05), Math.round(s * 1.55), Math.round(s * 0.42));
-        ctx.beginPath();
-        ctx.arc(x - s * 0.45, y + s * 0.12, s * 0.28, 0, Math.PI * 2);
-        ctx.arc(x,            y - s * 0.05, s * 0.38, 0, Math.PI * 2);
-        ctx.arc(x + s * 0.42, y + s * 0.12, s * 0.30, 0, Math.PI * 2);
-        ctx.arc(x,            y + s * 0.22, s * 0.36, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      function drawBackground(now){
-        const isOni = STATE.oni;
-        const horizon = STATE.horizonY;
-
-        if (!isOni){
-          const skyGrad = ctx.createLinearGradient(0, 0, 0, horizon);
-          skyGrad.addColorStop(0, "#98dfff");
-          skyGrad.addColorStop(0.60, "#74c9ff");
-          skyGrad.addColorStop(1, "#56b4f4");
-          ctx.fillStyle = skyGrad;
-          ctx.fillRect(0, 0, W, horizon);
-
-          const sunGrad = ctx.createRadialGradient(W * 0.82, horizon * 0.30, 4, W * 0.82, horizon * 0.30, 34);
-          sunGrad.addColorStop(0, "rgba(255,247,178,.95)");
-          sunGrad.addColorStop(0.45, "rgba(255,236,128,.72)");
-          sunGrad.addColorStop(1, "rgba(255,236,128,0)");
-          ctx.fillStyle = sunGrad;
-          ctx.beginPath();
-          ctx.arc(W * 0.82, horizon * 0.30, 34, 0, Math.PI * 2);
-          ctx.fill();
-
-          drawCloud(W * 0.30, horizon * 0.20, 42);
-          drawCloud(W * 0.73, horizon * 0.34, 34);
-          drawCloud(W * 0.42, horizon * 0.55, 30);
-
-          const seaGrad = ctx.createLinearGradient(0, horizon, 0, H);
-          seaGrad.addColorStop(0, "#2c9ef0");
-          seaGrad.addColorStop(0.55, "#1783db");
-          seaGrad.addColorStop(1, "#0b4f98");
-          ctx.fillStyle = seaGrad;
-          ctx.fillRect(0, horizon, W, H - horizon);
-
-          ctx.fillStyle = "rgba(255,255,255,.18)";
-          ctx.fillRect(0, horizon - 2, W, 2);
-          ctx.fillStyle = "rgba(255,255,255,.10)";
-          ctx.fillRect(0, horizon + 2, W, 1);
-
-          const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
-          floorGrad.addColorStop(0, "rgba(19,52,89,.22)");
-          floorGrad.addColorStop(1, "rgba(8,24,48,.48)");
-          ctx.fillStyle = floorGrad;
-          ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
-        } else {
-          ctx.fillStyle = "#060819";
-          ctx.fillRect(0, 0, W, H);
-
-          const t = now / 1000;
-          const band1 = Math.floor(40 + 12 * Math.sin(t * 0.6));
-          const band2 = Math.floor(70 + 18 * Math.cos(t * 0.42));
-          ctx.fillStyle = "rgba(120,70,170,0.07)";
-          ctx.fillRect(0, 0, W, band1);
-          ctx.fillRect(0, band1 + 50, W, band2);
-
-          ctx.fillStyle = "rgba(255,255,255,0.06)";
-          ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
-          ctx.fillStyle = "rgba(255,255,255,0.05)";
-          ctx.fillRect(0, FLOOR_Y - 6, W, 6);
-          ctx.fillStyle = "rgba(0,255,255,0.04)";
-          ctx.fillRect(0, 0, W, H);
-        }
-      }
-
-      function drawItems(){
-        for (const it of STATE.items){
-          if (!it.alive) continue;
-          const img = IMGS[it.spec.type.imgKey];
-          drawImageCentered(ctx, img, it.x, it.y, it.spec.size.draw);
-        }
-      }
-
-      function drawTourist(){
-        const t = STATE.tourist;
-        const img = (t.dir > 0) ? IMGS.tourist_right : IMGS.tourist_left;
-        drawImageCentered(ctx, img, t.x + t.w / 2, t.y, 44);
-      }
-
-      function drawSquid(){
-        const s = STATE.squid;
-        const img = IMGS.squid;
-        const cx = s.x + s.w / 2;
-        const cy = s.y;
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.scale(s.dir, 1);
-        ctx.drawImage(img, Math.round(-s.w / 2), Math.round(-s.h / 2), s.w, s.h);
-        ctx.restore();
-      }
-
-      function drawDash(now){
-        const d = STATE.dash;
-        if (!d.active) return;
-
-        const trail = STATE.dashTrail;
-        trail.unshift({ x: d.x, t: now });
-        if (trail.length > 4) trail.pop();
-
-        for (let i = trail.length - 1; i >= 0; i--){
-          const a = (i + 1) / (trail.length + 1);
-          const alpha = 0.12 + 0.22 * (1 - a);
-          const wid = d.w + i * 14;
-          const hi  = d.h + i * 2;
-          const x = trail[i].x - i * 10;
-          const y = d.y;
-
-          ctx.fillStyle = `rgba(0, 220, 255, ${alpha})`;
-          ctx.fillRect(Math.round(x), Math.round(y - hi / 2), wid, hi);
-        }
-
-        ctx.fillStyle = "rgba(210, 255, 255, 0.35)";
-        ctx.fillRect(Math.round(d.x), Math.round(d.y - d.h / 2), d.w, d.h);
-
-        ctx.fillStyle = "rgba(0, 255, 255, 0.35)";
-        ctx.fillRect(Math.round(d.x + d.w - 6), Math.round(d.y - d.h / 2), 6, d.h);
-      }
-
-      function drawHook(){
-        const h = STATE.hook;
-        ctx.strokeStyle = "rgba(255,255,255,.22)";
-        ctx.beginPath();
-        ctx.moveTo(h.x, 18);
-        ctx.lineTo(h.x, h.y);
-        ctx.stroke();
-
-        drawImageCentered(ctx, IMGS.pick, h.x, h.y, 24);
-
-        if (h.hasCatch && h.caught){
-          const s = h.caught.size.draw;
-          const ty = h.y + 12 + (s / 2) - 2;
-          const img = IMGS[h.caught.type.imgKey];
-          drawImageCentered(ctx, img, h.x, ty, s);
-        }
-      }
-
-      function drawHUD(now){
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 13px system-ui";
-
-        const h = STATE.hook;
-        if (STATE.phase === "countdown"){
-          ctx.fillText("開始前：落とす位置を見定めよう", 10, 18);
-        } else if (h.phase === "idle"){
-          ctx.fillText("タップ：好きな位置に糸を垂らす", 10, 18);
-        } else if (h.phase === "drop"){
-          ctx.fillText("落下中…当てろ！", 10, 18);
-        } else {
-          ctx.fillText("巻き上げ中！天敵に注意！", 10, 18);
-        }
-
-        if (STATE.extended){
-          ctx.fillStyle = "rgba(255,255,255,.92)";
-          ctx.font = "bold 12px system-ui";
-          ctx.fillText("延長中", 10, 36);
-        }
-
-        if (STATE.oni){
-          ctx.fillStyle = "rgba(0,255,255,.92)";
-          ctx.font = "bold 12px system-ui";
-          ctx.fillText("鬼モード", 60, 36);
-        }
-
-        if (STATE.combo >= 2){
-          const comboMult = getComboMultiplier(STATE.combo).toFixed(2);
-          ctx.fillStyle = "rgba(255,220,120,.95)";
-          ctx.font = "bold 12px system-ui";
-          ctx.fillText(`連続倍率 ×${comboMult}`, 130, 36);
-        }
-
-        if (now < STATE.flashUntil && STATE.flashMsg){
-          ctx.fillStyle = "rgba(0,0,0,.35)";
-          ctx.fillRect(0, 44, W, 26);
-          ctx.fillStyle = "#fff";
-          ctx.font = "bold 13px system-ui";
-          ctx.fillText(STATE.flashMsg, 12, 62);
-        }
-
-        if (STATE.freezeUntil && now < STATE.freezeUntil){
-          ctx.fillStyle = "rgba(0,0,0,.35)";
-          ctx.fillRect(0, 0, W, H);
-          ctx.fillStyle = "rgba(0,255,255,.9)";
-          ctx.font = "bold 18px system-ui";
-          ctx.fillText("鬼モード突入", 110, 230);
-        }
-
-        if (getRemainingTime() <= 0 && STATE.phase === "play"){
-          ctx.fillStyle = "rgba(0,0,0,.65)";
-          ctx.fillRect(0, 0, W, H);
-          ctx.fillStyle = "#fff";
-          ctx.font = "bold 22px system-ui";
-          ctx.fillText("TIME UP!", 120, 230);
-        }
-      }
-
-      function render(now){
-        drawBackground(now);
-        drawTourist();
-        drawSquid();
-        drawDash(now);
-        if (!STATE.hook.hasCatch) drawItems();
-        drawHook();
-        drawHUD(now);
-      }
-
-      let last = nowMs();
-
-      function step(now){
-        if (!STATE) return;
-        const dt = Math.min(0.033, (now - last) / 1000);
-        last = now;
-
-        const mul = STATE.oni ? CFG.ONI_SPEED_MUL : 1.0;
-
-        if (!(STATE.freezeUntil && now < STATE.freezeUntil)){
-          for (const it of STATE.items){
-            if (!it.alive) continue;
-
-            if (now < it.pauseUntil){
-              it.vx *= 0.90;
-            } else {
-              if (now >= it.nextMind){
-                if (Math.random() < 0.10) it.pauseUntil = now + rand(260, 620);
-                const flip = (Math.random() < 0.18) ? -1 : 1;
-                const spd = 45 + rand(-18, 60);
-                it.vxTarget = clamp(flip * (Math.random() < 0.5 ? -1 : 1) * spd, -130, 130);
-                it.bobAmp = clamp(it.bobAmp + rand(-0.6, 0.9), 0.5, 3.4);
-                it.bobSpd = clamp(it.bobSpd + rand(-1.2, 1.4), 2.0, 9.0);
-                it.nextMind = now + rand(350, 1300);
-              }
-
-              const dv = it.vxTarget - it.vx;
-              it.vx += clamp(dv, -240 * dt, 240 * dt);
-              it.vx += rand(-6, 6) * dt;
-              it.vx = clamp(it.vx, -130, 130);
-            }
-
-            it.x += it.vx * dt;
-
-            const half = it.spec.size.draw / 2;
-            if (it.x - half < 10){
-              it.x = 10 + half;
-              it.vx = Math.abs(it.vx) * (0.85 + Math.random() * 0.25);
-              it.vxTarget = Math.abs(it.vxTarget) * (0.8 + Math.random() * 0.4);
-              it.nextMind = Math.min(it.nextMind, now + rand(120, 420));
-            }
-            if (it.x + half > W - 10){
-              it.x = (W - 10) - half;
-              it.vx = -Math.abs(it.vx) * (0.85 + Math.random() * 0.25);
-              it.vxTarget = -Math.abs(it.vxTarget) * (0.8 + Math.random() * 0.4);
-              it.nextMind = Math.min(it.nextMind, now + rand(120, 420));
-            }
-
-            it.y = it.baseY + Math.sin((now / 1000) * it.bobSpd + it.bobPhase) * it.bobAmp;
-          }
-
-          const t = STATE.tourist;
-          t.x += t.dir * t.speed * mul * dt;
-          if (t.x < 0){ t.x = 0; t.dir *= -1; }
-          if (t.x + t.w > W){ t.x = W - t.w; t.dir *= -1; }
-
-          const s = STATE.squid;
-          s.baseX += s.dir * s.speed * mul * dt;
-          if (s.baseX < 0){ s.baseX = 0; s.dir *= -1; }
-          if (s.baseX + s.w > W){ s.baseX = W - s.w; s.dir *= -1; }
-
-          const sec = (now / 1000) * (Math.PI * 2) * s.freq + s.phase;
-          s.x = s.baseX + Math.sin(sec) * s.ampX;
-          s.y = s.baseY + Math.cos(sec * 0.85) * s.ampY;
-
-          const d = STATE.dash;
-          if (!d.active && now >= d.nextAt) spawnDash(now);
-          if (d.active){
-            d.x += d.vx * dt;
-            if (d.x + d.w < -40) despawnDash();
-          }
-        }
-
-        if (STATE.phase === "play" && !STATE.ended){
-          const h = STATE.hook;
-
-          if (h.phase === "drop"){
-            const spd = hookDropSpeed(h.y, FLOOR_Y);
-            h.y += spd * dt;
-
-            if (!h.hasCatch){
-              for (const it of STATE.items){
-                if (!it.alive) continue;
-                const rr = it.spec.size.draw * 0.38;
-                if (circleHit(h.x, h.y, 10, it.x, it.y, rr)){
-                  h.hasCatch = true;
-                  h.phase = "reel";
-                  h.caught = it.spec;
-                  h.giantDropArmed = (it.spec.sizeKey === "giant");
-                  h.giantDropRolled = false;
-                  h.giantWillDrop = false;
-                  it.alive = false;
-                  flashText(`HIT!（${it.spec.size.label}/${it.spec.type.label}）`, 750);
-                  break;
-                }
-              }
-            }
-
-            if (h.y >= FLOOR_Y - 10){
-              h.y = FLOOR_Y - 10;
-              h.phase = "reel";
-              if (!h.hasCatch){
-                STATE.combo = 0;
-                flashText("空振り…！", 600);
-              }
-            }
-          }
-
-          if (h.phase === "reel"){
-            const spd = hookReelSpeed(h.y, FLOOR_Y, h.hasCatch);
-            h.y -= spd * dt;
-
-            if (h.hasCatch && h.caught && h.giantDropArmed){
-              if (!h.giantDropRolled && h.y < GIANT_DROP_START_Y){
-                h.giantDropRolled = true;
-                h.giantWillDrop = (Math.random() < CFG.GIANT_DROP_CHANCE);
-              }
-              if (h.giantWillDrop && h.y < (GIANT_DROP_START_Y - 40)){
-                const dead = STATE.items.find(v => !v.alive);
-                if (dead) resetItem(dead);
-                h.hasCatch = false;
-                h.caught = null;
-                STATE.combo = 0;
-                STATE.miss++;
-                flashText("巨大たこ焼き、落ちた！！", 950);
-                setHookIdle();
-              }
-            }
-
-            if (h.hasCatch && h.caught){
-              const fishSize = h.caught.size.draw;
-              const fishR = fishSize * 0.38;
-              const fishX = h.x;
-              const fishY = h.y + 12 + (fishSize / 2) - 2;
-
-              const t = STATE.tourist;
-              const s = STATE.squid;
-              const d = STATE.dash;
-
-              if (circleRectHit(fishX, fishY, fishR, t.x, t.y - t.h / 2, t.w, t.h)){
-                const dead = STATE.items.find(v => !v.alive);
-                if (dead) resetItem(dead);
-                h.hasCatch = false;
-                h.caught = null;
-                STATE.combo = 0;
-                STATE.miss++;
-                flashText("観光客に横取りされた！", 850);
-                setHookIdle();
-              }
-
-              if (h.hasCatch && circleRectHit(fishX, fishY, fishR, s.x, s.y - s.h / 2, s.w, s.h)){
-                const dead = STATE.items.find(v => !v.alive);
-                if (dead) resetItem(dead);
-                h.hasCatch = false;
-                h.caught = null;
-                STATE.combo = 0;
-                STATE.miss++;
-                STATE.score -= 40;
-                flashText("イカに奪われた… -40", 950);
-                setHookIdle();
-              }
-
-              if (h.hasCatch && d.active && circleRectHit(fishX, fishY, fishR, d.x, d.y - d.h / 2, d.w, d.h)){
-                const dead = STATE.items.find(v => !v.alive);
-                if (dead) resetItem(dead);
-                h.hasCatch = false;
-                h.caught = null;
-                STATE.combo = 0;
-                STATE.miss++;
-                flashText("観光客に横取りされた！", 850);
-                setHookIdle();
-                despawnDash();
-              }
-            }
-
-            if (h.y <= 18){
-              h.y = 18;
-              if (h.hasCatch && h.caught){
-                const dead = STATE.items.find(v => !v.alive);
-                if (dead) resetItem(dead);
-
-                const nextCombo = (h.caught.type.mult < 0) ? 0 : (STATE.combo + 1);
-                const gained = calcCatchScore(h.caught, nextCombo);
-
-                if (h.caught.type.mult < 0){
-                  STATE.score += gained;
-                  STATE.combo = 0;
-                  STATE.miss++;
-                  flashText(`生焼け！ ${gained}`, 900);
-                } else {
-                  STATE.combo = nextCombo;
-                  STATE.score += gained;
-                  const comboMult = getComboMultiplier(STATE.combo).toFixed(2);
-                  flashText(`GET! ${gained > 0 ? "+" : ""}${gained}（×${comboMult}）`, 900);
-                }
-
-                h.hasCatch = false;
-                h.caught = null;
-                setHookIdle();
-              } else {
-                setHookIdle();
-              }
-            }
-          }
-        }
-
-        setText("tfScore", STATE.score);
-        setText("tfCombo", STATE.combo);
-        setText("tfMiss", STATE.miss);
-        setText("tfTime", Math.max(0, STATE.limit - STATE.elapsed));
-
-        render(now);
-        rafId = requestAnimationFrame(step);
-      }
-
-      setHookIdle();
-      setText("tfScore", 0);
-      setText("tfCombo", 0);
-      setText("tfMiss", 0);
-      setText("tfTime", CFG.BASE_LIMIT);
-
-      rafId = requestAnimationFrame(step);
-
-      if (withCountdown){
-        startCountdownPhase();
-      } else {
-        startTimerLoop();
-      }
-    }
-
-    async function init(){
-      loadMonthlyStats();
-
-      const ctx = els.canvas.getContext("2d");
-      ctx.imageSmoothingEnabled = false;
-      ctx.fillStyle = "#081425";
-      ctx.fillRect(0, 0, CFG.W, CFG.H);
-      ctx.fillStyle = "#fff";
-      ctx.font = "16px system-ui";
-      ctx.fillText("読み込み中…", 120, 260);
-
-      const { images, failed } = await loadAllImages();
-      if (failed.length){
-        ctx.fillStyle = "#081425";
-        ctx.fillRect(0, 0, CFG.W, CFG.H);
-        ctx.fillStyle = "#fff";
-        ctx.font = "14px system-ui";
-        ctx.fillText("画像が読み込めないものがあります：", 20, 40);
-        ctx.font = "11px system-ui";
-        let y = 70;
-        for (const f of failed){
-          ctx.fillText(`- ${f.key}: ${f.url}`, 20, y);
-          y += 16;
-          if (y > CFG.H - 30) break;
-        }
-        ctx.fillText("CDN_BASE / ファイル名を確認してください。", 20, CFG.H - 16);
+  }
+
+  function showCountdownNum(v){
+    els.countNum.textContent = String(v);
+    els.countOverlay.classList.add("show");
+  }
+
+  function hideCountdown(){
+    els.countOverlay.classList.remove("show");
+  }
+
+  function showDropSplash(payload){
+    return new Promise((resolve) => {
+      if (!payload){
+        resolve();
         return;
       }
 
-      IMGS = images;
-      refreshBestUI();
+      els.dropBadge.textContent = payload.badge || "DROP";
+      els.dropTitle.textContent = payload.title || "GET!";
+      els.dropSub.textContent = payload.sub || "";
+      els.dropQty.textContent = payload.qtyText || "";
+      els.dropTotal.innerHTML = payload.totalText || "";
 
-      const c2 = els.canvas.getContext("2d");
-      c2.imageSmoothingEnabled = false;
-      c2.fillStyle = "#081425";
-      c2.fillRect(0, 0, CFG.W, CFG.H);
-      c2.fillStyle = "#fff";
-      c2.font = "14px system-ui";
-      c2.fillText("ゲーム開始", 140, 260);
+      if (payload.img){
+        els.dropImg.src = payload.img;
+        els.dropImg.style.display = "block";
+      } else {
+        els.dropImg.removeAttribute("src");
+        els.dropImg.style.display = "none";
+      }
 
-      startGameWithCountdown();
+      if (payload.rare){
+        els.dropCard.classList.add("dropRare");
+      } else {
+        els.dropCard.classList.remove("dropRare");
+      }
+
+      els.dropSplash.classList.add("show");
+
+      const done = () => {
+        els.dropSplash.classList.remove("show");
+        els.dropOkBtn.removeEventListener("click", done);
+        resolve();
+      };
+
+      els.dropOkBtn.addEventListener("click", done, { once:true });
+    });
+  }
+
+  function animateResultScore(target){
+    if (scoreAnimFrame){
+      cancelAnimationFrame(scoreAnimFrame);
+      scoreAnimFrame = null;
     }
 
+    const end = Math.max(0, Math.floor(Number(target || 0)));
+    const duration = 900;
+    const start = performance.now();
+
+    function tick(now){
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const value = Math.floor(end * eased);
+      els.resultScoreValue.textContent = String(value);
+
+      if (t < 1){
+        scoreAnimFrame = requestAnimationFrame(tick);
+      } else {
+        els.resultScoreValue.textContent = String(end);
+        els.resultScoreValue.classList.remove("bump");
+        void els.resultScoreValue.offsetWidth;
+        els.resultScoreValue.classList.add("bump");
+        scoreAnimFrame = null;
+      }
+    }
+
+    els.resultScoreValue.textContent = "0";
+    scoreAnimFrame = requestAnimationFrame(tick);
+  }
+
+  function renderWaterDrop(dropInfo){
+    if (!dropInfo){
+      els.waterDropArea.innerHTML = `
+        <div class="emptyLine">今回は何もドロップしなかった…</div>
+      `;
+      return;
+    }
+
+    els.waterDropArea.innerHTML = `
+      <div class="dropCardLine">
+        <div class="dropThumb">
+          <img src="${dropInfo.img}" alt="${dropInfo.label}">
+        </div>
+        <div class="dropMeta">
+          <div class="dropBadgeLine">WATER DROP</div>
+          <div class="dropName">${dropInfo.label}</div>
+          <div class="dropDesc">×${dropInfo.qty} を獲得 / 所持数：${dropInfo.total}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCardDrop(cardInfo, cardResult){
+    if (!cardInfo || !cardResult || !cardResult.ok){
+      els.cardDropArea.innerHTML = `
+        <div class="emptyLine">今回はカードドロップなし</div>
+      `;
+      return;
+    }
+
+    const extraText = cardResult.isNew
+      ? `NEW! 図鑑に登録`
+      : `×${cardResult.count}`;
+
+    els.cardDropArea.innerHTML = `
+      <div class="dropCardLine">
+        <div class="dropThumb">
+          <img src="${cardInfo.img}" alt="${cardInfo.name}">
+        </div>
+        <div class="dropMeta">
+          <div class="dropBadgeLine">CARD DROP</div>
+          <div class="dropName">${cardInfo.name}</div>
+          <div class="dropDesc">${cardInfo.rarity} / ${extraText}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function showResultScreen(score, extended, oniReached){
+    const rec = saveFishingRecord(score);
     refreshBestUI();
 
-    els.backBtn.addEventListener("click", () => {
-      try{
-        if (history.length > 1) history.back();
-        else location.href = "../town/";
-      }catch(_){
-        location.href = "../town/";
+    const iso = localStorage.getItem(FISH_LS.playedAt);
+    const dt = iso ? new Date(iso) : new Date();
+
+    const waterDrop = rollWaterDrop(score);
+    const dropInfo = addWaterToFarm(waterDrop);
+
+    const cardDrop = rollCardDrop(score);
+    let cardResult = { ok:false, count:0, isNew:false };
+    if (cardDrop){
+      cardResult = saveCardToZukan(cardDrop);
+    }
+
+    if (dropInfo){
+      await showDropSplash({
+        badge: "WATER DROP",
+        title: dropInfo.label,
+        sub: "ファームにミズが追加された！",
+        qtyText: `×${dropInfo.qty} GET!`,
+        totalText: `所持数：<b>${dropInfo.total}</b>`,
+        img: dropInfo.img,
+        rare: dropInfo.id === "water_supergod" || dropInfo.id === "water_yunokawa"
+      });
+    }
+
+    if (cardDrop){
+      await showDropSplash({
+        badge: "CARD DROP",
+        title: cardDrop.name,
+        sub: cardResult.ok
+          ? (cardResult.isNew ? "新しいカードを獲得！" : "同じカードを獲得！")
+          : "保存に失敗しました。",
+        qtyText: cardResult.ok
+          ? (cardResult.isNew ? "NEW!" : `×${cardResult.count}`)
+          : "SAVE ERROR",
+        totalText: cardResult.ok
+          ? `${cardDrop.rarity}`
+          : `localStorageを確認`,
+        img: cardDrop.img,
+        rare: cardDrop.rarity === "SR" || cardDrop.rarity === "SECRET"
+      });
+    }
+
+    let rankName = SCORE_3000_LINE;
+    let rankLine = "記録に残る静けさだった。";
+    if (score !== 3000){
+      const r = getRank(score);
+      rankName = r.name.replace(/[〘〙]/g, "");
+      rankLine = r.line;
+    }
+
+    els.resultMain.textContent = rankName;
+    els.resultRankSub.textContent = rankLine;
+    els.resultDate.textContent = `記録：${formatLocal(dt)}`;
+    els.resultBestInline.textContent = String(rec.best);
+
+    if (rec.isNew) els.bestNewBadge.classList.add("show");
+    else els.bestNewBadge.classList.remove("show");
+
+    if (extended){
+      els.resultExtendedChip.style.display = "inline-flex";
+      els.resultExtendedChip.textContent = "延長：あり";
+    } else {
+      els.resultExtendedChip.style.display = "none";
+    }
+
+    if (extended && oniReached){
+      els.resultOniChip.style.display = "inline-flex";
+      els.resultOniChip.textContent = "鬼モード：到達";
+    } else if (extended) {
+      els.resultOniChip.style.display = "inline-flex";
+      els.resultOniChip.textContent = "鬼モード：未到達";
+    } else {
+      els.resultOniChip.style.display = "none";
+    }
+
+    renderWaterDrop(dropInfo);
+    renderCardDrop(cardDrop, cardResult);
+
+    showResult();
+    animateResultScore(score);
+  }
+
+  function getRemainingTime(){
+    if (!STATE) return 0;
+    return Math.max(0, STATE.limit - STATE.elapsed);
+  }
+
+  function stopCountdown(){
+    countdownRunning = false;
+    if (countdownTimer){
+      clearTimeout(countdownTimer);
+      countdownTimer = null;
+    }
+    hideCountdown();
+  }
+
+  function detachPointer(){
+    const cvs = els.canvas;
+    if (cvs && onPointer){
+      cvs.removeEventListener("pointerdown", onPointer);
+      onPointer = null;
+    }
+  }
+
+  function stopGame(){
+    stopCountdown();
+    if (timerId) clearInterval(timerId);
+    timerId = null;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+    detachPointer();
+    STATE = null;
+  }
+
+  function flashText(msg, ms){
+    if (!STATE) return;
+    STATE.flashMsg = msg;
+    STATE.flashUntil = nowMs() + ms;
+  }
+
+  function drawImageCentered(ctx, img, x, y, size){
+    ctx.drawImage(img, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+  }
+
+  function startTimerLoop(){
+    if (timerId) clearInterval(timerId);
+
+    timerId = setInterval(() => {
+      if (!STATE || !STATE.timerStarted) return;
+      if (getRemainingTime() <= 0) return;
+
+      STATE.elapsed++;
+
+      if (STATE.elapsed === 30){
+        if (STATE.score >= CFG.EXT_SCORE){
+          STATE.extended = true;
+          STATE.limit = CFG.EXT_LIMIT;
+          flashText(`延長解放！${CFG.EXT_LIMIT}秒へ`, 1100);
+        } else {
+          STATE.limit = CFG.BASE_LIMIT;
+          flashText("終了！", 900);
+        }
       }
-    });
 
-    els.resultAgainBtn.addEventListener("click", () => {
-      hideResult();
-      startGameWithCountdown();
-    });
+      if (STATE.extended && STATE.elapsed === CFG.ONI_AT){
+        STATE.oni = true;
+        STATE.oniReached = true;
+        STATE.freezeUntil = nowMs() + CFG.ONI_FREEZE_MS;
+        flashText("鬼モード突入！！", 1000);
+      }
 
-    els.resultCloseBtn.addEventListener("click", () => {
-      location.href = TOP_URL;
-    });
+      setText("tfTime", Math.max(0, STATE.limit - STATE.elapsed));
+      setText("tfScore", STATE.score);
+      setText("tfCombo", STATE.combo);
+      setText("tfMiss", STATE.miss);
 
-    els.retryBtn.addEventListener("click", () => {
-      hideResult();
-      startGameWithCountdown();
-    });
+      if (getRemainingTime() <= 0 && !STATE.ended){
+        STATE.ended = true;
+        setTimeout(() => { showResultScreen(STATE.score, STATE.extended, STATE.oniReached); }, 120);
+      }
+    }, 1000);
+  }
 
-    init();
-  })();
-  </script>
+  function startGameWithCountdown(){
+    if (countdownRunning) return;
+    startGame({ withCountdown: true });
+  }
+
+  function startCountdownPhase(){
+    if (!STATE) return;
+    countdownRunning = true;
+    STATE.phase = "countdown";
+    STATE.inputEnabled = false;
+    STATE.timerStarted = false;
+
+    let n = CFG.COUNTDOWN_SEC;
+    showCountdownNum(n);
+
+    function tick(){
+      if (!STATE || !countdownRunning) return;
+
+      if (n > 1){
+        n--;
+        showCountdownNum(n);
+        countdownTimer = setTimeout(tick, 1000);
+        return;
+      }
+
+      els.countNum.textContent = "GO!";
+      countdownTimer = setTimeout(() => {
+        if (!STATE) return;
+        stopCountdown();
+        STATE.phase = "play";
+        STATE.inputEnabled = true;
+        STATE.timerStarted = true;
+        startTimerLoop();
+        flashText("START!", 650);
+      }, 420);
+    }
+
+    countdownTimer = setTimeout(tick, 1000);
+  }
+
+  function startGame(opts = {}){
+    const withCountdown = !!opts.withCountdown;
+
+    stopGame();
+    hideResult();
+
+    const cvs = els.canvas;
+    const ctx = cvs.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+
+    const W = CFG.W, H = CFG.H;
+    const FLOOR_Y = Math.floor(H * CFG.FLOOR_Y_RATIO);
+    const GIANT_DROP_START_Y = Math.floor(H * CFG.GIANT_DROP_START_Y_RATIO);
+    const ENEMY_CENTER_Y = Math.floor(H * CFG.ENEMY_CENTER_Y_RATIO);
+    const TOURIST_Y = ENEMY_CENTER_Y - Math.floor(CFG.ENEMY_GAP * 0.55);
+    const SQUID_Y   = ENEMY_CENTER_Y + Math.floor(CFG.ENEMY_GAP * 0.55);
+    const HORIZON_Y = TOURIST_Y + 10;
+
+    STATE = {
+      elapsed: 0,
+      limit: CFG.BASE_LIMIT,
+      extended: false,
+      oni: false,
+      oniReached: false,
+      freezeUntil: 0,
+
+      score: 0,
+      combo: 0,
+      miss: 0,
+
+      flashMsg: "",
+      flashUntil: 0,
+
+      items: [],
+      hook: null,
+      tourist: null,
+      squid: null,
+      dash: null,
+      dashTrail: [],
+      bubbles: [],
+      corals: [],
+
+      ended: false,
+
+      phase: withCountdown ? "countdown" : "play",
+      inputEnabled: !withCountdown,
+      timerStarted: !withCountdown,
+    };
+
+    function remaining(){
+      return Math.max(0, STATE.limit - STATE.elapsed);
+    }
+
+    for (let i = 0; i < CFG.ITEM_COUNT; i++){
+      const spec = buildTakoyakiSpec();
+      const baseY = (FLOOR_Y - 18) + rand(-4, 4);
+      STATE.items.push({
+        x: rand(W * 0.15, W * 0.85),
+        baseY,
+        y: baseY,
+        alive: true,
+        spec,
+        vx: (Math.random() < 0.5 ? -1 : 1) * (45 + rand(0, 22)),
+        vxTarget: (Math.random() < 0.5 ? -1 : 1) * (45 + rand(0, 50)),
+        bobAmp: rand(0.6, 2.4),
+        bobSpd: rand(3.0, 7.8),
+        bobPhase: rand(0, Math.PI * 2),
+        nextMind: nowMs() + rand(450, 1100),
+        pauseUntil: 0,
+      });
+    }
+
+    for (let i = 0; i < 16; i++){
+      STATE.bubbles.push({
+        x: rand(14, W - 14),
+        y: rand(HORIZON_Y + 30, FLOOR_Y + 45),
+        r: rand(1.5, 5),
+        speed: rand(12, 34),
+        sway: rand(0.2, 1.2),
+        phase: rand(0, Math.PI * 2),
+        alpha: rand(0.12, 0.34)
+      });
+    }
+
+    for (let i = 0; i < 7; i++){
+      STATE.corals.push({
+        x: 18 + i * 50 + rand(-10, 10),
+        h: rand(18, 48),
+        w: rand(14, 28),
+        type: i % 3
+      });
+    }
+
+    function resetItem(it){
+      it.spec = buildTakoyakiSpec();
+      const baseY = (FLOOR_Y - 18) + rand(-4, 4);
+      it.x = rand(W * 0.15, W * 0.85);
+      it.baseY = baseY;
+      it.y = baseY;
+      it.alive = true;
+      it.vx = (Math.random() < 0.5 ? -1 : 1) * (45 + rand(0, 22));
+      it.vxTarget = (Math.random() < 0.5 ? -1 : 1) * (45 + rand(0, 50));
+      it.bobAmp = rand(0.6, 2.4);
+      it.bobSpd = rand(3.0, 7.8);
+      it.bobPhase = rand(0, Math.PI * 2);
+      it.nextMind = nowMs() + rand(450, 1100);
+      it.pauseUntil = 0;
+    }
+
+    STATE.hook = {
+      x: W * 0.5,
+      y: 18,
+      phase: "idle",
+      hasCatch: false,
+      caught: null,
+      giantDropArmed: false,
+      giantDropRolled: false,
+      giantWillDrop: false,
+    };
+
+    function setHookIdle(){
+      const h = STATE.hook;
+      h.phase = "idle";
+      h.y = 18;
+      h.hasCatch = false;
+      h.caught = null;
+      h.giantDropArmed = false;
+      h.giantDropRolled = false;
+      h.giantWillDrop = false;
+    }
+
+    STATE.tourist = { x: 0, y: TOURIST_Y, w: 34, h: 18, dir: 1, speed: 90 };
+    STATE.squid = {
+      baseX: W - 58, baseY: SQUID_Y, x: W - 58, y: SQUID_Y,
+      w: 58, h: 58, dir: -1,
+      speed: 18, ampX: 10, ampY: 16, freq: 0.55,
+      phase: Math.random() * Math.PI * 2,
+    };
+
+    const dashY = Math.floor((TOURIST_Y + SQUID_Y) * 0.5) - 12;
+    STATE.dash = {
+      active:false,
+      x: W + 60,
+      y: dashY,
+      w: 54,
+      h: 10,
+      vx: -950,
+      nextAt: nowMs() + (10 * 1000 + Math.random() * (15 - 10) * 1000)
+    };
+
+    function spawnDash(now){
+      const d = STATE.dash;
+      d.active = true;
+      d.x = W + d.w + 10;
+      d.vx = -950 * (STATE.oni ? 1.15 : 1.0);
+      const minS = STATE.oni ? 4 : 10;
+      const maxS = STATE.oni ? 7 : 15;
+      d.nextAt = now + (minS * 1000 + Math.random() * (maxS - minS) * 1000);
+      STATE.dashTrail.length = 0;
+      if (STATE.phase === "play") flashText("⚠ 流れが来た", 520);
+    }
+
+    function despawnDash(){
+      const d = STATE.dash;
+      d.active = false;
+      d.x = W + d.w + 10;
+    }
+
+    function startDropAt(x){
+      if (!STATE || !STATE.inputEnabled) return;
+      if (remaining() <= 0) return;
+      const h = STATE.hook;
+      if (h.phase !== "idle") return;
+      h.x = clamp(x, 10, W - 10);
+      h.phase = "drop";
+      h.hasCatch = false;
+      h.caught = null;
+      h.giantDropArmed = false;
+      h.giantDropRolled = false;
+      h.giantWillDrop = false;
+    }
+
+    onPointer = (e) => {
+      e.preventDefault();
+      startDropAt(pointerToCanvasX(e, cvs));
+    };
+    cvs.addEventListener("pointerdown", onPointer, { passive:false });
+
+    function drawSkyAndSea(now){
+      const isOni = STATE.oni;
+
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, HORIZON_Y);
+      if (isOni){
+        skyGrad.addColorStop(0, "#281538");
+        skyGrad.addColorStop(1, "#102140");
+      } else {
+        skyGrad.addColorStop(0, "#7fd2ff");
+        skyGrad.addColorStop(.45, "#9de2ff");
+        skyGrad.addColorStop(1, "#d7f4ff");
+      }
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, HORIZON_Y);
+
+      if (!isOni){
+        ctx.fillStyle = "rgba(255,255,255,.20)";
+        ctx.beginPath();
+        ctx.arc(295, 70, 24, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(255,255,255,.52)";
+        ctx.fillRect(32, 50, 54, 10);
+        ctx.fillRect(52, 42, 40, 12);
+        ctx.fillRect(248, 38, 46, 10);
+        ctx.fillRect(270, 30, 34, 12);
+      }
+
+      const seaGrad = ctx.createLinearGradient(0, HORIZON_Y, 0, H);
+      if (isOni){
+        seaGrad.addColorStop(0, "#0b1c33");
+        seaGrad.addColorStop(.45, "#08182a");
+        seaGrad.addColorStop(1, "#04111a");
+      } else {
+        seaGrad.addColorStop(0, "#3fb8e8");
+        seaGrad.addColorStop(.20, "#2495cf");
+        seaGrad.addColorStop(.55, "#0e5d93");
+        seaGrad.addColorStop(1, "#083f67");
+      }
+      ctx.fillStyle = seaGrad;
+      ctx.fillRect(0, HORIZON_Y, W, H - HORIZON_Y);
+
+      ctx.fillStyle = isOni ? "rgba(120,220,255,.16)" : "rgba(255,255,255,.40)";
+      ctx.fillRect(0, HORIZON_Y - 2, W, 4);
+
+      ctx.fillStyle = isOni ? "rgba(120,220,255,.08)" : "rgba(255,255,255,.18)";
+      for (let i = 0; i < 7; i++){
+        const waveX = i * 58 + ((now / 20) % 18);
+        ctx.fillRect(waveX, HORIZON_Y + (i % 2 === 0 ? 3 : 6), 22, 2);
+      }
+
+      const lightGrad = ctx.createLinearGradient(0, HORIZON_Y, 0, FLOOR_Y);
+      lightGrad.addColorStop(0, "rgba(255,255,255,.16)");
+      lightGrad.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = lightGrad;
+      ctx.beginPath();
+      ctx.moveTo(80, HORIZON_Y);
+      ctx.lineTo(116, H);
+      ctx.lineTo(154, H);
+      ctx.lineTo(118, HORIZON_Y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(220, HORIZON_Y);
+      ctx.lineTo(256, H);
+      ctx.lineTo(290, H);
+      ctx.lineTo(254, HORIZON_Y);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawSeaDecor(now, dt){
+      const floorTop = FLOOR_Y + 4;
+
+      ctx.fillStyle = "rgba(10,33,49,.95)";
+      ctx.fillRect(0, floorTop, W, H - floorTop);
+
+      ctx.fillStyle = "rgba(255,255,255,.05)";
+      ctx.fillRect(0, FLOOR_Y - 6, W, 6);
+
+      for (const c of STATE.corals){
+        const x = c.x;
+        const y = H - 20;
+        const sway = Math.sin((now / 1000) + x * .08) * 2;
+
+        if (c.type === 0){
+          ctx.fillStyle = "rgba(246,110,121,.48)";
+          ctx.fillRect(x + sway, y - c.h, 6, c.h);
+          ctx.fillRect(x + 8 + sway, y - c.h * .75, 6, c.h * .75);
+          ctx.fillRect(x - 7 + sway, y - c.h * .58, 6, c.h * .58);
+        } else if (c.type === 1){
+          ctx.fillStyle = "rgba(123,223,171,.30)";
+          ctx.fillRect(x + sway, y - c.h, 4, c.h);
+          ctx.fillRect(x + 6 + sway, y - c.h * .88, 4, c.h * .88);
+          ctx.fillRect(x + 12 + sway, y - c.h * .70, 4, c.h * .70);
+        } else {
+          ctx.fillStyle = "rgba(250,180,115,.34)";
+          ctx.fillRect(x + sway, y - c.h * .45, c.w, c.h * .45);
+          ctx.fillRect(x + 6 + sway, y - c.h, 6, c.h * .55);
+          ctx.fillRect(x + 16 + sway, y - c.h * .82, 6, c.h * .42);
+        }
+      }
+
+      ctx.fillStyle = "rgba(80,98,110,.55)";
+      ctx.beginPath();
+      ctx.arc(38, H - 16, 11, 0, Math.PI * 2);
+      ctx.arc(86, H - 12, 14, 0, Math.PI * 2);
+      ctx.arc(306, H - 14, 13, 0, Math.PI * 2);
+      ctx.arc(336, H - 10, 17, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (const b of STATE.bubbles){
+        b.y -= b.speed * dt * (STATE.oni ? 1.25 : 1);
+        b.x += Math.sin((now / 1000) + b.phase) * b.sway * dt * 20;
+
+        if (b.y < HORIZON_Y + 4){
+          b.y = H - rand(8, 44);
+          b.x = rand(12, W - 12);
+        }
+
+        ctx.strokeStyle = `rgba(255,255,255,${b.alpha})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawItems(){
+      for (const it of STATE.items){
+        if (!it.alive) continue;
+        const img = IMGS[it.spec.type.imgKey];
+        drawImageCentered(ctx, img, it.x, it.y, it.spec.size.draw);
+      }
+    }
+
+    function drawTourist(){
+      const t = STATE.tourist;
+      const img = (t.dir > 0) ? IMGS.tourist_right : IMGS.tourist_left;
+      drawImageCentered(ctx, img, t.x + t.w / 2, t.y, 44);
+    }
+
+    function drawSquid(){
+      const s = STATE.squid;
+      const img = IMGS.squid;
+      const cx = s.x + s.w / 2;
+      const cy = s.y;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(s.dir, 1);
+      ctx.drawImage(img, Math.round(-s.w / 2), Math.round(-s.h / 2), s.w, s.h);
+      ctx.restore();
+    }
+
+    function drawDash(now){
+      const d = STATE.dash;
+      if (!d.active) return;
+
+      const trail = STATE.dashTrail;
+      trail.unshift({ x: d.x, t: now });
+      if (trail.length > 4) trail.pop();
+
+      for (let i = trail.length - 1; i >= 0; i--){
+        const a = (i + 1) / (trail.length + 1);
+        const alpha = 0.12 + 0.22 * (1 - a);
+        const wid = d.w + i * 14;
+        const hi  = d.h + i * 2;
+        const x = trail[i].x - i * 10;
+        const y = d.y;
+
+        ctx.fillStyle = `rgba(0, 220, 255, ${alpha})`;
+        ctx.fillRect(Math.round(x), Math.round(y - hi / 2), wid, hi);
+      }
+
+      ctx.fillStyle = "rgba(210, 255, 255, 0.35)";
+      ctx.fillRect(Math.round(d.x), Math.round(d.y - d.h / 2), d.w, d.h);
+
+      ctx.fillStyle = "rgba(0, 255, 255, 0.35)";
+      ctx.fillRect(Math.round(d.x + d.w - 6), Math.round(d.y - d.h / 2), 6, d.h);
+    }
+
+    function drawHook(){
+      const h = STATE.hook;
+      ctx.strokeStyle = "rgba(255,255,255,.24)";
+      ctx.beginPath();
+      ctx.moveTo(h.x, 18);
+      ctx.lineTo(h.x, h.y);
+      ctx.stroke();
+
+      drawImageCentered(ctx, IMGS.pick, h.x, h.y, 24);
+
+      if (h.hasCatch && h.caught){
+        const s = h.caught.size.draw;
+        const ty = h.y + 12 + (s / 2) - 2;
+        const img = IMGS[h.caught.type.imgKey];
+        drawImageCentered(ctx, img, h.x, ty, s);
+      }
+    }
+
+    function drawHUD(now){
+      ctx.fillStyle = "#fff";
+      ctx.font = "13px system-ui";
+
+      const h = STATE.hook;
+      if (STATE.phase === "countdown"){
+        ctx.fillText("開始前：落とす位置を見定めよう", 10, 18);
+      } else if (h.phase === "idle"){
+        ctx.fillText("タップ：好きな位置に糸を垂らす", 10, 18);
+      } else if (h.phase === "drop"){
+        ctx.fillText("落下中…当てろ！", 10, 18);
+      } else {
+        ctx.fillText("巻き上げ中！天敵に注意！", 10, 18);
+      }
+
+      if (STATE.extended){
+        ctx.fillStyle = "rgba(255,255,255,.78)";
+        ctx.font = "12px system-ui";
+        ctx.fillText("延長中", 10, 36);
+      }
+
+      if (STATE.oni){
+        ctx.fillStyle = "rgba(0,255,255,.92)";
+        ctx.font = "12px system-ui";
+        ctx.fillText("鬼モード", 60, 36);
+      }
+
+      if (STATE.combo >= 2){
+        const comboMult = getComboMultiplier(STATE.combo).toFixed(2);
+        ctx.fillStyle = "rgba(255,220,120,.98)";
+        ctx.font = "12px system-ui";
+        ctx.fillText(`連続倍率 ×${comboMult}`, 130, 36);
+      }
+
+      if (now < STATE.flashUntil && STATE.flashMsg){
+        ctx.fillStyle = "rgba(0,0,0,.55)";
+        ctx.fillRect(0, 44, W, 26);
+        ctx.fillStyle = "#fff";
+        ctx.font = "13px system-ui";
+        ctx.fillText(STATE.flashMsg, 12, 62);
+      }
+
+      if (STATE.freezeUntil && now < STATE.freezeUntil){
+        ctx.fillStyle = "rgba(0,0,0,.35)";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "rgba(0,255,255,.9)";
+        ctx.font = "18px system-ui";
+        ctx.fillText("鬼モード突入", 110, 230);
+      }
+
+      if (getRemainingTime() <= 0 && STATE.phase === "play"){
+        ctx.fillStyle = "rgba(0,0,0,.65)";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#fff";
+        ctx.font = "22px system-ui";
+        ctx.fillText("TIME UP!", 120, 230);
+      }
+    }
+
+    function render(now, dt){
+      drawSkyAndSea(now);
+      drawSeaDecor(now, dt);
+      drawTourist();
+      drawSquid();
+      drawDash(now);
+      if (!STATE.hook.hasCatch) drawItems();
+      drawHook();
+      drawHUD(now);
+    }
+
+    let last = nowMs();
+
+    function step(now){
+      if (!STATE) return;
+      const dt = Math.min(0.033, (now - last) / 1000);
+      last = now;
+
+      const W = CFG.W;
+      const H = CFG.H;
+      const FLOOR_Y = Math.floor(H * CFG.FLOOR_Y_RATIO);
+      const GIANT_DROP_START_Y = Math.floor(H * CFG.GIANT_DROP_START_Y_RATIO);
+
+      const mul = STATE.oni ? CFG.ONI_SPEED_MUL : 1.0;
+
+      if (!(STATE.freezeUntil && now < STATE.freezeUntil)){
+        for (const it of STATE.items){
+          if (!it.alive) continue;
+
+          if (now < it.pauseUntil){
+            it.vx *= 0.90;
+          } else {
+            if (now >= it.nextMind){
+              if (Math.random() < 0.10) it.pauseUntil = now + rand(260, 620);
+              const flip = (Math.random() < 0.18) ? -1 : 1;
+              const spd = 45 + rand(-18, 60);
+              it.vxTarget = clamp(flip * (Math.random() < 0.5 ? -1 : 1) * spd, -130, 130);
+              it.bobAmp = clamp(it.bobAmp + rand(-0.6, 0.9), 0.5, 3.4);
+              it.bobSpd = clamp(it.bobSpd + rand(-1.2, 1.4), 2.0, 9.0);
+              it.nextMind = now + rand(350, 1300);
+            }
+
+            const dv = it.vxTarget - it.vx;
+            it.vx += clamp(dv, -240 * dt, 240 * dt);
+            it.vx += rand(-6, 6) * dt;
+            it.vx = clamp(it.vx, -130, 130);
+          }
+
+          it.x += it.vx * dt;
+
+          const half = it.spec.size.draw / 2;
+          if (it.x - half < 10){
+            it.x = 10 + half;
+            it.vx = Math.abs(it.vx) * (0.85 + Math.random() * 0.25);
+            it.vxTarget = Math.abs(it.vxTarget) * (0.8 + Math.random() * 0.4);
+            it.nextMind = Math.min(it.nextMind, now + rand(120, 420));
+          }
+          if (it.x + half > W - 10){
+            it.x = (W - 10) - half;
+            it.vx = -Math.abs(it.vx) * (0.85 + Math.random() * 0.25);
+            it.vxTarget = -Math.abs(it.vxTarget) * (0.8 + Math.random() * 0.4);
+            it.nextMind = Math.min(it.nextMind, now + rand(120, 420));
+          }
+
+          it.y = it.baseY + Math.sin((now / 1000) * it.bobSpd + it.bobPhase) * it.bobAmp;
+        }
+
+        const t = STATE.tourist;
+        t.x += t.dir * t.speed * mul * dt;
+        if (t.x < 0){ t.x = 0; t.dir *= -1; }
+        if (t.x + t.w > W){ t.x = W - t.w; t.dir *= -1; }
+
+        const s = STATE.squid;
+        s.baseX += s.dir * s.speed * mul * dt;
+        if (s.baseX < 0){ s.baseX = 0; s.dir *= -1; }
+        if (s.baseX + s.w > W){ s.baseX = W - s.w; s.dir *= -1; }
+
+        const sec = (now / 1000) * (Math.PI * 2) * s.freq + s.phase;
+        s.x = s.baseX + Math.sin(sec) * s.ampX;
+        s.y = s.baseY + Math.cos(sec * 0.85) * s.ampY;
+
+        const d = STATE.dash;
+        if (!d.active && now >= d.nextAt) spawnDash(now);
+        if (d.active){
+          d.x += d.vx * dt;
+          if (d.x + d.w < -40) despawnDash();
+        }
+      }
+
+      if (STATE.phase === "play" && !STATE.ended){
+        const h = STATE.hook;
+
+        if (h.phase === "drop"){
+          const spd = hookDropSpeed(h.y, FLOOR_Y);
+          h.y += spd * dt;
+
+          if (!h.hasCatch){
+            for (const it of STATE.items){
+              if (!it.alive) continue;
+              const rr = it.spec.size.draw * 0.38;
+              if (circleHit(h.x, h.y, 10, it.x, it.y, rr)){
+                h.hasCatch = true;
+                h.phase = "reel";
+                h.caught = it.spec;
+                h.giantDropArmed = (it.spec.sizeKey === "giant");
+                h.giantDropRolled = false;
+                h.giantWillDrop = false;
+                it.alive = false;
+                flashText(`HIT!（${it.spec.size.label}/${it.spec.type.label}）`, 750);
+                break;
+              }
+            }
+          }
+
+          if (h.y >= FLOOR_Y - 10){
+            h.y = FLOOR_Y - 10;
+            h.phase = "reel";
+            if (!h.hasCatch){
+              STATE.combo = 0;
+              flashText("空振り…！", 600);
+            }
+          }
+        }
+
+        if (h.phase === "reel"){
+          const spd = hookReelSpeed(h.y, FLOOR_Y, h.hasCatch);
+          h.y -= spd * dt;
+
+          if (h.hasCatch && h.caught && h.giantDropArmed){
+            if (!h.giantDropRolled && h.y < GIANT_DROP_START_Y){
+              h.giantDropRolled = true;
+              h.giantWillDrop = (Math.random() < CFG.GIANT_DROP_CHANCE);
+            }
+            if (h.giantWillDrop && h.y < (GIANT_DROP_START_Y - 40)){
+              const dead = STATE.items.find(v => !v.alive);
+              if (dead) resetItem(dead);
+              h.hasCatch = false;
+              h.caught = null;
+              STATE.combo = 0;
+              STATE.miss++;
+              flashText("巨大たこ焼き、落ちた！！", 950);
+              setHookIdle();
+            }
+          }
+
+          if (h.hasCatch && h.caught){
+            const fishSize = h.caught.size.draw;
+            const fishR = fishSize * 0.38;
+            const fishX = h.x;
+            const fishY = h.y + 12 + (fishSize / 2) - 2;
+
+            const t = STATE.tourist;
+            const s = STATE.squid;
+            const d = STATE.dash;
+
+            if (circleRectHit(fishX, fishY, fishR, t.x, t.y - t.h / 2, t.w, t.h)){
+              const dead = STATE.items.find(v => !v.alive);
+              if (dead) resetItem(dead);
+              h.hasCatch = false;
+              h.caught = null;
+              STATE.combo = 0;
+              STATE.miss++;
+              flashText("観光客に横取りされた！", 850);
+              setHookIdle();
+            }
+
+            if (h.hasCatch && circleRectHit(fishX, fishY, fishR, s.x, s.y - s.h / 2, s.w, s.h)){
+              const dead = STATE.items.find(v => !v.alive);
+              if (dead) resetItem(dead);
+              h.hasCatch = false;
+              h.caught = null;
+              STATE.combo = 0;
+              STATE.miss++;
+              STATE.score -= 40;
+              flashText("イカに奪われた… -40", 950);
+              setHookIdle();
+            }
+
+            if (h.hasCatch && d.active && circleRectHit(fishX, fishY, fishR, d.x, d.y - d.h / 2, d.w, d.h)){
+              const dead = STATE.items.find(v => !v.alive);
+              if (dead) resetItem(dead);
+              h.hasCatch = false;
+              h.caught = null;
+              STATE.combo = 0;
+              STATE.miss++;
+              flashText("観光客に横取りされた！", 850);
+              setHookIdle();
+              despawnDash();
+            }
+          }
+
+          if (h.y <= 18){
+            h.y = 18;
+            if (h.hasCatch && h.caught){
+              const dead = STATE.items.find(v => !v.alive);
+              if (dead) resetItem(dead);
+
+              const nextCombo = (h.caught.type.mult < 0) ? 0 : (STATE.combo + 1);
+              const gained = calcCatchScore(h.caught, nextCombo);
+
+              if (h.caught.type.mult < 0){
+                STATE.score += gained;
+                STATE.combo = 0;
+                STATE.miss++;
+                flashText(`生焼け！ ${gained}`, 900);
+              } else {
+                STATE.combo = nextCombo;
+                STATE.score += gained;
+                const comboMult = getComboMultiplier(STATE.combo).toFixed(2);
+                flashText(`GET! ${gained > 0 ? "+" : ""}${gained}（×${comboMult}）`, 900);
+              }
+
+              h.hasCatch = false;
+              h.caught = null;
+              setHookIdle();
+            } else {
+              setHookIdle();
+            }
+          }
+        }
+      }
+
+      setText("tfScore", STATE.score);
+      setText("tfCombo", STATE.combo);
+      setText("tfMiss", STATE.miss);
+      setText("tfTime", Math.max(0, STATE.limit - STATE.elapsed));
+
+      render(now, dt);
+      rafId = requestAnimationFrame(step);
+    }
+
+    setHookIdle();
+    setText("tfScore", 0);
+    setText("tfCombo", 0);
+    setText("tfMiss", 0);
+    setText("tfTime", CFG.BASE_LIMIT);
+
+    rafId = requestAnimationFrame(step);
+
+    if (withCountdown){
+      startCountdownPhase();
+    } else {
+      startTimerLoop();
+    }
+  }
+
+  async function init(){
+    loadMonthlyStats();
+
+    const ctx = els.canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = "#081425";
+    ctx.fillRect(0, 0, CFG.W, CFG.H);
+    ctx.fillStyle = "#fff";
+    ctx.font = "16px system-ui";
+    ctx.fillText("読み込み中…", 120, 260);
+
+    const { images, failed } = await loadAllImages();
+    if (failed.length){
+      ctx.fillStyle = "#081425";
+      ctx.fillRect(0, 0, CFG.W, CFG.H);
+      ctx.fillStyle = "#fff";
+      ctx.font = "14px system-ui";
+      ctx.fillText("画像が読み込めないものがあります：", 20, 40);
+      ctx.font = "11px system-ui";
+      let y = 70;
+      for (const f of failed){
+        ctx.fillText(`- ${f.key}: ${f.url}`, 20, y);
+        y += 16;
+        if (y > CFG.H - 30) break;
+      }
+      ctx.fillText("CDN_BASE / ファイル名を確認してください。", 20, CFG.H - 16);
+      return;
+    }
+
+    IMGS = images;
+    refreshBestUI();
+
+    const c2 = els.canvas.getContext("2d");
+    c2.imageSmoothingEnabled = false;
+    c2.fillStyle = "#7fd2ff";
+    c2.fillRect(0, 0, CFG.W, 180);
+    c2.fillStyle = "#3fb8e8";
+    c2.fillRect(0, 180, CFG.W, CFG.H - 180);
+    c2.fillStyle = "#fff";
+    c2.font = "14px system-ui";
+    c2.fillText("ゲーム開始", 140, 260);
+
+    startGameWithCountdown();
+  }
+
+  refreshBestUI();
+
+  els.backBtn.addEventListener("click", () => {
+    try{
+      if (history.length > 1) history.back();
+      else location.href = "../town/";
+    }catch(_){
+      location.href = "../town/";
+    }
+  });
+
+  els.resultRetryBtn.addEventListener("click", () => {
+    hideResult();
+    startGameWithCountdown();
+  });
+
+  els.resultCloseBtn.addEventListener("click", () => {
+    hideResult();
+    location.href = "index.html";
+  });
+
+  els.retryBtn.addEventListener("click", () => {
+    hideResult();
+    startGameWithCountdown();
+  });
+
+  init();
+})();
+</script>
 </body>
 </html>
