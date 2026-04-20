@@ -1294,6 +1294,7 @@
   const LS_BOOK     = "tf_v1_book";
   const LS_INV      = "tf_v1_inv";
   const LS_GODBONUS = "ttc_god_bonus_v1";
+  const LS_MYSHOP_MONTHLY_SALES = "ttc_myshop_monthly_sales_v1";
 
   const GROW_MS = 30 * 60 * 1000;
   const HISTORY_LIMIT = 24;
@@ -1659,12 +1660,102 @@
     return `${fmtNum(n)} pt`;
   }
 
+  /* =========================================================
+     myshop monthly sales
+  ========================================================= */
+  function createDefaultMyshopSales(){
+    return {
+      monthKey: getMonthKey(),
+      sales: 0
+    };
+  }
+
+  function normalizeMyshopSales(v){
+    if (!v || typeof v !== "object") return createDefaultMyshopSales();
+    return {
+      monthKey: String(v.monthKey || getMonthKey()),
+      sales: Number(v.sales || 0)
+    };
+  }
+
+  function getLegacySalesFromMonthly(){
+    const monthly = loadMonthly();
+    return {
+      monthKey: String(monthly.monthKey || getMonthKey()),
+      sales: Number(monthly.sales || 0)
+    };
+  }
+
+  function loadMyshopMonthlySales(){
+    try{
+      const raw = localStorage.getItem(LS_MYSHOP_MONTHLY_SALES);
+
+      if (!raw){
+        const legacy = getLegacySalesFromMonthly();
+
+        if (Number(legacy.sales || 0) > 0) {
+          const migrated = {
+            monthKey: legacy.monthKey || getMonthKey(),
+            sales: Number(legacy.sales || 0)
+          };
+          localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(migrated));
+          return migrated;
+        }
+
+        const def = createDefaultMyshopSales();
+        localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
+        return def;
+      }
+
+      const parsed = JSON.parse(raw);
+      const safe = normalizeMyshopSales(parsed);
+
+      if (Number(safe.sales || 0) <= 0) {
+        const legacy = getLegacySalesFromMonthly();
+        if (
+          String(legacy.monthKey || "") === String(safe.monthKey || "") &&
+          Number(legacy.sales || 0) > 0
+        ) {
+          const migrated = {
+            monthKey: safe.monthKey || legacy.monthKey || getMonthKey(),
+            sales: Number(legacy.sales || 0)
+          };
+          localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(migrated));
+          return migrated;
+        }
+      }
+
+      localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(safe));
+      return safe;
+    }catch(_){
+      const legacy = getLegacySalesFromMonthly();
+      if (Number(legacy.sales || 0) > 0) {
+        const migrated = {
+          monthKey: legacy.monthKey || getMonthKey(),
+          sales: Number(legacy.sales || 0)
+        };
+        localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(migrated));
+        return migrated;
+      }
+
+      const def = createDefaultMyshopSales();
+      localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(def));
+      return def;
+    }
+  }
+
+  function saveMyshopMonthlySales(v){
+    localStorage.setItem(LS_MYSHOP_MONTHLY_SALES, JSON.stringify(normalizeMyshopSales(v)));
+  }
+
   function getCurrentMonthStats(){
     const stats = loadMonthly();
+    const myshopSales = loadMyshopMonthlySales();
+
     return {
       monthKey: stats.monthKey || getMonthKey(),
       harvest: Number(stats.harvest || 0),
-      sales: Number(stats.sales || 0),
+      sales: Number(myshopSales.sales || 0),
       fishing: Number(stats.fishing || 0),
       tower: Number(stats.tower || 0)
     };
@@ -2100,49 +2191,85 @@
   function rolloverIfNeeded(){
     const currentKey = getMonthKey();
     const monthly = loadMonthly();
+    const myshopSales = loadMyshopMonthlySales();
 
-    if (monthly.monthKey === currentKey) return monthly;
+    const mergedCurrent = {
+      monthKey: monthly.monthKey || currentKey,
+      harvest: Number(monthly.harvest || 0),
+      sales: Number(myshopSales.sales || 0),
+      fishing: Number(monthly.fishing || 0),
+      tower: Number(monthly.tower || 0)
+    };
+
+    const needsMonthlyRollover = monthly.monthKey !== currentKey;
+    const needsMyshopRollover = myshopSales.monthKey !== currentKey;
+
+    if (!needsMonthlyRollover && !needsMyshopRollover) return mergedCurrent;
+
+    const oldMonthKey = monthly.monthKey || myshopSales.monthKey || currentKey;
+    const mergedOld = {
+      monthKey: oldMonthKey,
+      harvest: Number(monthly.harvest || 0),
+      sales: Number(myshopSales.sales || 0),
+      fishing: Number(monthly.fishing || 0),
+      tower: Number(monthly.tower || 0)
+    };
 
     const history = loadHistory();
 
     if (
-      monthly.monthKey &&
-      isMeaningfulMonth(monthly) &&
-      !history.some(v => v.monthKey === monthly.monthKey)
+      mergedOld.monthKey &&
+      isMeaningfulMonth(mergedOld) &&
+      !history.some(v => v.monthKey === mergedOld.monthKey)
     ) {
-      const title = getMainTitleFromStats(monthly);
-      const grantedSeeds = getGrantedSeedsFromStats(monthly);
+      const title = getMainTitleFromStats(mergedOld);
+      const grantedSeeds = getGrantedSeedsFromStats(mergedOld);
 
       grantedSeeds.forEach(seed => addSeed(seed.id, 1));
 
       history.unshift({
-        monthKey: monthly.monthKey,
+        monthKey: mergedOld.monthKey,
         title,
-        harvest: Number(monthly.harvest || 0),
-        sales: Number(monthly.sales || 0),
-        fishing: Number(monthly.fishing || 0),
-        tower: Number(monthly.tower || 0),
+        harvest: Number(mergedOld.harvest || 0),
+        sales: Number(mergedOld.sales || 0),
+        fishing: Number(mergedOld.fishing || 0),
+        tower: Number(mergedOld.tower || 0),
         grantedSeeds
       });
 
       saveHistory(history);
 
       if (grantedSeeds.length) {
-        toast(`${monthly.monthKey} 報酬確定：${grantedSeeds.map(v => v.name).join(" / ")} を授かりました`);
+        toast(`${mergedOld.monthKey} 報酬確定：${grantedSeeds.map(v => v.name).join(" / ")} を授かりました`);
       } else {
-        toast(`${monthly.monthKey} の月間結果を確定しました`);
+        toast(`${mergedOld.monthKey} の月間結果を確定しました`);
       }
     }
 
-    const fresh = {
+    if (needsMonthlyRollover){
+      saveMonthly({
+        monthKey: currentKey,
+        harvest: 0,
+        sales: 0,
+        fishing: 0,
+        tower: 0
+      });
+    }
+
+    if (needsMyshopRollover){
+      saveMyshopMonthlySales({
+        monthKey: currentKey,
+        sales: 0
+      });
+    }
+
+    return {
       monthKey: currentKey,
       harvest: 0,
       sales: 0,
       fishing: 0,
       tower: 0
     };
-    saveMonthly(fresh);
-    return fresh;
   }
 
   /* =========================================================
@@ -2862,6 +2989,28 @@
     await saveRankingAfterMonthlyUpdate();
   };
 
+  window.ttcSetMyshopSales = async function(value){
+    const current = loadMyshopMonthlySales();
+    const next = {
+      monthKey: current.monthKey || getMonthKey(),
+      sales: Number(value || 0)
+    };
+    saveMyshopMonthlySales(next);
+    renderAll();
+    await saveRankingAfterMonthlyUpdate();
+  };
+
+  window.ttcAddMyshopSales = async function(delta){
+    const current = loadMyshopMonthlySales();
+    const next = {
+      monthKey: current.monthKey || getMonthKey(),
+      sales: Math.max(0, Number(current.sales || 0) + Number(delta || 0))
+    };
+    saveMyshopMonthlySales(next);
+    renderAll();
+    await saveRankingAfterMonthlyUpdate();
+  };
+
   window.ttcGrantSeed = function(seedId, count = 1){
     addSeed(seedId, count);
     renderAll();
@@ -2886,12 +3035,14 @@
 
   window.ttcResetMonthly = async function(){
     saveMonthly(createDefaultMonthly());
+    saveMyshopMonthlySales(createDefaultMyshopSales());
     renderAll();
     await saveRankingAfterMonthlyUpdate();
   };
 
   window.ttcForceRolloverTest = function(){
     const cur = loadMonthly();
+    const curSales = loadMyshopMonthlySales();
     const d = new Date();
     d.setMonth(d.getMonth() - 1);
 
@@ -2901,6 +3052,11 @@
       sales: Number(cur.sales || 0),
       fishing: Number(cur.fishing || 0),
       tower: Number(cur.tower || 0)
+    });
+
+    saveMyshopMonthlySales({
+      monthKey: getMonthKey(d),
+      sales: Number(curSales.sales || 0)
     });
 
     renderAll();
