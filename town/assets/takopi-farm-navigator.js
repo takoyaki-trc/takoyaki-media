@@ -3,24 +3,26 @@
 
   /* =========================================
      たこ焼きファーム街 2ページ目専用
-     たこぴナビゲーター 完全版
+     たこぴナビゲーター 完全版（所持アイテム導線なし版）
+     - 建物はリンク全体ではなく画像本体を光らせる
+     - 初回は畑ではなくプレゼント誘導
+     - 資材不足時はシリアル / みくじ / お店へ誘導
+     - 所持アイテムボタンは使わない
   ========================================= */
 
   const CONFIG = {
     icon: "https://ul.h3z.jp/xtmKojxp.png",
 
     storage: {
-      seenIntro: "takopi_farm_nav_seen_intro_v1",
-      closedHint: "takopi_farm_nav_closed_hint_v1",
-      step: "takopi_farm_nav_step_v1",
-      serialFlagDismissed: "takopi_farm_nav_serial_dismissed_v1"
+      seenIntro: "takopi_farm_nav_seen_intro_v3",
+      closedHint: "takopi_farm_nav_closed_hint_v3",
+      step: "takopi_farm_nav_step_v3"
     },
 
     selectors: {
       giftBtn: "#giftBoxBtn",
       serialBtn: "#serialCodeBtn",
       guideBtn: "#farmGuideBtn",
-      inventoryBtn: "#inventoryBtn",
       newsBtn: "#newsBtn",
 
       omikujiBuilding: ".b4",
@@ -34,11 +36,17 @@
       kasumiNpc: ".t8",
       waterNpc: ".t9",
       myshopNpc: ".t6"
+    },
+
+    links: {
+      serial: "https://takoyaki-card.com/town-test/code.html",
+      fish: "./takofish-01.html",
+      tower: "./takoyaki-tower01.html"
     }
   };
 
   /* =========================================
-     状態判定
+     状態取得
   ========================================= */
   function getLS(key, fallback = null) {
     try {
@@ -98,28 +106,49 @@
     return totalCount(inv.fert) > 0;
   }
 
-  function hasAnyItems(inv = getInv()) {
-    return hasAnySeed(inv) || hasAnyWater(inv) || hasAnyFert(inv);
-  }
-
+  /* =========================================
+     初見おすすめステップ判定
+  ========================================= */
   function inferRecommendedStep() {
     const inv = getInv();
     const octo = getOcto();
     const giftClaimed = hasClaimedGift();
 
-    if (!giftClaimed) return 0; // プレゼント
-    if (!hasAnyItems(inv)) return 1; // シリアル or みくじ
-    if (!hasAnySeed(inv)) return 1;
-    if (!hasAnyWater(inv) || !hasAnyFert(inv)) {
-      if (octo > 0) return 3; // お店で補充
-      return 6; // 釣り / タワー
+    const seed = hasAnySeed(inv);
+    const water = hasAnyWater(inv);
+    const fert = hasAnyFert(inv);
+
+    if (!giftClaimed && !seed && !water && !fert) {
+      return 0;
     }
-    return 4; // 畑へ
+
+    if (!giftClaimed) {
+      return 0;
+    }
+
+    if (!seed) {
+      return 1;
+    }
+
+    if (!water || !fert) {
+      if (octo > 0) return 3;
+      return 2;
+    }
+
+    return 4;
   }
 
   /* =========================================
-     DOM
+     DOM helpers
   ========================================= */
+  function qs(sel) {
+    try {
+      return document.querySelector(sel);
+    } catch (_) {
+      return null;
+    }
+  }
+
   function injectStyle() {
     const style = document.createElement("style");
     style.textContent = `
@@ -228,7 +257,7 @@
         font-size: 13px;
         line-height: 1.74;
         color: rgba(255,255,255,.92);
-        min-height: 6.6em;
+        min-height: 6.8em;
         white-space: pre-line;
       }
 
@@ -373,16 +402,22 @@
           0 0 0 3px rgba(255,212,107,.95),
           0 0 0 8px rgba(255,212,107,.22),
           0 0 24px rgba(255,190,60,.75) !important;
-        border-radius: 14px !important;
+        border-radius: 16px !important;
         animation: takopiTargetPulse 1.2s ease-in-out infinite;
       }
 
-      .tf-building.takopi-nav-target{
-        border-radius: 20px !important;
+      .tf-building > img.takopi-nav-target{
+        display: block;
+        border-radius: 18px !important;
       }
 
-      .takomin.takopi-nav-target{
-        border-radius: 999px !important;
+      .takomin > img.takopi-nav-target{
+        display: block;
+        border-radius: 14px !important;
+      }
+
+      .hud-btn.takopi-nav-target{
+        border-radius: 12px !important;
       }
 
       @keyframes takopiFarmNavPulse{
@@ -465,24 +500,33 @@
     return root;
   }
 
-  function qs(sel) {
-    try {
-      return document.querySelector(sel);
-    } catch (_) {
-      return null;
-    }
-  }
-
   function clearTargets() {
     document.querySelectorAll(".takopi-nav-target").forEach(el => {
       el.classList.remove("takopi-nav-target");
     });
   }
 
+  function resolveHighlightTarget(selector) {
+    const el = qs(selector);
+    if (!el) return null;
+
+    if (el.classList.contains("tf-building")) {
+      const img = el.querySelector("img");
+      if (img) return img;
+    }
+
+    if (el.classList.contains("takomin")) {
+      const img = el.querySelector("img");
+      if (img) return img;
+    }
+
+    return el;
+  }
+
   function markTarget(selector) {
     clearTargets();
-    const el = qs(selector);
-    if (el) el.classList.add("takopi-nav-target");
+    const target = resolveHighlightTarget(selector);
+    if (target) target.classList.add("takopi-nav-target");
   }
 
   function scrollToTarget(selector) {
@@ -501,19 +545,26 @@
     el.click();
   }
 
-  function goTo(selectorOrHref) {
-    const el = qs(selectorOrHref);
-    if (el) {
-      if (el.tagName === "A" && el.href) {
+  function goToHref(href) {
+    if (!href) return;
+    location.href = href;
+  }
+
+  function goToSelector(selector) {
+    const el = qs(selector);
+    if (!el) return;
+
+    markTarget(selector);
+    scrollToTarget(selector);
+
+    if (el.tagName === "A" && el.href) {
+      setTimeout(() => {
         location.href = el.href;
-        return;
-      }
-      el.click();
+      }, 180);
       return;
     }
-    if (/^https?:/i.test(selectorOrHref) || selectorOrHref.startsWith("./")) {
-      location.href = selectorOrHref;
-    }
+
+    el.click();
   }
 
   /* =========================================
@@ -522,105 +573,110 @@
   function buildSteps() {
     const inv = getInv();
     const giftClaimed = hasClaimedGift();
-    const octo = getOcto();
 
     return [
       {
         id: 0,
-        title: "まずはプレゼントたこ🐙",
+        title: "まずは🎁プレゼントたこ🐙",
         text:
 `最初はここから始めるたこ🐙
-🎁を開いて、タネ・ミズ・ヒリョウを受け取るたこ。
-何も持ってないまま畑に行くより、先に資材をそろえるたこ。`,
+何も持ってないまま畑に行っても始められないたこ。
+まず🎁を開いて、タネ・ミズ・ヒリョウを受け取るたこ。`,
         chips: ["最初の一手", "資材確保", "初心者向け"],
         target: CONFIG.selectors.giftBtn,
         done: giftClaimed,
         actions: [
-          { label: "🎁を開く", kind: "run", onClick: () => clickTarget(CONFIG.selectors.giftBtn), type: "primary" },
-          { label: "場所を光らせる", kind: "focus", target: CONFIG.selectors.giftBtn, type: "secondary" },
+          { label: "🎁を開く", kind: "click", selector: CONFIG.selectors.giftBtn, type: "primary" },
+          { label: "場所を光らせる", kind: "focus", selector: CONFIG.selectors.giftBtn, type: "secondary" },
           { label: "次を見る", kind: "next", type: "ghost" }
         ]
       },
+
       {
         id: 1,
-        title: "シリアルがあるならここたこ🐙",
+        title: "タネがないなら次はここたこ🐙",
         text:
 `シリアルコードを持ってるなら、先に入力するたこ🐙
-タネが増えるから、ファームを始めやすくなるたこ。
-持ってないなら、この次の「みくじ」に進めばOKたこ。`,
+タネが増えるから始めやすいたこ。
+持ってないなら、この次のみくじに進めばOKたこ。`,
         chips: ["シリアル入力", "タネ追加", "持ってる人向け"],
         target: CONFIG.selectors.serialBtn,
         done: hasAnySeed(inv),
         actions: [
-          { label: "🎫入力へ", kind: "goto", href: "https://takoyaki-card.com/town-test/code.html", type: "primary" },
+          { label: "🎫入力へ", kind: "href", href: CONFIG.links.serial, type: "primary" },
           { label: "コードないたこ", kind: "next", type: "secondary" },
-          { label: "場所を光らせる", kind: "focus", target: CONFIG.selectors.serialBtn, type: "ghost" }
+          { label: "場所を光らせる", kind: "focus", selector: CONFIG.selectors.serialBtn, type: "ghost" }
         ]
       },
+
       {
         id: 2,
         title: "次はたこ焼きみくじたこ🐙",
         text:
-`シリアルがない時は、たこ焼きみくじも見ておくたこ🐙
+`シリアルがない時や、まだ足りない時はみくじも見るたこ🐙
 オクトや資材が増えることがあるたこ。
-毎日こつこつがけっこう大事たこ。`,
+毎日こつこつが大事たこ。`,
         chips: ["みくじ", "ログイン導線", "補充"],
         target: CONFIG.selectors.omikujiBuilding,
         done: false,
         actions: [
-          { label: "みくじへ行く", kind: "gotoSelector", selector: CONFIG.selectors.omikujiBuilding, type: "primary" },
-          { label: "場所を光らせる", kind: "focus", target: CONFIG.selectors.omikujiBuilding, type: "secondary" },
+          { label: "みくじへ行く", kind: "selector", selector: CONFIG.selectors.omikujiBuilding, type: "primary" },
+          { label: "場所を光らせる", kind: "focus", selector: CONFIG.selectors.omikujiBuilding, type: "secondary" },
           { label: "次を見る", kind: "next", type: "ghost" }
         ]
       },
+
       {
         id: 3,
         title: "資材が足りないならお店たこ🐙",
         text:
 `タネ・ミズ・ヒリョウが足りないなら、たこぴのお店へ行くたこ🐙
-オクトがある時は、先にここで必要な分をそろえると楽たこ。
-露店ごっこは、あとでオクト稼ぎにも使えるたこ。`,
+オクトがある時は、ここで必要な分をそろえるたこ。
+足りなくなってから困る前に、先に補充しておくたこ。`,
         chips: ["たこぴのお店", "資材補充", "オクト消費"],
         target: CONFIG.selectors.shopBuilding,
         done: hasAnySeed(inv) && hasAnyWater(inv) && hasAnyFert(inv),
         actions: [
-          { label: "お店へ行く", kind: "gotoSelector", selector: CONFIG.selectors.shopBuilding, type: "primary" },
-          { label: "所持アイテムを見る", kind: "run", onClick: () => clickTarget(CONFIG.selectors.inventoryBtn), type: "secondary" },
+          { label: "お店へ行く", kind: "selector", selector: CONFIG.selectors.shopBuilding, type: "primary" },
+          { label: "場所を光らせる", kind: "focus", selector: CONFIG.selectors.shopBuilding, type: "secondary" },
           { label: "次を見る", kind: "next", type: "ghost" }
         ]
       },
+
       {
         id: 4,
-        title: "準備できたら畑へ行くたこ🐙",
+        title: "準備できたら畑たこ🐙",
         text:
 `ここからが本番たこ🐙
-畑では、まずタネを選ぶたこ。
+畑ではまずタネを選ぶたこ。
 次にミズとヒリョウを装備して、ワンタップ植えで植えるたこ。`,
         chips: ["畑", "タネ", "ミズ", "ヒリョウ"],
         target: CONFIG.selectors.farmBuilding,
         done: false,
         actions: [
-          { label: "🌱畑へ行く", kind: "gotoSelector", selector: CONFIG.selectors.farmBuilding, type: "primary" },
-          { label: "始め方を見る", kind: "run", onClick: () => clickTarget(CONFIG.selectors.guideBtn), type: "secondary" },
-          { label: "次を見る", kind: "next", type: "ghost" }
+          { label: "🌱畑へ行く", kind: "selector", selector: CONFIG.selectors.farmBuilding, type: "primary" },
+          { label: "始め方を見る", kind: "click", selector: CONFIG.selectors.guideBtn, type: "secondary" },
+          { label: "次を見る", kind: "ghost", type: "ghost" }
         ]
       },
+
       {
         id: 5,
         title: "収穫したら次の使い道たこ🐙",
         text:
 `カードを収穫したら、それで終わりじゃないたこ🐙
-露店ごっこで売ったり、
-たこ焼きマッチングの推理ゲームでオクトや資材を狙うたこ。`,
-        chips: ["収穫後", "露店", "推理ゲーム"],
+マイ露店で売ったり、
+カード募集板でオクトや資材を狙うたこ。`,
+        chips: ["収穫後", "マイ露店", "カード募集板"],
         target: CONFIG.selectors.matchingBuilding,
         done: false,
         actions: [
-          { label: "推理ゲームへ", kind: "gotoSelector", selector: CONFIG.selectors.matchingBuilding, type: "primary" },
-          { label: "マイ露店へ", kind: "gotoSelector", selector: CONFIG.selectors.myshopBuilding, type: "secondary" },
+          { label: "募集板へ", kind: "selector", selector: CONFIG.selectors.matchingBuilding, type: "primary" },
+          { label: "マイ露店へ", kind: "selector", selector: CONFIG.selectors.myshopBuilding, type: "secondary" },
           { label: "次を見る", kind: "next", type: "ghost" }
         ]
       },
+
       {
         id: 6,
         title: "資材集めはミニゲームも使うたこ🐙",
@@ -632,8 +688,8 @@
         target: CONFIG.selectors.takopiNpc,
         done: false,
         actions: [
-          { label: "釣りへ行くたこ", kind: "goto", href: "./takofish-01.html", type: "primary" },
-          { label: "タワーへ行くたこ", kind: "goto", href: "./takoyaki-tower01.html", type: "secondary" },
+          { label: "釣りへ行くたこ", kind: "href", href: CONFIG.links.fish, type: "primary" },
+          { label: "タワーへ行くたこ", kind: "href", href: CONFIG.links.tower, type: "secondary" },
           { label: "最初に戻る", kind: "reset", type: "ghost" }
         ]
       }
@@ -644,10 +700,8 @@
     currentStep: Number(getLS(CONFIG.storage.step, inferRecommendedStep())) || 0
   };
 
-  const root = (() => {
-    injectStyle();
-    return createRoot();
-  })();
+  injectStyle();
+  const root = createRoot();
 
   const panel = document.getElementById("takopiFarmNavPanel");
   const fab = document.getElementById("takopiFarmNavFab");
@@ -666,7 +720,10 @@
     fab.setAttribute("aria-expanded", "true");
     panel.setAttribute("aria-hidden", "false");
     root.classList.remove("is-hint");
-    if (markSeen) setLS(CONFIG.storage.seenIntro, "1");
+
+    if (markSeen) {
+      setLS(CONFIG.storage.seenIntro, "1");
+    }
   }
 
   function closeNav() {
@@ -702,32 +759,24 @@
       btn.textContent = action.label;
 
       btn.addEventListener("click", () => {
-        if (action.kind === "run" && typeof action.onClick === "function") {
-          action.onClick();
+        if (action.kind === "click") {
+          clickTarget(action.selector);
           return;
         }
 
         if (action.kind === "focus") {
-          markTarget(action.target);
-          scrollToTarget(action.target);
-          return;
-        }
-
-        if (action.kind === "goto") {
-          goTo(action.href);
-          return;
-        }
-
-        if (action.kind === "gotoSelector") {
           markTarget(action.selector);
           scrollToTarget(action.selector);
+          return;
+        }
 
-          const el = qs(action.selector);
-          if (el && el.tagName === "A" && el.href) {
-            setTimeout(() => {
-              location.href = el.href;
-            }, 180);
-          }
+        if (action.kind === "href") {
+          goToHref(action.href);
+          return;
+        }
+
+        if (action.kind === "selector") {
+          goToSelector(action.selector);
           return;
         }
 
@@ -743,6 +792,12 @@
           saveStep();
           renderStep();
           return;
+        }
+
+        if (action.kind === "ghost") {
+          state.currentStep = (state.currentStep + 1) % steps.length;
+          saveStep();
+          renderStep();
         }
       });
 
@@ -807,6 +862,9 @@
     setTimeout(() => {
       closeNav();
       setLS(CONFIG.storage.seenIntro, "1");
+      state.currentStep = inferRecommendedStep();
+      saveStep();
+      renderStep();
     }, 7600);
   } else {
     renderStep();
@@ -820,6 +878,5 @@
     renderStep();
   });
 
-  /* 初回レンダリング */
   renderStep();
 })();
