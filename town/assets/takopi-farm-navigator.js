@@ -1,0 +1,825 @@
+(() => {
+  "use strict";
+
+  /* =========================================
+     たこ焼きファーム街 2ページ目専用
+     たこぴナビゲーター 完全版
+  ========================================= */
+
+  const CONFIG = {
+    icon: "https://ul.h3z.jp/xtmKojxp.png",
+
+    storage: {
+      seenIntro: "takopi_farm_nav_seen_intro_v1",
+      closedHint: "takopi_farm_nav_closed_hint_v1",
+      step: "takopi_farm_nav_step_v1",
+      serialFlagDismissed: "takopi_farm_nav_serial_dismissed_v1"
+    },
+
+    selectors: {
+      giftBtn: "#giftBoxBtn",
+      serialBtn: "#serialCodeBtn",
+      guideBtn: "#farmGuideBtn",
+      inventoryBtn: "#inventoryBtn",
+      newsBtn: "#newsBtn",
+
+      omikujiBuilding: ".b4",
+      farmBuilding: ".b1",
+      matchingBuilding: ".b2",
+      myshopBuilding: ".b3",
+      titleBuilding: ".b5",
+      shopBuilding: ".b6",
+
+      takopiNpc: ".t10",
+      kasumiNpc: ".t8",
+      waterNpc: ".t9",
+      myshopNpc: ".t6"
+    }
+  };
+
+  /* =========================================
+     状態判定
+  ========================================= */
+  function getLS(key, fallback = null) {
+    try {
+      const v = localStorage.getItem(key);
+      return v == null ? fallback : v;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function setLS(key, value) {
+    try {
+      localStorage.setItem(key, String(value));
+    } catch (_) {}
+  }
+
+  function getJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function getInv() {
+    const inv = getJSON("tf_v1_inv", { ver: 1, seed: {}, water: {}, fert: {} }) || {};
+    inv.seed = inv.seed || {};
+    inv.water = inv.water || {};
+    inv.fert = inv.fert || {};
+    return inv;
+  }
+
+  function totalCount(obj) {
+    return Object.values(obj || {}).reduce((sum, v) => sum + Math.max(0, Number(v || 0)), 0);
+  }
+
+  function getOcto() {
+    const n = Number(getLS("roten_v1_octo", "0"));
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
+
+  function hasClaimedGift() {
+    return getLS("roten_v1_launch_gift_claimed", "0") === "1";
+  }
+
+  function hasAnySeed(inv = getInv()) {
+    return totalCount(inv.seed) > 0;
+  }
+
+  function hasAnyWater(inv = getInv()) {
+    return totalCount(inv.water) > 0;
+  }
+
+  function hasAnyFert(inv = getInv()) {
+    return totalCount(inv.fert) > 0;
+  }
+
+  function hasAnyItems(inv = getInv()) {
+    return hasAnySeed(inv) || hasAnyWater(inv) || hasAnyFert(inv);
+  }
+
+  function inferRecommendedStep() {
+    const inv = getInv();
+    const octo = getOcto();
+    const giftClaimed = hasClaimedGift();
+
+    if (!giftClaimed) return 0; // プレゼント
+    if (!hasAnyItems(inv)) return 1; // シリアル or みくじ
+    if (!hasAnySeed(inv)) return 1;
+    if (!hasAnyWater(inv) || !hasAnyFert(inv)) {
+      if (octo > 0) return 3; // お店で補充
+      return 6; // 釣り / タワー
+    }
+    return 4; // 畑へ
+  }
+
+  /* =========================================
+     DOM
+  ========================================= */
+  function injectStyle() {
+    const style = document.createElement("style");
+    style.textContent = `
+      .takopi-farm-nav{
+        position: fixed;
+        right: max(12px, env(safe-area-inset-right));
+        bottom: max(12px, calc(env(safe-area-inset-bottom) + 8px));
+        z-index: 999999;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+        pointer-events: none;
+      }
+
+      .takopi-farm-nav *{
+        box-sizing: border-box;
+        pointer-events: auto;
+      }
+
+      .takopi-farm-nav__hint{
+        max-width: 220px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        background: rgba(0,0,0,.84);
+        color: #fff;
+        font-size: 12px;
+        line-height: 1.45;
+        border: 1px solid rgba(255,255,255,.12);
+        box-shadow: 0 10px 24px rgba(0,0,0,.28);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(6px);
+        transition: .22s ease;
+      }
+
+      .takopi-farm-nav.is-hint .takopi-farm-nav__hint{
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .takopi-farm-nav__panel{
+        width: min(92vw, 372px);
+        border: 3px solid rgba(255,255,255,.22);
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(15,20,32,.97), rgba(8,10,18,.97));
+        box-shadow: 0 18px 40px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.06) inset;
+        color: #fff;
+        padding: 14px 14px 12px;
+        transform-origin: right bottom;
+        transform: translateY(8px) scale(.96);
+        opacity: 0;
+        visibility: hidden;
+        transition: .22s ease;
+        backdrop-filter: blur(8px);
+        position: relative;
+      }
+
+      .takopi-farm-nav.is-open .takopi-farm-nav__panel{
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .takopi-farm-nav__close{
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(255,255,255,.06);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .takopi-farm-nav__badge{
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .03em;
+        color: #08111f;
+        background: linear-gradient(180deg, #ffd76f, #ffb648);
+        margin-bottom: 8px;
+        box-shadow: 0 6px 16px rgba(255,182,72,.3);
+      }
+
+      .takopi-farm-nav__title{
+        margin: 0 0 8px;
+        font-size: 16px;
+        line-height: 1.4;
+        font-weight: 900;
+        letter-spacing: .01em;
+      }
+
+      .takopi-farm-nav__text{
+        margin: 0 0 12px;
+        font-size: 13px;
+        line-height: 1.74;
+        color: rgba(255,255,255,.92);
+        min-height: 6.6em;
+        white-space: pre-line;
+      }
+
+      .takopi-farm-nav__chips{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0 0 12px;
+      }
+
+      .takopi-farm-nav__chip{
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(255,255,255,.06);
+        color: rgba(255,255,255,.92);
+        border-radius: 999px;
+        padding: 6px 9px;
+        font-size: 11px;
+        line-height: 1;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .takopi-farm-nav__actions{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .takopi-farm-nav__btn{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 10px 10px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: .01em;
+        border: 2px solid rgba(255,255,255,.14);
+        transition: .15s ease;
+        text-align: center;
+        cursor: pointer;
+        appearance: none;
+      }
+
+      .takopi-farm-nav__btn--primary{
+        background: linear-gradient(180deg, #ffd76f, #ffb648);
+        color: #231400;
+        box-shadow: 0 8px 18px rgba(255,182,72,.28);
+      }
+
+      .takopi-farm-nav__btn--secondary{
+        background: linear-gradient(180deg, rgba(120,190,255,.22), rgba(255,255,255,.08));
+        color: #fff;
+        border-color: rgba(170,220,255,.22);
+      }
+
+      .takopi-farm-nav__btn--ghost{
+        grid-column: 1 / -1;
+        background: rgba(255,255,255,.06);
+        color: rgba(255,255,255,.95);
+      }
+
+      .takopi-farm-nav__btn:active{
+        transform: translateY(1px);
+      }
+
+      .takopi-farm-nav__fab{
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 62px;
+        padding: 8px 14px 8px 10px;
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #ffcf6b 0%, #ffab39 100%);
+        color: #251300;
+        font-weight: 900;
+        font-size: 14px;
+        letter-spacing: .02em;
+        box-shadow: 0 14px 28px rgba(0,0,0,.32), 0 0 0 3px rgba(255,255,255,.14);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+
+      .takopi-farm-nav__fab::after{
+        content:"";
+        position:absolute;
+        inset:-3px;
+        border-radius:999px;
+        border:2px solid rgba(255,208,107,.45);
+        animation: takopiFarmNavPulse 1.8s ease-out infinite;
+        pointer-events:none;
+      }
+
+      .takopi-farm-nav.is-open .takopi-farm-nav__fab::after{
+        animation:none;
+        opacity:0;
+      }
+
+      .takopi-farm-nav__icon-wrap{
+        width: 42px;
+        height: 42px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.24);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        flex:0 0 42px;
+        overflow:hidden;
+      }
+
+      .takopi-farm-nav__icon{
+        width: 34px;
+        height: 34px;
+        object-fit: contain;
+        display:block;
+      }
+
+      .takopi-farm-nav__label{
+        display:flex;
+        flex-direction:column;
+        align-items:flex-start;
+        line-height:1.05;
+      }
+
+      .takopi-farm-nav__label small{
+        font-size:10px;
+        font-weight:800;
+        opacity:.84;
+        margin-top:3px;
+      }
+
+      .takopi-nav-target{
+        position: relative !important;
+        z-index: 99990 !important;
+        box-shadow:
+          0 0 0 3px rgba(255,212,107,.95),
+          0 0 0 8px rgba(255,212,107,.22),
+          0 0 24px rgba(255,190,60,.75) !important;
+        border-radius: 14px !important;
+        animation: takopiTargetPulse 1.2s ease-in-out infinite;
+      }
+
+      .tf-building.takopi-nav-target{
+        border-radius: 20px !important;
+      }
+
+      .takomin.takopi-nav-target{
+        border-radius: 999px !important;
+      }
+
+      @keyframes takopiFarmNavPulse{
+        0%{ transform:scale(1); opacity:.9; }
+        70%{ transform:scale(1.12); opacity:0; }
+        100%{ transform:scale(1.12); opacity:0; }
+      }
+
+      @keyframes takopiTargetPulse{
+        0%,100%{
+          box-shadow:
+            0 0 0 3px rgba(255,212,107,.95),
+            0 0 0 8px rgba(255,212,107,.22),
+            0 0 24px rgba(255,190,60,.75);
+        }
+        50%{
+          box-shadow:
+            0 0 0 3px rgba(255,247,180,1),
+            0 0 0 10px rgba(255,212,107,.28),
+            0 0 34px rgba(255,190,60,.95);
+        }
+      }
+
+      @media (max-width:480px){
+        .takopi-farm-nav{
+          right:10px;
+          bottom:max(10px, calc(env(safe-area-inset-bottom) + 8px));
+        }
+        .takopi-farm-nav__panel{
+          width:min(94vw, 336px);
+          padding:13px 12px 11px;
+        }
+        .takopi-farm-nav__title{
+          font-size:15px;
+        }
+        .takopi-farm-nav__text{
+          font-size:12.5px;
+          min-height:7em;
+        }
+        .takopi-farm-nav__actions{
+          grid-template-columns:1fr;
+        }
+        .takopi-farm-nav__btn--ghost{
+          grid-column:auto;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function createRoot() {
+    const root = document.createElement("div");
+    root.className = "takopi-farm-nav";
+    root.id = "takopiFarmNav";
+
+    root.innerHTML = `
+      <div class="takopi-farm-nav__hint" id="takopiFarmNavHint">次に押す場所、案内するたこ🐙</div>
+
+      <div class="takopi-farm-nav__panel" id="takopiFarmNavPanel" aria-hidden="true">
+        <button class="takopi-farm-nav__close" id="takopiFarmNavClose" type="button" aria-label="たこぴナビを閉じる">×</button>
+        <div class="takopi-farm-nav__badge">🐙 たこぴナビ</div>
+        <h2 class="takopi-farm-nav__title" id="takopiFarmNavTitle"></h2>
+        <p class="takopi-farm-nav__text" id="takopiFarmNavText"></p>
+        <div class="takopi-farm-nav__chips" id="takopiFarmNavChips"></div>
+        <div class="takopi-farm-nav__actions" id="takopiFarmNavActions"></div>
+      </div>
+
+      <button class="takopi-farm-nav__fab" id="takopiFarmNavFab" type="button" aria-expanded="false" aria-controls="takopiFarmNavPanel">
+        <span class="takopi-farm-nav__icon-wrap">
+          <img class="takopi-farm-nav__icon" src="${CONFIG.icon}" alt="たこぴ">
+        </span>
+        <span class="takopi-farm-nav__label">
+          たこぴナビ
+          <small>次やること</small>
+        </span>
+      </button>
+    `;
+
+    document.body.appendChild(root);
+    return root;
+  }
+
+  function qs(sel) {
+    try {
+      return document.querySelector(sel);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function clearTargets() {
+    document.querySelectorAll(".takopi-nav-target").forEach(el => {
+      el.classList.remove("takopi-nav-target");
+    });
+  }
+
+  function markTarget(selector) {
+    clearTargets();
+    const el = qs(selector);
+    if (el) el.classList.add("takopi-nav-target");
+  }
+
+  function scrollToTarget(selector) {
+    const el = qs(selector);
+    if (!el) return;
+    try {
+      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+    } catch (_) {
+      el.scrollIntoView();
+    }
+  }
+
+  function clickTarget(selector) {
+    const el = qs(selector);
+    if (!el) return;
+    el.click();
+  }
+
+  function goTo(selectorOrHref) {
+    const el = qs(selectorOrHref);
+    if (el) {
+      if (el.tagName === "A" && el.href) {
+        location.href = el.href;
+        return;
+      }
+      el.click();
+      return;
+    }
+    if (/^https?:/i.test(selectorOrHref) || selectorOrHref.startsWith("./")) {
+      location.href = selectorOrHref;
+    }
+  }
+
+  /* =========================================
+     ステップ定義
+  ========================================= */
+  function buildSteps() {
+    const inv = getInv();
+    const giftClaimed = hasClaimedGift();
+    const octo = getOcto();
+
+    return [
+      {
+        id: 0,
+        title: "まずはプレゼントたこ🐙",
+        text:
+`最初はここから始めるたこ🐙
+🎁を開いて、タネ・ミズ・ヒリョウを受け取るたこ。
+何も持ってないまま畑に行くより、先に資材をそろえるたこ。`,
+        chips: ["最初の一手", "資材確保", "初心者向け"],
+        target: CONFIG.selectors.giftBtn,
+        done: giftClaimed,
+        actions: [
+          { label: "🎁を開く", kind: "run", onClick: () => clickTarget(CONFIG.selectors.giftBtn), type: "primary" },
+          { label: "場所を光らせる", kind: "focus", target: CONFIG.selectors.giftBtn, type: "secondary" },
+          { label: "次を見る", kind: "next", type: "ghost" }
+        ]
+      },
+      {
+        id: 1,
+        title: "シリアルがあるならここたこ🐙",
+        text:
+`シリアルコードを持ってるなら、先に入力するたこ🐙
+タネが増えるから、ファームを始めやすくなるたこ。
+持ってないなら、この次の「みくじ」に進めばOKたこ。`,
+        chips: ["シリアル入力", "タネ追加", "持ってる人向け"],
+        target: CONFIG.selectors.serialBtn,
+        done: hasAnySeed(inv),
+        actions: [
+          { label: "🎫入力へ", kind: "goto", href: "https://takoyaki-card.com/town-test/code.html", type: "primary" },
+          { label: "コードないたこ", kind: "next", type: "secondary" },
+          { label: "場所を光らせる", kind: "focus", target: CONFIG.selectors.serialBtn, type: "ghost" }
+        ]
+      },
+      {
+        id: 2,
+        title: "次はたこ焼きみくじたこ🐙",
+        text:
+`シリアルがない時は、たこ焼きみくじも見ておくたこ🐙
+オクトや資材が増えることがあるたこ。
+毎日こつこつがけっこう大事たこ。`,
+        chips: ["みくじ", "ログイン導線", "補充"],
+        target: CONFIG.selectors.omikujiBuilding,
+        done: false,
+        actions: [
+          { label: "みくじへ行く", kind: "gotoSelector", selector: CONFIG.selectors.omikujiBuilding, type: "primary" },
+          { label: "場所を光らせる", kind: "focus", target: CONFIG.selectors.omikujiBuilding, type: "secondary" },
+          { label: "次を見る", kind: "next", type: "ghost" }
+        ]
+      },
+      {
+        id: 3,
+        title: "資材が足りないならお店たこ🐙",
+        text:
+`タネ・ミズ・ヒリョウが足りないなら、たこぴのお店へ行くたこ🐙
+オクトがある時は、先にここで必要な分をそろえると楽たこ。
+露店ごっこは、あとでオクト稼ぎにも使えるたこ。`,
+        chips: ["たこぴのお店", "資材補充", "オクト消費"],
+        target: CONFIG.selectors.shopBuilding,
+        done: hasAnySeed(inv) && hasAnyWater(inv) && hasAnyFert(inv),
+        actions: [
+          { label: "お店へ行く", kind: "gotoSelector", selector: CONFIG.selectors.shopBuilding, type: "primary" },
+          { label: "所持アイテムを見る", kind: "run", onClick: () => clickTarget(CONFIG.selectors.inventoryBtn), type: "secondary" },
+          { label: "次を見る", kind: "next", type: "ghost" }
+        ]
+      },
+      {
+        id: 4,
+        title: "準備できたら畑へ行くたこ🐙",
+        text:
+`ここからが本番たこ🐙
+畑では、まずタネを選ぶたこ。
+次にミズとヒリョウを装備して、ワンタップ植えで植えるたこ。`,
+        chips: ["畑", "タネ", "ミズ", "ヒリョウ"],
+        target: CONFIG.selectors.farmBuilding,
+        done: false,
+        actions: [
+          { label: "🌱畑へ行く", kind: "gotoSelector", selector: CONFIG.selectors.farmBuilding, type: "primary" },
+          { label: "始め方を見る", kind: "run", onClick: () => clickTarget(CONFIG.selectors.guideBtn), type: "secondary" },
+          { label: "次を見る", kind: "next", type: "ghost" }
+        ]
+      },
+      {
+        id: 5,
+        title: "収穫したら次の使い道たこ🐙",
+        text:
+`カードを収穫したら、それで終わりじゃないたこ🐙
+露店ごっこで売ったり、
+たこ焼きマッチングの推理ゲームでオクトや資材を狙うたこ。`,
+        chips: ["収穫後", "露店", "推理ゲーム"],
+        target: CONFIG.selectors.matchingBuilding,
+        done: false,
+        actions: [
+          { label: "推理ゲームへ", kind: "gotoSelector", selector: CONFIG.selectors.matchingBuilding, type: "primary" },
+          { label: "マイ露店へ", kind: "gotoSelector", selector: CONFIG.selectors.myshopBuilding, type: "secondary" },
+          { label: "次を見る", kind: "next", type: "ghost" }
+        ]
+      },
+      {
+        id: 6,
+        title: "資材集めはミニゲームも使うたこ🐙",
+        text:
+`ミズやヒリョウが足りなくなったら、
+たこ焼き釣りやバランスタワーも使うたこ🐙
+足りない時の補充先として覚えておくと強いたこ。`,
+        chips: ["たこ焼き釣り", "バランスタワー", "補充"],
+        target: CONFIG.selectors.takopiNpc,
+        done: false,
+        actions: [
+          { label: "釣りへ行くたこ", kind: "goto", href: "./takofish-01.html", type: "primary" },
+          { label: "タワーへ行くたこ", kind: "goto", href: "./takoyaki-tower01.html", type: "secondary" },
+          { label: "最初に戻る", kind: "reset", type: "ghost" }
+        ]
+      }
+    ];
+  }
+
+  let state = {
+    currentStep: Number(getLS(CONFIG.storage.step, inferRecommendedStep())) || 0
+  };
+
+  const root = (() => {
+    injectStyle();
+    return createRoot();
+  })();
+
+  const panel = document.getElementById("takopiFarmNavPanel");
+  const fab = document.getElementById("takopiFarmNavFab");
+  const closeBtn = document.getElementById("takopiFarmNavClose");
+  const titleEl = document.getElementById("takopiFarmNavTitle");
+  const textEl = document.getElementById("takopiFarmNavText");
+  const chipsEl = document.getElementById("takopiFarmNavChips");
+  const actionsEl = document.getElementById("takopiFarmNavActions");
+
+  function saveStep() {
+    setLS(CONFIG.storage.step, String(state.currentStep));
+  }
+
+  function openNav(markSeen = true) {
+    root.classList.add("is-open");
+    fab.setAttribute("aria-expanded", "true");
+    panel.setAttribute("aria-hidden", "false");
+    root.classList.remove("is-hint");
+    if (markSeen) setLS(CONFIG.storage.seenIntro, "1");
+  }
+
+  function closeNav() {
+    root.classList.remove("is-open");
+    fab.setAttribute("aria-expanded", "false");
+    panel.setAttribute("aria-hidden", "true");
+  }
+
+  function renderStep() {
+    const steps = buildSteps();
+    if (state.currentStep < 0) state.currentStep = 0;
+    if (state.currentStep >= steps.length) state.currentStep = 0;
+
+    const step = steps[state.currentStep];
+    if (!step) return;
+
+    titleEl.textContent = step.title;
+    textEl.textContent = step.text;
+
+    chipsEl.innerHTML = "";
+    (step.chips || []).forEach(chipText => {
+      const chip = document.createElement("span");
+      chip.className = "takopi-farm-nav__chip";
+      chip.textContent = chipText;
+      chipsEl.appendChild(chip);
+    });
+
+    actionsEl.innerHTML = "";
+    (step.actions || []).forEach(action => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `takopi-farm-nav__btn takopi-farm-nav__btn--${action.type || "ghost"}`;
+      btn.textContent = action.label;
+
+      btn.addEventListener("click", () => {
+        if (action.kind === "run" && typeof action.onClick === "function") {
+          action.onClick();
+          return;
+        }
+
+        if (action.kind === "focus") {
+          markTarget(action.target);
+          scrollToTarget(action.target);
+          return;
+        }
+
+        if (action.kind === "goto") {
+          goTo(action.href);
+          return;
+        }
+
+        if (action.kind === "gotoSelector") {
+          markTarget(action.selector);
+          scrollToTarget(action.selector);
+
+          const el = qs(action.selector);
+          if (el && el.tagName === "A" && el.href) {
+            setTimeout(() => {
+              location.href = el.href;
+            }, 180);
+          }
+          return;
+        }
+
+        if (action.kind === "next") {
+          state.currentStep = (state.currentStep + 1) % steps.length;
+          saveStep();
+          renderStep();
+          return;
+        }
+
+        if (action.kind === "reset") {
+          state.currentStep = 0;
+          saveStep();
+          renderStep();
+          return;
+        }
+      });
+
+      actionsEl.appendChild(btn);
+    });
+
+    if (step.target) {
+      markTarget(step.target);
+    } else {
+      clearTargets();
+    }
+  }
+
+  function jumpRecommended() {
+    state.currentStep = inferRecommendedStep();
+    saveStep();
+    renderStep();
+  }
+
+  fab.addEventListener("click", () => {
+    if (root.classList.contains("is-open")) {
+      closeNav();
+      return;
+    }
+    jumpRecommended();
+    openNav(true);
+  });
+
+  closeBtn.addEventListener("click", () => {
+    closeNav();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!root.classList.contains("is-open")) return;
+    if (root.contains(e.target)) return;
+    closeNav();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && root.classList.contains("is-open")) {
+      closeNav();
+    }
+  });
+
+  if (!getLS(CONFIG.storage.closedHint)) {
+    setTimeout(() => {
+      root.classList.add("is-hint");
+    }, 900);
+
+    setTimeout(() => {
+      root.classList.remove("is-hint");
+      setLS(CONFIG.storage.closedHint, "1");
+    }, 5200);
+  }
+
+  if (!getLS(CONFIG.storage.seenIntro)) {
+    setTimeout(() => {
+      jumpRecommended();
+      openNav(false);
+    }, 1200);
+
+    setTimeout(() => {
+      closeNav();
+      setLS(CONFIG.storage.seenIntro, "1");
+    }, 7600);
+  } else {
+    renderStep();
+  }
+
+  window.addEventListener("storage", () => {
+    renderStep();
+  });
+
+  window.addEventListener("pageshow", () => {
+    renderStep();
+  });
+
+  /* 初回レンダリング */
+  renderStep();
+})();
