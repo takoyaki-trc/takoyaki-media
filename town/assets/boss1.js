@@ -98,7 +98,7 @@
     { id:"TN-048", name:"《TN-048:店主反撃レビュー《佐俣雄一郎🎯》》", url:"https://ul.h3z.jp/itQ85zyP.jpg" },
 
     /* URLが不正でも動作は止めない（画像が出ないだけ） */
-    { id:"TN-049", name:"《TN-049:たこ焼きの御神体》", url:"https://ul.h3z.jp/KJQrt??.jpg" },
+    { id:"TN-049", name:"《TN-049:たこ焼きの御神体》", url:"https://ul.h3z.jp/GQ8H0lGq.jpg" },
 
     { id:"BN-050", name:"《BN-050:焼かれし記憶、ソースに還る》", url:"https://ul.h3z.jp/nMEEgSCs.jpg" }
   ];
