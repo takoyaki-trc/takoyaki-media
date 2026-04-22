@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>塔神の最後の試練</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  body{
+    margin:0;
+    font-family:"DotGothic16","MS Gothic",sans-serif;
+    background:linear-gradient(180deg,#2a1450,#130722);
+    color:#fff8e8;
+    padding:16px;
+  }
+  .wrap{max-width:440px;margin:0 auto;}
+  .panel{
+    border-radius:20px;
+    background:linear-gradient(180deg,rgba(111,52,179,.72),rgba(47,20,86,.96));
+    border:2px solid rgba(255,223,150,.42);
+    overflow:hidden;
+    box-shadow:0 14px 30px rgba(0,0,0,.35);
+  }
+  .head{
+    padding:16px;
+    text-align:center;
+    font-family:"Press Start 2P",monospace;
+    font-size:14px;
+    line-height:1.8;
+    color:#ffe7b0;
+    background:linear-gradient(180deg,#4c287a,#281248);
+  }
+  .body{padding:14px;}
+  .note{text-align:center;line-height:1.8;color:#e9dcc0;font-size:13px;margin-bottom:12px;}
+  .track{
+    position:relative;
+    height:28px;
+    border-radius:999px;
+    background:rgba(0,0,0,.28);
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.14);
+    margin-bottom:12px;
+  }
+  .zone{
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:44%;
+    width:12%;
+    background:linear-gradient(180deg, rgba(255,219,114,.95), rgba(255,161,64,.95));
+  }
+  .marker{
+    position:absolute;
+    top:-4px;
+    width:12px;
+    height:36px;
+    border-radius:6px;
+    background:#fff;
+    box-shadow:0 0 10px rgba(255,255,255,.32);
+  }
+  .status{
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,223,140,.16);
+    border-radius:16px;
+    padding:12px;
+    margin-bottom:12px;
+    text-align:center;
+    line-height:1.8;
+  }
+  .btn{
+    width:100%;
+    min-height:52px;
+    border:0;
+    border-radius:15px;
+    cursor:pointer;
+    font-size:18px;
+    font-weight:900;
+    font-family:"DotGothic16","MS Gothic",sans-serif;
+    color:#2d220f;
+    background:linear-gradient(180deg,#ffe98a 0%,#efc445 100%);
+    border:2px solid rgba(120,93,45,.42);
+    margin-top:12px;
+  }
+  .btn.secondary{
+    background:linear-gradient(180deg,#fffef8 0%,#efe7d0 100%);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <div class="head">塔神の最後の試練</div>
+    <div class="body">
+      <div class="note">通常より高速。8回の停止判定を乗り越えろ。</div>
+      <div class="track" id="track">
+        <div class="zone"></div>
+        <div class="marker" id="marker"></div>
+      </div>
+      <div class="status" id="status">開始を押してください</div>
+      <button class="btn" id="actionBtn" type="button">開始</button>
+      <button class="btn secondary" id="backBtn" type="button">戻る</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const LS_TRIAL_SESSION = "ttc_god_trial_session_v1";
+  const LS_TRIAL_RESULT  = "ttc_god_trial_result_v1";
+  const EXPECTED_SEED = "seed_god_tower";
+
+  const track = document.getElementById("track");
+  const marker = document.getElementById("marker");
+  const statusEl = document.getElementById("status");
+  const actionBtn = document.getElementById("actionBtn");
+  const backBtn = document.getElementById("backBtn");
+
+  let session = null;
+  let running = false;
+  let x = 0;
+  let dir = 1;
+  let raf = 0;
+  let round = 0;
+  let success = 0;
+  const totalRounds = 8;
+  let speed = 8.4;
+
+  function loadSession(){
+    try{
+      return JSON.parse(localStorage.getItem(LS_TRIAL_SESSION) || "null");
+    }catch{
+      return null;
+    }
+  }
+
+  function saveResult(grade, score){
+    if(!session) return;
+    localStorage.setItem(LS_TRIAL_RESULT, JSON.stringify({
+      sessionId: session.sessionId,
+      seedId: EXPECTED_SEED,
+      grade,
+      score,
+      at: Date.now()
+    }));
+  }
+
+  function goBack(){
+    if(session?.returnTo){
+      location.href = session.returnTo;
+    }else{
+      history.back();
+    }
+  }
+
+  function loop(){
+    const width = Math.max(0, track.clientWidth - 12);
+    x += dir * speed;
+    if(x <= 0){ x = 0; dir = 1; }
+    if(x >= width){ x = width; dir = -1; }
+    marker.style.left = x + "px";
+    raf = requestAnimationFrame(loop);
+  }
+
+  function beginRound(){
+    round++;
+    statusEl.innerHTML = `ROUND ${round} / ${totalRounds}<br>成功 ${success}`;
+    x = 0;
+    dir = 1;
+    speed += 0.55;
+    running = true;
+    loop();
+    actionBtn.textContent = "止める";
+  }
+
+  function finish(){
+    cancelAnimationFrame(raf);
+    running = false;
+
+    let grade = "fail";
+    if(success >= 8) grade = "perfect";
+    else if(success >= 6) grade = "great";
+    else if(success >= 4) grade = "clear";
+
+    saveResult(grade, success);
+    statusEl.innerHTML = `試練終了<br>成功 ${success} / ${totalRounds}<br>結果：${grade}`;
+    actionBtn.textContent = "戻る";
+    actionBtn.onclick = goBack;
+  }
+
+  function stopRound(){
+    cancelAnimationFrame(raf);
+    running = false;
+
+    const width = track.clientWidth;
+    const center = x + 6;
+    const left = width * 0.44;
+    const right = width * 0.56;
+    const ok = center >= left && center <= right;
+    if(ok) success++;
+
+    if(round >= totalRounds){
+      finish();
+    }else{
+      statusEl.innerHTML = `${ok ? "成功" : "失敗"}<br>次のラウンドへ`;
+      actionBtn.textContent = "次へ";
+      actionBtn.onclick = () => {
+        actionBtn.onclick = handleAction;
+        beginRound();
+      };
+    }
+  }
+
+  function handleAction(){
+    if(!session || session.seedId !== EXPECTED_SEED) return;
+    if(!running && round === 0){
+      beginRound();
+      return;
+    }
+    if(running){
+      stopRound();
+    }
+  }
+
+  session = loadSession();
+  if(!session || session.seedId !== EXPECTED_SEED){
+    statusEl.textContent = "無効な試練です";
+    actionBtn.disabled = true;
+  }
+
+  actionBtn.addEventListener("click", handleAction);
+  backBtn.addEventListener("click", goBack);
+})();
+</script>
+</body>
+</html>
