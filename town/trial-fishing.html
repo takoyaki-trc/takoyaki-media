@@ -17,6 +17,9 @@
     --muted:rgba(255,255,255,.76);
     --line:rgba(255,255,255,.14);
     --shadow:0 14px 40px rgba(0,0,0,.55);
+    --gold:#ffd979;
+    --cyan:#7fd0ff;
+    --danger:#ff7d7d;
   }
 
   *{ box-sizing:border-box; }
@@ -128,7 +131,6 @@
     font-size:12px;
     color:rgba(255,255,255,.92);
   }
-
   .stats b{ font-weight:1000; }
 
   .canvaswrap{
@@ -181,7 +183,6 @@
     pointer-events:none;
     background:transparent;
   }
-
   .countOverlay.show{ display:flex; }
 
   .countInner{
@@ -217,6 +218,78 @@
     color:rgba(255,255,255,.82);
   }
 
+  .introOverlay{
+    position:absolute;
+    inset:0;
+    z-index:30;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:
+      radial-gradient(circle at 50% 32%, rgba(255,215,110,.10) 0, rgba(255,215,110,0) 30%),
+      rgba(0,0,0,.92);
+    transition:opacity .28s ease, visibility .28s ease;
+  }
+
+  .introOverlay.hide{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+  }
+
+  .introCard{
+    width:min(100%, 360px);
+    border-radius:20px;
+    border:1px solid rgba(255,255,255,.14);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,214,120,.16), rgba(255,214,120,0) 50%),
+      linear-gradient(180deg, rgba(24,30,52,.97), rgba(10,14,26,.98));
+    box-shadow:0 20px 60px rgba(0,0,0,.55);
+    padding:18px 16px 16px;
+    text-align:center;
+    animation:introPop .32s ease;
+  }
+
+  @keyframes introPop{
+    0%{ transform:scale(.95) translateY(8px); opacity:0; }
+    100%{ transform:scale(1) translateY(0); opacity:1; }
+  }
+
+  .introTop{
+    font-family:"Press Start 2P", monospace;
+    font-size:12px;
+    line-height:1.8;
+    color:#ffe39b;
+    margin-bottom:10px;
+  }
+
+  .introMain{
+    font-size:30px;
+    line-height:1.25;
+    font-weight:1000;
+    color:#fff6e8;
+    text-shadow:0 0 18px rgba(255,210,90,.20);
+    margin-bottom:10px;
+  }
+
+  .introSub{
+    font-size:15px;
+    line-height:1.8;
+    color:rgba(255,255,255,.88);
+    margin-bottom:14px;
+  }
+
+  .introWarn{
+    display:inline-block;
+    padding:6px 10px;
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    font-size:12px;
+    color:#ffd9a3;
+  }
+
   .resultOverlay{
     position:fixed;
     inset:0;
@@ -228,7 +301,6 @@
     background:rgba(0,0,0,.82);
     backdrop-filter:blur(4px);
   }
-
   .resultOverlay.show{ display:flex; }
 
   .resultModal{
@@ -378,13 +450,13 @@
     background:rgba(255,255,255,.06);
   }
 
-  .rateCard .rLabel{
+  .rLabel{
     font-size:12px;
     font-weight:1000;
     margin-bottom:6px;
   }
 
-  .rateCard .rValue{
+  .rValue{
     font-size:18px;
     font-weight:1000;
     line-height:1.2;
@@ -397,6 +469,14 @@
     color:rgba(255,255,255,.78);
   }
 
+  .lockNote{
+    margin-top:8px;
+    font-size:12px;
+    line-height:1.6;
+    color:#ffd9a3;
+    text-align:center;
+  }
+
   .resultActions{
     flex:0 0 auto;
     display:grid;
@@ -407,7 +487,7 @@
     background:linear-gradient(180deg, rgba(18,22,32,.96), rgba(12,15,22,.98));
   }
 
-  .resultActions .actionBtn{
+  .actionBtn{
     width:100%;
     min-width:0;
     padding:13px 12px;
@@ -420,6 +500,11 @@
     color:#fff;
   }
 
+  .actionBtn[disabled]{
+    opacity:.5;
+    cursor:not-allowed;
+  }
+
   @media (max-width:560px){
     .countNum{ font-size:60px; }
     .resultModal{
@@ -428,7 +513,7 @@
     }
     .resultScoreValue{ font-size:34px; }
     .rankValue{ font-size:19px; }
-    .rateGrid{ grid-template-columns:1fr 1fr 1fr; }
+    .introMain{ font-size:24px; }
   }
 </style>
 </head>
@@ -466,6 +551,15 @@
               <div class="countLabel">TRIAL START</div>
               <div id="countNum" class="countNum">3</div>
               <div class="countHelp">超極小だけを狙え</div>
+            </div>
+          </div>
+
+          <div id="introOverlay" class="introOverlay">
+            <div class="introCard">
+              <div class="introTop">LAST TRIAL</div>
+              <div class="introMain">最後の試練！</div>
+              <div class="introSub">20秒以内に<br>たこ焼きを釣り上げろ！</div>
+              <div class="introWarn">敵は強化済み</div>
             </div>
           </div>
         </div>
@@ -525,11 +619,12 @@
         <div class="rateNote" id="rateNote">
           試練結果に応じて、称号ページに戻った際の神カード抽選率へ反映されます。
         </div>
+        <div class="lockNote" id="lockNote">5秒後に閉じられます</div>
       </div>
     </div>
 
     <div class="resultActions">
-      <button id="resultCloseBtn" class="actionBtn" type="button">結果を持ち帰る</button>
+      <button id="resultCloseBtn" class="actionBtn" type="button" disabled>結果を持ち帰る</button>
     </div>
   </div>
 </div>
@@ -557,6 +652,9 @@
     H: 520,
     LIMIT: 20,
     COUNTDOWN_SEC: 3,
+    INTRO_MS: 1800,
+    RESULT_LOCK_MS: 5000,
+
     FLOOR_Y_RATIO: 0.86,
     TOP_Y: 18,
 
@@ -572,7 +670,7 @@
     HOOK_DROP_BASE: 700,
     HOOK_REEL_BASE: 320,
 
-    TOURIST: { w:42, h:22, speed:140 },
+    TOURIST: { w:44, h:24, speed:140, drawW:44, drawH:24 },
     SQUID: { w:72, h:72, speed:28, ampX:14, ampY:20, freq:0.85 },
     DASH: {
       w:78, h:14,
@@ -596,6 +694,7 @@
 
     countOverlay: document.getElementById("countOverlay"),
     countNum: document.getElementById("countNum"),
+    introOverlay: document.getElementById("introOverlay"),
 
     tfCatch: document.getElementById("tfCatch"),
     tfDivine: document.getElementById("tfDivine"),
@@ -616,6 +715,7 @@
     rateLR: document.getElementById("rateLR"),
     rateNote: document.getElementById("rateNote"),
     resultCloseBtn: document.getElementById("resultCloseBtn"),
+    lockNote: document.getElementById("lockNote"),
   };
 
   let IMGS = null;
@@ -623,6 +723,9 @@
   let session = null;
   let rafId = null;
   let countdownTimer = null;
+  let introTimer = null;
+  let resultLockTimer = null;
+  let resultUnlockAt = 0;
   let onPointer = null;
   let lastFrameTime = 0;
   let accTimer = 0;
@@ -634,6 +737,11 @@
   function openResult(){
     els.resultOverlay.classList.add("show");
     document.body.style.overflow = "hidden";
+  }
+
+  function closeResult(){
+    els.resultOverlay.classList.remove("show");
+    document.body.style.overflow = "";
   }
 
   function loadImage(src){
@@ -716,6 +824,20 @@
     els.countOverlay.classList.remove("show");
   }
 
+  function stopIntro(){
+    if (introTimer){
+      clearTimeout(introTimer);
+      introTimer = null;
+    }
+  }
+
+  function stopResultLock(){
+    if (resultLockTimer){
+      clearInterval(resultLockTimer);
+      resultLockTimer = null;
+    }
+  }
+
   function stopGameLoop(){
     if (rafId){
       cancelAnimationFrame(rafId);
@@ -723,6 +845,7 @@
     }
     detachPointer();
     stopCountdown();
+    stopIntro();
   }
 
   function pointerToCanvasX(e, cvs){
@@ -831,10 +954,23 @@
     countdownTimer = setTimeout(tick, 1000);
   }
 
+  function startIntroThenGame(){
+    els.introOverlay.classList.remove("hide");
+    introTimer = setTimeout(() => {
+      els.introOverlay.classList.add("hide");
+      startCountdown();
+    }, CFG.INTRO_MS);
+  }
+
   function startGame(){
     stopGameLoop();
+    stopResultLock();
     finished = false;
+    closeResult();
     document.body.style.overflow = "";
+
+    els.resultCloseBtn.disabled = true;
+    els.lockNote.textContent = "5秒後に閉じられます";
 
     const FLOOR_Y = Math.floor(CFG.H * CFG.FLOOR_Y_RATIO);
     const HORIZON_Y = Math.floor(CFG.H * 0.34);
@@ -849,7 +985,7 @@
       godMode: false,
       ended: false,
 
-      phase: "countdown",
+      phase: "intro",
       inputEnabled: false,
       timerStarted: false,
 
@@ -936,7 +1072,7 @@
     els.canvas.addEventListener("pointerdown", onPointer, { passive:false });
 
     setHud();
-    startCountdown();
+    startIntroThenGame();
 
     lastFrameTime = performance.now();
     accTimer = 0;
@@ -1030,7 +1166,13 @@
   function drawTourist(ctx){
     const t = STATE.tourist;
     const img = t.dir > 0 ? IMGS.tourist_right : IMGS.tourist_left;
-    ctx.drawImage(img, Math.round(t.x), Math.round(t.y - t.h / 2), 44, 24);
+    ctx.drawImage(
+      img,
+      Math.round(t.x),
+      Math.round(t.y - CFG.TOURIST.drawH / 2),
+      CFG.TOURIST.drawW,
+      CFG.TOURIST.drawH
+    );
   }
 
   function drawSquid(ctx){
@@ -1105,6 +1247,23 @@
     STATE.dashTrail.length = 0;
   }
 
+  function startResultLock(){
+    stopResultLock();
+    resultUnlockAt = Date.now() + CFG.RESULT_LOCK_MS;
+    els.resultCloseBtn.disabled = true;
+
+    resultLockTimer = setInterval(() => {
+      const remain = Math.max(0, Math.ceil((resultUnlockAt - Date.now()) / 1000));
+      if (remain <= 0){
+        stopResultLock();
+        els.resultCloseBtn.disabled = false;
+        els.lockNote.textContent = "閉じられます";
+      } else {
+        els.lockNote.textContent = `${remain}秒後に閉じられます`;
+      }
+    }, 200);
+  }
+
   function finishTrial(){
     if (finished) return;
     finished = true;
@@ -1158,6 +1317,7 @@
 
     requestAnimationFrame(() => {
       openResult();
+      startResultLock();
     });
   }
 
@@ -1307,7 +1467,7 @@
         const fishX = h.x;
         const fishY = h.y + 12 + (fishSize / 2) - 2;
 
-        if (circleRectHit(fishX, fishY, fishR, t.x, t.y - t.h / 2, t.w, t.h)){
+        if (circleRectHit(fishX, fishY, fishR, t.x, t.y - CFG.TOURIST.drawH / 2, CFG.TOURIST.drawW, CFG.TOURIST.drawH)){
           const dead = STATE.items.find(v => !v.alive);
           if (dead) resetTarget(dead);
           h.hasCatch = false;
@@ -1434,7 +1594,11 @@
   }
 
   els.backBtn.addEventListener("click", goBack);
-  els.resultCloseBtn.addEventListener("click", goBack);
+
+  els.resultCloseBtn.addEventListener("click", () => {
+    if (els.resultCloseBtn.disabled) return;
+    goBack();
+  });
 
   init();
 })();
