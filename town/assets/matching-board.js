@@ -464,6 +464,9 @@
     ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea`, rarity: v.rarity || "SP" }))
   ];
 
+  // 伝説マッチでは水SPカードを出さない
+  const LEGEND_EXTRA_SERIES_CARDS = EXTRA_SERIES_CARDS.filter(v => !/^SP-MIZU-/.test(String(v.id || "")));
+
   const CARDS_ALL = [...FIRST_SERIES_CARDS, ...EXTRA_SERIES_CARDS];
   const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
 
@@ -1627,8 +1630,8 @@
 
   function getDisplayPoolByType(type, legend = false) {
     if (legend) {
-      return EXTRA_SERIES_CARDS.length
-        ? EXTRA_SERIES_CARDS
+      return LEGEND_EXTRA_SERIES_CARDS.length
+        ? LEGEND_EXTRA_SERIES_CARDS
         : FIRST_SERIES_CARDS.filter(c => ["UR", "LR"].includes(c.rarity));
     }
 
@@ -1673,8 +1676,8 @@
   function chooseWantedCard(type, difficulty, rnd, legend = false) {
     let pool = getDisplayPoolByType(type, legend);
 
-    if (legend && EXTRA_SERIES_CARDS.length) {
-      return { card: pick(EXTRA_SERIES_CARDS, rnd), qty: 1, isExtraPool: true };
+    if (legend && LEGEND_EXTRA_SERIES_CARDS.length) {
+      return { card: pick(LEGEND_EXTRA_SERIES_CARDS, rnd), qty: 1, isExtraPool: true };
     }
 
     if (difficulty >= 5) {
