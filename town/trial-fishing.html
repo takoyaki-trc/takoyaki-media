@@ -282,7 +282,7 @@
     flex-direction:column;
     min-height:0;
     overflow:hidden;
-      transform:translateY(12px) scale(.96);
+    transform:translateY(12px) scale(.96);
     opacity:0;
     animation:resultPop .24s ease forwards;
   }
@@ -478,8 +478,8 @@
           <span>成功：<b id="tfCatch">0</b></span>
           <span>神極小：<b id="tfDivine">0</b></span>
           <span>失敗：<b id="tfMiss">0</b></span>
-          <span>残り：<b id="tfTime">--</b>s</span>
-          <span>判定：<b id="tfJudge">---</b></span>
+          <span>残り：<b id="tfTime">20</b>s</span>
+          <span>判定：<b id="tfJudge">FAIL</b></span>
         </div>
       </div>
 
@@ -563,17 +563,11 @@
     FLOOR_Y_RATIO: 0.86,
     TOP_Y: 18,
 
-    /* 超極小 */
     TARGET_DRAW: 16,
-    TARGET_BASE: 1,
-
-    /* 神極小 */
     DIVINE_DRAW: 20,
     DIVINE_BONUS: 2,
     DIVINE_CHANCE: 0.12,
 
-    /* 神域モード */
-    DIVINE_PHASE_START: 15, /* 残り5秒で開始 */
     GOD_MODE_DRAW: 12,
     GOD_MODE_DIVINE_DRAW: 15,
 
@@ -612,13 +606,13 @@
   let STATE = null;
   let rafId = null;
   let countdownTimer = null;
-  let countdownRunning = false;
   let onPointer = null;
   let session = null;
+  let lastFrameTime = 0;
+  let accTimer = 0;
 
   function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
   function rand(a, b){ return a + Math.random() * (b - a); }
-  function nowMs(){ return performance.now(); }
 
   function openResult(){
     els.resultOverlay.classList.add("show");
@@ -684,7 +678,6 @@
   }
 
   function stopCountdown(){
-    countdownRunning = false;
     if (countdownTimer){
       clearTimeout(countdownTimer);
       countdownTimer = null;
@@ -698,6 +691,8 @@
     rafId = null;
     detachPointer();
     STATE = null;
+    lastFrameTime = 0;
+    accTimer = 0;
   }
 
   function pointerToCanvasX(e, cvs){
@@ -747,10 +742,10 @@
 
   function makeTarget(){
     const divine = Math.random() < CFG.DIVINE_CHANCE;
-    const godMode = STATE.godMode;
+    const godMode = !!STATE?.godMode;
     return {
       x: rand(CFG.W * 0.14, CFG.W * 0.86),
-      baseY: STATE.world.FLOOR_Y - 14 + rand(-2, 2),
+      baseY: Math.floor(CFG.H * CFG.FLOOR_Y_RATIO) - 14 + rand(-2, 2),
       y: 0,
       alive: true,
       divine,
@@ -762,7 +757,7 @@
       bobAmp: rand(0.8, 2.6),
       bobSpd: rand(3.4, 7.8),
       bobPhase: rand(0, Math.PI * 2),
-      nextMind: nowMs() + rand(360, 1200),
+      nextMind: performance.now() + rand(360, 1200),
       pauseUntil: 0,
     };
   }
@@ -775,17 +770,16 @@
 
   function startCountdown(){
     if (!STATE) return;
-    countdownRunning = true;
+    let n = CFG.COUNTDOWN_SEC;
     STATE.phase = "countdown";
     STATE.inputEnabled = false;
     STATE.timerStarted = false;
 
-    let n = CFG.COUNTDOWN_SEC;
     els.countNum.textContent = String(n);
     els.countOverlay.classList.add("show");
 
     function tick(){
-      if (!STATE || !countdownRunning) return;
+      if (!STATE) return;
 
       if (n > 1){
         n--;
@@ -801,7 +795,7 @@
         STATE.phase = "play";
         STATE.inputEnabled = true;
         STATE.timerStarted = true;
-        STATE.lastTickAt = nowMs();
+        STATE.startedAt = performance.now();
       }, 420);
     }
 
@@ -811,10 +805,6 @@
   function startGame(){
     stopGame();
     closeResult();
-
-    const cvs = els.canvas;
-    const ctx = cvs.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
 
     const FLOOR_Y = Math.floor(CFG.H * CFG.FLOOR_Y_RATIO);
     const HORIZON_Y = Math.floor(CFG.H * 0.34);
@@ -830,7 +820,7 @@
       phase: "countdown",
       inputEnabled: false,
       timerStarted: false,
-      lastTickAt: 0,
+      startedAt: 0,
 
       flashMsg: "",
       flashUntil: 0,
@@ -858,14 +848,6 @@
       caught: null,
     };
 
-    function setHookIdle(){
-      const h = STATE.hook;
-      h.phase = "idle";
-      h.y = CFG.TOP_Y;
-      h.hasCatch = false;
-      h.caught = null;
-    }
-
     function startDropAt(x){
       if (!STATE || !STATE.inputEnabled || STATE.ended) return;
       const h = STATE.hook;
@@ -878,345 +860,355 @@
 
     onPointer = (e) => {
       e.preventDefault();
-      startDropAt(pointerToCanvasX(e, cvs));
+      startDropAt(pointerToCanvasX(e, els.canvas));
     };
-    cvs.addEventListener("pointerdown", onPointer, { passive:false });
+    els.canvas.addEventListener("pointerdown", onPointer, { passive:false });
 
-    function drawBackground(now){
-      const god = STATE.godMode;
-      const seaRough = clamp(STATE.miss / 10, 0, 1);
-      const HORIZON_Y = STATE.world.HORIZON_Y;
-      const FLOOR_Y = STATE.world.FLOOR_Y;
+    setHud();
+    startCountdown();
 
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, HORIZON_Y);
-      if (god){
-        skyGrad.addColorStop(0, "#6246a8");
-        skyGrad.addColorStop(.6, "#1b3264");
-        skyGrad.addColorStop(1, "#102647");
-      } else {
-        skyGrad.addColorStop(0, "#9ee7ff");
-        skyGrad.addColorStop(.62, "#c6f0ff");
-        skyGrad.addColorStop(1, "#dff7ff");
-      }
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, CFG.W, HORIZON_Y);
+    lastFrameTime = performance.now();
+    accTimer = 0;
+    rafId = requestAnimationFrame(gameLoop);
+  }
 
-      const seaGrad = ctx.createLinearGradient(0, HORIZON_Y, 0, CFG.H);
-      if (god){
-        seaGrad.addColorStop(0, "#2d64b7");
-        seaGrad.addColorStop(.5, "#173d7f");
-        seaGrad.addColorStop(1, "#0b214b");
-      } else {
-        seaGrad.addColorStop(0, "#36a4db");
-        seaGrad.addColorStop(.5, "#1675a9");
-        seaGrad.addColorStop(1, "#0b3d67");
-      }
-      ctx.fillStyle = seaGrad;
-      ctx.fillRect(0, HORIZON_Y, CFG.W, CFG.H - HORIZON_Y);
+  function drawBackground(ctx, now){
+    const god = STATE.godMode;
+    const seaRough = clamp(STATE.miss / 10, 0, 1);
+    const HORIZON_Y = STATE.world.HORIZON_Y;
+    const FLOOR_Y = STATE.world.FLOOR_Y;
 
-      const waveAmp = god ? 3.2 + seaRough * 3.4 : 1.5 + seaRough * 3.2;
-      const waveAlpha = god ? 0.34 : 0.24;
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, HORIZON_Y);
+    if (god){
+      skyGrad.addColorStop(0, "#6246a8");
+      skyGrad.addColorStop(.6, "#1b3264");
+      skyGrad.addColorStop(1, "#102647");
+    } else {
+      skyGrad.addColorStop(0, "#9ee7ff");
+      skyGrad.addColorStop(.62, "#c6f0ff");
+      skyGrad.addColorStop(1, "#dff7ff");
+    }
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, CFG.W, HORIZON_Y);
 
-      for (let i = 0; i < CFG.W + 40; i += 18){
-        const y = HORIZON_Y + 6 + Math.sin((now / 140) + i * 0.18) * waveAmp;
-        ctx.fillStyle = `rgba(255,255,255,${waveAlpha})`;
-        ctx.fillRect(i, y, 12, 2);
-      }
+    const seaGrad = ctx.createLinearGradient(0, HORIZON_Y, 0, CFG.H);
+    if (god){
+      seaGrad.addColorStop(0, "#2d64b7");
+      seaGrad.addColorStop(.5, "#173d7f");
+      seaGrad.addColorStop(1, "#0b214b");
+    } else {
+      seaGrad.addColorStop(0, "#36a4db");
+      seaGrad.addColorStop(.5, "#1675a9");
+      seaGrad.addColorStop(1, "#0b3d67");
+    }
+    ctx.fillStyle = seaGrad;
+    ctx.fillRect(0, HORIZON_Y, CFG.W, CFG.H - HORIZON_Y);
 
-      ctx.fillStyle = god ? "rgba(255,220,130,.07)" : "rgba(255,255,255,.05)";
-      for (let i = 0; i < 11; i++){
-        const bx = 16 + (i * 31 % CFG.W);
-        const by = HORIZON_Y + 30 + ((i * 33 + Math.sin(now / 700 + i) * 18) % (CFG.H - HORIZON_Y - 90));
-        const r = (i % 3) + 1;
-        ctx.beginPath();
-        ctx.arc(bx, by, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    const waveAmp = god ? 3.2 + seaRough * 3.4 : 1.5 + seaRough * 3.2;
+    const waveAlpha = god ? 0.34 : 0.24;
 
-      ctx.fillStyle = god ? "#12345d" : "#1d6288";
-      ctx.fillRect(0, FLOOR_Y, CFG.W, CFG.H - FLOOR_Y);
-      ctx.fillStyle = "rgba(255,255,255,.10)";
-      ctx.fillRect(0, FLOOR_Y - 6, CFG.W, 6);
-
-      if (god){
-        ctx.fillStyle = "rgba(255,222,130,.08)";
-        ctx.fillRect(0, 0, CFG.W, CFG.H);
-      }
-
-      if (STATE.flashUntil > now && STATE.flashMsg){
-        ctx.fillStyle = "rgba(0,0,0,.48)";
-        ctx.fillRect(0, 46, CFG.W, 26);
-        ctx.fillStyle = "#fff";
-        ctx.font = "13px system-ui";
-        ctx.fillText(STATE.flashMsg, 12, 64);
-      }
+    for (let i = 0; i < CFG.W + 40; i += 18){
+      const y = HORIZON_Y + 6 + Math.sin((now / 140) + i * 0.18) * waveAmp;
+      ctx.fillStyle = `rgba(255,255,255,${waveAlpha})`;
+      ctx.fillRect(i, y, 12, 2);
     }
 
-    function drawTargets(){
-      for (const it of STATE.items){
-        if (!it.alive) continue;
-        const img = it.divine ? IMGS.divine : IMGS.tiny;
-        ctx.save();
-        if (it.divine){
-          ctx.shadowColor = "rgba(255,223,120,.38)";
-          ctx.shadowBlur = 10;
-        }
-        ctx.drawImage(img, Math.round(it.x - it.draw / 2), Math.round(it.y - it.draw / 2), it.draw, it.draw);
-        ctx.restore();
-      }
-    }
-
-    function drawHook(){
-      const h = STATE.hook;
-      ctx.strokeStyle = "rgba(255,255,255,.28)";
+    ctx.fillStyle = god ? "rgba(255,220,130,.07)" : "rgba(255,255,255,.05)";
+    for (let i = 0; i < 11; i++){
+      const bx = 16 + (i * 31 % CFG.W);
+      const by = HORIZON_Y + 30 + ((i * 33 + Math.sin(now / 700 + i) * 18) % (CFG.H - HORIZON_Y - 90));
+      const r = (i % 3) + 1;
       ctx.beginPath();
-      ctx.moveTo(h.x, CFG.TOP_Y);
-      ctx.lineTo(h.x, h.y);
-      ctx.stroke();
+      ctx.arc(bx, by, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-      ctx.drawImage(IMGS.pick, Math.round(h.x - 12), Math.round(h.y - 12), 24, 24);
+    ctx.fillStyle = god ? "#12345d" : "#1d6288";
+    ctx.fillRect(0, FLOOR_Y, CFG.W, CFG.H - FLOOR_Y);
+    ctx.fillStyle = "rgba(255,255,255,.10)";
+    ctx.fillRect(0, FLOOR_Y - 6, CFG.W, 6);
 
-      if (h.hasCatch && h.caught){
-        const size = h.caught.draw;
-        const ty = h.y + 12 + (size / 2) - 2;
-        const img = h.caught.divine ? IMGS.divine : IMGS.tiny;
-        ctx.save();
-        if (h.caught.divine){
-          ctx.shadowColor = "rgba(255,223,120,.40)";
-          ctx.shadowBlur = 10;
-        }
-        ctx.drawImage(img, Math.round(h.x - size / 2), Math.round(ty - size / 2), size, size);
-        ctx.restore();
+    if (god){
+      ctx.fillStyle = "rgba(255,222,130,.08)";
+      ctx.fillRect(0, 0, CFG.W, CFG.H);
+    }
+
+    if (STATE.flashUntil > now && STATE.flashMsg){
+      ctx.fillStyle = "rgba(0,0,0,.48)";
+      ctx.fillRect(0, 46, CFG.W, 26);
+      ctx.fillStyle = "#fff";
+      ctx.font = "13px system-ui";
+      ctx.fillText(STATE.flashMsg, 12, 64);
+    }
+  }
+
+  function drawTargets(ctx){
+    for (const it of STATE.items){
+      if (!it.alive) continue;
+      const img = it.divine ? IMGS.divine : IMGS.tiny;
+      ctx.save();
+      if (it.divine){
+        ctx.shadowColor = "rgba(255,223,120,.38)";
+        ctx.shadowBlur = 10;
       }
+      ctx.drawImage(img, Math.round(it.x - it.draw / 2), Math.round(it.y - it.draw / 2), it.draw, it.draw);
+      ctx.restore();
     }
+  }
 
-    function render(now){
-      drawBackground(now);
-      drawTargets();
-      drawHook();
+  function drawHook(ctx){
+    const h = STATE.hook;
+    ctx.strokeStyle = "rgba(255,255,255,.28)";
+    ctx.beginPath();
+    ctx.moveTo(h.x, CFG.TOP_Y);
+    ctx.lineTo(h.x, h.y);
+    ctx.stroke();
+
+    ctx.drawImage(IMGS.pick, Math.round(h.x - 12), Math.round(h.y - 12), 24, 24);
+
+    if (h.hasCatch && h.caught){
+      const size = h.caught.draw;
+      const ty = h.y + 12 + (size / 2) - 2;
+      const img = h.caught.divine ? IMGS.divine : IMGS.tiny;
+      ctx.save();
+      if (h.caught.divine){
+        ctx.shadowColor = "rgba(255,223,120,.40)";
+        ctx.shadowBlur = 10;
+      }
+      ctx.drawImage(img, Math.round(h.x - size / 2), Math.round(ty - size / 2), size, size);
+      ctx.restore();
     }
+  }
 
-    function finish(){
-      STATE.ended = true;
-      const judge = getJudge(STATE.catchCount, STATE.divineCount);
+  function updateGame(dt, now){
+    if (!STATE || STATE.ended) return;
 
-      saveTrialResult(judge.grade, {
-        catchCount: STATE.catchCount,
-        divineCount: STATE.divineCount,
-        miss: STATE.miss,
-        godMode: STATE.godMode,
-        totalScore: STATE.catchCount + STATE.divineCount * CFG.DIVINE_BONUS
-      });
+    if (STATE.timerStarted){
+      accTimer += dt;
+      while (accTimer >= 1000){
+        accTimer -= 1000;
+        STATE.elapsed++;
+        const remain = Math.max(0, CFG.LIMIT - STATE.elapsed);
 
-      els.resultScoreValue.textContent = judge.label;
-      els.rankValue.textContent = judge.label;
-      els.rankSub.textContent = judge.line;
-      els.statCatch.textContent = `${STATE.catchCount}個`;
-      els.statDivine.textContent = `神極小：${STATE.divineCount}個`;
-      els.statMiss.textContent = String(STATE.miss);
-      els.statMode.textContent = `神域モード：${STATE.godMode ? "到達" : "未到達"}`;
+        if (!STATE.godMode && remain <= 5){
+          STATE.godMode = true;
+          STATE.flashMsg = "神域モード突入";
+          STATE.flashUntil = now + 1200;
 
-      openResult();
-    }
-
-    let last = nowMs();
-
-    function step(now){
-      if (!STATE) return;
-
-      const dt = Math.min(0.033, (now - last) / 1000);
-      last = now;
-
-      if (STATE.timerStarted && !STATE.ended){
-        const sec = Math.floor((now - STATE.lastTickAt) / 1000);
-        if (sec > STATE.elapsed){
-          STATE.elapsed = sec;
-          const remain = Math.max(0, CFG.LIMIT - STATE.elapsed);
-
-          if (!STATE.godMode && remain <= 5){
-            STATE.godMode = true;
-            STATE.flashMsg = "神域モード突入";
-            STATE.flashUntil = now + 1200;
-
-            for (const it of STATE.items){
-              if (it.alive){
-                it.draw = it.divine ? CFG.GOD_MODE_DIVINE_DRAW : CFG.GOD_MODE_DRAW;
-              }
+          for (const it of STATE.items){
+            if (it.alive){
+              it.draw = it.divine ? CFG.GOD_MODE_DIVINE_DRAW : CFG.GOD_MODE_DRAW;
             }
           }
+        }
 
-          if (remain <= 0){
-            finish();
+        if (remain <= 0){
+          finish();
+          return;
+        }
+        setHud();
+      }
+    }
+
+    for (const it of STATE.items){
+      if (!it.alive) continue;
+
+      if (now < it.pauseUntil){
+        it.vx *= 0.90;
+      } else {
+        if (now >= it.nextMind){
+          if (Math.random() < 0.12) it.pauseUntil = now + rand(220, 520);
+          const flip = (Math.random() < 0.5 ? -1 : 1);
+          it.vxTarget = flip * rand(26, STATE.godMode ? 86 : 62);
+          it.bobAmp = clamp(it.bobAmp + rand(-0.6, 0.8), 0.8, 4.0);
+          it.bobSpd = clamp(it.bobSpd + rand(-1.1, 1.2), 3.2, 10);
+          it.nextMind = now + rand(280, 820);
+        }
+
+        const dv = it.vxTarget - it.vx;
+        it.vx += clamp(dv, -250 * dt / 1000, 250 * dt / 1000);
+        it.x += it.vx * dt / 1000;
+        it.y = it.baseY + Math.sin((now / 1000) * it.bobSpd + it.bobPhase) * it.bobAmp;
+
+        const half = it.draw / 2;
+        if (it.x - half < 12){
+          it.x = 12 + half;
+          it.vx = Math.abs(it.vx);
+          it.vxTarget = Math.abs(it.vxTarget);
+        }
+        if (it.x + half > CFG.W - 12){
+          it.x = CFG.W - 12 - half;
+          it.vx = -Math.abs(it.vx);
+          it.vxTarget = -Math.abs(it.vxTarget);
+        }
+      }
+    }
+
+    const h = STATE.hook;
+    const FLOOR_Y = STATE.world.FLOOR_Y;
+
+    if (h.phase === "drop"){
+      const spd = hookDropSpeed(h.y, FLOOR_Y);
+      h.y += spd * dt / 1000;
+
+      if (!h.hasCatch){
+        for (const it of STATE.items){
+          if (!it.alive) continue;
+          const rr = it.draw * 0.34;
+          if (circleHit(h.x, h.y, 9, it.x, it.y, rr)){
+            h.hasCatch = true;
+            h.phase = "reel";
+            h.caught = { divine:it.divine, draw:it.draw };
+            it.alive = false;
+            break;
           }
+        }
+      }
+
+      if (h.y >= FLOOR_Y - 10){
+        h.y = FLOOR_Y - 10;
+        h.phase = "reel";
+        if (!h.hasCatch){
+          STATE.miss++;
+          STATE.flashMsg = "空振り";
+          STATE.flashUntil = now + 700;
           setHud();
         }
       }
-
-      if (!STATE.ended){
-        for (const it of STATE.items){
-          if (!it.alive) continue;
-
-          if (now < it.pauseUntil){
-            it.vx *= 0.90;
-          } else {
-            if (now >= it.nextMind){
-              if (Math.random() < 0.12) it.pauseUntil = now + rand(220, 520);
-              const flip = (Math.random() < 0.5 ? -1 : 1);
-              it.vxTarget = flip * rand(26, STATE.godMode ? 86 : 62);
-              it.bobAmp = clamp(it.bobAmp + rand(-0.6, 0.8), 0.8, 4.0);
-              it.bobSpd = clamp(it.bobSpd + rand(-1.1, 1.2), 3.2, 10);
-              it.nextMind = now + rand(280, 820);
-            }
-
-            const dv = it.vxTarget - it.vx;
-            it.vx += clamp(dv, -250 * dt, 250 * dt);
-            it.x += it.vx * dt;
-            it.y = it.baseY + Math.sin((now / 1000) * it.bobSpd + it.bobPhase) * it.bobAmp;
-
-            const half = it.draw / 2;
-            if (it.x - half < 12){
-              it.x = 12 + half;
-              it.vx = Math.abs(it.vx);
-              it.vxTarget = Math.abs(it.vxTarget);
-            }
-            if (it.x + half > CFG.W - 12){
-              it.x = CFG.W - 12 - half;
-              it.vx = -Math.abs(it.vx);
-              it.vxTarget = -Math.abs(it.vxTarget);
-            }
-          }
-        }
-
-        const h = STATE.hook;
-        const FLOOR_Y = STATE.world.FLOOR_Y;
-
-        if (h.phase === "drop"){
-          const spd = hookDropSpeed(h.y, FLOOR_Y);
-          h.y += spd * dt;
-
-          if (!h.hasCatch){
-            for (const it of STATE.items){
-              if (!it.alive) continue;
-              const rr = it.draw * 0.34;
-              if (circleHit(h.x, h.y, 9, it.x, it.y, rr)){
-                h.hasCatch = true;
-                h.phase = "reel";
-                h.caught = { divine:it.divine, draw:it.draw };
-                it.alive = false;
-                break;
-              }
-            }
-          }
-
-          if (h.y >= FLOOR_Y - 10){
-            h.y = FLOOR_Y - 10;
-            h.phase = "reel";
-            if (!h.hasCatch){
-              STATE.miss++;
-              STATE.flashMsg = "空振り";
-              STATE.flashUntil = now + 700;
-              setHud();
-            }
-          }
-        }
-
-        if (h.phase === "reel"){
-          const spd = hookReelSpeed(h.y, FLOOR_Y, h.hasCatch);
-          h.y -= spd * dt;
-
-          if (h.y <= CFG.TOP_Y){
-            h.y = CFG.TOP_Y;
-
-            if (h.hasCatch && h.caught){
-              if (h.caught.divine){
-                STATE.divineCount++;
-                STATE.flashMsg = "神極小捕獲";
-              } else {
-                STATE.catchCount++;
-                STATE.flashMsg = "超極小捕獲";
-              }
-              STATE.flashUntil = now + 800;
-
-              const dead = STATE.items.find(v => !v.alive);
-              if (dead) resetTarget(dead);
-
-              h.phase = "idle";
-              h.hasCatch = false;
-              h.caught = null;
-              setHud();
-            } else {
-              h.phase = "idle";
-            }
-          }
-        }
-      }
-
-      render(now);
-      rafId = requestAnimationFrame(step);
     }
 
-    function begin(){
-      const cvs = els.canvas;
-      const ctx = cvs.getContext("2d");
-      ctx.imageSmoothingEnabled = false;
+    if (h.phase === "reel"){
+      const spd = hookReelSpeed(h.y, FLOOR_Y, h.hasCatch);
+      h.y -= spd * dt / 1000;
 
-      ctx.fillStyle = "#8fdbff";
+      if (h.y <= CFG.TOP_Y){
+        h.y = CFG.TOP_Y;
+
+        if (h.hasCatch && h.caught){
+          if (h.caught.divine){
+            STATE.divineCount++;
+            STATE.flashMsg = "神極小捕獲";
+          } else {
+            STATE.catchCount++;
+            STATE.flashMsg = "超極小捕獲";
+          }
+          STATE.flashUntil = now + 800;
+
+          const dead = STATE.items.find(v => !v.alive);
+          if (dead) resetTarget(dead);
+
+          h.phase = "idle";
+          h.hasCatch = false;
+          h.caught = null;
+          setHud();
+        } else {
+          h.phase = "idle";
+        }
+      }
+    }
+  }
+
+  function renderFrame(now){
+    if (!STATE) return;
+    const ctx = els.canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    drawBackground(ctx, now);
+    drawTargets(ctx);
+    drawHook(ctx);
+  }
+
+  function finish(){
+    STATE.ended = true;
+    const judge = getJudge(STATE.catchCount, STATE.divineCount);
+
+    saveTrialResult(judge.grade, {
+      catchCount: STATE.catchCount,
+      divineCount: STATE.divineCount,
+      miss: STATE.miss,
+      godMode: STATE.godMode,
+      totalScore: STATE.catchCount + STATE.divineCount * CFG.DIVINE_BONUS
+    });
+
+    els.resultScoreValue.textContent = judge.label;
+    els.rankValue.textContent = judge.label;
+    els.rankSub.textContent = judge.line;
+    els.statCatch.textContent = `${STATE.catchCount}個`;
+    els.statDivine.textContent = `神極小：${STATE.divineCount}個`;
+    els.statMiss.textContent = String(STATE.miss);
+    els.statMode.textContent = `神域モード：${STATE.godMode ? "到達" : "未到達"}`;
+
+    openResult();
+  }
+
+  function gameLoop(ts){
+    if (!STATE) return;
+
+    if (!lastFrameTime) lastFrameTime = ts;
+    const dt = Math.min(33, ts - lastFrameTime);
+    lastFrameTime = ts;
+
+    updateGame(dt, ts);
+    renderFrame(ts);
+
+    if (STATE && !STATE.ended){
+      rafId = requestAnimationFrame(gameLoop);
+    }
+  }
+
+  async function init(){
+    try{
+      IMGS = await loadAllImages();
+    } catch(e){
+      const ctx = els.canvas.getContext("2d");
+      ctx.fillStyle = "#081425";
       ctx.fillRect(0, 0, CFG.W, CFG.H);
       ctx.fillStyle = "#fff";
       ctx.font = "14px system-ui";
-      ctx.fillText("試練準備中…", 128, 260);
-
-      startCountdown();
-      setHud();
-      rafId = requestAnimationFrame(step);
+      ctx.fillText("画像の読み込みに失敗しました", 70, 250);
+      return;
     }
 
-    async function init(){
-      try{
-        IMGS = await loadAllImages();
-      } catch(e){
-        const ctx = els.canvas.getContext("2d");
-        ctx.fillStyle = "#081425";
-        ctx.fillRect(0, 0, CFG.W, CFG.H);
-        ctx.fillStyle = "#fff";
-        ctx.font = "14px system-ui";
-        ctx.fillText("画像の読み込みに失敗しました", 70, 250);
-        return;
-      }
-
-      session = loadSession();
-      if (!session || session.seedId !== EXPECTED_SEED){
-        const ctx = els.canvas.getContext("2d");
-        ctx.fillStyle = "#081425";
-        ctx.fillRect(0, 0, CFG.W, CFG.H);
-        ctx.fillStyle = "#fff";
-        ctx.font = "14px system-ui";
-        ctx.fillText("無効な試練です", 120, 250);
-        return;
-      }
-
-      els.canvas.getContext("2d").imageSmoothingEnabled = false;
-      startGame();
-      begin();
+    session = loadSession();
+    if (!session || session.seedId !== EXPECTED_SEED){
+      const ctx = els.canvas.getContext("2d");
+      ctx.fillStyle = "#081425";
+      ctx.fillRect(0, 0, CFG.W, CFG.H);
+      ctx.fillStyle = "#fff";
+      ctx.font = "14px system-ui";
+      ctx.fillText("無効な試練です", 120, 250);
+      return;
     }
 
-    els.backBtn.addEventListener("click", goBack);
-    els.retryBtn.addEventListener("click", () => {
-      startGame();
-      begin();
-    });
-    els.playAgainBtn.addEventListener("click", () => {
-      closeResult();
-      startGame();
-      begin();
-    });
-    els.resultCloseBtn.addEventListener("click", goBack);
-    els.resultOverlay.addEventListener("click", (e) => {
-      if (e.target === els.resultOverlay) closeResult();
-    });
+    const ctx = els.canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = "#8fdbff";
+    ctx.fillRect(0, 0, CFG.W, CFG.H);
+    ctx.fillStyle = "#fff";
+    ctx.font = "14px system-ui";
+    ctx.fillText("試練準備中…", 128, 260);
 
-    init();
-  })();
+    startGame();
+  }
+
+  els.backBtn.addEventListener("click", goBack);
+
+  els.retryBtn.addEventListener("click", () => {
+    startGame();
+  });
+
+  els.playAgainBtn.addEventListener("click", () => {
+    closeResult();
+    startGame();
+  });
+
+  els.resultCloseBtn.addEventListener("click", goBack);
+
+  els.resultOverlay.addEventListener("click", (e) => {
+    if (e.target === els.resultOverlay) closeResult();
+  });
+
+  init();
+})();
 </script>
 </body>
 </html>
