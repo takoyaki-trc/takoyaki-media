@@ -128,27 +128,6 @@
     background:rgba(0,0,0,.12);
   }
 
-  .hud-left{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    align-items:center;
-  }
-
-  .btn{
-    appearance:none;
-    border:1px solid var(--line);
-    background:var(--btn);
-    color:var(--text);
-    border-radius:14px;
-    padding:10px 12px;
-    font-weight:900;
-    cursor:pointer;
-  }
-
-  .btn:hover{ background:var(--btn2); }
-  .btn[disabled]{ opacity:.45; cursor:not-allowed; }
-
   .stats{
     display:flex;
     gap:10px;
@@ -406,7 +385,7 @@
   .resultActions{
     flex:0 0 auto;
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:1fr;
     gap:10px;
     padding:10px 12px calc(10px + env(safe-area-inset-bottom));
     border-top:1px solid rgba(255,255,255,.08);
@@ -424,12 +403,6 @@
     border:1px solid rgba(255,255,255,.14);
   }
 
-  .actionRetry{
-    background:linear-gradient(180deg, #7fd0ff, #41aef0);
-    color:#06253b;
-    box-shadow:0 10px 20px rgba(80,175,240,.18);
-  }
-
   .actionClose{
     background:#2a3147;
     color:#fff;
@@ -444,7 +417,7 @@
     .resultScoreValue{ font-size:34px; }
     .rankValue{ font-size:19px; }
     .resultActions{
-      grid-template-columns:1fr 1fr;
+      grid-template-columns:1fr;
       gap:8px;
       padding:10px 10px calc(10px + env(safe-area-inset-bottom));
     }
@@ -471,9 +444,6 @@
   <main class="main">
     <section class="card" aria-label="釣神の最後の試練">
       <div class="hud">
-        <div class="hud-left">
-          <button id="retryBtn" class="btn" type="button">もう一回</button>
-        </div>
         <div class="stats" aria-label="ステータス">
           <span>成功：<b id="tfCatch">0</b></span>
           <span>神極小：<b id="tfDivine">0</b></span>
@@ -498,7 +468,7 @@
 
         <div class="footnote">
           タップで糸を落下 → 超極小だけを回収。<br>
-          最後の5秒は神域モード。さらに小さい獲物が現れます。
+          イカ・観光客・流れは通常より強化済み。最後の5秒は神域モード。
         </div>
       </div>
     </section>
@@ -534,7 +504,6 @@
     </div>
 
     <div class="resultActions">
-      <button id="playAgainBtn" class="actionBtn actionRetry" type="button">もう一回試す</button>
       <button id="resultCloseBtn" class="actionBtn actionClose" type="button">結果を持ち帰る</button>
     </div>
   </div>
@@ -553,6 +522,9 @@
     pick: `${CDN_BASE}pick.png?v=3`,
     tiny: `${CDN_BASE}tako_sauce.png?v=3`,
     divine: `${CDN_BASE}tako_rainbow.png?v=3`,
+    tourist_left: `${CDN_BASE}tourist_left.png?v=3`,
+    tourist_right: `${CDN_BASE}tourist_right.png?v=3`,
+    squid: `${CDN_BASE}ika.png?v=3`,
   };
 
   const CFG = {
@@ -574,11 +546,22 @@
     ITEM_COUNT: 6,
     HOOK_DROP_BASE: 700,
     HOOK_REEL_BASE: 320,
+
+    /* 強化敵 */
+    TOURIST: { w:42, h:22, speed:140 },
+    SQUID: { w:72, h:72, speed:28, ampX:14, ampY:20, freq:0.85 },
+
+    DASH: {
+      w:78, h:14,
+      speed:1250,
+      minS:5, maxS:9,
+      godMinS:3, godMaxS:5,
+      trail:5,
+    }
   };
 
   const els = {
     backBtn: document.getElementById("backBtn"),
-    retryBtn: document.getElementById("retryBtn"),
     canvas: document.getElementById("tfCanvas"),
 
     countOverlay: document.getElementById("countOverlay"),
@@ -598,7 +581,6 @@
     statDivine: document.getElementById("statDivine"),
     statMiss: document.getElementById("statMiss"),
     statMode: document.getElementById("statMode"),
-    playAgainBtn: document.getElementById("playAgainBtn"),
     resultCloseBtn: document.getElementById("resultCloseBtn"),
   };
 
@@ -717,6 +699,14 @@
     return (dx * dx + dy * dy) <= (ar + br) * (ar + br);
   }
 
+  function circleRectHit(cx, cy, cr, rx, ry, rw, rh){
+    const nx = clamp(cx, rx, rx + rw);
+    const ny = clamp(cy, ry, ry + rh);
+    const dx = cx - nx;
+    const dy = cy - ny;
+    return (dx * dx + dy * dy) <= cr * cr;
+  }
+
   function getJudge(catchCount, divineCount){
     const total = catchCount + divineCount * CFG.DIVINE_BONUS;
     if (total >= 16) return { grade:"perfect", label:"PERFECT", line:"釣神はあなたを神域の者と認めた。" };
@@ -752,12 +742,12 @@
       draw: divine
         ? (godMode ? CFG.GOD_MODE_DIVINE_DRAW : CFG.DIVINE_DRAW)
         : (godMode ? CFG.GOD_MODE_DRAW : CFG.TARGET_DRAW),
-      vx: (Math.random() < 0.5 ? -1 : 1) * rand(26, 56),
-      vxTarget: (Math.random() < 0.5 ? -1 : 1) * rand(26, 64),
-      bobAmp: rand(0.8, 2.6),
-      bobSpd: rand(3.4, 7.8),
+      vx: (Math.random() < 0.5 ? -1 : 1) * rand(30, 70),
+      vxTarget: (Math.random() < 0.5 ? -1 : 1) * rand(30, 82),
+      bobAmp: rand(1.0, 3.0),
+      bobSpd: rand(4.0, 8.8),
       bobPhase: rand(0, Math.PI * 2),
-      nextMind: performance.now() + rand(360, 1200),
+      nextMind: performance.now() + rand(260, 760),
       pauseUntil: 0,
     };
   }
@@ -808,6 +798,8 @@
 
     const FLOOR_Y = Math.floor(CFG.H * CFG.FLOOR_Y_RATIO);
     const HORIZON_Y = Math.floor(CFG.H * 0.34);
+    const TOURIST_Y = HORIZON_Y + 6;
+    const SQUID_Y = HORIZON_Y + 102;
 
     STATE = {
       elapsed: 0,
@@ -827,10 +819,16 @@
 
       items: [],
       hook: null,
+      tourist: null,
+      squid: null,
+      dash: null,
+      dashTrail: [],
 
       world: {
         FLOOR_Y,
-        HORIZON_Y
+        HORIZON_Y,
+        TOURIST_Y,
+        SQUID_Y
       }
     };
 
@@ -846,6 +844,40 @@
       phase: "idle",
       hasCatch: false,
       caught: null,
+    };
+
+    STATE.tourist = {
+      x: 0,
+      y: TOURIST_Y,
+      w: CFG.TOURIST.w,
+      h: CFG.TOURIST.h,
+      dir: 1,
+      speed: CFG.TOURIST.speed
+    };
+
+    STATE.squid = {
+      baseX: CFG.W - CFG.SQUID.w,
+      baseY: SQUID_Y,
+      x: CFG.W - CFG.SQUID.w,
+      y: SQUID_Y,
+      w: CFG.SQUID.w,
+      h: CFG.SQUID.h,
+      dir: -1,
+      speed: CFG.SQUID.speed,
+      ampX: CFG.SQUID.ampX,
+      ampY: CFG.SQUID.ampY,
+      freq: CFG.SQUID.freq,
+      phase: Math.random() * Math.PI * 2
+    };
+
+    STATE.dash = {
+      active:false,
+      x: CFG.W + 120,
+      y: (TOURIST_Y + SQUID_Y) / 2,
+      w: CFG.DASH.w,
+      h: CFG.DASH.h,
+      vx: -CFG.DASH.speed,
+      nextAt: performance.now() + rand(CFG.DASH.minS * 1000, CFG.DASH.maxS * 1000)
     };
 
     function startDropAt(x){
@@ -874,13 +906,13 @@
 
   function drawBackground(ctx, now){
     const god = STATE.godMode;
-    const seaRough = clamp(STATE.miss / 10, 0, 1);
+    const seaRough = clamp(STATE.miss / 8, 0, 1);
     const HORIZON_Y = STATE.world.HORIZON_Y;
     const FLOOR_Y = STATE.world.FLOOR_Y;
 
     const skyGrad = ctx.createLinearGradient(0, 0, 0, HORIZON_Y);
     if (god){
-      skyGrad.addColorStop(0, "#6246a8");
+      skyGrad.addColorStop(0, "#6a49b9");
       skyGrad.addColorStop(.6, "#1b3264");
       skyGrad.addColorStop(1, "#102647");
     } else {
@@ -893,7 +925,7 @@
 
     const seaGrad = ctx.createLinearGradient(0, HORIZON_Y, 0, CFG.H);
     if (god){
-      seaGrad.addColorStop(0, "#2d64b7");
+      seaGrad.addColorStop(0, "#316dc6");
       seaGrad.addColorStop(.5, "#173d7f");
       seaGrad.addColorStop(1, "#0b214b");
     } else {
@@ -904,19 +936,19 @@
     ctx.fillStyle = seaGrad;
     ctx.fillRect(0, HORIZON_Y, CFG.W, CFG.H - HORIZON_Y);
 
-    const waveAmp = god ? 3.2 + seaRough * 3.4 : 1.5 + seaRough * 3.2;
-    const waveAlpha = god ? 0.34 : 0.24;
+    const waveAmp = god ? 4.8 + seaRough * 4.5 : 2.4 + seaRough * 4.2;
+    const waveAlpha = god ? 0.40 : 0.28;
 
-    for (let i = 0; i < CFG.W + 40; i += 18){
-      const y = HORIZON_Y + 6 + Math.sin((now / 140) + i * 0.18) * waveAmp;
+    for (let i = 0; i < CFG.W + 40; i += 14){
+      const y = HORIZON_Y + 6 + Math.sin((now / 95) + i * 0.24) * waveAmp;
       ctx.fillStyle = `rgba(255,255,255,${waveAlpha})`;
       ctx.fillRect(i, y, 12, 2);
     }
 
-    ctx.fillStyle = god ? "rgba(255,220,130,.07)" : "rgba(255,255,255,.05)";
+    ctx.fillStyle = god ? "rgba(255,220,130,.08)" : "rgba(255,255,255,.05)";
     for (let i = 0; i < 11; i++){
       const bx = 16 + (i * 31 % CFG.W);
-      const by = HORIZON_Y + 30 + ((i * 33 + Math.sin(now / 700 + i) * 18) % (CFG.H - HORIZON_Y - 90));
+      const by = HORIZON_Y + 30 + ((i * 33 + Math.sin(now / 500 + i) * 26) % (CFG.H - HORIZON_Y - 90));
       const r = (i % 3) + 1;
       ctx.beginPath();
       ctx.arc(bx, by, r, 0, Math.PI * 2);
@@ -956,6 +988,39 @@
     }
   }
 
+  function drawTourist(ctx){
+    const t = STATE.tourist;
+    const img = t.dir > 0 ? IMGS.tourist_right : IMGS.tourist_left;
+    ctx.drawImage(img, Math.round(t.x), Math.round(t.y - t.h / 2), 44, 24);
+  }
+
+  function drawSquid(ctx){
+    const s = STATE.squid;
+    ctx.save();
+    ctx.translate(s.x + s.w / 2, s.y);
+    ctx.scale(s.dir, 1);
+    ctx.drawImage(IMGS.squid, Math.round(-s.w / 2), Math.round(-s.h / 2), s.w, s.h);
+    ctx.restore();
+  }
+
+  function drawDash(ctx){
+    const d = STATE.dash;
+    if (!d.active) return;
+
+    for (let i = STATE.dashTrail.length - 1; i >= 0; i--){
+      const trail = STATE.dashTrail[i];
+      const a = (i + 1) / (STATE.dashTrail.length + 1);
+      const alpha = 0.12 + 0.24 * (1 - a);
+      ctx.fillStyle = `rgba(0,255,255,${alpha})`;
+      ctx.fillRect(Math.round(trail.x), Math.round(d.y - d.h / 2), d.w + i * 16, d.h + i * 2);
+    }
+
+    ctx.fillStyle = "rgba(220,255,255,.40)";
+    ctx.fillRect(Math.round(d.x), Math.round(d.y - d.h / 2), d.w, d.h);
+    ctx.fillStyle = "rgba(0,255,255,.46)";
+    ctx.fillRect(Math.round(d.x + d.w - 8), Math.round(d.y - d.h / 2), 8, d.h);
+  }
+
   function drawHook(ctx){
     const h = STATE.hook;
     ctx.strokeStyle = "rgba(255,255,255,.28)";
@@ -978,6 +1043,27 @@
       ctx.drawImage(img, Math.round(h.x - size / 2), Math.round(ty - size / 2), size, size);
       ctx.restore();
     }
+  }
+
+  function spawnDash(now){
+    const d = STATE.dash;
+    d.active = true;
+    d.x = CFG.W + d.w + 10;
+    d.vx = -CFG.DASH.speed * (STATE.godMode ? 1.18 : 1.0);
+    d.nextAt = now + rand(
+      (STATE.godMode ? CFG.DASH.godMinS : CFG.DASH.minS) * 1000,
+      (STATE.godMode ? CFG.DASH.godMaxS : CFG.DASH.maxS) * 1000
+    );
+    STATE.dashTrail.length = 0;
+    STATE.flashMsg = "流れ発生";
+    STATE.flashUntil = now + 520;
+  }
+
+  function despawnDash(){
+    const d = STATE.dash;
+    d.active = false;
+    d.x = CFG.W + d.w + 10;
+    STATE.dashTrail.length = 0;
   }
 
   function updateGame(dt, now){
@@ -1017,16 +1103,16 @@
         it.vx *= 0.90;
       } else {
         if (now >= it.nextMind){
-          if (Math.random() < 0.12) it.pauseUntil = now + rand(220, 520);
+          if (Math.random() < 0.16) it.pauseUntil = now + rand(180, 480);
           const flip = (Math.random() < 0.5 ? -1 : 1);
-          it.vxTarget = flip * rand(26, STATE.godMode ? 86 : 62);
-          it.bobAmp = clamp(it.bobAmp + rand(-0.6, 0.8), 0.8, 4.0);
-          it.bobSpd = clamp(it.bobSpd + rand(-1.1, 1.2), 3.2, 10);
-          it.nextMind = now + rand(280, 820);
+          it.vxTarget = flip * rand(34, STATE.godMode ? 96 : 74);
+          it.bobAmp = clamp(it.bobAmp + rand(-0.6, 0.8), 1.0, 4.4);
+          it.bobSpd = clamp(it.bobSpd + rand(-1.1, 1.2), 4.0, 10.2);
+          it.nextMind = now + rand(180, 620);
         }
 
         const dv = it.vxTarget - it.vx;
-        it.vx += clamp(dv, -250 * dt / 1000, 250 * dt / 1000);
+        it.vx += clamp(dv, -340 * dt / 1000, 340 * dt / 1000);
         it.x += it.vx * dt / 1000;
         it.y = it.baseY + Math.sin((now / 1000) * it.bobSpd + it.bobPhase) * it.bobAmp;
 
@@ -1041,6 +1127,44 @@
           it.vx = -Math.abs(it.vx);
           it.vxTarget = -Math.abs(it.vxTarget);
         }
+      }
+    }
+
+    const t = STATE.tourist;
+    t.x += t.dir * t.speed * dt / 1000;
+    if (t.x < 0){
+      t.x = 0;
+      t.dir = 1;
+    }
+    if (t.x + t.w > CFG.W){
+      t.x = CFG.W - t.w;
+      t.dir = -1;
+    }
+
+    const s = STATE.squid;
+    s.baseX += s.dir * s.speed * dt / 1000;
+    if (s.baseX < 0){
+      s.baseX = 0;
+      s.dir = 1;
+    }
+    if (s.baseX + s.w > CFG.W){
+      s.baseX = CFG.W - s.w;
+      s.dir = -1;
+    }
+    const sec = (now / 1000) * (Math.PI * 2) * s.freq + s.phase;
+    s.x = s.baseX + Math.sin(sec) * s.ampX;
+    s.y = s.baseY + Math.cos(sec * 0.9) * s.ampY;
+
+    const d = STATE.dash;
+    if (!d.active && now >= d.nextAt){
+      spawnDash(now);
+    }
+    if (d.active){
+      d.x += d.vx * dt / 1000;
+      STATE.dashTrail.unshift({ x:d.x });
+      if (STATE.dashTrail.length > CFG.DASH.trail) STATE.dashTrail.pop();
+      if (d.x + d.w < -40){
+        despawnDash();
       }
     }
 
@@ -1081,6 +1205,50 @@
       const spd = hookReelSpeed(h.y, FLOOR_Y, h.hasCatch);
       h.y -= spd * dt / 1000;
 
+      if (h.hasCatch && h.caught){
+        const fishSize = h.caught.draw;
+        const fishR = fishSize * 0.34;
+        const fishX = h.x;
+        const fishY = h.y + 12 + (fishSize / 2) - 2;
+
+        if (circleRectHit(fishX, fishY, fishR, t.x, t.y - t.h / 2, t.w, t.h)){
+          const dead = STATE.items.find(v => !v.alive);
+          if (dead) resetTarget(dead);
+          h.hasCatch = false;
+          h.caught = null;
+          h.phase = "idle";
+          STATE.miss++;
+          STATE.flashMsg = "観光客に奪われた";
+          STATE.flashUntil = now + 850;
+          setHud();
+        }
+
+        if (h.hasCatch && circleRectHit(fishX, fishY, fishR, s.x, s.y - s.h / 2, s.w, s.h)){
+          const dead = STATE.items.find(v => !v.alive);
+          if (dead) resetTarget(dead);
+          h.hasCatch = false;
+          h.caught = null;
+          h.phase = "idle";
+          STATE.miss++;
+          STATE.flashMsg = "イカに奪われた";
+          STATE.flashUntil = now + 850;
+          setHud();
+        }
+
+        if (h.hasCatch && d.active && circleRectHit(fishX, fishY, fishR, d.x, d.y - d.h / 2, d.w, d.h)){
+          const dead = STATE.items.find(v => !v.alive);
+          if (dead) resetTarget(dead);
+          h.hasCatch = false;
+          h.caught = null;
+          h.phase = "idle";
+          STATE.miss++;
+          STATE.flashMsg = "流れに飲まれた";
+          STATE.flashUntil = now + 850;
+          despawnDash();
+          setHud();
+        }
+      }
+
       if (h.y <= CFG.TOP_Y){
         h.y = CFG.TOP_Y;
 
@@ -1113,6 +1281,9 @@
     const ctx = els.canvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
     drawBackground(ctx, now);
+    drawTourist(ctx);
+    drawSquid(ctx);
+    drawDash(ctx);
     drawTargets(ctx);
     drawHook(ctx);
   }
@@ -1179,28 +1350,10 @@
       return;
     }
 
-    const ctx = els.canvas.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = "#8fdbff";
-    ctx.fillRect(0, 0, CFG.W, CFG.H);
-    ctx.fillStyle = "#fff";
-    ctx.font = "14px system-ui";
-    ctx.fillText("試練準備中…", 128, 260);
-
     startGame();
   }
 
   els.backBtn.addEventListener("click", goBack);
-
-  els.retryBtn.addEventListener("click", () => {
-    startGame();
-  });
-
-  els.playAgainBtn.addEventListener("click", () => {
-    closeResult();
-    startGame();
-  });
-
   els.resultCloseBtn.addEventListener("click", goBack);
 
   els.resultOverlay.addEventListener("click", (e) => {
