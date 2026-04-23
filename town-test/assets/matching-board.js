@@ -138,78 +138,6 @@
     return Math.max(0, Math.floor(n));
   }
 
-  function normalizeCardCode(v) {
-    return String(v || "")
-      .trim()
-      .toLowerCase()
-      .replace(/[\s_\-]+/g, "");
-  }
-
-  function extractCountFromRawEntry(rawEntry) {
-    if (rawEntry == null) return 0;
-
-    if (typeof rawEntry === "number") {
-      return Math.max(0, Math.floor(rawEntry));
-    }
-
-    if (typeof rawEntry === "boolean") {
-      return rawEntry ? 1 : 0;
-    }
-
-    if (typeof rawEntry === "string") {
-      const n = Number(rawEntry);
-      return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
-    }
-
-    if (typeof rawEntry === "object") {
-      const candidates = [
-        rawEntry.count,
-        rawEntry.owned,
-        rawEntry.qty,
-        rawEntry.amount,
-        rawEntry.total,
-        rawEntry.num
-      ];
-
-      for (const c of candidates) {
-        const n = Number(c);
-        if (Number.isFinite(n)) return Math.max(0, Math.floor(n));
-      }
-
-      if (
-        rawEntry.id ||
-        rawEntry.no ||
-        rawEntry.cardId ||
-        rawEntry.name ||
-        rawEntry.img ||
-        rawEntry.image
-      ) {
-        return 1;
-      }
-    }
-
-    return 0;
-  }
-
-  function getPossibleIdsFromEntry(key, rawEntry) {
-    const ids = new Set();
-
-    if (key != null && String(key).trim()) ids.add(String(key).trim());
-
-    if (rawEntry && typeof rawEntry === "object") {
-      const vals = [rawEntry.id, rawEntry.no, rawEntry.cardId, rawEntry.code];
-      vals.forEach(v => {
-        if (v != null && String(v).trim()) ids.add(String(v).trim());
-      });
-    }
-
-    return Array.from(ids);
-  }
-
-  function isSameCardCode(a, b) {
-    return normalizeCardCode(a) !== "" && normalizeCardCode(a) === normalizeCardCode(b);
-  }
-
   // =========================================================
   // Dynamic style
   // =========================================================
@@ -464,14 +392,14 @@
       { no: "TN-049", name: "たこ焼きの御神体", img: "https://ul.h3z.jp/GQ8H0lGq.jpg" }
     ],
     UR: [
-      { no: "TN-001", name: "黒き真珠イカさま焼き", img: "town/assets/images/1stcard/001ur1.png" },
-      { no: "TN-007", name: "ローソク出せ！", img: "town/assets/images/1stcard/007ur1.png" },
-      { no: "TN-033", name: "鉄板のビーナス", img: "town/assets/images/1stcard/033ur1.png" },
-      { no: "TN-045", name: "ドリームファイト", img: "town/assets/images/1stcard/045ur1.png" }
+      { no: "TN-001", name: "黒き真珠イカさま焼き", img: "assets/images/1stcard/001ur1.png" },
+      { no: "TN-007", name: "ローソク出せ！", img: "assets/images/1stcard/007ur1.png" },
+      { no: "TN-033", name: "鉄板のビーナス", img: "assets/images/1stcard/033ur1.png" },
+      { no: "TN-045", name: "ドリームファイト", img: "assets/images/1stcard/045ur1.png" }
     ],
     LR: [
       { no: "TN-025", name: "たこ焼き化石in函館山", img: "https://ul.h3z.jp/NEuFQ7PB.png" },
-      { no: "TN-050", name: "焼かれし記憶、ソースに還る", img: "town/assets/images/1stcard/050lr1.png" }
+      { no: "TN-050", name: "焼かれし記憶、ソースに還る", img: "assets/images/1stcard/050lr1.png" }
     ]
   };
 
@@ -535,6 +463,9 @@
     ...WATER_SPECIAL_CARDS.rotten.map(v => ({ ...v, id: `${v.id}_rotten`, rarity: v.rarity || "SP" })),
     ...WATER_SPECIAL_CARDS.sea.map(v => ({ ...v, id: `${v.id}_sea`, rarity: v.rarity || "SP" }))
   ];
+
+  // 伝説マッチでは水SPカードを出さない
+  const LEGEND_EXTRA_SERIES_CARDS = EXTRA_SERIES_CARDS.filter(v => !/^SP-MIZU-/.test(String(v.id || "")));
 
   const CARDS_ALL = [...FIRST_SERIES_CARDS, ...EXTRA_SERIES_CARDS];
   const CARD_MAP = Object.fromEntries(CARDS_ALL.map(v => [v.id, v]));
@@ -1003,20 +934,39 @@
 
     if (rawEntry == null) return null;
 
-    let count = extractCountFromRawEntry(rawEntry);
+    let count = 0;
     let base = {};
 
-    if (typeof rawEntry === "object" && rawEntry !== null) {
+    if (typeof rawEntry === "number") {
+      count = Math.max(0, Math.floor(rawEntry));
+    } else if (typeof rawEntry === "boolean") {
+      count = rawEntry ? 1 : 0;
+    } else if (typeof rawEntry === "string") {
+      const n = Number(rawEntry);
+      count = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+    } else if (typeof rawEntry === "object") {
       base = rawEntry;
+
+      if (typeof rawEntry.count === "number" || typeof rawEntry.count === "string") {
+        count = Number(rawEntry.count);
+      } else if (typeof rawEntry.owned === "number" || typeof rawEntry.owned === "string") {
+        count = Number(rawEntry.owned);
+      } else if (typeof rawEntry.qty === "number" || typeof rawEntry.qty === "string") {
+        count = Number(rawEntry.qty);
+      } else {
+        count = 1;
+      }
+
+      count = Math.max(0, Math.floor(Number(count) || 0));
     }
 
     if (count <= 0) return null;
 
     return {
       ...base,
-      id: base.id || base.no || base.cardId || info.id || cardId,
+      id: base.id || info.id || cardId,
       name: base.name || info.name || cardId,
-      img: base.img || base.image || info.img || "",
+      img: base.img || info.img || "",
       rarity: base.rarity || info.rarity || "N",
       tier: base.tier || base.rarity || info.rarity || "N",
       at: base.at ?? "",
@@ -1052,15 +1002,15 @@
       if (
         typeof rawEntry !== "object" ||
         rawEntry == null ||
-        String(rawEntry.id || rawEntry.no || rawEntry.cardId || "") !== String(normalized.id || "") ||
+        String(rawEntry.id || "") !== String(normalized.id || "") ||
         String(rawEntry.name || "") !== String(normalized.name || "") ||
-        String(rawEntry.img || rawEntry.image || "") !== String(normalized.img || "") ||
+        String(rawEntry.img || "") !== String(normalized.img || "") ||
         String(rawEntry.rarity || "") !== String(normalized.rarity || "") ||
         String(rawEntry.tier || "") !== String(normalized.tier || "") ||
         String(rawEntry.at ?? "") !== String(normalized.at ?? "") ||
         String(rawEntry.lastAt ?? "") !== String(normalized.lastAt ?? "") ||
         String(rawEntry.lastAddedAt ?? "") !== String(normalized.lastAddedAt ?? "") ||
-        Number(extractCountFromRawEntry(rawEntry)) !== Number(normalized.count || 0)
+        Number(rawEntry.count || 0) !== Number(normalized.count || 0)
       ) {
         changed = true;
       }
@@ -1099,42 +1049,16 @@
   }
 
   function getOwnedCount(cardId) {
-    const book = loadJSON(KEY.book, { ver: 1, got: {} });
-    const got = (book && typeof book === "object" && book.got && typeof book.got === "object")
-      ? book.got
-      : {};
-
-    let total = 0;
-
-    for (const [key, rawEntry] of Object.entries(got)) {
-      const possibleIds = getPossibleIdsFromEntry(key, rawEntry);
-      const matched = possibleIds.some(v => isSameCardCode(v, cardId));
-      if (!matched) continue;
-      total += extractCountFromRawEntry(rawEntry);
-    }
-
-    return Math.max(0, Math.floor(total));
+    const book = getBook();
+    const entry = book.got?.[cardId];
+    return Math.max(0, Math.floor(Number(entry?.count || 0)));
   }
 
   function addOwned(cardId, delta) {
     const book = getBook();
     const info = CARD_MAP[cardId] || { id: cardId, name: cardId, rarity: "N", img: "" };
 
-    let targetKey = null;
-    let current = null;
-
-    for (const [key, rawEntry] of Object.entries(book.got || {})) {
-      const possibleIds = getPossibleIdsFromEntry(key, rawEntry);
-      if (possibleIds.some(v => isSameCardCode(v, cardId))) {
-        targetKey = key;
-        current = normalizeBookEntry(key, rawEntry);
-        break;
-      }
-    }
-
-    if (!targetKey) targetKey = cardId;
-
-    current = current || {
+    const current = normalizeBookEntry(cardId, book.got?.[cardId]) || {
       id: cardId,
       name: info.name,
       img: info.img || "",
@@ -1150,9 +1074,9 @@
     const nextCount = Math.max(0, Math.floor(Number(current.count || 0) + Number(delta || 0)));
 
     if (nextCount <= 0) {
-      delete book.got[targetKey];
+      delete book.got[cardId];
     } else {
-      book.got[targetKey] = {
+      book.got[cardId] = {
         ...current,
         id: current.id || cardId,
         name: current.name || info.name || cardId,
@@ -1186,17 +1110,11 @@
     let changed = false;
     const nextGot = {};
 
-    for (const [rawKey, rawEntry] of Object.entries(book.got)) {
-      const possibleIds = getPossibleIdsFromEntry(rawKey, rawEntry);
-      const canonicalId =
-        possibleIds.find(id => CARD_MAP[id]) ||
-        CARDS_ALL.find(card => possibleIds.some(v => isSameCardCode(v, card.id)))?.id ||
-        rawKey;
-
-      const normalized = normalizeBookEntry(canonicalId, rawEntry);
+    for (const [cardId, rawEntry] of Object.entries(book.got)) {
+      const normalized = normalizeBookEntry(cardId, rawEntry);
       if (!normalized) continue;
 
-      const info = CARD_MAP[canonicalId] || null;
+      const info = CARD_MAP[cardId] || null;
 
       if (!normalized.img && info?.img) {
         normalized.img = info.img;
@@ -1218,22 +1136,12 @@
         changed = true;
       }
 
-      if (!normalized.id || !isSameCardCode(normalized.id, canonicalId)) {
-        normalized.id = canonicalId;
+      if (!normalized.id) {
+        normalized.id = cardId;
         changed = true;
       }
 
-      if (nextGot[canonicalId]) {
-        nextGot[canonicalId].count =
-          Number(nextGot[canonicalId].count || 0) + Number(normalized.count || 0);
-        changed = true;
-      } else {
-        nextGot[canonicalId] = normalized;
-      }
-
-      if (String(rawKey) !== String(canonicalId)) {
-        changed = true;
-      }
+      nextGot[cardId] = normalized;
     }
 
     if (changed) {
@@ -1722,8 +1630,8 @@
 
   function getDisplayPoolByType(type, legend = false) {
     if (legend) {
-      return EXTRA_SERIES_CARDS.length
-        ? EXTRA_SERIES_CARDS
+      return LEGEND_EXTRA_SERIES_CARDS.length
+        ? LEGEND_EXTRA_SERIES_CARDS
         : FIRST_SERIES_CARDS.filter(c => ["UR", "LR"].includes(c.rarity));
     }
 
@@ -1768,8 +1676,8 @@
   function chooseWantedCard(type, difficulty, rnd, legend = false) {
     let pool = getDisplayPoolByType(type, legend);
 
-    if (legend && EXTRA_SERIES_CARDS.length) {
-      return { card: pick(EXTRA_SERIES_CARDS, rnd), qty: 1, isExtraPool: true };
+    if (legend && LEGEND_EXTRA_SERIES_CARDS.length) {
+      return { card: pick(LEGEND_EXTRA_SERIES_CARDS, rnd), qty: 1, isExtraPool: true };
     }
 
     if (difficulty >= 5) {
