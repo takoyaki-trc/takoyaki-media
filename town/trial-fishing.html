@@ -348,6 +348,55 @@
     line-height:1.4;
   }
 
+  .rateWrap{
+    margin:0 0 10px;
+    padding:12px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.05);
+  }
+
+  .rateTitle{
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.08em;
+    opacity:.82;
+    margin-bottom:8px;
+  }
+
+  .rateGrid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+  }
+
+  .rateCard{
+    padding:10px 8px;
+    border-radius:12px;
+    text-align:center;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.06);
+  }
+
+  .rateCard .rLabel{
+    font-size:12px;
+    font-weight:1000;
+    margin-bottom:6px;
+  }
+
+  .rateCard .rValue{
+    font-size:18px;
+    font-weight:1000;
+    line-height:1.2;
+  }
+
+  .rateNote{
+    margin-top:8px;
+    font-size:11px;
+    line-height:1.6;
+    color:rgba(255,255,255,.78);
+  }
+
   .resultActions{
     flex:0 0 auto;
     display:grid;
@@ -379,6 +428,7 @@
     }
     .resultScoreValue{ font-size:34px; }
     .rankValue{ font-size:19px; }
+    .rateGrid{ grid-template-columns:1fr 1fr 1fr; }
   }
 </style>
 </head>
@@ -455,6 +505,27 @@
           <div id="statMode" class="statMini">神域モード：未到達</div>
         </div>
       </div>
+
+      <div class="rateWrap">
+        <div class="rateTitle">今回の神カード排出率</div>
+        <div class="rateGrid">
+          <div class="rateCard">
+            <div class="rLabel">SR</div>
+            <div class="rValue" id="rateSR">0%</div>
+          </div>
+          <div class="rateCard">
+            <div class="rLabel">UR</div>
+            <div class="rValue" id="rateUR">0%</div>
+          </div>
+          <div class="rateCard">
+            <div class="rLabel">LR</div>
+            <div class="rValue" id="rateLR">0%</div>
+          </div>
+        </div>
+        <div class="rateNote" id="rateNote">
+          試練結果に応じて、称号ページに戻った際の神カード抽選率へ反映されます。
+        </div>
+      </div>
     </div>
 
     <div class="resultActions">
@@ -512,6 +583,13 @@
     }
   };
 
+  const RATE_TABLE = {
+    fail:    { SR:80, UR:18, LR:2 },
+    clear:   { SR:55, UR:32, LR:13 },
+    great:   { SR:35, UR:40, LR:25 },
+    perfect: { SR:15, UR:35, LR:50 }
+  };
+
   const els = {
     backBtn: document.getElementById("backBtn"),
     canvas: document.getElementById("tfCanvas"),
@@ -533,6 +611,10 @@
     statDivine: document.getElementById("statDivine"),
     statMiss: document.getElementById("statMiss"),
     statMode: document.getElementById("statMode"),
+    rateSR: document.getElementById("rateSR"),
+    rateUR: document.getElementById("rateUR"),
+    rateLR: document.getElementById("rateLR"),
+    rateNote: document.getElementById("rateNote"),
     resultCloseBtn: document.getElementById("resultCloseBtn"),
   };
 
@@ -579,15 +661,30 @@
     }
   }
 
+  function getJudge(catchCount, divineCount){
+    const total = catchCount + divineCount * CFG.DIVINE_BONUS;
+    if (total >= 16) return { grade:"perfect", label:"PERFECT", line:"釣神はあなたを神域の者と認めた。", total };
+    if (total >= 11) return { grade:"great", label:"GREAT", line:"神域の縁に触れた。あと一歩で完全到達。", total };
+    if (total >= 7)  return { grade:"clear", label:"CLEAR", line:"試練突破。釣神の眼に映るだけの腕がある。", total };
+    return { grade:"fail", label:"FAIL", line:"まだ足りない。もっと小さな世界を見抜け。", total };
+  }
+
+  function getRatesByGrade(grade){
+    return RATE_TABLE[grade] || RATE_TABLE.fail;
+  }
+
   function saveTrialResult(grade, detail){
     try{
       if (!session) return;
+      const rates = getRatesByGrade(grade);
+
       localStorage.setItem(LS_TRIAL_RESULT, JSON.stringify({
         sessionId: session.sessionId,
         seedId: EXPECTED_SEED,
         grade,
         detail,
         score: detail.totalScore,
+        rates,
         at: Date.now()
       }));
     } catch(e){
@@ -656,14 +753,6 @@
     const dx = cx - nx;
     const dy = cy - ny;
     return (dx * dx + dy * dy) <= cr * cr;
-  }
-
-  function getJudge(catchCount, divineCount){
-    const total = catchCount + divineCount * CFG.DIVINE_BONUS;
-    if (total >= 16) return { grade:"perfect", label:"PERFECT", line:"釣神はあなたを神域の者と認めた。" };
-    if (total >= 11) return { grade:"great", label:"GREAT", line:"神域の縁に触れた。あと一歩で完全到達。" };
-    if (total >= 7)  return { grade:"clear", label:"CLEAR", line:"試練突破。釣神の眼に映るだけの腕がある。" };
-    return { grade:"fail", label:"FAIL", line:"まだ足りない。もっと小さな世界を見抜け。" };
   }
 
   function updateJudgeUI(){
@@ -1028,16 +1117,16 @@
       const divineCount = Number(STATE?.divineCount || 0);
       const miss = Number(STATE?.miss || 0);
       const godMode = !!STATE?.godMode;
-      const totalScore = catchCount + divineCount * CFG.DIVINE_BONUS;
 
       const judge = getJudge(catchCount, divineCount);
+      const rates = getRatesByGrade(judge.grade);
 
       saveTrialResult(judge.grade, {
         catchCount,
         divineCount,
         miss,
         godMode,
-        totalScore
+        totalScore: judge.total
       });
 
       els.resultScoreValue.textContent = judge.label;
@@ -1047,6 +1136,11 @@
       els.statDivine.textContent = `神極小：${divineCount}個`;
       els.statMiss.textContent = String(miss);
       els.statMode.textContent = `神域モード：${godMode ? "到達" : "未到達"}`;
+
+      els.rateSR.textContent = `${rates.SR}%`;
+      els.rateUR.textContent = `${rates.UR}%`;
+      els.rateLR.textContent = `${rates.LR}%`;
+      els.rateNote.textContent = `評価 ${judge.label} により、この確率で釣神カード抽選へ反映されます。`;
     }catch(e){
       console.error("finishTrial error", e);
       els.resultScoreValue.textContent = "ERROR";
@@ -1056,6 +1150,10 @@
       els.statDivine.textContent = "神極小：0個";
       els.statMiss.textContent = "0";
       els.statMode.textContent = "神域モード：不明";
+      els.rateSR.textContent = "80%";
+      els.rateUR.textContent = "18%";
+      els.rateLR.textContent = "2%";
+      els.rateNote.textContent = "エラー時はFAIL基準の確率として扱ってください。";
     }
 
     requestAnimationFrame(() => {
