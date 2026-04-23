@@ -131,6 +131,7 @@
     font-size:12px;
     color:rgba(255,255,255,.92);
   }
+
   .stats b{ font-weight:1000; }
 
   .canvaswrap{
@@ -183,6 +184,7 @@
     pointer-events:none;
     background:transparent;
   }
+
   .countOverlay.show{ display:flex; }
 
   .countInner{
@@ -229,6 +231,8 @@
     background:
       radial-gradient(circle at 50% 32%, rgba(255,215,110,.10) 0, rgba(255,215,110,0) 30%),
       rgba(0,0,0,.92);
+    opacity:1;
+    visibility:visible;
     transition:opacity .28s ease, visibility .28s ease;
   }
 
@@ -236,6 +240,10 @@
     opacity:0;
     visibility:hidden;
     pointer-events:none;
+  }
+
+  .introOverlay.gone{
+    display:none;
   }
 
   .introCard{
@@ -301,6 +309,7 @@
     background:rgba(0,0,0,.82);
     backdrop-filter:blur(4px);
   }
+
   .resultOverlay.show{ display:flex; }
 
   .resultModal{
@@ -955,10 +964,27 @@
   }
 
   function startIntroThenGame(){
-    els.introOverlay.classList.remove("hide");
+    stopIntro();
+
+    if (!STATE || finished) return;
+
+    STATE.phase = "intro";
+    STATE.inputEnabled = false;
+    STATE.timerStarted = false;
+
+    els.introOverlay.classList.remove("hide", "gone");
+
     introTimer = setTimeout(() => {
+      if (!STATE || finished) return;
+
       els.introOverlay.classList.add("hide");
-      startCountdown();
+
+      setTimeout(() => {
+        if (!STATE || finished) return;
+
+        els.introOverlay.classList.add("gone");
+        startCountdown();
+      }, 320);
     }, CFG.INTRO_MS);
   }
 
@@ -968,6 +994,8 @@
     finished = false;
     closeResult();
     document.body.style.overflow = "";
+
+    els.introOverlay.classList.remove("hide", "gone");
 
     els.resultCloseBtn.disabled = true;
     els.lockNote.textContent = "5秒後に閉じられます";
@@ -1253,8 +1281,10 @@
     els.resultCloseBtn.disabled = true;
 
     resultLockTimer = setInterval(() => {
-      const remain = Math.max(0, Math.ceil((resultUnlockAt - Date.now()) / 1000));
-      if (remain <= 0){
+      const remainMs = resultUnlockAt - Date.now();
+      const remain = Math.max(0, Math.ceil(remainMs / 1000));
+
+      if (remainMs <= 0){
         stopResultLock();
         els.resultCloseBtn.disabled = false;
         els.lockNote.textContent = "閉じられます";
