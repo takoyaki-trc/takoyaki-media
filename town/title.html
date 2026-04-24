@@ -937,9 +937,18 @@ body::before{
   font-weight:900;
   line-height:2;
   letter-spacing:.05em;
-  text-align:left;
+  text-align:center;
   text-shadow:0 0 12px rgba(255,226,144,.42);
   white-space:pre-line;
+  opacity:1;
+  filter:blur(0);
+  transition:opacity 1.6s ease, filter 1.6s ease, transform 1.6s ease;
+}
+
+.cutin-type.fadeout{
+  opacity:0;
+  filter:blur(7px);
+  transform:translateY(-54%);
 }
 
 .cutin-gods{
@@ -1120,6 +1129,10 @@ body::before{
     transform:translateY(-50%);
     font-size:18px;
     line-height:2;
+    text-align:center;
+  }
+  .cutin-type.fadeout{
+    transform:translateY(-54%);
   }
 }
 </style>
@@ -1775,7 +1788,7 @@ ${escapeHtml(card.story||"")}
 
 function wait(ms){return new Promise(res=>setTimeout(res,ms))}
 
-async function typeText(el,text,speed=42){
+async function typeText(el,text,speed=85){
   el.textContent="";
   for(const ch of text){
     el.textContent+=ch;
@@ -1806,6 +1819,7 @@ async function playGodCutin(card){
   godCutin.classList.add("show");
 
   cutinType.textContent="";
+  cutinType.classList.remove("fadeout");
   cutinCardName.textContent="";
   cutinCardName.classList.remove("show");
   cutinGods.classList.remove("run");
@@ -1814,13 +1828,19 @@ async function playGodCutin(card){
 
   cutinRainbow.offsetHeight;
   cutinWhiteout.offsetHeight;
+  cutinType.offsetHeight;
 
-  await wait(260);
+  await wait(320);
 
   const excerpt = getStoryExcerpt(card);
-  await typeText(cutinType, excerpt, 42);
+  await typeText(cutinType, excerpt, 92);
 
-  await wait(1200);
+  await wait(2200);
+
+  cutinType.classList.add("fadeout");
+  await wait(1700);
+
+  await wait(850);
 
   cutinGods.classList.add("run");
   await wait(1050);
