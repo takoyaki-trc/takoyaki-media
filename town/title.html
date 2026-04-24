@@ -24,7 +24,7 @@
     --hero1:#ff6f66;
     --hero2:#ce1e29;
     --hero3:#760d13;
-    --glowGold:0 0 14px rgba(255,219,122,.18), 0 0 30px rgba(255,186,78,.10);
+    --glowGold:0 0 14px rgba(255,219,122,.22), 0 0 34px rgba(255,186,78,.14);
     --glowPurple:0 0 20px rgba(163,108,255,.16);
   }
 
@@ -308,7 +308,7 @@
     margin:12px auto 0;
     width:fit-content;
     max-width:100%;
-    padding:8px 12px;
+    padding:8px 10px 8px 12px;
     border-radius:999px;
     background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
     border:1px solid rgba(255,223,145,.18);
@@ -318,9 +318,25 @@
     position:relative;
     z-index:1;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+    display:flex;
+    align-items:center;
+    gap:8px;
   }
 
   .player-chip strong{ color:#ffe8a3; }
+
+  .name-change-btn{
+    border:1px solid rgba(255,232,163,.35);
+    background:linear-gradient(180deg, #fff0b8, #dca946);
+    color:#2d220f;
+    border-radius:999px;
+    padding:3px 8px;
+    font-family:"DotGothic16","MS Gothic",sans-serif;
+    font-size:11px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 3px 8px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.55);
+  }
 
   .stars{
     display:flex;
@@ -505,14 +521,24 @@
 
   .seedbox{
     margin:12px 14px 0;
-    padding:12px 12px 10px;
+    padding:14px 12px 12px;
     border-radius:18px;
     background:
-      radial-gradient(circle at 50% 0%, rgba(255,232,140,.10), transparent 50%),
-      rgba(255,255,255,.06);
-    border:1px solid rgba(255,223,140,.18);
+      radial-gradient(circle at 50% 0%, rgba(255,232,140,.12), transparent 50%),
+      linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+    border:1px solid rgba(255,223,140,.22);
     position:relative;
     z-index:2;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 8px 18px rgba(0,0,0,.12);
+  }
+
+  .seedbox-head{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin-bottom:10px;
+    min-height:28px;
   }
 
   .seedbox-title{
@@ -521,8 +547,30 @@
     font-size:11px;
     line-height:1.6;
     color:#ffe8b0;
-    margin-bottom:10px;
     text-shadow:0 0 10px rgba(255,220,120,.10);
+  }
+
+  .seed-help-btn{
+    position:absolute;
+    right:0;
+    top:50%;
+    transform:translateY(-50%);
+    min-width:48px;
+    height:30px;
+    border-radius:9px;
+    border:1px solid rgba(255,232,163,.48);
+    cursor:pointer;
+    font-family:"DotGothic16","MS Gothic",sans-serif;
+    font-size:13px;
+    font-weight:900;
+    color:#2b1c08;
+    background:
+      radial-gradient(circle at 50% 20%, rgba(255,255,255,.55), transparent 44%),
+      linear-gradient(180deg, #fff0b8, #d79b28 58%, #9f6419);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.62),
+      0 6px 12px rgba(0,0,0,.22),
+      0 0 12px rgba(255,205,94,.14);
   }
 
   .seed-grid{
@@ -535,7 +583,9 @@
     position:relative;
     border-radius:14px;
     padding:10px 8px 8px;
-    background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,255,255,.08), transparent 44%),
+      linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
     border:1px solid rgba(255,223,140,.16);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
     min-height:128px;
@@ -544,11 +594,45 @@
     align-items:center;
     justify-content:flex-start;
     gap:6px;
+    cursor:pointer;
+    transition:transform .14s ease, filter .14s ease, box-shadow .14s ease, border-color .14s ease;
   }
 
+  .seed-card:active{ transform:translateY(1px) scale(.99); }
+
   .seed-card.empty-stock{
-    opacity:.55;
-    filter:saturate(.6);
+    opacity:.48;
+    filter:saturate(.62);
+    cursor:not-allowed;
+  }
+
+  .seed-card.selected{
+    border-color:rgba(255,232,135,.95);
+    box-shadow:
+      inset 0 0 0 2px rgba(255,232,135,.34),
+      inset 0 1px 0 rgba(255,255,255,.10),
+      0 0 0 2px rgba(255,176,57,.20),
+      0 0 22px rgba(255,214,102,.24),
+      0 10px 18px rgba(0,0,0,.18);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,232,135,.22), transparent 50%),
+      linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
+  }
+
+  .seed-card.selected::before{
+    content:"SELECT";
+    position:absolute;
+    left:8px;
+    top:8px;
+    padding:3px 6px;
+    border-radius:6px;
+    background:linear-gradient(180deg, #fff3c8, #dca23b);
+    color:#251804;
+    font-family:"Press Start 2P", monospace;
+    font-size:7px;
+    line-height:1.4;
+    z-index:3;
+    box-shadow:0 4px 10px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.6);
   }
 
   .seed-thumb{
@@ -604,6 +688,18 @@
       0 4px 10px rgba(0,0,0,.18);
   }
 
+  .selected-seed-note{
+    margin:10px 2px 0;
+    padding:8px 10px;
+    border-radius:12px;
+    text-align:center;
+    color:#ffe8b0;
+    background:rgba(0,0,0,.16);
+    border:1px solid rgba(255,223,140,.14);
+    font-size:12px;
+    line-height:1.6;
+  }
+
   .god-body{
     padding:14px 12px 12px;
     position:relative;
@@ -639,6 +735,20 @@
     background:
       radial-gradient(circle at 50% 25%, rgba(255,255,226,.22), transparent 26%),
       url("https://takoyaki-trc.github.io/takoyaki-media/town/assets/images/kami.png") center/cover no-repeat;
+    cursor:pointer;
+    transition:transform .14s ease, filter .14s ease, box-shadow .14s ease;
+  }
+
+  .god-plot:active{
+    transform:translateY(1px) scale(.995);
+  }
+
+  .god-plot.is-clickable{
+    box-shadow:
+      inset 0 0 0 2px rgba(255,248,210,.32),
+      0 12px 24px rgba(0,0,0,.20),
+      0 0 22px rgba(255,223,120,.22),
+      0 0 0 3px rgba(255,212,93,.16);
   }
 
   .god-plot::before{
@@ -762,64 +872,31 @@
     line-height:1.7;
   }
 
-  .god-actions{
-    margin-top:12px;
-    display:grid;
-    gap:8px;
+  .tiny-reset-wrap{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:4px;
   }
 
-  .god-actions-row{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-  }
-
-  .btn{
-    width:100%;
-    min-height:52px;
-    border:0;
-    border-radius:15px;
-    cursor:pointer;
-    font-size:18px;
-    font-weight:900;
+  .tiny-reset{
+    border:1px solid rgba(123,58,58,.32);
+    border-radius:9px;
+    background:linear-gradient(180deg, rgba(255,210,216,.95), rgba(236,145,156,.95));
+    color:#561018;
     font-family:"DotGothic16","MS Gothic",sans-serif;
-    color:var(--btnText);
-    background:linear-gradient(180deg, #fffef8 0%, #efe7d0 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.95),
-      0 8px 18px rgba(0,0,0,.22);
-    border:2px solid rgba(120,93,45,.42);
-    transition:transform .14s ease, filter .14s ease, box-shadow .14s ease;
+    font-size:11px;
+    font-weight:900;
+    min-height:28px;
+    padding:3px 9px;
+    cursor:pointer;
+    opacity:.82;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 4px 9px rgba(0,0,0,.12);
   }
 
-  .btn:hover{ filter:brightness(1.02); }
-
-  .btn.primary{
-    background:
-      radial-gradient(circle at 50% 18%, rgba(255,255,255,.44), transparent 40%),
-      linear-gradient(180deg, #ffe98a 0%, #efc445 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.92),
-      0 8px 18px rgba(0,0,0,.22),
-      0 0 16px rgba(255,209,103,.12);
-  }
-
-  .btn.warn{
-    background:
-      radial-gradient(circle at 50% 18%, rgba(255,255,255,.32), transparent 40%),
-      linear-gradient(180deg, #ffd7dd 0%, #ffb4c0 100%);
-  }
-
-  .btn:disabled{
-    opacity:.45;
+  .tiny-reset:disabled{
+    opacity:.35;
     cursor:not-allowed;
-    filter:none;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.55),
-      0 6px 12px rgba(0,0,0,.12);
   }
-
-  .btn:active{ transform:translateY(1px); }
 
   .altar-body{
     padding:12px;
@@ -1121,39 +1198,34 @@
     font-size:14px;
   }
 
-  .seed-select-list{ display:grid; gap:10px; }
+  .seed-help-list{
+    display:grid;
+    gap:10px;
+  }
 
-  .seed-select-btn{
-    width:100%;
-    border:1px solid rgba(255,223,140,.16);
-    background:rgba(255,255,255,.06);
-    border-radius:14px;
+  .seed-help-card{
+    border-radius:16px;
     padding:12px;
-    color:#fff;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    text-align:left;
-    cursor:pointer;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,223,140,.16);
   }
 
-  .seed-select-left{
+  .seed-help-top{
     display:flex;
     align-items:center;
     gap:10px;
-    min-width:0;
+    margin-bottom:8px;
   }
 
-  .seed-select-img{
-    width:58px;
-    height:58px;
+  .seed-help-img{
+    width:54px;
+    height:54px;
     display:grid;
     place-items:center;
     flex:0 0 auto;
   }
 
-  .seed-select-img img{
+  .seed-help-img img{
     width:100%;
     height:100%;
     object-fit:contain;
@@ -1161,26 +1233,35 @@
     filter:drop-shadow(0 8px 10px rgba(0,0,0,.22));
   }
 
-  .seed-select-name{
-    font-size:15px;
+  .seed-help-title{
+    color:#fff8ea;
     font-weight:900;
-    color:#fff7e8;
+    font-size:16px;
     line-height:1.4;
   }
 
-  .seed-select-sub{
-    margin-top:4px;
-    font-size:12px;
+  .seed-help-cond{
     color:#dbcfae;
-    line-height:1.5;
+    font-size:13px;
+    line-height:1.7;
+    margin-bottom:10px;
   }
 
-  .seed-select-count{
-    font-family:"Press Start 2P", monospace;
-    color:#ffe8a3;
-    font-size:10px;
-    line-height:1.5;
-    white-space:nowrap;
+  .game-link{
+    display:block;
+    text-decoration:none;
+    text-align:center;
+    border-radius:13px;
+    padding:10px 12px;
+    color:#2b1c08;
+    font-weight:900;
+    background:
+      radial-gradient(circle at 50% 18%, rgba(255,255,255,.52), transparent 44%),
+      linear-gradient(180deg, #fff0b8, #d79b28 58%, #9f6419);
+    border:1px solid rgba(255,232,163,.48);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.62),
+      0 7px 14px rgba(0,0,0,.20);
   }
 
   .reward-box{ display:grid; gap:12px; }
@@ -1332,6 +1413,31 @@
     gap:8px;
   }
 
+  .btn{
+    width:100%;
+    min-height:52px;
+    border:0;
+    border-radius:15px;
+    cursor:pointer;
+    font-size:18px;
+    font-weight:900;
+    font-family:"DotGothic16","MS Gothic",sans-serif;
+    color:var(--btnText);
+    background:
+      radial-gradient(circle at 50% 18%, rgba(255,255,255,.54), transparent 40%),
+      linear-gradient(180deg, #fff0b8 0%, #e4b94f 56%, #9d651d 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.76),
+      inset 0 -2px 0 rgba(94,54,9,.22),
+      0 8px 18px rgba(0,0,0,.24),
+      0 0 18px rgba(255,209,103,.13);
+    border:2px solid rgba(255,232,163,.55);
+    transition:transform .14s ease, filter .14s ease, box-shadow .14s ease;
+  }
+
+  .btn:hover{ filter:brightness(1.03); }
+  .btn:active{ transform:translateY(1px); }
+
   @keyframes heroHalo{
     0%,100%{ opacity:.72; transform:translateX(-50%) scale(1); }
     50%{ opacity:1; transform:translateX(-50%) scale(1.05); }
@@ -1366,10 +1472,8 @@
     .main-title{ font-size:20px; }
     .history-btn{ font-size:16px; }
     .seed-grid{ grid-template-columns:1fr 1fr; }
-    .god-actions-row{ grid-template-columns:1fr; }
     .altar-grid{ grid-template-columns:repeat(2,1fr); }
     .history-item{ grid-template-columns:1fr; }
-    .seed-select-left{ align-items:flex-start; }
     .god-seed-visual{
       width:180px;
       height:180px;
@@ -1395,7 +1499,10 @@
         <div class="hero-kicker">今月の記録から授与</div>
         <div class="main-title" id="mainTitle">タコ民</div>
         <div class="hero-sub" id="heroSub">今月の記録から授与された称号です</div>
-        <div class="player-chip">プレイヤー：<strong id="playerNameInline">未設定</strong></div>
+        <div class="player-chip">
+          プレイヤー：<strong id="playerNameInline">未設定</strong>
+          <button class="name-change-btn" id="changeNameBtn" type="button">変更</button>
+        </div>
       </div>
     </div>
 
@@ -1444,8 +1551,12 @@
     </div>
 
     <div class="seedbox">
-      <div class="seedbox-title">GOD SEEDS</div>
+      <div class="seedbox-head">
+        <div class="seedbox-title">GOD SEEDS</div>
+        <button class="seed-help-btn" id="openSeedHelpBtn" type="button">条件</button>
+      </div>
       <div class="seed-grid" id="seedGrid"></div>
+      <div class="selected-seed-note" id="selectedSeedNote">タネを選んでから、下の神の畑をタップしてください</div>
     </div>
 
     <div class="god-panel">
@@ -1453,23 +1564,19 @@
       <div class="god-body">
         <div class="god-note">
           月間報酬で授かった神のタネだけを植えられます。<br>
-          この畑は枯れません。デバッグ中は10秒で育ちます。
+          タネを選んで畑をタップ。READYになったら畑タップで収穫できます。
         </div>
 
         <div class="god-plot-wrap">
-          <div class="god-plot">
+          <div class="god-plot" id="godPlot">
             <div class="god-plot-stage" id="godPlotStage"></div>
             <div class="god-plot-inner" id="godPlotInner">EMPTY</div>
           </div>
           <div class="god-status" id="godStatus">まだ何も植えられていません</div>
         </div>
 
-        <div class="god-actions">
-          <div class="god-actions-row">
-            <button class="btn primary" id="plantBtn" type="button">神のタネを植える</button>
-            <button class="btn" id="harvestBtn" type="button">収穫する</button>
-          </div>
-          <button class="btn warn" id="clearBtn" type="button">畑を空にする</button>
+        <div class="tiny-reset-wrap">
+          <button class="tiny-reset" id="clearBtn" type="button">空にする</button>
         </div>
       </div>
     </div>
@@ -1513,13 +1620,13 @@
   </div>
 </div>
 
-<div class="modal" id="seedModal" aria-hidden="true">
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="seedModalTitle">
+<div class="modal" id="seedHelpModal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="seedHelpTitle">
     <div class="modal-head">
-      <div class="modal-title" id="seedModalTitle">植える神のタネを選ぶ</div>
-      <button class="close-btn" id="closeSeedBtn" type="button" aria-label="閉じる">×</button>
+      <div class="modal-title" id="seedHelpTitle">神のタネ 入手条件</div>
+      <button class="close-btn" id="closeSeedHelpBtn" type="button" aria-label="閉じる">×</button>
     </div>
-    <div class="seed-select-list" id="seedModalList"></div>
+    <div class="seed-help-list" id="seedHelpList"></div>
   </div>
 </div>
 
@@ -1540,12 +1647,13 @@
     </div>
     <div class="name-help">
       はじめにユーザー名を決めてください。<br>
-      2〜10文字 / 公序良俗に反する表現・URL・記号だらけの名前は使えません。
+      2〜10文字 / 公序良俗に反する表現・URL・記号だらけの名前は使えません。<br>
+      将来GAS連携時は、この名前をランキング表示名として使えます。
     </div>
     <input class="name-input" id="nameInput" type="text" maxlength="10" placeholder="例：たこ焼きなーな">
     <div class="name-error" id="nameError"></div>
     <div class="name-actions">
-      <button class="btn primary" id="saveNameBtn" type="button">この名前にする</button>
+      <button class="btn" id="saveNameBtn" type="button">この名前にする</button>
     </div>
   </div>
 </div>
@@ -1570,6 +1678,8 @@
   const GROW_MS = DEBUG_MODE ? 10 * 1000 : 30 * 60 * 1000;
   const HISTORY_LIMIT = 24;
 
+  let selectedSeedId = "";
+
   const SEED_IMG = {
     seed_god_yaki:  "https://takoyaki-card.com/town/assets/images/tane/kamiyaki.png",
     seed_god_shop:  "https://takoyaki-card.com/town/assets/images/tane/kamiroten.png",
@@ -1592,10 +1702,50 @@
   };
 
   const GOD_SEEDS = [
-    { id:"seed_god_yaki",  name:"焼き神のタネ", short:"焼き神", icon:"🔥", statKey:"harvest", img:SEED_IMG.seed_god_yaki },
-    { id:"seed_god_shop",  name:"露店神のタネ", short:"露店神", icon:"🪙", statKey:"sales",   img:SEED_IMG.seed_god_shop },
-    { id:"seed_god_fish",  name:"釣り神のタネ", short:"釣り神", icon:"🎣", statKey:"fishing", img:SEED_IMG.seed_god_fish },
-    { id:"seed_god_tower", name:"塔神のタネ",   short:"塔神",   icon:"🗼", statKey:"tower",   img:SEED_IMG.seed_god_tower }
+    {
+      id:"seed_god_yaki",
+      name:"焼き神のタネ",
+      short:"焼き神",
+      icon:"🔥",
+      statKey:"harvest",
+      img:SEED_IMG.seed_god_yaki,
+      condition:"月間収穫数 3,000枚以上で入手",
+      gameName:"たこ焼きファームへ",
+      gameUrl:"https://takoyaki-trc.github.io/takoyaki-media/town/takofarm.html"
+    },
+    {
+      id:"seed_god_shop",
+      name:"露店神のタネ",
+      short:"露店神",
+      icon:"🪙",
+      statKey:"sales",
+      img:SEED_IMG.seed_god_shop,
+      condition:"月間マイ露店売上 300,000oct以上で入手",
+      gameName:"マイ露店へ",
+      gameUrl:"https://takoyaki-trc.github.io/takoyaki-media/town/roten.html"
+    },
+    {
+      id:"seed_god_fish",
+      name:"釣り神のタネ",
+      short:"釣り神",
+      icon:"🎣",
+      statKey:"fishing",
+      img:SEED_IMG.seed_god_fish,
+      condition:"月間たこ焼き釣りスコア 5,000点以上で入手",
+      gameName:"たこ焼き釣りへ",
+      gameUrl:"https://takoyaki-trc.github.io/takoyaki-media/town/takoyaki-fishing.html"
+    },
+    {
+      id:"seed_god_tower",
+      name:"塔神のタネ",
+      short:"塔神",
+      icon:"🗼",
+      statKey:"tower",
+      img:SEED_IMG.seed_god_tower,
+      condition:"月間たこ焼きタワー 50階以上で入手",
+      gameName:"たこ焼きタワーへ",
+      gameUrl:"https://takoyaki-trc.github.io/takoyaki-media/town/takoyaki-tower.html"
+    }
   ];
 
   const GOD_CARD_POOLS = {
@@ -1882,6 +2032,8 @@
   const playerNameInline = document.getElementById("playerNameInline");
 
   const seedGrid     = document.getElementById("seedGrid");
+  const selectedSeedNote = document.getElementById("selectedSeedNote");
+  const godPlot      = document.getElementById("godPlot");
   const godPlotStage = document.getElementById("godPlotStage");
   const godPlotInner = document.getElementById("godPlotInner");
   const godStatus    = document.getElementById("godStatus");
@@ -1889,23 +2041,23 @@
   const bonusBox     = document.getElementById("bonusBox");
   const bonusBody    = document.getElementById("bonusBody");
 
-  const plantBtn     = document.getElementById("plantBtn");
-  const harvestBtn   = document.getElementById("harvestBtn");
   const clearBtn     = document.getElementById("clearBtn");
 
   const historyModal   = document.getElementById("historyModal");
-  const seedModal      = document.getElementById("seedModal");
+  const seedHelpModal  = document.getElementById("seedHelpModal");
   const rewardModal    = document.getElementById("rewardModal");
   const nameModal      = document.getElementById("nameModal");
 
   const historyList    = document.getElementById("historyList");
-  const seedModalList  = document.getElementById("seedModalList");
+  const seedHelpList   = document.getElementById("seedHelpList");
   const rewardBody     = document.getElementById("rewardBody");
 
   const openHistoryBtn = document.getElementById("openHistoryBtn");
   const closeHistoryBtn= document.getElementById("closeHistoryBtn");
-  const closeSeedBtn   = document.getElementById("closeSeedBtn");
+  const openSeedHelpBtn= document.getElementById("openSeedHelpBtn");
+  const closeSeedHelpBtn = document.getElementById("closeSeedHelpBtn");
   const closeRewardBtn = document.getElementById("closeRewardBtn");
+  const changeNameBtn  = document.getElementById("changeNameBtn");
 
   const nameInput      = document.getElementById("nameInput");
   const nameError      = document.getElementById("nameError");
@@ -1962,7 +2114,7 @@
 
     const anyOpen =
       historyModal.classList.contains("show") ||
-      seedModal.classList.contains("show") ||
+      seedHelpModal.classList.contains("show") ||
       rewardModal.classList.contains("show") ||
       nameModal.classList.contains("show");
 
@@ -2090,6 +2242,7 @@
       openModal(nameModal);
     }else{
       playerNameInline.textContent = name;
+      nameInput.value = name;
     }
   }
 
@@ -2107,6 +2260,12 @@
     playerNameInline.textContent = safe;
     closeModal(nameModal);
     toast("ユーザー名を設定しました");
+  });
+
+  changeNameBtn.addEventListener("click", () => {
+    nameError.textContent = "";
+    nameInput.value = loadUserName();
+    openModal(nameModal);
   });
 
   function createDefaultMonthly(){
@@ -2217,6 +2376,31 @@
     localStorage.setItem(DEBUG_GIVE_SEEDS_ONCE_KEY, "1");
   }
 
+  function updateSelectedSeedNote(){
+    const inv = loadInv();
+    const farm = loadFarm();
+
+    if(farm.seedId){
+      selectedSeedNote.textContent = "畑にタネがあります。READYになったら畑をタップで収穫できます";
+      return;
+    }
+
+    if(!selectedSeedId){
+      selectedSeedNote.textContent = "タネを選んでから、下の神の畑をタップしてください";
+      return;
+    }
+
+    const meta = seedMeta(selectedSeedId);
+    const count = Number(inv[selectedSeedId] || 0);
+
+    if(!meta){
+      selectedSeedNote.textContent = "タネを選んでください";
+      return;
+    }
+
+    selectedSeedNote.textContent = `${meta.name} を選択中 / 残り ${count}個`;
+  }
+
   function renderSeedGrid(){
     const inv = loadInv();
     seedGrid.innerHTML = "";
@@ -2224,8 +2408,15 @@
     GOD_SEEDS.forEach(s => {
       const count = Number(inv[s.id] || 0);
 
+      if(selectedSeedId === s.id && count <= 0){
+        selectedSeedId = "";
+      }
+
       const el = document.createElement("div");
-      el.className = "seed-card" + (count <= 0 ? " empty-stock" : "");
+      el.className =
+        "seed-card" +
+        (count <= 0 ? " empty-stock" : "") +
+        (selectedSeedId === s.id ? " selected" : "");
 
       el.innerHTML = `
         <div class="seed-thumb ${escapeHtml(s.id.replaceAll("_", "-"))}">
@@ -2235,8 +2426,28 @@
         <div class="seed-name">${escapeHtml(s.name)}</div>
       `;
 
+      el.addEventListener("click", () => {
+        if(count <= 0){
+          toast("このタネは持っていません");
+          return;
+        }
+
+        const farm = loadFarm();
+        if(farm.seedId){
+          toast("畑にタネがあります。収穫後に選べます");
+          return;
+        }
+
+        selectedSeedId = s.id;
+        renderSeedGrid();
+        renderFarm();
+        toast(`${s.name} を選びました`);
+      });
+
       seedGrid.appendChild(el);
     });
+
+    updateSelectedSeedNote();
   }
 
   function loadFarm(){
@@ -2265,16 +2476,18 @@
     godPlotStage.innerHTML = "";
     godPlotInner.textContent = "EMPTY";
     godPlotInner.classList.remove("ready");
+    godPlot.classList.remove("is-clickable");
 
     if(!f.seedId){
-      godStatus.textContent = "まだ何も植えられていません";
-      plantBtn.disabled = false;
-      harvestBtn.disabled = true;
+      godStatus.textContent = selectedSeedId
+        ? `${seedName(selectedSeedId)} を選択中。畑をタップで植えられます。`
+        : "まだ何も植えられていません";
       clearBtn.disabled = true;
+      if(selectedSeedId) godPlot.classList.add("is-clickable");
+      updateSelectedSeedNote();
       return;
     }
 
-    plantBtn.disabled = true;
     clearBtn.disabled = false;
 
     const now = Date.now();
@@ -2292,14 +2505,15 @@
     if(stage === "stage-ready"){
       godPlotInner.textContent = "READY";
       godPlotInner.classList.add("ready");
-      godStatus.textContent = "収穫できます";
-      harvestBtn.disabled = false;
+      godStatus.textContent = "収穫できます。畑をタップしてください。";
+      godPlot.classList.add("is-clickable");
     }else{
       const remain = Math.max(0, GROW_MS - diff);
       godPlotInner.textContent = "GROWING";
       godStatus.textContent = `成長中：${fmtRemain(remain)}`;
-      harvestBtn.disabled = true;
     }
+
+    updateSelectedSeedNote();
   }
 
   function allGodCards(){
@@ -2517,7 +2731,7 @@ ${escapeHtml(card.story || "")}
           ${storyHtml}
         </div>
 
-        <button class="btn primary" id="rewardOkBtn" type="button">閉じる</button>
+        <button class="btn" id="rewardOkBtn" type="button">閉じる</button>
       </div>
     `;
 
@@ -2567,21 +2781,43 @@ ${escapeHtml(card.story || "")}
     });
   }
 
+  function renderSeedHelp(){
+    seedHelpList.innerHTML = GOD_SEEDS.map(seed => `
+      <div class="seed-help-card">
+        <div class="seed-help-top">
+          <div class="seed-help-img ${escapeHtml(seed.id.replaceAll("_", "-"))}">
+            <img src="${escapeHtml(seed.img)}" alt="">
+          </div>
+          <div>
+            <div class="seed-help-title">${escapeHtml(seed.name)}</div>
+            <div class="seed-help-cond">${escapeHtml(seed.condition)}</div>
+          </div>
+        </div>
+        <a class="game-link" href="${escapeHtml(seed.gameUrl)}">${escapeHtml(seed.gameName)}</a>
+      </div>
+    `).join("");
+  }
+
   openHistoryBtn.addEventListener("click", () => {
     renderHistory();
     openModal(historyModal);
   });
 
+  openSeedHelpBtn.addEventListener("click", () => {
+    renderSeedHelp();
+    openModal(seedHelpModal);
+  });
+
   closeHistoryBtn.addEventListener("click", () => closeModal(historyModal));
-  closeSeedBtn.addEventListener("click", () => closeModal(seedModal));
+  closeSeedHelpBtn.addEventListener("click", () => closeModal(seedHelpModal));
   closeRewardBtn.addEventListener("click", () => closeModal(rewardModal));
 
   historyModal.addEventListener("click", e => {
     if(e.target === historyModal) closeModal(historyModal);
   });
 
-  seedModal.addEventListener("click", e => {
-    if(e.target === seedModal) closeModal(seedModal);
+  seedHelpModal.addEventListener("click", e => {
+    if(e.target === seedHelpModal) closeModal(seedHelpModal);
   });
 
   rewardModal.addEventListener("click", e => {
@@ -2593,7 +2829,7 @@ ${escapeHtml(card.story || "")}
 
     if(nameModal.classList.contains("show")) return;
     if(rewardModal.classList.contains("show")) { closeModal(rewardModal); return; }
-    if(seedModal.classList.contains("show")) { closeModal(seedModal); return; }
+    if(seedHelpModal.classList.contains("show")) { closeModal(seedHelpModal); return; }
     if(historyModal.classList.contains("show")) { closeModal(historyModal); }
   });
 
@@ -2683,64 +2919,40 @@ ${escapeHtml(card.story || "")}
     renderAltar();
   }
 
-  plantBtn.addEventListener("click", () => {
+  function plantSelectedSeed(){
     const inv = loadInv();
-    const list = GOD_SEEDS.filter(s => Number(inv[s.id] || 0) > 0);
 
-    if(list.length === 0){
-      toast("タネがありません");
+    if(!selectedSeedId){
+      toast("先に上のタネを選んでください");
       return;
     }
 
-    const farm = loadFarm();
-    if(farm.seedId){
-      toast("畑にはすでにタネがあります");
+    const count = Number(inv[selectedSeedId] || 0);
+    if(count <= 0){
+      selectedSeedId = "";
+      renderAll();
+      toast("このタネは持っていません");
       return;
     }
 
-    seedModalList.innerHTML = "";
+    inv[selectedSeedId] = count - 1;
+    saveInv(inv);
 
-    list.forEach(s => {
-      const btn = document.createElement("button");
-      btn.className = "seed-select-btn";
-      const seedClass = String(s.id).replaceAll("_", "-");
-
-      btn.innerHTML = `
-        <div class="seed-select-left">
-          <div class="seed-select-img ${escapeHtml(seedClass)}"><img src="${escapeHtml(s.img)}" alt=""></div>
-          <div>
-            <div class="seed-select-name">${escapeHtml(s.name)}</div>
-            <div class="seed-select-sub">${escapeHtml(s.short)}</div>
-          </div>
-        </div>
-        <div class="seed-select-count">x${Number(inv[s.id] || 0)}</div>
-      `;
-
-      btn.onclick = () => {
-        inv[s.id] = Number(inv[s.id] || 0) - 1;
-        saveInv(inv);
-
-        saveFarm({
-          seedId: s.id,
-          plantedAt: Date.now()
-        });
-
-        closeModal(seedModal);
-        renderAll();
-        toast(`${s.name} を植えました`);
-      };
-
-      seedModalList.appendChild(btn);
+    saveFarm({
+      seedId:selectedSeedId,
+      plantedAt:Date.now()
     });
 
-    openModal(seedModal);
-  });
+    toast(`${seedName(selectedSeedId)} を植えました`);
+    selectedSeedId = "";
+    renderAll();
+  }
 
-  harvestBtn.addEventListener("click", () => {
+  function harvestFarm(){
     const f = loadFarm();
 
     if(!f.seedId){
-      toast("まだ何も植えられていません");
+      plantSelectedSeed();
       return;
     }
 
@@ -2748,7 +2960,7 @@ ${escapeHtml(card.story || "")}
     const diff = now - Number(f.plantedAt || 0);
 
     if(diff < GROW_MS){
-      toast("まだ収穫できません");
+      toast("まだ成長中です");
       return;
     }
 
@@ -2759,19 +2971,25 @@ ${escapeHtml(card.story || "")}
       return;
     }
 
+    const seedId = f.seedId;
+
     addToBook(reward);
     saveFarm({});
 
     renderAll();
-    renderRewardCard(reward, f.seedId, false);
+    renderRewardCard(reward, seedId, false);
 
     const gotBonus = ensureCompleteBonus();
     if(gotBonus){
       setTimeout(() => {
         renderAll();
-        renderRewardCard(GOD_BONUS_CARD, f.seedId, true);
+        renderRewardCard(GOD_BONUS_CARD, seedId, true);
       }, 500);
     }
+  }
+
+  godPlot.addEventListener("click", () => {
+    harvestFarm();
   });
 
   clearBtn.addEventListener("click", () => {
