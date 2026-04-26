@@ -2,15 +2,12 @@
   "use strict";
 
   // =========================================================
-  // takofarm.js（外部コラボ対応＋プレミア演出 完全版）
+  // takofarm.js（外部コラボ対応＋UR/LR先出しプレミア演出 完全版）
   // ✅ window.TAKOFARM_COLLAB_SEEDS からコラボタネを外部読み込み
   // ✅ 古い seed_colabo はタネ一覧から削除
   // ✅ コラボカードは rarity="COL" / tier=N,R,SR,UR,LR で図鑑保存
-  // ✅ コラボUR/LRはプレミア収穫演出
-  // ✅ アニバーサリー：図鑑ではSP扱い（rarity="SP"固定）
-  // ✅ XP：rarityではなく tier（N/R/SR/UR/LR）に沿って入る
-  // ✅ 図鑑：tierも保存
-  // ✅ 月間記録 ttc_monthly_stats_v1 に harvest を自動反映
+  // ✅ コラボUR/LRは「畑タップ → 演出 → カード表示」
+  // ✅ プレミア演出：タイプライター / 背景カード / 光 / 振動 / カードドーン / レインボー
   // =========================================================
 
   const EXTERNAL_COLLAB_SEEDS = Array.isArray(window.TAKOFARM_COLLAB_SEEDS)
@@ -157,62 +154,13 @@
   };
 
   const SEEDS = [
-    {
-      id: "seed_random",
-      name: "なに出るタネ",
-      desc: "何が出るか\n誰もまだ\n知らない",
-      factor: 1.0,
-      img: "https://ul.h3z.jp/gnyvP580.png",
-      fx: "第一弾全50種"
-    },
-    {
-      id: "seed_shop",
-      name: "店頭タネ",
-      desc: "店頭カード\nだけ出る\nタネです",
-      factor: 1.0,
-      img: "https://ul.h3z.jp/IjvuhWoY.png",
-      fx: "店頭全25種"
-    },
-    {
-      id: "seed_line",
-      name: "回線タネ",
-      desc: "通販カード\nだけ出る\nタネです",
-      factor: 1.0,
-      img: "https://ul.h3z.jp/AonxB5x7.png",
-      fx: "BOOTH全25種"
-    },
-    {
-      id: "seed_special",
-      name: "たこぴのタネ",
-      desc: "植えると\nたこぴだけ\n出てくる",
-      factor: 1.0,
-      img: "https://ul.h3z.jp/29OsEvjf.png",
-      fx: "たこぴカード8種"
-    },
-    {
-      id: "seed_bussasari",
-      name: "ブッ刺さりタネ",
-      desc: "ダーツプロ\n5種だけが\n出てくる",
-      factor: 1.05,
-      img: "https://ul.h3z.jp/MjWkTaU3.png",
-      fx: "ダーツプロ全5種"
-    },
-    {
-      id: "seed_namara_kawasar",
-      name: "なまら買わさるタネ",
-      desc: "限定カード\nだけ狙える\n特別タネ",
-      factor: 1.08,
-      img: "https://ul.h3z.jp/yiqHzfi0.png",
-      fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全12種"
-    },
-    {
-      id: "seed_anniv",
-      name: "ﾊｰﾌｱﾆﾊﾞｰｻﾘｰ\nのタネ",
-      desc: "5種から\nランダムで\n収穫する",
-      factor: 1.0,
-      img: "https://takoyaki-card.com/town/assets/images/anniversary/anv1.png",
-      fx: "全5種《N/R/SR/UR/LR》"
-    },
+    { id: "seed_random", name: "なに出るタネ", desc: "何が出るか\n誰もまだ\n知らない", factor: 1.0, img: "https://ul.h3z.jp/gnyvP580.png", fx: "第一弾全50種" },
+    { id: "seed_shop", name: "店頭タネ", desc: "店頭カード\nだけ出る\nタネです", factor: 1.0, img: "https://ul.h3z.jp/IjvuhWoY.png", fx: "店頭全25種" },
+    { id: "seed_line", name: "回線タネ", desc: "通販カード\nだけ出る\nタネです", factor: 1.0, img: "https://ul.h3z.jp/AonxB5x7.png", fx: "BOOTH全25種" },
+    { id: "seed_special", name: "たこぴのタネ", desc: "植えると\nたこぴだけ\n出てくる", factor: 1.0, img: "https://ul.h3z.jp/29OsEvjf.png", fx: "たこぴカード8種" },
+    { id: "seed_bussasari", name: "ブッ刺さりタネ", desc: "ダーツプロ\n5種だけが\n出てくる", factor: 1.05, img: "https://ul.h3z.jp/MjWkTaU3.png", fx: "ダーツプロ全5種" },
+    { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "限定カード\nだけ狙える\n特別タネ", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全12種" },
+    { id: "seed_anniv", name: "ﾊｰﾌｱﾆﾊﾞｰｻﾘｰ\nのタネ", desc: "5種から\nランダムで\n収穫する", factor: 1.0, img: "https://takoyaki-card.com/town/assets/images/anniversary/anv1.png", fx: "全5種《N/R/SR/UR/LR》" },
     ...EXTERNAL_COLLAB_SEEDS
   ];
 
@@ -518,15 +466,8 @@
 
   function itemRewardForLevel(level) {
     const lv = Math.max(1, Math.floor(level));
-    const count =
-      lv >= 15 ? pickWeighted([{ v: 2, w: 55 }, { v: 3, w: 45 }]) :
-      lv >= 8 ? pickWeighted([{ v: 1, w: 30 }, { v: 2, w: 70 }]) :
-      1;
-
-    const cat =
-      lv >= 12 ? pickWeighted([{ v: "seed", w: 45 }, { v: "water", w: 30 }, { v: "fert", w: 25 }]) :
-      lv >= 6 ? pickWeighted([{ v: "seed", w: 55 }, { v: "water", w: 25 }, { v: "fert", w: 20 }]) :
-      pickWeighted([{ v: "seed", w: 70 }, { v: "water", w: 20 }, { v: "fert", w: 10 }]);
+    const count = lv >= 15 ? pickWeighted([{ v: 2, w: 55 }, { v: 3, w: 45 }]) : lv >= 8 ? pickWeighted([{ v: 1, w: 30 }, { v: 2, w: 70 }]) : 1;
+    const cat = lv >= 12 ? pickWeighted([{ v: "seed", w: 45 }, { v: "water", w: 30 }, { v: "fert", w: 25 }]) : lv >= 6 ? pickWeighted([{ v: "seed", w: 55 }, { v: "water", w: 25 }, { v: "fert", w: 20 }]) : pickWeighted([{ v: "seed", w: 70 }, { v: "water", w: 20 }, { v: "fert", w: 10 }]);
 
     const seedChoices = SEEDS.filter((x) => x.id !== "seed_anniv" && !isExternalCollabSeed(x.id));
     const waterChoices = WATERS.slice();
@@ -555,7 +496,6 @@
   function grantLevelRewards(level) {
     const octo = octoRewardForLevel(level);
     addOcto(octo);
-
     const items = itemRewardForLevel(level);
     const inv = loadInv();
     for (const it of items) {
@@ -569,30 +509,23 @@
 
   function addXP(amount) {
     if (!Number.isFinite(amount) || amount <= 0) return { leveled: false, unlockedDelta: 0, rewards: [] };
-
     let leveled = false;
     let unlockedDelta = 0;
     const rewards = [];
-
     player.xp += Math.floor(amount);
-
     while (player.xp >= xpNeedForLevel(player.level)) {
       player.xp -= xpNeedForLevel(player.level);
       player.level += 1;
       leveled = true;
-
       const r = grantLevelRewards(player.level);
       let unlockedNow = 0;
-
       if (player.unlocked < MAX_PLOTS) {
         player.unlocked += 1;
         unlockedDelta += 1;
         unlockedNow = 1;
       }
-
       rewards.push({ level: player.level, unlockedNow, ...r });
     }
-
     savePlayer(player);
     return { leveled, unlockedDelta, rewards };
   }
@@ -661,10 +594,7 @@
   function fmtRemain(ms) {
     if (ms <= 0) return "00:00:00";
     const s = Math.floor(ms / 1000);
-    const hh = Math.floor(s / 3600);
-    const mm = Math.floor((s % 3600) / 60);
-    const ss = s % 60;
-    return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+    return `${pad2(Math.floor(s / 3600))}:${pad2(Math.floor((s % 3600) / 60))}:${pad2(s % 60)}`;
   }
 
   function pickRarityFromRates(rates, fallback = "N") {
@@ -682,26 +612,21 @@
 
   function pickRarityWithWater(waterId) {
     const w = WATERS.find((x) => x.id === waterId);
-
     if (w && w.id === "water_rotten") {
       if (Math.random() < 0.12) return "WATER_SPECIAL";
       const k = pickRarityFromRates({ N: 70, R: 24, SR: 5, UR: 0.8, LR: 0.2 });
       if (k === "LR") return "UR";
       if (k === "UR") return "SR";
       if (k === "SR") return "R";
-      if (k === "R") return "N";
       return "N";
     }
-
     if (w && w.id === "water_sea") {
       if (Math.random() < 0.03) return "WATER_SPECIAL";
       return pickRarityFromRates({ N: 82, R: 16.5, SR: 1.1, UR: 0.3, LR: 0.1 });
     }
-
     if (w && w.id === "water_yunokawa") return pickRarityFromRates({ N: 30, R: 68, SR: 1.5, UR: 0.4, LR: 0.1 });
     if (w && w.id === "water_supergod") return pickRarityFromRates({ N: 30, R: 50, SR: 18, UR: 1, LR: 1 });
     if (w && w.rates) return pickRarityFromRates(w.rates);
-
     return pickRarityFromRates(BASE_RARITY_RATE);
   }
 
@@ -748,16 +673,9 @@
     return { id: c.id, name: c.name, img: c.img, rarity: c.rarity, tier: c.rarity };
   }
 
-  function pickAnnivTier() {
-    return pickRarityFromRates(ANNIV_RATES);
-  }
-
   function pickAnnivReward() {
-    const tier = pickAnnivTier();
-    const c =
-      ANNIV_POOL.find((x) => String(x.tier || "").toUpperCase() === tier) ||
-      ANNIV_POOL.find((x) => String(x.tier || "").toUpperCase() === "N") ||
-      ANNIV_POOL[0];
+    const tier = pickRarityFromRates(ANNIV_RATES);
+    const c = ANNIV_POOL.find((x) => String(x.tier || "").toUpperCase() === tier) || ANNIV_POOL[0];
     return { id: c.id, name: c.name, img: c.img, rarity: "SP", tier: c.tier || tier };
   }
 
@@ -765,37 +683,26 @@
     if (!p) return null;
     const fert = FERTS.find((x) => x.id === (p.fertId || null));
     if (!fert) return null;
-
     if (fert.id === "fert_sleep") {
       const sleepSpP = Number(fert.sleepSpChance ?? 0);
       if (sleepSpP > 0 && Math.random() < sleepSpP) return pickSleepFertSpecialReward();
     }
-
     const towerSpP = Number(fert.towerSpChance ?? 0);
     if (towerSpP > 0 && Math.random() < towerSpP) return { ...TOWER_SP_REWARD };
-
     const burnP = Number(fert.burnCardUp ?? 0);
-    if (burnP > 0 && Math.random() < burnP) {
-      return { id: "SP-BURN", name: "焼きすぎたカード", img: "https://ul.h3z.jp/VSQupsYH.png", rarity: "SP", tier: "N" };
-    }
-
+    if (burnP > 0 && Math.random() < burnP) return { id: "SP-BURN", name: "焼きすぎたカード", img: "https://ul.h3z.jp/VSQupsYH.png", rarity: "SP", tier: "N" };
     const rawP = Number(fert.rawCardChance ?? 0);
-    if (rawP > 0 && Math.random() < rawP) {
-      return { id: "SP-RAW", name: "ドロドロ生焼けカード", img: "https://ul.h3z.jp/5E5NpGKP.png", rarity: "SP", tier: "N" };
-    }
-
+    if (rawP > 0 && Math.random() < rawP) return { id: "SP-RAW", name: "ドロドロ生焼けカード", img: "https://ul.h3z.jp/5E5NpGKP.png", rarity: "SP", tier: "N" };
     return null;
   }
 
   function drawRewardForPlot(p) {
     const sp = pickFertSPIfAny(p);
     if (sp) return sp;
-
     if (p && isExternalCollabSeed(p.seedId)) {
       const reward = pickExternalCollabReward(p.seedId);
       if (reward) return reward;
     }
-
     if (p && p.seedId === "seed_special") {
       const c = pick(TAKOPI_SEED_POOL);
       return { id: c.id, name: c.name, img: c.img, rarity: c.rarity || "N", tier: c.rarity || "N" };
@@ -805,12 +712,10 @@
     if (p && p.seedId === "seed_namara_kawasar") return pickNamaraReward();
 
     const rarity = p && p.fixedRarity ? p.fixedRarity : pickRarityWithWater(p ? p.waterId : null);
-
     if (rarity === "WATER_SPECIAL") {
       const special = pickWaterSpecialReward(p ? p.waterId : null);
       if (special) return special;
     }
-
     const seedId = p ? p.seedId : null;
     const filtered = filterPoolBySeed(seedId, getPoolByRarity(rarity));
     const picked = filtered.length ? { rarity, card: pick(filtered) } : fallbackPickBySeed(seedId, rarity);
@@ -879,7 +784,6 @@
   let state = loadState();
   let book = loadBook();
   let inv = loadInv();
-
   let __scrollY = 0;
   let __locked = false;
 
@@ -996,31 +900,124 @@
 
   function ensurePremiumCutinStyle() {
     if (document.getElementById("farmPremiumCutinStyle")) return;
+
     const style = document.createElement("style");
     style.id = "farmPremiumCutinStyle";
     style.textContent = `
-      .farm-premium-cutin{position:fixed;inset:0;z-index:100002;display:none;overflow:hidden;background:#020008;color:#fff}
-      .farm-premium-cutin.show{display:block}
-      .farm-premium-noise{position:absolute;inset:0;background:linear-gradient(transparent 0 96%,rgba(255,255,255,.12) 96% 100%),radial-gradient(circle at 50% 50%,rgba(255,255,255,.06),transparent 55%);background-size:100% 4px,100% 100%;opacity:.28;mix-blend-mode:screen;animation:farmPremiumNoise .12s steps(2) infinite;z-index:3}
-      .farm-premium-bgcards{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
-      .farm-premium-bgcard{position:absolute;width:min(42vw,180px);aspect-ratio:3/4;object-fit:cover;border-radius:16px;opacity:0;filter:brightness(.32) saturate(1.05) blur(.2px);box-shadow:0 18px 45px rgba(0,0,0,.55);transform:translate(-50%,-50%) scale(.82);animation:farmPremiumCardSlide 2.9s ease-in-out forwards}
-      .farm-premium-type{position:absolute;left:24px;right:24px;top:50%;transform:translateY(-50%);min-height:150px;display:flex;align-items:center;justify-content:center;color:#ffeec4;font-family:"DotGothic16","MS Gothic",sans-serif;font-size:19px;font-weight:900;line-height:2;letter-spacing:.05em;text-align:center;text-shadow:0 0 12px rgba(255,226,144,.42),0 2px 0 rgba(0,0,0,.7);white-space:pre-line;opacity:1;filter:blur(0);transition:opacity 1.6s ease,filter 1.6s ease,transform 1.6s ease;z-index:5}
-      .farm-premium-type.fadeout{opacity:0;filter:blur(7px);transform:translateY(-54%)}
-      .farm-premium-rainbow{position:absolute;left:50%;top:50%;width:34vmax;height:34vmax;transform:translate(-50%,-50%) scale(0);opacity:0;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,1) 0 7%,rgba(255,246,170,.95) 8% 13%,rgba(255,45,92,.92) 14% 23%,rgba(255,178,0,.90) 24% 33%,rgba(255,246,0,.90) 34% 43%,rgba(0,255,144,.88) 44% 53%,rgba(0,183,255,.88) 54% 63%,rgba(139,44,255,.88) 64% 73%,rgba(255,0,160,.82) 74% 82%,rgba(255,255,255,0) 83% 100%);filter:blur(2px) saturate(1.45);mix-blend-mode:screen;pointer-events:none;z-index:6}
-      .farm-premium-rainbow::before,.farm-premium-rainbow::after{content:"";position:absolute;inset:-20%;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,0,80,.85),rgba(255,198,0,.85),rgba(255,255,0,.85),rgba(0,255,156,.85),rgba(0,190,255,.85),rgba(142,58,255,.85),rgba(255,0,180,.85),rgba(255,0,80,.85));opacity:.65;filter:blur(12px);animation:farmPremiumRainbowSpin .8s linear infinite}
-      .farm-premium-rainbow::after{inset:-45%;opacity:.38;filter:blur(24px);animation-duration:1.25s;animation-direction:reverse}
-      .farm-premium-rainbow.flash{animation:farmPremiumRainbowSpread 1.25s cubic-bezier(.08,.8,.08,1) forwards}
-      .farm-premium-whiteout{position:absolute;inset:0;opacity:0;background:#fff;pointer-events:none;z-index:7}
-      .farm-premium-whiteout.flash{animation:farmPremiumWhiteOut .55s ease-out forwards}
-      .farm-premium-cardname{position:absolute;left:18px;right:18px;top:52%;transform:translateY(-50%) scale(.8);text-align:center;opacity:0;color:#fff8d8;font-family:"DotGothic16","MS Gothic",sans-serif;font-size:25px;font-weight:900;line-height:1.5;white-space:pre-line;text-shadow:0 3px 0 rgba(0,0,0,.55),0 0 18px rgba(255,226,144,.8);z-index:8}
-      .farm-premium-cardname.show{animation:farmPremiumCardNamePop .9s ease-out forwards}
+      .farm-premium-cutin{
+        position:fixed;inset:0;z-index:100002;display:none;overflow:hidden;background:#020008;color:#fff;
+      }
+      .farm-premium-cutin.show{display:block;}
+      .farm-premium-bgcards{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;}
+      .farm-premium-bgcard{
+        position:absolute;width:min(42vw,180px);aspect-ratio:3/4;object-fit:cover;border-radius:16px;
+        opacity:0;filter:brightness(.30) saturate(1.1) blur(.2px);
+        box-shadow:0 18px 45px rgba(0,0,0,.55);
+        transform:translate(-50%,-50%) scale(.65) rotate(-4deg);
+        animation:farmPremiumCardSlide 3.2s ease-in-out forwards;
+      }
+      .farm-premium-light{
+        position:absolute;inset:-20%;z-index:2;opacity:0;pointer-events:none;
+        background:
+          radial-gradient(circle at 50% 50%,rgba(255,255,255,.95) 0 5%,rgba(255,230,120,.55) 6% 16%,rgba(255,0,170,.18) 17% 32%,transparent 46%),
+          conic-gradient(from 0deg,rgba(255,0,90,.0),rgba(255,220,0,.22),rgba(0,255,180,.18),rgba(0,160,255,.22),rgba(180,0,255,.18),rgba(255,0,90,.0));
+        filter:blur(8px) saturate(1.6);mix-blend-mode:screen;transform:scale(.2) rotate(0deg);
+      }
+      .farm-premium-light.flash{animation:farmPremiumLightBurst 1.25s cubic-bezier(.08,.8,.08,1) forwards;}
+      .farm-premium-noise{
+        position:absolute;inset:0;z-index:3;opacity:.28;mix-blend-mode:screen;
+        background:
+          linear-gradient(transparent 0 96%,rgba(255,255,255,.12) 96% 100%),
+          radial-gradient(circle at 50% 50%,rgba(255,255,255,.06),transparent 55%);
+        background-size:100% 4px,100% 100%;
+        animation:farmPremiumNoise .12s steps(2) infinite;
+      }
+      .farm-premium-type{
+        position:absolute;left:24px;right:24px;top:50%;transform:translateY(-50%);
+        min-height:150px;z-index:5;display:flex;align-items:center;justify-content:center;
+        color:#ffeec4;font-family:"DotGothic16","MS Gothic",sans-serif;font-size:19px;font-weight:900;
+        line-height:2;letter-spacing:.05em;text-align:center;
+        text-shadow:0 0 12px rgba(255,226,144,.42),0 2px 0 rgba(0,0,0,.7);
+        white-space:pre-line;opacity:1;filter:blur(0);
+        transition:opacity 1.25s ease,filter 1.25s ease,transform 1.25s ease;
+      }
+      .farm-premium-type.fadeout{opacity:0;filter:blur(7px);transform:translateY(-54%);}
+      .farm-premium-rainbow{
+        position:absolute;left:50%;top:50%;z-index:6;width:34vmax;height:34vmax;
+        transform:translate(-50%,-50%) scale(0);opacity:0;border-radius:50%;
+        background:
+          radial-gradient(circle,
+            rgba(255,255,255,1) 0 7%,
+            rgba(255,246,170,.95) 8% 13%,
+            rgba(255,45,92,.92) 14% 23%,
+            rgba(255,178,0,.90) 24% 33%,
+            rgba(255,246,0,.90) 34% 43%,
+            rgba(0,255,144,.88) 44% 53%,
+            rgba(0,183,255,.88) 54% 63%,
+            rgba(139,44,255,.88) 64% 73%,
+            rgba(255,0,160,.82) 74% 82%,
+            rgba(255,255,255,0) 83% 100%);
+        filter:blur(2px) saturate(1.45);mix-blend-mode:screen;pointer-events:none;
+      }
+      .farm-premium-rainbow.flash{animation:farmPremiumRainbowSpread 1.25s cubic-bezier(.08,.8,.08,1) forwards;}
+      .farm-premium-whiteout{position:absolute;inset:0;z-index:7;opacity:0;background:#fff;pointer-events:none;}
+      .farm-premium-whiteout.flash{animation:farmPremiumWhiteOut .55s ease-out forwards;}
+      .farm-premium-card-pop{
+        position:absolute;left:50%;top:48%;z-index:8;width:min(68vw,260px);aspect-ratio:3/4;
+        object-fit:cover;border-radius:18px;opacity:0;
+        transform:translate(-50%,-50%) scale(.35) rotate(-8deg);
+        box-shadow:
+          0 0 0 3px rgba(255,255,255,.92),
+          0 0 34px rgba(255,226,140,.78),
+          0 26px 60px rgba(0,0,0,.68);
+        filter:saturate(1.18) brightness(1.08);
+      }
+      .farm-premium-card-pop.show{animation:farmPremiumCardPop .95s cubic-bezier(.12,.9,.18,1) forwards;}
+      .farm-premium-cardname{
+        position:absolute;left:18px;right:18px;top:82%;z-index:9;
+        transform:translateY(-50%) scale(.8);text-align:center;opacity:0;
+        color:#fff8d8;font-family:"DotGothic16","MS Gothic",sans-serif;font-size:24px;font-weight:900;
+        line-height:1.45;white-space:pre-line;
+        text-shadow:0 3px 0 rgba(0,0,0,.55),0 0 18px rgba(255,226,144,.8);
+      }
+      .farm-premium-cardname.show{animation:farmPremiumCardNamePop .75s ease-out forwards;}
       @keyframes farmPremiumNoise{0%{opacity:.15}100%{opacity:.32}}
-      @keyframes farmPremiumCardSlide{0%{opacity:0;transform:translate(-50%,-50%) scale(.62) rotate(-4deg)}18%{opacity:.16}55%{opacity:.22;transform:translate(-50%,-50%) scale(1.06) rotate(2deg)}100%{opacity:.10;transform:translate(-50%,-50%) scale(1.18) rotate(0deg)}}
-      @keyframes farmPremiumRainbowSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-      @keyframes farmPremiumRainbowSpread{0%{opacity:0;transform:translate(-50%,-50%) scale(.02);filter:blur(1px) saturate(1.7) brightness(1.2)}12%{opacity:1;transform:translate(-50%,-50%) scale(.22)}38%{opacity:1;transform:translate(-50%,-50%) scale(1.85);filter:blur(4px) saturate(1.8) brightness(1.4)}72%{opacity:.92;transform:translate(-50%,-50%) scale(3.7);filter:blur(8px) saturate(1.5) brightness(1.25)}100%{opacity:0;transform:translate(-50%,-50%) scale(5.8);filter:blur(16px) saturate(1.2) brightness(1.05)}}
+      @keyframes farmPremiumCardSlide{
+        0%{opacity:0;transform:translate(-50%,-50%) scale(.58) rotate(-5deg)}
+        18%{opacity:.16}
+        55%{opacity:.24;transform:translate(-50%,-50%) scale(1.08) rotate(2deg)}
+        100%{opacity:.10;transform:translate(-50%,-50%) scale(1.22) rotate(0deg)}
+      }
+      @keyframes farmPremiumLightBurst{
+        0%{opacity:0;transform:scale(.15) rotate(0deg)}
+        12%{opacity:1}
+        42%{opacity:.95;transform:scale(1.65) rotate(80deg)}
+        100%{opacity:0;transform:scale(3.4) rotate(180deg)}
+      }
+      @keyframes farmPremiumRainbowSpread{
+        0%{opacity:0;transform:translate(-50%,-50%) scale(.02);filter:blur(1px) saturate(1.7) brightness(1.2)}
+        12%{opacity:1;transform:translate(-50%,-50%) scale(.22)}
+        38%{opacity:1;transform:translate(-50%,-50%) scale(1.85);filter:blur(4px) saturate(1.8) brightness(1.4)}
+        72%{opacity:.92;transform:translate(-50%,-50%) scale(3.7);filter:blur(8px) saturate(1.5) brightness(1.25)}
+        100%{opacity:0;transform:translate(-50%,-50%) scale(5.8);filter:blur(16px) saturate(1.2) brightness(1.05)}
+      }
       @keyframes farmPremiumWhiteOut{0%{opacity:0}20%{opacity:.92}100%{opacity:0}}
-      @keyframes farmPremiumCardNamePop{0%{opacity:0;transform:translateY(-50%) scale(.72)}25%{opacity:1;transform:translateY(-50%) scale(1.08)}100%{opacity:1;transform:translateY(-50%) scale(1)}}
-      @media(max-width:480px){.farm-premium-type{left:22px;right:22px;font-size:18px;line-height:2}.farm-premium-cardname{font-size:23px}}
+      @keyframes farmPremiumCardPop{
+        0%{opacity:0;transform:translate(-50%,-50%) scale(.35) rotate(-8deg)}
+        42%{opacity:1;transform:translate(-50%,-50%) scale(1.14) rotate(2deg)}
+        68%{opacity:1;transform:translate(-50%,-50%) scale(.96) rotate(0deg)}
+        100%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0deg)}
+      }
+      @keyframes farmPremiumCardNamePop{
+        0%{opacity:0;transform:translateY(-50%) scale(.72)}
+        25%{opacity:1;transform:translateY(-50%) scale(1.08)}
+        100%{opacity:1;transform:translateY(-50%) scale(1)}
+      }
+      @media(max-width:480px){
+        .farm-premium-type{left:22px;right:22px;font-size:18px;line-height:2}
+        .farm-premium-card-pop{width:min(72vw,250px)}
+        .farm-premium-cardname{font-size:22px;top:83%}
+      }
     `;
     document.head.appendChild(style);
   }
@@ -1037,6 +1034,12 @@
     }
   }
 
+  function vibratePremium(pattern) {
+    try {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    } catch {}
+  }
+
   function getPremiumText(card) {
     const tier = String(card.tier || card.rarity || "").toUpperCase();
     if (tier === "LR") {
@@ -1047,6 +1050,7 @@
 
   function createPremiumCutin(card) {
     ensurePremiumCutinStyle();
+
     const old = document.getElementById("farmPremiumCutin");
     if (old) old.remove();
 
@@ -1069,10 +1073,12 @@
 
     wrap.innerHTML = `
       <div class="farm-premium-bgcards">${bgCards}</div>
+      <div class="farm-premium-light" id="farmPremiumLight"></div>
       <div class="farm-premium-noise"></div>
       <div class="farm-premium-type" id="farmPremiumType"></div>
       <div class="farm-premium-rainbow" id="farmPremiumRainbow"></div>
       <div class="farm-premium-whiteout" id="farmPremiumWhiteout"></div>
+      <img class="farm-premium-card-pop" id="farmPremiumCardPop" src="${img}" alt="">
       <div class="farm-premium-cardname" id="farmPremiumCardName"></div>
     `;
 
@@ -1083,26 +1089,43 @@
   async function playPremiumHarvestCutin(card) {
     const wrap = createPremiumCutin(card);
     const typeEl = wrap.querySelector("#farmPremiumType");
+    const light = wrap.querySelector("#farmPremiumLight");
     const rainbow = wrap.querySelector("#farmPremiumRainbow");
     const whiteout = wrap.querySelector("#farmPremiumWhiteout");
+    const cardPop = wrap.querySelector("#farmPremiumCardPop");
     const cardName = wrap.querySelector("#farmPremiumCardName");
 
     wrap.classList.add("show");
+    vibratePremium([40, 40, 80]);
+
     await waitPremium(320);
     await typePremiumText(typeEl, getPremiumText(card), 92);
-    await waitPremium(1800);
+    await waitPremium(1200);
+
     typeEl.classList.add("fadeout");
-    await waitPremium(2000);
+    await waitPremium(900);
+
+    light.classList.add("flash");
+    vibratePremium([80, 40, 120]);
+
+    await waitPremium(350);
     rainbow.classList.add("flash");
-    await waitPremium(380);
+
+    await waitPremium(360);
     whiteout.classList.add("flash");
-    await waitPremium(280);
+    vibratePremium([120, 60, 180]);
+
+    await waitPremium(230);
+    cardPop.classList.add("show");
+
+    await waitPremium(380);
 
     const tier = String(card.tier || card.rarity || "").toUpperCase();
     cardName.textContent = `${tier} フェスカード GET\n${card.name}`;
     cardName.classList.add("show");
 
-    await waitPremium(2600);
+    await waitPremium(2400);
+
     wrap.classList.remove("show");
     wrap.remove();
   }
@@ -1301,7 +1324,6 @@
     const items = isSeed ? SEEDS : isWater ? WATERS : FERTS;
     const invType = isSeed ? "seed" : isWater ? "water" : "fert";
     const title = isSeed ? "種を選ぶ" : isWater ? "水を選ぶ" : "肥料を選ぶ";
-
     const FISHING_WATER_IDS = new Set(["water_rotten", "water_sea", "water_yunokawa", "water_supergod"]);
 
     const cells = items.map((x) => {
@@ -1371,8 +1393,8 @@
   function render() {
     player = loadPlayer();
     book = loadBook();
-
     farmEl.innerHTML = "";
+
     let grow = 0, ready = 0, burn = 0;
 
     for (let i = 0; i < MAX_PLOTS; i++) {
@@ -1456,7 +1478,6 @@
     stReady.textContent = String(ready);
     stBurn.textContent = String(burn);
     stBook.textContent = String(Object.keys((book && book.got) ? book.got : {}).length);
-
     stLevel.textContent = String(player.level);
     stXP.textContent = String(player.xp);
     stUnlock.textContent = String(player.unlocked);
@@ -1499,12 +1520,18 @@
     if (!okSeed || !okWater || !okFert) {
       const lack = !okSeed ? "タネ" : !okWater ? "ミズ" : "ヒリョウ";
       const goKind = !okSeed ? "seed" : !okWater ? "water" : "fert";
+
       openModal("在庫が足りない", `
         <div class="step"><b>${lack}</b> の在庫が足りないため植えられない。<br>露店で買うか、装備を変えてね。</div>
         <div class="row"><button type="button" id="btnChange">装備を変える</button><button type="button" class="primary" id="btnOk">OK</button></div>
       `);
+
       clearHarvestCommit();
-      document.getElementById("btnChange").addEventListener("click", () => { closeModal(); openPickGrid(goKind); });
+
+      document.getElementById("btnChange").addEventListener("click", () => {
+        closeModal();
+        openPickGrid(goKind);
+      });
       document.getElementById("btnOk").addEventListener("click", closeModal);
       return;
     }
@@ -1625,7 +1652,40 @@
     openModal("Lvアップ！", buildLevelRewardHtml(xpRes));
     clearHarvestCommit();
     const btn = document.getElementById("btnLevelClose");
-    if (btn) btn.addEventListener("click", () => { closeModal(); render(); });
+    if (btn) btn.addEventListener("click", () => {
+      closeModal();
+      render();
+    });
+  }
+
+  function showHarvestModal(i, reward) {
+    openModal("収穫！", `
+      <div class="harvWrap">
+        <div class="reward">
+          <div class="harvMeta">
+            <div class="harvName">${escapeHtml(reward.name)}（${escapeHtml(reward.id)}）</div>
+            <div class="harvId">レア：<b>${escapeHtml(rarityLabel(reward.rarity, reward.tier))}</b></div>
+            <div class="note">この画面を閉じると自動で図鑑に登録されます。</div>
+          </div>
+          <div class="harvCard"><img src="${escapeHtml(reward.img)}" alt="${escapeHtml(reward.name)}"></div>
+          <div class="row">
+            <button type="button" id="btnCancel">閉じる</button>
+            <button type="button" class="primary" id="btnConfirm">図鑑を確認する</button>
+          </div>
+        </div>
+      </div>
+    `);
+
+    setHarvestCommit(() => commitHarvest(i, reward));
+
+    document.getElementById("btnCancel").addEventListener("click", closeModalOrCommit);
+
+    document.getElementById("btnConfirm").addEventListener("click", async () => {
+      const fn = __harvestCommitFn;
+      __harvestCommitFn = null;
+      if (fn) await fn();
+      location.href = "./zukan.html";
+    });
   }
 
   async function commitHarvest(i, reward) {
@@ -1640,15 +1700,12 @@
     state.plots[i] = { state: "EMPTY" };
     saveState(state);
     render();
-    closeModal();
-
-    if (shouldPlayPremiumHarvest(reward)) {
-      await playPremiumHarvestCutin(reward);
-    }
 
     if (xpRes && xpRes.leveled && Array.isArray(xpRes.rewards) && xpRes.rewards.length) {
       const toLevel = xpRes.rewards[xpRes.rewards.length - 1].level;
       const unlockedDelta = Number(xpRes.unlockedDelta || 0);
+      closeModal();
+
       showLevelUpSplash({
         fromLevel: prevLevel,
         toLevel,
@@ -1661,6 +1718,7 @@
       return;
     }
 
+    closeModal();
     render();
   }
 
@@ -1716,32 +1774,13 @@
 
       const reward = p.reward;
 
-      openModal("収穫！", `
-        <div class="harvWrap">
-          <div class="reward">
-            <div class="harvMeta">
-              <div class="harvName">${escapeHtml(reward.name)}（${escapeHtml(reward.id)}）</div>
-              <div class="harvId">レア：<b>${escapeHtml(rarityLabel(reward.rarity, reward.tier))}</b></div>
-              <div class="note">この画面を閉じると自動で図鑑に登録されます。</div>
-            </div>
-            <div class="harvCard"><img src="${escapeHtml(reward.img)}" alt="${escapeHtml(reward.name)}"></div>
-            <div class="row">
-              <button type="button" id="btnCancel">閉じる</button>
-              <button type="button" class="primary" id="btnConfirm">図鑑を確認する</button>
-            </div>
-          </div>
-        </div>
-      `);
-
-      setHarvestCommit(() => commitHarvest(i, reward));
-      document.getElementById("btnCancel").addEventListener("click", closeModalOrCommit);
-
-      document.getElementById("btnConfirm").addEventListener("click", async () => {
-        const fn = __harvestCommitFn;
-        __harvestCommitFn = null;
-        if (fn) await fn();
-        location.href = "./zukan.html";
-      });
+      if (shouldPlayPremiumHarvest(reward)) {
+        playPremiumHarvestCutin(reward).then(() => {
+          showHarvestModal(i, reward);
+        });
+      } else {
+        showHarvestModal(i, reward);
+      }
 
       return;
     }
@@ -1758,8 +1797,8 @@
   function addToBook(card) {
     const b = loadBook();
     if (!b.got) b.got = {};
-
     const prev = b.got[card.id];
+
     if (prev) {
       prev.count = (Number.isFinite(prev.count) ? prev.count : 1) + 1;
       prev.name = card.name;
@@ -1777,7 +1816,7 @@
         tier: card.tier || "",
         count: 1,
         at: Date.now(),
-        lastAt: Date.now(),
+        lastAt: Date.now()
       };
     }
 
