@@ -2,6 +2,7 @@
   "use strict";
 
   const BASE = "https://takoyaki-card.com/town/assets/images/collabo/";
+  const TANE = "https://takoyaki-card.com/town/assets/images/tane/";
 
   window.TAKOFARM_COLLAB_SEEDS = [
     {
@@ -9,7 +10,16 @@
       name: "たこ焼きフェス\n6月6日のタネ",
       desc: "DAY1限定\n5種から\n収穫する",
       factor: 1.0,
-      img: BASE + "seed_fes_2026_day1.png",
+
+      // 植えた直後の基本画像
+      img: TANE + "fes1.gif",
+
+      // 成長段階画像
+      stageImgs: {
+        s1: TANE + "fes1.gif",
+        s2: TANE + "fes2.gif"
+      },
+
       fx: "FES DAY1 全5種《N/R/SR/UR/LR》",
       badge: "フェス",
       active: true,
@@ -67,7 +77,16 @@
       name: "たこ焼きフェス\n6月7日のタネ",
       desc: "DAY2限定\n5種から\n収穫する",
       factor: 1.0,
-      img: BASE + "seed_fes_2026_day2.png",
+
+      // 植えた直後の基本画像
+      img: TANE + "fes1.gif",
+
+      // 成長段階画像
+      stageImgs: {
+        s1: TANE + "fes1.gif",
+        s2: TANE + "fes2.gif"
+      },
+
       fx: "FES DAY2 全5種《N/R/SR/UR/LR》",
       badge: "フェス",
       active: true,
