@@ -16,8 +16,8 @@
 
       // 成長段階画像
       stageImgs: {
-        s1: TANE + "fes1.gif",
-        s2: TANE + "fes2.gif"
+        s1: TANE + "1st.png",
+        s2: TANE + "2nd.png"
       },
 
       fx: "FES DAY1 全5種《N/R/SR/UR/LR》",
