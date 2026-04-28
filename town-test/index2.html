@@ -1130,134 +1130,278 @@
     }
 
     /* =========================
-   たこぴナビ：右下コンパクト版（調整済み）
-   ・サイズ小さめ
-   ・文字小さめ
-   ・全体バランス調整
-========================= */
+       たこぴナビ：右下コンパクト版
+       ✅ 1枚目寄せの小さめサイズ
+       ✅ 文字も小さめ
+       ✅ モーダル中は非表示
+    ========================= */
 
-.takopi-nav-mini{
-  position:fixed;
-  right:12px;
-  bottom:calc(12px + env(safe-area-inset-bottom));
-  z-index:8500;
+    .takopi-nav-mini{
+      position:fixed;
+      right:12px;
+      bottom:calc(12px + env(safe-area-inset-bottom));
+      z-index:8500;
 
-  width:min(150px,calc(100vw - 20px));
-  height:44px;
+      width:min(188px,calc(100vw - 24px));
+      height:52px;
 
-  display:flex;
-  align-items:center;
-  gap:6px;
+      display:flex;
+      align-items:center;
+      gap:8px;
 
-  padding:5px 10px 5px 7px;
-  border:0;
-  border-radius:999px;
+      padding:6px 12px 6px 8px;
+      border:0;
+      border-radius:999px;
 
-  background:linear-gradient(180deg,#ffd575 0%,#ffbb52 100%);
-  color:#3b2306;
+      background:linear-gradient(180deg,#ffd575 0%,#ffbb52 100%);
+      color:#3b2306;
+      box-shadow:
+        0 8px 18px rgba(0,0,0,.22),
+        inset 0 1px 0 rgba(255,255,255,.35);
 
-  box-shadow:
-    0 6px 14px rgba(0,0,0,.20),
-    inset 0 1px 0 rgba(255,255,255,.35);
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+      transition:opacity .18s ease, transform .18s ease;
+    }
 
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation;
+    .takopi-nav-mini::before{
+      content:"";
+      position:absolute;
+      inset:3px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.24);
+      pointer-events:none;
+    }
 
-  transition:opacity .18s ease, transform .18s ease;
-}
+    .takopi-nav-mini img{
+      width:38px;
+      height:38px;
+      object-fit:contain;
+      image-rendering:pixelated;
+      flex:0 0 auto;
 
-.takopi-nav-mini::before{
-  content:"";
-  position:absolute;
-  inset:2px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.24);
-  pointer-events:none;
-}
+      background:rgba(255,255,255,.38);
+      border-radius:999px;
+      padding:2px;
+      box-shadow:0 4px 8px rgba(80,40,0,.15);
+    }
 
-/* たこぴ画像 */
-.takopi-nav-mini img{
-  width:32px;
-  height:32px;
-  object-fit:contain;
-  image-rendering:pixelated;
-  flex:0 0 auto;
+    .takopi-nav-mini > span{
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      min-width:0;
+      line-height:1.1;
+      text-align:left;
+    }
 
-  background:rgba(255,255,255,.38);
-  border-radius:999px;
-  padding:2px;
-  box-shadow:0 3px 6px rgba(80,40,0,.15);
-}
+    .takopi-nav-mini-main{
+      display:block;
+      font-size:14px;
+      font-weight:1000;
+      letter-spacing:.03em;
+      color:#3a2105;
+      white-space:nowrap;
+    }
 
-/* テキスト全体 */
-.takopi-nav-mini > span{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  min-width:0;
-  line-height:1.05;
-  text-align:left;
-}
+    .takopi-nav-mini-sub{
+      display:block;
+      margin-top:4px;
+      font-size:10px;
+      font-weight:900;
+      color:rgba(58,33,5,.72);
+      white-space:nowrap;
+    }
 
-/* メイン文字 */
-.takopi-nav-mini-main{
-  display:block;
-  font-size:12px;
-  font-weight:1000;
-  letter-spacing:.03em;
-  color:#3a2105;
-  white-space:nowrap;
-}
+    body.has-active-modal .takopi-nav-mini,
+    .takopi-nav-mini.is-hidden{
+      opacity:0;
+      pointer-events:none;
+      transform:translateY(8px) scale(.96);
+    }
 
-/* サブ文字 */
-.takopi-nav-mini-sub{
-  display:block;
-  margin-top:2px;
-  font-size:9px;
-  font-weight:900;
-  color:rgba(58,33,5,.72);
-  white-space:nowrap;
-}
+    .takopi-nav{
+      position:fixed;
+      inset:0;
+      z-index:9000;
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      padding:14px 14px calc(78px + env(safe-area-inset-bottom));
+      background:rgba(0,0,0,.35);
+    }
 
-/* モーダル中は非表示 */
-body.has-active-modal .takopi-nav-mini,
-.takopi-nav-mini.is-hidden{
-  opacity:0;
-  pointer-events:none;
-  transform:translateY(6px) scale(.96);
-}
+    .takopi-nav.is-open{
+      display:flex;
+    }
 
-/* =========================
-   モバイル最適化
-========================= */
+    .takopi-nav-card{
+      position:relative;
+      width:min(440px,92vw);
+      max-height:58vh;
+      overflow:auto;
 
-@media(max-width:520px){
-  .takopi-nav-mini{
-    right:10px;
-    bottom:calc(10px + env(safe-area-inset-bottom));
+      padding:14px 14px 16px;
+      border-radius:17px;
+      border:2px solid rgba(255,255,255,.18);
 
-    width:min(150px,calc(100vw - 20px));
-    height:44px;
+      background:
+        radial-gradient(circle at 18% 0%,rgba(255,221,120,.16),transparent 34%),
+        linear-gradient(180deg,#151b2b,#0d111d);
 
-    padding:5px 9px 5px 7px;
-    gap:6px;
-  }
+      color:#fff;
+      box-shadow:0 18px 50px rgba(0,0,0,.45);
+      -webkit-overflow-scrolling:touch;
+    }
 
-  .takopi-nav-mini img{
-    width:32px;
-    height:32px;
-  }
+    .takopi-nav-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
 
-  .takopi-nav-mini-main{
-    font-size:12px;
-  }
+    .takopi-nav-label{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:26px;
+      padding:0 11px;
+      border-radius:999px;
+      background:linear-gradient(180deg,#ffe58a,#ffbf47);
+      color:#241600;
+      font-size:11px;
+      font-weight:900;
+    }
 
-  .takopi-nav-mini-sub{
-    font-size:9px;
-    margin-top:2px;
-  }
-}
+    .takopi-nav-close{
+      position:static;
+      flex:0 0 auto;
+      width:32px;
+      height:32px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.22);
+      background:rgba(0,0,0,.35);
+      color:#fff;
+      font-size:18px;
+      line-height:1;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .takopi-nav-title{
+      margin:0 0 9px;
+      font-size:16px;
+      line-height:1.35;
+      font-weight:1000;
+    }
+
+    .takopi-nav-text{
+      margin:0;
+      font-size:12.5px;
+      line-height:1.65;
+      color:rgba(255,255,255,.9);
+      white-space:pre-line;
+    }
+
+    .takopi-nav-tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:11px;
+    }
+
+    .takopi-nav-tag{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:22px;
+      padding:0 8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      color:rgba(255,255,255,.86);
+      font-size:10px;
+      font-weight:800;
+    }
+
+    .takopi-nav-actions{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:8px;
+    }
+
+    .takopi-nav-main,
+    .takopi-nav-guide,
+    .takopi-nav-next{
+      min-height:40px;
+      border-radius:12px;
+      font-size:13px;
+      font-weight:900;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+    }
+
+    .takopi-nav-main{
+      border:0;
+      background:linear-gradient(180deg,#ffe58a,#ffbf47);
+      color:#241600;
+    }
+
+    .takopi-nav-guide,
+    .takopi-nav-next{
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+    }
+
+    @media(max-width:520px){
+      .takopi-nav-mini{
+        right:10px;
+        bottom:calc(10px + env(safe-area-inset-bottom));
+        width:min(178px,calc(100vw - 20px));
+        height:50px;
+        padding:6px 10px 6px 8px;
+        gap:7px;
+      }
+
+      .takopi-nav-mini img{
+        width:36px;
+        height:36px;
+      }
+
+      .takopi-nav-mini-main{
+        font-size:13.5px;
+      }
+
+      .takopi-nav-mini-sub{
+        font-size:9.5px;
+        margin-top:3px;
+      }
+
+      .takopi-nav{
+        padding:12px 12px calc(72px + env(safe-area-inset-bottom));
+      }
+
+      .takopi-nav-card{
+        width:94vw;
+        max-height:56vh;
+        padding:13px 13px 15px;
+        border-radius:16px;
+      }
+
+      .takopi-nav-title{
+        font-size:15.5px;
+      }
+
+      .takopi-nav-text{
+        font-size:12px;
+      }
+    }
   </style>
 </head>
 
