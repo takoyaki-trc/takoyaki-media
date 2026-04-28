@@ -24,28 +24,28 @@
         {
           id: "FES-26-SP-D1-001",
           name: "仕掛け人T",
-          img: BASE + "FES-26-SP-D1-001.png",
+          img: BASE + "FES26SPD1001.png",
           rarity: "COL",
           tier: "SR"
         },
         {
           id: "FES-26-SP-D1-002",
           name: "時速たこ焼き",
-          img: BASE + "FES-26-SP-D1-002.png",
+          img: BASE + "FES26SPD1002.png",
           rarity: "COL",
           tier: "R"
         },
         {
           id: "FES-26-SP-D1-003",
           name: "開幕5分前",
-          img: BASE + "FES-26-SP-D1-003.png",
+          img: BASE + "FES26SPD1003.png",
           rarity: "COL",
           tier: "N"
         },
         {
           id: "FES-26-SP-D1-004",
           name: "食べながら並ぶ人",
-          img: BASE + "FES-26-SP-D1-004.png",
+          img: BASE + "FES26SPD1004.png",
           rarity: "COL",
           tier: "UR",
           premium: true
@@ -53,7 +53,7 @@
         {
           id: "FES-26-SP-D1-005",
           name: "全方位フェスティバル",
-          img: BASE + "FES-26-SP-D1-005.png",
+          img: BASE + "FES26SPD1005.png",
           rarity: "COL",
           tier: "LR",
           premium: true
@@ -80,28 +80,28 @@
         {
           id: "FES-26-SP-D2-001",
           name: "食べたすぎて焼いてる人",
-          img: BASE + "FES-26-SP-D2-001.png",
+          img: BASE + "FES26SPD2001.png",
           rarity: "COL",
           tier: "N"
         },
         {
           id: "FES-26-SP-D2-002",
           name: "全部いく人",
-          img: BASE + "FES-26-SP-D2-002.png",
+          img: BASE + "FES26SPD2002.png",
           rarity: "COL",
           tier: "R"
         },
         {
           id: "FES-26-SP-D2-003",
           name: "全員優勝抽選会",
-          img: BASE + "FES-26-SP-D2-003.png",
+          img: BASE + "FES26SPD2003.png",
           rarity: "COL",
           tier: "SR"
         },
         {
           id: "FES-26-SP-D2-004",
           name: "たこ焼き無限マジックショー",
-          img: BASE + "FES-26-SP-D2-004.png",
+          img: BASE + "FES26SPD2004.png",
           rarity: "COL",
           tier: "UR",
           premium: true
@@ -109,7 +109,7 @@
         {
           id: "FES-26-SP-D2-005",
           name: "余韻ポスター",
-          img: BASE + "FES-26-SP-D2-005.png",
+          img: BASE + "FES26SPD2005.png",
           rarity: "COL",
           tier: "LR",
           premium: true
