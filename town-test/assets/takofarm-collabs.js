@@ -1,7 +1,6 @@
 (() => {
   "use strict";
 
-  // ✅ 絶対パス（ここを基準に全画像を読み込む）
   const BASE = "https://takoyaki-card.com/town/assets/images/collabo/";
 
   window.TAKOFARM_COLLAB_SEEDS = [
@@ -15,35 +14,36 @@
       badge: "フェス",
       active: true,
       category: "COL",
-
-      // 排出率
       rates: { N: 55, R: 25, SR: 14, UR: 5, LR: 1 },
 
-      // カードプール
       pool: [
         {
-          id: "FES-26-SP-D1-001",
+          id: "COL-FES26-D1-001",
+          displayId: "FES-26-SP-D1-001",
           name: "仕掛け人T",
           img: BASE + "FES26SPD1001.png",
           rarity: "COL",
           tier: "SR"
         },
         {
-          id: "FES-26-SP-D1-002",
+          id: "COL-FES26-D1-002",
+          displayId: "FES-26-SP-D1-002",
           name: "時速たこ焼き",
           img: BASE + "FES26SPD1002.png",
           rarity: "COL",
           tier: "R"
         },
         {
-          id: "FES-26-SP-D1-003",
+          id: "COL-FES26-D1-003",
+          displayId: "FES-26-SP-D1-003",
           name: "開幕5分前",
           img: BASE + "FES26SPD1003.png",
           rarity: "COL",
           tier: "N"
         },
         {
-          id: "FES-26-SP-D1-004",
+          id: "COL-FES26-D1-004",
+          displayId: "FES-26-SP-D1-004",
           name: "食べながら並ぶ人",
           img: BASE + "FES26SPD1004.png",
           rarity: "COL",
@@ -51,7 +51,8 @@
           premium: true
         },
         {
-          id: "FES-26-SP-D1-005",
+          id: "COL-FES26-D1-005",
+          displayId: "FES-26-SP-D1-005",
           name: "全方位フェスティバル",
           img: BASE + "FES26SPD1005.png",
           rarity: "COL",
@@ -71,35 +72,36 @@
       badge: "フェス",
       active: true,
       category: "COL",
-
-      // 排出率
       rates: { N: 55, R: 25, SR: 14, UR: 5, LR: 1 },
 
-      // カードプール
       pool: [
         {
-          id: "FES-26-SP-D2-001",
+          id: "COL-FES26-D2-001",
+          displayId: "FES-26-SP-D2-001",
           name: "食べたすぎて焼いてる人",
           img: BASE + "FES26SPD2001.png",
           rarity: "COL",
           tier: "N"
         },
         {
-          id: "FES-26-SP-D2-002",
+          id: "COL-FES26-D2-002",
+          displayId: "FES-26-SP-D2-002",
           name: "全部いく人",
           img: BASE + "FES26SPD2002.png",
           rarity: "COL",
           tier: "R"
         },
         {
-          id: "FES-26-SP-D2-003",
+          id: "COL-FES26-D2-003",
+          displayId: "FES-26-SP-D2-003",
           name: "全員優勝抽選会",
           img: BASE + "FES26SPD2003.png",
           rarity: "COL",
           tier: "SR"
         },
         {
-          id: "FES-26-SP-D2-004",
+          id: "COL-FES26-D2-004",
+          displayId: "FES-26-SP-D2-004",
           name: "たこ焼き無限マジックショー",
           img: BASE + "FES26SPD2004.png",
           rarity: "COL",
@@ -107,7 +109,8 @@
           premium: true
         },
         {
-          id: "FES-26-SP-D2-005",
+          id: "COL-FES26-D2-005",
+          displayId: "FES-26-SP-D2-005",
           name: "余韻ポスター",
           img: BASE + "FES26SPD2005.png",
           rarity: "COL",
