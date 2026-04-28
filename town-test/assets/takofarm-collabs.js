@@ -10,16 +10,22 @@
       name: "たこ焼きフェス\n6月6日のタネ",
       desc: "DAY1限定\n5種から\n収穫する",
       factor: 1.0,
+
+      // タネ一覧・所持アイテムで表示する画像
       img: TANE + "1st.png",
-      stageImgs: {
-        s1: TANE + "fes1.gif",
-        s2: TANE + "fes2.gif"
+
+      // 畑に植えたあとの成長段階画像
+      growImgs: {
+        stage1: TANE + "fes1.gif",
+        stage2: TANE + "fes2.gif"
       },
+
       fx: "FES DAY1 全5種《N/R/SR/UR/LR》",
       badge: "フェス",
       active: true,
       category: "COL",
       rates: { N: 55, R: 25, SR: 14, UR: 5, LR: 1 },
+
       pool: [
         { id: "COL-FES26-D1-001", displayId: "FES-26-SP-D1-001", name: "仕掛け人T", img: BASE + "FES26SPD1001.png", rarity: "COL", tier: "SR" },
         { id: "COL-FES26-D1-002", displayId: "FES-26-SP-D1-002", name: "時速たこ焼き", img: BASE + "FES26SPD1002.png", rarity: "COL", tier: "R" },
@@ -28,21 +34,28 @@
         { id: "COL-FES26-D1-005", displayId: "FES-26-SP-D1-005", name: "全方位フェスティバル", img: BASE + "FES26SPD1005.png", rarity: "COL", tier: "LR", premium: true }
       ]
     },
+
     {
       id: "seed_fes_2026_day2",
       name: "たこ焼きフェス\n6月7日のタネ",
       desc: "DAY2限定\n5種から\n収穫する",
       factor: 1.0,
+
+      // タネ一覧・所持アイテムで表示する画像
       img: TANE + "2nd.png",
-      stageImgs: {
-        s1: TANE + "fes1.gif",
-        s2: TANE + "fes2.gif"
+
+      // 畑に植えたあとの成長段階画像
+      growImgs: {
+        stage1: TANE + "fes1.gif",
+        stage2: TANE + "fes2.gif"
       },
+
       fx: "FES DAY2 全5種《N/R/SR/UR/LR》",
       badge: "フェス",
       active: true,
       category: "COL",
       rates: { N: 55, R: 25, SR: 14, UR: 5, LR: 1 },
+
       pool: [
         { id: "COL-FES26-D2-001", displayId: "FES-26-SP-D2-001", name: "食べたすぎて焼いてる人", img: BASE + "FES26SPD2001.png", rarity: "COL", tier: "N" },
         { id: "COL-FES26-D2-002", displayId: "FES-26-SP-D2-002", name: "全部いく人", img: BASE + "FES26SPD2002.png", rarity: "COL", tier: "R" },
@@ -52,4 +65,5 @@
       ]
     }
   ];
+
 })();
