@@ -5,9 +5,12 @@
   // takofarm.js（外部コラボ対応＋UR/LR先出しプレミア演出 完全版）
   // ✅ window.TAKOFARM_COLLAB_SEEDS からコラボタネを外部読み込み
   // ✅ 古い seed_colabo はタネ一覧から削除
+  // ✅ グラタンコラボ固定成長画像は削除
+  // ✅ アニバーサリー関連のタネ・成長段階は削除
+  // ✅ 外部コラボは各ファイル内の growImgs / stageImgs を読む
   // ✅ コラボカードは rarity="COL" / tier=N,R,SR,UR,LR で図鑑保存
+  // ✅ displayId があれば収穫表示用の品番として使う
   // ✅ コラボUR/LRは「畑タップ → 演出 → カード表示」
-  // ✅ プレミア演出：タイプライター / 背景カード / 光 / 振動 / カードドーン / レインボー
   // =========================================================
 
   const EXTERNAL_COLLAB_SEEDS = Array.isArray(window.TAKOFARM_COLLAB_SEEDS)
@@ -18,10 +21,6 @@
     EMPTY: "https://ul.h3z.jp/muPEAkao.png",
     GROW1: "https://ul.h3z.jp/BrHRk8C4.png",
     GROW2: "https://ul.h3z.jp/tD4LUB6F.png",
-    COLABO_GROW1: "https://ul.h3z.jp/cq1soJdm.gif",
-    COLABO_GROW2: "https://ul.h3z.jp/I6Iu4J32.gif",
-    ANNIV_GROW1: "https://takoyaki-card.com/town/assets/images/anniversary/tane1.gif",
-    ANNIV_GROW2: "https://takoyaki-card.com/town/assets/images/anniversary/tane2.gif",
     READY: "https://ul.h3z.jp/AmlnQA1b.png",
     BURN: "https://ul.h3z.jp/q9hxngx6.png",
     GROW2_SR65: "https://ul.h3z.jp/HfpFoeBk.png",
@@ -160,7 +159,6 @@
     { id: "seed_special", name: "たこぴのタネ", desc: "植えると\nたこぴだけ\n出てくる", factor: 1.0, img: "https://ul.h3z.jp/29OsEvjf.png", fx: "たこぴカード8種" },
     { id: "seed_bussasari", name: "ブッ刺さりタネ", desc: "ダーツプロ\n5種だけが\n出てくる", factor: 1.05, img: "https://ul.h3z.jp/MjWkTaU3.png", fx: "ダーツプロ全5種" },
     { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "限定カード\nだけ狙える\n特別タネ", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全12種" },
-    { id: "seed_anniv", name: "ﾊｰﾌｱﾆﾊﾞｰｻﾘｰ\nのタネ", desc: "5種から\nランダムで\n収穫する", factor: 1.0, img: "https://takoyaki-card.com/town/assets/images/anniversary/anv1.png", fx: "全5種《N/R/SR/UR/LR》" },
     ...EXTERNAL_COLLAB_SEEDS
   ];
 
@@ -237,14 +235,6 @@
     { id: "NK-012", name: "てりたま", img: "https://ul.h3z.jp/MU6ehdTH.png", rarity: "SR" },
   ];
 
-  const ANNIV_POOL = [
-    { id: "SP-ANV-001", name: "会話トリガー:店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/1.png", rarity: "SP", tier: "N" },
-    { id: "SP-ANV-002", name: "定型ループNPC", img: "https://takoyaki-card.com/town/assets/images/anniversary/2.png", rarity: "SP", tier: "R" },
-    { id: "SP-ANV-003", name: "始まりの合図", img: "https://takoyaki-card.com/town/assets/images/anniversary/3.png", rarity: "SP", tier: "SR" },
-    { id: "SP-ANV-004", name: "ここにいる店主", img: "https://takoyaki-card.com/town/assets/images/anniversary/4a.jpg", rarity: "SP", tier: "UR" },
-    { id: "SP-ANV-005", name: "物語の外側", img: "https://takoyaki-card.com/town/assets/images/anniversary/4b.jpg", rarity: "SP", tier: "LR" },
-  ];
-
   const WATER_SPECIAL_CARDS = {
     rotten: [
       { id: "SP-MIZU-001", name: "腐敗したカード", img: "https://takoyaki-card.com/town/assets/images/sp/huhai.png", rarity: "N", tier: "N", weight: 95 },
@@ -256,7 +246,6 @@
     ]
   };
 
-  const ANNIV_RATES = { N: 66, R: 20, SR: 10, UR: 3, LR: 1 };
   const MAX_PLOTS = 25;
   const START_UNLOCK = 3;
   const XP_BY_RARITY = { N: 10, R: 20, SR: 40, UR: 130, LR: 200, SP: 0, COL: 0 };
@@ -285,12 +274,12 @@
     const pool = waterId === "water_rotten" ? WATER_SPECIAL_CARDS.rotten : waterId === "water_sea" ? WATER_SPECIAL_CARDS.sea : null;
     if (!pool || !pool.length) return null;
     const c = pickWeightedCard(pool);
-    return { id: c.id, name: c.name, img: c.img, rarity: c.rarity, tier: c.tier };
+    return { id: c.id, displayId: c.displayId || c.id, name: c.name, img: c.img, rarity: c.rarity, tier: c.tier };
   }
 
   function pickSleepFertSpecialReward() {
     const c = pickWeightedCard(SLEEP_FERT_SP_CARDS);
-    return { id: c.id, name: c.name, img: c.img, rarity: "SP", tier: c.tier };
+    return { id: c.id, displayId: c.displayId || c.id, name: c.name, img: c.img, rarity: "SP", tier: c.tier };
   }
 
   function getExternalCollabSeed(seedId) {
@@ -328,12 +317,40 @@
 
     return {
       id: c.id,
+      displayId: c.displayId || c.id,
       name: c.name,
       img: c.img,
       rarity: "COL",
       tier: finalTier,
       premium: !!c.premium || finalTier === "UR" || finalTier === "LR"
     };
+  }
+
+  function getExternalCollabGrowImage(seedId, progress) {
+    const seed = getExternalCollabSeed(seedId);
+    if (!seed) return null;
+
+    const growImgs = seed.growImgs || seed.stageImgs || null;
+    if (!growImgs || typeof growImgs !== "object") return seed.img || null;
+
+    const s1 =
+      growImgs.stage1 ||
+      growImgs.s1 ||
+      growImgs.grow1 ||
+      growImgs.GROW1 ||
+      seed.img ||
+      null;
+
+    const s2 =
+      growImgs.stage2 ||
+      growImgs.s2 ||
+      growImgs.grow2 ||
+      growImgs.GROW2 ||
+      s1 ||
+      seed.img ||
+      null;
+
+    return progress < 0.5 ? s1 : s2;
   }
 
   function xpNeedForLevel(level) {
@@ -469,7 +486,7 @@
     const count = lv >= 15 ? pickWeighted([{ v: 2, w: 55 }, { v: 3, w: 45 }]) : lv >= 8 ? pickWeighted([{ v: 1, w: 30 }, { v: 2, w: 70 }]) : 1;
     const cat = lv >= 12 ? pickWeighted([{ v: "seed", w: 45 }, { v: "water", w: 30 }, { v: "fert", w: 25 }]) : lv >= 6 ? pickWeighted([{ v: "seed", w: 55 }, { v: "water", w: 25 }, { v: "fert", w: 20 }]) : pickWeighted([{ v: "seed", w: 70 }, { v: "water", w: 20 }, { v: "fert", w: 10 }]);
 
-    const seedChoices = SEEDS.filter((x) => x.id !== "seed_anniv" && !isExternalCollabSeed(x.id));
+    const seedChoices = SEEDS.filter((x) => !isExternalCollabSeed(x.id));
     const waterChoices = WATERS.slice();
     const fertChoices = FERTS.filter((x) => !TOWER_FERT_IDS.has(x.id));
 
@@ -665,18 +682,12 @@
 
   function pickBussasariReward() {
     const c = pick(BUSSASARI_POOL);
-    return { id: c.id, name: c.name, img: c.img, rarity: "N", tier: "N" };
+    return { id: c.id, displayId: c.displayId || c.id, name: c.name, img: c.img, rarity: "N", tier: "N" };
   }
 
   function pickNamaraReward() {
     const c = pick(NAMARA_POOL);
-    return { id: c.id, name: c.name, img: c.img, rarity: c.rarity, tier: c.rarity };
-  }
-
-  function pickAnnivReward() {
-    const tier = pickRarityFromRates(ANNIV_RATES);
-    const c = ANNIV_POOL.find((x) => String(x.tier || "").toUpperCase() === tier) || ANNIV_POOL[0];
-    return { id: c.id, name: c.name, img: c.img, rarity: "SP", tier: c.tier || tier };
+    return { id: c.id, displayId: c.displayId || c.id, name: c.name, img: c.img, rarity: c.rarity, tier: c.rarity };
   }
 
   function pickFertSPIfAny(p) {
@@ -688,26 +699,28 @@
       if (sleepSpP > 0 && Math.random() < sleepSpP) return pickSleepFertSpecialReward();
     }
     const towerSpP = Number(fert.towerSpChance ?? 0);
-    if (towerSpP > 0 && Math.random() < towerSpP) return { ...TOWER_SP_REWARD };
+    if (towerSpP > 0 && Math.random() < towerSpP) return { ...TOWER_SP_REWARD, displayId: TOWER_SP_REWARD.displayId || TOWER_SP_REWARD.id };
     const burnP = Number(fert.burnCardUp ?? 0);
-    if (burnP > 0 && Math.random() < burnP) return { id: "SP-BURN", name: "焼きすぎたカード", img: "https://ul.h3z.jp/VSQupsYH.png", rarity: "SP", tier: "N" };
+    if (burnP > 0 && Math.random() < burnP) return { id: "SP-BURN", displayId: "SP-BURN", name: "焼きすぎたカード", img: "https://ul.h3z.jp/VSQupsYH.png", rarity: "SP", tier: "N" };
     const rawP = Number(fert.rawCardChance ?? 0);
-    if (rawP > 0 && Math.random() < rawP) return { id: "SP-RAW", name: "ドロドロ生焼けカード", img: "https://ul.h3z.jp/5E5NpGKP.png", rarity: "SP", tier: "N" };
+    if (rawP > 0 && Math.random() < rawP) return { id: "SP-RAW", displayId: "SP-RAW", name: "ドロドロ生焼けカード", img: "https://ul.h3z.jp/5E5NpGKP.png", rarity: "SP", tier: "N" };
     return null;
   }
 
   function drawRewardForPlot(p) {
     const sp = pickFertSPIfAny(p);
     if (sp) return sp;
+
     if (p && isExternalCollabSeed(p.seedId)) {
       const reward = pickExternalCollabReward(p.seedId);
       if (reward) return reward;
     }
+
     if (p && p.seedId === "seed_special") {
       const c = pick(TAKOPI_SEED_POOL);
-      return { id: c.id, name: c.name, img: c.img, rarity: c.rarity || "N", tier: c.rarity || "N" };
+      return { id: c.id, displayId: c.displayId || c.id, name: c.name, img: c.img, rarity: c.rarity || "N", tier: c.rarity || "N" };
     }
-    if (p && p.seedId === "seed_anniv") return pickAnnivReward();
+
     if (p && p.seedId === "seed_bussasari") return pickBussasariReward();
     if (p && p.seedId === "seed_namara_kawasar") return pickNamaraReward();
 
@@ -716,11 +729,20 @@
       const special = pickWaterSpecialReward(p ? p.waterId : null);
       if (special) return special;
     }
+
     const seedId = p ? p.seedId : null;
     const filtered = filterPoolBySeed(seedId, getPoolByRarity(rarity));
     const picked = filtered.length ? { rarity, card: pick(filtered) } : fallbackPickBySeed(seedId, rarity);
     const c = picked.card;
-    return { id: c.no, name: c.name, img: c.img, rarity: picked.rarity, tier: picked.rarity };
+
+    return {
+      id: c.no,
+      displayId: c.displayId || c.no,
+      name: c.name,
+      img: c.img,
+      rarity: picked.rarity,
+      tier: picked.rarity
+    };
   }
 
   function rarityLabel(r, tier) {
@@ -1337,8 +1359,6 @@
       let topBadge = "";
       if (isSeed && isExternalCollabSeed(x.id)) {
         topBadge = badgeHtml(x.badge || "コラボ", "rgba(255,70,90,.96)", "rgba(255,110,130,.98)", "#fff");
-      } else if (isSeed && x.id === "seed_anniv") {
-        topBadge = badgeHtml("期間限定", "rgba(255,195,80,.96)", "rgba(255,220,130,.98)", "#0b0d17");
       } else if (isWater && FISHING_WATER_IDS.has(x.id)) {
         topBadge = badgeHtml("釣り", "rgba(90,180,255,.96)", "rgba(150,215,255,.98)", "#07131f");
       } else if (isFert && TOWER_FERT_IDS.has(x.id)) {
@@ -1441,9 +1461,7 @@
         const progress = (Date.now() - start) / Math.max(1, end - start);
 
         if (isExternalCollabSeed(p.seedId)) {
-          img = progress < 0.5 ? PLOT_IMG.COLABO_GROW1 : PLOT_IMG.COLABO_GROW2;
-        } else if (p.seedId === "seed_anniv") {
-          img = progress < 0.5 ? PLOT_IMG.ANNIV_GROW1 : PLOT_IMG.ANNIV_GROW2;
+          img = getExternalCollabGrowImage(p.seedId, progress) || PLOT_IMG.GROW1;
         } else {
           if (progress < 0.5) img = PLOT_IMG.GROW1;
           else if (p.srHint === "SR100") img = PLOT_IMG.GROW2_SR100;
@@ -1548,7 +1566,6 @@
 
     const isFixedSeed =
       isExternalCollabSeed(seedId) ||
-      seedId === "seed_anniv" ||
       seedId === "seed_special" ||
       seedId === "seed_bussasari" ||
       seedId === "seed_namara_kawasar";
@@ -1659,11 +1676,13 @@
   }
 
   function showHarvestModal(i, reward) {
+    const showId = reward.displayId || reward.id;
+
     openModal("収穫！", `
       <div class="harvWrap">
         <div class="reward">
           <div class="harvMeta">
-            <div class="harvName">${escapeHtml(reward.name)}（${escapeHtml(reward.id)}）</div>
+            <div class="harvName">${escapeHtml(reward.name)}（${escapeHtml(showId)}）</div>
             <div class="harvId">レア：<b>${escapeHtml(rarityLabel(reward.rarity, reward.tier))}</b></div>
             <div class="note">この画面を閉じると自動で図鑑に登録されます。</div>
           </div>
@@ -1805,11 +1824,13 @@
       prev.img = card.img;
       prev.rarity = card.rarity || prev.rarity || "";
       prev.tier = card.tier || prev.tier || "";
+      prev.displayId = card.displayId || prev.displayId || card.id;
       prev.lastAt = Date.now();
       b.got[card.id] = prev;
     } else {
       b.got[card.id] = {
         id: card.id,
+        displayId: card.displayId || card.id,
         name: card.name,
         img: card.img,
         rarity: card.rarity || "",
