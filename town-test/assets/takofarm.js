@@ -316,14 +316,15 @@
     const finalTier = String(c.tier || tier || "N").toUpperCase();
 
     return {
-      id: c.id,
-      displayId: c.displayId || c.id,
-      name: c.name,
-      img: c.img,
-      rarity: "COL",
-      tier: finalTier,
-      premium: c.premium === true
-    };
+  id: c.id,
+  displayId: c.displayId || c.id,
+  name: c.name,
+  img: c.img,
+  rarity: "COL",
+  tier: finalTier,
+  premium: c.premium === true,
+  typewriter: Array.isArray(c.typewriter) ? c.typewriter : null
+};
   }
 
   function getExternalCollabGrowImage(seedId, progress) {
@@ -1063,12 +1064,11 @@
   }
 
   function getPremiumText(card) {
-    const tier = String(card.tier || card.rarity || "").toUpperCase();
-    if (tier === "LR") {
-      return "空気が変わった。\nただの収穫ではない。\nフェスの熱が、カードの中で光り出す。\nこれは――今日だけの伝説。";
-    }
-    return "何かが焼き上がろうとしている。\n人の声。\n屋台の匂い。\nフェスのざわめき。\nその一瞬が、カードになる。";
+  if (card && Array.isArray(card.typewriter) && card.typewriter.length) {
+    return card.typewriter.join("\n");
   }
+  return "";
+}
 
   function createPremiumCutin(card) {
     ensurePremiumCutinStyle();
