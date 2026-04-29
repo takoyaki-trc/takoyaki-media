@@ -2012,8 +2012,8 @@ function renderRankingShell(messageHtml="ランキング読み込み中..."){
     </button>
 
     <div class="rank-action-note">
-      現在の今月記録をGASへ登録します。<br>
-      同じ端末では最新記録で上書きされます。
+      ページ表示時に自動登録されます。<br>
+      ボタンを押すと手動で再登録できます。
     </div>
   `;
 
@@ -2057,7 +2057,8 @@ function renderRankingRows(rows,type){
   `;
 }
 
-async function submitRanking(){
+async function submitRanking(options={}){
+  const silent = !!options.silent;
   const payload = {
     action: "submitScore",
     ...getCurrentStats()
@@ -2073,12 +2074,12 @@ async function submitRanking(){
       body: JSON.stringify(payload)
     });
 
-    toast("ランキングに登録しました");
+    if(!silent) toast("ランキングに登録しました");
     setTimeout(()=>loadRanking(currentRankingType),700);
 
   }catch(err){
     console.error(err);
-    toast("ランキング登録に失敗しました");
+    if(!silent) toast("ランキング登録に失敗しました");
   }
 }
 
@@ -2176,6 +2177,11 @@ giveDebugSeeds();
 initUserName();
 renderAll();
 setInterval(renderFarm,1000);
+
+// ページを開いたら自動で今月記録をGASへ登録
+submitRanking({ silent:true });
+
+// 初回ランキング表示
 loadRanking("harvest");
 })();
 </script>
