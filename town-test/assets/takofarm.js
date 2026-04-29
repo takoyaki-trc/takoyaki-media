@@ -322,7 +322,7 @@
       img: c.img,
       rarity: "COL",
       tier: finalTier,
-      premium: !!c.premium || finalTier === "UR" || finalTier === "LR"
+      premium: c.premium === true
     };
   }
 
