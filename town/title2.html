@@ -1187,9 +1187,7 @@ body::before{
     <div class="ranking-panel">
       <div class="panel-header">月間ユーザーランキング</div>
       <div class="ranking-body">
-        <div class="ranking-note">GAS連携を一旦外しています。<br>新しいGAS作成後に、この部分へランキングを再接続できます。</div>
-        <div class="rank-empty">Historyは月が切り替わった最初のアクセス時に前月分を確定します</div>
-      </div>
+       <div id="rankingList"></div>
     </div>
 
     <div class="seedbox">
@@ -1293,6 +1291,7 @@ body::before{
 
 const LS_MONTHLY="ttc_monthly_stats_v1";
 const LS_HISTORY="ttc_monthly_history_v1";
+  const GAS_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbxZfpDOMHboPWEZ20s_wRghcCRf0uptUvChiY_wae0EyyYT3uFKhGYR3KP8rGf61hgrng/exec";
 const LS_GODFARM="ttc_godfarm_v1";
 const LS_BOOK="tf_v1_book";
 const LS_INV="tf_v1_inv";
@@ -1362,6 +1361,7 @@ const ALTAR_GROUPS=[
 ];
 
 const $=id=>document.getElementById(id);
+  const rankingList = $("rankingList");
 const harvestValue=$("harvestValue"),salesValue=$("salesValue"),fishingValue=$("fishingValue"),towerValue=$("towerValue");
 const mainTitle=$("mainTitle"),heroSub=$("heroSub"),monthInfo=$("monthInfo"),playerNameInline=$("playerNameInline");
 const seedGrid=$("seedGrid"),selectedSeedNote=$("selectedSeedNote"),godPlot=$("godPlot"),godPlotStage=$("godPlotStage"),godPlotInner=$("godPlotInner"),godStatus=$("godStatus");
@@ -1936,8 +1936,129 @@ giveDebugSeeds();
 initUserName();
 renderAll();
 setInterval(renderFarm,1000);
-
+loadRanking("harvest");
 })();
+
+  function getUserId(){
+  let id = localStorage.getItem("ttc_user_id_v1");
+  if(!id){
+    id = "user_" + crypto.randomUUID();
+    localStorage.setItem("ttc_user_id_v1", id);
+  }
+  return id;
+}
+
+function getCurrentStats(){
+  const monthKey = getMonthKey();
+  const monthly = loadJson(LS_MONTHLY, {});
+  const stats = monthly[monthKey] || {};
+
+  return {
+    monthKey,
+    userId: getUserId(),
+    userName: localStorage.getItem(LS_USER_NAME) || "名無しのタコ民",
+    harvest: Number(stats.harvest || 0),
+    sales: Number(stats.sales || 0),
+    fishing: Number(stats.fishing || 0),
+    tower: Number(stats.tower || 0)
+  };
+}
+
+async function submitRanking(){
+  const payload = {
+    action: "submitScore",
+    ...getCurrentStats()
+  };
+
+  try{
+    await fetch(GAS_RANKING_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    toast("ランキングに登録しました");
+    await loadRanking("harvest");
+
+  }catch(err){
+    console.error(err);
+    toast("ランキング登録に失敗しました");
+  }
+}
+
+async function loadRanking(type="harvest"){
+  if(!rankingList) return;
+
+  const monthKey = getMonthKey();
+
+  rankingList.innerHTML = `
+    <div class="rank-empty">ランキング読み込み中...</div>
+  `;
+
+  try{
+    const url = `${GAS_RANKING_API_URL}?action=getRanking&monthKey=${encodeURIComponent(monthKey)}&type=${encodeURIComponent(type)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if(!data.ok){
+      rankingList.innerHTML = `
+        <div class="rank-empty">ランキングの取得に失敗しました</div>
+      `;
+      return;
+    }
+
+    const rows = data.ranking || [];
+
+    if(rows.length === 0){
+      rankingList.innerHTML = `
+        <div class="rank-empty">
+          まだランキング登録がありません。<br>
+          最初のタコ民になれます。
+        </div>
+      `;
+      return;
+    }
+
+    rankingList.innerHTML = `
+      <div style="display:grid;gap:8px;">
+        ${rows.map(row => `
+          <div style="
+            display:grid;
+            grid-template-columns:42px 1fr auto;
+            gap:8px;
+            align-items:center;
+            padding:10px;
+            border-radius:12px;
+            background:rgba(0,0,0,.05);
+            border:1px solid rgba(121,90,39,.18);
+            color:#2d2214;
+            font-weight:900;
+          ">
+            <div>${row.rank}位</div>
+            <div>${escapeHtml(row.userName)}</div>
+            <div>${fmtNum(row.score)}</div>
+          </div>
+        `).join("")}
+      </div>
+
+      <button class="btn" type="button" id="submitRankingBtn" style="margin-top:12px;">
+        ランキングに登録する
+      </button>
+    `;
+
+    const btn = $("submitRankingBtn");
+    if(btn) btn.addEventListener("click", submitRanking);
+
+  }catch(err){
+    console.error(err);
+    rankingList.innerHTML = `
+      <div class="rank-empty">ランキング通信エラー</div>
+    `;
+  }
+}
 </script>
 </body>
 </html>
