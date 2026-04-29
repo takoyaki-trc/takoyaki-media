@@ -1347,7 +1347,7 @@ body::before{
 
 const LS_MONTHLY="ttc_monthly_stats_v1";
 const LS_HISTORY="ttc_monthly_history_v1";
-  const GAS_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbz-ts15vAF4XHq76fJenfQCNFuo4FHalITxw4tarCbo6wvwSMeE1hDl2EhxBleBzYw3wA/exec";
+const GAS_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbz-ts15vAF4XHq76fJenfQCNFuo4FHalITxw4tarCbo6wvwSMeE1hDl2EhxBleBzYw3wA/exec";
 const LS_GODFARM="ttc_godfarm_v1";
 const LS_BOOK="tf_v1_book";
 const LS_INV="tf_v1_inv";
@@ -1945,7 +1945,9 @@ async function harvestFarm(){
 
 /* =========================
    GAS 月間ユーザーランキング
-   ✅ 重要：この関数群は必ず (() => { ... }) の内側に置く
+   ✅ 登録も取得も GET + JSONP に統一
+   ✅ Apps Script のCORS沼を避ける
+   ✅ この関数群は必ず (() => { ... }) の内側
 ========================= */
 
 let currentRankingType = "harvest";
@@ -1989,6 +1991,57 @@ function getCurrentStats(){
   };
 }
 
+function buildRankingApiUrl(action, params={}){
+  const url = new URL(GAS_RANKING_API_URL);
+  url.searchParams.set("action", action);
+  Object.entries(params).forEach(([key,val])=>{
+    url.searchParams.set(key, String(val ?? ""));
+  });
+  url.searchParams.set("t", String(Date.now()));
+  return url.toString();
+}
+
+function loadJsonp(url, timeoutMs=15000){
+  return new Promise((resolve, reject)=>{
+    const callbackName = "__ttc_rank_cb_" + Date.now() + "_" + Math.floor(Math.random() * 1000000000);
+    const sep = url.includes("?") ? "&" : "?";
+    const script = document.createElement("script");
+    let done = false;
+
+    const cleanup = ()=>{
+      try{ delete window[callbackName]; }catch(_){ window[callbackName] = undefined; }
+      if(script.parentNode) script.parentNode.removeChild(script);
+    };
+
+    const timer = setTimeout(()=>{
+      if(done) return;
+      done = true;
+      cleanup();
+      reject(new Error("JSONP_TIMEOUT"));
+    }, timeoutMs);
+
+    window[callbackName] = (data)=>{
+      if(done) return;
+      done = true;
+      clearTimeout(timer);
+      cleanup();
+      resolve(data);
+    };
+
+    script.onerror = ()=>{
+      if(done) return;
+      done = true;
+      clearTimeout(timer);
+      cleanup();
+      reject(new Error("JSONP_SCRIPT_ERROR"));
+    };
+
+    script.async = true;
+    script.src = `${url}${sep}callback=${encodeURIComponent(callbackName)}`;
+    document.body.appendChild(script);
+  });
+}
+
 function renderRankingShell(messageHtml="ランキング読み込み中..."){
   if(!rankingList) return;
 
@@ -2025,7 +2078,9 @@ function renderRankingShell(messageHtml="ランキング読み込み中..."){
   });
 
   const submitBtn = $("submitRankingBtn");
-  if(submitBtn) submitBtn.addEventListener("click", submitRanking);
+  if(submitBtn){
+    submitBtn.addEventListener("click",()=>submitRanking({silent:false}));
+  }
 }
 
 function renderRankingRows(rows,type){
@@ -2057,120 +2112,90 @@ function renderRankingRows(rows,type){
   `;
 }
 
+function renderRankingError(message, detail=""){
+  const rowsRoot = $("rankingRows");
+  if(!rowsRoot) return;
+
+  rowsRoot.innerHTML = `
+    <div class="rank-empty">
+      ${escapeHtml(message)}<br>
+      ${detail ? `<small>${escapeHtml(detail)}</small>` : ""}
+    </div>
+  `;
+}
+
 async function submitRanking(options={}){
   const silent = !!options.silent;
   const stats = getCurrentStats();
 
   try{
-    const url =
-      `${GAS_RANKING_API_URL}?action=submitScore` +
-      `&monthKey=${encodeURIComponent(stats.monthKey)}` +
-      `&userId=${encodeURIComponent(stats.userId)}` +
-      `&userName=${encodeURIComponent(stats.userName)}` +
-      `&harvest=${encodeURIComponent(stats.harvest)}` +
-      `&sales=${encodeURIComponent(stats.sales)}` +
-      `&fishing=${encodeURIComponent(stats.fishing)}` +
-      `&tower=${encodeURIComponent(stats.tower)}` +
-      `&t=${Date.now()}`;
+    const url = buildRankingApiUrl("submitScore", {
+      monthKey: stats.monthKey,
+      userId: stats.userId,
+      userName: stats.userName,
+      harvest: stats.harvest,
+      sales: stats.sales,
+      fishing: stats.fishing,
+      tower: stats.tower
+    });
 
     const data = await loadJsonp(url);
 
     if(!data || !data.ok){
-      console.error("submit failed", data);
+      console.error("ranking submit failed", data);
       if(!silent) toast("ランキング登録に失敗しました");
-      return;
+      return false;
     }
 
     if(!silent) toast("ランキングに登録しました");
-    setTimeout(()=>loadRanking(currentRankingType),500);
+    return true;
 
   }catch(err){
-    console.error(err);
+    console.error("ranking submit error", err);
     if(!silent) toast("ランキング登録に失敗しました");
+    return false;
   }
-}
-function loadJsonp(url, timeoutMs=10000){
-  return new Promise((resolve, reject)=>{
-    const callbackName = "ttcRankingCallback_" + Date.now() + "_" + Math.random().toString(36).slice(2);
-    const script = document.createElement("script");
-    const sep = url.includes("?") ? "&" : "?";
-    let done = false;
-
-    const cleanup = ()=>{
-      try{ delete window[callbackName]; }catch(_){ window[callbackName] = undefined; }
-      if(script && script.parentNode) script.parentNode.removeChild(script);
-    };
-
-    const timer = setTimeout(()=>{
-      if(done) return;
-      done = true;
-      cleanup();
-      reject(new Error("jsonp_timeout"));
-    }, timeoutMs);
-
-    window[callbackName] = (data)=>{
-      if(done) return;
-      done = true;
-      clearTimeout(timer);
-      cleanup();
-      resolve(data);
-    };
-
-    script.onerror = ()=>{
-      if(done) return;
-      done = true;
-      clearTimeout(timer);
-      cleanup();
-      reject(new Error("jsonp_script_error"));
-    };
-
-    script.src = `${url}${sep}callback=${encodeURIComponent(callbackName)}`;
-    document.body.appendChild(script);
-  });
 }
 
 async function loadRanking(type="harvest"){
   currentRankingType = type || "harvest";
-
   if(!rankingList) return;
 
   renderRankingShell("ランキング読み込み中...");
 
-  const monthKey = getMonthKey();
-
   try{
-    const url = `${GAS_RANKING_API_URL}?action=getRanking&monthKey=${encodeURIComponent(monthKey)}&type=${encodeURIComponent(currentRankingType)}&t=${Date.now()}`;
+    const url = buildRankingApiUrl("getRanking", {
+      monthKey: getMonthKey(),
+      type: currentRankingType
+    });
+
     const data = await loadJsonp(url);
 
     if(!data || !data.ok){
-      const rowsRoot = $("rankingRows");
-      if(rowsRoot){
-        rowsRoot.innerHTML = `
-          <div class="rank-empty">
-            ランキングの取得に失敗しました。<br>
-            GAS側がJSONP対応になっているか確認してください。
-          </div>
-        `;
-      }
+      console.error("ranking load failed", data);
+      renderRankingError(
+        "ランキングの取得に失敗しました。",
+        data && data.error ? `GAS error: ${data.error}` : "GASのデプロイ設定を確認してください。"
+      );
       return;
     }
 
     renderRankingRows(data.ranking || [], currentRankingType);
 
   }catch(err){
-    console.error(err);
-    const rowsRoot = $("rankingRows");
-    if(rowsRoot){
-      rowsRoot.innerHTML = `
-        <div class="rank-empty">
-          ランキング通信エラー。<br>
-          GASコードをJSONP対応版に置き換えて、再デプロイしてください。
-        </div>
-      `;
-    }
+    console.error("ranking load error", err);
+    renderRankingError(
+      "ランキング通信エラー。",
+      "GASを最新バージョンで再デプロイし、アクセス権を「全員」にしてください。"
+    );
   }
 }
 
+async function submitAndLoadInitialRanking(){
+  renderRankingShell("ランキング登録中...");
+  await submitRanking({silent:true});
+  await loadRanking("harvest");
+}
 
 $("saveNameBtn").addEventListener("click",()=>{
   const val=$("nameInput").value;
@@ -2223,11 +2248,8 @@ initUserName();
 renderAll();
 setInterval(renderFarm,1000);
 
-// ページを開いたら自動で今月記録をGASへ登録
-submitRanking({ silent:true });
-
-// 初回ランキング表示
-loadRanking("harvest");
+// ページを開いたら自動登録してからランキング表示
+submitAndLoadInitialRanking();
 })();
 </script>
 </body>
