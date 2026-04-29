@@ -1153,9 +1153,13 @@
   }
 
   function shouldPlayPremiumHarvest(card) {
-    const tier = String(card && (card.tier || card.rarity) || "").toUpperCase();
-    return !!card && (card.premium === true || tier === "UR" || tier === "LR");
-  }
+  if (!card) return false;
+
+  const tier = String(card.tier || card.rarity || "").toUpperCase();
+
+  // フェス（premium=true）のみ対象
+  return card.premium === true && (tier === "UR" || tier === "LR");
+}
 
   function showLevelUpSplash({ fromLevel, toLevel, unlockedDelta = 0, onDone } = {}) {
     const old = document.getElementById("levelUpSplash");
