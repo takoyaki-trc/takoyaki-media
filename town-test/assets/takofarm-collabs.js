@@ -15,7 +15,7 @@
         stage1: TANE + "fes1.gif",
         stage2: TANE + "fes2.gif"
       },
-      fx: "FES DAY1 全5種《N/R/SR/UR/LR》",
+      fx: "FES DAY1 全5種\n《N/R/SR/UR/LR》",
       badge: "フェス",
       active: true,
       category: "COL",
@@ -89,7 +89,7 @@
         stage1: TANE + "fes1.gif",
         stage2: TANE + "fes2.gif"
       },
-      fx: "FES DAY2 全5種《N/R/SR/UR/LR》",
+      fx: "FES DAY2 全5種\n《N/R/SR/UR/LR》",
       badge: "フェス",
       active: true,
       category: "COL",
