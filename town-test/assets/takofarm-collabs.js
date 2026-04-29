@@ -19,7 +19,7 @@
       badge: "フェス",
       active: true,
       category: "COL",
-      rates: { N: 55, R: 25, SR: 14, UR: 5, LR: 1 },
+      rates: { N: 40, R: 30, SR: 17, UR: 8, LR: 5 },
 
       pool: [
         {
