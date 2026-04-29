@@ -353,6 +353,62 @@ body::before{
 }
 
 .ranking-body{padding:16px 12px}
+
+.ranking-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:10px;
+}
+.rank-tab{
+  min-height:38px;
+  border-radius:12px;
+  border:1px solid rgba(121,90,39,.22);
+  background:linear-gradient(180deg,rgba(255,255,255,.76),rgba(235,222,196,.96));
+  color:#4a3518;
+  font-family:"DotGothic16","MS Gothic",sans-serif;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+.rank-tab.active{
+  background:linear-gradient(180deg,#fff0b8,#dca946);
+  color:#261805;
+  border-color:rgba(121,90,39,.42);
+  box-shadow:0 0 0 2px rgba(255,211,94,.16);
+}
+.rank-list{
+  display:grid;
+  gap:8px;
+}
+.rank-row{
+  display:grid;
+  grid-template-columns:44px 1fr auto;
+  gap:8px;
+  align-items:center;
+  padding:10px;
+  border-radius:12px;
+  background:rgba(0,0,0,.05);
+  border:1px solid rgba(121,90,39,.18);
+  color:#2d2214;
+  font-weight:900;
+}
+.rank-row.top1{
+  background:linear-gradient(180deg,rgba(255,238,177,.85),rgba(255,221,126,.55));
+  border-color:rgba(166,113,27,.34);
+}
+.rank-score{
+  font-family:"Press Start 2P",monospace;
+  font-size:10px;
+  white-space:nowrap;
+}
+.rank-action-note{
+  margin:10px 0 0;
+  text-align:center;
+  color:#5a421f;
+  font-size:12px;
+  line-height:1.6;
+}
 .rank-empty{
   padding:16px 12px;
   border-radius:14px;
@@ -1187,9 +1243,9 @@ body::before{
     <div class="ranking-panel">
       <div class="panel-header">月間ユーザーランキング</div>
       <div class="ranking-body">
-       <div id="rankingList"></div>
+        <div id="rankingList"></div>
+      </div>
     </div>
- </div>
     <div class="seedbox">
       <div class="seedbox-head">
         <div class="seedbox-title">GOD SEEDS</div>
@@ -1886,6 +1942,190 @@ async function harvestFarm(){
   }
 }
 
+
+/* =========================
+   GAS 月間ユーザーランキング
+   ✅ 重要：この関数群は必ず (() => { ... }) の内側に置く
+========================= */
+
+let currentRankingType = "harvest";
+
+const RANKING_TYPES = [
+  { type:"harvest", label:"🔥 収穫", unit:"枚" },
+  { type:"sales",   label:"🪙 売上", unit:"oct" },
+  { type:"fishing", label:"🎣 釣り", unit:"点" },
+  { type:"tower",   label:"🗼 タワー", unit:"階" }
+];
+
+function getRankingTypeMeta(type){
+  return RANKING_TYPES.find(v=>v.type===type) || RANKING_TYPES[0];
+}
+
+function getUserId(){
+  let id = localStorage.getItem("ttc_user_id_v1");
+  if(!id){
+    if(window.crypto && typeof crypto.randomUUID === "function"){
+      id = "user_" + crypto.randomUUID();
+    }else{
+      id = "user_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    }
+    localStorage.setItem("ttc_user_id_v1", id);
+  }
+  return id;
+}
+
+function getCurrentStats(){
+  const stats = rolloverIfNeeded();
+  const userName = loadUserName() || localStorage.getItem(LS_USER_NAME) || "名無しのタコ民";
+
+  return {
+    monthKey: stats.monthKey || getMonthKey(),
+    userId: getUserId(),
+    userName,
+    harvest: Number(stats.harvest || 0),
+    sales: Number(stats.sales || 0),
+    fishing: Number(stats.fishing || 0),
+    tower: Number(stats.tower || 0)
+  };
+}
+
+function renderRankingShell(messageHtml="ランキング読み込み中..."){
+  if(!rankingList) return;
+
+  rankingList.innerHTML = `
+    <div class="ranking-tabs">
+      ${RANKING_TYPES.map(v => `
+        <button
+          class="rank-tab ${v.type===currentRankingType ? "active" : ""}"
+          type="button"
+          data-rank-type="${v.type}"
+        >${v.label}</button>
+      `).join("")}
+    </div>
+
+    <div id="rankingRows">
+      <div class="rank-empty">${messageHtml}</div>
+    </div>
+
+    <button class="btn" type="button" id="submitRankingBtn" style="margin-top:12px;">
+      ランキングに登録する
+    </button>
+
+    <div class="rank-action-note">
+      現在の今月記録をGASへ登録します。<br>
+      同じ端末では最新記録で上書きされます。
+    </div>
+  `;
+
+  rankingList.querySelectorAll("[data-rank-type]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const type = btn.getAttribute("data-rank-type") || "harvest";
+      loadRanking(type);
+    });
+  });
+
+  const submitBtn = $("submitRankingBtn");
+  if(submitBtn) submitBtn.addEventListener("click", submitRanking);
+}
+
+function renderRankingRows(rows,type){
+  const rowsRoot = $("rankingRows");
+  if(!rowsRoot) return;
+
+  const meta = getRankingTypeMeta(type);
+
+  if(!rows || rows.length === 0){
+    rowsRoot.innerHTML = `
+      <div class="rank-empty">
+        まだランキング登録がありません。<br>
+        「ランキングに登録する」を押すと最初のタコ民になれます。
+      </div>
+    `;
+    return;
+  }
+
+  rowsRoot.innerHTML = `
+    <div class="rank-list">
+      ${rows.map(row => `
+        <div class="rank-row ${Number(row.rank)===1 ? "top1" : ""}">
+          <div>${escapeHtml(row.rank)}位</div>
+          <div>${escapeHtml(row.userName || "名無しのタコ民")}</div>
+          <div class="rank-score">${fmtNum(row.score)} ${meta.unit}</div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+async function submitRanking(){
+  const payload = {
+    action: "submitScore",
+    ...getCurrentStats()
+  };
+
+  try{
+    await fetch(GAS_RANKING_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    toast("ランキングに登録しました");
+    setTimeout(()=>loadRanking(currentRankingType),700);
+
+  }catch(err){
+    console.error(err);
+    toast("ランキング登録に失敗しました");
+  }
+}
+
+async function loadRanking(type="harvest"){
+  currentRankingType = type || "harvest";
+
+  if(!rankingList) return;
+
+  renderRankingShell("ランキング読み込み中...");
+
+  const monthKey = getMonthKey();
+
+  try{
+    const url = `${GAS_RANKING_API_URL}?action=getRanking&monthKey=${encodeURIComponent(monthKey)}&type=${encodeURIComponent(currentRankingType)}&t=${Date.now()}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if(!data || !data.ok){
+      const rowsRoot = $("rankingRows");
+      if(rowsRoot){
+        rowsRoot.innerHTML = `
+          <div class="rank-empty">
+            ランキングの取得に失敗しました。<br>
+            登録ボタンは使えます。
+          </div>
+        `;
+      }
+      return;
+    }
+
+    renderRankingRows(data.ranking || [], currentRankingType);
+
+  }catch(err){
+    console.error(err);
+    const rowsRoot = $("rankingRows");
+    if(rowsRoot){
+      rowsRoot.innerHTML = `
+        <div class="rank-empty">
+          ランキング通信エラー。<br>
+          登録ボタンは使えます。
+        </div>
+      `;
+    }
+  }
+}
+
+
 $("saveNameBtn").addEventListener("click",()=>{
   const val=$("nameInput").value;
   const err=validateName(val);
@@ -1938,127 +2178,6 @@ renderAll();
 setInterval(renderFarm,1000);
 loadRanking("harvest");
 })();
-
-  function getUserId(){
-  let id = localStorage.getItem("ttc_user_id_v1");
-  if(!id){
-    id = "user_" + crypto.randomUUID();
-    localStorage.setItem("ttc_user_id_v1", id);
-  }
-  return id;
-}
-
-function getCurrentStats(){
-  const monthKey = getMonthKey();
-  const monthly = loadJson(LS_MONTHLY, {});
-  const stats = monthly[monthKey] || {};
-
-  return {
-    monthKey,
-    userId: getUserId(),
-    userName: localStorage.getItem(LS_USER_NAME) || "名無しのタコ民",
-    harvest: Number(stats.harvest || 0),
-    sales: Number(stats.sales || 0),
-    fishing: Number(stats.fishing || 0),
-    tower: Number(stats.tower || 0)
-  };
-}
-
-async function submitRanking(){
-  const payload = {
-    action: "submitScore",
-    ...getCurrentStats()
-  };
-
-  try{
-    await fetch(GAS_RANKING_API_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    toast("ランキングに登録しました");
-    await loadRanking("harvest");
-
-  }catch(err){
-    console.error(err);
-    toast("ランキング登録に失敗しました");
-  }
-}
-
-async function loadRanking(type="harvest"){
-  if(!rankingList) return;
-
-  const monthKey = getMonthKey();
-
-  rankingList.innerHTML = `
-    <div class="rank-empty">ランキング読み込み中...</div>
-  `;
-
-  try{
-    const url = `${GAS_RANKING_API_URL}?action=getRanking&monthKey=${encodeURIComponent(monthKey)}&type=${encodeURIComponent(type)}`;
-    const res = await fetch(url);
-    const data = await res.json();
-
-    if(!data.ok){
-      rankingList.innerHTML = `
-        <div class="rank-empty">ランキングの取得に失敗しました</div>
-      `;
-      return;
-    }
-
-    const rows = data.ranking || [];
-
-    if(rows.length === 0){
-      rankingList.innerHTML = `
-        <div class="rank-empty">
-          まだランキング登録がありません。<br>
-          最初のタコ民になれます。
-        </div>
-      `;
-      return;
-    }
-
-    rankingList.innerHTML = `
-      <div style="display:grid;gap:8px;">
-        ${rows.map(row => `
-          <div style="
-            display:grid;
-            grid-template-columns:42px 1fr auto;
-            gap:8px;
-            align-items:center;
-            padding:10px;
-            border-radius:12px;
-            background:rgba(0,0,0,.05);
-            border:1px solid rgba(121,90,39,.18);
-            color:#2d2214;
-            font-weight:900;
-          ">
-            <div>${row.rank}位</div>
-            <div>${escapeHtml(row.userName)}</div>
-            <div>${fmtNum(row.score)}</div>
-          </div>
-        `).join("")}
-      </div>
-
-      <button class="btn" type="button" id="submitRankingBtn" style="margin-top:12px;">
-        ランキングに登録する
-      </button>
-    `;
-
-    const btn = $("submitRankingBtn");
-    if(btn) btn.addEventListener("click", submitRanking);
-
-  }catch(err){
-    console.error(err);
-    rankingList.innerHTML = `
-      <div class="rank-empty">ランキング通信エラー</div>
-    `;
-  }
-}
 </script>
 </body>
 </html>
