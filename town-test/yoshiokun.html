@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>露店売上 救済ページ</title>
+<style>
+body{
+  margin:0;
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  background:#160b25;
+  color:#fff8e8;
+  font-family:"MS Gothic",sans-serif;
+  padding:20px;
+}
+.box{
+  max-width:420px;
+  width:100%;
+  background:linear-gradient(180deg,#3b1764,#1b0b30);
+  border:2px solid #e6b84e;
+  border-radius:20px;
+  padding:24px;
+  text-align:center;
+}
+h1{font-size:22px;color:#ffe8a3}
+.amount{font-size:28px;color:#ffd86b;margin:18px 0;font-weight:bold}
+p{line-height:1.8}
+a{
+  display:block;
+  margin-top:18px;
+  padding:14px;
+  border-radius:14px;
+  background:linear-gradient(180deg,#fff0b8,#dca946);
+  color:#241805;
+  font-weight:bold;
+  text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+<div class="box">
+  <h1 id="title">救済処理中...</h1>
+  <div class="amount">+1,718,575 oct</div>
+  <p id="message">露店売上の記録を確認しています。</p>
+  <a href="https://takoyaki-trc.github.io/takoyaki-media/town/title.html">称号ページへ戻る</a>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const LS_MONTHLY = "ttc_monthly_stats_v1";
+  const LS_MYSHOP_MONTHLY_SALES = "ttc_myshop_monthly_sales_v1";
+
+  const RESCUE_AMOUNT = 1718575;
+  const RESCUE_DONE_KEY = "rescue_shop_sales_add_1718575_done_v1";
+
+  function loadJson(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){
+      return fallback;
+    }
+  }
+
+  function saveJson(key, value){
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function getMonthKey(){
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  }
+
+  function applyRescue(){
+    const title = document.getElementById("title");
+    const message = document.getElementById("message");
+
+    if(localStorage.getItem(RESCUE_DONE_KEY) === "1"){
+      title.textContent = "救済済みです";
+      message.textContent = "この救済はすでに反映されています。二重反映はされません。";
+      return;
+    }
+
+    const monthKey = getMonthKey();
+
+    const monthly = loadJson(LS_MONTHLY, {});
+    monthly.monthKey = monthKey;
+    monthly.sales = Number(monthly.sales || 0) + RESCUE_AMOUNT;
+    saveJson(LS_MONTHLY, monthly);
+
+    const shopSales = loadJson(LS_MYSHOP_MONTHLY_SALES, {});
+    shopSales.monthKey = monthKey;
+    shopSales.total = Number(shopSales.total || 0) + RESCUE_AMOUNT;
+    shopSales.sales = Number(shopSales.sales || 0) + RESCUE_AMOUNT;
+    saveJson(LS_MYSHOP_MONTHLY_SALES, shopSales);
+
+    localStorage.setItem(RESCUE_DONE_KEY, "1");
+
+    title.textContent = "救済完了しました";
+    message.textContent = "現在の露店売上に 1,718,575oct を加算しました。称号ページで確認してください。";
+  }
+
+  applyRescue();
+})();
+</script>
+</body>
+</html>
