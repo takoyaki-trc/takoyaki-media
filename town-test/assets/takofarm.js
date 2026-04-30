@@ -156,9 +156,9 @@
     { id: "seed_random", name: "なに出るタネ", desc: "何が出るか\n誰もまだ\n知らない", factor: 1.0, img: "https://ul.h3z.jp/gnyvP580.png", fx: "第一弾全50種" },
     { id: "seed_shop", name: "店頭タネ", desc: "店頭カード\nだけ出る\nタネです", factor: 1.0, img: "https://ul.h3z.jp/IjvuhWoY.png", fx: "店頭全25種" },
     { id: "seed_line", name: "回線タネ", desc: "通販カード\nだけ出る\nタネです", factor: 1.0, img: "https://ul.h3z.jp/AonxB5x7.png", fx: "BOOTH全25種" },
-    { id: "seed_special", name: "たこぴのタネ", desc: "植えると\nたこぴだけ\n出てくる", factor: 1.0, img: "https://ul.h3z.jp/29OsEvjf.png", fx: "たこぴカード8種" },
+    { id: "seed_special", name: "たこぴのタネ", desc: "植えると\nたこぴだけ\n出てくる", factor: 1.0, img: "https://ul.h3z.jp/29OsEvjf.png", fx: "たこぴカード9種" },
     { id: "seed_bussasari", name: "ブッ刺さりタネ", desc: "ダーツプロ\n5種だけが\n出てくる", factor: 1.05, img: "https://ul.h3z.jp/MjWkTaU3.png", fx: "ダーツプロ全5種" },
-    { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "限定カード\nだけ狙える\n特別タネ", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全12種" },
+    { id: "seed_namara_kawasar", name: "なまら買わさるタネ", desc: "限定カード\nだけ狙える\n特別タネ", factor: 1.08, img: "https://ul.h3z.jp/yiqHzfi0.png", fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全13種" },
     ...EXTERNAL_COLLAB_SEEDS
   ];
 
