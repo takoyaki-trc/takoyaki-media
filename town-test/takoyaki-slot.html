@@ -344,7 +344,7 @@ button:disabled{
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "takoyaki_slot_lever_v1";
+  const STORAGE_KEY = "takoyaki_slot_lever_sound_v1";
 
   const SYMBOLS = [
     { id:"tako", emoji:"🐙" },
@@ -386,6 +386,9 @@ button:disabled{
   const gamesEl = document.getElementById("games");
   const bigEl = document.getElementById("big");
   const regEl = document.getElementById("reg");
+
+  let audioCtx = null;
+  let reelSoundTimer = null;
 
   let state = loadState();
 
@@ -508,11 +511,16 @@ button:disabled{
   }
 
   function startSpin(){
+    unlockAudio();
+
     if(isSpinning) return;
     if(state.medal < PAY.cost){
+      playErrorSound();
       setMessage("メダルが足りないたこ。", "");
       return;
     }
+
+    playLeverSound();
 
     state.medal -= PAY.cost;
     state.games += 1;
@@ -524,6 +532,8 @@ button:disabled{
 
     setLamp(false);
     setMessage("リール回転中……<br>好きな順番で止めるたこ。", "");
+
+    startReelLoopSound();
 
     reels.forEach((reel, i) => {
       reel.classList.add("spinning");
@@ -550,7 +560,11 @@ button:disabled{
   }
 
   function stopReel(index){
+    unlockAudio();
+
     if(!isSpinning || stopped[index]) return;
+
+    playStopSound(index);
 
     stopped[index] = true;
     stopBtns[index].disabled = true;
@@ -564,6 +578,7 @@ button:disabled{
     vibrate(35);
 
     if(stopped.every(Boolean)){
+      stopReelLoopSound();
       finishSpin();
     }
   }
@@ -577,20 +592,26 @@ button:disabled{
       state.medal += PAY.big;
       state.big += 1;
       setLamp(true);
+      playPekaSound();
+      setTimeout(playBigSound, 250);
       setMessage("🌈🌈🌈<br>神焼きBONUS！<br>" + PAY.big + "メダル獲得！", "big");
       vibrate([80,40,120]);
     }else if(result.type === "reg"){
       state.medal += PAY.reg;
       state.reg += 1;
       setLamp(true);
+      playPekaSound();
+      setTimeout(playRegSound, 250);
       setMessage("💥💥💥<br>半焼けBONUS！<br>" + PAY.reg + "メダル獲得！", "reg");
       vibrate([60,40,60]);
     }else if(result.type === "replay"){
       state.medal += PAY.replay;
+      playReplaySound();
       setMessage("🐙🐙🐙<br>リプレイたこ。<br>" + PAY.replay + "メダル返却。", "replay");
       vibrate(50);
     }else{
       setLamp(false);
+      playMissSound();
       setMessage("ハズレ。<br>まだ鉄板は温まっている……。", "");
     }
 
@@ -615,6 +636,131 @@ button:disabled{
     }
   }
 
+  /* =========================
+     サウンド機能
+     外部音源なし / Web Audio
+  ========================= */
+
+  function unlockAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    if(audioCtx.state === "suspended"){
+      audioCtx.resume();
+    }
+  }
+
+  function tone(freq, duration, type = "square", volume = 0.08, delay = 0){
+    if(!audioCtx) return;
+
+    const now = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + duration + 0.03);
+  }
+
+  function noise(duration = 0.08, volume = 0.06, delay = 0){
+    if(!audioCtx) return;
+
+    const now = audioCtx.currentTime + delay;
+    const bufferSize = audioCtx.sampleRate * duration;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for(let i = 0; i < bufferSize; i++){
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const src = audioCtx.createBufferSource();
+    const gain = audioCtx.createGain();
+
+    src.buffer = buffer;
+
+    gain.gain.setValueAtTime(volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    src.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    src.start(now);
+    src.stop(now + duration);
+  }
+
+  function playLeverSound(){
+    tone(150, 0.05, "sawtooth", 0.08);
+    tone(90, 0.08, "square", 0.06, 0.05);
+  }
+
+  function startReelLoopSound(){
+    stopReelLoopSound();
+
+    reelSoundTimer = setInterval(() => {
+      if(!isSpinning) return;
+      noise(0.025, 0.025);
+      tone(95 + Math.random() * 25, 0.025, "square", 0.025);
+    }, 95);
+  }
+
+  function stopReelLoopSound(){
+    if(reelSoundTimer){
+      clearInterval(reelSoundTimer);
+      reelSoundTimer = null;
+    }
+  }
+
+  function playStopSound(index){
+    tone(220 + index * 55, 0.055, "square", 0.09);
+    tone(120 + index * 30, 0.045, "triangle", 0.06, 0.04);
+  }
+
+  function playPekaSound(){
+    tone(880, 0.08, "sine", 0.12);
+    tone(1320, 0.10, "sine", 0.10, 0.08);
+    tone(1760, 0.13, "sine", 0.08, 0.17);
+  }
+
+  function playBigSound(){
+    tone(523.25, 0.10, "square", 0.10, 0.00);
+    tone(659.25, 0.10, "square", 0.10, 0.12);
+    tone(783.99, 0.10, "square", 0.10, 0.24);
+    tone(1046.5, 0.22, "square", 0.11, 0.36);
+    tone(1318.5, 0.24, "sine", 0.08, 0.58);
+  }
+
+  function playRegSound(){
+    tone(392, 0.10, "square", 0.09, 0.00);
+    tone(523.25, 0.10, "square", 0.09, 0.13);
+    tone(659.25, 0.18, "square", 0.09, 0.26);
+  }
+
+  function playReplaySound(){
+    tone(440, 0.08, "triangle", 0.07, 0.00);
+    tone(660, 0.08, "triangle", 0.07, 0.10);
+  }
+
+  function playMissSound(){
+    tone(180, 0.07, "sawtooth", 0.045, 0.00);
+    tone(120, 0.10, "sawtooth", 0.035, 0.08);
+  }
+
+  function playErrorSound(){
+    tone(100, 0.12, "sawtooth", 0.08);
+    tone(80, 0.12, "sawtooth", 0.06, 0.11);
+  }
+
   lever.addEventListener("click", startSpin);
 
   stopBtns.forEach((btn, index) => {
@@ -622,6 +768,9 @@ button:disabled{
   });
 
   resetBtn.addEventListener("click", () => {
+    unlockAudio();
+    playStopSound(0);
+
     localStorage.removeItem(STORAGE_KEY);
 
     state = { medal:100, games:0, big:0, reg:0 };
@@ -634,6 +783,8 @@ button:disabled{
       if(t) clearInterval(t);
     });
     reelTimers = [null,null,null];
+
+    stopReelLoopSound();
 
     reels.forEach((reel, i) => {
       reel.classList.remove("spinning");
