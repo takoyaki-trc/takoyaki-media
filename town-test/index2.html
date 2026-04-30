@@ -3372,14 +3372,45 @@ if (getRaw(EXIST.history) != null) keys[EXIST.history] = getRaw(EXIST.history);
 
       if (!ok) return false;
 
-      for (const k of keys) {
-        const v = source[k];
-        if (v === null || v === undefined) {
-          localStorage.removeItem(k);
-        } else {
-          localStorage.setItem(k, String(v));
-        }
-      }
+      function getCurrentMonthKey(){
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+}
+
+function getBackupMonthKey(raw){
+  try{
+    const obj = JSON.parse(raw);
+    return obj && obj.monthKey ? String(obj.monthKey) : "";
+  }catch(e){
+    return "";
+  }
+}
+
+const MONTHLY_PROTECTED_KEYS = new Set([
+  "ttc_monthly_stats_v1",
+  "ttc_myshop_monthly_sales_v1"
+]);
+
+const currentMonthKey = getCurrentMonthKey();
+
+for (const k of keys) {
+  const v = source[k];
+
+  if (MONTHLY_PROTECTED_KEYS.has(k)) {
+    const backupMonthKey = getBackupMonthKey(v);
+
+    if (!backupMonthKey || backupMonthKey !== currentMonthKey) {
+      console.warn("月間記録は復元しません:", k, backupMonthKey || "monthKeyなし");
+      continue;
+    }
+  }
+
+  if (v === null || v === undefined) {
+    localStorage.removeItem(k);
+  } else {
+    localStorage.setItem(k, String(v));
+  }
+}
 
       alert("復元しました。ページを再読み込みします。");
       location.reload();
