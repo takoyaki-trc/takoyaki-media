@@ -234,7 +234,7 @@
       desc: "植えると\nたこぴだけ\n出てくる",
       factor: 1.0,
       img: "https://ul.h3z.jp/29OsEvjf.png",
-      fx: "たこぴカード8種"
+      fx: "たこぴカード9種"
     },
 
     {
@@ -251,7 +251,7 @@
       desc: "限定カード\nだけ狙える\n特別タネ",
       factor: 1.08,
       img: "https://ul.h3z.jp/yiqHzfi0.png",
-      fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全12種"
+      fx: "限定ｼｮｯﾌﾟｶｰﾄﾞ全13種"
     },
 
     {
