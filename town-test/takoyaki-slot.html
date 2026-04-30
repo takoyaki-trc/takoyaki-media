@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>たこ焼きスロット｜焼き場のランプ</title>
+
+<style>
+  *{box-sizing:border-box}
+
+  body{
+    margin:0;
+    min-height:100svh;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+    color:#fff7e8;
+    background:
+      radial-gradient(circle at top,#4b1f18 0%,#18090b 48%,#090506 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+  }
+
+  .slot-wrap{
+    width:min(420px,100%);
+    border:4px solid #f6c15a;
+    border-radius:24px;
+    padding:16px;
+    background:linear-gradient(180deg,#8d1f16,#3d0e12 58%,#1a0809);
+    box-shadow:
+      0 18px 40px rgba(0,0,0,.5),
+      inset 0 0 24px rgba(255,210,90,.22);
+  }
+
+  .title{
+    text-align:center;
+    font-weight:900;
+    letter-spacing:.04em;
+    font-size:24px;
+    margin:4px 0 8px;
+    color:#ffe28a;
+    text-shadow:0 3px 0 #612000,0 0 14px rgba(255,240,120,.55);
+  }
+
+  .sub{
+    text-align:center;
+    font-size:13px;
+    color:#ffd9a0;
+    margin-bottom:12px;
+  }
+
+  .lamp{
+    width:132px;
+    height:132px;
+    margin:0 auto 14px;
+    border-radius:999px;
+    display:grid;
+    place-items:center;
+    font-size:54px;
+    background:radial-gradient(circle,#3a1a1a,#140707);
+    border:5px solid #3b1708;
+    box-shadow:inset 0 0 18px rgba(0,0,0,.8);
+    transition:.25s;
+  }
+
+  .lamp.on{
+    background:radial-gradient(circle,#fff8b8 0%,#ffdd43 40%,#ff8c00 75%);
+    box-shadow:
+      0 0 18px #ffe86b,
+      0 0 42px #ffb300,
+      inset 0 0 12px rgba(255,255,255,.7);
+    animation:peka .85s infinite alternate;
+  }
+
+  @keyframes peka{
+    from{transform:scale(1)}
+    to{transform:scale(1.04)}
+  }
+
+  .machine{
+    background:#24070a;
+    border:3px solid #f5b64c;
+    border-radius:18px;
+    padding:14px;
+    box-shadow:inset 0 0 18px rgba(0,0,0,.75);
+  }
+
+  .reels{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-bottom:14px;
+  }
+
+  .reel{
+    height:112px;
+    border-radius:16px;
+    background:linear-gradient(180deg,#fffaf0,#ffdca3);
+    color:#2b1208;
+    display:grid;
+    place-items:center;
+    font-size:56px;
+    font-weight:900;
+    border:4px solid #5b260b;
+    box-shadow:
+      inset 0 8px 18px rgba(255,255,255,.65),
+      inset 0 -10px 18px rgba(120,55,0,.25);
+    overflow:hidden;
+  }
+
+  .reel.spin{
+    animation:spin .12s linear infinite;
+  }
+
+  @keyframes spin{
+    0%{transform:translateY(-2px);filter:blur(0)}
+    50%{transform:translateY(2px);filter:blur(1px)}
+    100%{transform:translateY(-2px);filter:blur(0)}
+  }
+
+  .message{
+    min-height:54px;
+    border-radius:14px;
+    padding:10px;
+    text-align:center;
+    background:rgba(0,0,0,.34);
+    border:1px solid rgba(255,255,255,.16);
+    font-weight:800;
+    line-height:1.45;
+    margin-bottom:12px;
+  }
+
+  .message.big{
+    color:#fff27d;
+    text-shadow:0 0 12px #ffd000;
+  }
+
+  .message.reg{
+    color:#ffb2ff;
+    text-shadow:0 0 12px #ff4cff;
+  }
+
+  .message.replay{
+    color:#aef6ff;
+    text-shadow:0 0 10px #48dfff;
+  }
+
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+    margin-bottom:12px;
+  }
+
+  .stat{
+    background:rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:12px;
+    padding:8px;
+    text-align:center;
+  }
+
+  .stat b{
+    display:block;
+    font-size:18px;
+    color:#ffe28a;
+  }
+
+  .buttons{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  button{
+    appearance:none;
+    border:0;
+    border-radius:16px;
+    padding:15px 12px;
+    font-weight:900;
+    font-size:17px;
+    color:#371800;
+    background:linear-gradient(180deg,#ffe38a,#ffb02f);
+    box-shadow:0 6px 0 #8d4300,0 12px 20px rgba(0,0,0,.35);
+  }
+
+  button:active{
+    transform:translateY(4px);
+    box-shadow:0 2px 0 #8d4300,0 8px 16px rgba(0,0,0,.28);
+  }
+
+  button:disabled{
+    opacity:.5;
+    pointer-events:none;
+  }
+
+  .note{
+    margin-top:12px;
+    font-size:12px;
+    line-height:1.6;
+    color:#ffd9a0;
+    text-align:center;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="slot-wrap">
+  <div class="title">たこ焼きスロット</div>
+  <div class="sub">焼き場のランプ｜試作1号機</div>
+
+  <div id="lamp" class="lamp">🐙</div>
+
+  <div class="machine">
+    <div class="reels">
+      <div id="reel1" class="reel">🐙</div>
+      <div id="reel2" class="reel">🐙</div>
+      <div id="reel3" class="reel">🐙</div>
+    </div>
+
+    <div id="message" class="message">
+      たこぴランプが光ればチャンスたこ。
+    </div>
+
+    <div class="stats">
+      <div class="stat">メダル<b id="medal">100</b></div>
+      <div class="stat">回転数<b id="spinCount">0</b></div>
+      <div class="stat">BIG<b id="bigCount">0</b></div>
+      <div class="stat">REG<b id="regCount">0</b></div>
+    </div>
+
+    <div class="buttons">
+      <button id="spinBtn">1回転する（3メダル）</button>
+      <button id="resetBtn">リセット</button>
+    </div>
+  </div>
+
+  <div class="note">
+    ※これは試作版です。メダルはゲーム内専用で、オクトや現実の景品には交換しない設計。
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const reels = [
+    document.getElementById("reel1"),
+    document.getElementById("reel2"),
+    document.getElementById("reel3")
+  ];
+
+  const lamp = document.getElementById("lamp");
+  const message = document.getElementById("message");
+  const spinBtn = document.getElementById("spinBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const medalEl = document.getElementById("medal");
+  const spinCountEl = document.getElementById("spinCount");
+  const bigCountEl = document.getElementById("bigCount");
+  const regCountEl = document.getElementById("regCount");
+
+  const STORAGE_KEY = "takoyaki_slot_demo_v1";
+
+  const SYMBOLS = [
+    { id:"tako", emoji:"🐙", img:"" },
+    { id:"fire", emoji:"🔥", img:"" },
+    { id:"takoyaki", emoji:"🍙", img:"" },
+    { id:"rainbow", emoji:"🌈", img:"" },
+    { id:"bomb", emoji:"💥", img:"" }
+  ];
+
+  const PAY = {
+    big: 120,
+    reg: 45,
+    replay: 3,
+    cost: 3
+  };
+
+  const state = loadState();
+
+  renderStats();
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const saved = JSON.parse(raw);
+        return {
+          medal: Number(saved.medal ?? 100),
+          spinCount: Number(saved.spinCount ?? 0),
+          bigCount: Number(saved.bigCount ?? 0),
+          regCount: Number(saved.regCount ?? 0)
+        };
+      }
+    }catch(e){}
+
+    return {
+      medal:100,
+      spinCount:0,
+      bigCount:0,
+      regCount:0
+    };
+  }
+
+  function saveState(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function renderStats(){
+    medalEl.textContent = state.medal;
+    spinCountEl.textContent = state.spinCount;
+    bigCountEl.textContent = state.bigCount;
+    regCountEl.textContent = state.regCount;
+
+    spinBtn.disabled = state.medal < PAY.cost;
+  }
+
+  function showSymbol(el, symbol){
+    if(symbol.img){
+      el.innerHTML = `<img src="${symbol.img}" alt="${symbol.id}" style="width:76px;height:76px;object-fit:contain;">`;
+    }else{
+      el.textContent = symbol.emoji;
+    }
+  }
+
+  function pickRandomSymbol(){
+    return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+  }
+
+  function decideResult(){
+    const r = Math.random();
+
+    if(r < 0.012){
+      return {
+        type:"big",
+        symbols:["rainbow","rainbow","rainbow"]
+      };
+    }
+
+    if(r < 0.036){
+      return {
+        type:"reg",
+        symbols:["bomb","bomb","bomb"]
+      };
+    }
+
+    if(r < 0.145){
+      return {
+        type:"replay",
+        symbols:["tako","tako","tako"]
+      };
+    }
+
+    return {
+      type:"miss",
+      symbols:makeMissSymbols()
+    };
+  }
+
+  function makeMissSymbols(){
+    const ids = ["tako","fire","takoyaki","rainbow","bomb"];
+    let result;
+
+    do{
+      result = [
+        ids[Math.floor(Math.random() * ids.length)],
+        ids[Math.floor(Math.random() * ids.length)],
+        ids[Math.floor(Math.random() * ids.length)]
+      ];
+    }while(
+      result[0] === result[1] &&
+      result[1] === result[2] &&
+      ["rainbow","bomb","tako"].includes(result[0])
+    );
+
+    return result;
+  }
+
+  function getSymbolById(id){
+    return SYMBOLS.find(s => s.id === id) || SYMBOLS[0];
+  }
+
+  function setMessage(text, type){
+    message.className = "message";
+    if(type) message.classList.add(type);
+    message.innerHTML = text;
+  }
+
+  function setLamp(on){
+    lamp.classList.toggle("on", on);
+    lamp.textContent = on ? "✨" : "🐙";
+  }
+
+  function sleep(ms){
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function spin(){
+    if(state.medal < PAY.cost) return;
+
+    spinBtn.disabled = true;
+    resetBtn.disabled = true;
+
+    state.medal -= PAY.cost;
+    state.spinCount += 1;
+    saveState();
+    renderStats();
+
+    setLamp(false);
+    setMessage("リール回転中……<br>焼き上がりを待つたこ。");
+
+    reels.forEach(r => r.classList.add("spin"));
+
+    const spinTimer = setInterval(() => {
+      reels.forEach(r => showSymbol(r, pickRandomSymbol()));
+    }, 80);
+
+    const result = decideResult();
+
+    const lampChance =
+      result.type === "big" ? 0.85 :
+      result.type === "reg" ? 0.65 :
+      result.type === "replay" ? 0.15 :
+      0.04;
+
+    if(Math.random() < lampChance){
+      await sleep(550);
+      setLamp(true);
+      setMessage("ぺかっ。<br>たこぴランプ点灯……！");
+    }
+
+    await sleep(900);
+
+    for(let i = 0; i < 3; i++){
+      await sleep(360);
+      reels[i].classList.remove("spin");
+      showSymbol(reels[i], getSymbolById(result.symbols[i]));
+    }
+
+    clearInterval(spinTimer);
+
+    await sleep(260);
+
+    if(result.type === "big"){
+      state.medal += PAY.big;
+      state.bigCount += 1;
+      setLamp(true);
+      setMessage(`🌈🌈🌈<br>神焼きBONUS！<br>${PAY.big}メダル獲得！`, "big");
+      vibrate([80,40,120]);
+    }else if(result.type === "reg"){
+      state.medal += PAY.reg;
+      state.regCount += 1;
+      setLamp(true);
+      setMessage(`💥💥💥<br>半焼けBONUS！<br>${PAY.reg}メダル獲得！`, "reg");
+      vibrate([60,40,60]);
+    }else if(result.type === "replay"){
+      state.medal += PAY.replay;
+      setMessage(`🐙🐙🐙<br>リプレイたこ。<br>${PAY.replay}メダル返却。`, "replay");
+      vibrate(40);
+    }else{
+      setMessage("ハズレ。<br>鉄板はまだ温まっている……。");
+    }
+
+    saveState();
+    renderStats();
+
+    resetBtn.disabled = false;
+  }
+
+  function vibrate(pattern){
+    if(navigator.vibrate){
+      navigator.vibrate(pattern);
+    }
+  }
+
+  spinBtn.addEventListener("click", spin);
+
+  resetBtn.addEventListener("click", () => {
+    localStorage.removeItem(STORAGE_KEY);
+    state.medal = 100;
+    state.spinCount = 0;
+    state.bigCount = 0;
+    state.regCount = 0;
+
+    reels.forEach(r => {
+      r.classList.remove("spin");
+      r.textContent = "🐙";
+    });
+
+    setLamp(false);
+    setMessage("リセット完了。<br>たこぴランプが光ればチャンスたこ。");
+    renderStats();
+  });
+
+})();
+</script>
+
+</body>
+</html>
