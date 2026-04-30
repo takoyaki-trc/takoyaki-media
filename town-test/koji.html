@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>補填アイテム受け取り</title>
+<style>
+body{
+  margin:0;
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(180deg,#1b0b33,#07030d);
+  color:#fff8e8;
+  font-family:"MS Gothic",sans-serif;
+  padding:20px;
+}
+.box{
+  width:min(100%,420px);
+  padding:22px;
+  border-radius:20px;
+  border:2px solid #f5c85e;
+  background:linear-gradient(180deg,#3b1764,#160726);
+  text-align:center;
+  box-shadow:0 18px 40px rgba(0,0,0,.45);
+}
+h1{font-size:22px;margin:0 0 12px}
+.seed{
+  font-size:18px;
+  margin:18px 0;
+  padding:14px;
+  border-radius:14px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,223,140,.25);
+}
+button{
+  width:100%;
+  min-height:54px;
+  border-radius:16px;
+  border:2px solid #ffe8a3;
+  background:linear-gradient(180deg,#fff0b8,#dca946);
+  color:#2b1c08;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.note{
+  margin-top:14px;
+  font-size:12px;
+  line-height:1.7;
+  color:#dccfb0;
+}
+.done{color:#ffe8a3;font-weight:bold}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h1>🎁 補填アイテム</h1>
+  <p>不具合のお詫びとして、下記アイテムを補填します。</p>
+
+  <div class="seed">🎣 釣り神のタネ ×1</div>
+
+  <button id="receiveBtn" type="button">受け取る</button>
+
+  <div class="note" id="msg">
+    ※この端末で1回だけ受け取れます。
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const LS_INV = "tf_v1_inv";
+  const CLAIM_KEY = "compensation_fish_god_seed_2026_05_01_v1";
+
+  const SEED_ID = "seed_god_fish";
+  const SEED_NAME = "釣り神のタネ";
+
+  const btn = document.getElementById("receiveBtn");
+  const msg = document.getElementById("msg");
+
+  function loadJson(key, fallback){
+    try{
+      return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+    }catch(e){
+      return fallback;
+    }
+  }
+
+  function saveJson(key, value){
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function alreadyClaimed(){
+    return localStorage.getItem(CLAIM_KEY) === "claimed";
+  }
+
+  function updateView(){
+    if(alreadyClaimed()){
+      btn.disabled = true;
+      btn.textContent = "受け取り済み";
+      msg.innerHTML = '<span class="done">この補填はすでに受け取り済みです。</span>';
+    }
+  }
+
+  btn.addEventListener("click", () => {
+    if(alreadyClaimed()){
+      updateView();
+      return;
+    }
+
+    const inv = loadJson(LS_INV, {});
+
+    inv[SEED_ID] = Number(inv[SEED_ID] || 0) + 1;
+
+    saveJson(LS_INV, inv);
+    localStorage.setItem(CLAIM_KEY, "claimed");
+
+    btn.disabled = true;
+    btn.textContent = "受け取り完了";
+    msg.innerHTML = `<span class="done">🎣 ${SEED_NAME} ×1 を受け取りました。</span>`;
+  });
+
+  updateView();
+})();
+</script>
+
+</body>
+</html>
