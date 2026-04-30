@@ -529,9 +529,7 @@
     { id: "TP-005", name: "お年玉たこぴ", img: "https://ul.h3z.jp/OPz58Wt6.png", rarity: "N" },
     { id: "TP-006", name: "バレンタインたこぴ", img: "https://ul.h3z.jp/J0kj3CLb.png", rarity: "N" },
     { id: "TP-007", name: "花見たこぴ", img: "https://ul.h3z.jp/KrCy4WQb.png", rarity: "N" },
-    { id: "TP-008", name: "入学たこぴ", img: "https://ul.h3z.jp/DidPdK9b.png", rarity: "N" },
-    { id: "TP-009", name: "こいのぼりたこぴ", img: "https://takoyaki-card.com/town/assets/images/takopi
-/takopi9.png", rarity: "N" },
+    { id: "TP-008", name: "入学たこぴ", img: "https://ul.h3z.jp/DidPdK9b.png", rarity: "UR" },
   ];
 
   const BUSSASARI_POOL = [
@@ -555,8 +553,6 @@
     { id: "NK-010", name: "ぶっかけ揚げ玉からしマヨ", img: "https://ul.h3z.jp/CcOw6yLq.png", rarity: "SR" },
     { id: "NK-011", name: "塩マヨペッパー", img: "https://ul.h3z.jp/7UJoTCe7.png", rarity: "R" },
     { id: "NK-012", name: "てりたま", img: "https://ul.h3z.jp/MU6ehdTH.png", rarity: "SR" },
-    { id: "NK-013", name: "濃厚たらマヨ", img: "https://takoyaki-card.com/town/assets/images/shopcard
-/shop13.png", rarity: "UR" },
   ];
 
   const GRATIN_POOL = [
