@@ -1,0 +1,1412 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>たこ焼きスロット｜焼き場のランプ AT版</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100svh;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+  background:
+    radial-gradient(circle at top,#6b1b17 0%,#23070a 48%,#070304 100%);
+  color:#fff7e8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+}
+
+.slot-machine{
+  width:min(390px,100%);
+  border-radius:22px;
+  background:linear-gradient(180deg,#ececec 0%,#9ea4aa 12%,#f4f4f4 18%,#b9bec4 100%);
+  border:4px solid #222;
+  box-shadow:0 20px 45px rgba(0,0,0,.55);
+  overflow:hidden;
+}
+
+.top-arch{
+  height:76px;
+  background:
+    radial-gradient(ellipse at center,#91ff9c 0%,#34c25b 35%,#d71920 38%,#b50010 70%);
+  border-bottom:5px solid #333;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff7a0;
+  font-weight:900;
+  font-size:24px;
+  text-shadow:0 3px 0 #630000,0 0 12px #fff36b;
+}
+
+.bonus-panel{
+  margin:10px 16px 8px;
+  border:4px solid #8b0000;
+  border-radius:10px;
+  background:linear-gradient(180deg,#e71919,#910000);
+  text-align:center;
+  padding:10px 8px;
+  font-size:20px;
+  font-weight:900;
+  color:#ffe27a;
+  text-shadow:0 2px 0 #4a0000;
+  box-shadow:inset 0 0 18px rgba(255,255,255,.25);
+}
+
+.tako-meter{
+  margin:0 16px 10px;
+  padding:8px;
+  border-radius:12px;
+  background:linear-gradient(180deg,#130817,#050205);
+  border:3px solid #3b203f;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:center;
+}
+
+.tako-meter-title{
+  font-size:12px;
+  font-weight:900;
+  color:#ffd77a;
+  text-shadow:0 0 8px rgba(255,180,50,.65);
+}
+
+.tako-lamps{
+  display:flex;
+  gap:4px;
+}
+
+.tako-dot{
+  width:31px;
+  height:31px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  font-size:18px;
+  background:#160b16;
+  border:2px solid #382440;
+  filter:grayscale(1);
+  opacity:.42;
+}
+
+.tako-dot.on{
+  background:radial-gradient(circle,#fff8b7 0%,#ffbc31 45%,#ff4d00 100%);
+  filter:none;
+  opacity:1;
+  box-shadow:0 0 10px #ffcf3a,0 0 18px #ff5b00;
+}
+
+.mode-panel{
+  margin:0 16px 10px;
+  padding:8px 10px;
+  border-radius:10px;
+  background:#101020;
+  border:3px solid #25254b;
+  font-weight:900;
+  text-align:center;
+  color:#aef7ff;
+  text-shadow:0 0 8px rgba(56,230,255,.65);
+  min-height:39px;
+}
+
+.reel-area{
+  margin:10px 16px;
+  padding:10px;
+  border-radius:12px;
+  background:
+    linear-gradient(90deg,#061257,#1327a8 15%,#fff1a8 50%,#1327a8 85%,#061257);
+  border:4px solid #ffd15a;
+  position:relative;
+}
+
+.reels{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  background:#111;
+  padding:8px;
+  border-radius:10px;
+  position:relative;
+}
+
+.reel{
+  height:156px;
+  background:#fffaf0;
+  border:4px solid #222;
+  border-radius:8px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:inset 0 8px 18px rgba(0,0,0,.22);
+}
+
+.reel-strip{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+}
+
+.symbol{
+  height:52px;
+  display:grid;
+  place-items:center;
+  font-size:34px;
+  color:#222;
+  border-bottom:1px solid rgba(0,0,0,.08);
+}
+
+.reel.spinning .reel-strip{
+  animation:reelSpin .18s linear infinite;
+}
+
+@keyframes reelSpin{
+  from{transform:translateY(0)}
+  to{transform:translateY(-260px)}
+}
+
+.center-line{
+  position:absolute;
+  left:0;
+  right:0;
+  top:52px;
+  height:52px;
+  pointer-events:none;
+  border-top:3px solid rgba(255,0,0,.75);
+  border-bottom:3px solid rgba(255,0,0,.75);
+  box-shadow:0 0 10px rgba(255,0,0,.45);
+}
+
+.reel-smoke{
+  position:absolute;
+  inset:8px;
+  border-radius:10px;
+  display:none;
+  place-items:center;
+  background:rgba(0,0,0,.52);
+  backdrop-filter:blur(2px);
+  z-index:20;
+  pointer-events:none;
+  text-align:center;
+  padding:10px;
+}
+
+.reel-smoke.show{
+  display:grid;
+}
+
+.navi-title{
+  font-size:18px;
+  font-weight:1000;
+  color:#fff27a;
+  text-shadow:0 0 12px #ffe100,0 2px 0 #6a0000;
+}
+
+.navi-sub{
+  margin-top:6px;
+  font-size:14px;
+  font-weight:900;
+  color:#fff;
+  line-height:1.4;
+}
+
+.counter-panel{
+  margin:10px 16px;
+  background:#180b22;
+  border:4px solid #222;
+  border-radius:12px;
+  padding:8px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+}
+
+.counter{
+  background:#050205;
+  border:1px solid #52396d;
+  border-radius:8px;
+  padding:5px 3px;
+  text-align:center;
+  font-size:10px;
+  color:#d6c2ff;
+}
+
+.counter b{
+  display:block;
+  color:#ff5cff;
+  font-size:17px;
+  margin-top:2px;
+  font-family:monospace;
+}
+
+.control-panel{
+  margin:0 16px 12px;
+  padding:12px;
+  background:linear-gradient(180deg,#222,#070707);
+  border-radius:16px;
+  border:4px solid #555;
+}
+
+.lamp-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.takopi-lamp{
+  width:70px;
+  height:70px;
+  border-radius:999px;
+  background:radial-gradient(circle,#311,#080303);
+  border:4px solid #111;
+  display:grid;
+  place-items:center;
+  font-size:34px;
+  box-shadow:inset 0 0 15px rgba(0,0,0,.8);
+}
+
+.takopi-lamp.on{
+  background:radial-gradient(circle,#fff8b5 0%,#ffd83d 45%,#ff8400 80%);
+  box-shadow:0 0 18px #fff36b,0 0 38px #ff9d00;
+  animation:peka .75s infinite alternate;
+}
+
+@keyframes peka{
+  from{transform:scale(1)}
+  to{transform:scale(1.06)}
+}
+
+.lever{
+  width:86px;
+  height:62px;
+  border-radius:18px;
+  border:0;
+  font-weight:900;
+  background:linear-gradient(180deg,#ffef9a,#ffad25);
+  color:#351600;
+  box-shadow:0 6px 0 #8a4300;
+}
+
+.lever:active{
+  transform:translateY(4px);
+  box-shadow:0 2px 0 #8a4300;
+}
+
+.stop-buttons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+.stop-btn{
+  height:56px;
+  border-radius:999px;
+  border:4px solid #fff;
+  background:radial-gradient(circle,#ff4a4a,#a90000);
+  color:#fff;
+  font-weight:900;
+  font-size:15px;
+  box-shadow:0 6px 0 #4b0000;
+}
+
+.stop-btn:active{
+  transform:translateY(4px);
+  box-shadow:0 2px 0 #4b0000;
+}
+
+button:disabled{
+  opacity:.35;
+  pointer-events:none;
+}
+
+.lower-panel{
+  background:linear-gradient(180deg,#e51d1d,#970000);
+  border-top:5px solid #333;
+  padding:18px 14px;
+  text-align:center;
+}
+
+.character{
+  font-size:52px;
+  margin-bottom:6px;
+}
+
+.message{
+  min-height:78px;
+  background:rgba(0,0,0,.32);
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:14px;
+  padding:10px;
+  font-weight:900;
+  line-height:1.45;
+}
+
+.message.big{
+  color:#fff27a;
+  text-shadow:0 0 12px #ffe100;
+}
+
+.message.reg{
+  color:#ffbaff;
+  text-shadow:0 0 12px #ff55ff;
+}
+
+.message.replay,
+.message.at{
+  color:#aef7ff;
+  text-shadow:0 0 12px #38e6ff;
+}
+
+.message.hot{
+  color:#ffdf74;
+  text-shadow:0 0 13px #ff8b00;
+}
+
+.reset{
+  margin-top:10px;
+  width:100%;
+  padding:11px;
+  border:0;
+  border-radius:12px;
+  font-weight:900;
+  background:linear-gradient(180deg,#fff,#cfcfcf);
+  color:#222;
+}
+</style>
+</head>
+
+<body>
+
+<div class="slot-machine">
+
+  <div class="top-arch">TAKOYAKI SLOT</div>
+
+  <div class="bonus-panel" id="bonusPanel">BIG CHANCE!!</div>
+
+  <div class="tako-meter">
+    <div class="tako-meter-title">タコメーター<br>3連続からAT期待度UP / 5連続で確定</div>
+    <div class="tako-lamps" id="takoMeter"></div>
+  </div>
+
+  <div class="mode-panel" id="modePanel">通常時</div>
+
+  <div class="reel-area">
+    <div class="reels">
+      <div id="reel0" class="reel">
+        <div class="reel-strip"></div>
+        <div class="center-line"></div>
+      </div>
+      <div id="reel1" class="reel">
+        <div class="reel-strip"></div>
+        <div class="center-line"></div>
+      </div>
+      <div id="reel2" class="reel">
+        <div class="reel-strip"></div>
+        <div class="center-line"></div>
+      </div>
+
+      <div id="reelSmoke" class="reel-smoke">
+        <div>
+          <div id="naviTitle" class="navi-title"></div>
+          <div id="naviSub" class="navi-sub"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="counter-panel">
+    <div class="counter">CREDIT<b id="medal">100</b></div>
+    <div class="counter">GAMES<b id="games">0</b></div>
+    <div class="counter">BIG<b id="big">0</b></div>
+    <div class="counter">AT<b id="atCount">0</b></div>
+  </div>
+
+  <div class="control-panel">
+    <div class="lamp-row">
+      <div id="lamp" class="takopi-lamp">🐙</div>
+      <button id="lever" class="lever">レバー<br>ON</button>
+    </div>
+
+    <div class="stop-buttons">
+      <button id="stop0" class="stop-btn" disabled>左停止</button>
+      <button id="stop1" class="stop-btn" disabled>中停止</button>
+      <button id="stop2" class="stop-btn" disabled>右停止</button>
+    </div>
+  </div>
+
+  <div class="lower-panel">
+    <div class="character">🐙🔥</div>
+    <div id="message" class="message">
+      レバーONでスタート。<br>
+      タコが連続で揃うとAT期待度アップたこ。
+    </div>
+    <button id="reset" class="reset">リセット</button>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const STORAGE_KEY = "takoyaki_slot_at_full_v1";
+
+  const SYMBOLS = [
+    { id:"tako", emoji:"🐙" },
+    { id:"fire", emoji:"🔥" },
+    { id:"takoyaki", emoji:"🍙" },
+    { id:"rainbow", emoji:"🌈" },
+    { id:"bomb", emoji:"💥" },
+    { id:"sauce", emoji:"🟤" },
+    { id:"star", emoji:"⭐" }
+  ];
+
+  const PAY = {
+    cost:3,
+    big:120,
+    reg:45,
+    replay:3,
+    koyaku:8,
+    atKoyaku:12
+  };
+
+  const reels = [
+    document.getElementById("reel0"),
+    document.getElementById("reel1"),
+    document.getElementById("reel2")
+  ];
+
+  const strips = reels.map(r => r.querySelector(".reel-strip"));
+
+  const stopBtns = [
+    document.getElementById("stop0"),
+    document.getElementById("stop1"),
+    document.getElementById("stop2")
+  ];
+
+  const lever = document.getElementById("lever");
+  const resetBtn = document.getElementById("reset");
+  const lamp = document.getElementById("lamp");
+  const message = document.getElementById("message");
+  const bonusPanel = document.getElementById("bonusPanel");
+  const modePanel = document.getElementById("modePanel");
+  const takoMeter = document.getElementById("takoMeter");
+
+  const reelSmoke = document.getElementById("reelSmoke");
+  const naviTitle = document.getElementById("naviTitle");
+  const naviSub = document.getElementById("naviSub");
+
+  const medalEl = document.getElementById("medal");
+  const gamesEl = document.getElementById("games");
+  const bigEl = document.getElementById("big");
+  const atCountEl = document.getElementById("atCount");
+
+  let audioCtx = null;
+  let reelSoundTimer = null;
+
+  let state = loadState();
+
+  let isSpinning = false;
+  let stopped = [true,true,true];
+  let stopOrder = [];
+  let result = null;
+  let reelTimers = [null,null,null];
+  let visibleSymbols = ["tako","tako","tako"];
+
+  initMeter();
+  initReels();
+  render();
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const s = JSON.parse(raw);
+        return {
+          medal:Number(s.medal ?? 100),
+          games:Number(s.games ?? 0),
+          big:Number(s.big ?? 0),
+          reg:Number(s.reg ?? 0),
+          atCount:Number(s.atCount ?? 0),
+          mode:s.mode || "normal",
+          takoMeter:Number(s.takoMeter ?? 0),
+          atGames:Number(s.atGames ?? 0),
+          atTotalAdded:Number(s.atTotalAdded ?? 0),
+          bonusStock:s.bonusStock || null
+        };
+      }
+    }catch(e){}
+
+    return {
+      medal:100,
+      games:0,
+      big:0,
+      reg:0,
+      atCount:0,
+      mode:"normal",
+      takoMeter:0,
+      atGames:0,
+      atTotalAdded:0,
+      bonusStock:null
+    };
+  }
+
+  function saveState(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function initMeter(){
+    takoMeter.innerHTML = "";
+    for(let i=0;i<5;i++){
+      const d = document.createElement("div");
+      d.className = "tako-dot";
+      d.textContent = "🐙";
+      takoMeter.appendChild(d);
+    }
+  }
+
+  function updateMeter(){
+    [...takoMeter.children].forEach((el,i) => {
+      el.classList.toggle("on", i < state.takoMeter);
+    });
+  }
+
+  function render(){
+    medalEl.textContent = state.medal;
+    gamesEl.textContent = state.games;
+    bigEl.textContent = state.big + state.reg;
+    atCountEl.textContent = state.atCount;
+
+    lever.disabled = isSpinning || state.medal < PAY.cost;
+
+    updateMeter();
+
+    if(state.mode === "normal"){
+      modePanel.textContent = "通常時";
+    }else if(state.mode === "atPrepare"){
+      modePanel.textContent = "AT突入準備中｜小役で上乗せ抽選";
+    }else if(state.mode === "at"){
+      modePanel.textContent = "AT中｜残り " + state.atGames + "G";
+    }else if(state.mode === "bonus"){
+      modePanel.textContent = "ボーナス確定｜絵柄を狙え";
+    }
+
+    if(state.bonusStock){
+      bonusPanel.textContent = state.bonusStock === "big" ? "BIG確定!! 🌈を狙え" : "REG確定!! 💥を狙え";
+    }else if(state.mode === "at"){
+      bonusPanel.textContent = "AT RUSH!!";
+    }else if(state.mode === "atPrepare"){
+      bonusPanel.textContent = "AT準備中!!";
+    }else{
+      bonusPanel.textContent = "BIG CHANCE!!";
+    }
+  }
+
+  function initReels(){
+    strips.forEach((strip, index) => {
+      strip.innerHTML = "";
+      const loop = [...SYMBOLS,...SYMBOLS,...SYMBOLS,...SYMBOLS];
+
+      loop.forEach(sym => {
+        const div = document.createElement("div");
+        div.className = "symbol";
+        div.textContent = sym.emoji;
+        strip.appendChild(div);
+      });
+
+      setCenterSymbol(index, "tako");
+    });
+  }
+
+  function symbolById(id){
+    return SYMBOLS.find(s => s.id === id) || SYMBOLS[0];
+  }
+
+  function setCenterSymbol(reelIndex, symbolId){
+    const strip = strips[reelIndex];
+    strip.innerHTML = "";
+
+    const before = randomSymbol();
+    const after = randomSymbol();
+    const center = symbolById(symbolId);
+
+    [before, center, after, ...SYMBOLS, ...SYMBOLS].forEach(sym => {
+      const div = document.createElement("div");
+      div.className = "symbol";
+      div.textContent = sym.emoji;
+      strip.appendChild(div);
+    });
+
+    strip.style.transform = "translateY(0)";
+    visibleSymbols[reelIndex] = symbolId;
+  }
+
+  function randomSymbol(){
+    return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+  }
+
+  function rand(max){
+    return Math.floor(Math.random() * max);
+  }
+
+  function chance(p){
+    return Math.random() < p;
+  }
+
+  function decideResult(){
+    if(state.bonusStock){
+      return {
+        role:"bonusStock",
+        bonusType:state.bonusStock,
+        target:state.bonusStock === "big" ? "rainbow" : "bomb",
+        symbols:null,
+        pekaTiming:"already"
+      };
+    }
+
+    if(state.mode === "at"){
+      return decideAtResult();
+    }
+
+    if(state.mode === "atPrepare"){
+      return decideAtPrepareResult();
+    }
+
+    const r = Math.random();
+
+    if(r < 0.010){
+      const type = chance(.72) ? "big" : "reg";
+      return {
+        role:"bonus",
+        bonusType:type,
+        target:type === "big" ? "rainbow" : "bomb",
+        symbols:null,
+        pekaTiming:chance(.55) ? "lever" : "third"
+      };
+    }
+
+    if(r < 0.130){
+      return {
+        role:"replay",
+        target:"tako",
+        symbols:["tako","tako","tako"],
+        smoke:true,
+        navi:"🐙を狙え！"
+      };
+    }
+
+    if(r < 0.355){
+      const k = pick(["fire","takoyaki","sauce","star"]);
+      return {
+        role:"koyaku",
+        target:k,
+        symbols:[k,k,k],
+        smoke:true,
+        navi:symbolById(k).emoji + "を狙え！"
+      };
+    }
+
+    return {
+      role:"miss",
+      symbols:makeMissSymbols()
+    };
+  }
+
+  function decideAtPrepareResult(){
+    const r = Math.random();
+
+    if(r < 0.55){
+      const k = pick(["fire","takoyaki","sauce","star"]);
+      return {
+        role:"prepareKoyaku",
+        target:k,
+        symbols:[k,k,k],
+        smoke:true,
+        order:randomOrder(),
+        navi:symbolById(k).emoji + " 押し順ナビ"
+      };
+    }
+
+    if(r < 0.75){
+      return {
+        role:"atStart",
+        symbols:makeMissSymbols()
+      };
+    }
+
+    return {
+      role:"miss",
+      symbols:makeMissSymbols()
+    };
+  }
+
+  function decideAtResult(){
+    const r = Math.random();
+
+    if(r < 0.62){
+      const k = pick(["fire","takoyaki","sauce","star"]);
+      return {
+        role:"atKoyaku",
+        target:k,
+        symbols:[k,k,k],
+        smoke:true,
+        order:randomOrder(),
+        navi:symbolById(k).emoji + " 押し順ナビ"
+      };
+    }
+
+    if(r < 0.73){
+      return {
+        role:"replay",
+        target:"tako",
+        symbols:["tako","tako","tako"],
+        smoke:true,
+        order:randomOrder(),
+        navi:"🐙 押し順ナビ"
+      };
+    }
+
+    return {
+      role:"miss",
+      symbols:makeMissSymbols()
+    };
+  }
+
+  function pick(arr){
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function randomOrder(){
+    const orders = [
+      [0,1,2],
+      [0,2,1],
+      [1,0,2],
+      [1,2,0],
+      [2,0,1],
+      [2,1,0]
+    ];
+    return pick(orders);
+  }
+
+  function orderText(order){
+    const names = ["左","中","右"];
+    return order.map((n,i) => (i+1) + "：" + names[n]).join(" → ");
+  }
+
+  function makeMissSymbols(){
+    const ids = SYMBOLS.map(s => s.id);
+    let arr;
+
+    do{
+      arr = [pick(ids),pick(ids),pick(ids)];
+    }while(
+      arr[0] === arr[1] &&
+      arr[1] === arr[2] &&
+      ["rainbow","bomb","tako","fire","takoyaki","sauce","star"].includes(arr[0])
+    );
+
+    return arr;
+  }
+
+  function startSpin(){
+    unlockAudio();
+
+    if(isSpinning) return;
+    if(state.medal < PAY.cost){
+      playErrorSound();
+      setMessage("メダルが足りないたこ。", "");
+      return;
+    }
+
+    playLeverSound();
+
+    state.medal -= PAY.cost;
+    state.games += 1;
+
+    if(state.mode === "at" && state.atGames > 0){
+      state.atGames -= 1;
+      if(state.atGames <= 0){
+        state.mode = "normal";
+        state.atGames = 0;
+        state.atTotalAdded = 0;
+        setMessage("AT終了。<br>またタコを集めるたこ。", "");
+      }
+    }
+
+    result = decideResult();
+    isSpinning = true;
+    stopped = [false,false,false];
+    stopOrder = [];
+
+    hideNavi();
+
+    if(result.role === "bonus" && result.pekaTiming === "lever"){
+      setLamp(true);
+      playPekaSound();
+      state.bonusStock = result.bonusType;
+      state.mode = "bonus";
+      setMessage("レバーONでペカッ！<br>" + bonusLabel(result.bonusType) + "確定。絵柄を狙うたこ。", "hot");
+    }else{
+      if(!state.bonusStock) setLamp(false);
+      setMessage("リール回転中……<br>好きな順番で止めるたこ。", "");
+    }
+
+    if(result.smoke){
+      showNavi(result);
+    }else if(result.role === "bonusStock"){
+      showBonusAim();
+    }
+
+    startReelLoopSound();
+
+    reels.forEach((reel, i) => {
+      reel.classList.add("spinning");
+      stopBtns[i].disabled = false;
+
+      reelTimers[i] = setInterval(() => {
+        fillRandomStrip(i);
+      }, 105);
+    });
+
+    saveState();
+    render();
+  }
+
+  function showNavi(res){
+    reelSmoke.classList.add("show");
+    naviTitle.textContent = res.navi || "チャンス";
+    if(res.order){
+      naviSub.textContent = orderText(res.order);
+    }else{
+      naviSub.textContent = "小役を狙え。ナビ外れは……？";
+    }
+  }
+
+  function showBonusAim(){
+    reelSmoke.classList.add("show");
+    naviTitle.textContent = state.bonusStock === "big" ? "🌈を狙え！" : "💥を狙え！";
+    naviSub.textContent = "目押し成功でボーナス入賞";
+  }
+
+  function hideNavi(){
+    reelSmoke.classList.remove("show");
+    naviTitle.textContent = "";
+    naviSub.textContent = "";
+  }
+
+  function fillRandomStrip(reelIndex){
+    const strip = strips[reelIndex];
+    strip.innerHTML = "";
+
+    for(let i=0; i<12; i++){
+      const div = document.createElement("div");
+      div.className = "symbol";
+      div.textContent = randomSymbol().emoji;
+      strip.appendChild(div);
+    }
+  }
+
+  function stopReel(index){
+    unlockAudio();
+
+    if(!isSpinning || stopped[index]) return;
+
+    playStopSound(index);
+
+    stopped[index] = true;
+    stopBtns[index].disabled = true;
+    stopOrder.push(index);
+
+    clearInterval(reelTimers[index]);
+    reelTimers[index] = null;
+
+    reels[index].classList.remove("spinning");
+
+    const symbol = decideStoppedSymbol(index);
+    setCenterSymbol(index, symbol);
+
+    vibrate(35);
+
+    if(stopped.every(Boolean)){
+      stopReelLoopSound();
+      finishSpin();
+    }
+  }
+
+  function decideStoppedSymbol(index){
+    if(result.role === "bonus" || result.role === "bonusStock"){
+      const target = result.target;
+
+      if(chance(.72)){
+        return target;
+      }
+
+      return pick(SYMBOLS.map(s => s.id).filter(id => id !== target));
+    }
+
+    if(result.order){
+      const correctSoFar = stopOrder.every((v,i) => v === result.order[i]);
+
+      if(correctSoFar){
+        return result.symbols[index];
+      }
+
+      return makeWrongSymbol(result.target);
+    }
+
+    if(result.symbols){
+      if(result.smoke && chance(.18)){
+        return makeWrongSymbol(result.target);
+      }
+
+      return result.symbols[index];
+    }
+
+    return randomSymbol().id;
+  }
+
+  function makeWrongSymbol(target){
+    const ids = SYMBOLS.map(s => s.id).filter(id => id !== target);
+    return pick(ids);
+  }
+
+  function finishSpin(){
+    isSpinning = false;
+    stopBtns.forEach(btn => btn.disabled = true);
+
+    const line = [...visibleSymbols];
+    const isTriple = line[0] === line[1] && line[1] === line[2];
+    const tripleId = isTriple ? line[0] : null;
+
+    if(result.role === "bonus" && result.pekaTiming === "third" && !state.bonusStock){
+      setLamp(true);
+      playPekaSound();
+      state.bonusStock = result.bonusType;
+      state.mode = "bonus";
+      setMessage("第3停止でペカッ！<br>" + bonusLabel(result.bonusType) + "確定。次ゲームから絵柄を狙うたこ。", "hot");
+      saveState();
+      render();
+      return;
+    }
+
+    if(result.role === "bonus" || result.role === "bonusStock"){
+      handleBonusAim(line);
+      return;
+    }
+
+    if(result.smoke && result.target){
+      const targetHit = isTriple && tripleId === result.target;
+
+      if(!targetHit && !result.order){
+        forceBonusByNaviMiss();
+        return;
+      }
+
+      if(!targetHit && result.order){
+        setMessage("押し順ミス。<br>小役はこぼれたたこ。", "");
+        saveState();
+        render();
+        return;
+      }
+    }
+
+    if(result.role === "replay" && isTriple && tripleId === "tako"){
+      handleTakoReplay();
+    }else if(result.role === "koyaku" && isTriple){
+      state.medal += PAY.koyaku;
+      setMessage(symbolById(tripleId).emoji + symbolById(tripleId).emoji + symbolById(tripleId).emoji + "<br>小役成立！<br>" + PAY.koyaku + "メダル獲得。", "replay");
+      resetTakoMeter();
+    }else if(result.role === "prepareKoyaku" && isTriple){
+      state.medal += PAY.koyaku;
+      const add = lotteryPrepareAdd();
+      setMessage("AT準備中の小役成功！<br>" + PAY.koyaku + "メダル獲得。<br>" + addText(add), "at");
+    }else if(result.role === "atKoyaku" && isTriple){
+      state.medal += PAY.atKoyaku;
+      const add = lotteryAtAdd();
+      setMessage("AT中 小役成功！<br>" + PAY.atKoyaku + "メダル獲得。<br>" + addText(add), "at");
+    }else if(result.role === "atStart"){
+      startAt();
+    }else{
+      handleMiss();
+    }
+
+    if(state.mode === "at" && state.atGames <= 0){
+      state.mode = "normal";
+    }
+
+    saveState();
+    render();
+  }
+
+  function handleBonusAim(line){
+    const target = state.bonusStock === "big" ? "rainbow" : "bomb";
+    const isTriple = line[0] === target && line[1] === target && line[2] === target;
+
+    if(isTriple){
+      if(state.bonusStock === "big"){
+        state.medal += PAY.big;
+        state.big += 1;
+        playBigSound();
+        setMessage("🌈🌈🌈<br>神焼きBONUS入賞！<br>" + PAY.big + "メダル獲得！", "big");
+      }else{
+        state.medal += PAY.reg;
+        state.reg += 1;
+        playRegSound();
+        setMessage("💥💥💥<br>半焼けBONUS入賞！<br>" + PAY.reg + "メダル獲得！", "reg");
+      }
+
+      state.bonusStock = null;
+      state.mode = "normal";
+      setLamp(false);
+      resetTakoMeter();
+    }else{
+      setLamp(true);
+      setMessage("ボーナス絵柄を狙え！<br>まだ確定中たこ。", "hot");
+      state.mode = "bonus";
+    }
+
+    saveState();
+    render();
+  }
+
+  function forceBonusByNaviMiss(){
+    const type = chance(.70) ? "big" : "reg";
+    state.bonusStock = type;
+    state.mode = "bonus";
+    setLamp(true);
+    playPekaSound();
+    setMessage("ナビ外れ発生……！<br>ボーナス確定たこ！<br>" + bonusLabel(type) + "を狙え。", "hot");
+    saveState();
+    render();
+  }
+
+  function handleTakoReplay(){
+    state.medal += PAY.replay;
+    state.takoMeter = Math.min(5, state.takoMeter + 1);
+
+    let txt = "🐙🐙🐙<br>タコ揃い！<br>タコメーター +" + 1 + "。";
+
+    if(state.takoMeter >= 5){
+      txt += "<br>5連続達成！AT確定たこ！";
+      enterAtPrepare(true);
+    }else if(state.takoMeter >= 3){
+      const rates = {3:.35,4:.60};
+      if(chance(rates[state.takoMeter] || .35)){
+        txt += "<br>AT当選！準備中へ移行たこ。";
+        enterAtPrepare(false);
+      }else{
+        txt += "<br>AT期待度上昇中……。";
+      }
+    }else{
+      txt += "<br>3個目から期待度が跳ねるたこ。";
+    }
+
+    playReplaySound();
+    setMessage(txt, "replay");
+  }
+
+  function enterAtPrepare(certain){
+    state.mode = "atPrepare";
+    const base = lotteryAtGames(certain);
+    state.atGames = base;
+    state.atTotalAdded = 0;
+    resetTakoMeter();
+    playPekaSound();
+  }
+
+  function startAt(){
+    if(state.atGames <= 0){
+      state.atGames = lotteryAtGames(false);
+    }
+    state.mode = "at";
+    state.atCount += 1;
+    playBigSound();
+    setMessage("AT突入！<br>残り " + state.atGames + "G。<br>押し順ナビで小役を取るたこ！", "at");
+  }
+
+  function lotteryAtGames(certain){
+    const r = Math.random();
+
+    if(certain){
+      if(r < .55) return 30;
+      if(r < .82) return 50;
+      if(r < .95) return 100;
+      return 10;
+    }
+
+    if(r < .55) return 10;
+    if(r < .82) return 30;
+    if(r < .96) return 50;
+    return 100;
+  }
+
+  function lotteryPrepareAdd(){
+    const r = Math.random();
+    let add = 0;
+
+    if(r < .18) add = 5;
+    else if(r < .26) add = 10;
+    else if(r < .30) add = 30;
+
+    if(add > 0){
+      state.atGames += add;
+      state.atTotalAdded += add;
+      playPekaSound();
+    }
+
+    return add;
+  }
+
+  function lotteryAtAdd(){
+    const r = Math.random();
+    let add = 0;
+
+    if(r < .15) add = 5;
+    else if(r < .23) add = 10;
+    else if(r < .27) add = 30;
+    else if(r < .285) add = 50;
+
+    if(add > 0){
+      state.atGames += add;
+      state.atTotalAdded += add;
+      playPekaSound();
+      vibrate([60,40,90]);
+    }
+
+    return add;
+  }
+
+  function addText(add){
+    if(add > 0){
+      return "上乗せ +" + add + "G！";
+    }
+    return "上乗せなし。まだ焼き足りないたこ。";
+  }
+
+  function resetTakoMeter(){
+    state.takoMeter = 0;
+  }
+
+  function handleMiss(){
+    resetTakoMeter();
+
+    if(state.mode === "atPrepare"){
+      setMessage("AT準備中。<br>小役を引けば上乗せチャンスたこ。", "");
+      return;
+    }
+
+    if(state.mode === "at"){
+      setMessage("AT中ハズレ。<br>残り " + state.atGames + "G。", "");
+      return;
+    }
+
+    setLamp(false);
+    playMissSound();
+    setMessage("ハズレ。<br>タコメーターはリセットたこ。", "");
+  }
+
+  function bonusLabel(type){
+    return type === "big" ? "神焼きBONUS" : "半焼けBONUS";
+  }
+
+  function setLamp(on){
+    lamp.classList.toggle("on", on);
+    lamp.textContent = on ? "✨" : "🐙";
+  }
+
+  function setMessage(text, type){
+    message.className = "message";
+    if(type) message.classList.add(type);
+    message.innerHTML = text;
+  }
+
+  function vibrate(pattern){
+    if(navigator.vibrate){
+      navigator.vibrate(pattern);
+    }
+  }
+
+  function unlockAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    if(audioCtx.state === "suspended"){
+      audioCtx.resume();
+    }
+  }
+
+  function tone(freq, duration, type = "square", volume = 0.08, delay = 0){
+    if(!audioCtx) return;
+
+    const now = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + duration + 0.03);
+  }
+
+  function noise(duration = 0.08, volume = 0.06, delay = 0){
+    if(!audioCtx) return;
+
+    const now = audioCtx.currentTime + delay;
+    const bufferSize = audioCtx.sampleRate * duration;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for(let i = 0; i < bufferSize; i++){
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const src = audioCtx.createBufferSource();
+    const gain = audioCtx.createGain();
+
+    src.buffer = buffer;
+
+    gain.gain.setValueAtTime(volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    src.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    src.start(now);
+    src.stop(now + duration);
+  }
+
+  function playLeverSound(){
+    tone(150, 0.05, "sawtooth", 0.08);
+    tone(90, 0.08, "square", 0.06, 0.05);
+  }
+
+  function startReelLoopSound(){
+    stopReelLoopSound();
+
+    reelSoundTimer = setInterval(() => {
+      if(!isSpinning) return;
+      noise(0.025, 0.025);
+      tone(95 + Math.random() * 25, 0.025, "square", 0.025);
+    }, 95);
+  }
+
+  function stopReelLoopSound(){
+    if(reelSoundTimer){
+      clearInterval(reelSoundTimer);
+      reelSoundTimer = null;
+    }
+  }
+
+  function playStopSound(index){
+    tone(220 + index * 55, 0.055, "square", 0.09);
+    tone(120 + index * 30, 0.045, "triangle", 0.06, 0.04);
+  }
+
+  function playPekaSound(){
+    tone(880, 0.08, "sine", 0.12);
+    tone(1320, 0.10, "sine", 0.10, 0.08);
+    tone(1760, 0.13, "sine", 0.08, 0.17);
+  }
+
+  function playBigSound(){
+    tone(523.25, 0.10, "square", 0.10, 0.00);
+    tone(659.25, 0.10, "square", 0.10, 0.12);
+    tone(783.99, 0.10, "square", 0.10, 0.24);
+    tone(1046.5, 0.22, "square", 0.11, 0.36);
+    tone(1318.5, 0.24, "sine", 0.08, 0.58);
+  }
+
+  function playRegSound(){
+    tone(392, 0.10, "square", 0.09, 0.00);
+    tone(523.25, 0.10, "square", 0.09, 0.13);
+    tone(659.25, 0.18, "square", 0.09, 0.26);
+  }
+
+  function playReplaySound(){
+    tone(440, 0.08, "triangle", 0.07, 0.00);
+    tone(660, 0.08, "triangle", 0.07, 0.10);
+  }
+
+  function playMissSound(){
+    tone(180, 0.07, "sawtooth", 0.045, 0.00);
+    tone(120, 0.10, "sawtooth", 0.035, 0.08);
+  }
+
+  function playErrorSound(){
+    tone(100, 0.12, "sawtooth", 0.08);
+    tone(80, 0.12, "sawtooth", 0.06, 0.11);
+  }
+
+  lever.addEventListener("click", startSpin);
+
+  stopBtns.forEach((btn, index) => {
+    btn.addEventListener("click", () => stopReel(index));
+  });
+
+  resetBtn.addEventListener("click", () => {
+    unlockAudio();
+    playStopSound(0);
+
+    localStorage.removeItem(STORAGE_KEY);
+
+    state = {
+      medal:100,
+      games:0,
+      big:0,
+      reg:0,
+      atCount:0,
+      mode:"normal",
+      takoMeter:0,
+      atGames:0,
+      atTotalAdded:0,
+      bonusStock:null
+    };
+
+    isSpinning = false;
+    stopped = [true,true,true];
+    stopOrder = [];
+    result = null;
+
+    reelTimers.forEach(t => {
+      if(t) clearInterval(t);
+    });
+    reelTimers = [null,null,null];
+
+    stopReelLoopSound();
+
+    reels.forEach((reel, i) => {
+      reel.classList.remove("spinning");
+      setCenterSymbol(i, "tako");
+    });
+
+    stopBtns.forEach(btn => btn.disabled = true);
+
+    hideNavi();
+    setLamp(false);
+    setMessage("リセット完了。<br>レバーONでスタートたこ。", "");
+
+    saveState();
+    render();
+  });
+
+})();
+</script>
+
+</body>
+</html>
