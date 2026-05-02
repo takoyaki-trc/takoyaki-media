@@ -1430,7 +1430,6 @@ html.is-night .boss-gate{
 
 <!-- ▼ GitHub（jsDelivr）からJS読み込み（defer推奨） -->
 <script defer src="./assets/takofarm3.js?v=20260129a"></script>
-
 <footer id="siteFooter" style="
   width:100%;
   margin: 10px auto 0;
@@ -1487,37 +1486,33 @@ html.is-night .boss-gate{
 (() => {
   "use strict";
 
-  // ===== 主要キー（必要ならここだけ増やせる） =====
   const KEY = {
     resident: "trc_v1_resident",
     lastLogin: "trc_v1_last_login",
   };
 
   const EXIST = {
-    farmBook:      "tf_v1_book",
-    farmInv:       "tf_v1_inv",
-    rotenOcto:     "roten_v1_octo",
-    tower:         "tower_v1_state",
-    fish:          "fish_v1_state",
+    farmBook: "tf_v1_book",
+    farmInv: "tf_v1_inv",
+    rotenOcto: "roten_v1_octo",
+    tower: "tower_v1_state",
+    fish: "fish_v1_state",
     myshopMonthlySales: "ttc_myshop_monthly_sales_v1",
-    // ★称号の頂
-    monthly:       "ttc_monthly_stats_v1",
-    history:       "ttc_monthly_history_v1",
-    godfarm:       "ttc_godfarm_v1",
-    godbonus:      "ttc_god_bonus_v1",
 
-    // ★募集板 / 熱量 / 好感度
+    monthly: "ttc_monthly_stats_v1",
+    history: "ttc_monthly_history_v1",
+    godfarm: "ttc_godfarm_v1",
+    godbonus: "ttc_god_bonus_v1",
+
     matchingBoard: "ttc_matching_board_v7",
-    matchingMeta:  "ttc_matching_meta_v6",
-    matchingHeat:  "matching_heat_v1",
-    affection:     "roten_v1_guest_affection",
+    matchingMeta: "ttc_matching_meta_v6",
+    matchingHeat: "matching_heat_v1",
+    affection: "roten_v1_guest_affection",
 
-    // ★かすみぴガチャ
-    kasumiGacha:   "kasumipi_gacha_v2",
-    kasumiBook:    "kasumipi_gacha_book_v2"
+    kasumiGacha: "kasumipi_gacha_v2",
+    kasumiBook: "kasumipi_gacha_book_v2"
   };
 
-  // ===== utils =====
   const getRaw = (k) => {
     const v = localStorage.getItem(k);
     return (v === null || v === undefined) ? null : String(v);
@@ -1563,7 +1558,6 @@ html.is-night .boss-gate{
     return isInstagramInAppBrowser() || isYahooInAppBrowser() || isFirefoxLike();
   }
 
-  // ===== 図鑑slim（count+img等） =====
   function slimBookRawKeepImg() {
     const raw = getRaw(EXIST.farmBook);
     if (!raw) return null;
@@ -1590,6 +1584,41 @@ html.is-night .boss-gate{
 
     const slim = { ver: book.ver ?? 1, got: outGot };
     return safeStringify(slim);
+  }
+
+  function normalizeMonthlyHistoryRaw(raw){
+    try{
+      const parsed = JSON.parse(String(raw));
+
+      if (Array.isArray(parsed)) {
+        return JSON.stringify(parsed.slice(0, 24));
+      }
+
+      if (parsed && typeof parsed === "object") {
+        if (Array.isArray(parsed.history)) {
+          return JSON.stringify(parsed.history.slice(0, 24));
+        }
+
+        const arr = Object.keys(parsed).map(monthKey => {
+          const v = parsed[monthKey];
+          if (!v || typeof v !== "object") return null;
+
+          return {
+            monthKey,
+            title: v.title || v.rank || v.name || "",
+            harvest: Number(v.harvest || 0),
+            sales: Number(v.sales || 0),
+            fishing: Number(v.fishing || 0),
+            tower: Number(v.tower || 0),
+            grantedSeeds: Array.isArray(v.grantedSeeds) ? v.grantedSeeds : []
+          };
+        }).filter(Boolean);
+
+        return JSON.stringify(arr.slice(0, 24));
+      }
+    }catch(_){}
+
+    return "[]";
   }
 
   function findFarmProgressKeys() {
@@ -1703,7 +1732,6 @@ html.is-night .boss-gate{
     return out.slice(0, 30);
   }
 
-  // ===== バックアップ作成 =====
   function buildSlimBackupPayload() {
     const keys = {};
 
@@ -1711,8 +1739,8 @@ html.is-night .boss-gate{
     keys[KEY.lastLogin] = getRaw(KEY.lastLogin);
 
     keys[EXIST.rotenOcto] = getRaw(EXIST.rotenOcto);
-    keys[EXIST.farmInv]   = getRaw(EXIST.farmInv);
-    keys[EXIST.farmBook]  = slimBookRawKeepImg();
+    keys[EXIST.farmInv] = getRaw(EXIST.farmInv);
+    keys[EXIST.farmBook] = slimBookRawKeepImg();
 
     for (const k of findFarmProgressKeys()) {
       const v = getRaw(k);
@@ -1736,18 +1764,24 @@ html.is-night .boss-gate{
       if (v != null) keys[k] = v;
     }
 
-    if (getRaw(EXIST.monthly)  != null) keys[EXIST.monthly]  = getRaw(EXIST.monthly);
+    if (getRaw(EXIST.monthly) != null) keys[EXIST.monthly] = getRaw(EXIST.monthly);
+
     if (getRaw(EXIST.myshopMonthlySales) != null) {
-  keys[EXIST.myshopMonthlySales] = getRaw(EXIST.myshopMonthlySales);
-}
-    if (getRaw(EXIST.history)  != null) keys[EXIST.history]  = getRaw(EXIST.history);
-    if (getRaw(EXIST.godfarm)  != null) keys[EXIST.godfarm]  = getRaw(EXIST.godfarm);
+      keys[EXIST.myshopMonthlySales] = getRaw(EXIST.myshopMonthlySales);
+    }
+
+    if (getRaw(EXIST.history) != null) {
+      keys[EXIST.history] = getRaw(EXIST.history);
+    }
+
+    if (getRaw(EXIST.godfarm) != null) keys[EXIST.godfarm] = getRaw(EXIST.godfarm);
     if (getRaw(EXIST.godbonus) != null) keys[EXIST.godbonus] = getRaw(EXIST.godbonus);
 
     for (const k of findMatchingKeys()) {
       const v = getRaw(k);
       if (v != null) keys[k] = v;
     }
+
     if (getRaw(EXIST.affection) != null) keys[EXIST.affection] = getRaw(EXIST.affection);
 
     for (const k of findKasumiGachaKeys()) {
@@ -1761,15 +1795,14 @@ html.is-night .boss-gate{
 
     return {
       app: "takoyaki-trc",
-      ver: 8,
-      kind: "slim+roten+title+matching+gacha-compatible",
+      ver: 9,
+      kind: "slim+roten+title+matching+gacha-compatible+history-safe",
       exportedAt: new Date().toISOString(),
-      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り/称号の頂/募集板/熱量/好感度/かすみぴガチャ を保存。旧keys形式バックアップの復元にも対応。",
+      note: "住民票/オクト/資材/図鑑(count+img+id)/畑進行(tf_v1_*)/露店進行(roten_v1_*)/タワー/釣り/称号の頂/称号ヒストリー/募集板/熱量/好感度/かすみぴガチャ を保存。復元時に称号ヒストリー形式を安全補正。",
       keys
     };
   }
 
-  // ===== 共通モーダル基礎 =====
   function createOverlayModal(id, innerHtml) {
     let modal = document.getElementById(id);
     if (modal) return modal;
@@ -1797,7 +1830,6 @@ html.is-night .boss-gate{
     return modal;
   }
 
-  // ===== JSON表示保存モーダル =====
   function ensureBackupTextModal() {
     return createOverlayModal("trcBackupTextModal", `
       <div style="
@@ -1935,7 +1967,6 @@ html.is-night .boss-gate{
     };
   }
 
-  // ===== バックアップ方法選択モーダル =====
   function ensureBackupChoiceModal() {
     return createOverlayModal("trcBackupChoiceModal", `
       <div style="
@@ -2005,7 +2036,6 @@ html.is-night .boss-gate{
     `);
   }
 
-  // ===== 復元モーダル生成 =====
   function ensureRestoreChoiceModal() {
     return createOverlayModal("trcRestoreChoiceModal", `
       <div style="
@@ -2126,7 +2156,6 @@ html.is-night .boss-gate{
     `);
   }
 
-  // ===== 保存処理 =====
   async function tryFileDownload(jsonText, filename) {
     try {
       const blob = new Blob([jsonText], { type: "application/json" });
@@ -2223,7 +2252,6 @@ html.is-night .boss-gate{
     return false;
   }
 
-  // ===== 復元 =====
   function restoreFromParsedData(data) {
     if (!data || typeof data !== "object") {
       alert("この内容はバックアップ形式ではありません。");
@@ -2250,47 +2278,62 @@ html.is-night .boss-gate{
       `書き出し日時: ${exportedAt}\n\n` +
       "続行しますか？"
     );
+
     if (!ok) return false;
 
     function getCurrentMonthKey(){
-  const d = new Date();
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
-}
-
-function getBackupMonthKey(raw){
-  try{
-    const obj = JSON.parse(raw);
-    return obj && obj.monthKey ? String(obj.monthKey) : "";
-  }catch(e){
-    return "";
-  }
-}
-
-const MONTHLY_PROTECTED_KEYS = new Set([
-  "ttc_monthly_stats_v1",
-  "ttc_myshop_monthly_sales_v1"
-]);
-
-const currentMonthKey = getCurrentMonthKey();
-
-for (const k of keys) {
-  const v = source[k];
-
-  if (MONTHLY_PROTECTED_KEYS.has(k)) {
-    const backupMonthKey = getBackupMonthKey(v);
-
-    if (!backupMonthKey || backupMonthKey !== currentMonthKey) {
-      console.warn("月間記録は復元しません:", k, backupMonthKey || "monthKeyなし");
-      continue;
+      const d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
     }
-  }
 
-  if (v === null || v === undefined) {
-    localStorage.removeItem(k);
-  } else {
-    localStorage.setItem(k, String(v));
-  }
-}
+    function getBackupMonthKey(raw){
+      try{
+        const obj = JSON.parse(raw);
+        return obj && obj.monthKey ? String(obj.monthKey) : "";
+      }catch(e){
+        return "";
+      }
+    }
+
+    const MONTHLY_PROTECTED_KEYS = new Set([
+      "ttc_monthly_stats_v1",
+      "ttc_myshop_monthly_sales_v1"
+    ]);
+
+    const currentMonthKey = getCurrentMonthKey();
+
+    for (const k of keys) {
+      const v = source[k];
+
+      if (MONTHLY_PROTECTED_KEYS.has(k)) {
+        const backupMonthKey = getBackupMonthKey(v);
+
+        if (!backupMonthKey || backupMonthKey !== currentMonthKey) {
+          console.warn("月間記録は復元しません:", k, backupMonthKey || "monthKeyなし");
+          continue;
+        }
+      }
+
+      if (v === null || v === undefined) {
+        localStorage.removeItem(k);
+      } else {
+        if (k === EXIST.history || k === "ttc_monthly_history_v1") {
+          try {
+            const parsed = JSON.parse(String(v));
+
+            if (Array.isArray(parsed)) {
+              localStorage.setItem(k, String(v));
+            } else {
+              localStorage.setItem(k, normalizeMonthlyHistoryRaw(String(v)));
+            }
+          } catch (_) {
+            localStorage.setItem(k, "[]");
+          }
+        } else {
+          localStorage.setItem(k, String(v));
+        }
+      }
+    }
 
     alert("復元しました。ページを再読み込みします。");
     location.reload();
@@ -2336,7 +2379,6 @@ for (const k of keys) {
     restoreFromParsedData(data);
   }
 
-  // ===== バックアップ方法選択 =====
   function openBackupChoiceModal() {
     const modal = ensureBackupChoiceModal();
     modal.style.display = "flex";
@@ -2345,8 +2387,8 @@ for (const k of keys) {
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `takoyaki-trc-backup_${stamp}.json`;
 
-    const btnFile  = modal.querySelector("#trcChoiceBackupFile");
-    const btnText  = modal.querySelector("#trcChoiceBackupText");
+    const btnFile = modal.querySelector("#trcChoiceBackupFile");
+    const btnText = modal.querySelector("#trcChoiceBackupText");
     const btnShare = modal.querySelector("#trcChoiceBackupShare");
     const btnClose = modal.querySelector("#trcChoiceBackupClose");
 
@@ -2370,15 +2412,14 @@ for (const k of keys) {
     };
   }
 
-  // ===== 復元方法選択 =====
   function openRestoreChoiceModal() {
     const choiceModal = ensureRestoreChoiceModal();
-    const pasteModal  = ensurePasteRestoreModal();
+    const pasteModal = ensurePasteRestoreModal();
 
     choiceModal.style.display = "flex";
 
     const btnPaste = choiceModal.querySelector("#trcChoicePaste");
-    const btnFile  = choiceModal.querySelector("#trcChoiceFile");
+    const btnFile = choiceModal.querySelector("#trcChoiceFile");
     const btnClose = choiceModal.querySelector("#trcChoiceClose");
 
     btnClose.onclick = () => {
@@ -2401,8 +2442,8 @@ for (const k of keys) {
       if (inp) inp.click();
     };
 
-    const pasteText  = pasteModal.querySelector("#trcPasteRestoreText");
-    const pasteRun   = pasteModal.querySelector("#trcPasteRestoreRun");
+    const pasteText = pasteModal.querySelector("#trcPasteRestoreText");
+    const pasteRun = pasteModal.querySelector("#trcPasteRestoreRun");
     const pasteClose = pasteModal.querySelector("#trcPasteRestoreClose");
 
     pasteClose.onclick = () => {
@@ -2414,10 +2455,9 @@ for (const k of keys) {
     };
   }
 
-  // ===== UI wiring =====
-  const btnBackup  = document.getElementById("trcFooterBackup");
+  const btnBackup = document.getElementById("trcFooterBackup");
   const btnRestore = document.getElementById("trcFooterRestore");
-  const inp        = document.getElementById("trcFooterRestoreFile");
+  const inp = document.getElementById("trcFooterRestoreFile");
 
   if (!btnBackup || !btnRestore || !inp) return;
 
@@ -2452,6 +2492,9 @@ for (const k of keys) {
 
     try {
       await restoreFromFile(f);
+    } catch (err) {
+      console.error(err);
+      alert("復元に失敗しました。ファイル形式を確認してください。");
     } finally {
       btnRestore.disabled = false;
       btnRestore.textContent = normal;
@@ -2459,9 +2502,9 @@ for (const k of keys) {
   });
 })();
 </script>
- <script src="./assets/weather2.js"></script>
 
+<script src="./assets/weather2.js"></script>
 <script defer src="https://takoyaki-trc.github.io/takoyaki-media/town/assets/takopi-navigator.js"></script>
- <script src="https://takoyaki-card.com/town/assets/js/monthly-auto-close.js"></script>
+<script src="https://takoyaki-card.com/town/assets/js/monthly-auto-close.js"></script>
 </body>
 </html>
