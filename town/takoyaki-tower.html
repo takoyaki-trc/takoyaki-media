@@ -1442,47 +1442,116 @@
     showToast._t = setTimeout(() => toastEl.classList.remove("show"), 520);
   }
 
+  function clamp01(v){ return Math.max(0, Math.min(1, v)); }
+
+  function hexToRgb(hex){
+    const h = hex.replace("#","");
+    return {
+      r:parseInt(h.slice(0,2),16),
+      g:parseInt(h.slice(2,4),16),
+      b:parseInt(h.slice(4,6),16)
+    };
+  }
+
+  function mixHex(a,b,t){
+    const A = hexToRgb(a);
+    const B = hexToRgb(b);
+    const r = Math.round(A.r + (B.r - A.r) * t);
+    const g = Math.round(A.g + (B.g - A.g) * t);
+    const bb = Math.round(A.b + (B.b - A.b) * t);
+    return `rgb(${r},${g},${bb})`;
+  }
+
   const SKY_COLORS = {
     morning:{ top:"#cfe8ff", bottom:"#fff2d4" },
-    day:    { top:"#a9cfe6", bottom:"#eaf5fb" },
-    sunset: { top:"#f0b38c", bottom:"#6b4e71" },
-    night:  { top:"#0b132b", bottom:"#1c2541" },
-    space:  { top:"#050710", bottom:"#0a1030" },
-    flare:  { top:"#05060b", bottom:"#14070b" },
+    day:{ top:"#a9cfe6", bottom:"#eaf5fb" },
+    sunset:{ top:"#f0b38c", bottom:"#6b4e71" },
+    night:{ top:"#070812", bottom:"#15152a" },
+    flare:{ top:"#240607", bottom:"#5a1409" },
+    heaven:{ top:"#bfe9ff", bottom:"#fff7dc" },
   };
 
-  function getTimePhase(floors){
+  function getStageBlend(floors){
     const f = Math.floor(Number(floors) || 0);
-    if (f <= 10) return "morning";
-    if (f <= 20) return "day";
-    if (f <= 30) return "sunset";
-    if (f <= 40) return "night";
-    if (f <= 50) return "space";
-    return "flare";
+
+    if (f < 10) return { a:"morning", b:"morning", t:0, stars:0, flare:0, heaven:0, dark:0 };
+    if (f < 20) return { a:"day", b:"day", t:0, stars:0, flare:0, heaven:0, dark:0 };
+    if (f < 30) return { a:"sunset", b:"sunset", t:0, stars:0, flare:0, heaven:0, dark:0 };
+
+    if (f < 35){
+      return { a:"night", b:"night", t:0, stars:.85, flare:0, heaven:0, dark:.92 };
+    }
+
+    if (f < 40){
+      const t = clamp01((f - 35) / 5);
+      return {
+        a:"night",
+        b:"flare",
+        t,
+        stars:.75 * (1 - t),
+        flare:t,
+        heaven:0,
+        dark:.92 * (1 - t)
+      };
+    }
+
+    if (f < 45){
+      return { a:"flare", b:"flare", t:0, stars:.10, flare:1, heaven:0, dark:0 };
+    }
+
+    if (f < 50){
+      const t = clamp01((f - 45) / 5);
+      return {
+        a:"flare",
+        b:"heaven",
+        t,
+        stars:.10 * (1 - t),
+        flare:1 - t,
+        heaven:t,
+        dark:0
+      };
+    }
+
+    return { a:"heaven", b:"heaven", t:0, stars:0, flare:0, heaven:1, dark:0 };
   }
 
   const STAR_FIELD = (() => {
     const stars = [];
-    const N = 180;
-    for (let i=0; i<N; i++){
-      const x = Math.random() * CONF.canvasW;
-      const y = Math.random() * CONF.canvasH;
-      const r = (Math.random() < 0.12) ? 2 : 1;
-      const a = 0.25 + Math.random() * 0.55;
-      const hue = (Math.random() < 0.18) ? (190 + Math.random()*40) : (0 + Math.random()*20);
-      stars.push({ x, y, r, a, hue });
+    for (let i=0; i<180; i++){
+      stars.push({
+        x:Math.random() * CONF.canvasW,
+        y:Math.random() * CONF.canvasH,
+        r:Math.random() < .12 ? 2 : 1,
+        a:.25 + Math.random() * .55,
+        hue:Math.random() < .18 ? 200 + Math.random()*40 : 35 + Math.random()*20
+      });
     }
     return stars;
   })();
 
-  function drawStars(alpha=1.0, density=1.0){
+  const HEAVEN_FEATHERS = (() => {
+    const arr = [];
+    for (let i=0; i<30; i++){
+      arr.push({
+        x:Math.random() * CONF.canvasW,
+        y:Math.random() * (CONF.canvasH + 80),
+        s:.50 + Math.random() * .90,
+        sp:.25 + Math.random() * .60,
+        rot:Math.random() * Math.PI * 2,
+        drift:.65 + Math.random() * 1.60
+      });
+    }
+    return arr;
+  })();
+
+  function drawStars(alpha=1,density=1){
     const count = Math.max(0, Math.floor(STAR_FIELD.length * density));
     ctx.save();
     ctx.globalAlpha = alpha;
     for (let i=0; i<count; i++){
       const s = STAR_FIELD[i];
-      ctx.fillStyle = `hsla(${s.hue}, 80%, 88%, ${s.a})`;
-      ctx.fillRect((s.x|0), (s.y|0), s.r, s.r);
+      ctx.fillStyle = `hsla(${s.hue},80%,88%,${s.a})`;
+      ctx.fillRect(s.x|0, s.y|0, s.r, s.r);
       if (s.r >= 2){
         ctx.fillRect((s.x|0)+1, (s.y|0)-1, 1, 1);
         ctx.fillRect((s.x|0)-1, (s.y|0)+1, 1, 1);
@@ -1491,93 +1560,229 @@
     ctx.restore();
   }
 
-  function drawSolarFlare(){
-    const cx = CONF.canvasW * 0.52;
-    const cy = CONF.canvasH * 1.12;
-    const R  = CONF.canvasH * 0.85;
-
+  function drawSolarFlare(alpha=1){
     ctx.save();
-    const g0 = ctx.createRadialGradient(cx, cy, R*0.08, cx, cy, R);
-    g0.addColorStop(0.00, "rgba(255,240,200,.95)");
-    g0.addColorStop(0.18, "rgba(255,190,90,.70)");
-    g0.addColorStop(0.42, "rgba(255,120,40,.42)");
-    g0.addColorStop(0.70, "rgba(240,60,30,.18)");
-    g0.addColorStop(1.00, "rgba(0,0,0,0)");
-    ctx.fillStyle = g0;
-    ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
-    ctx.restore();
+    ctx.globalAlpha = alpha;
 
+    const cx = CONF.canvasW * 0.5;
+    const cy = CONF.canvasH * 0.92;
+    const time = performance.now() * 0.001;
+
+    // 背景の深み：黒赤〜紫を少し入れて、安い炎っぽさを減らす
+    const deep = ctx.createLinearGradient(0, 0, 0, CONF.canvasH);
+    deep.addColorStop(0.00, "rgba(22, 5, 24, .34)");
+    deep.addColorStop(0.42, "rgba(64, 10, 18, .28)");
+    deep.addColorStop(1.00, "rgba(255, 94, 22, .16)");
+    ctx.fillStyle = deep;
+    ctx.fillRect(0, 0, CONF.canvasW, CONF.canvasH);
+
+    // 太陽の核
+    const pulse = 1 + Math.sin(time * 1.7) * 0.035;
+    const core = ctx.createRadialGradient(
+      cx, cy, 8,
+      cx, cy, CONF.canvasH * 0.72 * pulse
+    );
+    core.addColorStop(0.00, "rgba(255,255,245,1)");
+    core.addColorStop(0.10, "rgba(255,244,170,.92)");
+    core.addColorStop(0.27, "rgba(255,178,82,.64)");
+    core.addColorStop(0.52, "rgba(255,92,42,.30)");
+    core.addColorStop(0.78, "rgba(120,22,32,.13)");
+    core.addColorStop(1.00, "rgba(0,0,0,0)");
+    ctx.fillStyle = core;
+    ctx.fillRect(0, 0, CONF.canvasW, CONF.canvasH);
+
+    ctx.globalCompositeOperation = "screen";
+
+    // 揺らぐフレア。細い棒ではなく、太めの光の帯にする
+    for (let i = 0; i < 11; i++){
+      const baseAngle = (-0.72 + i * (1.44 / 10));
+      const wave = Math.sin(time * 0.9 + i * 1.37) * 0.075;
+      const angle = baseAngle + wave;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+
+      const width = 34 + Math.sin(time * 1.8 + i) * 9;
+      const height = CONF.canvasH * (0.82 + (i % 3) * 0.06);
+
+      const g = ctx.createLinearGradient(0, 20, 0, -height);
+      g.addColorStop(0.00, "rgba(255,238,150,.36)");
+      g.addColorStop(0.28, "rgba(255,178,72,.20)");
+      g.addColorStop(0.62, "rgba(255,92,50,.075)");
+      g.addColorStop(1.00, "rgba(0,0,0,0)");
+
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(-width * 0.50, 30);
+      ctx.bezierCurveTo(-width * 0.85, -height * 0.32, -width * 0.26, -height * 0.70, 0, -height);
+      ctx.bezierCurveTo(width * 0.26, -height * 0.70, width * 0.85, -height * 0.32, width * 0.50, 30);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // 太陽の輪郭リング
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    ctx.translate(cx, CONF.canvasH * 0.72);
-    const rays = 10;
-    for (let i=0; i<rays; i++){
-      const ang = (-0.55 + i*(1.10/(rays-1))) + (Math.sin((i+1)*3.1)*0.03);
-      ctx.save();
-      ctx.rotate(ang);
-      const w = 10 + i*1.2;
-      const h = CONF.canvasH * 0.95;
-      const g = ctx.createLinearGradient(0, 0, 0, -h);
-      g.addColorStop(0.00, "rgba(255,210,120,.35)");
-      g.addColorStop(0.35, "rgba(255,130,60,.14)");
-      g.addColorStop(1.00, "rgba(0,0,0,0)");
+    const ringR = 115 + Math.sin(time * 1.25) * 5;
+    const ring = ctx.createRadialGradient(cx, cy, ringR * 0.72, cx, cy, ringR);
+    ring.addColorStop(0.00, "rgba(255,255,255,0)");
+    ring.addColorStop(0.58, "rgba(255,242,160,.10)");
+    ring.addColorStop(0.76, "rgba(255,220,110,.22)");
+    ring.addColorStop(1.00, "rgba(255,110,40,0)");
+    ctx.fillStyle = ring;
+    ctx.fillRect(0,0,CONF.canvasW,CONF.canvasH);
+    ctx.restore();
+
+    // 横に走る薄いレンズフレア
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 4; i++){
+      const y = cy - 170 + i * 58 + Math.sin(time * 0.7 + i) * 4;
+      const g = ctx.createLinearGradient(0, y, CONF.canvasW, y);
+      g.addColorStop(0.00, "rgba(255,255,255,0)");
+      g.addColorStop(0.28, "rgba(255,206,105,.06)");
+      g.addColorStop(0.50, "rgba(255,250,210,.20)");
+      g.addColorStop(0.72, "rgba(255,148,66,.07)");
+      g.addColorStop(1.00, "rgba(255,255,255,0)");
       ctx.fillStyle = g;
-      ctx.fillRect(-w/2, 40, w, -h);
-      ctx.restore();
+      ctx.fillRect(0, y, CONF.canvasW, 10);
     }
     ctx.restore();
 
+    // ほんの少し火の粉。多すぎると安っぽくなるので控えめ
     ctx.save();
-    ctx.globalCompositeOperation = "screen";
-    const gx = ctx.createRadialGradient(CONF.canvasW*0.52, CONF.canvasH*0.22, 0, CONF.canvasW*0.52, CONF.canvasH*0.22, CONF.canvasW*0.55);
-    gx.addColorStop(0.00, "rgba(255,240,220,.10)");
-    gx.addColorStop(0.25, "rgba(255,180,120,.08)");
-    gx.addColorStop(0.55, "rgba(255,80,60,.04)");
-    gx.addColorStop(1.00, "rgba(0,0,0,0)");
-    ctx.fillStyle = gx;
-    ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 32; i++){
+      const px = (i * 73 + Math.sin(time + i) * 30) % CONF.canvasW;
+      const py = (CONF.canvasH - ((time * (20 + i % 5 * 7) + i * 41) % CONF.canvasH));
+      const size = 1 + (i % 3);
+      ctx.fillStyle = i % 4 === 0 ? "rgba(255,255,210,.55)" : "rgba(255,176,72,.38)";
+      ctx.fillRect(px, py, size, size);
+    }
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function drawHeaven(alpha=1){
+    const now = performance.now() * .001;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    const aura = ctx.createRadialGradient(
+      CONF.canvasW*.5, CONF.canvasH*.22, 0,
+      CONF.canvasW*.5, CONF.canvasH*.22, CONF.canvasW*.86
+    );
+    aura.addColorStop(0, "rgba(255,255,255,.80)");
+    aura.addColorStop(.30, "rgba(255,238,170,.34)");
+    aura.addColorStop(.68, "rgba(130,210,255,.18)");
+    aura.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = aura;
+    ctx.fillRect(0,0,CONF.canvasW,CONF.canvasH);
+
+    ctx.globalAlpha = alpha * .55;
+    for (let i=0; i<5; i++){
+      const y = 80 + i * 110 + Math.sin(now*.35 + i) * 10;
+      const g = ctx.createLinearGradient(0,y,CONF.canvasW,y);
+      g.addColorStop(0, "rgba(255,255,255,0)");
+      g.addColorStop(.5, "rgba(255,255,255,.30)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, y, CONF.canvasW, 18);
+    }
+
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "rgba(255,255,255,.80)";
+    ctx.strokeStyle = "rgba(255,230,170,.55)";
+    ctx.lineWidth = 1;
+
+    for (const f of HEAVEN_FEATHERS){
+      const y = (f.y + now * 28 * f.sp) % (CONF.canvasH + 70) - 45;
+      const x = f.x + Math.sin(now * f.drift + f.y * .02) * 24;
+
+      ctx.save();
+      ctx.translate(x,y);
+      ctx.rotate(Math.sin(now + f.rot) * .55);
+      ctx.scale(f.s,f.s);
+
+      ctx.beginPath();
+      ctx.moveTo(0,-12);
+      ctx.bezierCurveTo(15,-6,12,12,0,20);
+      ctx.bezierCurveTo(-8,8,-8,-5,0,-12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0,-9);
+      ctx.lineTo(0,17);
+      ctx.strokeStyle = "rgba(210,190,130,.35)";
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
     ctx.restore();
   }
 
   function drawBG(){
-    const phase = getTimePhase(S.floors);
-    const sky = SKY_COLORS[phase] || SKY_COLORS.day;
+    const blend = getStageBlend(S.floors);
+    const A = SKY_COLORS[blend.a];
+    const B = SKY_COLORS[blend.b];
+
+    const top = mixHex(A.top, B.top, blend.t);
+    const bottom = mixHex(A.bottom, B.bottom, blend.t);
+
     const grad = ctx.createLinearGradient(0,0,0,CONF.canvasH);
-    grad.addColorStop(0, sky.top);
-    grad.addColorStop(1, sky.bottom);
+    grad.addColorStop(0, top);
+    grad.addColorStop(1, bottom);
     ctx.fillStyle = grad;
-    ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
+    ctx.fillRect(0,0,CONF.canvasW,CONF.canvasH);
 
-    if (phase === "night"){
-      drawStars(0.90, 0.55);
-    } else if (phase === "space"){
-      drawStars(1.00, 0.95);
+    if (blend.stars > 0){
+      drawStars(.95, blend.stars);
+    }
+
+    if (blend.dark > 0){
       ctx.save();
-      const neb = ctx.createRadialGradient(CONF.canvasW*0.30, CONF.canvasH*0.35, 0, CONF.canvasW*0.30, CONF.canvasH*0.35, CONF.canvasW*0.70);
-      neb.addColorStop(0.00, "rgba(120,160,255,.10)");
-      neb.addColorStop(0.35, "rgba(180,120,255,.06)");
-      neb.addColorStop(1.00, "rgba(0,0,0,0)");
-      ctx.fillStyle = neb;
-      ctx.fillRect(0,0,CONF.canvasW, CONF.canvasH);
+      ctx.globalAlpha = blend.dark;
+      const v = ctx.createRadialGradient(
+        CONF.canvasW*.5, CONF.canvasH*.45, CONF.canvasW*.08,
+        CONF.canvasW*.5, CONF.canvasH*.45, CONF.canvasW*.78
+      );
+      v.addColorStop(0, "rgba(0,0,0,0)");
+      v.addColorStop(.48, "rgba(0,0,0,.18)");
+      v.addColorStop(1, "rgba(0,0,0,.58)");
+      ctx.fillStyle = v;
+      ctx.fillRect(0,0,CONF.canvasW,CONF.canvasH);
       ctx.restore();
-    } else if (phase === "flare"){
-      drawStars(0.85, 0.75);
-      drawSolarFlare();
     }
 
-    if (!CONF.grid) return;
-    ctx.save();
-    ctx.globalAlpha = 0.08;
-    const step = 30;
-    for (let y=0; y<CONF.canvasH; y+=step){
-      ctx.beginPath();
-      ctx.moveTo(0,y);
-      ctx.lineTo(CONF.canvasW,y);
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1;
-      ctx.stroke();
+    if (blend.flare > 0){
+      drawSolarFlare(blend.flare);
     }
-    ctx.restore();
+
+    if (blend.heaven > 0){
+      drawHeaven(blend.heaven);
+    }
+
+    if (CONF.grid){
+      ctx.save();
+      ctx.globalAlpha = .055;
+      for (let y=0; y<CONF.canvasH; y+=30){
+        ctx.beginPath();
+        ctx.moveTo(0,y);
+        ctx.lineTo(CONF.canvasW,y);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
   }
 
   function setHUD(){
@@ -2303,7 +2508,7 @@
     ctx.closePath();
   }
 
-  function drawBlock(b, index){
+  function drawBlock(b,index){
     const y = b.y + S.cameraY;
     if (y > CONF.canvasH + 120 || y < -240) return;
 
@@ -2311,26 +2516,61 @@
     const w = Math.round(b.width);
     const boost = CONF.BASE_BOOST[index] ?? 1.0;
     const h = Math.round(b.h * boost);
-
     const tile = b.tileKey ? IMG[b.tileKey] : null;
-    const rAll = Math.round(Math.min(w, h) * 0.40);
+    const rAll = Math.round(Math.min(w,h) * .40);
+
+    const needsBrightOutline =
+      S.floors >= 30 ||
+      b.tileKey === "takoX" ||
+      b.tileKey === "takoR";
+
+    // 30階以降・黒系たこ焼き用の見やすさ補助。
+    // 太い白線ではなく、背景になじむ細い外光だけにする。
+    if (needsBrightOutline){
+      ctx.save();
+      ctx.shadowColor = S.floors >= 45
+        ? "rgba(255,255,220,.34)"
+        : "rgba(255,220,120,.34)";
+      ctx.shadowBlur = S.floors >= 40 ? 10 : 9;
+      ctx.lineWidth = 1.25;
+      ctx.strokeStyle = S.floors >= 50
+        ? "rgba(255,255,255,.30)"
+        : "rgba(255,215,120,.28)";
+      ctx.beginPath();
+      roundedPath(x,y,w,h,rAll);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     ctx.save();
     ctx.beginPath();
-    roundedPath(x, y, w, h, rAll);
+    roundedPath(x,y,w,h,rAll);
     ctx.clip();
 
     if (!tile || !tile.naturalWidth){
-      const grad = ctx.createLinearGradient(x, y, x, y+h);
-      grad.addColorStop(0, "#ffd34d");
-      grad.addColorStop(1, "#f08b2f");
+      const grad = ctx.createLinearGradient(x,y,x,y+h);
+      grad.addColorStop(0,"#ffd34d");
+      grad.addColorStop(1,"#f08b2f");
       ctx.fillStyle = grad;
-      ctx.fillRect(x, y, w, h);
-    } else {
-      drawImageCover(ctx, tile, x, y, w, h);
+      ctx.fillRect(x,y,w,h);
+    }else{
+      drawImageCover(ctx,tile,x,y,w,h);
     }
 
     ctx.restore();
+
+    if (needsBrightOutline){
+      ctx.save();
+      ctx.globalAlpha = S.floors >= 30 && S.floors < 40 ? .38 : .26;
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = S.floors >= 50
+        ? "rgba(255,255,255,.48)"
+        : "rgba(255,226,150,.42)";
+      ctx.beginPath();
+      roundedPath(x + .5, y + .5, Math.max(1,w - 1), Math.max(1,h - 1), rAll);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   function draw(){
