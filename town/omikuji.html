@@ -1946,10 +1946,16 @@
       }
 
       function getHiddenDaikyoRate(streak){
-        const safe = Math.max(0, Number(streak || 0));
-        if(safe >= 6) return DAIKYO_HIDDEN_RATE_MAP[6];
-        return DAIKYO_HIDDEN_RATE_MAP[safe] ?? 30;
-      }
+  const safe = Math.max(0, Number(streak || 0));
+
+  // 大凶7連達成後は通常確率に戻す
+  if(safe >= 7) return 30;
+
+  // 大凶6連中だけ85%
+  if(safe >= 6) return DAIKYO_HIDDEN_RATE_MAP[6];
+
+  return DAIKYO_HIDDEN_RATE_MAP[safe] ?? 30;
+}
 
       function buildOmikujiPoolForCurrentState(){
         const state = loadDaikyoState();
