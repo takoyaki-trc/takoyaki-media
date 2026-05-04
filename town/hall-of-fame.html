@@ -12,16 +12,8 @@
 <style>
 :root{
   --gold1:#fff0b8;
-  --gold2:#e6b84e;
-  --gold3:#9e641d;
   --text:#fff8e8;
   --muted:#dccfb0;
-  --purple1:#4b2478;
-  --purple2:#220d42;
-  --dark:#09030f;
-  --red1:#ff625f;
-  --red2:#d71928;
-  --red3:#7f0712;
 }
 
 *{box-sizing:border-box}
@@ -58,7 +50,6 @@ body::before{
 }
 
 .main-card{
-  position:relative;
   border-radius:24px;
   overflow:hidden;
   border:2px solid rgba(247,213,118,.55);
@@ -126,6 +117,25 @@ h1{
   font-weight:900;
   letter-spacing:.08em;
   text-shadow:0 2px 0 rgba(0,0,0,.35);
+  cursor:pointer;
+  user-select:none;
+}
+
+.month-head::after{
+  content:" ▼";
+  font-size:14px;
+}
+
+.month-section.closed .month-head::after{
+  content:" ▶";
+}
+
+.month-body{
+  display:block;
+}
+
+.month-section.closed .month-body{
+  display:none;
 }
 
 .trophy-grid{
@@ -239,7 +249,7 @@ h1{
   box-shadow:none;
 }
 
-.loading,.error-box,.empty-page{
+.loading,.empty-page{
   padding:22px 14px;
   text-align:center;
   color:#fff1ce;
@@ -261,6 +271,7 @@ h1{
   z-index:80;
   backdrop-filter:blur(4px);
 }
+
 .modal.show{display:flex}
 
 .modal-card{
@@ -371,7 +382,8 @@ h1{
 
     <div class="footer-note">
       ※今月分はまだ途中経過のため表示しません。<br>
-      月が変わると、前月分の殿堂が自動で追加されます。
+      月が変わると、前月分の殿堂が自動で追加されます。<br>
+      最新月だけ最初から開き、過去月はタップで開閉できます。
     </div>
   </main>
 </div>
@@ -396,10 +408,10 @@ h1{
 
 const GAS_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbxZ6s4bgrR4CywdgGiOAk7l9istFjPEK7ph2laKc14NvqGPbNTCQFrFNoqDkgnOK84kJA/exec";
 
-/* ここから殿堂表示開始 */
+/* 殿堂表示開始月 */
 const START_MONTH_KEY = "2026-04";
 
-/* 表示する部門 */
+/* 部門設定 */
 const RANKING_TYPES = [
   {
     type:"harvest",
@@ -469,9 +481,11 @@ function getRankingTypeMeta(type){
 function buildRankingApiUrl(action, params={}){
   const url = new URL(GAS_RANKING_API_URL);
   url.searchParams.set("action", action);
+
   Object.entries(params).forEach(([key,val])=>{
     url.searchParams.set(key, String(val ?? ""));
   });
+
   url.searchParams.set("t", String(Date.now()));
   return url.toString();
 }
@@ -480,11 +494,17 @@ function loadJsonp(url, timeoutMs=15000){
   return new Promise((resolve, reject)=>{
     const callbackName = "__ttc_hof_cb_" + Date.now() + "_" + Math.floor(Math.random() * 1000000000);
     const sep = url.includes("?") ? "&" : "?";
+
     let script = null;
     let done = false;
 
     const cleanup = ()=>{
-      try{ delete window[callbackName]; }catch(_){ window[callbackName] = undefined; }
+      try{
+        delete window[callbackName];
+      }catch(_){
+        window[callbackName] = undefined;
+      }
+
       if(script && script.parentNode){
         script.parentNode.removeChild(script);
       }
@@ -507,6 +527,7 @@ function loadJsonp(url, timeoutMs=15000){
 
     script = document.createElement("script");
     script.async = true;
+
     script.onerror = ()=>{
       if(done) return;
       done = true;
@@ -516,7 +537,9 @@ function loadJsonp(url, timeoutMs=15000){
     };
 
     script.src = `${url}${sep}callback=${encodeURIComponent(callbackName)}&_=${Date.now()}`;
-    document.head.appendChild(script);
+
+    const target = document.head || document.body || document.documentElement;
+    target.appendChild(script);
   });
 }
 
@@ -536,19 +559,23 @@ function toMonthKey(year, month){
 
 function addMonth(year, month){
   month += 1;
+
   if(month >= 13){
     year += 1;
     month = 1;
   }
+
   return { year, month };
 }
 
 function getPreviousMonthKey(){
   const now = new Date();
+
   let y = now.getFullYear();
   let m = now.getMonth() + 1;
 
   m -= 1;
+
   if(m <= 0){
     y -= 1;
     m = 12;
@@ -560,7 +587,11 @@ function getPreviousMonthKey(){
 function compareMonthKey(a,b){
   const aa = parseMonthKey(a);
   const bb = parseMonthKey(b);
-  if(aa.year !== bb.year) return aa.year - bb.year;
+
+  if(aa.year !== bb.year){
+    return aa.year - bb.year;
+  }
+
   return aa.month - bb.month;
 }
 
@@ -576,6 +607,7 @@ function getHallMonths(){
 
   while(compareMonthKey(toMonthKey(year,month),endKey) <= 0){
     list.push(toMonthKey(year,month));
+
     const next = addMonth(year,month);
     year = next.year;
     month = next.month;
@@ -649,6 +681,7 @@ async function fetchMonthData(monthKey){
       };
     }catch(err){
       console.error("ranking fetch error", monthKey, meta.type, err);
+
       result[meta.type] = {
         ok:false,
         rows:[],
@@ -703,12 +736,17 @@ function renderTrophyCard(monthKey,meta,data){
   `;
 }
 
-function renderMonthSection(monthKey,monthData){
+function renderMonthSection(monthKey,monthData,isOpen){
   return `
-    <section class="month-section">
-      <div class="month-head">${escapeHtml(monthLabel(monthKey))} 殿堂祭壇</div>
-      <div class="trophy-grid">
-        ${RANKING_TYPES.map(meta => renderTrophyCard(monthKey,meta,monthData[meta.type])).join("")}
+    <section class="month-section ${isOpen ? "" : "closed"}">
+      <div class="month-head" data-toggle-month="${escapeHtml(monthKey)}">
+        ${escapeHtml(monthLabel(monthKey))} 殿堂祭壇
+      </div>
+
+      <div class="month-body">
+        <div class="trophy-grid">
+          ${RANKING_TYPES.map(meta => renderTrophyCard(monthKey,meta,monthData[meta.type])).join("")}
+        </div>
       </div>
     </section>
   `;
@@ -723,6 +761,17 @@ function bindDetailButtons(cache){
       const rows = cache?.[monthKey]?.[type]?.rows || [];
 
       openRankingModal(monthKey,meta,rows);
+    });
+  });
+}
+
+function bindMonthToggles(){
+  document.querySelectorAll("[data-toggle-month]").forEach(head=>{
+    head.addEventListener("click",()=>{
+      const section = head.closest(".month-section");
+      if(!section) return;
+
+      section.classList.toggle("closed");
     });
   });
 }
@@ -797,18 +846,25 @@ async function init(){
   hallRoot.innerHTML = months
     .slice()
     .reverse()
-    .map(monthKey => renderMonthSection(monthKey,cache[monthKey]))
+    .map((monthKey,index) => renderMonthSection(monthKey,cache[monthKey], index === 0))
     .join("");
 
   bindDetailButtons(cache);
+  bindMonthToggles();
 }
 
 closeModalBtn.addEventListener("click",closeModal);
+
 rankModal.addEventListener("click",e=>{
-  if(e.target === rankModal) closeModal();
+  if(e.target === rankModal){
+    closeModal();
+  }
 });
+
 window.addEventListener("keydown",e=>{
-  if(e.key === "Escape") closeModal();
+  if(e.key === "Escape"){
+    closeModal();
+  }
 });
 
 init();
