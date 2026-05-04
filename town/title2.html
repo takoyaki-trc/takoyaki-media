@@ -1330,7 +1330,7 @@ body::before{
       <button class="history-btn" id="openHistoryBtn" type="button">HISTORY</button>
     </div>
 
-    <div class="subinfo" id="monthInfo">月が変わった最初のアクセス時に前月の報酬を確定します</div>
+    <div class="subinfo" id="monthInfo">月が変わった最初のアクセス時に前月の報酬が確定し、条件達成した神のタネがGOD SEEDSに自動追加されます</div>
     <div class="ornament-bottom"><div class="line"></div></div>
   </section>
 </div>
@@ -1444,10 +1444,25 @@ seed_god_tower:[
 ]
 };
   
-const GOD_BONUS_CARD={id:"SP-GD-BN-001",category:"SP",tier:"SECRET",name:"四神の祝福",img:"",catch:"四つ揃えば、世界が焼き上がる。",story:`焼き、露店、釣り、塔。
-四神を揃えた者だけが辿り着く特別な祝福。
-もう偶然ではない。
-それは、神域の証。`,skill:"《四神祝福》",sideEffect:"もう普通のたこ焼きには戻れない。"};
+const GOD_BONUS_CARD={
+  id:"SP-GOD-12",
+  category:"SP",
+  tier:"SECRET",
+  name:"逆神・リバースノカミ",
+  img:"https://takoyaki-card.com/town/assets/images/sp/SP-GOD.png",
+
+  catch:"すべてを極めた者が、最後に選ぶ“否定”。",
+
+  story:`焼かない。
+完成させない。
+その“途中”こそが最も濃い。`,
+
+  skill:"《未完成保持》",
+
+  sideEffect:"すべての工程を未完成のまま固定。終わらない状態が最大評価になる。",
+
+  godWord:"「完成しない方が、続く。」"
+};
 
 const ALTAR_GROUPS=[
 {title:"🔥 焼き神",seedId:"seed_god_yaki",ids:["SP-GD-YK-001","SP-GD-YK-002","SP-GD-YK-003"]},
@@ -1543,20 +1558,117 @@ function addToBook(card){
   saveBook(book);
 }
 
-function createDefaultMonthly(){return{monthKey:getMonthKey(),harvest:0,fishing:0,tower:0}}
+function createDefaultMonthly(){
+  return { monthKey:getMonthKey(), harvest:0, sales:0, fishing:0, tower:0 };
+}
+
+/*
+  月間記録の安全読み込み
+  ・ここでは保存しない（0上書き事故防止）
+  ・旧形式/新形式どちらも読む
+*/
 function loadMonthly(){
-  const p=loadJson(LS_MONTHLY,createDefaultMonthly());
-  const safe={monthKey:String(p.monthKey||getMonthKey()),harvest:Number(p.harvest||0),fishing:Number(p.fishing||0),tower:Number(p.tower||0)};
-  saveJson(LS_MONTHLY,safe);
-  return safe;
+  const currentKey = getMonthKey();
+  const p = loadJson(LS_MONTHLY, null);
+
+  if(!p || typeof p !== "object"){
+    return { monthKey:currentKey, harvest:0, sales:0, fishing:0, tower:0 };
+  }
+
+  if(p.monthKey){
+    return {
+      monthKey:String(p.monthKey || currentKey),
+      harvest:Number(p.harvest || 0),
+      sales:Number(p.sales || 0),
+      fishing:Number(p.fishing || 0),
+      tower:Number(p.tower || 0)
+    };
+  }
+
+  if(p[currentKey] && typeof p[currentKey] === "object"){
+    const row = p[currentKey];
+    return {
+      monthKey:currentKey,
+      harvest:Number(row.harvest || 0),
+      sales:Number(row.sales || row.total || 0),
+      fishing:Number(row.fishing || 0),
+      tower:Number(row.tower || 0)
+    };
+  }
+
+  return { monthKey:currentKey, harvest:0, sales:Number(p.sales || 0), fishing:0, tower:0 };
 }
+
+/*
+  露店売上の安全読み込み
+  ・旧形式 { "2026-04": 1720000 }
+  ・新形式 { monthKey:"2026-04", total:1720000 }
+  ・別形式 { monthKey:"2026-04", sales:1720000 }
+  すべて対応
+  ※ここでは保存しない。読み込みだけ。
+*/
 function loadShopSalesRecord(){
-  const p=loadJson(LS_MYSHOP_MONTHLY_SALES,{monthKey:getMonthKey(),total:0});
-  const safe={monthKey:String(p.monthKey||getMonthKey()),total:Number(p.total??p.sales??0)};
-  saveJson(LS_MYSHOP_MONTHLY_SALES,safe);
-  return safe;
+  const currentKey = getMonthKey();
+  const p = loadJson(LS_MYSHOP_MONTHLY_SALES, null);
+
+  if(!p || typeof p !== "object"){
+    return { monthKey:currentKey, total:0 };
+  }
+
+  if(String(p.monthKey || "") === currentKey){
+    return {
+      monthKey:currentKey,
+      total:Number(p.total ?? p.sales ?? 0)
+    };
+  }
+
+  if(p[currentKey] != null){
+    return {
+      monthKey:currentKey,
+      total:Number(p[currentKey] || 0)
+    };
+  }
+
+  if(!p.monthKey && (p.total != null || p.sales != null)){
+    return {
+      monthKey:currentKey,
+      total:Number(p.total ?? p.sales ?? 0)
+    };
+  }
+
+  return { monthKey:String(p.monthKey || currentKey), total:Number(p.total ?? p.sales ?? 0) };
 }
-function saveShopSalesRecord(rec){saveJson(LS_MYSHOP_MONTHLY_SALES,{monthKey:String(rec?.monthKey||getMonthKey()),total:Number(rec?.total??rec?.sales??0)})}
+
+/*
+  露店売上の安全保存
+  ・同じ月の売上を小さい値で上書きしない
+  ・旧形式の値も救出して最大値を保存
+*/
+function saveShopSalesRecord(rec){
+  const currentKey = getMonthKey();
+  const targetMonth = String(rec?.monthKey || currentKey);
+  const nextTotal = Math.max(0, Number(rec?.total ?? rec?.sales ?? 0));
+
+  const before = loadJson(LS_MYSHOP_MONTHLY_SALES, null);
+  let oldTotal = 0;
+
+  if(before && typeof before === "object"){
+    if(String(before.monthKey || "") === targetMonth){
+      oldTotal = Number(before.total ?? before.sales ?? 0);
+    }
+    if(before[targetMonth] != null){
+      oldTotal = Math.max(oldTotal, Number(before[targetMonth] || 0));
+    }
+  }
+
+  const safeTotal = targetMonth === currentKey ? Math.max(oldTotal, nextTotal) : nextTotal;
+
+  saveJson(LS_MYSHOP_MONTHLY_SALES, {
+    monthKey:targetMonth,
+    total:safeTotal,
+    sales:safeTotal
+  });
+}
 function loadHistory(){return loadJson(LS_HISTORY,[])}
 function saveHistory(list){saveJson(LS_HISTORY,list.slice(0,HISTORY_LIMIT))}
 
@@ -1732,7 +1844,7 @@ function renderAltar(){
   const bonusOwned=hasCard(GOD_BONUS_CARD.id);
   if(hasAllGroupsComplete()){
     bonusBox.style.display="block";
-    bonusBody.innerHTML=`<div class="bonus-badge">COMPLETE</div><br>四神コンプリート達成<br>${bonusOwned?"特別カード「四神の祝福」を授与済みです":"特別カードの授与条件を達成しています"}`;
+    bonusBody.innerHTML=`<div class="bonus-badge">COMPLETE</div><br>四神コンプリート達成<br>${bonusOwned?"特別カード「逆神･リバースのカミ」を授与済みです":"特別カードの授与条件を達成しています"}`;
   }else{
     bonusBox.style.display="none";
     bonusBody.innerHTML="";
@@ -1792,16 +1904,10 @@ function getStoryExcerpt(card){
     .filter(Boolean);
 
   if(!storyLines.length){
-    return `${card.name}\n神域より現れた。\n今、カードが焼き上がる。`;
+    return `${card.name}\n神域より現れた。`;
   }
 
-  const min = 3;
-  const max = 5;
-  const want = Math.min(max, Math.max(min, storyLines.length >= 5 ? 5 : storyLines.length));
-  const startMax = Math.max(0, storyLines.length - want);
-  const start = startMax > 0 ? Math.floor(Math.random() * (startMax + 1)) : 0;
-
-  return storyLines.slice(start, start + want).join("\n");
+  return storyLines.slice(0, 2).join("\n");
 }
 
 async function playGodCutin(card){
@@ -1819,22 +1925,20 @@ async function playGodCutin(card){
   cutinWhiteout.offsetHeight;
   cutinType.offsetHeight;
 
-  await wait(260);
+  await wait(320);
 
-  const excerpt = `最初は、誰も触らなかった。
-ただ、静かにそこにあった。
-気づいた時には、
-もう完成していた。`;
+  const excerpt = getStoryExcerpt(card);
+  await typeText(cutinType, excerpt, 92);
 
-  await typeText(cutinType, excerpt, 55);
-
-  await wait(1200);
+  await wait(2200);
 
   cutinType.classList.add("fadeout");
-  await wait(900);
+  await wait(1700);
+
+  await wait(850);
 
   cutinGods.classList.add("run");
-  await wait(900);
+  await wait(1050);
 
   cutinRainbow.classList.add("flash");
   await wait(380);
@@ -1845,10 +1949,11 @@ async function playGodCutin(card){
   cutinCardName.textContent=`${card.tier} 神カード GET\n${card.name}`;
   cutinCardName.classList.add("show");
 
-  await wait(2200);
+  await wait(2400);
 
   godCutin.classList.remove("show");
 }
+
 function normalizeGrantedSeeds(value,legacyId="",legacyName=""){
   if(Array.isArray(value))return value.map(v=>({id:String(v?.id||""),name:String(v?.name||"")})).filter(v=>v.id);
   if(legacyId)return[{id:String(legacyId),name:String(legacyName||seedName(legacyId))}];
@@ -1896,34 +2001,60 @@ function renderSeedHelp(){
 }
 
 function rolloverIfNeeded(){
-  const currentKey=getMonthKey();
-  const stats=loadMonthly();
-  const salesRec=loadShopSalesRecord();
-  const statsMonth=String(stats.monthKey||currentKey);
-  const salesMonth=String(salesRec.monthKey||currentKey);
+  const currentKey = getMonthKey();
+  const stats = loadMonthly();
+  const salesRec = loadShopSalesRecord();
+  const statsMonth = String(stats.monthKey || currentKey);
+  const salesMonth = String(salesRec.monthKey || currentKey);
 
-  if(statsMonth===currentKey&&salesMonth===currentKey){
-    return{monthKey:currentKey,harvest:Number(stats.harvest||0),sales:Number(salesRec.total||0),fishing:Number(stats.fishing||0),tower:Number(stats.tower||0)};
+  const currentSales = Math.max(Number(stats.sales || 0), Number(salesRec.total || 0));
+
+  if(statsMonth === currentKey && salesMonth === currentKey){
+    return {
+      monthKey:currentKey,
+      harvest:Number(stats.harvest || 0),
+      sales:currentSales,
+      fishing:Number(stats.fishing || 0),
+      tower:Number(stats.tower || 0)
+    };
   }
 
-  const oldMonthKey=statsMonth!==currentKey?statsMonth:salesMonth;
-  const oldMerged={monthKey:oldMonthKey,harvest:Number(stats.harvest||0),sales:Number(salesRec.total||0),fishing:Number(stats.fishing||0),tower:Number(stats.tower||0)};
-  const history=loadHistory();
-  const meaningful=oldMerged.harvest>0||oldMerged.sales>0||oldMerged.fishing>0||oldMerged.tower>0;
-  const already=history.some(v=>String(v.monthKey||"")===oldMonthKey);
+  const oldMonthKey = statsMonth !== currentKey ? statsMonth : salesMonth;
+  const oldMerged = {
+    monthKey:oldMonthKey,
+    harvest:Number(stats.harvest || 0),
+    sales:currentSales,
+    fishing:Number(stats.fishing || 0),
+    tower:Number(stats.tower || 0)
+  };
 
-  if(meaningful&&!already){
-    const grantedSeeds=getGrantedSeedsFromStats(oldMerged);
-    history.unshift({monthKey:oldMerged.monthKey,title:getMainTitleFromStats(oldMerged),harvest:oldMerged.harvest,sales:oldMerged.sales,fishing:oldMerged.fishing,tower:oldMerged.tower,grantedSeeds});
+  const history = loadHistory();
+  const meaningful = oldMerged.harvest > 0 || oldMerged.sales > 0 || oldMerged.fishing > 0 || oldMerged.tower > 0;
+  const already = history.some(v => String(v.monthKey || "") === oldMonthKey);
+
+  if(meaningful && !already){
+    const grantedSeeds = getGrantedSeedsFromStats(oldMerged);
+    history.unshift({
+      monthKey:oldMerged.monthKey,
+      title:getMainTitleFromStats(oldMerged),
+      harvest:oldMerged.harvest,
+      sales:oldMerged.sales,
+      fishing:oldMerged.fishing,
+      tower:oldMerged.tower,
+      grantedSeeds
+    });
     saveHistory(history);
-    const inv=loadInv();
-    grantedSeeds.forEach(seed=>inv[seed.id]=Number(inv[seed.id]||0)+1);
+
+    const inv = loadInv();
+    grantedSeeds.forEach(seed => inv[seed.id] = Number(inv[seed.id] || 0) + 1);
     saveInv(inv);
   }
 
-  saveJson(LS_MONTHLY,{monthKey:currentKey,harvest:0,fishing:0,tower:0});
-  saveShopSalesRecord({monthKey:currentKey,total:0});
-  return{monthKey:currentKey,harvest:0,sales:0,fishing:0,tower:0};
+  // 新しい月だけ初期化。saveShopSalesRecord 側で同月の小さい値上書きを防ぐ。
+  saveJson(LS_MONTHLY, { monthKey:currentKey, harvest:0, sales:0, fishing:0, tower:0 });
+  saveShopSalesRecord({ monthKey:currentKey, total:0 });
+
+  return { monthKey:currentKey, harvest:0, sales:0, fishing:0, tower:0 };
 }
 
 function renderAll(){
@@ -2126,11 +2257,32 @@ function renderRankingRows(rows,type){
     return;
   }
 
+  // スコア高い順に並べ直し
+  const sorted = [...rows].sort((a,b)=>Number(b.score||0)-Number(a.score||0));
+
+  // 同点は同率順位にする
+  let lastScore = null;
+  let lastRank = 0;
+
+  const rankedRows = sorted.map((row,index)=>{
+    const score = Number(row.score || 0);
+
+    if(lastScore === null || score !== lastScore){
+      lastRank = index + 1;
+      lastScore = score;
+    }
+
+    return {
+      ...row,
+      displayRank:lastRank
+    };
+  });
+
   rowsRoot.innerHTML = `
     <div class="rank-list">
-      ${rows.map(row => `
-        <div class="rank-row ${Number(row.rank)===1 ? "top1" : ""}">
-          <div>${escapeHtml(row.rank)}位</div>
+      ${rankedRows.map(row => `
+        <div class="rank-row ${Number(row.displayRank)===1 ? "top1" : ""}">
+          <div>${escapeHtml(row.displayRank)}位</div>
           <div>${escapeHtml(row.userName || "名無しのタコ民")}</div>
           <div class="rank-score">${fmtNum(row.score)} ${meta.unit}</div>
         </div>
@@ -2138,7 +2290,6 @@ function renderRankingRows(rows,type){
     </div>
   `;
 }
-
 function renderRankingError(message, detail=""){
   const rowsRoot = $("rankingRows");
   if(!rowsRoot) return;
