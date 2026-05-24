@@ -1,1357 +1,813 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
-<title>たこ焼きスロット｜ペカッと神焼きランプ</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>たこ焼きスロット｜焼きランプ</title>
 
 <style>
-*{box-sizing:border-box}
-
-:root{
-  --gold:#d8a642;
-  --gold2:#ffe7a0;
-  --gold3:#8d5d16;
-  --black:#080604;
-  --panel:#110b08;
-  --red:#9b0000;
-  --red2:#df1b1b;
-  --blue:#28c7ff;
+* {
+  box-sizing: border-box;
 }
 
-body{
-  margin:0;
-  min-height:100svh;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at top,#3d150d 0%,#150604 48%,#050201 100%);
-  color:#fff7e8;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:12px;
-  user-select:none;
+    radial-gradient(circle at top, #2b143d 0%, #09040f 45%, #000 100%);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px;
 }
 
-.slot-machine{
-  width:min(410px,100%);
-  border-radius:20px;
-  background:
-    radial-gradient(circle at top,#2a2118 0%,#080604 55%,#030201 100%);
-  border:4px solid #050302;
+.game {
+  width: 100%;
+  max-width: 430px;
+  border: 3px solid #ffcc33;
+  border-radius: 24px;
+  padding: 16px;
+  background: linear-gradient(180deg, #171021, #07040a);
   box-shadow:
-    0 22px 50px rgba(0,0,0,.75),
-    inset 0 0 0 2px var(--gold),
-    inset 0 0 0 6px #251607;
-  overflow:hidden;
-  position:relative;
+    0 0 18px rgba(255, 204, 51, 0.5),
+    inset 0 0 20px rgba(255, 120, 0, 0.15);
 }
 
-.slot-machine:before{
-  content:"";
-  position:absolute;
-  inset:10px;
-  border:1px solid rgba(255,220,130,.42);
-  border-radius:15px;
-  pointer-events:none;
-  z-index:5;
+.title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffcc33;
+  text-shadow: 0 0 10px #ff7b00;
+  margin-bottom: 10px;
 }
 
-.top-arch{
-  min-height:104px;
-  padding:18px 10px 10px;
+.sub-title {
+  text-align: center;
+  font-size: 12px;
+  color: #ffd98a;
+  margin-bottom: 12px;
+}
+
+.panel {
+  background: #120b18;
+  border: 2px solid #4b335f;
+  border-radius: 18px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.status {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.status div {
+  background: #08050d;
+  border: 1px solid #5d4370;
+  border-radius: 12px;
+  padding: 8px 4px;
+}
+
+.status strong {
+  display: block;
+  font-size: 18px;
+  color: #fff1a8;
+}
+
+.yaki-lamp-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0;
+}
+
+.yaki-lamp {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
   background:
-    radial-gradient(ellipse at center,rgba(255,220,120,.22),transparent 48%),
-    linear-gradient(180deg,#120d08,#050302);
-  border-bottom:3px solid var(--gold);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  color:var(--gold2);
-  font-weight:1000;
-  font-size:25px;
-  line-height:1.08;
-  letter-spacing:.03em;
-  text-align:center;
-  text-shadow:
-    0 3px 0 #301500,
-    0 0 12px rgba(255,190,55,.85),
-    0 0 28px rgba(255,110,0,.35);
+    radial-gradient(circle at 35% 30%, #fff5b8 0%, #ffd54a 22%, #cc6b00 55%, #381800 100%);
+  border: 5px solid #ffe066;
+  box-shadow:
+    0 0 10px rgba(255, 190, 0, 0.35),
+    inset 0 -10px 20px rgba(80, 20, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #421800;
+  font-weight: 900;
+  font-size: 18px;
+  transition: 0.2s;
 }
 
-.top-arch small{
-  margin-top:8px;
-  font-size:13px;
-  letter-spacing:.05em;
-  color:#f7d27a;
-}
-
-.bonus-panel{
-  margin:12px 16px 10px;
-  border:3px solid var(--gold);
-  border-radius:10px;
+.yaki-lamp.on {
   background:
-    linear-gradient(180deg,#5a0704,#b40000 45%,#430100);
-  text-align:center;
-  padding:11px 8px;
-  font-size:21px;
-  font-weight:1000;
-  color:var(--gold2);
-  text-shadow:0 2px 0 #210000,0 0 10px rgba(255,210,90,.7);
-  box-shadow:
-    inset 0 0 18px rgba(255,255,255,.18),
-    0 0 12px rgba(255,170,40,.18);
+    radial-gradient(circle at 35% 28%, #fff 0%, #fff49b 18%, #ffeb3b 38%, #ff7b00 70%, #ff2600 100%);
+  color: #5a1200;
+  animation: lampFlash 0.45s infinite alternate;
 }
 
-.mode-panel{
-  margin:0 16px 10px;
-  padding:9px 10px;
-  border-radius:10px;
-  background:linear-gradient(180deg,#111927,#060811);
-  border:2px solid var(--gold3);
-  font-weight:1000;
-  text-align:center;
-  color:#aef7ff;
-  text-shadow:0 0 8px rgba(56,230,255,.65);
-  min-height:42px;
-  box-shadow:inset 0 0 0 1px rgba(255,230,150,.18);
+@keyframes lampFlash {
+  from {
+    box-shadow:
+      0 0 18px #ffe066,
+      0 0 28px #ff9500,
+      0 0 48px #ff3b00;
+    transform: scale(1);
+  }
+  to {
+    box-shadow:
+      0 0 30px #fff,
+      0 0 55px #ffea00,
+      0 0 80px #ff3b00;
+    transform: scale(1.04);
+  }
 }
 
-.reel-area{
-  margin:10px 16px;
-  padding:9px;
-  border-radius:12px;
-  background:
-    linear-gradient(90deg,#050302,#17100b 12%,#876322 50%,#17100b 88%,#050302);
-  border:3px solid var(--gold);
-  position:relative;
-  box-shadow:
-    inset 0 0 0 2px #04135b,
-    0 0 18px rgba(255,190,40,.22);
+.reels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
-.reels{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:7px;
-  background:#050505;
-  padding:8px;
-  border-radius:9px;
-  position:relative;
+.reel {
+  height: 118px;
+  background: linear-gradient(180deg, #fff9dd, #f4d28a);
+  border: 4px solid #ffcc33;
+  border-radius: 18px;
+  color: #111;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.35);
 }
 
-.reel{
-  height:174px;
-  background:#fff7e4;
-  border:3px solid #090909;
-  border-radius:8px;
-  overflow:hidden;
-  position:relative;
-  box-shadow:inset 0 8px 22px rgba(0,0,0,.35);
+.symbol {
+  height: 118px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 54px;
+  line-height: 1;
+  transition: transform 0.08s;
 }
 
-.reel-strip{
-  position:absolute;
-  top:0;
-  left:0;
-  width:100%;
+.reel.spinning .symbol {
+  animation: shake 0.08s infinite;
 }
 
-.symbol{
-  height:58px;
-  display:grid;
-  place-items:center;
-  border-bottom:1px solid rgba(0,0,0,.08);
-  background:#fff8e9;
+@keyframes shake {
+  0% { transform: translateY(-2px); }
+  100% { transform: translateY(2px); }
 }
 
-.symbol img{
-  width:50px;
-  height:50px;
-  object-fit:contain;
-  image-rendering:auto;
-  filter:drop-shadow(0 2px 1px rgba(0,0,0,.18));
+.stop-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.symbol.emoji{
-  font-size:34px;
+button {
+  border: none;
+  border-radius: 14px;
+  padding: 13px 8px;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(180deg, #ff4b4b, #990d0d);
+  box-shadow: 0 5px 0 #4d0505;
+  cursor: pointer;
+  font-size: 15px;
 }
 
-.symbol.glow-target img,
-.symbol.glow-target{
-  filter:drop-shadow(0 0 6px #fff0a0) drop-shadow(0 0 13px #ff8a00);
-  transform:scale(1.04);
+button:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #4d0505;
 }
 
-.reel.spinning .reel-strip{
-  animation:reelSpin .15s linear infinite;
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
-@keyframes reelSpin{
-  from{transform:translateY(0)}
-  to{transform:translateY(-290px)}
+.main-button {
+  width: 100%;
+  margin-top: 12px;
+  font-size: 20px;
+  background: linear-gradient(180deg, #32e875, #087d31);
+  box-shadow: 0 6px 0 #03491b;
 }
 
-.center-line{
-  position:absolute;
-  left:0;
-  right:0;
-  top:58px;
-  height:58px;
-  pointer-events:none;
-  border-top:2px solid rgba(255,30,20,.65);
-  border-bottom:2px solid rgba(255,30,20,.65);
-  box-shadow:0 0 8px rgba(255,70,0,.35);
-  z-index:3;
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
 }
 
-.reel-smoke{
-  position:absolute;
-  inset:8px;
-  border-radius:9px;
-  display:none;
-  place-items:center;
-  background:rgba(0,0,0,.48);
-  backdrop-filter:blur(1.5px);
-  z-index:20;
-  pointer-events:none;
-  text-align:center;
-  padding:10px;
+.small-button {
+  background: linear-gradient(180deg, #5678ff, #1c2d91);
+  box-shadow: 0 5px 0 #10194d;
+  font-size: 13px;
 }
 
-.reel-smoke.show{
-  display:grid;
+.message {
+  min-height: 58px;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #050308;
+  border: 1px solid #4b335f;
+  color: #fff1a8;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.5;
 }
 
-.navi-title{
-  font-size:19px;
-  font-weight:1000;
-  color:rgba(255,238,160,.7);
-  text-shadow:0 0 8px rgba(255,160,0,.55);
+.flash-big {
+  animation: bigFlash 0.8s ease;
 }
 
-.navi-sub{
-  margin-top:6px;
-  font-size:13px;
-  font-weight:900;
-  color:rgba(255,255,255,.62);
-  line-height:1.45;
-  text-shadow:0 0 6px rgba(0,0,0,.85);
+@keyframes bigFlash {
+  0%, 100% { background: linear-gradient(180deg, #171021, #07040a); }
+  30% { background: #ffcc00; color: #000; }
+  60% { background: #ff2b2b; }
 }
 
-.counter-panel{
-  margin:10px 16px;
-  background:#050304;
-  border:2px solid var(--gold3);
-  border-radius:10px;
-  padding:8px;
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:6px;
-  box-shadow:inset 0 0 0 1px rgba(255,230,150,.18);
+.flash-reg {
+  animation: regFlash 0.8s ease;
 }
 
-.counter{
-  background:#030102;
-  border:1px solid #4c2f10;
-  border-radius:8px;
-  padding:5px 3px;
-  text-align:center;
-  font-size:10px;
-  color:#f0c778;
+@keyframes regFlash {
+  0%, 100% { background: linear-gradient(180deg, #171021, #07040a); }
+  50% { background: #874cff; }
 }
 
-.counter b{
-  display:block;
-  color:#ff5cff;
-  font-size:17px;
-  margin-top:2px;
-  font-family:monospace;
+.dev {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #d8c2ff;
+  text-align: center;
 }
 
-.control-panel{
-  margin:0 16px 12px;
-  padding:12px;
-  background:
-    radial-gradient(circle at 18% 28%,rgba(255,70,20,.12),transparent 18%),
-    linear-gradient(180deg,#161413,#050505);
-  border-radius:14px;
-  border:3px solid #2b2b2b;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,220,130,.24),
-    0 0 0 2px #050302;
+select {
+  border-radius: 10px;
+  padding: 6px;
+  background: #08050d;
+  color: #fff;
+  border: 1px solid #7c5a99;
 }
 
-.lamp-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin-bottom:12px;
-}
+@media (max-width: 380px) {
+  .symbol {
+    font-size: 46px;
+  }
 
-.takopi-lamp{
-  width:88px;
-  height:88px;
-  border-radius:999px;
-  background:radial-gradient(circle,#2a0808,#050202 70%);
-  border:4px solid #080403;
-  display:grid;
-  place-items:center;
-  box-shadow:
-    inset 0 0 18px rgba(0,0,0,.9),
-    0 0 0 2px #2e1c0a;
-  overflow:hidden;
-  position:relative;
-}
+  .reel,
+  .symbol {
+    height: 104px;
+  }
 
-.takopi-lamp img{
-  width:80px;
-  height:80px;
-  object-fit:cover;
-  border-radius:999px;
-  filter:brightness(.5) saturate(.75);
-  transition:.25s;
-}
-
-.takopi-lamp.on{
-  background:radial-gradient(circle,#fff8b5 0%,#ffd83d 45%,#ff8400 80%);
-  box-shadow:
-    0 0 18px #fff36b,
-    0 0 38px #ff9d00,
-    0 0 62px rgba(255,0,0,.48);
-  animation:peka .75s infinite alternate;
-}
-
-.takopi-lamp.on img{
-  filter:brightness(1.25) saturate(1.45) drop-shadow(0 0 10px #fff1a0);
-  transform:scale(1.08);
-}
-
-.takopi-lamp.on:after{
-  content:"ペカッ";
-  position:absolute;
-  left:50%;
-  bottom:2px;
-  transform:translateX(-50%);
-  font-size:12px;
-  font-weight:1000;
-  color:#fff27a;
-  text-shadow:0 0 8px #ff6b00,0 2px 0 #5a0000;
-}
-
-@keyframes peka{
-  from{transform:scale(1)}
-  to{transform:scale(1.05)}
-}
-
-.lever{
-  width:96px;
-  height:68px;
-  border-radius:15px;
-  border:2px solid #ffe7a0;
-  font-weight:1000;
-  background:linear-gradient(180deg,#fff2a8,#d79018 75%,#875000);
-  color:#261000;
-  box-shadow:0 6px 0 #5c3300,0 0 12px rgba(255,210,90,.35);
-}
-
-.lever:active{
-  transform:translateY(4px);
-  box-shadow:0 2px 0 #5c3300;
-}
-
-.stop-buttons{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-}
-
-.stop-btn{
-  height:56px;
-  border-radius:999px;
-  border:3px solid #bba27a;
-  background:radial-gradient(circle,#cc2626,#750000);
-  color:#ffe0a3;
-  font-weight:1000;
-  font-size:15px;
-  box-shadow:0 6px 0 #280000,0 0 10px rgba(255,50,30,.25);
-  text-shadow:0 2px 0 #2a0000;
-}
-
-.stop-btn:active{
-  transform:translateY(4px);
-  box-shadow:0 2px 0 #280000;
-}
-
-button:disabled{
-  opacity:.35;
-  pointer-events:none;
-}
-
-.lower-panel{
-  background:linear-gradient(180deg,#140b06,#050302);
-  border-top:3px solid var(--gold3);
-  padding:15px 14px 16px;
-  text-align:center;
-}
-
-.character{
-  font-size:38px;
-  margin-bottom:6px;
-}
-
-.message{
-  min-height:88px;
-  background:rgba(0,0,0,.45);
-  border:1px solid rgba(255,210,120,.35);
-  border-radius:10px;
-  padding:10px;
-  font-weight:900;
-  line-height:1.45;
-}
-
-.message.big{
-  color:#fff27a;
-  text-shadow:0 0 12px #ffe100;
-}
-
-.message.reg{
-  color:#ffbaff;
-  text-shadow:0 0 12px #ff55ff;
-}
-
-.message.bt{
-  color:#aef7ff;
-  text-shadow:0 0 12px #38e6ff;
-}
-
-.message.hot{
-  color:#ffdf74;
-  text-shadow:0 0 13px #ff8b00;
-}
-
-.message.freeze{
-  color:#fff;
-  background:
-    radial-gradient(circle,#4feaff33,#000 65%);
-  border-color:#aef7ff;
-  text-shadow:0 0 10px #4feaff,0 0 18px #fff;
-  animation:freezeFlash .35s infinite alternate;
-}
-
-@keyframes freezeFlash{
-  from{filter:brightness(1)}
-  to{filter:brightness(1.25)}
-}
-
-.reset{
-  margin-top:10px;
-  width:100%;
-  padding:11px;
-  border:0;
-  border-radius:10px;
-  font-weight:1000;
-  background:linear-gradient(180deg,#fff0b0,#c79024);
-  color:#251100;
-}
-
-.help{
-  margin-top:8px;
-  font-size:11px;
-  line-height:1.5;
-  opacity:.75;
+  .yaki-lamp {
+    width: 100px;
+    height: 100px;
+    font-size: 16px;
+  }
 }
 </style>
 </head>
 
 <body>
+<div class="game" id="game">
+  <div class="title">たこ焼きスロット</div>
+  <div class="sub-title">焼きランプが光れば、神焼きチャンス。</div>
 
-<div class="slot-machine">
-
-  <div class="top-arch">
-    ペカッと神焼きランプ
-    <small>TAKOYAKI SLOT / 焼き戻しトリガー搭載</small>
-  </div>
-
-  <div class="bonus-panel" id="bonusPanel">ランプが光ればボーナス!!</div>
-
-  <div class="mode-panel" id="modePanel">通常時</div>
-
-  <div class="reel-area">
-    <div class="reels">
-      <div id="reel0" class="reel">
-        <div class="reel-strip"></div>
-        <div class="center-line"></div>
-      </div>
-      <div id="reel1" class="reel">
-        <div class="reel-strip"></div>
-        <div class="center-line"></div>
-      </div>
-      <div id="reel2" class="reel">
-        <div class="reel-strip"></div>
-        <div class="center-line"></div>
-      </div>
-
-      <div id="reelSmoke" class="reel-smoke">
-        <div>
-          <div id="naviTitle" class="navi-title"></div>
-          <div id="naviSub" class="navi-sub"></div>
-        </div>
-      </div>
+  <div class="panel">
+    <div class="status">
+      <div>メダル<strong id="medals">500</strong></div>
+      <div>BET<strong id="bet">3</strong></div>
+      <div>獲得<strong id="win">0</strong></div>
     </div>
-  </div>
 
-  <div class="counter-panel">
-    <div class="counter">CREDIT<b id="medal">100</b></div>
-    <div class="counter">GAMES<b id="games">0</b></div>
-    <div class="counter">BIG<b id="big">0</b></div>
-    <div class="counter">REG<b id="reg">0</b></div>
-  </div>
+    <div class="yaki-lamp-wrap">
+      <div class="yaki-lamp" id="lamp">焼き<br>ランプ</div>
+    </div>
 
-  <div class="control-panel">
-    <div class="lamp-row">
-      <div id="lamp" class="takopi-lamp">
-        <img src="https://ul.h3z.jp/SWLStuGt.png" alt="たこぴランプ">
-      </div>
-      <button id="lever" class="lever">レバー<br>ON</button>
+    <div class="reels">
+      <div class="reel" id="reel0"><div class="symbol" id="symbol0">🟡</div></div>
+      <div class="reel" id="reel1"><div class="symbol" id="symbol1">🐙</div></div>
+      <div class="reel" id="reel2"><div class="symbol" id="symbol2">🔥</div></div>
     </div>
 
     <div class="stop-buttons">
-      <button id="stop0" class="stop-btn" disabled>左停止</button>
-      <button id="stop1" class="stop-btn" disabled>中停止</button>
-      <button id="stop2" class="stop-btn" disabled>右停止</button>
+      <button id="stop0" disabled>STOP</button>
+      <button id="stop1" disabled>STOP</button>
+      <button id="stop2" disabled>STOP</button>
+    </div>
+
+    <button class="main-button" id="startBtn">焼く！</button>
+
+    <div class="controls">
+      <button class="small-button" id="assistBtn">目押しアシスト：ON</button>
+      <button class="small-button" id="resetBtn">メダル補充</button>
+    </div>
+
+    <div class="message" id="message">
+      3枚BETで焼き開始！<br>たこぴ、準備完了。
+    </div>
+
+    <div class="dev">
+      設定：
+      <select id="settingSelect">
+        <option value="1">設定1</option>
+        <option value="2">設定2</option>
+        <option value="3" selected>設定3</option>
+        <option value="4">設定4</option>
+        <option value="5">設定5</option>
+        <option value="6">設定6</option>
+      </select>
     </div>
   </div>
-
-  <div class="lower-panel">
-    <div class="character">🐙🔥</div>
-    <div id="message" class="message">
-      レバーONでスタート。<br>
-      ランプが光ればボーナス確定たこ。
-    </div>
-    <button id="reset" class="reset">リセット</button>
-    <div class="help">
-      BIG後は焼き戻しトリガーへ。<br>
-      1Gで再ボーナスを狙う、たこ焼き式連チャン仕様。
-    </div>
-  </div>
-
 </div>
 
 <script>
-(() => {
-  "use strict";
+/*
+  たこ焼きスロット 完全版
+  --------------------------------------------------
+  ・HTML/CSS/JSのみ
+  ・レバーON時に内部抽選
+  ・3リール停止
+  ・最大4コマ引き込み風制御
+  ・ボーナスフラグ持ち越し
+  ・目押しアシストON/OFF
+  ・設定1〜6
+  --------------------------------------------------
 
-  const STORAGE_KEY = "takoyaki_peka_slot_bt_v1";
+  注意：
+  実機の完全なリール制御ではなく、
+  ブラウザゲーム用に分かりやすく簡略化した疑似制御です。
+*/
 
-  const IMG = {
-    peka: "https://ul.h3z.jp/SWLStuGt.png",
-    cherry: "https://ul.h3z.jp/2LH0ncn0.png",
-    replay: "https://ul.h3z.jp/zcUHMwx4.png",
-    seven: "https://ul.h3z.jp/qy69DtIc.png"
-  };
+/* =========================
+   基本設定
+========================= */
 
-  const SYMBOLS = [
-    { id:"seven", type:"img", src:IMG.seven, label:"7" },
-    { id:"cherry", type:"img", src:IMG.cherry, label:"チェリー" },
-    { id:"replay", type:"img", src:IMG.replay, label:"リプレイ" },
-    { id:"takoyaki", type:"emoji", emoji:"🐙", label:"たこ焼き" },
-    { id:"sauce", type:"emoji", emoji:"🟤", label:"ソース" },
-    { id:"mayo", type:"emoji", emoji:"🌕", label:"マヨ" },
-    { id:"card", type:"emoji", emoji:"🎴", label:"トレカ" },
-    { id:"fire", type:"emoji", emoji:"🔥", label:"火力" }
-  ];
+const BET = 3;
 
-  const REEL_TABLE = [
-    ["seven","replay","cherry","takoyaki","sauce","replay","mayo","card","replay","fire","cherry","takoyaki","seven","replay","sauce","mayo","card","replay","fire","takoyaki","cherry"],
-    ["seven","cherry","replay","sauce","takoyaki","replay","card","mayo","fire","replay","takoyaki","cherry","seven","sauce","replay","card","mayo","takoyaki","fire","replay","cherry"],
-    ["seven","replay","takoyaki","cherry","mayo","replay","sauce","card","fire","replay","cherry","takoyaki","seven","mayo","replay","sauce","card","fire","takoyaki","replay","cherry"]
-  ];
+// 開発用：初期メダル
+let medals = 500;
 
-  const PAY = {
-    cost:3,
-    big:176,
-    reg:99,
-    btBonus:125,
-    freezeBonus:300,
-    cherry:8,
-    replay:3,
-    koyaku:6
-  };
+// 開発用：初期設定
+let currentSetting = 3;
 
-  const GAME_RATE = {
-    normalBig: 1 / 299,
-    normalReg: 1 / 430,
-    cherryBonus: 0.025,
-    btFreeze: 0.03,
-    btBig: 0.82
-  };
+// 目押しアシスト
+let assistMode = true;
 
-  const reels = [
-    document.getElementById("reel0"),
-    document.getElementById("reel1"),
-    document.getElementById("reel2")
-  ];
+// ボーナス持ち越しフラグ
+let bonusFlag = null; // "BIG" or "REG" or null
 
-  const strips = reels.map(r => r.querySelector(".reel-strip"));
+// 今ゲームの内部成立役
+let currentRole = null;
 
-  const stopBtns = [
-    document.getElementById("stop0"),
-    document.getElementById("stop1"),
-    document.getElementById("stop2")
-  ];
+// 即告知か第3停止告知か
+let pendingNotice = false;
 
-  const lever = document.getElementById("lever");
-  const resetBtn = document.getElementById("reset");
-  const lamp = document.getElementById("lamp");
-  const message = document.getElementById("message");
-  const bonusPanel = document.getElementById("bonusPanel");
-  const modePanel = document.getElementById("modePanel");
+/*
+  機械割イメージ用の設定値。
+  実際の出玉率はプレイ方法、目押しミス、ボーナス持ち越しで変動します。
+*/
+const SETTINGS = {
+  1: { big: 1 / 310, reg: 1 / 430, cherry: 1 / 36, tako: 1 / 95, replay: 1 / 7.3, label: "約97.5%" },
+  2: { big: 1 / 295, reg: 1 / 400, cherry: 1 / 35, tako: 1 / 92, replay: 1 / 7.3, label: "約98.5%" },
+  3: { big: 1 / 280, reg: 1 / 370, cherry: 1 / 34, tako: 1 / 90, replay: 1 / 7.3, label: "約100.0%" },
+  4: { big: 1 / 260, reg: 1 / 335, cherry: 1 / 33, tako: 1 / 86, replay: 1 / 7.3, label: "約102.0%" },
+  5: { big: 1 / 240, reg: 1 / 300, cherry: 1 / 32, tako: 1 / 82, replay: 1 / 7.3, label: "約104.0%" },
+  6: { big: 1 / 220, reg: 1 / 270, cherry: 1 / 31, tako: 1 / 78, replay: 1 / 7.3, label: "約106.0%" }
+};
 
-  const reelSmoke = document.getElementById("reelSmoke");
-  const naviTitle = document.getElementById("naviTitle");
-  const naviSub = document.getElementById("naviSub");
+/*
+  図柄定義。
+  imageに画像URLを入れれば、あとから画像化しやすい構造。
+*/
+const SYMBOLS = {
+  BIG:    { text: "🌈", name: "神焼き7", image: null },
+  REG:    { text: "🐙", name: "たこぴ", image: null },
+  GRILL:  { text: "🔥", name: "焼き台", image: null },
+  TAKO:   { text: "🟡", name: "たこ焼き", image: null },
+  WATER:  { text: "💧", name: "ミズ", image: null },
+  STAR:   { text: "⭐", name: "レア星", image: null },
+  CHERRY: { text: "🍒", name: "チェリー", image: null }
+};
 
-  const medalEl = document.getElementById("medal");
-  const gamesEl = document.getElementById("games");
-  const bigEl = document.getElementById("big");
-  const regEl = document.getElementById("reg");
+/*
+  リール配列。
+  ここを変更すると目押し難易度が変わります。
+*/
+const REELS = [
+  ["BIG", "WATER", "TAKO", "CHERRY", "STAR", "REG", "TAKO", "GRILL", "WATER", "CHERRY", "TAKO", "STAR", "REG", "GRILL", "TAKO", "WATER", "BIG", "STAR", "TAKO", "CHERRY"],
+  ["REG", "TAKO", "WATER", "STAR", "BIG", "GRILL", "TAKO", "WATER", "REG", "STAR", "TAKO", "GRILL", "BIG", "WATER", "TAKO", "STAR", "REG", "GRILL", "TAKO", "WATER"],
+  ["TAKO", "STAR", "REG", "WATER", "GRILL", "BIG", "TAKO", "STAR", "WATER", "REG", "GRILL", "TAKO", "BIG", "WATER", "STAR", "TAKO", "REG", "GRILL", "WATER", "TAKO"]
+];
 
-  let audioCtx = null;
-  let reelSoundTimer = null;
+// 現在表示中のリール位置
+let reelPositions = [0, 0, 0];
 
-  let state = loadState();
+// 停止済みか
+let stopped = [true, true, true];
 
-  let isSpinning = false;
-  let stopped = [true,true,true];
-  let stopOrder = [];
-  let result = null;
-  let reelTimers = [null,null,null];
-  let visibleSymbols = ["seven","seven","seven"];
+// 回転タイマー
+let spinTimers = [null, null, null];
 
-  initReels();
-  render();
+// 停止結果
+let resultSymbols = [null, null, null];
 
-  function loadState(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw){
-        const s = JSON.parse(raw);
-        return {
-          medal:Number(s.medal ?? 100),
-          games:Number(s.games ?? 0),
-          big:Number(s.big ?? 0),
-          reg:Number(s.reg ?? 0),
-          mode:s.mode || "normal",
-          bonusStock:s.bonusStock || null,
-          btPending:Boolean(s.btPending ?? false),
-          btUsed:Boolean(s.btUsed ?? false),
-          totalOut:Number(s.totalOut ?? 0)
-        };
+// ゲーム中か
+let isPlaying = false;
+
+/* =========================
+   DOM
+========================= */
+
+const gameEl = document.getElementById("game");
+const medalEl = document.getElementById("medals");
+const betEl = document.getElementById("bet");
+const winEl = document.getElementById("win");
+const messageEl = document.getElementById("message");
+const lampEl = document.getElementById("lamp");
+const startBtn = document.getElementById("startBtn");
+const assistBtn = document.getElementById("assistBtn");
+const resetBtn = document.getElementById("resetBtn");
+const settingSelect = document.getElementById("settingSelect");
+
+const reelEls = [
+  document.getElementById("reel0"),
+  document.getElementById("reel1"),
+  document.getElementById("reel2")
+];
+
+const symbolEls = [
+  document.getElementById("symbol0"),
+  document.getElementById("symbol1"),
+  document.getElementById("symbol2")
+];
+
+const stopBtns = [
+  document.getElementById("stop0"),
+  document.getElementById("stop1"),
+  document.getElementById("stop2")
+];
+
+/* =========================
+   表示更新
+========================= */
+
+function renderStatus(win = 0) {
+  medalEl.textContent = medals;
+  betEl.textContent = BET;
+  winEl.textContent = win;
+}
+
+function setMessage(text) {
+  messageEl.innerHTML = text;
+}
+
+function setLamp(on) {
+  lampEl.classList.toggle("on", on);
+}
+
+function flash(type) {
+  gameEl.classList.remove("flash-big", "flash-reg");
+  void gameEl.offsetWidth;
+
+  if (type === "BIG") gameEl.classList.add("flash-big");
+  if (type === "REG") gameEl.classList.add("flash-reg");
+}
+
+function getSymbolText(symbolKey) {
+  return SYMBOLS[symbolKey].text;
+}
+
+function renderReel(index) {
+  const symbolKey = REELS[index][reelPositions[index]];
+  symbolEls[index].textContent = getSymbolText(symbolKey);
+}
+
+/* =========================
+   内部抽選
+========================= */
+
+function lottery() {
+  // ボーナス持ち越し中は通常抽選しない
+  if (bonusFlag) {
+    return bonusFlag;
+  }
+
+  const s = SETTINGS[currentSetting];
+  const r = Math.random();
+
+  let p = 0;
+
+  p += s.big;
+  if (r < p) return "BIG";
+
+  p += s.reg;
+  if (r < p) return "REG";
+
+  p += s.cherry;
+  if (r < p) return "CHERRY";
+
+  p += s.tako;
+  if (r < p) return "TAKO";
+
+  p += s.replay;
+  if (r < p) return "REPLAY";
+
+  return "MISS";
+}
+
+/* =========================
+   リール制御
+========================= */
+
+/*
+  最大4コマ以内の引き込み。
+  stopBasePositionから4コマ先まで見て、狙い図柄があればそこに止める。
+*/
+function findPullInPosition(reelIndex, stopBasePosition, targetSymbol) {
+  const reel = REELS[reelIndex];
+
+  for (let offset = 0; offset <= 4; offset++) {
+    const pos = (stopBasePosition + offset) % reel.length;
+    if (reel[pos] === targetSymbol) {
+      return pos;
+    }
+  }
+
+  return stopBasePosition;
+}
+
+/*
+  ハズレ時に、成立していない3つ揃いを避けるための簡易蹴り制御。
+*/
+function avoidAccidentalWin(reelIndex, stopBasePosition) {
+  let pos = stopBasePosition;
+  const reel = REELS[reelIndex];
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const testSymbol = reel[pos];
+
+    if (reelIndex === 2) {
+      if (
+        resultSymbols[0] &&
+        resultSymbols[1] &&
+        resultSymbols[0] === resultSymbols[1] &&
+        resultSymbols[1] === testSymbol
+      ) {
+        pos = (pos + 1) % reel.length;
+        continue;
       }
-    }catch(e){}
+    }
 
-    return {
-      medal:100,
-      games:0,
-      big:0,
-      reg:0,
-      mode:"normal",
-      bonusStock:null,
-      btPending:false,
-      btUsed:false,
-      totalOut:0
-    };
+    return pos;
   }
 
-  function saveState(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  return pos;
+}
+
+/*
+  停止位置決定。
+  assistMode ONなら当選役をかなり引き込みやすくする。
+  OFFなら現在位置から4コマ範囲にあれば引き込む。
+*/
+function decideStopPosition(reelIndex) {
+  const base = reelPositions[reelIndex];
+  let target = null;
+
+  if (currentRole === "BIG") target = "BIG";
+  if (currentRole === "REG") target = "REG";
+  if (currentRole === "TAKO") target = "TAKO";
+  if (currentRole === "REPLAY") target = "WATER";
+
+  // チェリーは左リールだけ狙う
+  if (currentRole === "CHERRY" && reelIndex === 0) {
+    target = "CHERRY";
   }
 
-  function render(){
-    medalEl.textContent = state.medal;
-    gamesEl.textContent = state.games;
-    bigEl.textContent = state.big;
-    regEl.textContent = state.reg;
-
-    lever.disabled = isSpinning || state.medal < PAY.cost;
-
-    if(state.mode === "normal"){
-      modePanel.textContent = "通常時";
-      bonusPanel.textContent = "ランプが光ればボーナス!!";
-    }
-
-    if(state.mode === "bonus"){
-      modePanel.textContent = "ボーナス確定中｜7を狙え";
-      bonusPanel.textContent = state.bonusStock === "big" ? "神焼きBIG確定!!" : "半焼けREG確定!!";
-    }
-
-    if(state.mode === "bt"){
-      modePanel.textContent = "焼き戻しトリガー｜1G連チャン勝負";
-      bonusPanel.textContent = "焼き戻しトリガー発動中!!";
-    }
-
-    if(state.mode === "freeze"){
-      modePanel.textContent = "たこぴフリーズ";
-      bonusPanel.textContent = "超神焼きフリーズ!!";
-    }
-
-    setLamp(state.mode === "bonus" || state.mode === "bt" || state.mode === "freeze");
-  }
-
-  function initReels(){
-    strips.forEach((strip, index) => {
-      strip.innerHTML = "";
-      const loop = [...REEL_TABLE[index], ...REEL_TABLE[index], ...REEL_TABLE[index]];
-
-      loop.forEach(id => {
-        strip.appendChild(makeSymbolEl(id));
-      });
-
-      setCenterSymbol(index, "seven");
-    });
-  }
-
-  function makeSymbolEl(id, glowId = null){
-    const sym = symbolById(id);
-    const div = document.createElement("div");
-    div.className = "symbol";
-    if(glowId && id === glowId) div.classList.add("glow-target");
-
-    if(sym.type === "img"){
-      const img = document.createElement("img");
-      img.src = sym.src;
-      img.alt = sym.label;
-      div.appendChild(img);
-    }else{
-      div.classList.add("emoji");
-      div.textContent = sym.emoji;
-    }
-
-    return div;
-  }
-
-  function symbolById(id){
-    return SYMBOLS.find(s => s.id === id) || SYMBOLS[0];
-  }
-
-  function setCenterSymbol(reelIndex, symbolId, glowId = null){
-    const strip = strips[reelIndex];
-    strip.innerHTML = "";
-
-    const before = pick(REEL_TABLE[reelIndex]);
-    const after = pick(REEL_TABLE[reelIndex]);
-
-    [before, symbolId, after, ...REEL_TABLE[reelIndex].slice(0,8)].forEach(id => {
-      strip.appendChild(makeSymbolEl(id, glowId));
-    });
-
-    strip.style.transform = "translateY(0)";
-    visibleSymbols[reelIndex] = symbolId;
-  }
-
-  function fillRandomStrip(reelIndex){
-    const strip = strips[reelIndex];
-    strip.innerHTML = "";
-
-    for(let i=0;i<12;i++){
-      const id = pick(REEL_TABLE[reelIndex]);
-      const glow = result && result.target ? result.target : null;
-      strip.appendChild(makeSymbolEl(id, glow));
-    }
-  }
-
-  function chance(p){
-    return Math.random() < p;
-  }
-
-  function pick(arr){
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
-
-  function decideResult(){
-    if(state.mode === "bt"){
-      return decideBtResult();
-    }
-
-    if(state.bonusStock){
-      return {
-        role:"bonusStock",
-        bonusType:state.bonusStock,
-        target:"seven",
-        symbols:["seven","seven","seven"],
-        smoke:true
-      };
-    }
-
-    const r = Math.random();
-    const bigRate = GAME_RATE.normalBig;
-    const regRate = GAME_RATE.normalReg;
-
-    if(r < bigRate){
-      return {
-        role:"bonus",
-        bonusType:"big",
-        target:"seven",
-        symbols:["seven","seven","seven"],
-        pekaTiming:chance(.55) ? "lever" : "third",
-        smoke:true
-      };
-    }
-
-    if(r < bigRate + regRate){
-      return {
-        role:"bonus",
-        bonusType:"reg",
-        target:"seven",
-        symbols:["seven","seven","seven"],
-        pekaTiming:chance(.45) ? "lever" : "third",
-        smoke:true
-      };
-    }
-
-    const k = Math.random();
-
-    if(k < .20){
-      return {
-        role:"replay",
-        target:"replay",
-        symbols:["replay","replay","replay"],
-        smoke:chance(.10)
-      };
-    }
-
-    if(k < .32){
-      const bonusHit = chance(GAME_RATE.cherryBonus);
-      if(bonusHit){
-        return {
-          role:"cherryBonus",
-          bonusType:chance(.65) ? "big" : "reg",
-          target:"cherry",
-          symbols:["cherry","cherry","cherry"],
-          pekaTiming:"third",
-          smoke:true
-        };
+  if (target) {
+    if (assistMode) {
+      // アシストON：目押し補助として8コマ範囲で探す
+      const reel = REELS[reelIndex];
+      for (let offset = 0; offset <= 8; offset++) {
+        const pos = (base + offset) % reel.length;
+        if (reel[pos] === target) return pos;
       }
-      return {
-        role:"cherry",
-        target:"cherry",
-        symbols:["cherry","blank","blank"],
-        smoke:chance(.18)
-      };
     }
 
-    if(k < .52){
-      const koyaku = pick(["takoyaki","sauce","mayo","card","fire"]);
-      return {
-        role:"koyaku",
-        target:koyaku,
-        symbols:[koyaku,koyaku,koyaku],
-        smoke:chance(.08)
-      };
-    }
-
-    return {
-      role:"miss",
-      symbols:makeMissSymbols()
-    };
+    // アシストOFF：通常の4コマ引き込み
+    return findPullInPosition(reelIndex, base, target);
   }
 
-  function decideBtResult(){
-    if(chance(GAME_RATE.btFreeze)){
-      return {
-        role:"freeze",
-        bonusType:"big",
-        target:"seven",
-        symbols:["seven","seven","seven"],
-        smoke:true
-      };
-    }
+  // ハズレ時は偶然のボーナス揃いなどを避ける
+  return avoidAccidentalWin(reelIndex, base);
+}
 
-    return {
-      role:"btBonus",
-      bonusType:chance(GAME_RATE.btBig) ? "big" : "reg",
-      target:"seven",
-      symbols:["seven","seven","seven"],
-      smoke:true
-    };
+/* =========================
+   回転・停止
+========================= */
+
+function startSpin() {
+  if (isPlaying) return;
+
+  if (medals < BET) {
+    setMessage("メダルが足りません。<br>焼き台に粉が入りません……。");
+    return;
   }
 
-  function makeMissSymbols(){
-    const ids = SYMBOLS.map(s => s.id);
-    let arr;
+  isPlaying = true;
+  stopped = [false, false, false];
+  resultSymbols = [null, null, null];
+  renderStatus(0);
 
-    do{
-      arr = [pick(ids), pick(ids), pick(ids)];
-    }while(arr[0] === arr[1] && arr[1] === arr[2]);
+  medals -= BET;
 
-    return arr;
-  }
+  currentRole = lottery();
 
-  function startSpin(){
-    unlockAudio();
+  // ボーナス初当たり時はフラグを立てる
+  if (currentRole === "BIG" || currentRole === "REG") {
+    bonusFlag = currentRole;
 
-    if(isSpinning) return;
-
-    if(state.medal < PAY.cost){
-      playErrorSound();
-      setMessage("メダルが足りないたこ。", "");
-      return;
-    }
-
-    playLeverSound();
-
-    state.medal -= PAY.cost;
-    state.games += 1;
-
-    result = decideResult();
-
-    isSpinning = true;
-    stopped = [false,false,false];
-    stopOrder = [];
-
-    hideNavi();
-
-    if(result.role === "bonus" && result.pekaTiming === "lever"){
-      state.bonusStock = result.bonusType;
-      state.mode = "bonus";
+    // 告知タイミング：70%即告知、30%第3停止後
+    if (Math.random() < 0.7) {
+      pendingNotice = false;
       setLamp(true);
-      playPekaSound();
-      setMessage("レバーONでペカッ！<br>" + bonusLabel(result.bonusType) + "確定。<br>7を狙うたこ。", "hot");
-      showNavi("7を狙え！", "ランプ点灯。ボーナス確定たこ。");
-    }else if(result.role === "bonusStock"){
-      showNavi("7を狙え！", "ボーナス確定中たこ。");
-    }else if(result.role === "btBonus"){
-      setLamp(true);
-      showNavi("焼き戻し成功！", "7を狙え。1G連チャンたこ。");
-      setMessage("焼き戻しトリガー発動！<br>1Gでボーナスを焼き戻したたこ！", "bt");
-    }else if(result.role === "freeze"){
-      state.mode = "freeze";
-      setLamp(true);
-      playFreezeSound();
-      showNavi("たこぴフリーズ!!", "超神焼きBIG確定。");
-      setMessage("たこぴフリーズ発生……！<br>鉄板の時間が止まったたこ。", "freeze");
-    }else if(result.smoke && result.target){
-      showNavi(symbolById(result.target).label + "を狙え！", "チャンス演出。対象絵柄が光るたこ。");
-      setMessage("チャンス演出発生！<br>" + symbolById(result.target).label + "を狙ってみるたこ。", "hot");
-    }else{
-      setLamp(state.mode === "bonus" || state.mode === "bt");
-      setMessage("リール回転中……<br>好きな順番で止めるたこ。", "");
-    }
-
-    startReelLoopSound();
-
-    reels.forEach((reel, i) => {
-      reel.classList.add("spinning");
-      stopBtns[i].disabled = false;
-
-      reelTimers[i] = setInterval(() => {
-        fillRandomStrip(i);
-      }, 90);
-    });
-
-    saveState();
-    render();
-  }
-
-  function stopReel(index){
-    unlockAudio();
-
-    if(!isSpinning || stopped[index]) return;
-
-    playStopSound(index);
-
-    stopped[index] = true;
-    stopBtns[index].disabled = true;
-    stopOrder.push(index);
-
-    clearInterval(reelTimers[index]);
-    reelTimers[index] = null;
-
-    reels[index].classList.remove("spinning");
-
-    const symbol = decideStoppedSymbol(index);
-    const glow = result && result.target ? result.target : null;
-    setCenterSymbol(index, symbol, glow);
-
-    vibrate(30);
-
-    if(stopped.every(Boolean)){
-      stopReelLoopSound();
-      finishSpin();
-    }
-  }
-
-  function decideStoppedSymbol(index){
-    if(result.role === "bonus" || result.role === "bonusStock" || result.role === "btBonus" || result.role === "freeze"){
-      return "seven";
-    }
-
-    if(result.role === "cherryBonus"){
-      return result.symbols[index] || "cherry";
-    }
-
-    if(result.role === "cherry"){
-      if(index === 0) return "cherry";
-      return pick(["replay","takoyaki","sauce","mayo","card","fire"]);
-    }
-
-    if(result.symbols){
-      return result.symbols[index] === "blank" ? pick(["replay","takoyaki","sauce","mayo","card","fire"]) : result.symbols[index];
-    }
-
-    return pick(REEL_TABLE[index]);
-  }
-
-  function finishSpin(){
-    isSpinning = false;
-    stopBtns.forEach(btn => btn.disabled = true);
-
-    const line = [...visibleSymbols];
-    const isTriple = line[0] === line[1] && line[1] === line[2];
-    const tripleId = isTriple ? line[0] : null;
-
-    if(result.role === "bonus" && result.pekaTiming === "third"){
-      state.bonusStock = result.bonusType;
-      state.mode = "bonus";
-      setLamp(true);
-      playPekaSound();
-      setMessage("第3停止でペカッ！<br>" + bonusLabel(result.bonusType) + "確定。<br>次ゲームで7を狙うたこ。", "hot");
-      saveState();
-      render();
-      return;
-    }
-
-    if(result.role === "cherryBonus"){
-      state.bonusStock = result.bonusType;
-      state.mode = "bonus";
-      setLamp(true);
-      playPekaSound();
-      setMessage("チェリーからペカッ！<br>" + bonusLabel(result.bonusType) + "確定。<br>これは焼けてるたこ。", "hot");
-      saveState();
-      render();
-      return;
-    }
-
-    if(result.role === "bonusStock"){
-      handleBonusPay(state.bonusStock);
-      return;
-    }
-
-    if(result.role === "btBonus"){
-      handleBtBonusPay(result.bonusType);
-      return;
-    }
-
-    if(result.role === "freeze"){
-      handleFreezePay();
-      return;
-    }
-
-    if(result.role === "replay" && isTriple && tripleId === "replay"){
-      state.medal += PAY.replay;
-      playReplaySound();
-      setMessage("リプレイ成立。<br>もう一回、鉄板を温めるたこ。", "bt");
-    }else if(result.role === "cherry"){
-      state.medal += PAY.cherry;
-      playReplaySound();
-      setMessage("チェリー成立！<br>" + PAY.cherry + "メダル獲得。<br>たまにここからペカるたこ。", "hot");
-    }else if(result.role === "koyaku" && isTriple){
-      state.medal += PAY.koyaku;
-      playReplaySound();
-      setMessage(symbolById(tripleId).label + "成立！<br>" + PAY.koyaku + "メダル獲得。", "bt");
-    }else{
-      playMissSound();
-      setMessage("ハズレ。<br>まだ焼きムラがあるたこ。", "");
-    }
-
-    saveState();
-    render();
-  }
-
-  function handleBonusPay(type){
-    if(type === "big"){
-      state.medal += PAY.big;
-      state.totalOut += PAY.big;
-      state.big += 1;
-      state.bonusStock = null;
-      state.mode = "bt";
-      playBigSound();
-      setLamp(true);
-      setMessage("777<br>神焼きBIG！<br>" + PAY.big + "メダル獲得。<br>終了後、焼き戻しトリガー発動たこ！", "big");
-    }else{
-      state.medal += PAY.reg;
-      state.totalOut += PAY.reg;
-      state.reg += 1;
-      state.bonusStock = null;
-      state.mode = "normal";
-      playRegSound();
+      setMessage("焼きランプ点灯！<br>ボーナス図柄を狙え！");
+    } else {
+      pendingNotice = true;
       setLamp(false);
-      setMessage("777<br>半焼けREG！<br>" + PAY.reg + "メダル獲得。<br>通常時へ戻るたこ。", "reg");
+      setMessage("焼き開始！<br>たこぴ、何かを隠している……。");
     }
-
-    saveState();
-    render();
-  }
-
-  function handleBtBonusPay(type){
-    const add = type === "big" ? PAY.btBonus : PAY.reg;
-    state.medal += add;
-    state.totalOut += add;
-
-    if(type === "big"){
-      state.big += 1;
-      playBigSound();
-      setMessage("焼き戻し成功！<br>神焼きBIG連チャン！<br>追加 " + add + "メダル獲得たこ。", "big");
-    }else{
-      state.reg += 1;
-      playRegSound();
-      setMessage("焼き戻し成功！<br>半焼けREG！<br>追加 " + add + "メダル獲得たこ。", "reg");
-    }
-
-    state.mode = "normal";
-    state.bonusStock = null;
+  } else {
+    pendingNotice = false;
     setLamp(false);
-
-    saveState();
-    render();
+    setMessage("焼き開始！<br>たこぴ、回転中……");
   }
 
-  function handleFreezePay(){
-    const add = PAY.freezeBonus;
-    state.medal += add;
-    state.totalOut += add;
-    state.big += 1;
-    state.mode = "normal";
-    state.bonusStock = null;
+  for (let i = 0; i < 3; i++) {
+    reelEls[i].classList.add("spinning");
+    stopBtns[i].disabled = false;
 
-    playFreezeSound();
+    spinTimers[i] = setInterval(() => {
+      reelPositions[i] = (reelPositions[i] + 1) % REELS[i].length;
+      renderReel(i);
+    }, 65 + i * 12);
+  }
+
+  startBtn.disabled = true;
+}
+
+function stopReel(index) {
+  if (!isPlaying || stopped[index]) return;
+
+  clearInterval(spinTimers[index]);
+  spinTimers[index] = null;
+
+  const stopPos = decideStopPosition(index);
+  reelPositions[index] = stopPos;
+  renderReel(index);
+
+  reelEls[index].classList.remove("spinning");
+  stopBtns[index].disabled = true;
+  stopped[index] = true;
+
+  const symbolKey = REELS[index][reelPositions[index]];
+  resultSymbols[index] = symbolKey;
+
+  // チェリーは左リール停止時点で一応告知
+  if (index === 0 && currentRole === "CHERRY" && symbolKey === "CHERRY") {
+    setMessage("左にチェリー停止！<br>たこぴ、つまみ食い成功。");
+  }
+
+  if (stopped.every(Boolean)) {
+    finishGame();
+  }
+}
+
+/* =========================
+   役判定
+========================= */
+
+function finishGame() {
+  let payout = 0;
+  let message = "";
+  const [a, b, c] = resultSymbols;
+
+  // 第3停止告知
+  if (pendingNotice && (currentRole === "BIG" || currentRole === "REG")) {
+    setLamp(true);
+    pendingNotice = false;
+    setMessage("第3停止で焼きランプ点灯！<br>ボーナス確定！");
+  }
+
+  if (currentRole === "BIG" && a === "BIG" && b === "BIG" && c === "BIG") {
+    payout = 300;
+    medals += payout;
+    bonusFlag = null;
     setLamp(false);
-
-    setMessage("超神焼きフリーズ完走！<br>追加 " + add + "メダル獲得！<br>たこぴ、完全に焼き切ったたこ。", "freeze");
-
-    saveState();
-    render();
-  }
-
-  function bonusLabel(type){
-    return type === "big" ? "神焼きBIG" : "半焼けREG";
-  }
-
-  function showNavi(title, sub){
-    reelSmoke.classList.add("show");
-    naviTitle.textContent = title;
-    naviSub.textContent = sub;
-  }
-
-  function hideNavi(){
-    reelSmoke.classList.remove("show");
-    naviTitle.textContent = "";
-    naviSub.textContent = "";
-  }
-
-  function setLamp(on){
-    lamp.classList.toggle("on", on);
-  }
-
-  function setMessage(text, type){
-    message.className = "message";
-    if(type) message.classList.add(type);
-    message.innerHTML = text;
-  }
-
-  function vibrate(pattern){
-    if(navigator.vibrate){
-      navigator.vibrate(pattern);
-    }
-  }
-
-  function unlockAudio(){
-    if(!audioCtx){
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
-    if(audioCtx.state === "suspended"){
-      audioCtx.resume();
-    }
-  }
-
-  function tone(freq, duration, type = "square", volume = 0.08, delay = 0){
-    if(!audioCtx) return;
-
-    const now = audioCtx.currentTime + delay;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, now);
-
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start(now);
-    osc.stop(now + duration + 0.03);
-  }
-
-  function noise(duration = 0.08, volume = 0.06, delay = 0){
-    if(!audioCtx) return;
-
-    const now = audioCtx.currentTime + delay;
-    const bufferSize = audioCtx.sampleRate * duration;
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    for(let i = 0; i < bufferSize; i++){
-      data[i] = Math.random() * 2 - 1;
-    }
-
-    const src = audioCtx.createBufferSource();
-    const gain = audioCtx.createGain();
-
-    src.buffer = buffer;
-
-    gain.gain.setValueAtTime(volume, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-    src.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    src.start(now);
-    src.stop(now + duration);
-  }
-
-  function playLeverSound(){
-    tone(150, 0.05, "sawtooth", 0.08);
-    tone(90, 0.08, "square", 0.06, 0.05);
-  }
-
-  function startReelLoopSound(){
-    stopReelLoopSound();
-
-    reelSoundTimer = setInterval(() => {
-      if(!isSpinning) return;
-      noise(0.025, 0.025);
-      tone(95 + Math.random() * 25, 0.025, "square", 0.025);
-    }, 80);
-  }
-
-  function stopReelLoopSound(){
-    if(reelSoundTimer){
-      clearInterval(reelSoundTimer);
-      reelSoundTimer = null;
-    }
-  }
-
-  function playStopSound(index){
-    tone(220 + index * 55, 0.055, "square", 0.09);
-    tone(120 + index * 30, 0.045, "triangle", 0.06, 0.04);
-  }
-
-  function playPekaSound(){
-    tone(880, 0.08, "sine", 0.12);
-    tone(1320, 0.10, "sine", 0.10, 0.08);
-    tone(1760, 0.13, "sine", 0.08, 0.17);
-    vibrate([60,30,80]);
-  }
-
-  function playBigSound(){
-    tone(523.25, 0.10, "square", 0.10, 0.00);
-    tone(659.25, 0.10, "square", 0.10, 0.12);
-    tone(783.99, 0.10, "square", 0.10, 0.24);
-    tone(1046.5, 0.22, "square", 0.11, 0.36);
-    tone(1318.5, 0.24, "sine", 0.08, 0.58);
-    vibrate([80,40,120]);
-  }
-
-  function playRegSound(){
-    tone(392, 0.10, "square", 0.09, 0.00);
-    tone(523.25, 0.10, "square", 0.09, 0.13);
-    tone(659.25, 0.18, "square", 0.09, 0.26);
-  }
-
-  function playReplaySound(){
-    tone(440, 0.08, "triangle", 0.07, 0.00);
-    tone(660, 0.08, "triangle", 0.07, 0.10);
-  }
-
-  function playMissSound(){
-    tone(180, 0.07, "sawtooth", 0.045, 0.00);
-    tone(120, 0.10, "sawtooth", 0.035, 0.08);
-  }
-
-  function playFreezeSound(){
-    tone(220, 0.16, "sine", 0.08, 0.00);
-    tone(330, 0.16, "sine", 0.08, 0.18);
-    tone(440, 0.16, "sine", 0.09, 0.36);
-    tone(880, 0.24, "sine", 0.10, 0.58);
-    tone(1760, 0.32, "sine", 0.08, 0.86);
-    vibrate([100,50,100,50,180]);
-  }
-
-  function playErrorSound(){
-    tone(100, 0.12, "sawtooth", 0.08);
-    tone(80, 0.12, "sawtooth", 0.06, 0.11);
-  }
-
-  lever.addEventListener("click", startSpin);
-
-  stopBtns.forEach((btn, index) => {
-    btn.addEventListener("click", () => stopReel(index));
-  });
-
-  resetBtn.addEventListener("click", () => {
-    unlockAudio();
-    playStopSound(0);
-
-    localStorage.removeItem(STORAGE_KEY);
-
-    state = {
-      medal:100,
-      games:0,
-      big:0,
-      reg:0,
-      mode:"normal",
-      bonusStock:null,
-      btPending:false,
-      btUsed:false,
-      totalOut:0
-    };
-
-    isSpinning = false;
-    stopped = [true,true,true];
-    stopOrder = [];
-    result = null;
-
-    reelTimers.forEach(t => {
-      if(t) clearInterval(t);
-    });
-    reelTimers = [null,null,null];
-
-    stopReelLoopSound();
-
-    reels.forEach((reel, i) => {
-      reel.classList.remove("spinning");
-      setCenterSymbol(i, "seven");
-    });
-
-    stopBtns.forEach(btn => btn.disabled = true);
-
-    hideNavi();
+    flash("BIG");
+    message = "🌈 神焼き降臨！！ 🌈<br>BIG BONUS +300枚！";
+  } else if (currentRole === "REG" && a === "REG" && b === "REG" && c === "REG") {
+    payout = 100;
+    medals += payout;
+    bonusFlag = null;
     setLamp(false);
-    setMessage("リセット完了。<br>レバーONでスタートたこ。", "");
+    flash("REG");
+    message = "🐙 半焼けボーナス！ 🐙<br>REG BONUS +100枚！";
+  } else if (currentRole === "CHERRY" && a === "CHERRY") {
+    payout = 10;
+    medals += payout;
+    message = "🍒 チェリー！ +10枚<br>たこぴ、端っこだけ焼けた。";
+  } else if (currentRole === "TAKO" && a === "TAKO" && b === "TAKO" && c === "TAKO") {
+    payout = 30;
+    medals += payout;
+    message = "🟡 たこ焼き揃い！ +30枚<br>外カリ中トロ、成功。";
+  } else if (currentRole === "REPLAY" && a === "WATER" && b === "WATER" && c === "WATER") {
+    payout = BET;
+    medals += payout;
+    message = "💧 リプレイ！<br>ミズ補充でもう一焼き。";
+  } else if (bonusFlag) {
+    message = "ボーナス成立中！<br>焼きランプ点灯中。図柄を狙え！";
+    setLamp(true);
+  } else if (currentRole === "CHERRY" && a !== "CHERRY") {
+    message = "チェリー取りこぼし……。<br>たこぴ、目押しの修行へ。";
+  } else {
+    const misses = [
+      "今日はまだ粉が足りない……。",
+      "焦げた。だが、味はある。",
+      "たこぴ、無言で首を振る。",
+      "焼き台は沈黙した……。",
+      "当たりは次の舟に入っているかも。"
+    ];
+    message = misses[Math.floor(Math.random() * misses.length)];
+  }
 
-    saveState();
-    render();
-  });
+  renderStatus(payout);
+  setMessage(message);
 
-})();
+  isPlaying = false;
+  startBtn.disabled = false;
+
+  for (let i = 0; i < 3; i++) {
+    stopBtns[i].disabled = true;
+  }
+}
+
+/* =========================
+   イベント
+========================= */
+
+startBtn.addEventListener("click", startSpin);
+
+stopBtns.forEach((btn, index) => {
+  btn.addEventListener("click", () => stopReel(index));
+});
+
+assistBtn.addEventListener("click", () => {
+  assistMode = !assistMode;
+  assistBtn.textContent = assistMode ? "目押しアシスト：ON" : "目押しアシスト：OFF";
+  setMessage(
+    assistMode
+      ? "目押しアシストON。<br>たこぴが少し手伝います。"
+      : "目押しアシストOFF。<br>己の目で焼き切れ。"
+  );
+});
+
+resetBtn.addEventListener("click", () => {
+  medals += 300;
+  renderStatus(0);
+  setMessage("メダルを300枚補充しました。<br>粉、再入荷。");
+});
+
+settingSelect.addEventListener("change", e => {
+  currentSetting = Number(e.target.value);
+  const label = SETTINGS[currentSetting].label;
+  setMessage(`設定${currentSetting}に変更しました。<br>機械割イメージ：${label}`);
+});
+
+/* =========================
+   初期表示
+========================= */
+
+for (let i = 0; i < 3; i++) {
+  reelPositions[i] = Math.floor(Math.random() * REELS[i].length);
+  renderReel(i);
+}
+
+renderStatus(0);
+setLamp(false);
 </script>
-
 </body>
 </html>
