@@ -24,57 +24,35 @@ html,body{
   height:100vh;
   overflow:hidden;
   user-select:none;
-  background:linear-gradient(#7ec7ff 0%,#bfe8ff 52%,#8d7657 53%,#3b2715 100%);
+  background:#7ec7ff;
 }
 
-#city{
+/* 背景画像を途切れにくく高速スクロール */
+#bgLayer{
   position:absolute;
   left:0;
-  bottom:92px;
-  width:240vw;
-  height:230px;
-  z-index:1;
-  background:linear-gradient(#6c86a0,#4f6478);
-  animation:cityMove 3.8s linear infinite;
-}
-
-#city::before{
-  content:"";
-  position:absolute;
-  left:0;
-  bottom:0;
+  top:0;
   width:100%;
   height:100%;
-  background:
-    linear-gradient(#d9b16f,#d9b16f) 20px 80px/90px 150px,
-    linear-gradient(#9fc3d8,#9fc3d8) 140px 40px/120px 190px,
-    linear-gradient(#c9855f,#c9855f) 300px 100px/95px 130px,
-    linear-gradient(#b7b7b7,#b7b7b7) 440px 60px/130px 170px,
-    linear-gradient(#e0c27d,#e0c27d) 620px 90px/110px 140px,
-    linear-gradient(#8fb0c8,#8fb0c8) 780px 50px/120px 180px,
-    linear-gradient(#c7775d,#c7775d) 940px 105px/100px 125px,
-    linear-gradient(#b8b8b8,#b8b8b8) 1100px 70px/130px 160px;
+  z-index:1;
+
+  --bgW:2048px;
+
+  background-image:url("https://ul.h3z.jp/j5JM4NXG.png");
   background-repeat:repeat-x;
+  background-size:auto 100%;
+  background-position:0 100%;
+
+  animation:bgScroll 1.45s linear infinite;
 }
 
-#city::after{
-  content:"";
-  position:absolute;
-  left:0;
-  bottom:40px;
-  width:100%;
-  height:70px;
-  background:repeating-linear-gradient(
-    90deg,
-    transparent 0 38px,
-    rgba(255,255,210,.8) 38px 52px,
-    transparent 52px 90px
-  );
-}
-
-@keyframes cityMove{
-  from{ transform:translateX(0); }
-  to{ transform:translateX(-120vw); }
+@keyframes bgScroll{
+  from{
+    background-position:0 100%;
+  }
+  to{
+    background-position:calc(var(--bgW) * -1) 100%;
+  }
 }
 
 #road{
@@ -83,7 +61,11 @@ html,body{
   bottom:0;
   width:100%;
   height:92px;
-  background:repeating-linear-gradient(90deg,#3d3d3d 0 70px,#464646 70px 140px);
+  background:repeating-linear-gradient(
+    90deg,
+    #3d3d3d 0 70px,
+    #464646 70px 140px
+  );
   border-top:6px solid #f0d07a;
   z-index:2;
 }
@@ -95,13 +77,21 @@ html,body{
   top:38px;
   width:300%;
   height:8px;
-  background:repeating-linear-gradient(90deg,#fff 0 60px,transparent 60px 120px);
+  background:repeating-linear-gradient(
+    90deg,
+    #fff 0 60px,
+    transparent 60px 120px
+  );
   animation:roadLineMove .28s linear infinite;
 }
 
 @keyframes roadLineMove{
-  from{ transform:translateX(0); }
-  to{ transform:translateX(120px); }
+  from{
+    transform:translateX(0);
+  }
+  to{
+    transform:translateX(120px);
+  }
 }
 
 #hud{
@@ -125,21 +115,22 @@ html,body{
   transform-origin:center bottom;
 }
 
+/* キャラはカクカクさせず自然に */
 .run{
-  animation:runBob .09s infinite alternate;
+  animation:runBob .18s infinite alternate;
 }
 
 @keyframes runBob{
   from{
-    transform:translateY(0) translateX(0) rotate(1deg);
+    transform:translateY(0);
   }
   to{
-    transform:translateY(-10px) translateX(-8px) rotate(-2deg);
+    transform:translateY(-3px);
   }
 }
 
 .jump{
-  transform:rotate(0deg);
+  transform:translateY(0);
 }
 
 .takoyaki{
@@ -226,7 +217,7 @@ html,body{
 
 <body>
 <div id="game">
-  <div id="city"></div>
+  <div id="bgLayer"></div>
 
   <div id="hud">
     SCORE：<span id="score">0</span><br>
@@ -255,12 +246,22 @@ html,body{
 <script>
 (() => {
   const game = document.getElementById("game");
+  const bgLayer = document.getElementById("bgLayer");
   const player = document.getElementById("player");
   const scoreEl = document.getElementById("score");
   const comboEl = document.getElementById("combo");
   const bonusEl = document.getElementById("bonus");
   const message = document.getElementById("message");
   const startBtn = document.getElementById("startBtn");
+
+  const BG_URL = "https://ul.h3z.jp/j5JM4NXG.png";
+
+  const bgImg = new Image();
+  bgImg.onload = () => {
+    const renderedWidth = window.innerHeight * (bgImg.naturalWidth / bgImg.naturalHeight);
+    bgLayer.style.setProperty("--bgW", renderedWidth + "px");
+  };
+  bgImg.src = BG_URL;
 
   let started = false;
   let gameOver = false;
@@ -283,7 +284,7 @@ html,body{
   const maxHoldFrames = 34;
 
   const forwardPower = 2.8;
-  const forwardReturn = 0.08;
+  const forwardReturn = 0.04;
   const maxForward = 70;
 
   let isGround = true;
@@ -349,6 +350,8 @@ html,body{
   function jumpStart(){
     isGround = false;
     velocityY = -firstJumpPower;
+
+    /* キャラは右から左へ走るので、ジャンプ時は左へ進む */
     velocityForward = forwardPower;
 
     player.classList.remove("run");
@@ -497,7 +500,7 @@ html,body{
     }
 
     if(!isGround){
-      velocityForward -= forwardReturn;
+      velocityForward = Math.max(0, velocityForward - forwardReturn);
     }else{
       playerForward *= 0.82;
       if(Math.abs(playerForward) < 0.5) playerForward = 0;
