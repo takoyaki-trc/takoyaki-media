@@ -24,18 +24,99 @@ html,body{
   height:100vh;
   overflow:hidden;
   user-select:none;
-  background:linear-gradient(#10131d 0%,#202638 58%,#6b4a2b 59%,#2a1a0d 100%);
+  background:linear-gradient(#7ec7ff 0%,#bfe8ff 52%,#8d7657 53%,#3b2715 100%);
 }
 
-#ground{
+/* 街背景 */
+#city{
+  position:absolute;
+  left:0;
+  bottom:92px;
+  width:220vw;
+  height:230px;
+  z-index:1;
+  background:
+    linear-gradient(#6c86a0,#4f6478);
+  animation:cityMove 12s linear infinite;
+}
+
+#city::before{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:100%;
+  height:100%;
+  background:
+    linear-gradient(#d9b16f,#d9b16f) 20px 80px/90px 150px,
+    linear-gradient(#9fc3d8,#9fc3d8) 140px 40px/120px 190px,
+    linear-gradient(#c9855f,#c9855f) 300px 100px/95px 130px,
+    linear-gradient(#b7b7b7,#b7b7b7) 440px 60px/130px 170px,
+    linear-gradient(#e0c27d,#e0c27d) 620px 90px/110px 140px,
+    linear-gradient(#8fb0c8,#8fb0c8) 780px 50px/120px 180px,
+    linear-gradient(#c7775d,#c7775d) 940px 105px/100px 125px,
+    linear-gradient(#b8b8b8,#b8b8b8) 1100px 70px/130px 160px,
+    linear-gradient(#d9b16f,#d9b16f) 1280px 90px/100px 140px,
+    linear-gradient(#9fc3d8,#9fc3d8) 1440px 45px/130px 185px;
+  background-repeat:repeat-x;
+}
+
+#city::after{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:40px;
+  width:100%;
+  height:70px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 38px,
+      rgba(255,255,210,.8) 38px 52px,
+      transparent 52px 90px
+    );
+  opacity:.9;
+}
+
+@keyframes cityMove{
+  from{ transform:translateX(0); }
+  to{ transform:translateX(-110vw); }
+}
+
+#road{
   position:absolute;
   left:0;
   bottom:0;
   width:100%;
   height:92px;
-  background:repeating-linear-gradient(90deg,#5b3518 0 38px,#6f421f 38px 76px);
-  border-top:6px solid #d8b27a;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #3d3d3d 0 70px,
+      #464646 70px 140px
+    );
+  border-top:6px solid #f0d07a;
   z-index:2;
+}
+
+#road::after{
+  content:"";
+  position:absolute;
+  left:0;
+  top:38px;
+  width:200%;
+  height:8px;
+  background:repeating-linear-gradient(
+    90deg,
+    #fff 0 60px,
+    transparent 60px 120px
+  );
+  animation:roadLineMove 1.5s linear infinite;
+}
+
+@keyframes roadLineMove{
+  from{ transform:translateX(0); }
+  to{ transform:translateX(120px); }
 }
 
 #hud{
@@ -64,12 +145,12 @@ html,body{
 }
 
 @keyframes runBob{
-  from{ transform:translateY(0) rotate(1deg) scaleX(-1); }
-  to{ transform:translateY(-7px) rotate(-1deg) scaleX(-1); }
+  from{ transform:translateY(0) rotate(1deg); }
+  to{ transform:translateY(-7px) rotate(-1deg); }
 }
 
 .jump{
-  transform:scaleX(-1);
+  transform:rotate(0deg);
 }
 
 .takoyaki{
@@ -120,27 +201,6 @@ html,body{
   box-shadow:0 0 18px #fff;
 }
 
-#powerGauge{
-  position:absolute;
-  right:10px;
-  bottom:120px;
-  width:18px;
-  height:120px;
-  border:3px solid #fff;
-  background:#222;
-  z-index:35;
-  display:none;
-}
-
-#powerFill{
-  position:absolute;
-  left:0;
-  bottom:0;
-  width:100%;
-  height:0%;
-  background:#ffe066;
-}
-
 #message{
   position:absolute;
   inset:0;
@@ -164,6 +224,8 @@ html,body{
 
 <body>
 <div id="game">
+  <div id="city"></div>
+
   <div id="hud">
     SCORE：<span id="score">0</span><br>
     COMBO：<span id="combo">0</span><br>
@@ -173,15 +235,13 @@ html,body{
   <div id="successLine" class="line"></div>
   <div id="perfectLine" class="line"></div>
 
-  <div id="powerGauge"><div id="powerFill"></div></div>
-
   <img id="player" class="run" src="https://ul.h3z.jp/s2peAezZ.png" alt="player">
 
-  <div id="ground"></div>
+  <div id="road"></div>
 
   <div id="message">
     たこ焼きジャンプ！<br>
-    短押しで小ジャンプ<br>
+    タップでジャンプ<br>
     長押しで大ジャンプ<br><br>
     画面を押してスタート
   </div>
@@ -195,8 +255,6 @@ html,body{
   const comboEl = document.getElementById("combo");
   const bonusEl = document.getElementById("bonus");
   const message = document.getElementById("message");
-  const powerGauge = document.getElementById("powerGauge");
-  const powerFill = document.getElementById("powerFill");
 
   let started = false;
   let gameOver = false;
@@ -209,26 +267,26 @@ html,body{
 
   let playerY = 0;
   let velocityY = 0;
-  const gravity = 0.82;
+  const gravity = 0.72;
 
-  const minJumpPower = 15;
-  const maxJumpPower = 28;
-  const maxHoldTime = 650;
+  const firstJumpPower = 15;
+  const holdBoostPower = 0.72;
+  const maxHoldFrames = 32;
 
   let isGround = true;
   let isPressing = false;
-  let pressStartTime = 0;
+  let holdFrames = 0;
 
   let takoyakis = [];
   let lastSpawn = 0;
-  let spawnInterval = 1200;
+  let spawnInterval = 1500;
 
   const sizes = [
-    { name:"極小", size:34, minSpeed:5.5, maxSpeed:8.5, point:80 },
-    { name:"小", size:48, minSpeed:4.8, maxSpeed:7.8, point:100 },
-    { name:"中", size:66, minSpeed:4.2, maxSpeed:7.0, point:130 },
-    { name:"大", size:86, minSpeed:3.8, maxSpeed:6.5, point:170 },
-    { name:"特大", size:112, minSpeed:3.2, maxSpeed:5.8, point:230 }
+    { name:"極小", size:34, minSpeed:2.4, maxSpeed:3.8, point:80 },
+    { name:"小", size:48, minSpeed:2.2, maxSpeed:3.5, point:100 },
+    { name:"中", size:66, minSpeed:2.0, maxSpeed:3.2, point:130 },
+    { name:"大", size:86, minSpeed:1.8, maxSpeed:2.9, point:170 },
+    { name:"特大", size:112, minSpeed:1.6, maxSpeed:2.6, point:230 }
   ];
 
   function updateHud(){
@@ -244,11 +302,6 @@ html,body{
     requestAnimationFrame(loop);
   }
 
-  function getHoldRate(){
-    const holdTime = Math.min(performance.now() - pressStartTime, maxHoldTime);
-    return holdTime / maxHoldTime;
-  }
-
   function startPress(e){
     e.preventDefault();
 
@@ -262,28 +315,18 @@ html,body{
     if(!isGround) return;
 
     isPressing = true;
-    pressStartTime = performance.now();
-    powerGauge.style.display = "block";
-    powerFill.style.height = "0%";
+    holdFrames = 0;
+    jumpStart();
   }
 
   function endPress(e){
     e.preventDefault();
-
-    if(!isPressing || !isGround || gameOver) return;
-
-    const rate = getHoldRate();
-    const power = minJumpPower + (maxJumpPower - minJumpPower) * rate;
-
     isPressing = false;
-    powerGauge.style.display = "none";
-
-    jump(power);
   }
 
-  function jump(power){
+  function jumpStart(){
     isGround = false;
-    velocityY = -power;
+    velocityY = -firstJumpPower;
     player.classList.remove("run");
     player.classList.add("jump");
   }
@@ -325,7 +368,7 @@ html,body{
       rotation: 0
     });
 
-    spawnInterval = 850 + Math.random() * 850;
+    spawnInterval = 1250 + Math.random() * 1250;
   }
 
   function rectsHit(a,b){
@@ -396,7 +439,6 @@ html,body{
   function endGame(){
     gameOver = true;
     isPressing = false;
-    powerGauge.style.display = "none";
 
     message.innerHTML =
       "焼かれた……！<br><br>" +
@@ -408,13 +450,14 @@ html,body{
   function loop(time){
     if(gameOver) return;
 
-    if(isPressing && isGround){
-      powerFill.style.height = Math.floor(getHoldRate() * 100) + "%";
-    }
-
     if(time - lastSpawn > spawnInterval){
       spawnTakoyaki();
       lastSpawn = time;
+    }
+
+    if(isPressing && !isGround && holdFrames < maxHoldFrames && velocityY < 0){
+      velocityY -= holdBoostPower;
+      holdFrames++;
     }
 
     playerY += velocityY;
@@ -426,6 +469,8 @@ html,body{
 
       if(!isGround){
         isGround = true;
+        isPressing = false;
+        holdFrames = 0;
         player.classList.add("run");
         player.classList.remove("jump");
         checkLandingBonus();
