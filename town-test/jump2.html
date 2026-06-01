@@ -27,7 +27,6 @@ html,body{
   background:linear-gradient(#7ec7ff 0%,#bfe8ff 52%,#8d7657 53%,#3b2715 100%);
 }
 
-/* 街背景 */
 #city{
   position:absolute;
   left:0;
@@ -35,9 +34,8 @@ html,body{
   width:220vw;
   height:230px;
   z-index:1;
-  background:
-    linear-gradient(#6c86a0,#4f6478);
-  animation:cityMove 12s linear infinite;
+  background:linear-gradient(#6c86a0,#4f6478);
+  animation:cityMove 10s linear infinite;
 }
 
 #city::before{
@@ -55,9 +53,7 @@ html,body{
     linear-gradient(#e0c27d,#e0c27d) 620px 90px/110px 140px,
     linear-gradient(#8fb0c8,#8fb0c8) 780px 50px/120px 180px,
     linear-gradient(#c7775d,#c7775d) 940px 105px/100px 125px,
-    linear-gradient(#b8b8b8,#b8b8b8) 1100px 70px/130px 160px,
-    linear-gradient(#d9b16f,#d9b16f) 1280px 90px/100px 140px,
-    linear-gradient(#9fc3d8,#9fc3d8) 1440px 45px/130px 185px;
+    linear-gradient(#b8b8b8,#b8b8b8) 1100px 70px/130px 160px;
   background-repeat:repeat-x;
 }
 
@@ -68,14 +64,12 @@ html,body{
   bottom:40px;
   width:100%;
   height:70px;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      transparent 0 38px,
-      rgba(255,255,210,.8) 38px 52px,
-      transparent 52px 90px
-    );
-  opacity:.9;
+  background:repeating-linear-gradient(
+    90deg,
+    transparent 0 38px,
+    rgba(255,255,210,.8) 38px 52px,
+    transparent 52px 90px
+  );
 }
 
 @keyframes cityMove{
@@ -89,12 +83,7 @@ html,body{
   bottom:0;
   width:100%;
   height:92px;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #3d3d3d 0 70px,
-      #464646 70px 140px
-    );
+  background:repeating-linear-gradient(90deg,#3d3d3d 0 70px,#464646 70px 140px);
   border-top:6px solid #f0d07a;
   z-index:2;
 }
@@ -106,12 +95,8 @@ html,body{
   top:38px;
   width:200%;
   height:8px;
-  background:repeating-linear-gradient(
-    90deg,
-    #fff 0 60px,
-    transparent 60px 120px
-  );
-  animation:roadLineMove 1.5s linear infinite;
+  background:repeating-linear-gradient(90deg,#fff 0 60px,transparent 60px 120px);
+  animation:roadLineMove 1.1s linear infinite;
 }
 
 @keyframes roadLineMove{
@@ -241,7 +226,7 @@ html,body{
 
   <div id="message">
     たこ焼きジャンプ！<br>
-    タップでジャンプ<br>
+    タップで小ジャンプ<br>
     長押しで大ジャンプ<br><br>
     画面を押してスタート
   </div>
@@ -267,11 +252,13 @@ html,body{
 
   let playerY = 0;
   let velocityY = 0;
-  const gravity = 0.72;
 
-  const firstJumpPower = 15;
-  const holdBoostPower = 0.72;
-  const maxHoldFrames = 32;
+  /* ここでバランス調整 */
+  const gravityUp = 0.34;      // 上昇中は落ちにくい
+  const gravityDown = 0.46;    // 下降中も少しゆっくり
+  const firstJumpPower = 10.5; // 高く飛びすぎない
+  const holdBoostPower = 0.28; // 長押し追加上昇
+  const maxHoldFrames = 38;    // 長押しで滞空時間を伸ばす
 
   let isGround = true;
   let isPressing = false;
@@ -279,14 +266,14 @@ html,body{
 
   let takoyakis = [];
   let lastSpawn = 0;
-  let spawnInterval = 1500;
+  let spawnInterval = 1300;
 
   const sizes = [
-    { name:"極小", size:34, minSpeed:2.4, maxSpeed:3.8, point:80 },
-    { name:"小", size:48, minSpeed:2.2, maxSpeed:3.5, point:100 },
-    { name:"中", size:66, minSpeed:2.0, maxSpeed:3.2, point:130 },
-    { name:"大", size:86, minSpeed:1.8, maxSpeed:2.9, point:170 },
-    { name:"特大", size:112, minSpeed:1.6, maxSpeed:2.6, point:230 }
+    { name:"極小", size:34, minSpeed:3.4, maxSpeed:4.8, point:80 },
+    { name:"小", size:48, minSpeed:3.2, maxSpeed:4.6, point:100 },
+    { name:"中", size:66, minSpeed:3.0, maxSpeed:4.4, point:130 },
+    { name:"大", size:86, minSpeed:2.8, maxSpeed:4.1, point:170 },
+    { name:"特大", size:112, minSpeed:2.6, maxSpeed:3.8, point:230 }
   ];
 
   function updateHud(){
@@ -368,7 +355,7 @@ html,body{
       rotation: 0
     });
 
-    spawnInterval = 1250 + Math.random() * 1250;
+    spawnInterval = 1050 + Math.random() * 950;
   }
 
   function rectsHit(a,b){
@@ -461,7 +448,12 @@ html,body{
     }
 
     playerY += velocityY;
-    velocityY += gravity;
+
+    if(velocityY < 0){
+      velocityY += gravityUp;
+    }else{
+      velocityY += gravityDown;
+    }
 
     if(playerY >= 0){
       playerY = 0;
@@ -485,7 +477,7 @@ html,body{
       const t = takoyakis[i];
 
       t.x += t.speed;
-      t.rotation += t.speed * 5;
+      t.rotation += t.speed * 5.5;
 
       t.el.style.left = t.x + "px";
       t.el.style.transform = `rotate(${t.rotation}deg)`;
