@@ -851,6 +851,45 @@ body::before{
   margin-bottom:8px;
 }
 
+.hall-link-panel{
+  margin:12px 14px 0;
+  position:relative;
+  z-index:2;
+}
+
+.hall-link{
+  display:block;
+  text-decoration:none;
+  border-radius:18px;
+  padding:14px 14px;
+  text-align:center;
+  color:#2b1c08;
+  background:
+    radial-gradient(circle at 50% 18%,rgba(255,255,255,.58),transparent 42%),
+    linear-gradient(180deg,#fff4c8 0%,#e7b94b 58%,#9e641d 100%);
+  border:2px solid rgba(255,232,163,.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.76),
+    inset 0 -2px 0 rgba(94,54,9,.22),
+    0 10px 22px rgba(0,0,0,.26),
+    0 0 20px rgba(255,209,103,.18);
+}
+
+.hall-link-main{
+  display:block;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:.06em;
+}
+
+.hall-link-sub{
+  display:block;
+  margin-top:4px;
+  font-size:12px;
+  line-height:1.6;
+  color:#4c3514;
+}
+
 .actions{padding:12px 14px 22px;position:relative;z-index:2}
 .history-btn,.btn{
   width:100%;
@@ -1288,6 +1327,13 @@ body::before{
         <div id="rankingList"></div>
       </div>
     </div>
+
+<div class="hall-link-panel">
+      <a class="hall-link" href="https://takoyaki-card.com/town/hall-of-fame.html">
+        <span class="hall-link-main">🏆 殿堂の祭壇へ</span>
+        <span class="hall-link-sub">過去の月間王者たちを祀る、記録の殿堂を見る</span>
+      </a>
+    </div>
     <div class="seedbox">
       <div class="seedbox-head">
         <div class="seedbox-title">GOD SEEDS</div>
@@ -1330,7 +1376,7 @@ body::before{
       <button class="history-btn" id="openHistoryBtn" type="button">HISTORY</button>
     </div>
 
-    <div class="subinfo" id="monthInfo">月が変わった最初のアクセス時に前月の報酬を確定します</div>
+    <div class="subinfo" id="monthInfo">月が変わった最初のアクセス時に前月の報酬が確定し、条件達成した神のタネがGOD SEEDSに自動追加されます</div>
     <div class="ornament-bottom"><div class="line"></div></div>
   </section>
 </div>
@@ -1444,10 +1490,25 @@ seed_god_tower:[
 ]
 };
   
-const GOD_BONUS_CARD={id:"SP-GD-BN-001",category:"SP",tier:"SECRET",name:"四神の祝福",img:"",catch:"四つ揃えば、世界が焼き上がる。",story:`焼き、露店、釣り、塔。
-四神を揃えた者だけが辿り着く特別な祝福。
-もう偶然ではない。
-それは、神域の証。`,skill:"《四神祝福》",sideEffect:"もう普通のたこ焼きには戻れない。"};
+const GOD_BONUS_CARD={
+  id:"SP-GOD-12",
+  category:"SP",
+  tier:"SECRET",
+  name:"逆神・リバースノカミ",
+  img:"https://takoyaki-card.com/town/assets/images/sp/SP-GOD.png",
+
+  catch:"すべてを極めた者が、最後に選ぶ“否定”。",
+
+  story:`焼かない。
+完成させない。
+その“途中”こそが最も濃い。`,
+
+  skill:"《未完成保持》",
+
+  sideEffect:"すべての工程を未完成のまま固定。終わらない状態が最大評価になる。",
+
+  godWord:"「完成しない方が、続く。」"
+};
 
 const ALTAR_GROUPS=[
 {title:"🔥 焼き神",seedId:"seed_god_yaki",ids:["SP-GD-YK-001","SP-GD-YK-002","SP-GD-YK-003"]},
@@ -1829,7 +1890,7 @@ function renderAltar(){
   const bonusOwned=hasCard(GOD_BONUS_CARD.id);
   if(hasAllGroupsComplete()){
     bonusBox.style.display="block";
-    bonusBody.innerHTML=`<div class="bonus-badge">COMPLETE</div><br>四神コンプリート達成<br>${bonusOwned?"特別カード「四神の祝福」を授与済みです":"特別カードの授与条件を達成しています"}`;
+    bonusBody.innerHTML=`<div class="bonus-badge">COMPLETE</div><br>四神コンプリート達成<br>${bonusOwned?"特別カード「逆神･リバースのカミ」を授与済みです":"特別カードの授与条件を達成しています"}`;
   }else{
     bonusBox.style.display="none";
     bonusBody.innerHTML="";
@@ -2015,32 +2076,67 @@ function rolloverIfNeeded(){
 
   const history = loadHistory();
   const meaningful = oldMerged.harvest > 0 || oldMerged.sales > 0 || oldMerged.fishing > 0 || oldMerged.tower > 0;
-  const already = history.some(v => String(v.monthKey || "") === oldMonthKey);
 
-  if(meaningful && !already){
+  if(meaningful){
     const grantedSeeds = getGrantedSeedsFromStats(oldMerged);
-    history.unshift({
-      monthKey:oldMerged.monthKey,
-      title:getMainTitleFromStats(oldMerged),
-      harvest:oldMerged.harvest,
-      sales:oldMerged.sales,
-      fishing:oldMerged.fishing,
-      tower:oldMerged.tower,
-      grantedSeeds
-    });
-    saveHistory(history);
+    const existingHistory = history.find(v => String(v.monthKey || "") === oldMonthKey);
 
-    const inv = loadInv();
-    grantedSeeds.forEach(seed => inv[seed.id] = Number(inv[seed.id] || 0) + 1);
-    saveInv(inv);
+    if(existingHistory){
+      const alreadyGrantedSeeds = normalizeGrantedSeeds(
+        existingHistory.grantedSeeds,
+        existingHistory.grantedSeedId,
+        existingHistory.grantedSeedName
+      );
+
+      const alreadyIds = new Set(alreadyGrantedSeeds.map(v => v.id));
+      const missingSeeds = grantedSeeds.filter(seed => !alreadyIds.has(seed.id));
+
+      if(missingSeeds.length){
+        const inv = loadInv();
+        missingSeeds.forEach(seed => {
+          inv[seed.id] = Number(inv[seed.id] || 0) + 1;
+        });
+        saveInv(inv);
+      }
+
+      existingHistory.grantedSeeds = [...alreadyGrantedSeeds, ...missingSeeds];
+      existingHistory.title = getMainTitleFromStats(oldMerged);
+      existingHistory.harvest = Math.max(Number(existingHistory.harvest || 0), oldMerged.harvest);
+      existingHistory.sales = Math.max(Number(existingHistory.sales || 0), oldMerged.sales);
+      existingHistory.fishing = Math.max(Number(existingHistory.fishing || 0), oldMerged.fishing);
+      existingHistory.tower = Math.max(Number(existingHistory.tower || 0), oldMerged.tower);
+
+      delete existingHistory.grantedSeedId;
+      delete existingHistory.grantedSeedName;
+
+      saveHistory(history);
+    }else{
+      const inv = loadInv();
+      grantedSeeds.forEach(seed => {
+        inv[seed.id] = Number(inv[seed.id] || 0) + 1;
+      });
+      saveInv(inv);
+
+      history.unshift({
+        monthKey:oldMerged.monthKey,
+        title:getMainTitleFromStats(oldMerged),
+        harvest:oldMerged.harvest,
+        sales:oldMerged.sales,
+        fishing:oldMerged.fishing,
+        tower:oldMerged.tower,
+        grantedSeeds
+      });
+      saveHistory(history);
+    }
   }
 
-  // 新しい月だけ初期化。saveShopSalesRecord 側で同月の小さい値上書きを防ぐ。
   saveJson(LS_MONTHLY, { monthKey:currentKey, harvest:0, sales:0, fishing:0, tower:0 });
   saveShopSalesRecord({ monthKey:currentKey, total:0 });
 
   return { monthKey:currentKey, harvest:0, sales:0, fishing:0, tower:0 };
 }
+
+
 
 function renderAll(){
   const stats=rolloverIfNeeded();
@@ -2242,11 +2338,32 @@ function renderRankingRows(rows,type){
     return;
   }
 
+  // スコア高い順に並べ直し
+  const sorted = [...rows].sort((a,b)=>Number(b.score||0)-Number(a.score||0));
+
+  // 同点は同率順位にする
+  let lastScore = null;
+  let lastRank = 0;
+
+  const rankedRows = sorted.map((row,index)=>{
+    const score = Number(row.score || 0);
+
+    if(lastScore === null || score !== lastScore){
+      lastRank = index + 1;
+      lastScore = score;
+    }
+
+    return {
+      ...row,
+      displayRank:lastRank
+    };
+  });
+
   rowsRoot.innerHTML = `
     <div class="rank-list">
-      ${rows.map(row => `
-        <div class="rank-row ${Number(row.rank)===1 ? "top1" : ""}">
-          <div>${escapeHtml(row.rank)}位</div>
+      ${rankedRows.map(row => `
+        <div class="rank-row ${Number(row.displayRank)===1 ? "top1" : ""}">
+          <div>${escapeHtml(row.displayRank)}位</div>
           <div>${escapeHtml(row.userName || "名無しのタコ民")}</div>
           <div class="rank-score">${fmtNum(row.score)} ${meta.unit}</div>
         </div>
@@ -2254,7 +2371,6 @@ function renderRankingRows(rows,type){
     </div>
   `;
 }
-
 function renderRankingError(message, detail=""){
   const rowsRoot = $("rankingRows");
   if(!rowsRoot) return;
