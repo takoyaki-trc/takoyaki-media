@@ -33,12 +33,7 @@ html,body{
   bottom:0;
   width:100%;
   height:92px;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #5b3518 0 38px,
-      #6f421f 38px 76px
-    );
+  background:repeating-linear-gradient(90deg,#5b3518 0 38px,#6f421f 38px 76px);
   border-top:6px solid #d8b27a;
   z-index:2;
 }
@@ -125,19 +120,25 @@ html,body{
   box-shadow:0 0 18px #fff;
 }
 
-.groundDot{
+#powerGauge{
   position:absolute;
-  bottom:100px;
-  height:4px;
-  background:#eee;
-  opacity:.45;
-  z-index:5;
-  animation:groundMove .9s linear forwards;
+  right:10px;
+  bottom:120px;
+  width:18px;
+  height:120px;
+  border:3px solid #fff;
+  background:#222;
+  z-index:35;
+  display:none;
 }
 
-@keyframes groundMove{
-  from{ left:-100px; }
-  to{ left:110vw; }
+#powerFill{
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:100%;
+  height:0%;
+  background:#ffe066;
 }
 
 #message{
@@ -172,15 +173,17 @@ html,body{
   <div id="successLine" class="line"></div>
   <div id="perfectLine" class="line"></div>
 
+  <div id="powerGauge"><div id="powerFill"></div></div>
+
   <img id="player" class="run" src="https://ul.h3z.jp/s2peAezZ.png" alt="player">
 
   <div id="ground"></div>
 
   <div id="message">
     たこ焼きジャンプ！<br>
-    ワンタップでジャンプ<br>
-    着地ラインを狙え！<br><br>
-    画面タップでスタート
+    短押しで小ジャンプ<br>
+    長押しで大ジャンプ<br><br>
+    画面を押してスタート
   </div>
 </div>
 
@@ -192,6 +195,8 @@ html,body{
   const comboEl = document.getElementById("combo");
   const bonusEl = document.getElementById("bonus");
   const message = document.getElementById("message");
+  const powerGauge = document.getElementById("powerGauge");
+  const powerFill = document.getElementById("powerFill");
 
   let started = false;
   let gameOver = false;
@@ -204,9 +209,15 @@ html,body{
 
   let playerY = 0;
   let velocityY = 0;
-  const gravity = 0.9;
-  const jumpPower = 18;
+  const gravity = 0.82;
+
+  const minJumpPower = 15;
+  const maxJumpPower = 28;
+  const maxHoldTime = 650;
+
   let isGround = true;
+  let isPressing = false;
+  let pressStartTime = 0;
 
   let takoyakis = [];
   let lastSpawn = 0;
@@ -231,19 +242,14 @@ html,body{
     started = true;
     message.classList.add("hidden");
     requestAnimationFrame(loop);
-    setInterval(createGroundDot, 220);
   }
 
-  function jump(){
-    if(!isGround || gameOver) return;
-
-    isGround = false;
-    velocityY = -jumpPower;
-    player.classList.remove("run");
-    player.classList.add("jump");
+  function getHoldRate(){
+    const holdTime = Math.min(performance.now() - pressStartTime, maxHoldTime);
+    return holdTime / maxHoldTime;
   }
 
-  function tap(e){
+  function startPress(e){
     e.preventDefault();
 
     if(gameOver){
@@ -252,15 +258,50 @@ html,body{
     }
 
     startGame();
-    jump();
+
+    if(!isGround) return;
+
+    isPressing = true;
+    pressStartTime = performance.now();
+    powerGauge.style.display = "block";
+    powerFill.style.height = "0%";
   }
 
-  game.addEventListener("pointerdown", tap);
+  function endPress(e){
+    e.preventDefault();
+
+    if(!isPressing || !isGround || gameOver) return;
+
+    const rate = getHoldRate();
+    const power = minJumpPower + (maxJumpPower - minJumpPower) * rate;
+
+    isPressing = false;
+    powerGauge.style.display = "none";
+
+    jump(power);
+  }
+
+  function jump(power){
+    isGround = false;
+    velocityY = -power;
+    player.classList.remove("run");
+    player.classList.add("jump");
+  }
+
+  game.addEventListener("pointerdown", startPress);
+  game.addEventListener("pointerup", endPress);
+  game.addEventListener("pointercancel", endPress);
+  game.addEventListener("pointerleave", endPress);
 
   window.addEventListener("keydown", e => {
+    if(e.code === "Space" && !isPressing){
+      startPress(e);
+    }
+  });
+
+  window.addEventListener("keyup", e => {
     if(e.code === "Space"){
-      e.preventDefault();
-      tap(e);
+      endPress(e);
     }
   });
 
@@ -275,7 +316,7 @@ html,body{
     game.appendChild(el);
 
     takoyakis.push({
-      el: el,
+      el,
       x: -data.size,
       size: data.size,
       speed: data.minSpeed + Math.random() * (data.maxSpeed - data.minSpeed),
@@ -285,20 +326,6 @@ html,body{
     });
 
     spawnInterval = 850 + Math.random() * 850;
-  }
-
-  function createGroundDot(){
-    if(!started || gameOver) return;
-
-    const dot = document.createElement("div");
-    dot.className = "groundDot";
-    dot.style.width = 30 + Math.random() * 90 + "px";
-    dot.style.bottom = 96 + Math.random() * 18 + "px";
-    game.appendChild(dot);
-
-    setTimeout(() => {
-      dot.remove();
-    }, 1000);
   }
 
   function rectsHit(a,b){
@@ -368,6 +395,9 @@ html,body{
 
   function endGame(){
     gameOver = true;
+    isPressing = false;
+    powerGauge.style.display = "none";
+
     message.innerHTML =
       "焼かれた……！<br><br>" +
       "SCORE：" + Math.floor(score) + "<br>" +
@@ -377,6 +407,10 @@ html,body{
 
   function loop(time){
     if(gameOver) return;
+
+    if(isPressing && isGround){
+      powerFill.style.height = Math.floor(getHoldRate() * 100) + "%";
+    }
 
     if(time - lastSpawn > spawnInterval){
       spawnTakoyaki();
