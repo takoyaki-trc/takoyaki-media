@@ -130,8 +130,8 @@ html,body{
 }
 
 @keyframes runBob{
-  from{ transform:translateY(0) translateX(0) rotate(1deg); }
-  to{ transform:translateY(-7px) translateX(-5px) rotate(-1deg); }
+  from{ transform:translateY(0) rotate(1deg); }
+  to{ transform:translateY(-7px) rotate(-1deg); }
 }
 
 .jump{
@@ -345,7 +345,10 @@ html,body{
   function jumpStart(){
     isGround = false;
     velocityY = -firstJumpPower;
-    velocityForward = -forwardPower;
+
+    /* 前ジャンプ：キャラは右側から左方向へ走るので、rightを増やす */
+    velocityForward = forwardPower;
+
     player.classList.remove("run");
     player.classList.add("jump");
   }
@@ -465,6 +468,7 @@ html,body{
       "<div>焼かれた……！<br><br>" +
       "SCORE：" + Math.floor(score) + "<br>" +
       "画面タップでリトライ</div>";
+
     message.classList.remove("hidden");
   }
 
@@ -478,20 +482,20 @@ html,body{
 
     if(isPressing && !isGround && holdFrames < maxHoldFrames && velocityY < 0){
       velocityY -= holdBoostPower;
-      velocityForward -= 0.035;
+      velocityForward += 0.035;
       holdFrames++;
     }
 
     playerY += velocityY;
     playerForward += velocityForward;
 
-    if(playerForward < -maxForward){
-      playerForward = -maxForward;
+    if(playerForward > maxForward){
+      playerForward = maxForward;
       velocityForward = 0;
     }
 
     if(!isGround){
-      velocityForward += forwardReturn;
+      velocityForward -= forwardReturn;
     }else{
       playerForward *= 0.82;
       if(Math.abs(playerForward) < 0.5) playerForward = 0;
@@ -519,7 +523,7 @@ html,body{
     }
 
     player.style.bottom = (groundBottom - playerY) + "px";
-    player.style.right = `calc(8vw + ${-playerForward}px)`;
+    player.style.right = `calc(8vw + ${playerForward}px)`;
 
     const playerRect = player.getBoundingClientRect();
 
