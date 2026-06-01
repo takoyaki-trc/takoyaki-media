@@ -31,11 +31,11 @@ html,body{
   position:absolute;
   left:0;
   bottom:92px;
-  width:220vw;
+  width:240vw;
   height:230px;
   z-index:1;
   background:linear-gradient(#6c86a0,#4f6478);
-  animation:cityMove 10s linear infinite;
+  animation:cityMove 8s linear infinite;
 }
 
 #city::before{
@@ -74,7 +74,7 @@ html,body{
 
 @keyframes cityMove{
   from{ transform:translateX(0); }
-  to{ transform:translateX(-110vw); }
+  to{ transform:translateX(-120vw); }
 }
 
 #road{
@@ -93,10 +93,10 @@ html,body{
   position:absolute;
   left:0;
   top:38px;
-  width:200%;
+  width:300%;
   height:8px;
   background:repeating-linear-gradient(90deg,#fff 0 60px,transparent 60px 120px);
-  animation:roadLineMove 1.1s linear infinite;
+  animation:roadLineMove .8s linear infinite;
 }
 
 @keyframes roadLineMove{
@@ -126,7 +126,7 @@ html,body{
 }
 
 .run{
-  animation:runBob .25s infinite alternate;
+  animation:runBob .20s infinite alternate;
 }
 
 @keyframes runBob{
@@ -190,6 +190,7 @@ html,body{
   position:absolute;
   inset:0;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
   text-align:center;
@@ -199,6 +200,18 @@ html,body{
   font-weight:bold;
   line-height:1.7;
   padding:20px;
+}
+
+#startBtn{
+  margin-top:22px;
+  padding:14px 28px;
+  border:3px solid #fff;
+  border-radius:12px;
+  background:#ffcc33;
+  color:#3b2100;
+  font-weight:900;
+  font-size:20px;
+  box-shadow:0 5px 0 #8a5a00;
 }
 
 .hidden{
@@ -225,10 +238,13 @@ html,body{
   <div id="road"></div>
 
   <div id="message">
-    たこ焼きジャンプ！<br>
-    タップで小ジャンプ<br>
-    長押しで大ジャンプ<br><br>
-    画面を押してスタート
+    <div>
+      たこ焼きジャンプ！<br>
+      タップで小ジャンプ<br>
+      長押しで大ジャンプ<br>
+      着地ラインを狙え！
+    </div>
+    <button id="startBtn">スタート</button>
   </div>
 </div>
 
@@ -240,6 +256,7 @@ html,body{
   const comboEl = document.getElementById("combo");
   const bonusEl = document.getElementById("bonus");
   const message = document.getElementById("message");
+  const startBtn = document.getElementById("startBtn");
 
   let started = false;
   let gameOver = false;
@@ -251,14 +268,19 @@ html,body{
   const groundBottom = 80;
 
   let playerY = 0;
+  let playerForward = 0;
   let velocityY = 0;
+  let velocityForward = 0;
 
-  /* ここでバランス調整 */
-  const gravityUp = 0.34;      // 上昇中は落ちにくい
-  const gravityDown = 0.46;    // 下降中も少しゆっくり
-  const firstJumpPower = 10.5; // 高く飛びすぎない
-  const holdBoostPower = 0.28; // 長押し追加上昇
-  const maxHoldFrames = 38;    // 長押しで滞空時間を伸ばす
+  const gravityUp = 0.34;
+  const gravityDown = 0.46;
+  const firstJumpPower = 10.5;
+  const holdBoostPower = 0.25;
+  const maxHoldFrames = 34;
+
+  const forwardPower = 2.1;
+  const forwardReturn = 0.18;
+  const maxForward = 52;
 
   let isGround = true;
   let isPressing = false;
@@ -266,14 +288,14 @@ html,body{
 
   let takoyakis = [];
   let lastSpawn = 0;
-  let spawnInterval = 1300;
+  let spawnInterval = 1900;
 
   const sizes = [
-    { name:"極小", size:34, minSpeed:3.4, maxSpeed:4.8, point:80 },
-    { name:"小", size:48, minSpeed:3.2, maxSpeed:4.6, point:100 },
-    { name:"中", size:66, minSpeed:3.0, maxSpeed:4.4, point:130 },
-    { name:"大", size:86, minSpeed:2.8, maxSpeed:4.1, point:170 },
-    { name:"特大", size:112, minSpeed:2.6, maxSpeed:3.8, point:230 }
+    { name:"極小", size:34, minSpeed:3.7, maxSpeed:5.1, point:80 },
+    { name:"小", size:48, minSpeed:3.5, maxSpeed:4.9, point:100 },
+    { name:"中", size:66, minSpeed:3.3, maxSpeed:4.7, point:130 },
+    { name:"大", size:86, minSpeed:3.1, maxSpeed:4.4, point:170 },
+    { name:"特大", size:112, minSpeed:2.9, maxSpeed:4.1, point:230 }
   ];
 
   function updateHud(){
@@ -282,22 +304,31 @@ html,body{
     bonusEl.textContent = bonus.toFixed(1);
   }
 
-  function startGame(){
+  function startGameOnly(e){
+    e.preventDefault();
+    e.stopPropagation();
+
     if(started) return;
+
     started = true;
+    gameOver = false;
     message.classList.add("hidden");
+
+    lastSpawn = performance.now() + 900;
     requestAnimationFrame(loop);
   }
 
+  startBtn.addEventListener("pointerdown", startGameOnly);
+
   function startPress(e){
     e.preventDefault();
+
+    if(!started) return;
 
     if(gameOver){
       location.reload();
       return;
     }
-
-    startGame();
 
     if(!isGround) return;
 
@@ -314,6 +345,10 @@ html,body{
   function jumpStart(){
     isGround = false;
     velocityY = -firstJumpPower;
+
+    /* 前ジャンプ：キャラは右側から左方向へ走るので、rightを増やす */
+    velocityForward = forwardPower;
+
     player.classList.remove("run");
     player.classList.add("jump");
   }
@@ -324,7 +359,7 @@ html,body{
   game.addEventListener("pointerleave", endPress);
 
   window.addEventListener("keydown", e => {
-    if(e.code === "Space" && !isPressing){
+    if(e.code === "Space" && started && !isPressing){
       startPress(e);
     }
   });
@@ -355,15 +390,17 @@ html,body{
       rotation: 0
     });
 
-    spawnInterval = 1050 + Math.random() * 950;
+    spawnInterval = 1650 + Math.random() * 1250;
   }
 
   function rectsHit(a,b){
+    const shrink = 18;
+
     return !(
-      a.right < b.left ||
-      a.left > b.right ||
-      a.bottom < b.top ||
-      a.top > b.bottom
+      a.right - shrink < b.left + shrink ||
+      a.left + shrink > b.right - shrink ||
+      a.bottom - shrink < b.top + shrink ||
+      a.top + shrink > b.bottom - shrink
     );
   }
 
@@ -428,9 +465,10 @@ html,body{
     isPressing = false;
 
     message.innerHTML =
-      "焼かれた……！<br><br>" +
+      "<div>焼かれた……！<br><br>" +
       "SCORE：" + Math.floor(score) + "<br>" +
-      "画面タップでリトライ";
+      "画面タップでリトライ</div>";
+
     message.classList.remove("hidden");
   }
 
@@ -444,10 +482,24 @@ html,body{
 
     if(isPressing && !isGround && holdFrames < maxHoldFrames && velocityY < 0){
       velocityY -= holdBoostPower;
+      velocityForward += 0.035;
       holdFrames++;
     }
 
     playerY += velocityY;
+    playerForward += velocityForward;
+
+    if(playerForward > maxForward){
+      playerForward = maxForward;
+      velocityForward = 0;
+    }
+
+    if(!isGround){
+      velocityForward -= forwardReturn;
+    }else{
+      playerForward *= 0.82;
+      if(Math.abs(playerForward) < 0.5) playerForward = 0;
+    }
 
     if(velocityY < 0){
       velocityY += gravityUp;
@@ -463,6 +515,7 @@ html,body{
         isGround = true;
         isPressing = false;
         holdFrames = 0;
+        velocityForward = 0;
         player.classList.add("run");
         player.classList.remove("jump");
         checkLandingBonus();
@@ -470,6 +523,7 @@ html,body{
     }
 
     player.style.bottom = (groundBottom - playerY) + "px";
+    player.style.right = `calc(8vw + ${playerForward}px)`;
 
     const playerRect = player.getBoundingClientRect();
 
@@ -477,7 +531,7 @@ html,body{
       const t = takoyakis[i];
 
       t.x += t.speed;
-      t.rotation += t.speed * 5.5;
+      t.rotation += t.speed * 5.8;
 
       t.el.style.left = t.x + "px";
       t.el.style.transform = `rotate(${t.rotation}deg)`;
