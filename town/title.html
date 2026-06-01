@@ -2076,32 +2076,67 @@ function rolloverIfNeeded(){
 
   const history = loadHistory();
   const meaningful = oldMerged.harvest > 0 || oldMerged.sales > 0 || oldMerged.fishing > 0 || oldMerged.tower > 0;
-  const already = history.some(v => String(v.monthKey || "") === oldMonthKey);
 
-  if(meaningful && !already){
+  if(meaningful){
     const grantedSeeds = getGrantedSeedsFromStats(oldMerged);
-    history.unshift({
-      monthKey:oldMerged.monthKey,
-      title:getMainTitleFromStats(oldMerged),
-      harvest:oldMerged.harvest,
-      sales:oldMerged.sales,
-      fishing:oldMerged.fishing,
-      tower:oldMerged.tower,
-      grantedSeeds
-    });
-    saveHistory(history);
+    const existingHistory = history.find(v => String(v.monthKey || "") === oldMonthKey);
 
-    const inv = loadInv();
-    grantedSeeds.forEach(seed => inv[seed.id] = Number(inv[seed.id] || 0) + 1);
-    saveInv(inv);
+    if(existingHistory){
+      const alreadyGrantedSeeds = normalizeGrantedSeeds(
+        existingHistory.grantedSeeds,
+        existingHistory.grantedSeedId,
+        existingHistory.grantedSeedName
+      );
+
+      const alreadyIds = new Set(alreadyGrantedSeeds.map(v => v.id));
+      const missingSeeds = grantedSeeds.filter(seed => !alreadyIds.has(seed.id));
+
+      if(missingSeeds.length){
+        const inv = loadInv();
+        missingSeeds.forEach(seed => {
+          inv[seed.id] = Number(inv[seed.id] || 0) + 1;
+        });
+        saveInv(inv);
+      }
+
+      existingHistory.grantedSeeds = [...alreadyGrantedSeeds, ...missingSeeds];
+      existingHistory.title = getMainTitleFromStats(oldMerged);
+      existingHistory.harvest = Math.max(Number(existingHistory.harvest || 0), oldMerged.harvest);
+      existingHistory.sales = Math.max(Number(existingHistory.sales || 0), oldMerged.sales);
+      existingHistory.fishing = Math.max(Number(existingHistory.fishing || 0), oldMerged.fishing);
+      existingHistory.tower = Math.max(Number(existingHistory.tower || 0), oldMerged.tower);
+
+      delete existingHistory.grantedSeedId;
+      delete existingHistory.grantedSeedName;
+
+      saveHistory(history);
+    }else{
+      const inv = loadInv();
+      grantedSeeds.forEach(seed => {
+        inv[seed.id] = Number(inv[seed.id] || 0) + 1;
+      });
+      saveInv(inv);
+
+      history.unshift({
+        monthKey:oldMerged.monthKey,
+        title:getMainTitleFromStats(oldMerged),
+        harvest:oldMerged.harvest,
+        sales:oldMerged.sales,
+        fishing:oldMerged.fishing,
+        tower:oldMerged.tower,
+        grantedSeeds
+      });
+      saveHistory(history);
+    }
   }
 
-  // 新しい月だけ初期化。saveShopSalesRecord 側で同月の小さい値上書きを防ぐ。
   saveJson(LS_MONTHLY, { monthKey:currentKey, harvest:0, sales:0, fishing:0, tower:0 });
   saveShopSalesRecord({ monthKey:currentKey, total:0 });
 
   return { monthKey:currentKey, harvest:0, sales:0, fishing:0, tower:0 };
 }
+
+
 
 function renderAll(){
   const stats=rolloverIfNeeded();
