@@ -27,7 +27,6 @@ html,body{
   background:#7ec7ff;
 }
 
-/* 背景画像を途切れにくく高速スクロール */
 #bgLayer{
   position:absolute;
   left:0;
@@ -43,15 +42,16 @@ html,body{
   background-size:auto 100%;
   background-position:0 100%;
 
-  animation:bgScroll 1.45s linear infinite;
+  animation:bgScroll 2.2s linear infinite;
 }
 
+/* 背景は右方向へ流す */
 @keyframes bgScroll{
   from{
     background-position:0 100%;
   }
   to{
-    background-position:calc(var(--bgW) * -1) 100%;
+    background-position:var(--bgW) 100%;
   }
 }
 
@@ -82,7 +82,7 @@ html,body{
     #fff 0 60px,
     transparent 60px 120px
   );
-  animation:roadLineMove .28s linear infinite;
+  animation:roadLineMove .38s linear infinite;
 }
 
 @keyframes roadLineMove{
@@ -115,7 +115,6 @@ html,body{
   transform-origin:center bottom;
 }
 
-/* キャラはカクカクさせず自然に */
 .run{
   animation:runBob .18s infinite alternate;
 }
@@ -254,14 +253,12 @@ html,body{
   const message = document.getElementById("message");
   const startBtn = document.getElementById("startBtn");
 
-  const BG_URL = "https://ul.h3z.jp/j5JM4NXG.png";
-
   const bgImg = new Image();
   bgImg.onload = () => {
     const renderedWidth = window.innerHeight * (bgImg.naturalWidth / bgImg.naturalHeight);
     bgLayer.style.setProperty("--bgW", renderedWidth + "px");
   };
-  bgImg.src = BG_URL;
+  bgImg.src = "https://ul.h3z.jp/j5JM4NXG.png";
 
   let started = false;
   let gameOver = false;
@@ -283,9 +280,9 @@ html,body{
   const holdBoostPower = 0.25;
   const maxHoldFrames = 34;
 
-  const forwardPower = 2.8;
-  const forwardReturn = 0.04;
-  const maxForward = 70;
+  const forwardPower = 3.0;
+  const forwardReturn = 0.025;
+  const maxForward = 82;
 
   let isGround = true;
   let isPressing = false;
@@ -351,7 +348,7 @@ html,body{
     isGround = false;
     velocityY = -firstJumpPower;
 
-    /* キャラは右から左へ走るので、ジャンプ時は左へ進む */
+    /* 右から左に走るので、前ジャンプ＝左へ進む */
     velocityForward = forwardPower;
 
     player.classList.remove("run");
@@ -362,18 +359,6 @@ html,body{
   game.addEventListener("pointerup", endPress);
   game.addEventListener("pointercancel", endPress);
   game.addEventListener("pointerleave", endPress);
-
-  window.addEventListener("keydown", e => {
-    if(e.code === "Space" && started && !isPressing){
-      startPress(e);
-    }
-  });
-
-  window.addEventListener("keyup", e => {
-    if(e.code === "Space"){
-      endPress(e);
-    }
-  });
 
   function spawnTakoyaki(){
     const data = sizes[Math.floor(Math.random() * sizes.length)];
@@ -388,7 +373,6 @@ html,body{
     takoyakis.push({
       el,
       x: -data.size,
-      size: data.size,
       speed: data.minSpeed + Math.random() * (data.maxSpeed - data.minSpeed),
       point: data.point,
       passed: false,
@@ -487,7 +471,7 @@ html,body{
 
     if(isPressing && !isGround && holdFrames < maxHoldFrames && velocityY < 0){
       velocityY -= holdBoostPower;
-      velocityForward += 0.035;
+      velocityForward += 0.04;
       holdFrames++;
     }
 
