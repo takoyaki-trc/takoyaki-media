@@ -278,9 +278,9 @@ html,body{
   const holdBoostPower = 0.25;
   const maxHoldFrames = 34;
 
-  const forwardPower = 2.1;
-  const forwardReturn = 0.18;
-  const maxForward = 52;
+  const forwardPower = 2.8;
+  const forwardReturn = 0.08;
+  const maxForward = 70;
 
   let isGround = true;
   let isPressing = false;
@@ -288,7 +288,7 @@ html,body{
 
   let takoyakis = [];
   let lastSpawn = 0;
-  let spawnInterval = 1900;
+  let spawnInterval = 2100;
 
   const sizes = [
     { name:"極小", size:34, minSpeed:3.7, maxSpeed:5.1, point:80 },
@@ -314,7 +314,7 @@ html,body{
     gameOver = false;
     message.classList.add("hidden");
 
-    lastSpawn = performance.now() + 900;
+    lastSpawn = performance.now() + 1200;
     requestAnimationFrame(loop);
   }
 
@@ -346,7 +346,7 @@ html,body{
     isGround = false;
     velocityY = -firstJumpPower;
 
-    /* 前ジャンプ：キャラは右側から左方向へ走るので、rightを増やす */
+    /* 右から左へ走るので、ジャンプ時は左へ進む */
     velocityForward = forwardPower;
 
     player.classList.remove("run");
@@ -390,7 +390,7 @@ html,body{
       rotation: 0
     });
 
-    spawnInterval = 1650 + Math.random() * 1250;
+    spawnInterval = 1900 + Math.random() * 1400;
   }
 
   function rectsHit(a,b){
@@ -543,9 +543,10 @@ html,body{
         return;
       }
 
+      /* たこ焼きを飛び越えた時だけ加点 */
       if(!t.passed && rect.left > playerRect.right){
         t.passed = true;
-        score += t.point * bonus;
+        score += Math.floor(t.point * bonus);
         updateHud();
       }
 
@@ -555,9 +556,7 @@ html,body{
       }
     }
 
-    score += 0.12 * bonus;
     updateHud();
-
     requestAnimationFrame(loop);
   }
 
