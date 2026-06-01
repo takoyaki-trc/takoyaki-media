@@ -20,7 +20,7 @@ html,body{
   position:relative;
   width:100vw;
   height:100vh;
-  background:linear-gradient(#111,#222 60%,#3a2a1a 61%,#1d140c);
+  background:linear-gradient(#10131d,#202638 58%,#6b4a2b 59%,#2a1a0d);
   overflow:hidden;
   user-select:none;
 }
@@ -37,7 +37,7 @@ html,body{
 
 #player{
   position:absolute;
-  left:8vw;
+  right:8vw;
   bottom:80px;
   width:150px;
   height:auto;
@@ -47,17 +47,22 @@ html,body{
 }
 
 .run{
-  animation:runBob .28s infinite alternate;
+  animation:runBob .25s infinite alternate;
 }
 
 @keyframes runBob{
-  from{ transform:translateY(0) rotate(-1deg); }
-  to{ transform:translateY(-8px) rotate(1deg); }
+  from{ transform:translateY(0) rotate(1deg) scaleX(-1); }
+  to{ transform:translateY(-7px) rotate(-1deg) scaleX(-1); }
+}
+
+.jump{
+  transform:scaleX(-1);
 }
 
 .takoyaki{
   position:absolute;
-  bottom:82px;
+  bottom:80px;
+  left:-120px;
   border-radius:50%;
   background:
     radial-gradient(circle at 35% 28%, #ffd28a 0 13%, transparent 14%),
@@ -89,32 +94,32 @@ html,body{
 }
 
 #successLine{
-  left:36vw;
-  width:18vw;
+  right:30vw;
+  width:22vw;
   background:#ffe066;
   box-shadow:0 0 12px #ffe066;
 }
 
 #perfectLine{
-  left:43vw;
-  width:5vw;
-  background:#ff3;
+  right:38vw;
+  width:6vw;
+  background:#fff;
   box-shadow:0 0 18px #fff;
 }
 
 .groundDot{
   position:absolute;
-  bottom:65px;
-  width:80px;
+  bottom:62px;
+  width:70px;
   height:4px;
   background:#ddd;
   opacity:.5;
-  animation:groundMove 1.2s linear infinite;
+  animation:groundMove .9s linear forwards;
 }
 
 @keyframes groundMove{
-  from{ right:-100px; }
-  to{ right:110vw; }
+  from{ left:-100px; }
+  to{ left:110vw; }
 }
 
 #message{
@@ -153,9 +158,9 @@ html,body{
 
   <div id="message">
     たこ焼きジャンプ！<br>
-    タップで小ジャンプ<br>
-    長押しで大ジャンプ<br><br>
-    画面を押してスタート
+    ワンタップでジャンプ<br>
+    着地ラインを狙え！<br><br>
+    画面タップでスタート
   </div>
 </div>
 
@@ -177,11 +182,9 @@ html,body{
 
   let playerY = 0;
   let velocityY = 0;
-  let gravity = 0.75;
+  const gravity = 0.9;
+  const jumpPower = 18;
   let isGround = true;
-
-  let pressStart = 0;
-  let holding = false;
 
   let takoyakis = [];
   let lastSpawn = 0;
@@ -208,68 +211,36 @@ html,body{
     started = true;
     message.classList.add("hidden");
     requestAnimationFrame(loop);
-    setInterval(createGroundDot, 280);
+    setInterval(createGroundDot, 220);
   }
 
-  function resetGame(){
-    location.reload();
-  }
-
-  function jump(power){
+  function jump(){
     if(!isGround || gameOver) return;
 
     isGround = false;
-    velocityY = -power;
+    velocityY = jumpPower;
     player.classList.remove("run");
+    player.classList.add("jump");
   }
 
-  function pointerDown(e){
+  function tap(e){
     e.preventDefault();
 
     if(gameOver){
-      resetGame();
+      location.reload();
       return;
     }
 
     startGame();
-    holding = true;
-    pressStart = performance.now();
+    jump();
   }
 
-  function pointerUp(e){
-    e.preventDefault();
-    if(!holding) return;
-
-    holding = false;
-
-    const holdTime = Math.min(performance.now() - pressStart, 520);
-
-    const minJump = 13;
-    const maxJump = 23;
-    const power = minJump + (holdTime / 520) * (maxJump - minJump);
-
-    jump(power);
-  }
-
-  game.addEventListener("pointerdown", pointerDown);
-  game.addEventListener("pointerup", pointerUp);
-  game.addEventListener("pointercancel", pointerUp);
+  game.addEventListener("pointerdown", tap);
 
   window.addEventListener("keydown", e => {
     if(e.code === "Space"){
       e.preventDefault();
-      if(!holding){
-        startGame();
-        holding = true;
-        pressStart = performance.now();
-      }
-    }
-  });
-
-  window.addEventListener("keyup", e => {
-    if(e.code === "Space"){
-      e.preventDefault();
-      pointerUp(e);
+      tap(e);
     }
   });
 
@@ -279,20 +250,16 @@ html,body{
     el.className = "takoyaki";
     el.style.width = data.size + "px";
     el.style.height = data.size + "px";
-    el.style.right = -data.size + "px";
     el.style.bottom = groundBottom + "px";
-
     game.appendChild(el);
 
     takoyakis.push({
       el,
-      x: window.innerWidth + data.size,
-      y: groundBottom,
+      x: -data.size,
       size: data.size,
       speed: data.minSpeed + Math.random() * (data.maxSpeed - data.minSpeed),
       point: data.point,
       passed: false,
-      judgedLanding: false,
       rotation: 0
     });
 
@@ -303,10 +270,10 @@ html,body{
     if(!started || gameOver) return;
     const dot = document.createElement("div");
     dot.className = "groundDot";
-    dot.style.width = 30 + Math.random() * 80 + "px";
+    dot.style.width = 30 + Math.random() * 90 + "px";
     dot.style.bottom = 58 + Math.random() * 20 + "px";
     game.appendChild(dot);
-    setTimeout(() => dot.remove(), 1400);
+    setTimeout(() => dot.remove(), 1000);
   }
 
   function rectsHit(a,b){
@@ -323,31 +290,31 @@ html,body{
     const center = playerRect.left + playerRect.width / 2;
     const w = window.innerWidth;
 
-    const successStart = w * 0.36;
-    const successEnd = w * 0.54;
-    const perfectStart = w * 0.43;
-    const perfectEnd = w * 0.48;
+    const successStart = w * 0.48;
+    const successEnd = w * 0.70;
+    const perfectStart = w * 0.56;
+    const perfectEnd = w * 0.62;
 
     if(center >= perfectStart && center <= perfectEnd){
       combo++;
       bonus = 2.5 + combo * 0.15;
       score += 300 * bonus;
-      showFloatingText("神着地！ ×" + bonus.toFixed(1));
+      showText("神着地！ ×" + bonus.toFixed(1));
     }else if(center >= successStart && center <= successEnd){
       combo++;
       bonus = 1.5 + combo * 0.1;
       score += 150 * bonus;
-      showFloatingText("着地成功！ ×" + bonus.toFixed(1));
+      showText("着地成功！ ×" + bonus.toFixed(1));
     }else{
       combo = 0;
       bonus = 1;
-      showFloatingText("着地ズレ…");
+      showText("着地ズレ…");
     }
 
     updateHud();
   }
 
-  function showFloatingText(text){
+  function showText(text){
     const div = document.createElement("div");
     div.textContent = text;
     div.style.position = "absolute";
@@ -390,15 +357,16 @@ html,body{
       lastSpawn = time;
     }
 
-    velocityY += gravity;
     playerY += velocityY;
+    velocityY -= gravity;
 
-    if(playerY >= 0){
+    if(playerY <= 0){
       if(!isGround){
         playerY = 0;
         velocityY = 0;
         isGround = true;
         player.classList.add("run");
+        player.classList.remove("jump");
         checkLandingBonus();
       }
     }
@@ -410,10 +378,11 @@ html,body{
     for(let i = takoyakis.length - 1; i >= 0; i--){
       const t = takoyakis[i];
 
-      t.x -= t.speed;
-      t.rotation -= t.speed * 4;
+      t.x += t.speed;
+      t.rotation += t.speed * 5;
 
-      t.el.style.transform = `translateX(${-window.innerWidth + t.x}px) rotate(${t.rotation}deg)`;
+      t.el.style.left = t.x + "px";
+      t.el.style.transform = `rotate(${t.rotation}deg)`;
 
       const rect = t.el.getBoundingClientRect();
 
@@ -422,19 +391,19 @@ html,body{
         return;
       }
 
-      if(!t.passed && rect.right < playerRect.left){
+      if(!t.passed && rect.left > playerRect.right){
         t.passed = true;
         score += t.point * bonus;
         updateHud();
       }
 
-      if(t.x < -200){
+      if(t.x > window.innerWidth + 200){
         t.el.remove();
         takoyakis.splice(i,1);
       }
     }
 
-    score += 0.15 * bonus;
+    score += 0.12 * bonus;
     updateHud();
 
     requestAnimationFrame(loop);
