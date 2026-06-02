@@ -15,18 +15,18 @@ body{margin:0;background:#111;overflow:hidden;font-family:system-ui,sans-serif;u
 #shop{position:absolute;left:8px;bottom:62px;font-size:48px;z-index:3}
 #player{position:absolute;width:58px;height:58px;left:95px;bottom:62px;z-index:10}
 #player img,.enemy img,.ally img{width:100%;height:100%;object-fit:contain}
-.enemy{position:absolute;width:54px;height:54px;z-index:6}
+.enemy{position:absolute;width:78px;height:78px;z-index:6}
 .ally{position:absolute;width:46px;height:46px;z-index:8}
-.bubble{position:absolute;left:-4px;top:-46px;width:58px;height:46px;background:#fff;border:3px solid #111;border-radius:16px;display:flex;align-items:center;justify-content:center;z-index:12}
-.bubble img{width:34px;height:34px;object-fit:contain}
-.bubble:after{content:"";position:absolute;left:23px;bottom:-9px;border-width:8px 6px 0 6px;border-style:solid;border-color:#111 transparent transparent transparent}
+.bubble{position:absolute;left:6px;top:-48px;width:62px;height:48px;background:#fff;border:3px solid #111;border-radius:16px;display:flex;align-items:center;justify-content:center;z-index:12}
+.bubble img{width:36px;height:36px;object-fit:contain}
+.bubble:after{content:"";position:absolute;left:25px;bottom:-9px;border-width:8px 6px 0 6px;border-style:solid;border-color:#111 transparent transparent transparent}
 .shot{position:absolute;width:32px;height:32px;z-index:15}
 .shot img{width:100%;height:100%;object-fit:contain}
 .moneyShot{position:absolute;width:30px;height:22px;background:#78e35f;border:3px solid #125c20;border-radius:4px;z-index:14}
 .moneyShot:after{content:"￥";position:absolute;inset:0;text-align:center;font-weight:900;color:#0c4217;font-size:14px}
 .naviShot{position:absolute;width:34px;height:28px;background:#fff;border:3px solid #111;border-radius:50%;z-index:14}
 .naviShot:after{content:"↩";position:absolute;inset:0;text-align:center;font-weight:900;color:#111}
-.effectText{position:absolute;color:#fff;font-weight:1000;font-size:16px;text-shadow:2px 2px #000;z-index:30}
+.effectText{position:absolute;color:#fff;font-weight:1000;font-size:20px;text-shadow:2px 2px #000;z-index:30}
 #message{position:absolute;left:10px;right:10px;top:68px;background:#fff;color:#2b160c;border:4px solid #111;border-radius:12px;padding:7px;text-align:center;font-weight:900;z-index:35;font-size:13px}
 
 #controls{
@@ -55,7 +55,6 @@ button:active{transform:translateY(4px);box-shadow:none}
 #sauceBtn{grid-column:4;grid-row:1 / 3}
 #plainBtn{grid-column:5;grid-row:1 / 3}
 #rainbowBtn{grid-column:6;grid-row:1 / 3}
-
 #start{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);z-index:60;width:230px;height:74px;background:#ff8b5a;font-size:20px}
 #gameover{position:absolute;inset:0;background:rgba(0,0,0,.75);z-index:70;display:none;align-items:center;justify-content:center;text-align:center;color:#fff;font-weight:900;padding:20px}
 #gameoverBox{background:#fff1b8;color:#2b160c;border:5px solid #111;border-radius:18px;padding:20px}
@@ -67,13 +66,13 @@ button:active{transform:translateY(4px);box-shadow:none}
 <div id="game">
   <div id="hud">
     <div class="stat">HP <span id="hp">5</span></div>
-    <div class="stat">撃破 <span id="score">0</span></div>
+    <div class="stat">満足 <span id="score">0</span></div>
     <div class="stat">味方 <span id="allyCount">0</span></div>
     <div class="stat">弾 <span id="ammo">30</span></div>
-    <div class="stat">攻撃は画像タップ</div>
+    <div class="stat">画像で攻撃</div>
   </div>
 
-  <div id="message">敵の吹き出し画像と同じたこ焼きボタンを押して攻撃！</div>
+  <div id="message">敵の吹き出し画像と同じたこ焼きを食べさせろ！</div>
 
   <div id="world">
     <div id="ground"></div>
@@ -146,6 +145,7 @@ const enemyTypes=[
 
 function msg(t){msgEl.textContent=t}
 function shotLabel(type){return type==="sauce"?"ソース":type==="plain"?"すっぴん":"虹たこ"}
+
 function updateHud(){
   hpEl.textContent=player.hp;
   scoreEl.textContent=player.score;
@@ -155,31 +155,37 @@ function updateHud(){
 
 function startGame(){
   running=true;
+
   enemies.forEach(e=>e.el.remove());
   shots.forEach(s=>s.el.remove());
   allies.forEach(a=>a.el.remove());
   supportShots.forEach(s=>s.el.remove());
   effects.forEach(e=>e.el.remove());
+
   enemies=[];shots=[];allies=[];supportShots=[];effects=[];
 
   player={x:90,y:62,vx:0,vy:0,w:58,h:58,hp:5,ammo:30,score:0,facing:-1,inv:0};
   spawnTimer=0;
+
   startBtn.style.display="none";
   gameoverEl.style.display="none";
-  msg("営業開始！たこ焼き画像を押すとそのまま攻撃！");
+
+  msg("営業開始！欲しいたこ焼きを食べさせろ！");
   updateHud();
+
   last=performance.now();
   requestAnimationFrame(loop);
 }
 
 function endGame(){
   running=false;
-  resultText.innerHTML=`営業終了！<br>撃破数：${player.score}<br>仲間：${allies.length}体`;
+  resultText.innerHTML=`営業終了！<br>満足させた数：${player.score}<br>仲間：${allies.length}体`;
   gameoverEl.style.display="flex";
 }
 
 function loop(now){
   if(!running)return;
+
   const dt=Math.min((now-last)/1000,0.033);
   last=now;
 
@@ -214,17 +220,21 @@ function updatePlayer(dt){
   player.vy-=gravity*dt;
   player.y+=player.vy*dt;
 
-  if(player.y<groundY){player.y=groundY;player.vy=0}
+  if(player.y<groundY){
+    player.y=groundY;
+    player.vy=0;
+  }
 
   if(player.inv>0){
     player.inv-=dt;
     playerEl.style.opacity=Math.floor(player.inv*10)%2?".35":"1";
-  }else playerEl.style.opacity="1";
+  }else{
+    playerEl.style.opacity="1";
+  }
 
   playerEl.style.left=player.x+"px";
   playerEl.style.bottom=player.y+"px";
 
-  /* 主役の身体向きを左右逆にする */
   playerEl.style.transform=player.facing===1 ? "scaleX(-1)" : "scaleX(1)";
 }
 
@@ -235,8 +245,9 @@ function jump(){
 
 function attack(type){
   if(!running)return;
+
   if(player.ammo<=0){
-    msg("たこ焼き切れ！敵を倒すと少し補充される！");
+    msg("たこ焼き切れ！敵を満足させると少し補充される！");
     return;
   }
 
@@ -255,7 +266,7 @@ function attack(type){
     w:32,h:32
   });
 
-  msg(`${shotLabel(type)}たこ焼き攻撃！`);
+  msg(`${shotLabel(type)}たこ焼き！`);
 }
 
 function spawnEnemy(){
@@ -274,7 +285,7 @@ function spawnEnemy(){
     hp:t.hp,maxHp:t.hp,
     speed:t.speed+Math.min(42,player.score*0.9),
     allyType:t.allyType,allyChance:t.allyChance,
-    x:world.clientWidth+50,y:groundY,w:54,h:54,
+    x:world.clientWidth+80,y:groundY,w:78,h:78,
     stunned:0,reversed:0
   });
 }
@@ -283,8 +294,9 @@ function updateEnemies(dt){
   for(let i=enemies.length-1;i>=0;i--){
     const e=enemies[i];
 
-    if(e.stunned>0)e.stunned-=dt;
-    else{
+    if(e.stunned>0){
+      e.stunned-=dt;
+    }else{
       const dir=e.reversed>0?1:-1;
       e.x+=dir*e.speed*dt;
     }
@@ -297,6 +309,7 @@ function updateEnemies(dt){
 
     if(hit(player,e)&&player.inv<=0){
       const pioneer=allies.find(a=>a.type==="pioneer");
+
       if(pioneer){
         pioneer.hp--;
         popText(pioneer.x,pioneer.y+50,"身代わり！");
@@ -306,7 +319,11 @@ function updateEnemies(dt){
         player.hp--;
         player.inv=1.2;
         msg(`${e.name}にぶつかった！`);
-        if(player.hp<=0){updateHud();endGame();return}
+        if(player.hp<=0){
+          updateHud();
+          endGame();
+          return;
+        }
       }
     }
 
@@ -315,10 +332,14 @@ function updateEnemies(dt){
       enemies.splice(i,1);
       player.hp--;
       msg("敵が屋台に到達！HP減少！");
-      if(player.hp<=0){updateHud();endGame();return}
+      if(player.hp<=0){
+        updateHud();
+        endGame();
+        return;
+      }
     }
 
-    if(e.x>world.clientWidth+120){
+    if(e.x>world.clientWidth+160){
       e.el.remove();
       enemies.splice(i,1);
     }
@@ -329,6 +350,7 @@ function updateShots(dt){
   for(let i=shots.length-1;i>=0;i--){
     const s=shots[i];
     s.x+=s.vx*dt;
+
     s.el.style.left=s.x+"px";
     s.el.style.bottom=s.y+"px";
 
@@ -338,10 +360,10 @@ function updateShots(dt){
       if(hit(s,e)){
         if(s.type===e.want){
           e.hp--;
-          popText(e.x,e.y+50,"正解！");
-          msg(`${e.name}に正解たこ焼き命中！`);
+          popText(e.x+10,e.y+75,"うまい!!");
+          msg(`${e.name}が「うまい!!」と叫んだ！`);
         }else{
-          popText(e.x,e.y+50,"違う！");
+          popText(e.x+10,e.y+75,"違う！");
           msg(`${e.name}はこのたこ焼きじゃない！`);
           e.speed+=10;
         }
@@ -363,22 +385,30 @@ function updateShots(dt){
 
 function defeatEnemy(index){
   const e=enemies[index];
+
   player.score++;
   player.ammo+=2;
+
+  popText(e.x+10,e.y+95,"うまい!!");
+
+  e.el.style.transition="all .45s ease";
+  e.el.style.transform="translateY(-40px) scale(1.35)";
+  e.el.style.opacity="0";
 
   const alreadySameAlly=allies.some(a=>a.type===e.allyType);
   const becomeAlly=!alreadySameAlly&&Math.random()<e.allyChance&&allies.length<4;
 
-  if(becomeAlly){
-    addAlly(e);
-    msg(`${e.name}が味方になった！`);
-    popText(e.x,e.y+55,"仲間！");
-  }else{
-    msg(`${e.name}を焼いた！`);
-    popText(e.x,e.y+55,"撃破！");
-  }
+  setTimeout(()=>{
+    if(becomeAlly){
+      addAlly(e);
+      msg(`${e.name}「うまい!!」→ 仲間になった！`);
+    }else{
+      msg(`${e.name}「うまい!!」`);
+    }
 
-  e.el.remove();
+    if(e.el.parentNode)e.el.remove();
+  },450);
+
   enemies.splice(index,1);
 }
 
@@ -401,6 +431,7 @@ function addAlly(enemy){
 
 function removeAlly(ally){
   const index=allies.indexOf(ally);
+
   if(index>=0){
     ally.el.remove();
     allies.splice(index,1);
@@ -413,7 +444,9 @@ function updateAllies(dt){
     let targetX=player.x-48-index*36;
     let targetY=groundY;
 
-    if(a.type==="pioneer")targetX=player.x+player.facing*55;
+    if(a.type==="pioneer"){
+      targetX=player.x+player.facing*55;
+    }
 
     a.x+=(targetX-a.x)*Math.min(1,dt*6);
     a.y+=(targetY-a.y)*Math.min(1,dt*6);
@@ -449,14 +482,18 @@ function fireSupport(ally,type){
 
   supportShots.push({
     el,type,
-    x:ally.x+20,y:ally.y+25,
-    vx:390,w:34,h:28
+    x:ally.x+20,
+    y:ally.y+25,
+    vx:390,
+    w:34,
+    h:28
   });
 }
 
 function updateSupportShots(dt){
   for(let i=supportShots.length-1;i>=0;i--){
     const s=supportShots[i];
+
     s.x+=s.vx*dt;
     s.el.style.left=s.x+"px";
     s.el.style.bottom=s.y+"px";
@@ -467,13 +504,13 @@ function updateSupportShots(dt){
       if(hit(s,e)){
         if(s.type==="money"){
           e.stunned=1.8;
-          popText(e.x,e.y+50,"停止！");
+          popText(e.x+10,e.y+85,"停止！");
           msg("札束攻撃！敵の動きが止まった！");
         }
 
         if(s.type==="navi"){
           e.reversed=2.0;
-          popText(e.x,e.y+50,"Uターン！");
+          popText(e.x+10,e.y+85,"Uターン！");
           msg("ナビ攻撃！敵がUターンした！");
         }
 
@@ -497,11 +534,11 @@ function protectBlast(ally){
     const dx=Math.abs((e.x+e.w/2)-(ally.x+ally.w/2));
     const dy=Math.abs((e.y+e.h/2)-(ally.y+ally.h/2));
 
-    if(dx<90&&dy<80){
-      e.x+=90;
+    if(dx<105&&dy<95){
+      e.x+=100;
       e.stunned=0.7;
       used=true;
-      popText(e.x,e.y+50,"圧力！");
+      popText(e.x+10,e.y+85,"圧力！");
     }
   });
 
@@ -519,12 +556,14 @@ function popText(x,y,text){
   el.style.left=x+"px";
   el.style.bottom=y+"px";
   world.appendChild(el);
+
   effects.push({el,life:0.8,x,y});
 }
 
 function updateEffects(dt){
   for(let i=effects.length-1;i>=0;i--){
     const e=effects[i];
+
     e.life-=dt;
     e.y+=40*dt;
     e.el.style.bottom=e.y+"px";
@@ -541,27 +580,69 @@ function hit(a,b){
   return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 }
 
-function press(name,value){keys[name]=value}
+function press(name,value){
+  keys[name]=value;
+}
 
 ["left","right"].forEach(id=>{
   const el=document.getElementById(id);
-  el.addEventListener("touchstart",e=>{e.preventDefault();press(id,true)});
-  el.addEventListener("touchend",e=>{e.preventDefault();press(id,false)});
-  el.addEventListener("mousedown",()=>press(id,true));
-  el.addEventListener("mouseup",()=>press(id,false));
-  el.addEventListener("mouseleave",()=>press(id,false));
+
+  el.addEventListener("touchstart",e=>{
+    e.preventDefault();
+    press(id,true);
+  });
+
+  el.addEventListener("touchend",e=>{
+    e.preventDefault();
+    press(id,false);
+  });
+
+  el.addEventListener("mousedown",()=>{
+    press(id,true);
+  });
+
+  el.addEventListener("mouseup",()=>{
+    press(id,false);
+  });
+
+  el.addEventListener("mouseleave",()=>{
+    press(id,false);
+  });
 });
 
-document.getElementById("jump").addEventListener("touchstart",e=>{e.preventDefault();jump()});
+document.getElementById("jump").addEventListener("touchstart",e=>{
+  e.preventDefault();
+  jump();
+});
+
 document.getElementById("jump").addEventListener("mousedown",jump);
 
-document.getElementById("sauceBtn").addEventListener("touchstart",e=>{e.preventDefault();attack("sauce")});
-document.getElementById("plainBtn").addEventListener("touchstart",e=>{e.preventDefault();attack("plain")});
-document.getElementById("rainbowBtn").addEventListener("touchstart",e=>{e.preventDefault();attack("rainbow")});
+document.getElementById("sauceBtn").addEventListener("touchstart",e=>{
+  e.preventDefault();
+  attack("sauce");
+});
 
-document.getElementById("sauceBtn").addEventListener("mousedown",()=>attack("sauce"));
-document.getElementById("plainBtn").addEventListener("mousedown",()=>attack("plain"));
-document.getElementById("rainbowBtn").addEventListener("mousedown",()=>attack("rainbow"));
+document.getElementById("plainBtn").addEventListener("touchstart",e=>{
+  e.preventDefault();
+  attack("plain");
+});
+
+document.getElementById("rainbowBtn").addEventListener("touchstart",e=>{
+  e.preventDefault();
+  attack("rainbow");
+});
+
+document.getElementById("sauceBtn").addEventListener("mousedown",()=>{
+  attack("sauce");
+});
+
+document.getElementById("plainBtn").addEventListener("mousedown",()=>{
+  attack("plain");
+});
+
+document.getElementById("rainbowBtn").addEventListener("mousedown",()=>{
+  attack("rainbow");
+});
 
 window.addEventListener("keydown",e=>{
   if(e.key==="ArrowLeft")press("left",true);
