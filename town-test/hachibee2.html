@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>焼き神のタネ補償ページ</title>
+<style>
+body{
+  margin:0;
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  background:radial-gradient(circle at top,#5b2da0,#12051f 70%);
+  color:#fff8e8;
+  font-family:"MS Gothic",sans-serif;
+  padding:20px;
+}
+.box{
+  width:min(100%,420px);
+  border:2px solid #f4d27a;
+  border-radius:22px;
+  padding:22px;
+  text-align:center;
+  background:linear-gradient(180deg,#3b1764,#1b0830);
+  box-shadow:0 18px 40px rgba(0,0,0,.45);
+}
+h1{
+  font-size:24px;
+  color:#ffe8a3;
+}
+p{
+  line-height:1.8;
+  font-size:15px;
+}
+.seed-list{
+  margin:16px 0;
+  padding:12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.08);
+  line-height:2;
+}
+button{
+  width:100%;
+  min-height:56px;
+  border-radius:16px;
+  border:2px solid #ffe8a3;
+  background:linear-gradient(180deg,#fff0b8,#dca946);
+  color:#2b1c08;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.result{
+  margin-top:16px;
+  line-height:1.8;
+  color:#ffe8a3;
+}
+.small{
+  margin-top:14px;
+  font-size:12px;
+  color:#d8c9aa;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h1>焼き神のタネ補償</h1>
+
+  <p>
+    月間記録の報酬で、本来入手できるはずだった<br>
+    焼き神のタネを補償します。
+  </p>
+
+  <div class="seed-list">
+    🔥 焼き神のタネ ×1
+  </div>
+
+  <button id="claimBtn">補償を受け取る</button>
+
+  <div class="result" id="result"></div>
+
+  <div class="small">
+    ※このページで受け取れるのは1回だけです。<br>
+    ※受け取り後、「称号の頂」に戻ると反映されます。
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const LS_INV = "tf_v1_inv";
+
+  // はちべえさん専用：焼き神のタネ補償フラグ
+  const COMP_KEY = "ttc_compensation_god_yaki_seed_20260608_hachibee";
+
+  // 称号ページで使われている正しいID
+  const COMP_SEEDS = [
+    { id:"seed_god_yaki", name:"焼き神のタネ" }
+  ];
+
+  const btn = document.getElementById("claimBtn");
+  const result = document.getElementById("result");
+
+  function loadJson(key, def){
+    try{
+      return JSON.parse(localStorage.getItem(key) || JSON.stringify(def));
+    }catch(e){
+      return def;
+    }
+  }
+
+  function saveJson(key, val){
+    localStorage.setItem(key, JSON.stringify(val));
+  }
+
+  function alreadyClaimed(){
+    return localStorage.getItem(COMP_KEY) === "claimed";
+  }
+
+  function updateView(){
+    if(alreadyClaimed()){
+      btn.disabled = true;
+      btn.textContent = "受け取り済み";
+      result.innerHTML = "この補償はすでに受け取り済みです。";
+    }
+  }
+
+  btn.addEventListener("click", () => {
+    if(alreadyClaimed()){
+      updateView();
+      return;
+    }
+
+    const inv = loadJson(LS_INV, {});
+
+    COMP_SEEDS.forEach(seed => {
+      inv[seed.id] = Number(inv[seed.id] || 0) + 1;
+    });
+
+    saveJson(LS_INV, inv);
+    localStorage.setItem(COMP_KEY, "claimed");
+
+    btn.disabled = true;
+    btn.textContent = "受け取り完了";
+
+    result.innerHTML =
+      "🔥 焼き神のタネを受け取りました。<br>" +
+      "称号の頂ページに戻って、GOD SEEDSを確認してください。";
+  });
+
+  updateView();
+})();
+</script>
+
+</body>
+</html>
