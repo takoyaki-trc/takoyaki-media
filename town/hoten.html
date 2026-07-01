@@ -5,20 +5,97 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>神のタネ補填</title>
 <style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#4b2478,#120620);color:#fff8e8;font-family:"MS Gothic",sans-serif}
-.box{width:min(92vw,430px);padding:24px;border-radius:20px;background:rgba(255,255,255,.08);border:2px solid rgba(255,223,140,.45);text-align:center}
-h1{font-size:22px;color:#ffe8a3}
-button{width:100%;min-height:54px;border-radius:16px;border:2px solid #ffe8a3;background:linear-gradient(180deg,#fff0b8,#dca946);color:#2b1c08;font-size:18px;font-weight:bold}
-.result{margin-top:18px;line-height:1.8;font-size:15px;text-align:left}
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg,#4b2478,#120620);
+  color:#fff8e8;
+  font-family:"MS Gothic",sans-serif;
+}
+
+.back-btn{
+  position:fixed;
+  top:16px;
+  left:16px;
+  padding:10px 16px;
+  border-radius:12px;
+  background:rgba(0,0,0,.45);
+  color:#fff;
+  text-decoration:none;
+  border:2px solid #ffe8a3;
+  font-weight:bold;
+  z-index:999;
+}
+
+.box{
+  width:min(92vw,430px);
+  padding:24px;
+  border-radius:20px;
+  background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,223,140,.45);
+  text-align:center;
+}
+
+h1{
+  font-size:22px;
+  color:#ffe8a3;
+}
+
+button{
+  width:100%;
+  min-height:54px;
+  border-radius:16px;
+  border:2px solid #ffe8a3;
+  background:linear-gradient(180deg,#fff0b8,#dca946);
+  color:#2b1c08;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.result{
+  margin-top:18px;
+  line-height:1.8;
+  font-size:15px;
+  text-align:left;
+}
+
+.title-btn{
+  display:block;
+  width:100%;
+  box-sizing:border-box;
+  padding:14px;
+  border-radius:16px;
+  background:linear-gradient(180deg,#bfffa5,#5fae32);
+  color:#2b1c08;
+  text-decoration:none;
+  font-size:18px;
+  font-weight:bold;
+  border:2px solid #ffe8a3;
+  margin-top:20px;
+  text-align:center;
+}
 </style>
 </head>
+
 <body>
+
+<a href="javascript:history.back()" class="back-btn">← 戻る</a>
 
 <div class="box">
   <h1>🌱 神のタネ受け取り</h1>
+
   <p>先月のランキング記録を確認して、条件達成分の神のタネを受け取れます。</p>
+
   <button id="grantBtn">先月分の神のタネを受け取る</button>
+
   <div class="result" id="result"></div>
+
+  <a href="https://takoyaki-card.com/town/title.html" class="title-btn">
+    🌱 神のタネを植えに行く
+  </a>
 </div>
 
 <script>
@@ -48,8 +125,11 @@ function getPrevMonthKey(){
 }
 
 function loadJson(key, def){
-  try{return JSON.parse(localStorage.getItem(key) || JSON.stringify(def));}
-  catch{return def;}
+  try{
+    return JSON.parse(localStorage.getItem(key) || JSON.stringify(def));
+  }catch{
+    return def;
+  }
 }
 
 function saveJson(key, val){
@@ -67,7 +147,11 @@ function getUserName(){
 function buildUrl(action, params = {}){
   const url = new URL(GAS_RANKING_API_URL);
   url.searchParams.set("action", action);
-  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, String(v ?? "")));
+
+  Object.entries(params).forEach(([k,v]) => {
+    url.searchParams.set(k, String(v ?? ""));
+  });
+
   url.searchParams.set("t", Date.now());
   return url.toString();
 }
@@ -80,8 +164,15 @@ function loadJsonp(url, timeoutMs = 15000){
     let done = false;
 
     const cleanup = () => {
-      try{ delete window[cb]; }catch(e){ window[cb] = undefined; }
-      if(script && script.parentNode) script.parentNode.removeChild(script);
+      try{
+        delete window[cb];
+      }catch(e){
+        window[cb] = undefined;
+      }
+
+      if(script && script.parentNode){
+        script.parentNode.removeChild(script);
+      }
     };
 
     const timer = setTimeout(() => {
@@ -100,6 +191,7 @@ function loadJsonp(url, timeoutMs = 15000){
     };
 
     script = document.createElement("script");
+
     script.onerror = () => {
       if(done) return;
       done = true;
@@ -123,7 +215,6 @@ async function getMyScore(monthKey, type){
   if(!data || !data.ok) return 0;
 
   const rows = data.ranking || [];
-
   let myRow = null;
 
   if(userId){
@@ -149,54 +240,62 @@ async function grantSeeds(){
   const already = [];
   const failed = [];
 
-  for(const rule of GOD_RULES){
-    const grantKey = `${monthKey}_${rule.seedId}`;
+  try{
+    for(const rule of GOD_RULES){
+      const grantKey = `${monthKey}_${rule.seedId}`;
 
-    if(monthGranted[rule.seedId] || granted[grantKey]){
-      already.push(`${rule.label}：${rule.seedName} は受け取り済み`);
-      continue;
+      if(monthGranted[rule.seedId] || granted[grantKey]){
+        already.push(`${rule.label}：${rule.seedName} は受け取り済み`);
+        continue;
+      }
+
+      const score = await getMyScore(monthKey, rule.type);
+
+      if(score >= rule.limit){
+        inv[rule.seedId] = Number(inv[rule.seedId] || 0) + 1;
+
+        if(!granted[monthKey]){
+          granted[monthKey] = {};
+        }
+
+        granted[monthKey][rule.seedId] = {
+          receivedAt: Date.now(),
+          score,
+          type: rule.type,
+          seedName: rule.seedName
+        };
+
+        added.push(`${rule.label}：${score.toLocaleString()} → ${rule.seedName} を1個追加`);
+      }else{
+        failed.push(`${rule.label}：${score.toLocaleString()} / 条件未達成`);
+      }
     }
 
-    const score = await getMyScore(monthKey, rule.type);
+    saveJson(LS_INV, inv);
+    saveJson(LS_GRANTED, granted);
 
-    if(score >= rule.limit){
-      inv[rule.seedId] = Number(inv[rule.seedId] || 0) + 1;
+    let html = `<b>${monthKey} 分の判定結果</b><br><br>`;
 
-      if(!granted[monthKey]) granted[monthKey] = {};
-      granted[monthKey][rule.seedId] = {
-        receivedAt: Date.now(),
-        score,
-        type: rule.type,
-        seedName: rule.seedName
-      };
-
-      added.push(`${rule.label}：${score.toLocaleString()} → ${rule.seedName} を1個追加`);
+    if(added.length){
+      html += "✅ 受け取り完了<br>";
+      html += added.join("<br>");
     }else{
-      failed.push(`${rule.label}：${score.toLocaleString()} / 条件未達成`);
+      html += "追加された神のタネはありませんでした。";
     }
+
+    if(already.length){
+      html += "<br><br>--- 受け取り済み ---<br>" + already.join("<br>");
+    }
+
+    if(failed.length){
+      html += "<br><br>--- 条件未達成 ---<br>" + failed.join("<br>");
+    }
+
+    result.innerHTML = html;
+
+  }catch(e){
+    result.innerHTML = "通信エラーが発生しました。時間をおいて再度お試しください。";
   }
-
-  saveJson(LS_INV, inv);
-  saveJson(LS_GRANTED, granted);
-
-  let html = `<b>${monthKey} 分の判定結果</b><br><br>`;
-
-  if(added.length){
-    html += "✅ 受け取り完了<br>";
-    html += added.join("<br>");
-  }else{
-    html += "追加された神のタネはありませんでした。";
-  }
-
-  if(already.length){
-    html += "<br><br>--- 受け取り済み ---<br>" + already.join("<br>");
-  }
-
-  if(failed.length){
-    html += "<br><br>--- 条件未達成 ---<br>" + failed.join("<br>");
-  }
-
-  result.innerHTML = html;
 }
 
 document.getElementById("grantBtn").addEventListener("click", grantSeeds);
