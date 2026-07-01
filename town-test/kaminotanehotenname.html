@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>神のタネ補填</title>
+<style>
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg,#4b2478,#120620);
+  color:#fff8e8;
+  font-family:"MS Gothic",sans-serif;
+}
+.box{
+  width:min(92vw,430px);
+  padding:24px;
+  border-radius:20px;
+  background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,223,140,.45);
+  text-align:center;
+}
+h1{font-size:22px;color:#ffe8a3}
+input{
+  width:100%;
+  min-height:48px;
+  border-radius:14px;
+  border:1px solid rgba(255,223,140,.5);
+  padding:10px 12px;
+  font-size:16px;
+  margin:10px 0;
+  box-sizing:border-box;
+}
+button{
+  width:100%;
+  min-height:54px;
+  border-radius:16px;
+  border:2px solid #ffe8a3;
+  background:linear-gradient(180deg,#fff0b8,#dca946);
+  color:#2b1c08;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+.result{
+  margin-top:18px;
+  line-height:1.8;
+  font-size:15px;
+  text-align:left;
+}
+.note{
+  font-size:13px;
+  line-height:1.7;
+  color:#dccfb0;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h1>🌱 神のタネ補填</h1>
+  <p class="note">
+    先月ランキングを確認して、未配布だった神のタネだけ補填します。<br>
+    ※露店神のタネは対象外です。
+  </p>
+
+  <input id="claimName" type="text" maxlength="20" placeholder="ランキング表示名を入力">
+
+  <button id="grantBtn">補填を受け取る</button>
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const GAS_RANKING_API_URL = "https://script.google.com/macros/s/AKfycbxZ6s4bgrR4CywdgGiOAk7l9istFjPEK7ph2laKc14NvqGPbNTCQFrFNoqDkgnOK84kJA/exec";
+
+const LS_INV = "tf_v1_inv";
+const LS_USER_ID = "ttc_user_id_v1";
+const LS_USER_NAME = "ttc_user_name_v1";
+const LS_FIX_CLAIMED = "ttc_god_seed_fix_2026_07_v2";
+
+const RULES = [
+  { type:"harvest", seedId:"seed_god_yaki",  seedName:"焼き神のタネ", label:"🔥 収穫", limit:3000 },
+  { type:"fishing", seedId:"seed_god_fish",  seedName:"釣り神のタネ", label:"🎣 釣り", limit:5000 },
+  { type:"tower",   seedId:"seed_god_tower", seedName:"塔神のタネ",   label:"🗼 タワー", limit:50 }
+];
+
+const result = document.getElementById("result");
+const btn = document.getElementById("grantBtn");
+const claimNameInput = document.getElementById("claimName");
+
+function getPrevMonthKey(){
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+}
+
+function loadJson(key, def){
+  try{
+    return JSON.parse(localStorage.getItem(key) || JSON.stringify(def));
+  }catch(e){
+    return def;
+  }
+}
+
+function saveJson(key, val){
+  localStorage.setItem(key, JSON.stringify(val));
+}
+
+function getUserId(){
+  return localStorage.getItem(LS_USER_ID) || "";
+}
+
+function getUserName(){
+  return localStorage.getItem(LS_USER_NAME) || "";
+}
+
+function getClaimName(){
+  return claimNameInput.value.trim();
+}
+
+function buildUrl(action, params = {}){
+  const url = new URL(GAS_RANKING_API_URL);
+  url.searchParams.set("action", action);
+  Object.entries(params).forEach(([k,v]) => {
+    url.searchParams.set(k, String(v ?? ""));
+  });
+  url.searchParams.set("t", Date.now());
+  return url.toString();
+}
+
+function loadJsonp(url, timeoutMs = 15000){
+  return new Promise((resolve, reject) => {
+    const cb = "__god_seed_fix_cb_" + Date.now() + "_" + Math.floor(Math.random() * 1000000);
+    const sep = url.includes("?") ? "&" : "?";
+    let script;
+    let done = false;
+
+    const cleanup = () => {
+      try{ delete window[cb]; }catch(e){ window[cb] = undefined; }
+      if(script && script.parentNode) script.parentNode.removeChild(script);
+    };
+
+    const timer = setTimeout(() => {
+      if(done) return;
+      done = true;
+      cleanup();
+      reject(new Error("TIMEOUT"));
+    }, timeoutMs);
+
+    window[cb] = data => {
+      if(done) return;
+      done = true;
+      clearTimeout(timer);
+      cleanup();
+      resolve(data);
+    };
+
+    script = document.createElement("script");
+    script.onerror = () => {
+      if(done) return;
+      done = true;
+      clearTimeout(timer);
+      cleanup();
+      reject(new Error("SCRIPT_ERROR"));
+    };
+
+    script.src = `${url}${sep}callback=${encodeURIComponent(cb)}`;
+    document.head.appendChild(script);
+  });
+}
+
+async function getMyScore(monthKey, type){
+  const claimName = getClaimName();
+  const userId = getUserId();
+  const userName = getUserName();
+
+  const url = buildUrl("getRanking", {
+    monthKey,
+    type
+  });
+
+  const data = await loadJsonp(url);
+
+  if(!data || !data.ok) return 0;
+
+  const rows = data.ranking || [];
+  let myRow = null;
+
+  if(claimName){
+    myRow = rows.find(r => String(r.userName || "").trim() === claimName);
+  }
+
+  if(!myRow && userId){
+    myRow = rows.find(r => String(r.userId || "") === String(userId));
+  }
+
+  if(!myRow && userName){
+    myRow = rows.find(r => String(r.userName || "").trim() === String(userName).trim());
+  }
+
+  return Number(myRow?.score || 0);
+}
+
+async function grantFix(){
+  const monthKey = getPrevMonthKey();
+  const claimName = getClaimName();
+
+  if(!claimName){
+    result.innerHTML = "ランキングに載っている名前を入力してください。";
+    return;
+  }
+
+  const claimed = loadJson(LS_FIX_CLAIMED, {});
+  const claimKey = `${monthKey}_${claimName}`;
+
+  if(claimed[claimKey]){
+    result.innerHTML = `⚠️ ${claimName} さんは、${monthKey}分の補填をすでに受け取り済みです。`;
+    btn.disabled = true;
+    return;
+  }
+
+  btn.disabled = true;
+  result.innerHTML = `${monthKey} のランキングを確認中です...`;
+
+  const inv = loadJson(LS_INV, {});
+  const added = [];
+  const failed = [];
+
+  try{
+    for(const rule of RULES){
+      const score = await getMyScore(monthKey, rule.type);
+
+      if(score >= rule.limit){
+        inv[rule.seedId] = Number(inv[rule.seedId] || 0) + 1;
+        added.push(`${rule.label}：${score.toLocaleString()} → ${rule.seedName} を1個追加`);
+      }else{
+        failed.push(`${rule.label}：${score.toLocaleString()} / 条件未達成`);
+      }
+    }
+
+    saveJson(LS_INV, inv);
+
+    claimed[claimKey] = {
+      claimedAt: Date.now(),
+      claimName,
+      monthKey,
+      added
+    };
+    saveJson(LS_FIX_CLAIMED, claimed);
+
+    let html = `<b>${monthKey}分の補填結果</b><br><br>`;
+
+    if(added.length){
+      html += "✅ 補填完了<br>";
+      html += added.join("<br>");
+    }else{
+      html += "追加される神のタネはありませんでした。";
+    }
+
+    if(failed.length){
+      html += "<br><br>--- 条件未達成 ---<br>";
+      html += failed.join("<br>");
+    }
+
+    html += `<br><br>※露店神のタネは今回の補填対象外です。`;
+
+    result.innerHTML = html;
+
+  }catch(err){
+    console.error(err);
+    result.innerHTML = "通信エラーが発生しました。時間をおいてもう一度お試しください。";
+    btn.disabled = false;
+  }
+}
+
+const savedName = getUserName();
+if(savedName){
+  claimNameInput.value = savedName;
+}
+
+btn.addEventListener("click", grantFix);
+
+})();
+</script>
+
+</body>
+</html>
