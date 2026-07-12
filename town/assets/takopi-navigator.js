@@ -17,7 +17,7 @@
       farm: "./index2.html",
       tower: "./takoyaki-tower01.html",
       fish: "./takofish-01.html",
-      shop: "./myshop-social.html",
+      shop: "./myshop.html",
       matching: "./matching-board.html",
       buy: "https://takoyaki-toreka.booth.pm/item_lists/m7YToKe5"
     },
