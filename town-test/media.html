@@ -16,579 +16,738 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <style>
-    :root{
-      --text:#1b1b1f;
-      --muted:rgba(27,27,31,.70);
-      --line:rgba(27,27,31,.14);
+<style>
+  :root{
+    --text:#171717;
+    --muted:#5f6368;
 
-      /* “DQ風BOX”を明るい羊皮紙に寄せる */
-      --dqBorder:rgba(27,27,31,.92);
+    --bg:#f4efe4;
+    --paper:#fffdf7;
+    --paper2:#f8f1df;
 
-      --accent:#1b7a3a;
-      --warn:#b36b00;
-      --news:#1d4ed8;
-      --radio:#7c3aed;
-      --marketing:#d97706;
-      --pr:#0f766e;
+    --border:#242424;
+    --softBorder:#d5c8ad;
 
-      --shadow:0 18px 60px rgba(0,0,0,.16);
-      --radius:18px;
+    --accent:#176b36;
+    --warn:#b15c00;
 
-      --safeT:env(safe-area-inset-top, 0px);
-      --safeB:env(safe-area-inset-bottom, 0px);
-      --safeL:env(safe-area-inset-left, 0px);
-      --safeR:env(safe-area-inset-right, 0px);
+    --news:#1648a8;
+    --radio:#6830a8;
+    --marketing:#b85e00;
+    --pr:#08736b;
 
-      --mono:
-        ui-monospace,
-        SFMono-Regular,
-        Menlo,
-        Consolas,
-        "Liberation Mono",
-        monospace;
+    --shadow:6px 6px 0 rgba(25,25,25,.16);
+    --shadowSmall:3px 3px 0 rgba(25,25,25,.13);
 
-      --sans:
-        system-ui,
-        -apple-system,
-        Segoe UI,
-        Roboto,
-        "Hiragino Kaku Gothic ProN",
-        "Noto Sans JP",
-        "Yu Gothic UI",
-        "Yu Gothic",
-        "Meiryo",
-        sans-serif;
+    --radius:14px;
+
+    --safeT:env(safe-area-inset-top,0px);
+    --safeB:env(safe-area-inset-bottom,0px);
+    --safeL:env(safe-area-inset-left,0px);
+    --safeR:env(safe-area-inset-right,0px);
+
+    --mono:
+      ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      Consolas,
+      "Liberation Mono",
+      monospace;
+
+    --sans:
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      "Hiragino Kaku Gothic ProN",
+      "Noto Sans JP",
+      "Yu Gothic UI",
+      "Yu Gothic",
+      "Meiryo",
+      sans-serif;
+  }
+
+  *{
+    box-sizing:border-box;
+  }
+
+  html,
+  body{
+    min-height:100%;
+  }
+
+  body{
+    margin:0;
+    color:var(--text);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+
+    /*
+      ぼやける大きな原因だった
+      radial-gradient を完全に撤去。
+    */
+    background:
+      linear-gradient(
+        90deg,
+        rgba(118,89,45,.055) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        rgba(118,89,45,.055) 1px,
+        transparent 1px
+      ),
+      var(--bg);
+
+    background-size:28px 28px;
+  }
+
+  /*
+    紙の粒感も撤去。
+    画面全体をクリアに見せる。
+  */
+  body::before{
+    display:none;
+  }
+
+  a{
+    color:inherit;
+  }
+
+  .wrap{
+    position:relative;
+    max-width:980px;
+    margin:0 auto;
+
+    padding:
+      calc(16px + var(--safeT))
+      calc(16px + var(--safeR))
+      calc(30px + var(--safeB))
+      calc(16px + var(--safeL));
+  }
+
+
+  /* =========================
+     ページ上部
+  ========================= */
+
+  .pageTop{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+
+  .backBtn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    min-height:36px;
+    padding:7px 14px;
+
+    border:2px solid var(--border);
+    border-radius:9px;
+
+    background:#ffffff;
+    color:#181818;
+
+    text-decoration:none;
+
+    box-shadow:var(--shadowSmall);
+
+    font-weight:900;
+    font-size:13px;
+
+    user-select:none;
+    white-space:nowrap;
+
+    transition:
+      transform .12s ease,
+      box-shadow .12s ease;
+  }
+
+  .backBtn:hover{
+    transform:translate(-1px,-1px);
+    box-shadow:4px 4px 0 rgba(25,25,25,.16);
+  }
+
+  .backBtn:active{
+    transform:translate(2px,2px);
+    box-shadow:1px 1px 0 rgba(25,25,25,.16);
+  }
+
+  .pageTitle{
+    position:relative;
+
+    display:inline-block;
+
+    padding:8px 15px;
+
+    border:2px solid var(--border);
+    border-radius:9px;
+
+    background:#202020;
+    color:#fff;
+
+    box-shadow:var(--shadowSmall);
+
+    font-weight:1000;
+    letter-spacing:.06em;
+    font-size:18px;
+    line-height:1.15;
+
+    white-space:nowrap;
+  }
+
+  .pageTitle::after{
+    content:"";
+    position:absolute;
+    left:10px;
+    right:10px;
+    bottom:-6px;
+    height:3px;
+
+    background:#d5a628;
+
+    border-radius:4px;
+  }
+
+  @media (max-width:420px){
+    .pageTitle{
+      font-size:17px;
     }
+  }
 
-    *{
-      box-sizing:border-box;
+
+  /* =========================
+     DQ風BOX
+  ========================= */
+
+  .dq{
+    position:relative;
+
+    border:2px solid var(--border);
+    border-radius:var(--radius);
+
+    /*
+      半透明・ぼかしをやめて
+      完全に不透明な紙色へ。
+    */
+    background:var(--paper);
+
+    box-shadow:var(--shadow);
+
+    padding:16px;
+
+    overflow:hidden;
+  }
+
+  .dq::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+
+    height:6px;
+
+    background:
+      linear-gradient(
+        90deg,
+        #d2a52c 0 20%,
+        #9f7620 20% 40%,
+        #d2a52c 40% 60%,
+        #9f7620 60% 80%,
+        #d2a52c 80% 100%
+      );
+  }
+
+  .dq .lead{
+    margin:3px 0 0;
+
+    color:#191919;
+
+    font-weight:1000;
+    letter-spacing:.035em;
+    font-size:14px;
+  }
+
+  .dq .sub{
+    margin:9px 0 0;
+
+    color:var(--muted);
+
+    font-size:12.5px;
+    line-height:1.7;
+  }
+
+
+  /* =========================
+     セクションタイトル
+  ========================= */
+
+  .sectionTitle{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    margin:20px 0 10px;
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+
+    padding:7px 12px;
+
+    border:2px solid var(--border);
+    border-radius:8px;
+
+    background:#242424;
+    color:#fff;
+
+    box-shadow:var(--shadowSmall);
+
+    font-weight:1000;
+    font-size:12px;
+    letter-spacing:.04em;
+  }
+
+  .badge .dot{
+    width:9px;
+    height:9px;
+
+    border-radius:2px;
+
+    background:#efc943;
+
+    box-shadow:none;
+  }
+
+
+  /* =========================
+     カード一覧
+  ========================= */
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:14px;
+  }
+
+  @media (min-width:720px){
+    .grid{
+      grid-template-columns:1fr 1fr;
     }
+  }
 
-    html,
-    body{
-      height:100%;
+  .card{
+    position:relative;
+
+    border:2px solid var(--border);
+    border-radius:var(--radius);
+
+    background:#ffffff;
+
+    box-shadow:var(--shadow);
+
+    overflow:hidden;
+
+    /*
+      backdrop-filterは完全撤去。
+    */
+  }
+
+  .card::before{
+    content:"";
+
+    position:absolute;
+    top:0;
+    left:0;
+
+    width:100%;
+    height:5px;
+
+    background:#303030;
+  }
+
+  .cardHead{
+    padding:15px 13px 11px;
+
+    border-bottom:2px solid #ded8cb;
+
+    background:var(--paper2);
+
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .meta{
+    min-width:0;
+  }
+
+  .mediaName{
+    margin:0;
+
+    color:#171717;
+
+    font-weight:1000;
+    letter-spacing:.025em;
+    font-size:14px;
+  }
+
+  .date{
+    display:inline-block;
+
+    margin:7px 0 0;
+    padding:3px 7px;
+
+    border:1px solid #cbbd9d;
+    border-radius:5px;
+
+    background:#fff;
+
+    color:#535353;
+
+    font-size:11.5px;
+    font-family:var(--mono);
+
+    font-weight:700;
+  }
+
+
+  /* =========================
+     右上バッジ
+  ========================= */
+
+  .typeTag{
+    flex:0 0 auto;
+
+    padding:6px 9px;
+
+    border-radius:6px;
+
+    font-size:11px;
+    font-weight:1000;
+    white-space:nowrap;
+
+    border:2px solid currentColor;
+
+    box-shadow:2px 2px 0 rgba(0,0,0,.10);
+  }
+
+  .typeTag.pr{
+    background:#e5f5f2;
+    color:var(--pr);
+  }
+
+  .typeTag.news{
+    background:#e8eefc;
+    color:var(--news);
+  }
+
+  .typeTag.radio{
+    background:#f0e8fa;
+    color:var(--radio);
+  }
+
+  .typeTag.marketing{
+    background:#fff0da;
+    color:var(--marketing);
+  }
+
+  .typeTag.latest{
+    background:#ddf4e4;
+    color:var(--accent);
+  }
+
+
+  /* =========================
+     カード本文
+  ========================= */
+
+  .cardBody{
+    padding:14px;
+  }
+
+  .headline{
+    position:relative;
+
+    margin:0;
+
+    padding-left:11px;
+
+    color:#171717;
+
+    font-weight:1000;
+    font-size:13.7px;
+    line-height:1.5;
+  }
+
+  .headline::before{
+    content:"";
+
+    position:absolute;
+    left:0;
+    top:.20em;
+    bottom:.15em;
+
+    width:4px;
+
+    border-radius:2px;
+
+    background:#d2a52c;
+  }
+
+  .desc{
+    margin:10px 0 0;
+
+    color:#545454;
+
+    font-size:12.5px;
+    line-height:1.72;
+  }
+
+  .actions{
+    margin-top:14px;
+
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+
+  /* =========================
+     ボタン
+  ========================= */
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+
+    min-height:39px;
+    padding:9px 13px;
+
+    border-radius:7px;
+
+    text-decoration:none;
+
+    font-weight:1000;
+    font-size:12.5px;
+
+    user-select:none;
+    white-space:nowrap;
+
+    border:2px solid currentColor;
+
+    background:#fff;
+
+    box-shadow:
+      3px 3px 0 rgba(20,20,20,.14);
+
+    transition:
+      transform .10s ease,
+      box-shadow .10s ease;
+  }
+
+  .btn:hover{
+    transform:translate(-1px,-1px);
+
+    box-shadow:
+      4px 4px 0 rgba(20,20,20,.14);
+  }
+
+  .btn:active{
+    transform:translate(2px,2px);
+
+    box-shadow:
+      1px 1px 0 rgba(20,20,20,.12);
+  }
+
+  .btn.pr{
+    background:var(--pr);
+    border-color:#065d56;
+    color:#fff;
+  }
+
+  .btn.news{
+    background:var(--news);
+    border-color:#103c91;
+    color:#fff;
+  }
+
+  .btn.radio{
+    background:var(--radio);
+    border-color:#542489;
+    color:#fff;
+  }
+
+  .btn.marketing{
+    background:var(--marketing);
+    border-color:#914900;
+    color:#fff;
+  }
+
+  .btn.form{
+    background:var(--accent);
+    border-color:#10552a;
+    color:#fff;
+  }
+
+
+  /* =========================
+     媒体ごとのアクセント
+  ========================= */
+
+  /*
+    タグの種類からカード上端に色を出す。
+    対応ブラウザでは媒体ごとの差が
+    一目で分かるようになる。
+  */
+
+  .card:has(.typeTag.news)::before{
+    background:var(--news);
+  }
+
+  .card:has(.typeTag.pr)::before{
+    background:var(--pr);
+  }
+
+  .card:has(.typeTag.marketing)::before{
+    background:var(--marketing);
+  }
+
+  .card:has(.typeTag.radio)::before{
+    background:var(--radio);
+  }
+
+  .card:has(.typeTag.latest)::before{
+    background:var(--accent);
+  }
+
+
+  /* =========================
+     FMいるか
+  ========================= */
+
+  .radioLayout{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:14px;
+    align-items:stretch;
+  }
+
+  @media (min-width:720px){
+    .radioLayout{
+      grid-template-columns:1.2fr .8fr;
     }
+  }
 
-    body{
-      margin:0;
-      color:var(--text);
-      font-family:var(--sans);
-      -webkit-font-smoothing:antialiased;
-      text-rendering:optimizeLegibility;
+  .shot{
+    border-radius:9px;
+    border:2px solid var(--border);
 
-      background:
-        radial-gradient(
-          900px 600px at 20% 10%,
-          rgba(120,190,255,.38),
-          transparent 60%
-        ),
-        radial-gradient(
-          900px 600px at 80% 0%,
-          rgba(255,170,220,.22),
-          transparent 60%
-        ),
-        radial-gradient(
-          900px 700px at 30% 95%,
-          rgba(120,255,214,.18),
-          transparent 60%
-        ),
-        linear-gradient(
-          180deg,
-          #eef7ff 0%,
-          #f6f2ff 40%,
-          #fff7ea 100%
-        );
-    }
+    background:#ece7da;
 
-    /* うっすら紙の粒感 */
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      pointer-events:none;
+    overflow:hidden;
 
-      background-image:
-        radial-gradient(
-          rgba(0,0,0,.06) 1px,
-          transparent 1px
-        ),
-        radial-gradient(
-          rgba(0,0,0,.04) 1px,
-          transparent 1px
-        );
+    min-height:180px;
 
-      background-size:
-        36px 36px,
-        62px 62px;
+    display:grid;
+    place-items:center;
 
-      background-position:
-        0 0,
-        14px 18px;
+    position:relative;
 
-      opacity:.10;
-      filter:contrast(110%);
-    }
+    box-shadow:
+      3px 3px 0 rgba(20,20,20,.12);
+  }
 
-    a{
-      color:inherit;
-    }
+  .shot img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+
+  /* =========================
+     フッター
+  ========================= */
+
+  footer{
+    margin-top:22px;
+
+    padding:12px 8px;
+
+    border-top:2px solid #b9ad95;
+
+    color:#625e55;
+
+    font-size:11.5px;
+    text-align:center;
+
+    font-weight:700;
+  }
+
+
+  /* =========================
+     スマホ微調整
+  ========================= */
+
+  @media (max-width:520px){
 
     .wrap{
-      position:relative;
-      max-width:980px;
-      margin:0 auto;
+      padding-left:
+        calc(12px + var(--safeL));
 
-      padding:
-        calc(14px + var(--safeT))
-        calc(16px + var(--safeR))
-        calc(26px + var(--safeB))
-        calc(16px + var(--safeL));
+      padding-right:
+        calc(12px + var(--safeR));
     }
-
-    /* ---------------------------
-       ページ上部
-    --------------------------- */
-
-    .pageTop{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom:12px;
-    }
-
-    .backBtn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-
-      padding:6px 12px;
-
-      border-radius:999px;
-      border:1px solid rgba(27,27,31,.18);
-
-      text-decoration:none;
-
-      background:rgba(255,255,255,.55);
-      box-shadow:0 8px 18px rgba(0,0,0,.10);
-
-      font-weight:900;
-      font-size:13px;
-
-      user-select:none;
-      backdrop-filter:blur(6px);
-
-      white-space:nowrap;
-    }
-
-    .pageTitle{
-      font-weight:1000;
-      letter-spacing:.03em;
-      font-size:18px;
-      line-height:1.15;
-      white-space:nowrap;
-    }
-
-    @media (max-width:420px){
-      .pageTitle{
-        font-size:17px;
-      }
-    }
-
-    /* ---------------------------
-       DQ風BOX
-    --------------------------- */
 
     .dq{
-      border:2px solid var(--dqBorder);
-      border-radius:var(--radius);
-
-      background:
-        radial-gradient(
-          900px 300px at 10% 0%,
-          rgba(255,255,255,.75),
-          rgba(255,255,255,.55)
-        ),
-        linear-gradient(
-          180deg,
-          rgba(255,255,255,.78),
-          rgba(255,255,255,.62)
-        );
-
-      box-shadow:var(--shadow);
-
-      padding:14px;
-
-      backdrop-filter:blur(10px);
+      padding:15px 13px;
     }
 
-    .dq .lead{
-      margin:0;
-      font-weight:1000;
-      letter-spacing:.03em;
-      font-size:14px;
-    }
-
-    .dq .sub{
-      margin:8px 0 0;
-      color:rgba(27,27,31,.72);
-      font-size:12.5px;
-      line-height:1.55;
-    }
-
-    /* ---------------------------
-       セクションタイトル
-    --------------------------- */
-
-    .sectionTitle{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin:16px 0 10px;
-    }
-
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-
-      padding:6px 10px;
-
-      border-radius:999px;
-      border:1px solid rgba(27,27,31,.16);
-
-      background:rgba(255,255,255,.66);
-
-      font-weight:1000;
-      font-size:12px;
-      letter-spacing:.03em;
-
-      backdrop-filter:blur(8px);
-    }
-
-    .badge .dot{
-      width:10px;
-      height:10px;
-      border-radius:3px;
-
-      background:rgba(27,122,58,.95);
-
-      box-shadow:
-        0 0 0 2px rgba(27,122,58,.18);
-    }
-
-    /* ---------------------------
-       カード一覧
-    --------------------------- */
-
-    .grid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:12px;
-    }
-
-    @media (min-width:720px){
-      .grid{
-        grid-template-columns:1fr 1fr;
-      }
-    }
-
-    .card{
-      border:1px solid rgba(27,27,31,.14);
-      border-radius:16px;
-
-      background:rgba(255,255,255,.68);
-
-      box-shadow:
-        0 14px 38px rgba(0,0,0,.12);
-
-      overflow:hidden;
-
-      backdrop-filter:blur(10px);
+    .cardBody{
+      padding:13px;
     }
 
     .cardHead{
-      padding:12px 12px 10px;
-
-      border-bottom:
-        1px solid rgba(27,27,31,.10);
-
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-    }
-
-    .meta{
-      min-width:0;
+      padding:
+        14px
+        12px
+        10px;
     }
 
     .mediaName{
-      margin:0;
-
-      font-weight:1000;
-      letter-spacing:.03em;
-      font-size:14px;
-    }
-
-    .date{
-      margin:6px 0 0;
-
-      color:rgba(27,27,31,.66);
-
-      font-size:12px;
-      font-family:var(--mono);
-    }
-
-    /* ---------------------------
-       右上バッジ
-    --------------------------- */
-
-    .typeTag{
-      flex:0 0 auto;
-
-      padding:6px 10px;
-
-      border-radius:999px;
-
-      font-size:11.5px;
-      font-weight:1000;
-      white-space:nowrap;
-
-      border:1px solid transparent;
-
-      box-shadow:
-        0 4px 12px rgba(0,0,0,.08);
-    }
-
-    .typeTag.pr{
-      background:rgba(15,118,110,.14);
-      color:var(--pr);
-      border-color:rgba(15,118,110,.26);
-    }
-
-    .typeTag.news{
-      background:rgba(29,78,216,.12);
-      color:var(--news);
-      border-color:rgba(29,78,216,.24);
-    }
-
-    .typeTag.radio{
-      background:rgba(124,58,237,.12);
-      color:var(--radio);
-      border-color:rgba(124,58,237,.24);
-    }
-
-    .typeTag.marketing{
-      background:rgba(217,119,6,.14);
-      color:var(--marketing);
-      border-color:rgba(217,119,6,.26);
-    }
-
-    .typeTag.latest{
-      background:
-        linear-gradient(
-          180deg,
-          rgba(27,122,58,.16),
-          rgba(27,122,58,.10)
-        );
-
-      color:var(--accent);
-
-      border-color:
-        rgba(27,122,58,.26);
-    }
-
-    /* ---------------------------
-       カード本文
-    --------------------------- */
-
-    .cardBody{
-      padding:12px;
+      font-size:13.5px;
     }
 
     .headline{
-      margin:0;
-
-      font-weight:950;
-      font-size:13.5px;
-      line-height:1.4;
+      font-size:13.3px;
     }
 
     .desc{
-      margin:8px 0 0;
-
-      color:rgba(27,27,31,.70);
-
-      font-size:12.5px;
-      line-height:1.6;
+      font-size:12.3px;
     }
 
-    .actions{
-      margin-top:12px;
-
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
+    .typeTag{
+      padding:5px 7px;
+      font-size:10.5px;
     }
-
-    /* ---------------------------
-       ボタン
-    --------------------------- */
 
     .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-
-      padding:10px 12px;
-
-      border-radius:12px;
-
-      text-decoration:none;
-
-      font-weight:900;
-      font-size:13px;
-
-      transition:
-        transform .12s ease,
-        background .12s ease,
-        border-color .12s ease;
-
-      user-select:none;
-      white-space:nowrap;
-
-      backdrop-filter:blur(6px);
-
-      box-shadow:
-        0 10px 26px rgba(0,0,0,.10);
-
-      border:
-        1px solid rgba(27,27,31,.18);
-
-      background:
-        rgba(255,255,255,.72);
-
-      color:var(--text);
-    }
-
-    .btn:hover{
-      transform:translateY(-1px);
-    }
-
-    .btn:active{
-      transform:
-        translateY(0px)
-        scale(.99);
-    }
-
-    .btn.pr{
-      background:rgba(15,118,110,.10);
-      border-color:rgba(15,118,110,.28);
-      color:var(--pr);
-    }
-
-    .btn.pr:hover{
-      background:rgba(15,118,110,.16);
-    }
-
-    .btn.news{
-      background:rgba(29,78,216,.08);
-      border-color:rgba(29,78,216,.24);
-      color:var(--news);
-    }
-
-    .btn.news:hover{
-      background:rgba(29,78,216,.14);
-    }
-
-    .btn.radio{
-      background:rgba(124,58,237,.09);
-      border-color:rgba(124,58,237,.24);
-      color:var(--radio);
-    }
-
-    .btn.radio:hover{
-      background:rgba(124,58,237,.15);
-    }
-
-    .btn.marketing{
-      background:rgba(217,119,6,.10);
-      border-color:rgba(217,119,6,.28);
-      color:var(--marketing);
-    }
-
-    .btn.marketing:hover{
-      background:rgba(217,119,6,.16);
-    }
-
-    .btn.form{
-      background:rgba(27,122,58,.10);
-      border-color:rgba(27,122,58,.28);
-      color:var(--accent);
-    }
-
-    .btn.form:hover{
-      background:rgba(27,122,58,.16);
-    }
-
-    /* ---------------------------
-       FMいるか
-    --------------------------- */
-
-    .radioLayout{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:12px;
-      align-items:stretch;
-    }
-
-    @media (min-width:720px){
-      .radioLayout{
-        grid-template-columns:1.2fr .8fr;
-      }
-    }
-
-    .shot{
-      border-radius:14px;
-      border:1px solid rgba(27,27,31,.16);
-
-      background:
-        rgba(255,255,255,.40);
-
-      overflow:hidden;
-
-      min-height:180px;
-
-      display:grid;
-      place-items:center;
-
-      position:relative;
-    }
-
-    .shot img{
       width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
     }
-
-    /* ---------------------------
-       フッター
-    --------------------------- */
-
-    footer{
-      margin-top:18px;
-
-      color:
-        rgba(27,27,31,.66);
-
-      font-size:12px;
-      text-align:center;
-    }
-  </style>
+  }
+</style>
 </head>
 
 <body>
