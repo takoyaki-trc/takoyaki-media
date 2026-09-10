@@ -414,7 +414,10 @@
   { id: "TP-007", name: "花見たこぴ", img: "https://ul.h3z.jp/KrCy4WQb.png", rarity: "N" },
   { id: "TP-008", name: "入学たこぴ", img: "https://ul.h3z.jp/DidPdK9b.png", rarity: "N" },
   { id: "TP-009", name: "こいのぼりたこぴ", img: "https://takoyaki-card.com/town/assets/images/takopi/takopi9.png", rarity: "N" },
-  { id: "TP-010", name: "梅雨たこぴ", img: "https://takoyaki-card.com/town/assets/images/takopi/takopi10.png", rarity: "N" }
+  { id: "TP-010", name: "梅雨たこぴ", img: "https://takoyaki-card.com/town/assets/images/takopi/takopi10.png", rarity: "N" },
+  { id: "TP-011", name: "夏祭りたこぴ", img: "https://takoyaki-card.com/town/assets/images/takopi/takopi11.png", rarity: "N" },
+  { id: "TP-012", name: "花火たこぴ", img: "https://takoyaki-card.com/town/assets/images/takopi/takopi12.png", rarity: "N" },
+  { id: "TP-013", name: "お月見たこぴ", img: "https://takoyaki-card.com/town/assets/images/takopi/takopi13.png", rarity: "N" }
 ];
 
   const BUSSASARI_POOL = [
