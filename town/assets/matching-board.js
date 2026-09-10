@@ -426,6 +426,12 @@
     { id: "BS-003", name: "自己啓発タコ塾《井上諒》", img: "https://ul.h3z.jp/P5vsAste.png", rarity: "N" },
     { id: "BS-004", name: "カロリーゼロ理論《仁木治》", img: "https://ul.h3z.jp/ZGBzzH2r.png", rarity: "N" },
     { id: "BS-005", name: "白い契約《稲石裕》", img: "https://ul.h3z.jp/nmiaCKae.png", rarity: "N" },
+    { id: "BS-006", name: "ゼロの代償《仁木治》", img: "https://takoyaki-card.com/town/assets/images/legend
+/bussasari/nf090.png", rarity: "N" },
+    { id: "BS-007", name: "ヨウコの悲鳴《津久井陽子》", img: "https://takoyaki-card.com/town/assets/images/legend
+/bussasari/nf091.png", rarity: "N" },
+    { id: "BS-008", name: "タコ入り娘《佐俣雄一郎》", img: "https://takoyaki-card.com/town/assets/images/legend
+/bussasari/nf092.png", rarity: "N" }
   ];
 
   
