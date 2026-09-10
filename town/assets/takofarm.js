@@ -236,7 +236,16 @@
     { id: "NK-010", name: "ぶっかけ揚げ玉からしマヨ", img: "https://ul.h3z.jp/CcOw6yLq.png", rarity: "SR" },
     { id: "NK-011", name: "塩マヨペッパー", img: "https://ul.h3z.jp/7UJoTCe7.png", rarity: "R" },
     { id: "NK-012", name: "てりたま", img: "https://ul.h3z.jp/MU6ehdTH.png", rarity: "SR" },
-    { id: "NK-013", name: "濃厚たらマヨ", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop13.png", rarity: "UR" }
+    { id: "NK-013", name: "濃厚たらマヨ", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop13.png", rarity: "UR" },
+    { id: "NK-014", name: "豆乳ごまだれネギラー", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop14.png", rarity: "R" },
+    { id: "NK-015", name: "ホッチリチーズ", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop15.png", rarity: "N" },
+    { id: "NK-016", name: "にんにく醤油", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop16.png", rarity: "SR" },
+    { id: "NK-017", name: "バター醬油", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop17.png", rarity: "R" },
+    { id: "NK-018", name: "和風キムチマヨ", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop18.png", rarity: "R" },
+    { id: "NK-019", name: "ポテサラ裏切りました", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop19.png", rarity: "UR" },
+    { id: "NK-020", name: "一口で沼るたこ焼き", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop20.png", rarity: "SR" },
+    { id: "NK-021", name: "特製ミートソース", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop21.png", rarity: "N" },
+    { id: "NK-022", name: "飲むたこ焼き", img: "https://takoyaki-card.com/town/assets/images/shopcard/shop22.png", rarity: "LR" }
   ];
 
   const WATER_SPECIAL_CARDS = {
